@@ -89,13 +89,25 @@ TRAVEL_SKILLS = [
     "wiki-report", "wiki-lint", "wiki-promote",
 ]
 
-# Scripts that travel
+# Scripts that travel — kept in sync with the actual contents of
+# bootstrap/workflows/llm-wiki/scripts/. Verified via build-wiki-package.py
+# on each release. wiki-promote.py is intentionally OMITTED until the
+# /wiki-promote skill grows a backing script.
 TRAVEL_SCRIPTS = [
-    "new-project.py", "wiki-init.py", "wiki-list-add.py",
-    "wiki-list-render.py", "wiki-lint-mechanical.py",
-    "wiki-reciprocate-backlinks.py", "wiki-index-per-folder.py",
-    "wiki-map-compile.py", "wiki-fetch-drive-folder.py",
-    "wiki-promote.py",
+    "new-project.py",
+    "wiki-init.py",
+    "wiki-fetch-drive-folder.py",
+    "wiki-fetch-pdf.py",
+    "wiki-fetch-youtube.py",
+    "wiki-index.py",
+    "wiki-index-per-folder.py",
+    "wiki-lint-mechanical.py",
+    "wiki-list-add.py",
+    "wiki-list-process.py",
+    "wiki-list-render.py",
+    "wiki-map-compile.py",
+    "wiki-reciprocate-backlinks.py",
+    "wiki-update.py",
 ]
 
 # Folder taxonomies per project type

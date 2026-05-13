@@ -3,20 +3,20 @@
 Install the LLM-wiki framework on a fresh machine. Ships /new-project, /wrap-up, /wiki-cycle, /wiki-search, /wiki-update, and the supporting scripts + templates to bootstrap a research or development project with structured per-project memory.
 
 **Version:** `2026-05-13`
-**Source repo:** [workflows-core](https://github.com/) (this package is generated from `bootstrap/workflows/llm-wiki/`)
+**Source repo:** [dadlabs-io/workflows-core](https://github.com/dadlabs-io/workflows-core) (this package is generated from `bootstrap/workflows/llm-wiki/`)
 
 ## One-time machine install
 
 ### Windows (PowerShell)
 ```powershell
-git clone <this-repo-url> ~/llm-wiki-bootstrap
+git clone https://github.com/dadlabs-io/llm-wiki-bootstrap.git ~/llm-wiki-bootstrap
 cd ~/llm-wiki-bootstrap
 .\install-wiki.ps1
 ```
 
 ### Mac / Linux (bash)
 ```bash
-git clone <this-repo-url> ~/llm-wiki-bootstrap
+git clone https://github.com/dadlabs-io/llm-wiki-bootstrap.git ~/llm-wiki-bootstrap
 cd ~/llm-wiki-bootstrap
 ./install-wiki.sh
 ```
@@ -75,4 +75,4 @@ Or from inside Claude Code: `/new-project --sync` does the same thing.
 
 ## Source of truth
 
-This repo is a release artifact built from [workflows-core](https://github.com/)'s `bootstrap/workflows/llm-wiki/` tree. To contribute changes, send PRs against workflows-core; the maintainer rebuilds + republishes this repo on each release.
+This repo is a release artifact built from [dadlabs-io/workflows-core](https://github.com/dadlabs-io/workflows-core)'s `bootstrap/workflows/llm-wiki/` tree. To contribute changes, send PRs against the source repo; the maintainer rebuilds + republishes this repo on each release.
