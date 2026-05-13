@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Build artifacts (in case you ever stage builds inside the repo)
+dist/
+build/
+
+# Local scratch
+scratch/
+tmp/

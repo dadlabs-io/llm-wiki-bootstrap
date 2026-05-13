@@ -1,0 +1,61 @@
+# CLAUDE.md — {{PROJECT_NAME}}
+
+{{PROJECT_DESCRIPTION}}
+
+## Project type
+
+**research** — external content is being ingested + curated into a knowledge base. New content arrives via `/wiki-update` (ad-hoc URL) or `/wiki-cycle` (batched discovery + ingest + lint + promote).
+
+## Where to look
+
+@{{VAULT_TOPIC_PATH}}/wiki/_MAP.md
+
+Wiki topic folders for this project (lives in the shared vault):
+- **active/** — current-state / actively-evolving entries
+- **long-term/** — settled / canonical research
+- **tooling/** — frameworks, libraries, products
+- **best-practices/** — synthesized rules
+- **implementation/** — practitioner deep-dives
+- **skills/** — specific reusable capability packages
+- **orchestration/** — coordination + multi-agent patterns
+- **interesting-docs/** — adjacent / personally-relevant content
+
+## Working rhythm
+
+1. **Drop URLs throughout the day**: into Google Drive (`__FOR CLAUDE/{{PROJECT_NAME}}/`) or via `/wiki-list add <url>`.
+2. **Run a cycle**: `/wiki-cycle` orchestrates discover → ingest → lint → promote → commit.
+3. **Search**: `/wiki-search "<query>"` to look up prior research.
+
+## Common commands
+
+```bash
+# Search the wiki
+/wiki-search "<query>"
+
+# Ingest a single URL right now
+/wiki-update <url>
+
+# Full cycle (discover + ingest + lint + promote)
+/wiki-cycle
+
+# Faster: just process the queue
+/wiki-cycle --ingest-only
+
+# Just lint
+/wiki-cycle --lint-only
+```
+
+## Source quality tiers
+
+- **tier 1** — peer-reviewed / primary research
+- **tier 2** — vendor / official docs
+- **tier 3** — expert / first-hand practitioner
+- **tier 4** — community / blog / X post
+- **tier self** — our own synthesis
+
+## Don't
+
+- Don't promote directly to `wiki/` — always stage in `_inbox/proposed/` and let `/wiki-promote` move them.
+- Don't reject items based on title patterns — every queued URL must be fully fetched and read before any cluster / skip / tier decision.
+- Don't edit `_MAP.md` or `_INDEX.md` by hand — they're auto-generated.
+- Don't suppress contradictions — both-sides-stay: keep contradictory entries cross-linked, never delete the minority view.

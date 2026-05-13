@@ -1,0 +1,61 @@
+# CLAUDE.md — {{PROJECT_NAME}}
+
+{{PROJECT_DESCRIPTION}}
+
+## Project type
+
+**development** — code is being built here. Session work is captured by agentmemory; durable design decisions are crystallized into the project wiki via `/wrap-up`.
+
+## Where to look
+
+@{{VAULT_TOPIC_PATH}}/wiki/_MAP.md
+
+Wiki topic folders for this project (lives in the shared vault):
+- **components/** — modules / classes / systems we've built
+- **decisions/** — ADR-style decisions with the *why* preserved
+- **architecture/** — system-level structural rules
+- **patterns/** — reusable approaches we adopt elsewhere
+- **troubleshooting/** — bugs + root causes (so we don't re-debug)
+- **best-practices/** — project-specific conventions
+
+## Working rhythm
+
+1. **Start a session**: agentmemory auto-loads recent context. The wiki MAP is always-loaded above.
+2. **Code + decide + investigate**: regular dev work.
+3. **End of session**: `/wrap-up` distills the session into proposed wiki entries.
+4. **Promote**: `/wiki-promote --review` to approve and move entries from proposed → wiki/.
+
+## Conventions
+
+(Edit this section as the project's conventions emerge — naming, testing, file layout, etc. Start with whatever you currently know; this is the agent's constitution.)
+
+## Common commands
+
+```bash
+# Search the project wiki
+/wiki-search "<query>"
+
+# Add an external reference (article, doc, video) to the wiki
+/wiki-update <url>
+
+# Wrap up the current session
+/wrap-up
+
+# Promote what's staged
+/wiki-promote --review
+```
+
+## Where memory lives
+
+| Layer | Where |
+|---|---|
+| **Session** (this conversation) | Claude Code context window |
+| **Short-term** (recent sessions) | agentmemory (background MCP server) |
+| **Long-term** (durable knowledge) | {{VAULT_TOPIC_PATH}}/wiki/ |
+| **Raw** (immutable log) | {{VAULT_TOPIC_PATH}}/raw/ |
+
+## Don't
+
+- Don't paste session transcripts into wiki entries — `/wrap-up` distills them. Transcripts go to `raw/sessions/`.
+- Don't promote directly to `wiki/` — always stage in `_inbox/proposed/` and let `/wiki-promote` move them.
+- Don't edit `_MAP.md` or `_INDEX.md` by hand — they're auto-generated.
