@@ -29,7 +29,7 @@ Conversational scaffold for a new project. Everything is per-project — the onl
 └── .gitignore
 ```
 
-Cursor variant: substitutes `.cursor/` for `.claude/`. `llm-wiki/` is identical.
+Cursor variant: substitutes `.cursor/` for `.claude/`. Additionally generates `.cursor/rules/<skill-name>.mdc` files (Cursor's native rule format) from each SKILL.md so Cursor's agent picks them up automatically. `llm-wiki/` is identical to claude-code.
 
 ## Flow at a glance
 

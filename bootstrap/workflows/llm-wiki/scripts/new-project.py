@@ -177,6 +177,67 @@ def _save_config(cfg, config_path: Path = CC_GLOBAL_CONFIG_PATH):
     _ok(f"wrote {config_path}")
 
 
+def _skill_to_mdc(skill_md_path: Path, mdc_path: Path, dry_run: bool = False) -> bool:
+    """Convert a Claude-Code SKILL.md to a Cursor .mdc rule.
+
+    Frontmatter shape diverges:
+      SKILL.md:  name: <slug>, description: <hint>
+      .mdc:      description: <hint>, alwaysApply: false
+
+    Cursor's rules system reads .mdc files from .cursor/rules/. The body
+    stays in markdown — Cursor's agent uses the rule as context-aware
+    instructions. alwaysApply=false means the rule only loads when the
+    description matches the conversation; this is the right default for
+    skills (which the user invokes by name, like /wiki-cycle).
+    """
+    if not skill_md_path.exists():
+        return False
+    text = skill_md_path.read_text(encoding="utf-8")
+    name = skill_md_path.parent.name
+    description = ""
+    body = text
+    if text.startswith("---"):
+        end = text.find("---", 3)
+        if end > 0:
+            header = text[3:end].strip()
+            body = text[end + 3:].lstrip("\n")
+            for line in header.split("\n"):
+                if line.startswith("description:"):
+                    description = line.split(":", 1)[1].strip()
+                    break
+    if not description:
+        description = f"Cursor rule generated from /{name} skill. Invoke when user mentions '{name}'."
+    mdc_text = (
+        "---\n"
+        f"description: {description}\n"
+        "alwaysApply: false\n"
+        "---\n\n"
+        f"# /{name}\n\n"
+        f"> Cursor rule generated from `.cursor/skills/{name}/SKILL.md`. "
+        f"Invoke when the user says `/{name}` or references the skill by name.\n\n"
+        f"{body}"
+    )
+    if dry_run:
+        print(f"WOULD write {mdc_path} ({len(mdc_text)} chars)")
+        return True
+    mdc_path.parent.mkdir(parents=True, exist_ok=True)
+    mdc_path.write_text(mdc_text, encoding="utf-8")
+    return True
+
+
+def _generate_cursor_rules(skills_dir: Path, rules_dir: Path, dry_run: bool = False) -> int:
+    """Generate .cursor/rules/<name>.mdc for every SKILL.md in skills_dir."""
+    count = 0
+    if not skills_dir.exists():
+        return 0
+    for skill_md in skills_dir.glob("*/SKILL.md"):
+        name = skill_md.parent.name
+        mdc_path = rules_dir / f"{name}.mdc"
+        if _skill_to_mdc(skill_md, mdc_path, dry_run=dry_run):
+            count += 1
+    return count
+
+
 def _copy_tree(src: Path, dst: Path, names=None, dry_run=False):
     """Copy contents of src to dst. If names is given, only copy those
     top-level entries. Existing files in dst are overwritten only if
@@ -374,10 +435,12 @@ def _merge_agentmemory_mcp(settings_path: Path = CC_GLOBAL_SETTINGS_PATH, tool: 
     else:
         data = {}
     mcp = data.setdefault("mcpServers", {})
-    # Canonical entry per the wiki's implementation/agentmemory-setup.md.
+    # Canonical entry from rohitg00/agentmemory README:
+    # https://github.com/rohitg00/agentmemory#claude-desktop
+    # Package: @agentmemory/mcp (thin shim that exposes @agentmemory/agentmemory's MCP entrypoint)
     mcp["agentmemory"] = {
         "command": "npx",
-        "args": ["-y", "@agentmemory/agentmemory-mcp"],
+        "args": ["-y", "@agentmemory/mcp"],
     }
     settings_path.parent.mkdir(parents=True, exist_ok=True)
     settings_path.write_text(
@@ -548,8 +611,21 @@ def phase_b(args):
     _ok(f"skills: {c} copied, {s} unchanged")
 
     if args.tool == "cursor":
-        _warn("Cursor adapter is partial: skills are copied as SKILL.md files.")
-        _warn("Until adapters/cursor/ generates .mdc rules, you'll invoke them manually.")
+        # Cursor adapter: generate .cursor/rules/<name>.mdc for each skill so
+        # Cursor's agent picks them up natively. The .cursor/skills/<name>/
+        # SKILL.md copies remain as reference / source of truth for re-generation.
+        # Read from bootstrap source (skills_src) since we know all TRAVEL_SKILLS
+        # exist there — same source the copy step uses.
+        rules_dir = target / ".cursor" / "rules"
+        # Restrict to TRAVEL_SKILLS so we don't generate rules for skills we
+        # didn't install.
+        n = 0
+        for skill_name in TRAVEL_SKILLS:
+            skill_md = skills_src / skill_name / "SKILL.md"
+            mdc_path = rules_dir / f"{skill_name}.mdc"
+            if _skill_to_mdc(skill_md, mdc_path, dry_run=args.dry_run):
+                n += 1
+        _ok(f"cursor rules generated: {n} .mdc files at {rules_dir}")
 
     # B3 — copy scripts
     _info(f"copying scripts: {scripts_src} -> {paths['scripts']}")
