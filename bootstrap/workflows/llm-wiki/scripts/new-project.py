@@ -38,47 +38,61 @@ if hasattr(sys.stdout, "reconfigure"):
 
 # ---------- Paths and defaults ----------
 
-# Claude Code (global)
-CC_DIR = Path.home() / ".claude"
-CC_SKILLS_DIR = CC_DIR / "skills"
-CC_SCRIPTS_DIR = CC_DIR / "wiki-scripts"
-CC_TEMPLATES_DIR = CC_DIR / "wiki-templates"
-CC_CONFIG_PATH = CC_DIR / "wiki-config.json"
-CC_SETTINGS_PATH = CC_DIR / "settings.json"
+# Global Claude Code path — used only for the ONE creator skill (/new-project)
+# that lives globally so users can invoke it from anywhere. Everything else
+# is per-project.
+CC_GLOBAL_DIR = Path.home() / ".claude"
+CC_GLOBAL_SKILLS_DIR = CC_GLOBAL_DIR / "skills"
+CC_GLOBAL_CONFIG_PATH = CC_GLOBAL_DIR / "wiki-config.json"
+CC_GLOBAL_SETTINGS_PATH = CC_GLOBAL_DIR / "settings.json"
 
-# Cursor (per-project; populated when --tool cursor)
-# These get computed relative to --target-folder at runtime
-def cursor_paths(target: Path):
-    wiki_root = target / ".wiki"
+
+def project_paths(tool: str, target: Path) -> dict:
+    """Per-project install layout. Always rooted at --target-folder.
+
+    Layout for claude-code:
+      <target>/.claude/skills/         ← runnable skills (Claude Code auto-loads)
+      <target>/.claude/wiki-scripts/   ← Python helpers
+      <target>/.claude/wiki-templates/ ← project-bootstrap templates
+      <target>/.claude/wiki-config.json
+      <target>/.claude/settings.json   ← MCP wiring (agentmemory)
+      <target>/llm-wiki/               ← human-readable wiki content
+        ├── README.md                  ← how to use this framework
+        ├── how-to/                    ← seed how-to docs
+        ├── best-practices/            ← seeded dev best practices
+        └── wiki/                      ← project's research/dev wiki entries
+                                         (was previously vault/<topic>/)
+
+    Layout for cursor (parallel, with .cursor/ instead of .claude/):
+      Skills land in <target>/.cursor/skills/ as a staging area — until the
+      cursor adapter generates .mdc rules from them, they're reference docs.
+      Settings (MCP) go to <target>/.cursor/mcp.json.
+    """
+    if tool == "claude-code":
+        tool_dir = target / ".claude"
+        settings = tool_dir / "settings.json"
+    elif tool == "cursor":
+        tool_dir = target / ".cursor"
+        settings = tool_dir / "mcp.json"
+    else:
+        raise ValueError(f"unknown tool: {tool}")
+
+    llm_wiki = target / "llm-wiki"
     return {
-        "skills": wiki_root / "skills",
-        "scripts": wiki_root / "scripts",
-        "templates": wiki_root / "templates",
-        "config": wiki_root / "config.json",
-        "settings": target / ".cursor" / "mcp.json",
-        "rules": target / ".cursor" / "rules",
+        "tool_dir": tool_dir,
+        "skills": tool_dir / "skills",
+        "scripts": tool_dir / "wiki-scripts",
+        "templates": tool_dir / "wiki-templates",
+        "config": tool_dir / "wiki-config.json",
+        "settings": settings,
+        "llm_wiki": llm_wiki,
+        "llm_wiki_readme": llm_wiki / "README.md",
+        "llm_wiki_how_to": llm_wiki / "how-to",
+        "llm_wiki_best_practices": llm_wiki / "best-practices",
+        "llm_wiki_wiki": llm_wiki / "wiki",
     }
 
 
-def install_paths(tool: str, target: Path | None = None):
-    """Return install paths dict for the chosen tool. For cursor, target must be provided."""
-    if tool == "claude-code":
-        return {
-            "skills": CC_SKILLS_DIR,
-            "scripts": CC_SCRIPTS_DIR,
-            "templates": CC_TEMPLATES_DIR,
-            "config": CC_CONFIG_PATH,
-            "settings": CC_SETTINGS_PATH,
-            "rules": None,
-        }
-    if tool == "cursor":
-        if target is None:
-            raise ValueError("cursor install requires --target-folder")
-        return cursor_paths(target)
-    raise ValueError(f"unknown tool: {tool}")
-
-
-DEFAULT_VAULT_ROOT_HINT = "docker/shared/openclaw/vault/wikis"
 DEFAULT_DRIVE_PARENT = "__FOR CLAUDE"
 
 # Skills that travel — keep in sync with INSTALL-INVENTORY.md
@@ -141,7 +155,7 @@ def _err(msg):
     print(f"[new-project] ✗ {msg}", file=sys.stderr)
 
 
-def _load_config(config_path: Path = CC_CONFIG_PATH):
+def _load_config(config_path: Path = CC_GLOBAL_CONFIG_PATH):
     """Read wiki-config.json or return None if absent."""
     if config_path.exists():
         try:
@@ -152,7 +166,7 @@ def _load_config(config_path: Path = CC_CONFIG_PATH):
     return None
 
 
-def _save_config(cfg, config_path: Path = CC_CONFIG_PATH):
+def _save_config(cfg, config_path: Path = CC_GLOBAL_CONFIG_PATH):
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(
         json.dumps(cfg, indent=2, sort_keys=True),
@@ -234,121 +248,68 @@ def _derive_bootstrap_source(args):
     return None
 
 
-# ---------- Phase A ----------
+# ---------- Phase A (global) ----------
+# Phase A installs ONLY the /new-project creator skill globally + records
+# the bootstrap source so subsequent /new-project invocations can find it.
+# All other skills + scripts + templates ship per-project (Phase B).
 
 def phase_a(args):
-    """Global install: skills + scripts + templates + config + agentmemory (dev)."""
+    """Global install: ONLY /new-project skill goes to ~/.claude/skills/.
+    Writes ~/.claude/wiki-config.json so future /new-project runs know where
+    the bootstrap source lives.
+
+    This is the install-wiki.ps1 / install-wiki.sh entry point. After this
+    succeeds, the user can cd to any project folder, start Claude Code, and
+    run /new-project to scaffold per-project structure.
+    """
     bootstrap = _derive_bootstrap_source(args)
     if not bootstrap:
-        _err("could not find workflows-core bootstrap. Pass --bootstrap-source <path>.")
+        _err("could not find bootstrap source. Pass --bootstrap-source <path>.")
         return 1
     _info(f"bootstrap source: {bootstrap}")
-    _info(f"tool: {args.tool}")
-
-    # Resolve install paths per tool. For cursor we need --target-folder up front
-    # so we can land everything inside the per-project .wiki/ folder.
-    target = Path(args.target_folder).resolve() if args.target_folder else None
-    if args.tool == "cursor" and target is None:
-        _err("cursor install requires --target-folder (Cursor has no global skills dir)")
-        return 1
-    paths = install_paths(args.tool, target=target)
-
-    if args.tool == "cursor":
-        _warn("Cursor adapter is partial: skills will be copied as-is (CC SKILL.md format).")
-        _warn("Until adapters/cursor/ generates .mdc rules, you'll invoke these manually.")
 
     skills_src = bootstrap / "bootstrap" / "workflows" / "llm-wiki" / "skills"
-    scripts_src = bootstrap / "bootstrap" / "workflows" / "llm-wiki" / "scripts"
-    templates_src = bootstrap / "bootstrap" / "workflows" / "llm-wiki" / "templates"
+    new_project_skill_src = skills_src / "new-project"
+    new_project_skill_dst = CC_GLOBAL_SKILLS_DIR / "new-project"
 
-    # A2 — copy skills
-    _info(f"copying skills: {skills_src} -> {paths['skills']}")
-    c, s = _copy_tree(skills_src, paths["skills"], names=TRAVEL_SKILLS, dry_run=args.dry_run)
-    _ok(f"skills: {c} copied, {s} unchanged")
+    if not new_project_skill_src.exists():
+        _err(f"new-project skill missing in bootstrap source: {new_project_skill_src}")
+        return 1
 
-    # A3 — copy scripts
-    _info(f"copying scripts: {scripts_src} -> {paths['scripts']}")
-    c, s = _copy_tree(scripts_src, paths["scripts"], names=TRAVEL_SCRIPTS, dry_run=args.dry_run)
-    _ok(f"scripts: {c} copied, {s} unchanged")
+    _info(f"installing /new-project skill: {new_project_skill_src} -> {new_project_skill_dst}")
+    c, s = _copy_tree(new_project_skill_src, new_project_skill_dst, dry_run=args.dry_run)
+    _ok(f"/new-project skill: {c} files copied, {s} unchanged")
 
-    # A4 — copy templates
-    _info(f"copying templates: {templates_src} -> {paths['templates']}")
-    c, s = _copy_tree(templates_src, paths["templates"], dry_run=args.dry_run)
-    _ok(f"templates: {c} copied, {s} unchanged")
-
-    # A5 — write wiki-config.json (location depends on tool)
-    cfg = _load_config(paths["config"]) or {}
-    vault_root = args.vault_root or cfg.get("vault_root") or str(bootstrap / DEFAULT_VAULT_ROOT_HINT)
+    # Persist bootstrap source path so the skill can find it next time
+    cfg = _load_config(CC_GLOBAL_CONFIG_PATH) or {}
     cfg.update({
-        "tool": args.tool,
-        "vault_root": str(Path(vault_root).resolve()),
-        "skills_installed_at": str(paths["skills"]),
-        "scripts_installed_at": str(paths["scripts"]),
-        "templates_installed_at": str(paths["templates"]),
         "bootstrap_source": str(bootstrap),
         "install_version": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "last_phase_a": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     })
-    # Drive config: persist if user opted in. wiki-fetch-drive-folder.py reads this.
+    # Preserve any default drive config from prior installs
     if args.drive_enabled == "yes":
-        cfg["drive"] = {
-            "enabled": True,
-            "parent_folder": args.drive_parent_folder or DEFAULT_DRIVE_PARENT,
-        }
+        cfg.setdefault("drive", {})["enabled"] = True
+        cfg["drive"]["parent_folder"] = args.drive_parent_folder or DEFAULT_DRIVE_PARENT
     elif args.drive_enabled == "no":
-        cfg["drive"] = {"enabled": False}
-    # else: leave drive config untouched (Phase A re-run shouldn't clobber it)
+        cfg.setdefault("drive", {})["enabled"] = False
 
     if args.dry_run:
-        print(f"WOULD write wiki-config.json to {paths['config']}: {json.dumps(cfg, indent=2)}")
+        print(f"WOULD write wiki-config.json to {CC_GLOBAL_CONFIG_PATH}: {json.dumps(cfg, indent=2)}")
     else:
-        _save_config(cfg, paths["config"])
+        _save_config(cfg, CC_GLOBAL_CONFIG_PATH)
 
-    # A5.5 — Drive OAuth walkthrough (if Drive ingest enabled)
-    if args.drive_enabled == "yes":
-        if args.dry_run:
-            print("WOULD walk user through Drive OAuth (if token not already cached)")
-        else:
-            ok = _drive_oauth_walkthrough(paths["scripts"])
-            if not ok:
-                _warn("Drive auth did not complete. /new-project will continue,")
-                _warn("but Drive ingest won't work until you re-run /new-project --sync")
-                _warn("with valid client_secrets.json in place.")
-
-    needs_restart = False
-
-    # A6, A7 — agentmemory (development only)
-    if args.project_type == "development":
-        if _agentmemory_wired(paths["settings"]) and _agentmemory_reachable():
-            _ok("agentmemory already installed + wired")
-        else:
-            _info("agentmemory: install + wire")
-            if args.dry_run:
-                print("WOULD run: npx @agentmemory/agentmemory (background)")
-                print(f"WOULD merge agentmemory MCP entry into {paths['settings']}")
-            else:
-                ok = _install_agentmemory()
-                if not ok:
-                    _err("agentmemory install failed; surface this to user and abort")
-                    return 1
-                _merge_agentmemory_mcp(paths["settings"], tool=args.tool)
-                needs_restart = True
-                cfg["agentmemory_wired"] = True
-                _save_config(cfg, paths["config"])
-
-    if needs_restart:
-        restart_target = "Claude Code" if args.tool == "claude-code" else "Cursor"
-        _info("===========================================")
-        _info("RESTART REQUIRED")
-        _info(f"{restart_target} must restart to pick up the new MCP server.")
-        _info(f"Restart {restart_target}, then re-run /new-project to continue with Phase B.")
-        _info("===========================================")
-        return 2
-
+    print()
+    _ok("Global install complete.")
+    print()
+    print("Next steps:")
+    print("  1. cd <your-project-folder>")
+    print("  2. Start Claude Code (or Cursor) in that folder")
+    print("  3. Run /new-project to scaffold per-project structure")
     return 0
 
 
-def _agentmemory_wired(settings_path: Path = CC_SETTINGS_PATH):
+def _agentmemory_wired(settings_path: Path = CC_GLOBAL_SETTINGS_PATH):
     """Check if settings file has an agentmemory MCP entry."""
     if not settings_path.exists():
         return False
@@ -399,7 +360,7 @@ def _install_agentmemory():
     return False
 
 
-def _merge_agentmemory_mcp(settings_path: Path = CC_SETTINGS_PATH, tool: str = "claude-code"):
+def _merge_agentmemory_mcp(settings_path: Path = CC_GLOBAL_SETTINGS_PATH, tool: str = "claude-code"):
     """Add an agentmemory entry to mcpServers in the right settings file.
     Format is identical for claude-code and cursor (both use mcpServers map).
     Preserves existing entries."""
@@ -513,27 +474,49 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
         return False
 
 
-# ---------- Phase B ----------
+# ---------- Phase B (per-project) ----------
+# Phase B is the bulk of the work: scaffold a project folder with everything
+# the user needs to run /wiki-cycle, /wrap-up, /wiki-search, etc.
+#
+# Layout (per project_paths()):
+#   <target>/.claude/skills/         (or .cursor/skills/)
+#   <target>/.claude/wiki-scripts/
+#   <target>/.claude/wiki-templates/
+#   <target>/.claude/wiki-config.json
+#   <target>/.claude/settings.json   (if dev project, agentmemory MCP wiring)
+#   <target>/llm-wiki/
+#     ├── README.md                  (rendered from seed/llm-wiki-readme.md.tmpl)
+#     ├── how-to/                    (seeded from seed/how-to/)
+#     ├── best-practices/            (seeded from seed/best-practices/)
+#     └── wiki/                      (project's research/dev wiki — was vault)
+#   <target>/CLAUDE.md, README.md, .gitignore (rendered from templates)
 
 def phase_b(args):
-    """Per-project scaffold: folder + git + wiki-init + CLAUDE.md/README/.gitignore."""
+    """Per-project scaffold."""
     target = Path(args.target_folder).resolve() if args.target_folder else None
-    paths = install_paths(args.tool, target=target)
-    cfg = _load_config(paths["config"])
-    if not cfg:
-        _err(f"no wiki-config.json at {paths['config']} — run --phase A first.")
+    if target is None:
+        _err("--target-folder is required for Phase B")
         return 1
+
+    bootstrap = _derive_bootstrap_source(args)
+    if not bootstrap:
+        _err("could not find bootstrap source. Pass --bootstrap-source <path> "
+             "or run Phase A first to record it.")
+        return 1
+
+    paths = project_paths(args.tool, target)
 
     name = _slugify(args.project_name or "")
     if not name:
         _err("--project-name is required")
         return 1
-    if target is None:
-        _err("--target-folder is required")
-        return 1
+
     if target.exists() and any(target.iterdir()) and not args.force:
-        _err(f"target folder {target} exists and is not empty (use --force to override)")
-        return 1
+        # Allow if the only entries are the dirs we're about to populate
+        unexpected = [p for p in target.iterdir() if p.name not in (".git", ".claude", ".cursor", "llm-wiki")]
+        if unexpected:
+            _err(f"target folder {target} has unexpected entries (use --force to override): {[p.name for p in unexpected][:5]}")
+            return 1
 
     description = args.project_description or ""
     project_type = args.project_type
@@ -541,10 +524,14 @@ def phase_b(args):
         _err(f"--project-type must be 'research' or 'development', got {project_type!r}")
         return 1
 
-    vault_root = Path(cfg["vault_root"])
+    wiki_src = bootstrap / "bootstrap" / "workflows" / "llm-wiki"
+    skills_src = wiki_src / "skills"
+    scripts_src = wiki_src / "scripts"
+    templates_src = wiki_src / "templates"
+    seed_src = wiki_src / "seed"
 
     # B1 — mkdir + git init
-    _info(f"creating project folder: {target}")
+    _info(f"project folder: {target}")
     if args.dry_run:
         print(f"WOULD mkdir {target} + git init")
     else:
@@ -553,97 +540,158 @@ def phase_b(args):
             subprocess.run(["git", "init"], cwd=target, capture_output=True, text=True)
         _ok(f"project folder ready: {target}")
 
-    # B2 — wiki-init
-    wiki_init = Path(cfg["scripts_installed_at"]) / "wiki-init.py"
-    if not wiki_init.exists():
-        # Fall back to bootstrap copy
-        wiki_init = Path(cfg["bootstrap_source"]) / "bootstrap" / "workflows" / "llm-wiki" / "scripts" / "wiki-init.py"
-    _info(f"running wiki-init for topic {name}")
-    cmd = [
-        sys.executable, str(wiki_init),
-        "--topic", name,
-        "--description", description or f"{name} project wiki",
-        "--vault", str(vault_root),
-    ]
-    if args.dry_run:
-        print(f"WOULD run: {' '.join(cmd)}")
-    else:
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode != 0:
-            _warn(f"wiki-init exited {result.returncode}: {result.stderr}")
-        else:
-            _ok(f"wiki topic created: {vault_root / name}")
+    # B2 — copy skills into <target>/.claude/skills/ (or .cursor/skills/)
+    _info(f"copying skills: {skills_src} -> {paths['skills']}")
+    c, s = _copy_tree(skills_src, paths["skills"], names=TRAVEL_SKILLS, dry_run=args.dry_run)
+    _ok(f"skills: {c} copied, {s} unchanged")
 
-    # Apply project-type folder taxonomy (wiki-init writes a default; we override)
+    if args.tool == "cursor":
+        _warn("Cursor adapter is partial: skills are copied as SKILL.md files.")
+        _warn("Until adapters/cursor/ generates .mdc rules, you'll invoke them manually.")
+
+    # B3 — copy scripts
+    _info(f"copying scripts: {scripts_src} -> {paths['scripts']}")
+    c, s = _copy_tree(scripts_src, paths["scripts"], names=TRAVEL_SCRIPTS, dry_run=args.dry_run)
+    _ok(f"scripts: {c} copied, {s} unchanged")
+
+    # B4 — copy templates
+    _info(f"copying templates: {templates_src} -> {paths['templates']}")
+    c, s = _copy_tree(templates_src, paths["templates"], dry_run=args.dry_run)
+    _ok(f"templates: {c} copied, {s} unchanged")
+
+    # B5 — create <target>/llm-wiki/ with seed content
+    if args.dry_run:
+        print(f"WOULD mkdir {paths['llm_wiki']} and seed how-to/, best-practices/, wiki/")
+    else:
+        paths["llm_wiki"].mkdir(parents=True, exist_ok=True)
+
+    # Seed: how-to/
+    if seed_src.exists() and (seed_src / "how-to").exists():
+        c, s = _copy_tree(seed_src / "how-to", paths["llm_wiki_how_to"], dry_run=args.dry_run)
+        _ok(f"seeded how-to/: {c} files")
+    else:
+        if not args.dry_run:
+            paths["llm_wiki_how_to"].mkdir(parents=True, exist_ok=True)
+        _info("no seed/how-to/ found in bootstrap — created empty folder")
+
+    # Seed: best-practices/
+    if seed_src.exists() and (seed_src / "best-practices").exists():
+        c, s = _copy_tree(seed_src / "best-practices", paths["llm_wiki_best_practices"], dry_run=args.dry_run)
+        _ok(f"seeded best-practices/: {c} files")
+    else:
+        if not args.dry_run:
+            paths["llm_wiki_best_practices"].mkdir(parents=True, exist_ok=True)
+        _info("no seed/best-practices/ found in bootstrap — created empty folder")
+
+    # B6 — apply project-type folder taxonomy under llm-wiki/wiki/
     folders = TAXONOMY[project_type]
-    topic_root = vault_root / name
+    wiki_root = paths["llm_wiki_wiki"]
     for sub in folders:
-        path = topic_root / "wiki" / sub
+        path = wiki_root / sub
         if args.dry_run:
             print(f"WOULD mkdir {path}")
         else:
             path.mkdir(parents=True, exist_ok=True)
-    # Also create raw/sessions/ for development wrap-ups
+    # raw/sessions/ for development wrap-ups (sibling of wiki/, under llm-wiki/)
     if project_type == "development":
-        sessions_dir = topic_root / "raw" / "sessions"
+        sessions_dir = paths["llm_wiki"] / "raw" / "sessions"
         if args.dry_run:
             print(f"WOULD mkdir {sessions_dir}")
         else:
             sessions_dir.mkdir(parents=True, exist_ok=True)
+    _ok(f"wiki folder taxonomy applied ({project_type}): {len(folders)} folders")
 
-    # B3, B4, B5 — render templates
-    templates_dir = Path(cfg["templates_installed_at"])
-    _render_template(
-        templates_dir / f"CLAUDE.md.{project_type}.tmpl",
-        target / "CLAUDE.md",
-        {
-            "PROJECT_NAME": name,
-            "PROJECT_DESCRIPTION": description,
-            "VAULT_TOPIC_PATH": str(topic_root).replace("\\", "/"),
-            "PROJECT_TYPE": project_type,
-        },
-        args.dry_run,
-    )
-    _render_template(
-        templates_dir / f"README.md.{project_type}.tmpl",
-        target / "README.md",
-        {
-            "PROJECT_NAME": name,
-            "PROJECT_DESCRIPTION": description,
-            "VAULT_TOPIC_PATH": str(topic_root).replace("\\", "/"),
-            "PROJECT_TYPE": project_type,
-        },
-        args.dry_run,
-    )
-    _render_template(
-        templates_dir / ".gitignore.tmpl",
-        target / ".gitignore",
-        {"PROJECT_TYPE": project_type},
-        args.dry_run,
-    )
+    # B7 — render top-level project files: CLAUDE.md / README.md / .gitignore
+    template_vars = {
+        "PROJECT_NAME": name,
+        "PROJECT_DESCRIPTION": description,
+        "LLM_WIKI_PATH": "llm-wiki",
+        "WIKI_PATH": "llm-wiki/wiki",
+        "PROJECT_TYPE": project_type,
+    }
+    _render_template(templates_src / f"CLAUDE.md.{project_type}.tmpl",
+                     target / "CLAUDE.md", template_vars, args.dry_run)
+    _render_template(templates_src / f"README.md.{project_type}.tmpl",
+                     target / "README.md", template_vars, args.dry_run)
+    _render_template(templates_src / ".gitignore.tmpl",
+                     target / ".gitignore", template_vars, args.dry_run)
 
-    # B6 — record per-project Drive subfolder + register project in global config
+    # B7.5 — render llm-wiki/README.md from seed template
+    seed_readme = seed_src / "llm-wiki-readme.md.tmpl"
+    if seed_readme.exists():
+        _render_template(seed_readme, paths["llm_wiki_readme"],
+                         template_vars, args.dry_run)
+
+    # B8 — write per-project wiki-config.json
     drive_subfolder = args.drive_subfolder if args.drive_subfolder is not None else name
-    drive_cfg = cfg.get("drive") or {}
-    if drive_cfg.get("enabled") and drive_subfolder:
-        projects = cfg.setdefault("projects", {})
-        projects[name] = {
-            "target_folder": str(target),
-            "topic_root": str(topic_root),
-            "project_type": project_type,
-            "drive_subfolder": drive_subfolder,
-            "created": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        }
-        if args.dry_run:
-            print(f"WOULD register project {name} (Drive subfolder: {drive_subfolder}) in {paths['config']}")
-        else:
-            _save_config(cfg, paths["config"])
-            _ok(f"project registered; Drive ingest will pull from {drive_cfg.get('parent_folder', DEFAULT_DRIVE_PARENT)}/{drive_subfolder}/")
-    elif drive_cfg.get("enabled") is False:
-        _info("Drive ingest disabled for this install — skip /wiki-cycle drive fetch")
+    # Global config (~/.claude/wiki-config.json) holds the bootstrap_source + drive parent
+    global_cfg = _load_config(CC_GLOBAL_CONFIG_PATH) or {}
+    drive_parent = (global_cfg.get("drive") or {}).get("parent_folder") or DEFAULT_DRIVE_PARENT
+    drive_enabled_global = (global_cfg.get("drive") or {}).get("enabled", False)
+    # Per-CLI overrides at Phase B time
+    if args.drive_enabled == "yes":
+        drive_enabled_global = True
+    elif args.drive_enabled == "no":
+        drive_enabled_global = False
 
-    # B7 — summary
-    start_cmd = "claude  # start a Claude Code session here" if args.tool == "claude-code" else "cursor .  # open in Cursor"
+    project_cfg = {
+        "tool": args.tool,
+        "project_name": name,
+        "project_type": project_type,
+        "project_description": description,
+        "target_folder": str(target),
+        "llm_wiki_root": str(paths["llm_wiki"]),
+        "vault_root": str(paths["llm_wiki_wiki"]),
+        "skills_installed_at": str(paths["skills"]),
+        "scripts_installed_at": str(paths["scripts"]),
+        "templates_installed_at": str(paths["templates"]),
+        "bootstrap_source": str(bootstrap),
+        "install_version": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "last_phase_b": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "drive": {
+            "enabled": bool(drive_enabled_global),
+            "parent_folder": drive_parent,
+            "subfolder": drive_subfolder if drive_enabled_global else None,
+        },
+    }
+    if args.dry_run:
+        print(f"WOULD write {paths['config']}: {json.dumps(project_cfg, indent=2)}")
+    else:
+        _save_config(project_cfg, paths["config"])
+
+    # B9 — Drive OAuth walkthrough (if enabled and global token isn't cached yet)
+    if drive_enabled_global:
+        if args.dry_run:
+            print("WOULD walk user through Drive OAuth (if token not already cached)")
+        else:
+            ok = _drive_oauth_walkthrough(paths["scripts"])
+            if not ok:
+                _warn("Drive auth did not complete. Project scaffold is still ready,")
+                _warn("but Drive ingest won't work until you fix the OAuth setup.")
+
+    needs_restart = False
+
+    # B10 — agentmemory (development only)
+    if project_type == "development":
+        if _agentmemory_wired(paths["settings"]) and _agentmemory_reachable():
+            _ok("agentmemory already wired in this project")
+        else:
+            _info("agentmemory: install + wire (per-project)")
+            if args.dry_run:
+                print("WOULD run: npx @agentmemory/agentmemory (background)")
+                print(f"WOULD merge agentmemory MCP entry into {paths['settings']}")
+            else:
+                ok = _install_agentmemory()
+                if not ok:
+                    _err("agentmemory install failed; surface this to user")
+                    return 1
+                _merge_agentmemory_mcp(paths["settings"], tool=args.tool)
+                needs_restart = True
+                project_cfg["agentmemory_wired"] = True
+                _save_config(project_cfg, paths["config"])
+
+    # B11 — summary
+    start_cmd = "claude" if args.tool == "claude-code" else "cursor ."
     print(json.dumps({
         "status": "ok",
         "phase": "B",
@@ -651,18 +699,29 @@ def phase_b(args):
         "project_name": name,
         "project_type": project_type,
         "target_folder": str(target),
-        "wiki_topic_root": str(topic_root),
+        "llm_wiki_root": str(paths["llm_wiki"]),
         "wiki_folders": folders,
-        "drive_enabled": bool(drive_cfg.get("enabled")),
-        "drive_subfolder": drive_subfolder if drive_cfg.get("enabled") else None,
-        "agentmemory_wired": cfg.get("agentmemory_wired", False) if project_type == "development" else None,
+        "drive_enabled": bool(drive_enabled_global),
+        "drive_subfolder": drive_subfolder if drive_enabled_global else None,
+        "agentmemory_wired": project_cfg.get("agentmemory_wired", False) if project_type == "development" else None,
+        "needs_restart": needs_restart,
         "next_steps": [
             f"cd {target}",
             start_cmd,
+            "Read llm-wiki/README.md for an overview",
             "/wrap-up at session-end to crystallize work into wiki entries",
             "/wiki-search to look up prior decisions/components",
         ],
     }, indent=2))
+
+    if needs_restart:
+        restart_target = "Claude Code" if args.tool == "claude-code" else "Cursor"
+        print()
+        _info("===========================================")
+        _info(f"RESTART {restart_target.upper()} to load the new agentmemory MCP server.")
+        _info("===========================================")
+        return 2
+
     return 0
 
 
@@ -685,23 +744,29 @@ def _render_template(src: Path, dst: Path, vars: dict, dry_run: bool):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--phase", choices=["A", "B", "sync"], required=True)
+    parser.add_argument("--phase", choices=["A", "B", "sync"], required=True,
+                        help="A = install /new-project skill globally + record bootstrap source. "
+                             "B = scaffold a per-project install (skills/scripts/llm-wiki/) at --target-folder. "
+                             "sync = re-run A to refresh the global /new-project skill.")
     parser.add_argument("--tool", choices=["claude-code", "cursor"], default="claude-code",
                         help="Which AI tool to install for (default: claude-code)")
     parser.add_argument("--project-name")
     parser.add_argument("--project-description", default="")
     parser.add_argument("--project-type", choices=["research", "development"])
-    parser.add_argument("--target-folder")
-    parser.add_argument("--bootstrap-source", help="Path to workflows-core checkout")
-    parser.add_argument("--vault-root", help="Override vault root (default: bootstrap/docker/shared/openclaw/vault/wikis)")
+    parser.add_argument("--target-folder",
+                        help="Project root folder (required for --phase B)")
+    parser.add_argument("--bootstrap-source",
+                        help="Path to the llm-wiki-bootstrap checkout (or workflows-core dev source)")
     parser.add_argument("--drive-enabled", choices=["yes", "no"], default=None,
                         help="Enable Google Drive ingest? Triggers OAuth walkthrough if 'yes'.")
     parser.add_argument("--drive-parent-folder", default=None,
                         help=f"Parent Drive folder for ingest (default: {DEFAULT_DRIVE_PARENT})")
     parser.add_argument("--drive-subfolder", default=None,
                         help="Per-project Drive subfolder (default: project slug)")
-    parser.add_argument("--force", action="store_true", help="Overwrite non-empty target folder")
-    parser.add_argument("--dry-run", action="store_true", help="Print actions without writing")
+    parser.add_argument("--force", action="store_true",
+                        help="Continue even if target folder has unexpected entries")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Print actions without writing")
     args = parser.parse_args()
 
     if args.phase == "A":
@@ -709,8 +774,7 @@ def main():
     if args.phase == "B":
         return phase_b(args)
     if args.phase == "sync":
-        # Same as Phase A but only the copy + config steps (no agentmemory)
-        args.project_type = "research"  # sync doesn't need dev-specific work
+        # Re-run Phase A to refresh the global /new-project skill
         return phase_a(args)
 
 

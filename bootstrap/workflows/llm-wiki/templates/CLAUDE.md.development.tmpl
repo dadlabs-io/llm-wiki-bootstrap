@@ -8,15 +8,20 @@
 
 ## Where to look
 
-@{{VAULT_TOPIC_PATH}}/wiki/_MAP.md
+@{{LLM_WIKI_PATH}}/README.md
+@{{WIKI_PATH}}/_MAP.md
 
-Wiki topic folders for this project (lives in the shared vault):
+Wiki content lives at `{{WIKI_PATH}}/`. Folders:
 - **components/** — modules / classes / systems we've built
 - **decisions/** — ADR-style decisions with the *why* preserved
 - **architecture/** — system-level structural rules
 - **patterns/** — reusable approaches we adopt elsewhere
 - **troubleshooting/** — bugs + root causes (so we don't re-debug)
 - **best-practices/** — project-specific conventions
+
+`llm-wiki/best-practices/` (sibling of `wiki/`) holds the seeded software-dev best practices that travel with every install — those are read-mostly references, not part of the project-specific wiki.
+
+`llm-wiki/raw/sessions/` holds session transcripts (created by `/wrap-up`) — immutable log, not for editing.
 
 ## Working rhythm
 
@@ -51,11 +56,11 @@ Wiki topic folders for this project (lives in the shared vault):
 |---|---|
 | **Session** (this conversation) | Claude Code context window |
 | **Short-term** (recent sessions) | agentmemory (background MCP server) |
-| **Long-term** (durable knowledge) | {{VAULT_TOPIC_PATH}}/wiki/ |
-| **Raw** (immutable log) | {{VAULT_TOPIC_PATH}}/raw/ |
+| **Long-term** (durable knowledge) | {{WIKI_PATH}}/ |
+| **Raw** (immutable log) | {{LLM_WIKI_PATH}}/raw/ |
 
 ## Don't
 
-- Don't paste session transcripts into wiki entries — `/wrap-up` distills them. Transcripts go to `raw/sessions/`.
-- Don't promote directly to `wiki/` — always stage in `_inbox/proposed/` and let `/wiki-promote` move them.
+- Don't paste session transcripts into wiki entries — `/wrap-up` distills them. Transcripts go to `{{LLM_WIKI_PATH}}/raw/sessions/`.
+- Don't promote directly to `{{WIKI_PATH}}/` — always stage in `{{WIKI_PATH}}/_inbox/proposed/` and let `/wiki-promote` move them.
 - Don't edit `_MAP.md` or `_INDEX.md` by hand — they're auto-generated.

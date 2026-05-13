@@ -8,16 +8,15 @@ Active research wiki.
 
 ## Wiki
 
-Content lives in:
+Content lives in `{{WIKI_PATH}}/`. Folders: active, long-term, tooling, best-practices, implementation, skills, orchestration, interesting-docs.
 
-- **Vault**: `{{VAULT_TOPIC_PATH}}`
-- **Search**: `/wiki-search "<query>"` from inside a Claude Code session
-- **Folders**: active, long-term, tooling, best-practices, implementation, skills, orchestration, interesting-docs
+For an orientation, read `{{LLM_WIKI_PATH}}/README.md`.
 
 ## Adding content
 
 - **Ad-hoc**: `/wiki-update <url>` for a single article
 - **Batch**: drop URLs into Drive (`__FOR CLAUDE/{{PROJECT_NAME}}/`) throughout the day, then run `/wiki-cycle`
+- **Search**: `/wiki-search "<query>"`
 
 See `CLAUDE.md` for the full ingest rhythm and source quality tiers.
 

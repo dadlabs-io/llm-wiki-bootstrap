@@ -1,29 +1,28 @@
 <#
-install-wiki.ps1 — install the LLM-wiki framework on this machine.
+install-wiki.ps1 — one-time machine install for the LLM-wiki framework.
 
-Runs new-project.py --phase A using this package as the bootstrap source.
-After it completes, /new-project is available in Claude Code and you can
-run it to scaffold any new project (research or development).
+What this does:
+  1. Installs the /new-project skill globally at ~/.claude/skills/new-project/
+  2. Records this package's path in ~/.claude/wiki-config.json as bootstrap_source
+  3. (Optional) Records a default Drive parent folder for ingest
 
-Usage (from the package root):
-  .\install-wiki.ps1                                # claude-code, research, no Drive
-  .\install-wiki.ps1 -Tool cursor -TargetFolder C:\proj
-  .\install-wiki.ps1 -ProjectType development -DriveEnabled yes
+What this does NOT do:
+  - Scaffold any project. That happens per-project when you run /new-project
+    inside a project folder via Claude Code (or Cursor).
 
-After install:
-  1. Restart Claude Code (or Cursor)
-  2. Run /new-project in a session to scaffold per-project structure
+After this script succeeds:
+  1. Restart Claude Code so it picks up the new global skill
+  2. cd to any project folder
+  3. Start Claude Code there
+  4. Run /new-project — it asks tool, type, name, Drive prefs and does the rest
+
+Usage (from this package's root):
+  .\install-wiki.ps1                                     # no Drive default
+  .\install-wiki.ps1 -DriveEnabled yes                   # Drive ingest, default folder
+  .\install-wiki.ps1 -DriveEnabled yes -DriveParentFolder "MyDriveFolder"
 #>
 
 param(
-    [ValidateSet("claude-code", "cursor")]
-    [string]$Tool = "claude-code",
-
-    [ValidateSet("research", "development")]
-    [string]$ProjectType = "research",
-
-    [string]$TargetFolder = "",
-
     [ValidateSet("yes", "no")]
     [string]$DriveEnabled = "no",
 
@@ -40,7 +39,6 @@ if (-not (Test-Path $Script)) {
     exit 2
 }
 
-# Verify python is on PATH
 $py = Get-Command python -ErrorAction SilentlyContinue
 if (-not $py) { $py = Get-Command python3 -ErrorAction SilentlyContinue }
 if (-not $py) {
@@ -48,42 +46,30 @@ if (-not $py) {
     exit 2
 }
 
-Write-Host "Installing LLM-wiki framework..." -ForegroundColor Cyan
-Write-Host "  Tool:         $Tool"
-Write-Host "  Project type: $ProjectType"
-Write-Host "  Drive ingest: $DriveEnabled"
+Write-Host "Installing LLM-wiki framework (global, one-time)..." -ForegroundColor Cyan
+Write-Host "  Bootstrap source: $Bootstrap"
+Write-Host "  Drive ingest:     $DriveEnabled"
+if ($DriveEnabled -eq "yes") {
+    Write-Host "  Drive parent:     $DriveParentFolder"
+}
 Write-Host ""
 
-$args = @(
-    $Script,
-    "--phase", "A",
-    "--tool", $Tool,
-    "--project-type", $ProjectType,
-    "--bootstrap-source", $Bootstrap,
-    "--drive-enabled", $DriveEnabled,
-    "--drive-parent-folder", $DriveParentFolder
-)
+& $py.Source $Script `
+    --phase A `
+    --bootstrap-source $Bootstrap `
+    --drive-enabled $DriveEnabled `
+    --drive-parent-folder $DriveParentFolder
 
-if ($Tool -eq "cursor") {
-    if (-not $TargetFolder) {
-        Write-Host "ERR: -TargetFolder is required for Cursor installs (no global skills dir)" -ForegroundColor Red
-        exit 2
-    }
-    $args += @("--target-folder", $TargetFolder)
-}
-
-& $py.Source @args
 $exit = $LASTEXITCODE
 
 if ($exit -eq 0) {
     Write-Host ""
     Write-Host "Install complete." -ForegroundColor Green
     Write-Host "Next steps:" -ForegroundColor Green
-    Write-Host "  1. Restart Claude Code (or Cursor)"
-    Write-Host "  2. In any new project folder, run /new-project to scaffold it"
-} elseif ($exit -eq 2) {
-    Write-Host ""
-    Write-Host "Restart Claude Code, then re-run install-wiki.ps1 to finish setup." -ForegroundColor Yellow
+    Write-Host "  1. Restart Claude Code" -ForegroundColor Green
+    Write-Host "  2. cd to any project folder" -ForegroundColor Green
+    Write-Host "  3. Start Claude Code there" -ForegroundColor Green
+    Write-Host "  4. Run /new-project — it asks tool, type, name, Drive prefs and does the rest" -ForegroundColor Green
 }
 
 exit $exit

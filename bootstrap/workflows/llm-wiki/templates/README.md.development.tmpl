@@ -8,17 +8,16 @@ In active development.
 
 ## Wiki
 
-Project documentation lives in a separate wiki vault:
+Project documentation lives at `{{WIKI_PATH}}/`. Folders: components, decisions, architecture, patterns, troubleshooting, best-practices.
 
-- **Vault**: `{{VAULT_TOPIC_PATH}}`
-- **Search**: `/wiki-search "<query>"` from inside a Claude Code session
-- **Folders**: components, decisions, architecture, patterns, troubleshooting
+For an orientation, read `{{LLM_WIKI_PATH}}/README.md`.
 
 ## Working with this project
 
 - Session work is captured automatically by [agentmemory](https://github.com/rohitg00/agentmemory)
 - Durable design decisions get crystallized into the wiki via `/wrap-up` at session end
 - External references (articles, docs) get added via `/wiki-update <url>`
+- Search prior decisions/components: `/wiki-search "<query>"`
 
 See `CLAUDE.md` for the full session rhythm and conventions.
 
