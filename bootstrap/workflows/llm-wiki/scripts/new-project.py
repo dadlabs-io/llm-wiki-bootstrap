@@ -95,10 +95,12 @@ def project_paths(tool: str, target: Path) -> dict:
 
 DEFAULT_DRIVE_PARENT = "__FOR CLAUDE"
 
-# Skills that travel — keep in sync with INSTALL-INVENTORY.md
+# Skills that travel — keep in sync with INSTALL-INVENTORY.md.
+# `wiki` is the browse-the-wiki helper (invoked by /wiki-cycle); it must
+# travel so /wiki-cycle works in per-project installs.
 TRAVEL_SKILLS = [
     "new-project", "wrap-up",
-    "wiki-init", "wiki-update", "wiki-search", "wiki-cycle",
+    "wiki", "wiki-init", "wiki-update", "wiki-search", "wiki-cycle",
     "wiki-discover", "wiki-list", "wiki-claims", "wiki-refresh",
     "wiki-report", "wiki-lint", "wiki-promote",
 ]
@@ -600,6 +602,29 @@ def phase_b(args):
         else:
             sessions_dir.mkdir(parents=True, exist_ok=True)
     _ok(f"wiki folder taxonomy applied ({project_type}): {len(folders)} folders")
+
+    # B6.5 — render wiki scaffold files (_MAP.md, _INDEX.md, README.md, HOME.md)
+    # inside <target>/llm-wiki/wiki/ from seed/wiki/*.tmpl. These give the agent
+    # orientation on day 1 and prevent the CLAUDE.md @-import from silently
+    # failing on a fresh project. wiki-map-compile.py / wiki-index-per-folder.py
+    # will regenerate _MAP.md and _INDEX.md once entries exist.
+    wiki_scaffold_vars = {
+        "PROJECT_NAME": name,
+        "PROJECT_DESCRIPTION": description or f"{name} project wiki",
+        "PROJECT_TYPE": project_type,
+    }
+    wiki_seed = seed_src / "wiki"
+    if wiki_seed.exists():
+        for tmpl_name, out_name in [
+            ("README.md.tmpl", "README.md"),
+            ("HOME.md.tmpl", "HOME.md"),
+            ("_MAP.md.tmpl", "_MAP.md"),
+            ("_INDEX.md.tmpl", "_INDEX.md"),
+        ]:
+            _render_template(wiki_seed / tmpl_name, wiki_root / out_name,
+                             wiki_scaffold_vars, args.dry_run)
+    else:
+        _warn(f"seed/wiki/ not found in bootstrap; wiki scaffold files skipped")
 
     # B7 — render top-level project files: CLAUDE.md / README.md / .gitignore
     template_vars = {

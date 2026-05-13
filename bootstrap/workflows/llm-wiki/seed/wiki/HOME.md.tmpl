@@ -1,0 +1,31 @@
+# {{PROJECT_NAME}} — wiki home
+
+This is the landing page for the **{{PROJECT_NAME}}** wiki. The content here lives at `llm-wiki/wiki/` inside the project root.
+
+## Start here
+
+- **What lives where**: see [_MAP.md](./_MAP.md) (always-loaded into context) or [_INDEX.md](./_INDEX.md) (full scannable list)
+- **Project scope**: see [README.md](./README.md)
+- **How to use it**: see `../how-to/getting-started.md`
+
+## Quick reference
+
+| Command | When |
+|---|---|
+| `/wiki-search "<query>"` | Look something up |
+| `/wiki-update <url>` | Add an external reference |
+| `/wiki-cycle` | Full ingest pipeline (research) |
+| `/wrap-up` | End-of-session distillation (development) |
+| `/wiki-promote --review` | Approve staged entries from `_inbox/proposed/` |
+
+## Don't
+
+- Don't hand-edit `_MAP.md` or `_INDEX.md` — they're auto-generated
+- Don't promote directly to `wiki/<folder>/` — always stage via `_inbox/proposed/`
+- Don't suppress contradictions — both-sides-stay: keep contradictory entries cross-linked
+
+## Concept gaps
+
+When you notice a project, person, framework, or paper that should be tracked but doesn't have an entry yet, add it to [`concept-gaps-things-mentioned-not-yet-covered.md`](./concept-gaps-things-mentioned-not-yet-covered.md) so the next `/wiki-cycle --discover` pass can pick it up.
+
+(That file doesn't exist yet — create it the first time you have a gap to track. Format: one row per gap with the term, where it was mentioned, and a priority.)
