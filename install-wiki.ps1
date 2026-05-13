@@ -20,13 +20,28 @@ Usage (from this package's root):
   .\install-wiki.ps1                                     # no Drive default
   .\install-wiki.ps1 -DriveEnabled yes                   # Drive ingest, default folder
   .\install-wiki.ps1 -DriveEnabled yes -DriveParentFolder "MyDriveFolder"
+
+Re-running the script:
+  By default, if the framework is already installed, you'll see the existing
+  install info and be prompted: Refresh / Skip / Force-reinstall.
+
+  -Force          : skip prompt; wipe existing skill + reinstall fresh
+  -RefreshOnly    : skip prompt; refresh skill from current bootstrap (idempotent)
 #>
 
 param(
     [ValidateSet("yes", "no")]
     [string]$DriveEnabled = "no",
 
-    [string]$DriveParentFolder = "__FOR CLAUDE"
+    [string]$DriveParentFolder = "__FOR CLAUDE",
+
+    # Bypass the already-installed prompt — always refresh from current
+    # bootstrap source without asking. Useful for scripted / unattended runs.
+    [switch]$Force,
+
+    # Refresh the skill files but don't change Drive config or other settings.
+    # If passed with -Force, prompt is skipped AND no drive args are written.
+    [switch]$RefreshOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -44,6 +59,46 @@ if (-not $py) { $py = Get-Command python3 -ErrorAction SilentlyContinue }
 if (-not $py) {
     Write-Host "ERR: python not found on PATH. Install Python 3.10+ first: https://www.python.org/" -ForegroundColor Red
     exit 2
+}
+
+# Idempotent install check — detect existing install and prompt if found
+$SkillPath = Join-Path $env:USERPROFILE ".claude\skills\new-project\SKILL.md"
+$ConfigPath = Join-Path $env:USERPROFILE ".claude\wiki-config.json"
+$AlreadyInstalled = (Test-Path $SkillPath) -and (Test-Path $ConfigPath)
+
+if ($AlreadyInstalled -and -not $Force -and -not $RefreshOnly) {
+    try { $cfg = Get-Content $ConfigPath -Raw | ConvertFrom-Json } catch { $cfg = $null }
+    Write-Host "LLM-wiki framework is already installed on this machine." -ForegroundColor Yellow
+    if ($cfg) {
+        Write-Host "  bootstrap source: $($cfg.bootstrap_source)"
+        Write-Host "  install version:  $($cfg.install_version)"
+        Write-Host "  last installed:   $($cfg.last_phase_a)"
+        if ($cfg.bootstrap_source -ne $Bootstrap) {
+            Write-Host "  NOTE: previous bootstrap_source differs from current ($Bootstrap)" -ForegroundColor Cyan
+        }
+    }
+    Write-Host ""
+    Write-Host "Choose:"
+    Write-Host "  [R] Refresh — re-copy /new-project skill from current bootstrap source (default)"
+    Write-Host "  [S] Skip   — exit without changes"
+    Write-Host "  [F] Force  — wipe existing install + reinstall fresh"
+    $choice = Read-Host "Choice [R/S/F]"
+    switch -Regex ($choice) {
+        '^[Ss]' {
+            Write-Host "Skipping." -ForegroundColor Cyan
+            exit 0
+        }
+        '^[Ff]' {
+            Write-Host "Wiping existing /new-project skill..." -ForegroundColor Yellow
+            $skillDir = Join-Path $env:USERPROFILE ".claude\skills\new-project"
+            Remove-Item -Recurse -Force $skillDir -ErrorAction SilentlyContinue
+            # Keep wiki-config.json — it will be updated, not wiped (user settings live there)
+        }
+        default {
+            Write-Host "Refreshing existing install." -ForegroundColor Cyan
+        }
+    }
+    Write-Host ""
 }
 
 Write-Host "Installing LLM-wiki framework (global, one-time)..." -ForegroundColor Cyan

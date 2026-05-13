@@ -20,16 +20,27 @@
 #   ./install-wiki.sh                                       # no Drive default
 #   ./install-wiki.sh --drive-enabled yes                   # Drive ingest, default folder
 #   ./install-wiki.sh --drive-enabled yes --drive-parent-folder "MyDriveFolder"
+#
+# Re-running the script:
+#   By default, if the framework is already installed, you'll see the existing
+#   install info and be prompted: Refresh / Skip / Force-reinstall.
+#
+#   --force          : skip prompt; wipe existing skill + reinstall fresh
+#   --refresh-only   : skip prompt; refresh skill from current bootstrap (idempotent)
 
 set -euo pipefail
 
 DRIVE_ENABLED="no"
 DRIVE_PARENT_FOLDER="__FOR CLAUDE"
+FORCE="no"
+REFRESH_ONLY="no"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --drive-enabled) DRIVE_ENABLED="$2"; shift 2;;
         --drive-parent-folder) DRIVE_PARENT_FOLDER="$2"; shift 2;;
+        --force) FORCE="yes"; shift;;
+        --refresh-only) REFRESH_ONLY="yes"; shift;;
         -h|--help)
             sed -n '2,/^$/p' "$0"
             exit 0;;
@@ -53,6 +64,48 @@ elif command -v python >/dev/null 2>&1; then
 else
     echo "ERR: python not found on PATH. Install Python 3.10+ first: https://www.python.org/" >&2
     exit 2
+fi
+
+# Idempotent install check
+SKILL_PATH="$HOME/.claude/skills/new-project/SKILL.md"
+CONFIG_PATH="$HOME/.claude/wiki-config.json"
+
+if [[ -f "$SKILL_PATH" && -f "$CONFIG_PATH" && "$FORCE" != "yes" && "$REFRESH_ONLY" != "yes" ]]; then
+    echo "LLM-wiki framework is already installed on this machine."
+    # Use python to safely parse the JSON
+    "$PY" -c "
+import json, pathlib
+p = pathlib.Path('$CONFIG_PATH')
+try:
+    cfg = json.loads(p.read_text(encoding='utf-8'))
+    print(f'  bootstrap source: {cfg.get(\"bootstrap_source\", \"(unknown)\")}')
+    print(f'  install version:  {cfg.get(\"install_version\", \"(unknown)\")}')
+    print(f'  last installed:   {cfg.get(\"last_phase_a\", \"(unknown)\")}')
+    if cfg.get('bootstrap_source') and cfg['bootstrap_source'] != '$HERE':
+        print(f'  NOTE: previous bootstrap_source differs from current ($HERE)')
+except Exception as e:
+    print(f'  (config unreadable: {e})')
+"
+    echo
+    echo "Choose:"
+    echo "  [R] Refresh — re-copy /new-project skill from current bootstrap source (default)"
+    echo "  [S] Skip   — exit without changes"
+    echo "  [F] Force  — wipe existing install + reinstall fresh"
+    read -p "Choice [R/S/F]: " choice
+    case "$choice" in
+        [Ss]*)
+            echo "Skipping."
+            exit 0
+            ;;
+        [Ff]*)
+            echo "Wiping existing /new-project skill..."
+            rm -rf "$HOME/.claude/skills/new-project"
+            ;;
+        *)
+            echo "Refreshing existing install."
+            ;;
+    esac
+    echo
 fi
 
 echo "Installing LLM-wiki framework (global, one-time)..."
