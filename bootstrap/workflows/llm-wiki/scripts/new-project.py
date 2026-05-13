@@ -122,6 +122,7 @@ TRAVEL_SCRIPTS = [
     "wiki-list-process.py",
     "wiki-list-render.py",
     "wiki-map-compile.py",
+    "wiki-promote.py",
     "wiki-reciprocate-backlinks.py",
     "wiki-update.py",
 ]
@@ -742,7 +743,15 @@ def phase_b(args):
         "project_description": description,
         "target_folder": str(target),
         "llm_wiki_root": str(paths["llm_wiki"]),
-        "vault_root": str(paths["llm_wiki_wiki"]),
+        # vault_root + wiki_topic together resolve to <target>/llm-wiki/wiki/
+        # under the existing scripts' <vault>/<topic>/wiki/ assumption.
+        # We keep that layout so wiki-update, wiki-init, wiki-cycle, etc.
+        # work unchanged in a per-project install. wiki_topic is always
+        # "llm-wiki" in the v1 single-wiki-per-project model; v2 may relax
+        # this to support multi-wiki.
+        "vault_root": str(target),
+        "wiki_topic": "llm-wiki",
+        "wiki_path": str(paths["llm_wiki_wiki"]),
         "skills_installed_at": str(paths["skills"]),
         "scripts_installed_at": str(paths["scripts"]),
         "templates_installed_at": str(paths["templates"]),

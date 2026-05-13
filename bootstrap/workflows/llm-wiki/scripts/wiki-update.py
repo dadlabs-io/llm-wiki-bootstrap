@@ -26,6 +26,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -39,8 +40,9 @@ from pathlib import Path
 
 def _default_vault():
     """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
-    otherwise fall back to "llm-wiki/wiki" relative to CWD. Per-project
-    installs put wiki content at <project>/llm-wiki/wiki/."""
+    otherwise fall back to CWD (project root). Per-project installs record
+    vault_root = <project-root>; combined with wiki_topic this gives
+    <project>/<topic>/wiki/ (default <topic> = 'llm-wiki')."""
     import json as _json
     cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
     if cfg_path.exists():
@@ -51,7 +53,25 @@ def _default_vault():
                 return str(Path(v))
         except (_json.JSONDecodeError, OSError):
             pass
-    return str(Path.cwd() / "llm-wiki" / "wiki")
+    return str(Path.cwd())
+
+
+def _default_topic():
+    """Resolve wiki_topic from <cwd>/.claude/wiki-config.json if present,
+    otherwise fall back to 'llm-wiki' (the v1 per-project wiki folder name).
+    Used by scripts that take --topic as an arg to provide a sensible
+    default in per-project installs."""
+    import json as _json
+    cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
+    if cfg_path.exists():
+        try:
+            cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
+            t = cfg.get("wiki_topic")
+            if t:
+                return t
+        except (_json.JSONDecodeError, OSError):
+            pass
+    return "llm-wiki"
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -500,7 +520,8 @@ def find_existing_by_url(wiki_root, url):
 
 
 def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
-                  ingested_by=None, raw_path=None, tier=None, confidence=None):
+                  ingested_by=None, raw_path=None, tier=None, confidence=None,
+                  staged=False):
     """Write the curated copy under wiki/{folder}/{slug}.md.
 
     Frontmatter includes: title, date, source_url, raw_path, ingested_by, tier,
@@ -520,7 +541,13 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
       low = synthesized from secondary references, source not fetched, or very thin
     """
     wiki_dir = Path(wiki_dir)
-    target_dir = wiki_dir / folder if folder else wiki_dir
+    # Staged entries land in _inbox/proposed/ regardless of the requested folder;
+    # the requested folder is preserved in the metadata sidecar so wiki-promote
+    # knows where to move the entry on acceptance.
+    if staged:
+        target_dir = wiki_dir / "_inbox" / "proposed"
+    else:
+        target_dir = wiki_dir / folder if folder else wiki_dir
     target_dir.mkdir(parents=True, exist_ok=True)
 
     target = unique_path(target_dir / f"{slug}.md")
@@ -552,6 +579,8 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
         fm_lines.append(f"tier: {tier}")
     if confidence is not None:
         fm_lines.append(f"confidence: {confidence}")
+    if staged:
+        fm_lines.append("status: proposed")
     if tags:
         fm_lines.append(f"tags: [{', '.join(tags)}]")
     fm_lines.append("---")
@@ -620,7 +649,7 @@ def print_slug_for(vault_root, topic, folder, title):
 def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
                 ingested_by=None, source_url_override=None, raw_path_override=None,
                 force=False, fetch_only=False, no_raw=False, skip_integration=False,
-                tier=None, confidence=None):
+                tier=None, confidence=None, staged=False):
     topic_root = Path(vault_root) / topic
     if not topic_root.exists():
         print(f"Error: topic '{topic}' not found at {topic_root}", file=sys.stderr)
@@ -682,6 +711,7 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
     curated_path = write_curated(
         wiki_dir, folder, final_slug, final_title, body, final_source_url, tags,
         ingested_by=ingested_by, raw_path=final_raw_path, tier=tier, confidence=confidence,
+        staged=staged,
     )
 
     # ── Integration step: bidirectional cross-link helpers ──────────────────
@@ -689,11 +719,16 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
     # mention candidates. Auto-rewrite unambiguous outbound matches in place.
     # Never auto-edit other files — inbound candidates are reported for the
     # agent to review.
+    #
+    # In --staged mode: skip outbound auto-rewrite entirely (don't touch other
+    # files until promotion). Still scan for inbound candidates so we can
+    # persist them in the metadata sidecar for /wiki-promote to consume.
     fixed = 0
     out_warnings = []
     inbound = []
     if not skip_integration:
-        fixed, out_warnings = resolve_outbound_links(curated_path, wiki_dir)
+        if not staged:
+            fixed, out_warnings = resolve_outbound_links(curated_path, wiki_dir)
         inbound = find_inbound_candidates(curated_path, wiki_dir, final_title)
 
         if fixed:
@@ -710,9 +745,53 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
                 print(f"    {rel}  [{term}]  ...{snippet}...")
             if len(inbound) > 15:
                 print(f"    ... and {len(inbound) - 15} more (truncated)")
-            print(f"  → consider adding backlinks to {curated_path.name} from these files")
+            if staged:
+                print(f"  → backlinks deferred to /wiki-promote (saved to metadata sidecar)")
+            else:
+                print(f"  → consider adding backlinks to {curated_path.name} from these files")
 
-    # Regenerate INDEX
+    # In staged mode, write the sidecar metadata so /wiki-promote can finish
+    # the integration on acceptance. The sidecar contains: target folder
+    # (where this entry should land on promotion), inbound candidates (files
+    # that mention this topic but don't link to it yet), and suggested
+    # backlinks (the same list, formatted for one-shot application).
+    if staged:
+        sidecar = curated_path.with_suffix(".proposed_metadata.json")
+        meta = {
+            "target_folder": folder or "",
+            "target_path": str((wiki_dir / folder / curated_path.name) if folder
+                               else (wiki_dir / curated_path.name)),
+            "source_url": final_source_url or "",
+            "title": final_title,
+            "tier": tier,
+            "confidence": confidence,
+            "inbound_candidates": [
+                {
+                    "path": str(path.relative_to(wiki_dir).as_posix()),
+                    "term": term,
+                    "snippet": snippet,
+                }
+                for path, term, snippet in inbound[:50]
+            ],
+            "suggested_backlinks": [
+                {
+                    "file": str(path.relative_to(wiki_dir).as_posix()),
+                    "link_text": final_title,
+                    "link_target": curated_path.name,
+                }
+                for path, _term, _snippet in inbound[:50]
+            ],
+            "created": datetime.now().isoformat(timespec="seconds"),
+        }
+        sidecar.write_text(json.dumps(meta, indent=2, ensure_ascii=False),
+                           encoding="utf-8")
+        print(f"  Metadata: {sidecar}")
+        print(f"  Status:   proposed — use /wiki-promote to move to {folder or '<wiki root>'}/")
+
+    # Regenerate INDEX (skip in staged mode — entry isn't in the wiki yet)
+    if staged:
+        no_index = True
+
     if not no_index:
         index_script = Path(__file__).parent / "wiki-index.py"
         if index_script.exists():
@@ -759,6 +838,11 @@ def main():
     parser.add_argument("--confidence", default=None, choices=["high", "medium", "low"], help="Entry confidence level. Measures how reliable OUR entry is (not the source — that's tier). high=primary source fetched + corroborated, medium=single good source fetched, low=synthesized from secondary refs or source not fetched. STRONGLY recommended for every new entry.")
     parser.add_argument("--slug-for", dest="slug_for", action="store_true", help="Lookup mode: print the canonical slug + path for --title without ingesting. Use during batch ingestion to discover slugs ahead of time so cross-references in entry bodies match the actual filenames.")
     parser.add_argument("--skip-integration", action="store_true", help="Skip the post-write integration step (outbound link resolution + inbound mention scan). Default is to run it.")
+    parser.add_argument("--staged", action="store_true",
+                        help="Stage the entry to _inbox/proposed/ instead of filing directly to wiki/<folder>/. "
+                             "Adds status: proposed to frontmatter and writes a .proposed_metadata.json sidecar "
+                             "containing the target folder, inbound link candidates, and suggested backlinks "
+                             "for /wiki-promote to finish the integration on acceptance. Safe for automated runs.")
     args = parser.parse_args()
 
     # Lookup mode — no ingestion, just print the slug + path
@@ -780,6 +864,7 @@ def main():
         skip_integration=args.skip_integration,
         tier=args.tier,
         confidence=args.confidence,
+        staged=args.staged,
     )
 
 

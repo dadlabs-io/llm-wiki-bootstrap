@@ -21,8 +21,9 @@ from pathlib import Path
 
 def _default_vault():
     """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
-    otherwise fall back to "llm-wiki/wiki" relative to CWD. Per-project
-    installs put wiki content at <project>/llm-wiki/wiki/."""
+    otherwise fall back to CWD (project root). Per-project installs record
+    vault_root = <project-root>; combined with wiki_topic this gives
+    <project>/<topic>/wiki/ (default <topic> = 'llm-wiki')."""
     import json as _json
     cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
     if cfg_path.exists():
@@ -33,7 +34,25 @@ def _default_vault():
                 return str(Path(v))
         except (_json.JSONDecodeError, OSError):
             pass
-    return str(Path.cwd() / "llm-wiki" / "wiki")
+    return str(Path.cwd())
+
+
+def _default_topic():
+    """Resolve wiki_topic from <cwd>/.claude/wiki-config.json if present,
+    otherwise fall back to 'llm-wiki' (the v1 per-project wiki folder name).
+    Used by scripts that take --topic as an arg to provide a sensible
+    default in per-project installs."""
+    import json as _json
+    cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
+    if cfg_path.exists():
+        try:
+            cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
+            t = cfg.get("wiki_topic")
+            if t:
+                return t
+        except (_json.JSONDecodeError, OSError):
+            pass
+    return "llm-wiki"
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 

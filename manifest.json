@@ -1,6 +1,6 @@
 {
-  "built_at": "2026-05-13T23:24:25+00:00",
-  "file_count": 61,
+  "built_at": "2026-05-13T23:38:02+00:00",
+  "file_count": 62,
   "package_layout": {
     "scripts": "bootstrap\\workflows\\llm-wiki\\scripts",
     "seed": "bootstrap\\workflows\\llm-wiki\\seed",
