@@ -42,7 +42,7 @@ Any pattern with 2+ URLs → batch-queue mode. Use a simple regex like `https?:/
 1. **Topic** — default = the topic configured in your harness if not specified. Confirm with user if ambiguous.
 2. **Folder** — concept folder under `wiki/`. List existing first:
    ```bash
-   ls docker/shared/openclaw/vault/wikis/<topic>/wiki/
+   ls llm-wiki/wiki/
    ```
    If none fit, propose a new folder name based on content.
 3. **Title** — let the script auto-detect, override only if obviously wrong.
@@ -123,8 +123,8 @@ With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks 
 Before writing cross-references in your synthesis, look up the canonical slug for each entry you want to link to:
 
 ```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-update.py \
-  --topic <topic> --vault docker/shared/openclaw/vault/wikis \
+python .claude/wiki-scripts/wiki-update.py \
+  --topic <topic> --vault llm-wiki/wiki \
   --slug-for --title "Karpathy's LLM Wiki Pattern" --folder long-term
 ```
 
@@ -140,8 +140,8 @@ Use that exact slug in your cross-reference markdown links. **Never guess slugs 
 
 ### Step 1: Fetch raw
 ```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-update.py \
-  --topic <topic> --vault docker/shared/openclaw/vault/wikis \
+python .claude/wiki-scripts/wiki-update.py \
+  --topic <topic> --vault llm-wiki/wiki \
   --source <url> --fetch-only
 ```
 Capture the `raw_path=...` line from the output.
@@ -184,12 +184,12 @@ After a batch of 5+ ingests, also update the relevant **hub page** (e.g., `activ
 
 ### Step 6: File the curated entry
 ```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-update.py \
+python .claude/wiki-scripts/wiki-update.py \
   --topic <topic> --folder <folder> \
   --source <synth file from step 4> \
   --source-url <original url> \
   --raw-path <raw path from step 1> \
-  --vault docker/shared/openclaw/vault/wikis \
+  --vault llm-wiki/wiki \
   --ingested-by claude-code \
   --tier <1|2|3|4|self> \
   --confidence <high|medium|low> \
@@ -242,7 +242,7 @@ For X.com, Twitter, Medium, Threads, etc. The fetch happens inside the openclaw 
 ### Step 1 — Fetch via Playwright in container
 
 ```bash
-MSYS_NO_PATHCONV=1 docker exec openclaw bash -c 'cd /home/node && node /home/node/.openclaw/agents-training/main/skills/research-wiki/wiki-fetch-page.js --topic <topic> --url <url> --vault /shared/openclaw/vault/wikis --ingested-by claude-code'
+MSYS_NO_PATHCONV=1 docker exec openclaw bash -c 'cd /home/node && node /home/node/.openclaw/agents-training/main/skills/research-wiki/wiki-fetch-page.js --topic <topic> --url <url> --vault llm-wiki/wiki --ingested-by claude-code'
 ```
 
 The script prints `raw_path=<path>` — capture it. Note the `MSYS_NO_PATHCONV=1` is needed on Git Bash for Windows (prevents path mangling). On Linux/Mac it's a harmless no-op.
@@ -257,12 +257,12 @@ Length philosophy: same as YouTube — quality over word count.
 
 Same as the URL flow Step 6:
 ```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-update.py \
+python .claude/wiki-scripts/wiki-update.py \
   --topic <topic> --folder <folder> \
   --source <synth file> \
   --source-url <original url> \
   --raw-path <raw path from step 1> \
-  --vault docker/shared/openclaw/vault/wikis \
+  --vault llm-wiki/wiki \
   --ingested-by claude-code \
   --title "<title>" --tags "<tags>"
 ```
@@ -278,7 +278,7 @@ MSYS_NO_PATHCONV=1 docker exec openclaw python3 \
   /home/node/.openclaw/agents-training/main/skills/research-wiki/wiki-fetch-pdf.py \
   --topic <topic> \
   --source <url-or-local-pdf-path> \
-  --vault /shared/openclaw/vault/wikis \
+  --vault llm-wiki/wiki \
   --ingested-by claude-code
 ```
 
@@ -315,7 +315,7 @@ The script will print `raw_path=<path>` on success — capture it. The transcrip
 
 ### Step 2 — Read the transcript and synthesize a curated summary
 
-Read the raw transcript file (from host: `docker/shared/openclaw/vault/wikis/<topic>/raw/<file>`). Then write a curated markdown summary that captures what's actually important:
+Read the raw transcript file (from host: `llm-wiki/raw/<file>`). Then write a curated markdown summary that captures what's actually important:
 
 - **TL;DR** (1-2 sentences — what is this video about, why does it matter)
 - **Key insights** (the actually substantive claims, numbers, frameworks, ideas)
@@ -330,13 +330,13 @@ Write the summary to a temp file (e.g. `/tmp/wiki-yt-{slug}.md`).
 ### Step 3 — File the summary as a curated wiki entry
 
 ```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-update.py \
+python .claude/wiki-scripts/wiki-update.py \
   --topic <topic> \
   --folder <folder> \
   --source /tmp/wiki-yt-<slug>.md \
   --source-url <youtube-url> \
   --raw-path <raw_path-from-step-1> \
-  --vault docker/shared/openclaw/vault/wikis \
+  --vault llm-wiki/wiki \
   --ingested-by claude-code \
   --title "<video title>" \
   --tags "youtube,<other tags>"
@@ -382,10 +382,10 @@ Tell the user:
 
 ## Key paths
 
-- Wikis vault: `docker/shared/openclaw/vault/wikis/`
-- wiki-update.py: `bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-update.py`
-- wiki-fetch-youtube.py: `bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-fetch-youtube.py`
-- Topic README (scope rules): `docker/shared/openclaw/vault/wikis/<topic>/README.md`
+- Wikis vault: `llm-wiki/wiki/`
+- wiki-update.py: `.claude/wiki-scripts/wiki-update.py`
+- wiki-fetch-youtube.py: `.claude/wiki-scripts/wiki-fetch-youtube.py`
+- Topic README (scope rules): `llm-wiki/wiki/README.md`
 
 
 ## Cycle contract

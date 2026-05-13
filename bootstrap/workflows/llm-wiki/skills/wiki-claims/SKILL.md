@@ -212,9 +212,9 @@ This is more precise than the agent reading entries and guessing at contradictio
 
 ## Key paths
 
-- Claims index: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/claims-index.json`
-- Claims report: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/claims-report-<date>.md`
-- Wiki entries: `docker/shared/openclaw/vault/wikis/<topic>/wiki/`
+- Claims index: `llm-wiki/wiki/_inbox/claims-index.json`
+- Claims report: `llm-wiki/wiki/_inbox/claims-report-<date>.md`
+- Wiki entries: `llm-wiki/wiki/`
 
 ## Don't
 

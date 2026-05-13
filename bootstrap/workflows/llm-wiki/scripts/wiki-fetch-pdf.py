@@ -34,10 +34,26 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+
+def _default_vault():
+    """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
+    otherwise fall back to "llm-wiki/wiki" relative to CWD. Per-project
+    installs put wiki content at <project>/llm-wiki/wiki/."""
+    import json as _json
+    cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
+    if cfg_path.exists():
+        try:
+            cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
+            v = cfg.get("vault_root")
+            if v:
+                return str(Path(v))
+        except (_json.JSONDecodeError, OSError):
+            pass
+    return str(Path.cwd() / "llm-wiki" / "wiki")
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-DEFAULT_VAULT = "/shared/openclaw/vault/wikis"
+DEFAULT_VAULT = _default_vault()
 USER_AGENT = "Mozilla/5.0 (research-wiki/1.0)"
 
 SLUG_RE = re.compile(r"[^a-z0-9]+")

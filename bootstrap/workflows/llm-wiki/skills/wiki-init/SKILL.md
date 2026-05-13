@@ -1,90 +1,84 @@
 ---
 name: wiki-init
-description: Create a new topic wiki — scaffolds the folder structure and templated README. Conversational discovery if the user doesn't provide all the details. Use when the user says "wiki init", "create a new wiki", "start a new research topic", "make a new wiki for X", "set up a wiki for Y", "init wiki", "new wiki".
+description: Initialize the per-project wiki — scaffolds the folder structure and templated README. Use when the user says "wiki init", "create a new wiki", "init wiki". In v1 install model, each project has ONE wiki at llm-wiki/wiki/; this skill is run automatically by /new-project but can also be invoked directly.
 ---
 
-Create a new topic wiki via conversational discovery if needed, then call wiki-init.py.
+> **⚙️ Internal skill.** Normally invoked by `/new-project` during per-project scaffold. Manual invocation is only useful if you want to add or rebuild a wiki layer in an existing project, or if you're (v2) adding a second wiki topic to a project.
+
+Create the per-project wiki structure at `llm-wiki/wiki/<topic>/` and write its scaffold files.
 
 ## Required fields
 
 | Field | Required | Default | How to get it |
 |---|---|---|---|
-| `topic` | ✅ yes | none — must come from user | If not given, ask or propose based on conversation |
-| `description` | ✅ yes | none — must come from user | If not given, ask or propose based on conversation |
-| `vault` | optional | `/shared/openclaw/vault/wikis` (host: `docker/shared/openclaw/vault/wikis/`) | Use default unless user overrides |
+| `topic` | ✅ yes | project slug | If not given, derive from the project folder name |
+| `description` | ✅ yes | project description from config | Read `.claude/wiki-config.json` if not given |
+| `vault` | optional | `llm-wiki/wiki` (relative to project root) | Use default unless overriding |
 
-## Conversational discovery flow
+## Default usage (called by /new-project)
 
-If the user types `/wiki-init` with NO args, OR with just a vague intent ("I want a wiki for X"):
+```bash
+python .claude/wiki-scripts/wiki-init.py \
+  --topic <project-slug> \
+  --description "<scope>" \
+  --vault llm-wiki/wiki
+```
 
-1. **Have a brief conversation** to understand what the topic is FOR. What kind of content goes in it? What's it NOT for?
+`new-project.py` Phase B calls this automatically with the right args. You usually don't run it by hand.
 
-2. **Propose all three fields** in this format, clearly:
+## Standalone invocation
 
+If you want to add a wiki to an existing project that doesn't have one, or rebuild the scaffold:
+
+1. **Verify project structure**: `<project>/.claude/wiki-scripts/wiki-init.py` should exist (created by `/new-project`). If not, run `/new-project --sync` first.
+
+2. **Propose the plan**:
    ```
    I'd create:
-     Vault:       docker/shared/openclaw/vault/wikis/
-     Topic:       <slugified-name>
-     Full path:   docker/shared/openclaw/vault/wikis/<slugified-name>/
-     Description: <one-line scope>
+     Project root: <cwd>
+     Wiki root:    llm-wiki/wiki/
+     Topic:        <slug>
+     Description:  <one-line scope>
 
    Confirm? (or tell me what to change)
    ```
 
-3. **Wait for confirmation** before running. Don't proceed without explicit "yes" / "go" / "create".
-
-4. If the user pushes back on any field, adjust and re-propose.
-
-## When the user gave full args
-
-If the user says `/wiki-init my-topic "scope here"`, just confirm briefly and run:
-
-```
-Creating: docker/shared/openclaw/vault/wikis/my-topic/
-Description: scope here
-Confirm? (or just say go)
-```
+3. **Run after confirmation**:
+   ```bash
+   python .claude/wiki-scripts/wiki-init.py \
+     --topic <slug> \
+     --description "<scope>" \
+     --vault llm-wiki/wiki
+   ```
 
 ## Topic naming guidance
 
 - Slug-style: lowercase, hyphens, no spaces
-- Specific over generic: `agentic-design` > `ai`
-- Long-running: name a research area, not a task
-- Examples of good topic names: `agentic-design`, `canadian-tax-law`, `home-network`, `unity-game-dev`, `claude-code-skills`, `memory-systems`
+- For v1 (one wiki per project), topic = project slug
+- Examples of good slugs: `agentic-design`, `dnd-combat-engine`, `canadian-tax-law`, `home-network`
 
 ## Description guidance
 
-A 1-2 sentence answer to "what is this wiki for?" — should be specific enough that future-you can decide what's on/off topic.
+A 1-2 sentence answer to "what is this wiki for?" — specific enough that future-you can decide what's on/off topic. The description goes into the wiki's root README.
 
 Examples:
 - ❌ "AI stuff"
 - ✅ "AI agent design patterns, Claude Code, memory architectures, context engineering — the meta-work of building agents"
-- ❌ "Canada"
-- ✅ "Canadian personal income tax rules, CRA forms, deduction categories, business expense rules"
-
-## Run the script
-
-```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-init.py \
-  --topic <slugified-topic> \
-  --description "<scope>" \
-  --vault docker/shared/openclaw/vault/wikis
-```
 
 ## After creation
 
-1. Show the user the topic root path
-2. Tell them to edit the topic README's "In scope / Out of scope" sections (it's a placeholder)
-3. Suggest first add: `/wiki-update` or `/wiki-list add <url>`
+1. Show the user the topic root path: `llm-wiki/wiki/<topic>/`
+2. Tell them to edit `llm-wiki/wiki/<topic>/README.md`'s "In scope / Out of scope" sections (placeholder)
+3. Suggest first add: `/wiki-update <url>` (research) or `/wrap-up` at session-end (development)
 
 ## Don't
 
-- Don't create a topic without explicit user confirmation when discovering conversationally
-- Don't create a topic with a generic name without asking ("ai", "research", "stuff")
-- Don't overwrite an existing topic — wiki-init.py already errors out, but check first if you can
+- Don't create a topic without explicit user confirmation when invoked standalone
+- Don't overwrite an existing topic — wiki-init.py errors out; check first
 - Don't fill in the README's scope sections automatically — that's a human decision
 
-## Key paths
+## Key paths (per-project install)
 
-- wiki-init.py: `bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-init.py`
-- Default vault: `docker/shared/openclaw/vault/wikis/`
+- wiki-init.py: `.claude/wiki-scripts/wiki-init.py`
+- Default vault (per-project): `llm-wiki/wiki/`
+- Created topic: `llm-wiki/wiki/<topic>/`

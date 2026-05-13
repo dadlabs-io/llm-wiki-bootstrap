@@ -10,7 +10,7 @@ Usage
 -----
     python wiki-reciprocate-backlinks.py \
         --topic agentic-design \
-        --vault docker/shared/openclaw/vault/wikis
+        --vault llm-wiki/wiki
 
     # Only process entries modified in the last N hours:
     python wiki-reciprocate-backlinks.py --topic agentic-design --since-hours 24
@@ -32,6 +32,22 @@ contract. Step name: "reciprocate-backlinks".
 
 from __future__ import annotations
 
+
+def _default_vault():
+    """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
+    otherwise fall back to "llm-wiki/wiki" relative to CWD. Per-project
+    installs put wiki content at <project>/llm-wiki/wiki/."""
+    import json as _json
+    cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
+    if cfg_path.exists():
+        try:
+            cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
+            v = cfg.get("vault_root")
+            if v:
+                return str(Path(v))
+        except (_json.JSONDecodeError, OSError):
+            pass
+    return str(Path.cwd() / "llm-wiki" / "wiki")
 import argparse
 import json
 import re
@@ -242,7 +258,7 @@ def emit_cycle_json(
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--topic", required=True)
-    ap.add_argument("--vault", default="docker/shared/openclaw/vault/wikis")
+    ap.add_argument("--vault", default=_default_vault())
     ap.add_argument(
         "--since-hours",
         type=float,

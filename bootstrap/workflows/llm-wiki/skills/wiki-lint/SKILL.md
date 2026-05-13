@@ -14,9 +14,9 @@ When the user says: `lint the wiki`, `/wiki-lint`, `quick wiki check`, `wiki hea
 Pure Python script. Fast, deterministic, no LLM in the loop. Reports only — never modifies files.
 
 ```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-lint-mechanical.py \
+python .claude/wiki-scripts/wiki-lint-mechanical.py \
   --topic <topic> \
-  --vault docker/shared/openclaw/vault/wikis
+  --vault llm-wiki/wiki
 ```
 
 Checks:
@@ -190,7 +190,7 @@ After applying approved fixes, run `wiki-lint-mechanical.py` again to verify:
 
 ## Key paths
 
-- Mechanical script: `bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-lint-mechanical.py`
+- Mechanical script: `.claude/wiki-scripts/wiki-lint-mechanical.py`
 - Mechanical report: `<vault>/<topic>/_inbox/lint-report.md`
 - Semantic report: `<vault>/<topic>/_inbox/<agent>-semantic-lint-<date>.md`
 

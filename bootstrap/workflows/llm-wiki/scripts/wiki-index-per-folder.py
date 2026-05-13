@@ -16,7 +16,7 @@ generates INDEXes inside each subfolder. Safe to delete and regenerate.
 Usage
 -----
     python wiki-index-per-folder.py --topic agentic-design \\
-        --vault docker/shared/openclaw/vault/wikis
+        --vault llm-wiki/wiki
 
     # Dry-run:
     python wiki-index-per-folder.py --topic agentic-design --dry-run
@@ -36,6 +36,22 @@ wiki/best-practices/cycle-step-return-format.md. Step name:
 
 from __future__ import annotations
 
+
+def _default_vault():
+    """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
+    otherwise fall back to "llm-wiki/wiki" relative to CWD. Per-project
+    installs put wiki content at <project>/llm-wiki/wiki/."""
+    import json as _json
+    cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
+    if cfg_path.exists():
+        try:
+            cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
+            v = cfg.get("vault_root")
+            if v:
+                return str(Path(v))
+        except (_json.JSONDecodeError, OSError):
+            pass
+    return str(Path.cwd() / "llm-wiki" / "wiki")
 import argparse
 import json
 import re
@@ -259,7 +275,7 @@ def emit_cycle_artifacts(
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--topic", required=True)
-    ap.add_argument("--vault", default="docker/shared/openclaw/vault/wikis")
+    ap.add_argument("--vault", default=_default_vault())
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--cycle-id", default=None)
     ap.add_argument("--run-folder", default=None)

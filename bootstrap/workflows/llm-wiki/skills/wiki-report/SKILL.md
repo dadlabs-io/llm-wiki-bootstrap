@@ -26,38 +26,38 @@ Run these in parallel where possible:
 
 **A. Recent changes** (git log):
 ```bash
-git log --oneline --since="7 days ago" -- docker/shared/openclaw/vault/wikis/<topic>/ | head -30
+git log --oneline --since="7 days ago" -- llm-wiki/ | head -30
 ```
 
 **B. Current entry count**:
 ```bash
-find docker/shared/openclaw/vault/wikis/<topic>/wiki -name "*.md" ! -name "_INDEX.md" | wc -l
+find llm-wiki/wiki -name "*.md" ! -name "_INDEX.md" | wc -l
 ```
 
 **C. Mechanical lint** (fast, 2 seconds):
 ```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-lint-mechanical.py \
-  --topic <topic> --vault docker/shared/openclaw/vault/wikis
+python .claude/wiki-scripts/wiki-lint-mechanical.py \
+  --topic <topic> --vault llm-wiki/wiki
 ```
 
 **D. Pending queue**:
 ```bash
-ls docker/shared/openclaw/vault/wikis/<topic>/_inbox/pending/*.md 2>/dev/null | wc -l
+ls llm-wiki/wiki/_inbox/pending/*.md 2>/dev/null | wc -l
 ```
 
 **E. Proposed (staged) entries**:
 ```bash
-ls docker/shared/openclaw/vault/wikis/<topic>/_inbox/proposed/*.md 2>/dev/null | grep -v README | wc -l
+ls llm-wiki/wiki/_inbox/proposed/*.md 2>/dev/null | grep -v README | wc -l
 ```
 
 **F. Discovery checklist** (if exists):
 ```bash
-ls docker/shared/openclaw/vault/wikis/<topic>/_inbox/discovered/*.md 2>/dev/null | head -5
+ls llm-wiki/wiki/_inbox/discovered/*.md 2>/dev/null | head -5
 ```
 
 **G. Stale entries** (review_after date has passed):
 ```bash
-grep -rl "review_after:" docker/shared/openclaw/vault/wikis/<topic>/wiki/ --include="*.md" | while read f; do
+grep -rl "review_after:" llm-wiki/wiki/ --include="*.md" | while read f; do
   date=$(grep "review_after:" "$f" | head -1 | awk '{print $2}')
   if [[ "$date" < "$(date +%Y-%m-%d)" ]]; then
     echo "$f|$date"
@@ -67,7 +67,7 @@ done
 
 **H. Claims report** (if exists):
 ```bash
-ls docker/shared/openclaw/vault/wikis/<topic>/_inbox/claims-report-*.md 2>/dev/null | tail -1
+ls llm-wiki/wiki/_inbox/claims-report-*.md 2>/dev/null | tail -1
 ```
 
 **I. Concept gaps count**:
@@ -277,11 +277,11 @@ This skill implements **Phase 8 (Human review #2)** of the research cycle. It's 
 
 ## Key paths
 
-- Reports: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/reports/`
-- Lint report: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/lint-report.md`
-- Claims report: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/claims-report-*.md`
-- Claims index: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/claims-index.json`
-- Concept gaps: `docker/shared/openclaw/vault/wikis/<topic>/wiki/concept-gaps-things-mentioned-not-yet-covered.md`
+- Reports: `llm-wiki/wiki/_inbox/reports/`
+- Lint report: `llm-wiki/wiki/_inbox/lint-report.md`
+- Claims report: `llm-wiki/wiki/_inbox/claims-report-*.md`
+- Claims index: `llm-wiki/wiki/_inbox/claims-index.json`
+- Concept gaps: `llm-wiki/wiki/concept-gaps-things-mentioned-not-yet-covered.md`
 
 ## Don't
 

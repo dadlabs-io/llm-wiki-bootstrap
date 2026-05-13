@@ -23,7 +23,7 @@ Promote staged entries from `_inbox/proposed/` into the live wiki. This is the s
 ### Step 1 — List what's in proposed/
 
 ```bash
-ls docker/shared/openclaw/vault/wikis/<topic>/_inbox/proposed/*.md 2>/dev/null | grep -v README
+ls llm-wiki/wiki/_inbox/proposed/*.md 2>/dev/null | grep -v README
 ```
 
 If empty, say "Nothing in staging — all entries are going direct to wiki." and stop.
@@ -75,8 +75,8 @@ For each entry to promote:
 
 6. **Regenerate INDEX**:
    ```bash
-   python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-index.py \
-     --topic <topic> --vault docker/shared/openclaw/vault/wikis
+   python .claude/wiki-scripts/wiki-index.py \
+     --topic <topic> --vault llm-wiki/wiki
    ```
 
 ### Step 4 — Report
@@ -109,10 +109,10 @@ If an entry in `proposed/` has no `_proposed_metadata.json`, it was probably pla
 
 ## Key paths
 
-- Proposed entries: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/proposed/`
-- Rejected entries: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/rejected/`
+- Proposed entries: `llm-wiki/wiki/_inbox/proposed/`
+- Rejected entries: `llm-wiki/wiki/_inbox/rejected/`
 - Metadata files: `<slug>_proposed_metadata.json` (adjacent to the entry)
-- INDEX script: `bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-index.py`
+- INDEX script: `.claude/wiki-scripts/wiki-index.py`
 
 ## Don't
 

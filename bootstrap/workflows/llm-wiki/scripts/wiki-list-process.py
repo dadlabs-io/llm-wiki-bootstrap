@@ -26,11 +26,27 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+
+def _default_vault():
+    """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
+    otherwise fall back to "llm-wiki/wiki" relative to CWD. Per-project
+    installs put wiki content at <project>/llm-wiki/wiki/."""
+    import json as _json
+    cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
+    if cfg_path.exists():
+        try:
+            cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
+            v = cfg.get("vault_root")
+            if v:
+                return str(Path(v))
+        except (_json.JSONDecodeError, OSError):
+            pass
+    return str(Path.cwd() / "llm-wiki" / "wiki")
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-DEFAULT_VAULT = "/shared/openclaw/vault/wikis"
+DEFAULT_VAULT = _default_vault()
 
 
 def parse_queue_file(path):

@@ -29,10 +29,10 @@ What to ask the user (only if not already provided):
 
 Run:
 ```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-list-add.py \
+python .claude/wiki-scripts/wiki-list-add.py \
   --topic <topic> \
   --source <url-or-path> \
-  --vault docker/shared/openclaw/vault/wikis \
+  --vault llm-wiki/wiki \
   --added-by claude-code \
   [--folder <folder>] \
   [--title "<title>"] \
@@ -50,17 +50,17 @@ What to ask:
 
 Dry run:
 ```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-list-process.py \
+python .claude/wiki-scripts/wiki-list-process.py \
   --topic <topic> \
-  --vault docker/shared/openclaw/vault/wikis \
+  --vault llm-wiki/wiki \
   --dry-run
 ```
 
 Real run:
 ```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-list-process.py \
+python .claude/wiki-scripts/wiki-list-process.py \
   --topic <topic> \
-  --vault docker/shared/openclaw/vault/wikis
+  --vault llm-wiki/wiki
 ```
 
 The processor passes each item's `added_by` field through to wiki-update.py as `--ingested-by` so we know who originally captured it.
@@ -73,7 +73,7 @@ After: report success/fail counts. List failed items if any, point at `_inbox/fa
 
 Just list what's in the pending queue:
 ```bash
-ls docker/shared/openclaw/vault/wikis/<topic>/_inbox/pending/
+ls llm-wiki/wiki/_inbox/pending/
 ```
 
 Then for each `.queue` file, cat it briefly to show the user:
@@ -92,7 +92,7 @@ Format as a compact list. Tell the user the total count and remind them they can
 
 ## Key paths
 
-- Pending queue: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/pending/`
-- Done: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/done/`
-- Failed: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/failed/` (with `.error` sidecars)
-- wiki-list-add.py / wiki-list-process.py: `bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/`
+- Pending queue: `llm-wiki/wiki/_inbox/pending/`
+- Done: `llm-wiki/wiki/_inbox/done/`
+- Failed: `llm-wiki/wiki/_inbox/failed/` (with `.error` sidecars)
+- wiki-list-add.py / wiki-list-process.py: `.claude/wiki-scripts/`

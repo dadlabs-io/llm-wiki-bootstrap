@@ -29,7 +29,7 @@ Search trusted sources for new content relevant to a topic wiki. Dedupes against
 
 ### Step 1 — Load the feeds config
 
-Read `docker/shared/openclaw/vault/wikis/<topic>/_config/feeds.md`. This file defines:
+Read `llm-wiki/wiki/_config/feeds.md`. This file defines:
 - Trusted authors/blogs with URLs, tiers, and keywords
 - YouTube channels to check
 - GitHub repos to watch
@@ -98,7 +98,7 @@ For each candidate URL/title found in search results:
 
 1. **URL dedup**: check if the exact URL exists in any wiki entry's `source_url` frontmatter:
    ```bash
-   grep -r "<url>" docker/shared/openclaw/vault/wikis/<topic>/wiki/ --include="*.md" -l
+   grep -r "<url>" llm-wiki/wiki/ --include="*.md" -l
    ```
 
 2. **Title/concept dedup**: search the wiki for the key concept:
@@ -109,7 +109,7 @@ For each candidate URL/title found in search results:
 
 3. **Queue dedup**: check if the URL is already in `_inbox/pending/` or `_inbox/done/`:
    ```bash
-   grep -r "<url>" docker/shared/openclaw/vault/wikis/<topic>/_inbox/ --include="*.md" -l
+   grep -r "<url>" llm-wiki/wiki/_inbox/ --include="*.md" -l
    ```
 
 ### Step 5 — Score and classify candidates
@@ -201,8 +201,8 @@ When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/discover.json
 After the user reviews the checklist (human review #1), queue the approved items:
 
 ```bash
-python bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-list-add.py \
-  --topic <topic> --vault docker/shared/openclaw/vault/wikis \
+python .claude/wiki-scripts/wiki-list-add.py \
+  --topic <topic> --vault llm-wiki/wiki \
   --source "<url>" --title "<title>" --priority <1-5> --tags "<tags>" --added-by claude-code
 ```
 
@@ -235,12 +235,12 @@ Discovery complete for <topic>
 
 ## Key paths
 
-- Feeds config: `docker/shared/openclaw/vault/wikis/<topic>/_config/feeds.md`
-- Discovery output: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/discovered/`
-- Pending queue: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/pending/`
-- Done queue: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/done/`
-- Concept gaps: `docker/shared/openclaw/vault/wikis/<topic>/wiki/concept-gaps-things-mentioned-not-yet-covered.md`
-- wiki-list-add script: `bootstrap/docker-setup/openclaw/agents-training/main/skills/research-wiki/wiki-list-add.py`
+- Feeds config: `llm-wiki/wiki/_config/feeds.md`
+- Discovery output: `llm-wiki/wiki/_inbox/discovered/`
+- Pending queue: `llm-wiki/wiki/_inbox/pending/`
+- Done queue: `llm-wiki/wiki/_inbox/done/`
+- Concept gaps: `llm-wiki/wiki/concept-gaps-things-mentioned-not-yet-covered.md`
+- wiki-list-add script: `.claude/wiki-scripts/wiki-list-add.py`
 
 ## Integration with the research cycle
 

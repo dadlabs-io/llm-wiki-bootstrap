@@ -66,14 +66,30 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
+
+def _default_vault():
+    """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
+    otherwise fall back to "llm-wiki/wiki" relative to CWD. Per-project
+    installs put wiki content at <project>/llm-wiki/wiki/."""
+    import json as _json
+    cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
+    if cfg_path.exists():
+        try:
+            cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
+            v = cfg.get("vault_root")
+            if v:
+                return str(Path(v))
+        except (_json.JSONDecodeError, OSError):
+            pass
+    return str(Path.cwd() / "llm-wiki" / "wiki")
 # Force UTF-8 stdout on Windows so Unicode in titles doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 DEFAULT_FOLDER_NAME = "__FOR CLAUDE"
 DEFAULT_TOKEN_CACHE = Path.home() / ".config" / "wiki-cycle" / "drive-token.json"
-DEFAULT_VAULT = "/shared/openclaw/vault/wikis"
-ACTIVITY_LOG = Path("/shared/openclaw/vault/logs/wiki-activity.jsonl")
+DEFAULT_VAULT = _default_vault()
+ACTIVITY_LOG = Path.home() / ".config" / "wiki-cycle" / "activity.jsonl"
 DEFAULT_ARCHIVE_FOLDER = "_completed"
 
 # Read-only is enough for passive scans (--no-move-handled). The default path

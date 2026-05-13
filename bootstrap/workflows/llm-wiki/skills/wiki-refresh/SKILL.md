@@ -27,7 +27,7 @@ Find entries that are past their review date, have low confidence, reference sou
 Read the frontmatter of every `.md` file in `wiki/` (not the full body — just YAML frontmatter). Extract:
 
 ```bash
-for f in $(find docker/shared/openclaw/vault/wikis/<topic>/wiki -name "*.md" ! -name "_INDEX.md"); do
+for f in $(find llm-wiki/wiki -name "*.md" ! -name "_INDEX.md"); do
   echo "---FILE: $f"
   head -30 "$f" | grep -E "^(title|date|source_url|tier|confidence|last_reviewed|review_after|tags):"
 done
@@ -155,8 +155,8 @@ The `/wiki-report` morning report references this skill's output — the "Stale 
 
 ## Key paths
 
-- Refresh report: `docker/shared/openclaw/vault/wikis/<topic>/_inbox/reports/refresh-report-<date>.md`
-- Wiki entries: `docker/shared/openclaw/vault/wikis/<topic>/wiki/`
+- Refresh report: `llm-wiki/wiki/_inbox/reports/refresh-report-<date>.md`
+- Wiki entries: `llm-wiki/wiki/`
 
 ## Don't
 
