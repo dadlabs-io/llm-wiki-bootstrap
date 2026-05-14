@@ -50,9 +50,9 @@ Round 2 (built using the slug from Round 1):
 - Target folder: `C:\github.com\test-project` (Recommended). On macOS/Linux substitute `~/proj/test-project`.
 - Project type: `Research` / `Development (Recommended for code projects)` — never default; let user pick
 - Drive: `No (Recommended)` / `Yes`
-- Description (Round 2): default **must include the project type**. For development → `Development wiki for test-project` (Recommended). For research → `Research wiki for test-project` (Recommended). Plus one alternate (e.g. plain `Wiki for test-project`) and `Other (type your own)`.
+- Description (Round 2): list **only the description that matches the chosen project type** plus one neutral alternate. Do NOT list the opposite type. If the user picked Development → list `Development wiki for test-project` (Recommended) and `Wiki for test-project` (plain). If they picked Research → list `Research wiki for test-project` (Recommended) and `Wiki for test-project` (plain). Mixing types is misleading and lets the user accidentally pick a contradictory description. The user can always free-text via the auto-added `Other` for anything else.
 
-Round 2 (description) **must still fire even when the user accepted all Round-1 defaults**. Always show the description picker — never silently use the default. The default's wording always reflects the project type chosen in Round 1.
+Round 2 (description) **must still fire even when the user accepted all Round-1 defaults**. Always show the description picker — never silently use the default. The default's wording always reflects the project type chosen in Round 1, and the alternatives never contradict that type.
 
 1. **Target folder** — where the new project goes (e.g., `C:\github.com\my-project`). If they gave it in their message, confirm by repeating it back.
 2. **Project type** — `research` or `development`. This is the most important call and the easiest to guess wrong. Ask explicitly: "Is this a research project (curating external content) or a development project (building code)?" Never default.
