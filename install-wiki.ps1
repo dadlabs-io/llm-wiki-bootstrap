@@ -239,6 +239,37 @@ if ($phaseBExit -eq 0) {
         Write-Host "  cursor .     # open in Cursor" -ForegroundColor Green
     }
     Write-Host "  Read llm-wiki/README.md for an overview" -ForegroundColor Green
+
+    # Register a Scheduled Task that auto-starts the agentmemory iii-engine
+    # at every Windows login. Machine-global, idempotent (skip if already
+    # registered). Only for development projects; only if -NoAgentmemory
+    # was not passed. Requires Docker Desktop OR native iii.exe to be
+    # available at run time -- we don't enforce that here, just register.
+    if (-not $NoAgentmemory -and $ProjectType -eq "development") {
+        $taskName = "AgentMemoryEngine"
+        $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+        if ($existing) {
+            Write-Host ""
+            Write-Host "agentmemory auto-start: task '$taskName' already registered (skipping)." -ForegroundColor Cyan
+        } else {
+            Write-Host ""
+            Write-Host "Registering Scheduled Task '$taskName' to auto-start agentmemory at login..." -ForegroundColor Cyan
+            try {
+                $action = New-ScheduledTaskAction -Execute "npx" -Argument "@agentmemory/agentmemory"
+                $trigger = New-ScheduledTaskTrigger -AtLogon -User $env:USERNAME
+                $taskSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopOnIdleEnd -ExecutionTimeLimit ([TimeSpan]::Zero)
+                $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive
+                Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $taskSettings -Principal $principal -Description "agentmemory iii-engine REST server (auto-start at login)" | Out-Null
+                Start-ScheduledTask -TaskName $taskName
+                Write-Host "  Task registered + started. Engine will boot on every login from now on." -ForegroundColor Green
+                Write-Host "  To disable later: Unregister-ScheduledTask -TaskName '$taskName' -Confirm:`$false" -ForegroundColor Gray
+                Write-Host "  PREREQ: Docker Desktop running OR native iii.exe v0.11.2 on PATH" -ForegroundColor Gray
+            } catch {
+                Write-Host "  WARN: could not register Scheduled Task (need admin?). You can run agentmemory manually." -ForegroundColor Yellow
+                Write-Host "  Error: $_" -ForegroundColor Yellow
+            }
+        }
+    }
     # Note: if agentmemory was wired, the Python script already printed the
     # RESTART banner. We exit 0 either way so tool wrappers don't read it as
     # a failure.
