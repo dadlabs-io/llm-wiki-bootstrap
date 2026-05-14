@@ -25,6 +25,19 @@ Most common case.
 
 Required discovery, in order. **ALL FIVE are mandatory — you must ask the user for each, even when you can plausibly default. Showing a default is fine; silently using the default is not. Every question gets explicit user confirmation.**
 
+**Use the `AskUserQuestion` tool with selectable options — do NOT ask the user via plain-text questions.** The tool's UI gives the user clear pre-built choices (radio buttons for type/drive, an "Other" escape hatch for free text, recommended-option highlighting). Plain-text Q&A loses that, makes the user retype the same answers every cycle, and is harder to scan.
+
+AskUserQuestion caps at 4 questions per call, so split into two rounds:
+- **Round 1 (4 questions)**: target folder, project type, project name (with default), drive ingest
+- **Round 2 (1 question)**: description (with default `"Wiki for <name>"`)
+
+For each question, supply 2–4 concrete options. Use `(Recommended)` suffix on the suggested default so it's selectable in one click. Examples:
+- Target folder: `C:\github.com\<slug>` (Recommended) / `~/proj/<slug>` / custom
+- Project type: `Research` / `Development (Recommended for code projects)` — never default; let user pick
+- Project name: `<slug-from-folder>` (Recommended) / custom
+- Drive: `No (Recommended)` / `Yes`
+- Description: `Wiki for <name>` (Recommended) / custom
+
 1. **Target folder** — where the new project goes (e.g., `C:\github.com\my-project`). If they gave it in their message, confirm by repeating it back.
 2. **Project type** — `research` or `development`. This is the most important call and the easiest to guess wrong. Ask explicitly: "Is this a research project (curating external content) or a development project (building code)?" Never default.
 3. **Project name** — slugified (lowercase, dashes). Propose a default from the target folder leaf, but **always show it and ask the user to confirm or override**. Do NOT silently use the default.
