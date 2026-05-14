@@ -419,10 +419,16 @@ def _install_agentmemory():
     return True
 
 
-def _merge_agentmemory_mcp(settings_path: Path = CC_GLOBAL_SETTINGS_PATH, tool: str = "claude-code"):
+def _merge_agentmemory_mcp(settings_path: Path = CC_GLOBAL_SETTINGS_PATH, tool: str = "claude-code", target: Path = None):
     """Add an agentmemory entry to mcpServers in the right settings file.
     Format is identical for claude-code and cursor (both use mcpServers map).
-    Preserves existing entries."""
+    Preserves existing entries.
+
+    If `target` is given, sets STANDALONE_PERSIST_PATH so the agentmemory
+    standalone server writes to <target>/llm-wiki/raw/sessions/agentmemory.json
+    instead of the machine-global default at ~/.agentmemory/standalone.json.
+    This keeps each project's memory isolated and bundled with the wiki.
+    """
     if settings_path.exists():
         try:
             data = json.loads(settings_path.read_text(encoding="utf-8"))
@@ -434,16 +440,26 @@ def _merge_agentmemory_mcp(settings_path: Path = CC_GLOBAL_SETTINGS_PATH, tool: 
     # Canonical entry from rohitg00/agentmemory README:
     # https://github.com/rohitg00/agentmemory#claude-desktop
     # Package: @agentmemory/mcp (thin shim that exposes @agentmemory/agentmemory's MCP entrypoint)
-    mcp["agentmemory"] = {
+    entry = {
         "command": "npx",
         "args": ["-y", "@agentmemory/mcp"],
     }
+    if target is not None:
+        # Per-project memory file under the wiki's existing raw/sessions/ folder.
+        # Without this env var, agentmemory defaults to ~/.agentmemory/standalone.json
+        # — a single machine-global store shared across every project. Per-project
+        # is what users almost always want.
+        persist_path = (target / "llm-wiki" / "raw" / "sessions" / "agentmemory.json").as_posix()
+        entry["env"] = {"STANDALONE_PERSIST_PATH": persist_path}
+    mcp["agentmemory"] = entry
     settings_path.parent.mkdir(parents=True, exist_ok=True)
     settings_path.write_text(
         json.dumps(data, indent=2),
         encoding="utf-8",
     )
     _ok(f"merged agentmemory entry into {settings_path}")
+    if target is not None:
+        _ok(f"  memory persists per-project at: {target}/llm-wiki/raw/sessions/agentmemory.json")
 
 
 # ---------- Google Drive OAuth walkthrough ----------
@@ -794,7 +810,7 @@ def phase_b(args):
                 if not ok:
                     _err("agentmemory install failed; surface this to user")
                     return 1
-                _merge_agentmemory_mcp(paths["settings"], tool=args.tool)
+                _merge_agentmemory_mcp(paths["settings"], tool=args.tool, target=target)
                 needs_restart = True
                 project_cfg["agentmemory_wired"] = True
                 _save_config(project_cfg, paths["config"])
