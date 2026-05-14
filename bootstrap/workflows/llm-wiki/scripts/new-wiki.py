@@ -384,50 +384,35 @@ def _agentmemory_wired(settings_path: Path = CC_GLOBAL_SETTINGS_PATH):
     return bool(data.get("mcpServers", {}).get("agentmemory"))
 
 
-def _agentmemory_reachable():
-    """HTTP probe agentmemory's /livez endpoint. Returns False on any failure."""
-    import urllib.request
-    import urllib.error
-    for port in (7890, 7891, 3000):  # try a few common ports
-        try:
-            req = urllib.request.Request(f"http://localhost:{port}/livez", method="GET")
-            with urllib.request.urlopen(req, timeout=2) as resp:
-                if resp.status == 200:
-                    return True
-        except (urllib.error.URLError, OSError):
-            continue
-    return False
-
-
 def _install_agentmemory():
-    """Run `npx @agentmemory/agentmemory` and wait for /livez. Returns True on success."""
-    _info("starting agentmemory via npx (this may take a minute on first run)...")
-    # On Windows, npx is npx.cmd (not npx.exe). subprocess.Popen with a bare
-    # "npx" arg won't find it without shell=True — Python's subprocess on
-    # Windows doesn't honor PATHEXT the way the shell does. shutil.which DOES
-    # honor PATHEXT, so it resolves to the full path of npx.cmd.
-    npx = shutil.which("npx") or "npx"
-    try:
-        # Start as a detached background process — npx will pull + run the server
-        # On Windows we don't have a clean detach; use Popen and let it run.
-        proc = subprocess.Popen(
-            [npx, "-y", "@agentmemory/agentmemory"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-    except FileNotFoundError:
+    """Announce the agentmemory wiring + verify npx is on PATH.
+
+    agentmemory is a stdio MCP server — Claude Code (or Cursor) spawns it
+    on-demand via the `mcpServers` config entry when the editor launches in the
+    project. There is no long-running HTTP listener to probe, so we don't try
+    to start a server here. We just verify npx exists (so the on-demand spawn
+    will work later) and write the MCP entry to .claude/settings.json.
+    """
+    _info("wiring agentmemory MCP server")
+    _info("  repo:    https://github.com/rohitg00/agentmemory")
+    _info("  package: @agentmemory/mcp (stdio MCP shim; Claude Code spawns it on demand)")
+    _info("  why:     gives Claude long-term memory across sessions (used by /wrap-up etc.)")
+    _info("  scope:   MACHINE-GLOBAL once cached — first launch triggers an npx fetch into")
+    _info("           %USERPROFILE%\\AppData\\Roaming\\npm-cache; every project on this machine")
+    _info("           shares the same install after that")
+    _info("  skip:    re-run with --no-agentmemory if you want to wire it yourself")
+    # On Windows, npx is npx.cmd (not npx.exe). Python's subprocess on Windows
+    # doesn't honor PATHEXT; shutil.which does. We only need to confirm npx is
+    # resolvable here — we don't actually spawn it.
+    npx = shutil.which("npx")
+    if not npx:
         _err("npx not found on PATH. Install Node.js first: https://nodejs.org/")
         _err("After installing, ensure Node's install dir is on your PATH, then re-run.")
         return False
-
-    # Poll /livez for up to 90 seconds
-    for i in range(45):
-        if _agentmemory_reachable():
-            _ok("agentmemory server is up")
-            return True
-        time.sleep(2)
-    _err("agentmemory did not respond on /livez within 90s")
-    return False
+    _ok(f"found npx: {npx}")
+    _ok("agentmemory will be spawned on demand by Claude Code (or Cursor) when you next launch")
+    _ok("  first launch fetches the package (~30-90s); subsequent launches reuse the npm cache")
+    return True
 
 
 def _merge_agentmemory_mcp(settings_path: Path = CC_GLOBAL_SETTINGS_PATH, tool: str = "claude-code"):
@@ -788,8 +773,12 @@ def phase_b(args):
     needs_restart = False
 
     # B10 — agentmemory (development only)
-    if project_type == "development":
-        if _agentmemory_wired(paths["settings"]) and _agentmemory_reachable():
+    if project_type == "development" and args.no_agentmemory:
+        _info("skipping agentmemory install (--no-agentmemory passed)")
+        _info("  wire it yourself later by adding to .claude/settings.json:")
+        _info('    "mcpServers": { "agentmemory": { "command": "npx", "args": ["-y", "@agentmemory/mcp"] } }')
+    elif project_type == "development":
+        if _agentmemory_wired(paths["settings"]):
             _ok("agentmemory already wired in this project")
         else:
             _info("agentmemory: install + wire (per-project)")
@@ -904,6 +893,8 @@ def main():
                         help="Per-project Drive subfolder (default: project slug)")
     parser.add_argument("--force", action="store_true",
                         help="Continue even if target folder has unexpected entries")
+    parser.add_argument("--no-agentmemory", action="store_true",
+                        help="Skip agentmemory MCP install + wiring (dev projects only)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print actions without writing")
     args = parser.parse_args()

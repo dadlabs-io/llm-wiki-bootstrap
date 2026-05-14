@@ -66,6 +66,10 @@ param(
     # bootstrap source without asking. Useful for scripted / unattended runs.
     [switch]$Force,
 
+    # Skip the agentmemory MCP install (dev projects only). User can wire it
+    # later by hand. See https://github.com/rohitg00/agentmemory.
+    [switch]$NoAgentmemory,
+
     # Refresh the skill files but don't change Drive config or other settings.
     # If passed with -Force, prompt is skipped AND no drive args are written.
     [switch]$RefreshOnly
@@ -210,6 +214,7 @@ $phaseBArgs = @(
     "--drive-enabled", $DriveEnabled,
     "--drive-parent-folder", $DriveParentFolder
 )
+if ($NoAgentmemory) { $phaseBArgs += "--no-agentmemory" }
 
 & $py.Source @phaseBArgs
 $phaseBExit = $LASTEXITCODE
