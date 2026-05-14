@@ -25,6 +25,8 @@ This is a **{{PROJECT_TYPE}}** project. The `wiki/` folder uses this taxonomy:
 
 ## How to use it
 
+**Quick reference**: see [how-to/commands.md](./how-to/commands.md) for every command with one-line descriptions.
+
 **Add an external reference (article, doc, video):**
 ```
 /wiki-update <url>
@@ -46,6 +48,29 @@ Distills the session into proposed wiki entries. Stages to `wiki/_inbox/proposed
 /wiki-cycle
 ```
 Discover → ingest → lint → promote → commit. Default behavior is conservative; flags like `--full`, `--ingest-only`, `--lint-only` change scope.
+
+## Need help?
+
+**Ask the agent in plain English anytime.** It has every file under `llm-wiki/how-to/` loaded as context — including the full command reference, getting-started guide, per-command deep-dives, and install instructions. Try:
+
+- "What commands do I have?"
+- "How do I add a URL to the wiki?"
+- "Show me what's in the wiki"
+- "How do I look up prior decisions?"
+- "What's the difference between /wiki-update and /wiki-cycle?"
+
+Or read the docs directly:
+
+| File | When |
+|---|---|
+| [how-to/getting-started.md](./how-to/getting-started.md) | Your first hour after install |
+| [how-to/commands.md](./how-to/commands.md) | Every command, one-line each |
+| [how-to/wiki-update.md](./how-to/wiki-update.md) | `/wiki-update` deep dive |
+| [how-to/wiki-cycle.md](./how-to/wiki-cycle.md) | `/wiki-cycle` orchestrator |
+| [how-to/wrap-up.md](./how-to/wrap-up.md) | `/wrap-up` for development sessions |
+| [how-to/wiki-search.md](./how-to/wiki-search.md) | `/wiki-search` ranking |
+| [how-to/drive-setup.md](./how-to/drive-setup.md) | Google Drive OAuth |
+| [how-to/install.md](./how-to/install.md) | Installing on another machine |
 
 ## Best-practices folder
 

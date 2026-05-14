@@ -800,8 +800,36 @@ def phase_b(args):
                 project_cfg["agentmemory_wired"] = True
                 _save_config(project_cfg, paths["config"])
 
-    # B11 — summary
+    # B11 — summary + project-type-specific next steps
     start_cmd = "claude" if args.tool == "claude-code" else "cursor ."
+
+    if project_type == "development":
+        next_steps = [
+            f"cd {target}",
+            start_cmd,
+            "Read llm-wiki/README.md (project overview)",
+            "Read llm-wiki/how-to/commands.md (full command reference)",
+            "Code + decide + investigate as normal",
+            "/wrap-up at session-end — distills the session into proposed wiki entries (components, decisions, architecture, patterns, troubleshooting)",
+            "/wiki-promote --review — accept/reject the proposed entries",
+            "/wiki-search \"<query>\" — look up prior decisions / components",
+            "/wiki-update <url> — add an external reference (article, doc, paper)",
+            "Ask the agent in plain English anytime: 'what commands do I have', 'how do I X'",
+        ]
+    else:  # research
+        next_steps = [
+            f"cd {target}",
+            start_cmd,
+            "Read llm-wiki/README.md (project overview)",
+            "Read llm-wiki/how-to/commands.md (full command reference)",
+            "Add URLs: /wiki-update <url>  OR  drop links into Drive (__FOR CLAUDE/<project-slug>/)",
+            "/wiki-cycle once a day/week — discovers new sources, ingests, lints, promotes",
+            "Source tier rules: T1 peer-reviewed/primary, T2 vendor/official docs, T3 expert, T4 community — pass --tier on every ingest",
+            "/wiki-search \"<query>\" — hybrid BM25 + vector + LLM rerank",
+            "Both-sides-stay rule: never delete contradictory entries, cross-link them",
+            "Ask the agent in plain English anytime: 'how do I add a URL', 'show me the wiki', 'what's the discovery process'",
+        ]
+
     print(json.dumps({
         "status": "ok",
         "phase": "B",
@@ -815,13 +843,8 @@ def phase_b(args):
         "drive_subfolder": drive_subfolder if drive_enabled_global else None,
         "agentmemory_wired": project_cfg.get("agentmemory_wired", False) if project_type == "development" else None,
         "needs_restart": needs_restart,
-        "next_steps": [
-            f"cd {target}",
-            start_cmd,
-            "Read llm-wiki/README.md for an overview",
-            "/wrap-up at session-end to crystallize work into wiki entries",
-            "/wiki-search to look up prior decisions/components",
-        ],
+        "next_steps": next_steps,
+        "help_anytime": "Ask in plain English. The agent has llm-wiki/how-to/*.md and llm-wiki/README.md loaded as context.",
     }, indent=2))
 
     if needs_restart:

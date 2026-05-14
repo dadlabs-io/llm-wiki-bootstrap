@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Scaffold a new project with the LLM-wiki framework. Asks tool (claude-code/cursor), project type (research/development), name, target folder, and Drive ingest preferences. Sets up per-project .claude/skills + llm-wiki/ folder with notes, best-practices, and the project's wiki. For development projects, also wires agentmemory MCP. Use when the user says "new project", "create-new-wiki", "/new-project", "set up a new wiki", "bootstrap a project", "start a new project".
+description: Scaffold a new project with the LLM-wiki framework. Asks tool (claude-code/cursor), project type (research/development), name, target folder, and Drive ingest preferences. Sets up per-project .claude/skills + llm-wiki/ folder with notes, best-practices, and the project's wiki. For development projects, also wires agentmemory MCP. Use when the user says "new project", "create a new wiki", "install a new wiki", "set up a new wiki", "bootstrap a project", "start a new project", or types "/new-project".
 ---
 
 # /new-project
@@ -119,9 +119,35 @@ python "<bootstrap_source>/bootstrap/workflows/llm-wiki/scripts/new-project.py" 
 
 The script handles everything in the layout diagram above and returns a JSON summary on stdout.
 
-### Step 2 — Read back the summary + next steps
+### Step 2 — Read back the summary + post-install reminders
 
 The JSON includes `needs_restart: true` if agentmemory was just installed. Surface that to the user — they need to restart Claude Code before /wrap-up etc. work.
+
+**After printing the next-steps**, also give the user a tailored "you're ready" message based on project type:
+
+#### Development project
+
+Tell the user:
+- `/wrap-up` at the end of every meaningful session — distills what you did into proposed wiki entries (components, decisions, architecture, patterns, troubleshooting). Without this, the session evaporates.
+- `/wiki-promote --review` to approve those proposed entries into the wiki
+- `/wiki-search "<query>"` to look up prior decisions / components
+- `/wiki-update <url>` for external references (articles, docs, papers)
+- agentmemory auto-loads recent session context — no action needed
+- **Ask the agent in natural language** for help anytime: "what commands do I have", "how do I look up prior decisions", "show me the wiki"
+
+#### Research project
+
+Tell the user:
+- Drop URLs into Google Drive (`<parent>/<project-slug>/`) throughout the day, OR
+- `/wiki-update <url>` for ad-hoc one-offs
+- `/wiki-cycle` once a day/week — discovers new sources, ingests the queue, lints, promotes
+- Source quality tiers: T1 (peer-reviewed / primary), T2 (vendor/official docs), T3 (expert/practitioner), T4 (community/blog). Set with `--tier` on every ingest.
+- `/wiki-search "<query>"` to look up prior research
+- **Ask the agent in natural language** for help anytime: "how do I add a URL", "what's the discovery process", "show me the wiki"
+
+#### Either type — universal closing
+
+End with: "Read `llm-wiki/how-to/commands.md` for the full command reference, or `llm-wiki/how-to/getting-started.md` for the first-hour walkthrough. You can also ask me anything in plain English — I have these docs loaded as context."
 
 ### Step 3 — Don't
 
