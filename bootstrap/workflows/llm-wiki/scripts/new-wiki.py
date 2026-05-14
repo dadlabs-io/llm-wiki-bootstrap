@@ -852,7 +852,9 @@ def phase_b(args):
         _info("===========================================")
         _info(f"RESTART {restart_target.upper()} to load the new agentmemory MCP server.")
         _info("===========================================")
-        return 2
+        # Exit 0 even when restart needed — exit-2 was a clever signal that
+        # gets misread as a script failure by tool wrappers. The restart
+        # message above is enough; the JSON above also has needs_restart: true.
 
     return 0
 

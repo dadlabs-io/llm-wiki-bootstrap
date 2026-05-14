@@ -239,9 +239,9 @@ if ($phaseBExit -eq 0) {
         Write-Host "  cursor .     # open in Cursor" -ForegroundColor Green
     }
     Write-Host "  Read llm-wiki/README.md for an overview" -ForegroundColor Green
-} elseif ($phaseBExit -eq 2) {
-    Write-Host ""
-    Write-Host "RESTART CLAUDE CODE -- agentmemory MCP was wired and needs a reload." -ForegroundColor Yellow
+    # Note: if agentmemory was wired, the Python script already printed the
+    # RESTART banner. We exit 0 either way so tool wrappers don't read it as
+    # a failure.
 }
 
 exit $phaseBExit
