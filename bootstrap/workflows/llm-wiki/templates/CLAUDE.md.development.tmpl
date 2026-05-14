@@ -64,6 +64,25 @@ The REST server has to be running for any auto-capture to actually persist. With
 
 See https://github.com/rohitg00/agentmemory for details.
 
+### Observations vs memories — two stores, two write paths
+
+agentmemory has **two separate stores** and they fill on different paths:
+
+| Store | Filled by | Lives where |
+|---|---|---|
+| `KV.observations` | The 12 lifecycle hooks (SessionStart, UserPromptSubmit, PostToolUse, etc.) — automatic | Raw events; viewable via `/agentmemory/observations?sessionId=...` |
+| `KV.memories` | Explicit `memory_save` MCP tool calls by the agent — deliberate | Structured memories; viewable via `/agentmemory/memories?project=...` |
+
+For observations to be promoted into structured memories (facts / concepts / narrative), the engine needs `AGENTMEMORY_AUTO_COMPRESS=true` set in `~/.agentmemory/.env` (the llm-wiki installer writes this). For context to flow BACK into new sessions, set `AGENTMEMORY_INJECT_CONTEXT=true` (also written by installer).
+
+**As the agent**: when the user says something durable ("remember that X", "for next time, do Y"), call `memory_save` directly — that's the explicit path and it's independent of the consolidation pipeline. Auto-capture from hooks is a bonus, not the primary mechanism.
+
+### Known issues (as of agentmemory 0.9.12 + iii-engine 0.11.2)
+
+- **#308 — SessionEnd unreliable**: `/sessions` may stay empty even when observations are arriving. Workaround: rely on explicit `memory_save` for important data; don't depend on session-end auto-summary.
+- **#338 — graph-stats broken**: `GRAPH_EXTRACTION_ENABLED=false` (default) avoids it. Log line `Function not found: mem::graph-stats` is the symptom; harmless if graph extraction is off.
+- **"Trigger scope does not match" log noise**: expected, ignore. iii fans events to all triggers and unmatched ones log a skip.
+
 ## Conventions
 
 (Edit this section as the project's conventions emerge — naming, testing, file layout, etc. Start with whatever you currently know; this is the agent's constitution.)

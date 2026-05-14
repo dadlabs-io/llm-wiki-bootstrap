@@ -246,6 +246,40 @@ if ($phaseBExit -eq 0) {
     # was not passed. Requires Docker Desktop OR native iii.exe to be
     # available at run time -- we don't enforce that here, just register.
     if (-not $NoAgentmemory -and $ProjectType -eq "development") {
+        # Write ~/.agentmemory/.env with the three "OFF by default" flags
+        # that need to be ON for auto-capture to actually do anything.
+        # Per rohitg00/agentmemory README + issues #138, #143.
+        $envDir = Join-Path $env:USERPROFILE ".agentmemory"
+        $envPath = Join-Path $envDir ".env"
+        if (-not (Test-Path $envPath)) {
+            New-Item -ItemType Directory -Force -Path $envDir | Out-Null
+            $envContent = @'
+# agentmemory engine configuration
+# Written by llm-wiki-bootstrap installer; safe to hand-edit.
+
+# Promote raw observations into structured memories (facts/concepts/narrative).
+# Without this, /memories stays empty forever -- only raw observations stored.
+AGENTMEMORY_AUTO_COMPRESS=true
+
+# Inject prior-session context back into the next SessionStart.
+# Without this, the agent never sees what it remembered last time.
+AGENTMEMORY_INJECT_CONTEXT=true
+
+# 4-tier consolidation timer (working -> episodic -> semantic -> procedural).
+CONSOLIDATION_ENABLED=true
+AUTO_FORGET_ENABLED=true
+
+# Graph extraction is broken on iii 0.11.2 + agentmemory 0.9.12 (#338).
+GRAPH_EXTRACTION_ENABLED=false
+
+# LLM provider keys are inherited from process env (ANTHROPIC_API_KEY etc.).
+'@
+            Set-Content -Path $envPath -Value $envContent -Encoding utf8
+            Write-Host "Wrote agentmemory config: $envPath" -ForegroundColor Cyan
+        } else {
+            Write-Host "agentmemory config already exists: $envPath (skipping)" -ForegroundColor Cyan
+        }
+
         $taskName = "AgentMemoryEngine"
         $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
         if ($existing) {
