@@ -72,15 +72,27 @@ Or read the docs directly:
 | [how-to/drive-setup.md](./how-to/drive-setup.md) | Google Drive OAuth |
 | [how-to/install.md](./how-to/install.md) | Installing on another machine |
 
-## Best-practices folder
+## Framework-managed folders — don't hand-edit
 
-`best-practices/` was seeded from the bootstrap installer's curated set — software-dev best practices that apply across projects (coding, communication, documentation, logging, testing, etc.). It travels with every install.
+⚠️ **`llm-wiki/how-to/` and `llm-wiki/best-practices/` are seeded by the framework on install** and may be overwritten when you re-run `install-wiki.ps1 -RefreshOnly` or `/new-wiki --sync` to pick up newer versions. If you edit these files in place, your changes get lost on the next refresh.
 
-These are **reference**, not part of the curated wiki. Read them, link to them from `wiki/` entries when relevant. Don't edit them by hand — if you want to override the canonical version for this project, copy the file into `wiki/best-practices/` (project-specific folder) and customize there.
+**Want to customize?** Put your additions in a separate location:
+
+| Where it lives | What goes there | Survives refreshes? |
+|---|---|---|
+| `llm-wiki/how-to/` | Framework-shipped usage docs | ❌ Overwritten on refresh |
+| `llm-wiki/best-practices/` | Framework-shipped best practices | ❌ Overwritten on refresh |
+| `llm-wiki/wiki/best-practices/` | **Your project's** best practices (project-specific overrides + additions) | ✅ Yours forever |
+| `llm-wiki/wiki/how-to/` (create if needed) | **Your project's** how-to docs (project-specific) | ✅ Yours forever |
+| Anywhere else under `llm-wiki/wiki/` | Project-specific entries | ✅ Yours forever |
+
+**Pattern**: if a shipped best-practice doesn't fit your project, copy it to `llm-wiki/wiki/best-practices/<same-name>.md` and edit the copy. The original stays at `llm-wiki/best-practices/<name>.md` (reference); your override lives at `llm-wiki/wiki/best-practices/<name>.md` (project canon). Document the divergence in your override's body so future-you remembers why.
+
+(V2 will support proper user-override layering — for v1, the copy-elsewhere pattern is the workaround.)
 
 ## How-to folder
 
-`how-to/` has short usage docs for the commands above. Start with `how-to/getting-started.md`.
+`how-to/` has short usage docs for the commands above. Start with `how-to/getting-started.md`. **Framework-managed** — see the warning above.
 
 ## Don't
 

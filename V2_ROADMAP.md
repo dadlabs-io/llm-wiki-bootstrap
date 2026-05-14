@@ -51,7 +51,21 @@ When the repo goes wide:
 - CI that runs `install-wiki.ps1` on a fresh Windows + macOS + Linux runner against a test project — catches platform regressions
 - Issue templates that lead with "what did you run, what happened, what did you expect"
 
-### 5. agentmemory alternatives
+### 5. User-override layering for seed content
+
+V1 ships `llm-wiki/how-to/` and `llm-wiki/best-practices/` as framework-managed folders. On every refresh, they get re-copied from the bootstrap source — so any user edits in place are lost.
+
+The v1 workaround: put project-specific overrides at `llm-wiki/wiki/how-to/<name>.md` or `llm-wiki/wiki/best-practices/<name>.md`. That folder is user content (not framework-managed) and survives refreshes. `_FRAMEWORK_MANAGED.md` marker files in each seed folder make this explicit.
+
+V2 should make the override mechanism first-class:
+- Framework looks for `wiki/how-to/<name>.md` first, falls back to `how-to/<name>.md`
+- Same for best-practices
+- On refresh, framework checks for an override before overwriting (and warns the user if the shipped version has changed in ways the override might want)
+- A `wiki-doctor` command that lists divergence (shipped vs override) and offers to merge specific changes
+
+This becomes important once a few real users have customized their installs and want refresh updates without losing their edits.
+
+### 6. agentmemory alternatives
 
 V1: agentmemory (rohitg00) — chosen because local, no subscription, MCP-native.
 V2: support pluggable memory backends:

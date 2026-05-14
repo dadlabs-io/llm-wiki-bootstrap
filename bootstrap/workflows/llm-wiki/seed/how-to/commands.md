@@ -1,5 +1,7 @@
 # Commands reference — every slash command
 
+> ⚠️ **Framework-managed file.** This is shipped by the LLM-wiki installer and may be overwritten when you refresh the framework. **Don't hand-edit.** To customize, see `llm-wiki/README.md` → "Framework-managed folders".
+
 Canonical reference for the LLM-wiki framework. Each command works inside Claude Code (or Cursor, via the .mdc rules) once the framework is installed for this project.
 
 ## The user-facing commands (these are the only ones you'll typically type)
