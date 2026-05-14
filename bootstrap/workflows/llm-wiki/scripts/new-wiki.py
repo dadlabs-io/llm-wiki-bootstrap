@@ -817,13 +817,17 @@ def phase_b(args):
 
     if project_type == "development":
         next_steps = [
-            f"cd {target}",
+            # --- Terminal phase (do all this BEFORE starting Claude Code) ---
+            "In a fresh terminal window, start the agentmemory REST engine:",
+            "  `npx @agentmemory/agentmemory`",
+            "Leave that terminal running (the engine needs to stay alive)",
+            # --- Claude Code phase (single context, no bouncing) ---
+            f"In another terminal: `cd {target}`",
             f"Start Claude Code: `{start_cmd}`",
-            "Install agentmemory (one-time, recommended). Run these in Claude Code one at a time:",
-            "  Step 1: `/plugin marketplace add rohitg00/agentmemory`",
-            "  Step 2: `/plugin install agentmemory`",
-            "  Step 3: In a separate terminal, run `npx @agentmemory/agentmemory` (starts the REST engine on :3111)",
-            "  Step 4: Verify with `/mcp` — agentmemory should show ✔ connected",
+            "Inside Claude Code, run: `/plugin marketplace add rohitg00/agentmemory`",
+            "Inside Claude Code, run: `/plugin install agentmemory`",
+            "Inside Claude Code, run: `/mcp` and verify `agentmemory` shows ✔ connected",
+            # --- Reading + working ---
             "Read `llm-wiki/README.md` for the project overview",
             "Read `llm-wiki/how-to/commands.md` for the full command reference",
             "Code, decide, investigate as normal",
