@@ -84,7 +84,23 @@ What kind of project is this?
 Pick (1 or 2):
 ```
 
-**Q3-5 — Name, description, target folder** (if not provided). Slugify the name.
+**Q3 — Name (ALWAYS confirm)**
+Even if you can infer it from the user's input or the folder name, **always show the proposed name and ask for confirmation**. Slugify (lowercase, dashes for non-alphanumerics, strip leading/trailing dashes).
+
+```
+Project name (slug): test-project
+Press enter to accept, or type a different slug:
+```
+
+**Q4 — Description (ALWAYS ask, with a default)**
+Always prompt, never skip. Default is `"Wiki for <name>"`. User hits enter to accept or types their own.
+
+```
+One-line description for the wiki: [default: Wiki for test-project]
+Press enter to accept the default, or type your own:
+```
+
+**Q5 — Target folder** (if not provided). Default is `C:\github.com\<slug>` on Windows, `~/proj/<slug>` on macOS/Linux. Confirm before proceeding.
 
 **Q6 — Drive ingest** (skip if user previously configured globally)
 ```
