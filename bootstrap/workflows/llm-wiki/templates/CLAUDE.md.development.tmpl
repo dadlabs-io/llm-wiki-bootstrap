@@ -28,10 +28,16 @@ Wiki content lives at `{{WIKI_PATH}}/`. Folders:
 
 ## Working rhythm
 
-1. **Start a session**: agentmemory auto-loads recent context. The wiki MAP is always-loaded above.
-2. **Code + decide + investigate**: regular dev work.
+1. **Start a session**: the wiki MAP is always-loaded above. **Query agentmemory** via its MCP tools (e.g. `mcp__agentmemory__search_memory` with a project-scoped query) to recall what prior sessions remembered — this is NOT automatic; you must invoke it.
+2. **Code + decide + investigate**: regular dev work. When something durable happens (a decision, a non-obvious gotcha, a constraint you'll need to remember next session), **call `mcp__agentmemory__add_memory`** to store it. Don't wait for `/wrap-up` — `/wrap-up` distills to wiki *entries* (Markdown for humans), agentmemory is the agent's *working memory* (machine-readable, queried automatically next session).
 3. **End of session**: `/wrap-up` distills the session into proposed wiki entries.
 4. **Promote**: `/wiki-promote --review` to approve and move entries from proposed → wiki/.
+
+## When to call agentmemory tools (explicit, not automatic)
+
+- **Session start**: call `search_memory` with the project's name to surface relevant prior memories. Don't skip this — it's the only way prior-session context surfaces.
+- **Mid-session, on durable events**: call `add_memory` when you've made a decision the user is likely to ask about again, discovered a constraint, identified a gotcha, or learned how something *actually* works (vs. how it appeared). Skip transient/noisy details.
+- **When user says "remember this"** or "what do you remember about X": call `add_memory` / `search_memory` respectively.
 
 ## Conventions
 
