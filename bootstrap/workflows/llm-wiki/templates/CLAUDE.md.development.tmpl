@@ -50,6 +50,36 @@ File a proposed entry when ANY of these happen:
 
 When in doubt, file it — `/wiki-promote --review` is the gate, so a thin entry costs nothing.
 
+### Entry shape (when filing inline)
+
+Use the same frontmatter contract that `/wrap-up` uses, but stamp `origin: inline` so `/wiki-promote --review` can tell who proposed it:
+
+```yaml
+---
+title: "<descriptive title>"
+date: <YYYY-MM-DD>
+source_url: "internal://session/<session-id>"
+raw_path: "(none — self-authored)"
+ingested_by: claude-code
+origin: inline       # who filed this: inline | wrap-up | wiki-update
+tier: self
+confidence: <high|medium|low>
+last_reviewed: <YYYY-MM-DD>
+review_after: <YYYY-MM-DD+90>
+project_type: development
+category: <component|decision|architecture|pattern|troubleshooting>
+tags: [<project-slug>, <category>, <topic-tags>]
+---
+```
+
+Body sections (skip any that don't apply):
+1. **TL;DR** — 1-2 sentences
+2. **What** — the artifact
+3. **Why** — rationale, alternatives, deciding factor
+4. **How** — code refs, file paths
+5. **Caveats / open questions**
+6. **Related** — links to other wiki entries
+
 ## Why no agentmemory / no Docker / no API-key burn
 
 We evaluated the rohitg00/agentmemory + iii-engine path 2026-05-14 and concluded: the infrastructure cost (Docker, three "OFF by default" env vars, upstream issues #138/#143/#308/#338, API-key compression burn at ~$5-20/mo) doesn't justify the marginal value over the proactive-listener pattern. The agent (you) is already in the conversation, already capable of judgment, and already has file-write tools. We just told you to use them. See the agentic-design wiki retrospective for the full reasoning.

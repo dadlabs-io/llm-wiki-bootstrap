@@ -86,6 +86,7 @@ date: <YYYY-MM-DD>
 source_url: "internal://session/<session-id-or-date>"
 raw_path: "raw/sessions/<YYYY-MM-DD>-<session-slug>.md"   # OR "(none — self-authored)"
 ingested_by: claude-code
+origin: wrap-up      # who filed this entry: wrap-up | inline | wiki-update
 tier: self
 confidence: <high|medium|low>
 last_reviewed: <YYYY-MM-DD>
