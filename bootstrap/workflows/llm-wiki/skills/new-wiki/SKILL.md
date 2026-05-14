@@ -60,7 +60,9 @@ Phase B — Per-project scaffold (Phase A already done by install-wiki.ps1)
 
 ## Step-by-step contract
 
-### Step 0 — Discovery (if args not provided)
+### Step 0 — Discovery (REQUIRED — ALWAYS ASK, never guess)
+
+**CRITICAL**: Never default values based on context (folder name, prior conversation, "reasonable guess"). Ask explicitly for every field below before running anything. The user's answer is the source of truth.
 
 Ask in this order:
 

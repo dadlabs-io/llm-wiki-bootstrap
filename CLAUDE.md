@@ -19,19 +19,35 @@ The user almost certainly wants one of three things:
 
 ### 1. Set up the framework + scaffold a new project (one shot)
 
-Most common case. Run the installer with a `-TargetFolder` (PowerShell) or `--target-folder` (bash):
+Most common case.
+
+**STOP — ask the user explicitly for each of these BEFORE running anything. Do NOT guess from the folder name or other context. The user's answer is the source of truth.**
+
+Required discovery, in order:
+
+1. **Target folder** — where the new project goes (e.g., `C:\github.com\my-project`). If they gave it in their message, confirm by repeating it back.
+2. **Project type** — `research` or `development`. This is the most important call and the easiest to guess wrong. Ask explicitly: "Is this a research project (curating external content) or a development project (building code)?" Never default.
+3. **Project name** — defaults to the target folder leaf, slugified. Show the proposed default and let them override.
+4. **Description** — one-liner. Optional; if they don't have one, leave empty.
+5. **Drive ingest** — yes/no. Defaults to no. Ask only if it might apply.
+
+Once you have all the answers, run:
 
 **Windows:**
 ```powershell
-.\install-wiki.ps1 -TargetFolder C:\github.com\<their-new-project>
+.\install-wiki.ps1 -TargetFolder C:\github.com\<their-new-project> `
+    -ProjectType <research|development> -ProjectName <slug> `
+    -ProjectDescription "<one-liner>" -DriveEnabled <yes|no>
 ```
 
 **Mac/Linux:**
 ```bash
-./install-wiki.sh --target-folder ~/proj/<their-new-project>
+./install-wiki.sh --target-folder ~/proj/<their-new-project> \
+    --project-type <research|development> --project-name <slug> \
+    --project-description "<one-liner>" --drive-enabled <yes|no>
 ```
 
-Ask them: what target folder, what project type (research or development), what to call it.
+Pass every value the user gave you — don't drop into the PowerShell `Read-Host` fallback if you can avoid it (it works, but it bypasses your role as the conversational layer).
 
 This installs the `/new-wiki` skill globally AND scaffolds the target project. After it completes, `/new-wiki` is available from any Claude Code session on this machine.
 
