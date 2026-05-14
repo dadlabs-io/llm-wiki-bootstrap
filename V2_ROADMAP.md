@@ -81,6 +81,17 @@ agentskills.io (and similar registries) are emerging. V2: register the LLM-wiki 
 
 This is the "ecosystem" plays — make the framework's components consumable independently.
 
+### 7. Tag agentmemory sessions by actor
+
+V1: all memories written by the agentmemory MCP server land in the same per-project store (`<project>/llm-wiki/raw/sessions/agentmemory.json`) with no actor metadata. Fine when one human + one agent are the only writers.
+
+V2 should add an actor tag (user id, agent persona, subagent role) on every write so multi-user or multi-agent setups can:
+- Filter "what did persona X remember"
+- Detect when two actors disagree on the same fact
+- Audit who wrote what during incident review
+
+Requires either upstream agentmemory support for actor tags or a thin wrapper that prepends `actor: <id>` to each memory body before forwarding. Probably the wrapper path — upstream changes are slower.
+
 ## Smaller follow-ups
 
 - **`/install-sync` command** — designed but not implemented. Diff bootstrap against installed copy, prompt to refresh.
