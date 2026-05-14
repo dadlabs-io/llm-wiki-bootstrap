@@ -109,24 +109,33 @@ if ($AlreadyInstalled -and -not $Force -and -not $RefreshOnly) {
         }
     }
     Write-Host ""
-    Write-Host "Choose:"
-    Write-Host "  [R] Refresh -- re-copy /new-wiki skill from current bootstrap source (default)"
-    Write-Host "  [S] Skip   -- exit without changes"
-    Write-Host "  [F] Force  -- wipe existing install + reinstall fresh"
-    $choice = Read-Host "Choice [R/S/F]"
-    switch -Regex ($choice) {
-        '^[Ss]' {
-            Write-Host "Skipping." -ForegroundColor Cyan
-            exit 0
-        }
-        '^[Ff]' {
-            Write-Host "Wiping existing /new-wiki skill..." -ForegroundColor Yellow
-            $skillDir = Join-Path $env:USERPROFILE ".claude\skills\new-wiki"
-            Remove-Item -Recurse -Force $skillDir -ErrorAction SilentlyContinue
-            # Keep wiki-config.json -- it will be updated, not wiped (user settings live there)
-        }
-        default {
-            Write-Host "Refreshing existing install." -ForegroundColor Cyan
+
+    # Detect non-interactive mode (stdin redirected, no console UI). When the
+    # script is run by an agent / CI / piped, Read-Host hangs forever. Default
+    # to Refresh in that case -- it's the safe idempotent path.
+    $nonInteractive = [Console]::IsInputRedirected -or -not [Environment]::UserInteractive
+    if ($nonInteractive) {
+        Write-Host "Non-interactive run detected -- defaulting to Refresh (pass -Force to wipe instead)." -ForegroundColor Cyan
+    } else {
+        Write-Host "Choose:"
+        Write-Host "  [R] Refresh -- re-copy /new-wiki skill from current bootstrap source (default)"
+        Write-Host "  [S] Skip   -- exit without changes"
+        Write-Host "  [F] Force  -- wipe existing install + reinstall fresh"
+        $choice = Read-Host "Choice [R/S/F]"
+        switch -Regex ($choice) {
+            '^[Ss]' {
+                Write-Host "Skipping." -ForegroundColor Cyan
+                exit 0
+            }
+            '^[Ff]' {
+                Write-Host "Wiping existing /new-wiki skill..." -ForegroundColor Yellow
+                $skillDir = Join-Path $env:USERPROFILE ".claude\skills\new-wiki"
+                Remove-Item -Recurse -Force $skillDir -ErrorAction SilentlyContinue
+                # Keep wiki-config.json -- it will be updated, not wiped (user settings live there)
+            }
+            default {
+                Write-Host "Refreshing existing install." -ForegroundColor Cyan
+            }
         }
     }
     Write-Host ""

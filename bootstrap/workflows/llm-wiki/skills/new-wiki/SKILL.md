@@ -121,7 +121,13 @@ Show the proposed plan and wait for "yes" / "go" / "create" before proceeding.
 
 ### Step 1 — Run Phase B
 
-The global Phase A install (which put this skill in `~/.claude/skills/`) also recorded `bootstrap_source` in `~/.claude/wiki-config.json`. Read that to find where the bootstrap source lives. Then:
+The global Phase A install (which put this skill in `~/.claude/skills/`) also recorded `bootstrap_source` in `~/.claude/wiki-config.json`. Read that to find where the bootstrap source lives.
+
+**TOOL CHOICE — IMPORTANT**:
+- **Windows**: invoke `python new-wiki.py ...` via the **PowerShell tool**, not the Bash tool. Bash → PowerShell argument bridging mangles empty quoted strings (e.g. `-ProjectDescription ""` collapses, so the next flag gets consumed as the description value, causing exit 2). If the PowerShell tool is denied by an auto-classifier, ask the user to run the command themselves in their terminal — do NOT fall back to `bash` → `powershell.exe ...`.
+- **macOS/Linux**: use the Bash tool directly — no shell-bridge issues.
+
+Then:
 
 ```bash
 python "<bootstrap_source>/bootstrap/workflows/llm-wiki/scripts/new-wiki.py" \

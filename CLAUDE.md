@@ -49,6 +49,11 @@ Once you have all the answers, run:
 
 Pass every value the user gave you — don't drop into the PowerShell `Read-Host` fallback if you can avoid it (it works, but it bypasses your role as the conversational layer).
 
+**TOOL CHOICE — important on Windows**:
+- Invoke `install-wiki.ps1` via the **PowerShell tool**. Do NOT use the Bash tool to call `powershell.exe ./install-wiki.ps1 ...`. Bash → PowerShell argument bridging eats empty quoted strings — `-ProjectDescription ""` collapses, and the *next* flag becomes the description value, which causes a cascade of parse errors and exit 2.
+- If the PowerShell tool gets denied by an auto-classifier, **ask the user to run the command themselves** in their terminal. Don't fall back to Bash → PowerShell.
+- Always pass a non-empty `-ProjectDescription` (default to `"Wiki for <name>"` if the user didn't provide one) so the bridge problem can't bite even if someone disregards the above.
+
 This installs the `/new-wiki` skill globally AND scaffolds the target project. After it completes, `/new-wiki` is available from any Claude Code session on this machine.
 
 ### 2. Just the global install (no project yet)
