@@ -27,23 +27,28 @@ Required discovery, in order. **ALL FIVE are mandatory — you must ask the user
 
 **Use the `AskUserQuestion` tool with selectable options — do NOT ask the user via plain-text questions.** The tool's UI gives the user clear pre-built choices (radio buttons for type/drive, an "Other" escape hatch for free text, recommended-option highlighting). Plain-text Q&A loses that, makes the user retype the same answers every cycle, and is harder to scan.
 
-AskUserQuestion caps at 4 questions per call, so split into two rounds:
-- **Round 1 (4 questions)**: target folder, project type, project name (with default), drive ingest
-- **Round 2 (1 question)**: description (with default `"Wiki for <name>"`)
+AskUserQuestion caps at 4 questions per call. Because **target folder and description both depend on the project name**, ask the name FIRST in its own round, then everything else with the name resolved:
+
+- **Round 1 (1 question)**: Project name (slug). Default: slugify whatever the user said in their message; if they said nothing concrete, default to `new-project`. Always show as a concrete value with an `Other (type your own)` option.
+- **Round 2 (4 questions)**: Target folder, project type, Drive ingest, Description. All four now use the Round-1 slug to build concrete defaults (`C:\github.com\<slug>`, `Development wiki for <slug>`, etc.).
+
+Do NOT compress this into one round with placeholder names like "use a different name under C:\github.com\" — that leaves the user with nowhere to type the actual name and produces broken paths.
 
 For each question, supply 2–4 **concrete, fully-resolved options** — never strategies, meta-instructions, or placeholders like `<slug>` or "use the folder leaf name as the slug". If you don't have a concrete value yet, resolve one BEFORE building the picker:
 
 - **Before building the picker, pick a working slug.** If the user gave a name in their message, slugify it. If they didn't, use `new-project` as the working slug and let them override via "Other". Never show `<slug>`, `<name>`, or `<new-project>` as literal placeholders in option labels — those leak through to the installer and break paths.
 - Use `(Recommended)` suffix on the suggested default so it's selectable in one click.
 
-Examples (assume the working slug is `test-project`):
-- **Target folder** — three concrete options so the user never has to type the full path unless they really want a different parent dir:
-  1. `C:\github.com\test-project` (Recommended) — use the proposed slug under the default parent
-  2. `Use a different name under C:\github.com\` — selecting this triggers a free-text follow-up asking for just the slug, then constructs the path
-  3. `Other` — free text for a completely different parent path
-  (On macOS/Linux substitute `~/proj/` for `C:\github.com\`.)
+**Don't manually add `Other` to the options list — the AskUserQuestion tool provides `Other` automatically with a free-text input.** Selecting `Other` immediately prompts the user to type their answer. Do NOT write custom labels like `"Use a different name under C:\github.com\"` to simulate this — those are regular labels that don't trigger free-text and leave the user stuck.
+
+Examples (assume the user said "test-project" so the resolved slug is `test-project`). List only the concrete recommended values — the tool adds `Other` for you:
+
+Round 1:
+- Project name (slug): `test-project` (Recommended)
+
+Round 2 (built using the slug from Round 1):
+- Target folder: `C:\github.com\test-project` (Recommended). On macOS/Linux substitute `~/proj/test-project`.
 - Project type: `Research` / `Development (Recommended for code projects)` — never default; let user pick
-- Project name (slug): `test-project` (Recommended) / Other (type a different slug)
 - Drive: `No (Recommended)` / `Yes`
 - Description (Round 2): default **must include the project type**. For development → `Development wiki for test-project` (Recommended). For research → `Research wiki for test-project` (Recommended). Plus one alternate (e.g. plain `Wiki for test-project`) and `Other (type your own)`.
 
