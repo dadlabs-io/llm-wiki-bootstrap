@@ -634,7 +634,7 @@ def main():
         "--auth-only", action="store_true",
         help="Run the OAuth flow (if not already cached), confirm the token, "
              "then exit. No folder listing, no queueing, no moves. Used by "
-             "/new-project to walk the user through Drive setup up front.",
+             "/new-wiki to walk the user through Drive setup up front.",
     )
     parser.add_argument(
         "--move-handled", action=argparse.BooleanOptionalAction, default=True,

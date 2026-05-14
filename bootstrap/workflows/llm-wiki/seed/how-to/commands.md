@@ -6,13 +6,13 @@ Canonical reference for the LLM-wiki framework. Each command works inside Claude
 
 | Command | When to use it |
 |---|---|
-| `/new-project` | Scaffold a new project. Asks tool, type, name, target, Drive prefs. Only needed to **start** a project. |
+| `/new-wiki` | Scaffold a new project. Asks tool, type, name, target, Drive prefs. Only needed to **start** a project. |
 | `/wiki-update <url>` | Add one external reference (article, paper, video) to the wiki right now |
 | `/wiki-cycle` | Full ingest pipeline — discover, batch-ingest, lint, promote, commit. For research projects, the daily/weekly command. |
 | `/wiki-search "<query>"` | Hybrid BM25 + vector + LLM-reranked search across your wiki |
 | `/wrap-up` | End-of-session distillation (development projects). Reads conversation + git diff, proposes wiki entries, stages them for your review. |
 | `/wiki-promote` | Walk staged entries in `_inbox/proposed/` and accept/reject each one |
-| `/wiki-init` | Manually scaffold the wiki folder (rarely needed — `/new-project` does it for you) |
+| `/wiki-init` | Manually scaffold the wiki folder (rarely needed — `/new-wiki` does it for you) |
 
 ## The internal commands (invoked by other commands, you usually don't type these)
 

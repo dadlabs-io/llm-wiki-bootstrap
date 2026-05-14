@@ -1,6 +1,6 @@
 # Getting started
 
-You just ran `/new-project` and have a fresh project. Here's the first hour.
+You just ran `/new-wiki` and have a fresh project. Here's the first hour.
 
 ## What you have
 
@@ -15,7 +15,7 @@ You just ran `/new-project` and have a fresh project. Here's the first hour.
 
 ### 1. Restart Claude Code
 
-If `/new-project` installed agentmemory (development projects), Claude Code needs a restart to pick up the new MCP server. After restart, agentmemory will auto-load recent session context.
+If `/new-wiki` installed agentmemory (development projects), Claude Code needs a restart to pick up the new MCP server. After restart, agentmemory will auto-load recent session context.
 
 ### 2. Read `llm-wiki/best-practices/`
 
@@ -42,7 +42,7 @@ Don't write more than ~120 lines. CLAUDE.md is a shortcut, not a manual. Use `@i
 
 ## Common gotchas
 
-- **`/new-project` paths**: skills/scripts/templates live at `<project>/.claude/`. Don't hand-edit these — they get overwritten on re-install. Edit the bootstrap source instead.
+- **`/new-wiki` paths**: skills/scripts/templates live at `<project>/.claude/`. Don't hand-edit these — they get overwritten on re-install. Edit the bootstrap source instead.
 - **agentmemory restart**: if `/wrap-up` says "agentmemory not reachable", Claude Code didn't restart after install. Restart and try again.
 - **Drive OAuth**: if you opted into Drive ingest and the OAuth flow failed, see `how-to/drive-setup.md`.
 - **Multiple projects on one machine**: each project has its own `.claude/skills/`. Skills don't conflict between projects. The Drive OAuth token IS shared globally (good — sign in once).

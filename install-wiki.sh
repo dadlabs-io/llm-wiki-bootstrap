@@ -3,7 +3,7 @@
 #
 # Two modes:
 #   1. Global install only (no --target-folder):
-#      Installs the /new-project skill at ~/.claude/skills/new-project/.
+#      Installs the /new-wiki skill at ~/.claude/skills/new-wiki/.
 #   2. One-shot install + scaffold (with --target-folder):
 #      Global install AS NEEDED, then scaffolds the project at --target-folder.
 #
@@ -56,10 +56,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT="$HERE/bootstrap/workflows/llm-wiki/scripts/new-project.py"
+SCRIPT="$HERE/bootstrap/workflows/llm-wiki/scripts/new-wiki.py"
 
 if [[ ! -f "$SCRIPT" ]]; then
-    echo "ERR: new-project.py not found at $SCRIPT" >&2
+    echo "ERR: new-wiki.py not found at $SCRIPT" >&2
     echo "Is this the correct package root?" >&2
     exit 2
 fi
@@ -74,7 +74,7 @@ else
 fi
 
 # Idempotent install check
-SKILL_PATH="$HOME/.claude/skills/new-project/SKILL.md"
+SKILL_PATH="$HOME/.claude/skills/new-wiki/SKILL.md"
 CONFIG_PATH="$HOME/.claude/wiki-config.json"
 
 if [[ -f "$SKILL_PATH" && -f "$CONFIG_PATH" && "$FORCE" != "yes" && "$REFRESH_ONLY" != "yes" ]]; then
@@ -95,7 +95,7 @@ except Exception as e:
 "
     echo
     echo "Choose:"
-    echo "  [R] Refresh — re-copy /new-project skill from current bootstrap source (default)"
+    echo "  [R] Refresh — re-copy /new-wiki skill from current bootstrap source (default)"
     echo "  [S] Skip   — exit without changes"
     echo "  [F] Force  — wipe existing install + reinstall fresh"
     read -p "Choice [R/S/F]: " choice
@@ -105,8 +105,8 @@ except Exception as e:
             exit 0
             ;;
         [Ff]*)
-            echo "Wiping existing /new-project skill..."
-            rm -rf "$HOME/.claude/skills/new-project"
+            echo "Wiping existing /new-wiki skill..."
+            rm -rf "$HOME/.claude/skills/new-wiki"
             ;;
         *)
             echo "Refreshing existing install."
@@ -143,7 +143,7 @@ if [[ -z "$TARGET_FOLDER" ]]; then
     echo "Next steps:"
     echo "  1. Restart Claude Code"
     echo "  2. cd to any project folder"
-    echo "  3. Run /new-project — it asks tool, type, name, Drive prefs and does the rest"
+    echo "  3. Run /new-wiki — it asks tool, type, name, Drive prefs and does the rest"
     echo
     echo "Or skip the two-step: re-run with --target-folder <path> to scaffold in one shot."
     exit 0

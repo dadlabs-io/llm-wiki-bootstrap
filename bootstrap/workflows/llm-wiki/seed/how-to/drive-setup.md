@@ -1,6 +1,6 @@
 # Drive setup — one-time OAuth for Google Drive ingest
 
-If you opted into Drive ingest at `/new-project` time, the installer attempted to walk you through OAuth. If it succeeded, you don't need this doc. If something failed, here's how to fix it.
+If you opted into Drive ingest at `/new-wiki` time, the installer attempted to walk you through OAuth. If it succeeded, you don't need this doc. If something failed, here's how to fix it.
 
 ## Prerequisites
 

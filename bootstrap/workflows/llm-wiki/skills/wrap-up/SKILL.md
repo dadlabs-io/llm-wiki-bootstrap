@@ -163,8 +163,8 @@ Never silently file empty / thin entries. Better to say "nothing here merits a w
 
 ## After install
 
-When this skill ships as part of `/new-project`'s standard bundle (Phase A), it lives at `~/.claude/skills/wrap-up/SKILL.md` globally. Project-local overrides at `<project>/.claude/skills/wrap-up/SKILL.md` if a project needs different folder taxonomy.
+When this skill ships as part of `/new-wiki`'s standard bundle (Phase A), it lives at `~/.claude/skills/wrap-up/SKILL.md` globally. Project-local overrides at `<project>/.claude/skills/wrap-up/SKILL.md` if a project needs different folder taxonomy.
 
 ## Source
 
-Authored 2026-05-12 in workflows-core during the session that designed the install pattern. Validated by dog-fooding on workflows-core itself before being part of the `/new-project` bundle.
+Authored 2026-05-12 in workflows-core during the session that designed the install pattern. Validated by dog-fooding on workflows-core itself before being part of the `/new-wiki` bundle.

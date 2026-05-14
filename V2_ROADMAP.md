@@ -6,7 +6,7 @@ Deferred items captured during the V1 design pass. Not in V1 scope; revisit afte
 
 ### 1. wiki-agent — turn the framework into an autonomous agent
 
-Today the framework is a collection of skills + scripts that a human invokes (via `/new-project`, `/wrap-up`, `/wiki-cycle`, etc.). V2 vision: a long-running agent that owns the wiki for a project.
+Today the framework is a collection of skills + scripts that a human invokes (via `/new-wiki`, `/wrap-up`, `/wiki-cycle`, etc.). V2 vision: a long-running agent that owns the wiki for a project.
 
 What it could do:
 - Watch the project for code changes and proactively offer `/wrap-up` when a session is ending
@@ -33,7 +33,7 @@ V2: support multiple named topics under one project. Useful for:
 
 Requires:
 - `wiki-config.json` to record a list of topics
-- `/new-project --add-topic <name>` mode
+- `/new-wiki --add-topic <name>` mode
 - Scripts to take `--topic` and respect which one (already supported, just not exposed in v1 UX)
 
 ### 3. Antigravity adapter
@@ -59,7 +59,7 @@ V2: support pluggable memory backends:
 - Letta (formerly MemGPT)
 - Bring-your-own (a thin MCP shim spec)
 
-Add a `--memory-backend` flag to `/new-project` for development projects.
+Add a `--memory-backend` flag to `/new-wiki` for development projects.
 
 ### 6. Skill marketplace integration
 
@@ -71,7 +71,7 @@ This is the "ecosystem" plays — make the framework's components consumable ind
 
 - **`/install-sync` command** — designed but not implemented. Diff bootstrap against installed copy, prompt to refresh.
 - **Per-skill versioning** — wiki-config.json has a single `install_version`. Per-skill versions would let partial refreshes target specific skills.
-- **Cross-OS path handling** — `new-project.py` has Windows-flavored paths in some print statements. Test on Mac/Linux for cosmetic issues.
+- **Cross-OS path handling** — `new-wiki.py` has Windows-flavored paths in some print statements. Test on Mac/Linux for cosmetic issues.
 - **agentmemory MCP package** verified on npm but not exercised end-to-end on a fresh machine. First real test will validate.
 - **`/wiki-update` and `/wiki-promote` end-to-end with backlinks** — staging+promote tested with 0-backlink case; tested-but-not-stressed with the suggested_backlinks application path.
 - **Drive OAuth on non-graphical sessions** — flow assumes the user has a browser; WSL / headless containers need a different path.

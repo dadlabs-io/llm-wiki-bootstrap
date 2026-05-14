@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-new-project.py — bootstrap a new project with the LLM-wiki framework.
+new-wiki.py — bootstrap a new project with the LLM-wiki framework.
 
 Runs in two phases:
 
@@ -11,7 +11,7 @@ Both phases are idempotent. Phase A checks state before doing work; running
 it twice is a no-op if everything is already installed. Phase B refuses to
 overwrite an existing project folder unless --force is passed.
 
-Discovery is the calling skill's job (`new-project/SKILL.md`); this script
+Discovery is the calling skill's job (`new-wiki/SKILL.md`); this script
 runs once the user has confirmed.
 
 Exit codes:
@@ -38,7 +38,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 # ---------- Paths and defaults ----------
 
-# Global Claude Code path — used only for the ONE creator skill (/new-project)
+# Global Claude Code path — used only for the ONE creator skill (/new-wiki)
 # that lives globally so users can invoke it from anywhere. Everything else
 # is per-project.
 CC_GLOBAL_DIR = Path.home() / ".claude"
@@ -99,7 +99,7 @@ DEFAULT_DRIVE_PARENT = "__FOR CLAUDE"
 # `wiki` is the browse-the-wiki helper (invoked by /wiki-cycle); it must
 # travel so /wiki-cycle works in per-project installs.
 TRAVEL_SKILLS = [
-    "new-project", "wrap-up",
+    "new-wiki", "wrap-up",
     "wiki", "wiki-init", "wiki-update", "wiki-search", "wiki-cycle",
     "wiki-discover", "wiki-list", "wiki-claims", "wiki-refresh",
     "wiki-report", "wiki-lint", "wiki-promote",
@@ -110,7 +110,7 @@ TRAVEL_SKILLS = [
 # on each release. wiki-promote.py is intentionally OMITTED until the
 # /wiki-promote skill grows a backing script.
 TRAVEL_SCRIPTS = [
-    "new-project.py",
+    "new-wiki.py",
     "wiki-init.py",
     "wiki-fetch-drive-folder.py",
     "wiki-fetch-pdf.py",
@@ -313,18 +313,18 @@ def _derive_bootstrap_source(args):
 
 
 # ---------- Phase A (global) ----------
-# Phase A installs ONLY the /new-project creator skill globally + records
-# the bootstrap source so subsequent /new-project invocations can find it.
+# Phase A installs ONLY the /new-wiki creator skill globally + records
+# the bootstrap source so subsequent /new-wiki invocations can find it.
 # All other skills + scripts + templates ship per-project (Phase B).
 
 def phase_a(args):
-    """Global install: ONLY /new-project skill goes to ~/.claude/skills/.
-    Writes ~/.claude/wiki-config.json so future /new-project runs know where
+    """Global install: ONLY /new-wiki skill goes to ~/.claude/skills/.
+    Writes ~/.claude/wiki-config.json so future /new-wiki runs know where
     the bootstrap source lives.
 
     This is the install-wiki.ps1 / install-wiki.sh entry point. After this
     succeeds, the user can cd to any project folder, start Claude Code, and
-    run /new-project to scaffold per-project structure.
+    run /new-wiki to scaffold per-project structure.
     """
     bootstrap = _derive_bootstrap_source(args)
     if not bootstrap:
@@ -333,16 +333,16 @@ def phase_a(args):
     _info(f"bootstrap source: {bootstrap}")
 
     skills_src = bootstrap / "bootstrap" / "workflows" / "llm-wiki" / "skills"
-    new_project_skill_src = skills_src / "new-project"
-    new_project_skill_dst = CC_GLOBAL_SKILLS_DIR / "new-project"
+    new_project_skill_src = skills_src / "new-wiki"
+    new_project_skill_dst = CC_GLOBAL_SKILLS_DIR / "new-wiki"
 
     if not new_project_skill_src.exists():
-        _err(f"new-project skill missing in bootstrap source: {new_project_skill_src}")
+        _err(f"new-wiki skill missing in bootstrap source: {new_project_skill_src}")
         return 1
 
-    _info(f"installing /new-project skill: {new_project_skill_src} -> {new_project_skill_dst}")
+    _info(f"installing /new-wiki skill: {new_project_skill_src} -> {new_project_skill_dst}")
     c, s = _copy_tree(new_project_skill_src, new_project_skill_dst, dry_run=args.dry_run)
-    _ok(f"/new-project skill: {c} files copied, {s} unchanged")
+    _ok(f"/new-wiki skill: {c} files copied, {s} unchanged")
 
     # Persist bootstrap source path so the skill can find it next time
     cfg = _load_config(CC_GLOBAL_CONFIG_PATH) or {}
@@ -369,7 +369,7 @@ def phase_a(args):
     print("Next steps:")
     print("  1. cd <your-project-folder>")
     print("  2. Start Claude Code (or Cursor) in that folder")
-    print("  3. Run /new-project to scaffold per-project structure")
+    print("  3. Run /new-wiki to scaffold per-project structure")
     return 0
 
 
@@ -502,7 +502,7 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
         _err("  2. Create Project → Enable Drive API → Create OAuth Client ID")
         _err("     (Desktop application)")
         _err(f"  3. Download JSON → save as {DRIVE_CLIENT_SECRETS_PATH}")
-        _err("  4. Re-run /new-project --sync to complete Drive setup.")
+        _err("  4. Re-run /new-wiki --sync to complete Drive setup.")
         _err("============================================================")
         return False
 
@@ -878,9 +878,9 @@ def _render_template(src: Path, dst: Path, vars: dict, dry_run: bool):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--phase", choices=["A", "B", "sync"], required=True,
-                        help="A = install /new-project skill globally + record bootstrap source. "
+                        help="A = install /new-wiki skill globally + record bootstrap source. "
                              "B = scaffold a per-project install (skills/scripts/llm-wiki/) at --target-folder. "
-                             "sync = re-run A to refresh the global /new-project skill.")
+                             "sync = re-run A to refresh the global /new-wiki skill.")
     parser.add_argument("--tool", choices=["claude-code", "cursor"], default="claude-code",
                         help="Which AI tool to install for (default: claude-code)")
     parser.add_argument("--project-name")
@@ -907,7 +907,7 @@ def main():
     if args.phase == "B":
         return phase_b(args)
     if args.phase == "sync":
-        # Re-run Phase A to refresh the global /new-project skill
+        # Re-run Phase A to refresh the global /new-wiki skill
         return phase_a(args)
 
 

@@ -39,7 +39,7 @@ To skip both for trusted full-auto runs:
 
 ## Drive-fetch step
 
-If you enabled Drive ingest at `/new-project` time, the cycle starts by pulling URLs from `<parent-folder>/<project-slug>/` in your Drive. Files get deduped against pending/proposed/wiki/done and queued into `_inbox/pending/`. Processed files move to `_completed/<cycle-id>/`.
+If you enabled Drive ingest at `/new-wiki` time, the cycle starts by pulling URLs from `<parent-folder>/<project-slug>/` in your Drive. Files get deduped against pending/proposed/wiki/done and queued into `_inbox/pending/`. Processed files move to `_completed/<cycle-id>/`.
 
 ## Don't
 

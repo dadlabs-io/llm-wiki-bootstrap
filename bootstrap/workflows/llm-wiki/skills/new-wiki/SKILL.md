@@ -1,11 +1,11 @@
 ---
-name: new-project
-description: Scaffold a new project with the LLM-wiki framework. Asks tool (claude-code/cursor), project type (research/development), name, target folder, and Drive ingest preferences. Sets up per-project .claude/skills + llm-wiki/ folder with notes, best-practices, and the project's wiki. For development projects, also wires agentmemory MCP. Use when the user says "new project", "create a new wiki", "install a new wiki", "set up a new wiki", "bootstrap a project", "start a new project", or types "/new-project".
+name: new-wiki
+description: Scaffold a new project with the LLM-wiki framework. Asks tool (claude-code/cursor), project type (research/development), name, target folder, and Drive ingest preferences. Sets up per-project .claude/skills + llm-wiki/ folder with notes, best-practices, and the project's wiki. For development projects, also wires agentmemory MCP. Use when the user says "new project", "create a new wiki", "install a new wiki", "set up a new wiki", "bootstrap a project", "start a new project", or types "/new-wiki".
 ---
 
-# /new-project
+# /new-wiki
 
-Conversational scaffold for a new project. Everything is per-project — the only global thing is this skill itself (lives at `~/.claude/skills/new-project/` so you can invoke it from anywhere).
+Conversational scaffold for a new project. Everything is per-project — the only global thing is this skill itself (lives at `~/.claude/skills/new-wiki/` so you can invoke it from anywhere).
 
 ## Layout this skill creates
 
@@ -34,7 +34,7 @@ Cursor variant: substitutes `.cursor/` for `.claude/`. Additionally generates `.
 ## Flow at a glance
 
 ```
-User: /new-project [name]
+User: /new-wiki [name]
    ↓
 Q1: tool? (claude-code | cursor)
 Q2: research or development?
@@ -106,7 +106,7 @@ Show the proposed plan and wait for "yes" / "go" / "create" before proceeding.
 The global Phase A install (which put this skill in `~/.claude/skills/`) also recorded `bootstrap_source` in `~/.claude/wiki-config.json`. Read that to find where the bootstrap source lives. Then:
 
 ```bash
-python "<bootstrap_source>/bootstrap/workflows/llm-wiki/scripts/new-project.py" \
+python "<bootstrap_source>/bootstrap/workflows/llm-wiki/scripts/new-wiki.py" \
   --phase B \
   --tool <claude-code|cursor> \
   --project-name <slug> \
@@ -171,13 +171,13 @@ If `~/.config/wiki-cycle/client_secrets.json` is missing, the helper prints inst
 
 ## Update mode
 
-`/new-project --sync` re-runs Phase A — refreshes the global `/new-project` skill from the current `bootstrap_source`. Use after `git pull` on the llm-wiki-bootstrap clone.
+`/new-wiki --sync` re-runs Phase A — refreshes the global `/new-wiki` skill from the current `bootstrap_source`. Use after `git pull` on the llm-wiki-bootstrap clone.
 
 To sync a per-project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`.
 
 ## Required: the bootstrap-source path
 
-`/new-project` reads `~/.claude/wiki-config.json` to find where the bootstrap source lives (recorded during Phase A by `install-wiki.ps1`).
+`/new-wiki` reads `~/.claude/wiki-config.json` to find where the bootstrap source lives (recorded during Phase A by `install-wiki.ps1`).
 
 If `~/.claude/wiki-config.json` is missing or doesn't have `bootstrap_source`, the user hasn't run the one-time machine install. Direct them to:
 
@@ -188,7 +188,7 @@ cd ~/llm-wiki-bootstrap
 ./install-wiki.sh      # Mac/Linux
 ```
 
-After that one-time setup, `/new-project` works in any project folder.
+After that one-time setup, `/new-wiki` works in any project folder.
 
 ## Source
 

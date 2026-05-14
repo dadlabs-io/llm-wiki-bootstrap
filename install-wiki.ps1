@@ -3,8 +3,8 @@ install-wiki.ps1 — install the LLM-wiki framework, optionally scaffold a proje
 
 Two modes:
   1. Global install only (no -TargetFolder):
-     Installs the /new-project skill at ~/.claude/skills/new-project/ and
-     records this package's path so /new-project can find it later.
+     Installs the /new-wiki skill at ~/.claude/skills/new-wiki/ and
+     records this package's path so /new-wiki can find it later.
   2. One-shot install + scaffold (with -TargetFolder):
      Does the global install AS NEEDED, then scaffolds the project at
      -TargetFolder (skills + scripts + llm-wiki/ + CLAUDE.md + agentmemory
@@ -73,10 +73,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Bootstrap = $PSScriptRoot
-$Script = Join-Path $Bootstrap "bootstrap\workflows\llm-wiki\scripts\new-project.py"
+$Script = Join-Path $Bootstrap "bootstrap\workflows\llm-wiki\scripts\new-wiki.py"
 
 if (-not (Test-Path $Script)) {
-    Write-Host "ERR: new-project.py not found at $Script" -ForegroundColor Red
+    Write-Host "ERR: new-wiki.py not found at $Script" -ForegroundColor Red
     Write-Host "Is this the correct package root?" -ForegroundColor Red
     exit 2
 }
@@ -106,7 +106,7 @@ if ($AlreadyInstalled -and -not $Force -and -not $RefreshOnly) {
     }
     Write-Host ""
     Write-Host "Choose:"
-    Write-Host "  [R] Refresh — re-copy /new-project skill from current bootstrap source (default)"
+    Write-Host "  [R] Refresh — re-copy /new-wiki skill from current bootstrap source (default)"
     Write-Host "  [S] Skip   — exit without changes"
     Write-Host "  [F] Force  — wipe existing install + reinstall fresh"
     $choice = Read-Host "Choice [R/S/F]"
@@ -116,7 +116,7 @@ if ($AlreadyInstalled -and -not $Force -and -not $RefreshOnly) {
             exit 0
         }
         '^[Ff]' {
-            Write-Host "Wiping existing /new-project skill..." -ForegroundColor Yellow
+            Write-Host "Wiping existing /new-wiki skill..." -ForegroundColor Yellow
             $skillDir = Join-Path $env:USERPROFILE ".claude\skills\new-project"
             Remove-Item -Recurse -Force $skillDir -ErrorAction SilentlyContinue
             # Keep wiki-config.json — it will be updated, not wiped (user settings live there)
@@ -156,7 +156,7 @@ if (-not $TargetFolder) {
     Write-Host "Next steps:" -ForegroundColor Green
     Write-Host "  1. Restart Claude Code" -ForegroundColor Green
     Write-Host "  2. cd to any project folder" -ForegroundColor Green
-    Write-Host "  3. Run /new-project — it asks tool, type, name, Drive prefs and does the rest" -ForegroundColor Green
+    Write-Host "  3. Run /new-wiki — it asks tool, type, name, Drive prefs and does the rest" -ForegroundColor Green
     Write-Host ""
     Write-Host "Or skip the two-step: re-run install-wiki.ps1 with -TargetFolder <path> to scaffold a project in one shot." -ForegroundColor DarkGray
     exit 0

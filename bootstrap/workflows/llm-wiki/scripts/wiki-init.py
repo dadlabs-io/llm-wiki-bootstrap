@@ -7,7 +7,7 @@ Usage:
     python3 wiki-init.py --topic <name> --description "..." --vault /custom/vault
 
 If --vault is omitted, defaults to the vault_root recorded in
-<cwd>/.claude/wiki-config.json (set by /new-project), or "llm-wiki/wiki"
+<cwd>/.claude/wiki-config.json (set by /new-wiki), or "llm-wiki/wiki"
 relative to CWD as a final fallback. Both --topic and --description are
 required because the slash command body is responsible for asking the
 user when they're missing.
