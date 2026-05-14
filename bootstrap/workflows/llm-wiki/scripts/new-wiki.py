@@ -792,28 +792,25 @@ def phase_b(args):
 
     needs_restart = False
 
-    # B10 — agentmemory (development only)
-    if project_type == "development" and args.no_agentmemory:
-        _info("skipping agentmemory install (--no-agentmemory passed)")
-        _info("  wire it yourself later by adding to <target>/.mcp.json:")
-        _info('    { "mcpServers": { "agentmemory": { "command": "npx", "args": ["-y", "@agentmemory/mcp"] } } }')
-    elif project_type == "development":
-        if _agentmemory_wired(paths["settings"]):
-            _ok("agentmemory already wired in this project")
-        else:
-            _info("agentmemory: install + wire (per-project)")
-            if args.dry_run:
-                print("WOULD run: npx @agentmemory/agentmemory (background)")
-                print(f"WOULD merge agentmemory MCP entry into {paths['settings']}")
-            else:
-                ok = _install_agentmemory()
-                if not ok:
-                    _err("agentmemory install failed; surface this to user")
-                    return 1
-                _merge_agentmemory_mcp(paths["settings"], tool=args.tool, target=target)
-                needs_restart = True
-                project_cfg["agentmemory_wired"] = True
-                _save_config(project_cfg, paths["config"])
+    # B10 — agentmemory: official plugin path
+    #
+    # We previously hand-wired @agentmemory/mcp into .mcp.json, but that's only
+    # half of what's needed — auto-capture of session events requires the
+    # upstream's Claude Code plugin (which installs 12 hooks + 4 skills + .mcp.json)
+    # AND the iii-engine REST server running on localhost:3111. Hand-wiring just
+    # the MCP gives you a connected-but-dormant tool that the agent never calls.
+    #
+    # The official plugin (https://github.com/rohitg00/agentmemory) handles all
+    # three pieces correctly. We just nudge the user to install it.
+    if project_type == "development" and not args.no_agentmemory:
+        _info("agentmemory wiring — use the official plugin (not hand-wired)")
+        _info("  After scaffolding, the user should run from Claude Code (inside")
+        _info("  this project):")
+        _info("    /plugin marketplace add rohitg00/agentmemory")
+        _info("    /plugin install agentmemory")
+        _info("  And in a separate terminal (one-time, machine-global):")
+        _info("    npx @agentmemory/agentmemory     # starts the iii-engine REST server")
+        _info("  See https://github.com/rohitg00/agentmemory for details.")
 
     # B11 — summary + project-type-specific next steps
     start_cmd = "claude" if args.tool == "claude-code" else "cursor ."
@@ -822,6 +819,10 @@ def phase_b(args):
         next_steps = [
             f"cd {target}",
             start_cmd,
+            "Install agentmemory (one-time, recommended):",
+            "  /plugin marketplace add rohitg00/agentmemory",
+            "  /plugin install agentmemory",
+            "  In a separate terminal: `npx @agentmemory/agentmemory` (starts the REST server)",
             "Read llm-wiki/README.md (project overview)",
             "Read llm-wiki/how-to/commands.md (full command reference)",
             "Code + decide + investigate as normal",
