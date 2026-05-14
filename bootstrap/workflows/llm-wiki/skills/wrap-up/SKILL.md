@@ -57,11 +57,14 @@ I see the following durable work from this session:
 | 2 | decision | --move-handled default-ON for wiki-fetch-drive-folder | wiki/decisions/ |
 | 3 | pattern | URL-dedup at producer (wiki-list-add) — defense-in-depth against stale-requeue | wiki/patterns/ |
 
-For each: keep / drop / reframe?
-Format: "1 keep, 2 drop, 3 reframe to <new title>"
+**Bulk accept (default):** `go` / `all` / `keep all` / `roll them up` — files every proposed entry as-is.
+**Bulk reject:** `none` / `drop all` / `skip` — files nothing.
+**Per-item override:** `1 keep, 2 drop, 3 reframe to <new title>` — escape hatch for surgical control.
+
+Show the bulk-accept option first so a one-word `go` is the obvious path. Per-item syntax is the escape hatch, not the default.
 ```
 
-Wait for explicit confirmation. The user MUST get to veto before any wiki entry is filed.
+Wait for explicit confirmation. The user MUST get to veto before any wiki entry is filed — but a one-word `go` is a valid veto-not-exercised.
 
 ### Step 3 — File each kept candidate to `_inbox/proposed/`
 
