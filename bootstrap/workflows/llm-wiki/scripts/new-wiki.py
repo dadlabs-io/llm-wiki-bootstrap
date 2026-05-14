@@ -817,6 +817,11 @@ def phase_b(args):
 
     if project_type == "development":
         next_steps = [
+            # --- Prerequisite: Docker (or native iii.exe) must be running first ---
+            "PREREQUISITE: agentmemory's iii-engine needs EITHER Docker Desktop running OR a native iii.exe (v0.11.2) on PATH:",
+            "  Option A (easier): Start Docker Desktop. Wait for the whale icon to be solid (not animating).",
+            "  Option B (lighter): Download iii.exe v0.11.2 from https://github.com/iiidev/iii/releases and put it in `C:\\Users\\<you>\\.local\\bin\\` (on your PATH).",
+            "  Without one of these, `npx @agentmemory/agentmemory` fails with 'iii-engine did not become ready' and agentmemory won't capture anything.",
             # --- Terminal phase (do all this BEFORE starting Claude Code) ---
             "In a fresh terminal window, start the agentmemory REST engine:",
             "  `npx @agentmemory/agentmemory`",

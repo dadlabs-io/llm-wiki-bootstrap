@@ -40,15 +40,24 @@ This project assumes the upstream agentmemory plugin is installed (rohitg00/agen
 - **4 skills** for memory recall/search/save
 - A `.mcp.json` entry wiring the on-demand MCP server
 
-One-time install (inside any project after starting `claude`):
+### Prerequisite: iii-engine runtime
+
+agentmemory needs an `iii-engine` REST server on `localhost:3111`. It runs that engine via EITHER Docker Desktop OR a native `iii.exe` binary. Pick one before you start the engine:
+
+- **Docker path** (easiest if Docker Desktop is already installed): start Docker Desktop. Wait for the whale icon in your tray to be solid (not animating) — Docker reports "running" before the daemon is actually ready, and starting the engine too early gives a misleading "iii-engine did not become ready" error.
+- **Native path** (lighter, no Docker): download `iii.exe` v0.11.2 from https://github.com/iiidev/iii/releases, put it in `C:\Users\<you>\.local\bin\` (on PATH). agentmemory will find it and skip Docker entirely.
+
+### Install steps
+
+In a separate terminal (machine-global, one-time):
+```
+npx @agentmemory/agentmemory     # starts the iii-engine REST server on :3111
+```
+
+Then inside any project after starting `claude`:
 ```
 /plugin marketplace add rohitg00/agentmemory
 /plugin install agentmemory
-```
-
-And in a separate terminal (machine-global, one-time):
-```
-npx @agentmemory/agentmemory     # starts the iii-engine REST server on :3111
 ```
 
 The REST server has to be running for any auto-capture to actually persist. Without it, hooks fire but their HTTP POSTs silently fail.
