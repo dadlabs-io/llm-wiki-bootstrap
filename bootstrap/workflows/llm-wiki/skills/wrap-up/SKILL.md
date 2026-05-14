@@ -32,7 +32,14 @@ If `project_type: research` — refuse and point user at `/wiki-update`.
 
 ### Step 1 — Scan the session for durable work
 
-Look at: the conversation in this session, files modified (`git status` + `git diff HEAD~N`), recent commits, any session scratchpad at `<vault>/<project>/_inbox/sessions/<session-id>/`.
+Look at: the conversation in this session, files modified, recent commits, any session scratchpad at `<vault>/<project>/_inbox/sessions/<session-id>/`.
+
+**Gracefully handle empty / brand-new repos.** `git log` exits 128 ("does not have any commits yet") on a freshly-scaffolded project, and `git diff HEAD~N` won't have anchors to compare against. Don't treat those as failures — they're the most common first-wrap-up state. Fall back to:
+- `git status --short` (works on a zero-commit repo) for the file list
+- `git diff --no-index /dev/null <file>` if you need diff content for a never-committed file
+- Or just read the files directly via the Read tool and synthesize from the conversation context — the conversation is the primary source anyway; git is supplementary.
+
+If you see "does not have any commits yet" or "fatal: ambiguous argument 'HEAD'" — treat as "everything is new", not as an error.
 
 Identify candidates by category. Each candidate gets ONE row in a proposal table.
 
