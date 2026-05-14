@@ -2,7 +2,7 @@
 
 Install the LLM-wiki framework on a fresh machine. Ships /new-project, /wrap-up, /wiki-cycle, /wiki-search, /wiki-update, and the supporting scripts + templates + seed content. After install, you scaffold per-project with `/new-project` inside any project folder.
 
-**Version:** `2026-05-13`
+**Version:** `2026-05-14`
 **Source repo:** [dadlabs-io/workflows-core](https://github.com/dadlabs-io/workflows-core) (this package is generated from `bootstrap/workflows/llm-wiki/`)
 
 ## Install model
@@ -16,49 +16,80 @@ Install the LLM-wiki framework on a fresh machine. Ships /new-project, /wrap-up,
 
 This means: skills + scripts live PER PROJECT (not globally). Updates to one project don't affect others.
 
-## One-time machine install
+## Quick start — one command
 
-### Windows (PowerShell)
 ```powershell
 git clone https://github.com/dadlabs-io/llm-wiki-bootstrap.git ~/llm-wiki-bootstrap
 cd ~/llm-wiki-bootstrap
-.\install-wiki.ps1
+
+# Install + scaffold a new project in one shot (interactive prompts):
+.\install-wiki.ps1 -TargetFolder C:\github.com\my-new-project
 ```
 
-### Mac / Linux (bash)
+Mac / Linux:
 ```bash
 git clone https://github.com/dadlabs-io/llm-wiki-bootstrap.git ~/llm-wiki-bootstrap
 cd ~/llm-wiki-bootstrap
-./install-wiki.sh
+./install-wiki.sh --target-folder ~/proj/my-new-project
 ```
 
 Requires: Python 3.10+, Git, Node.js (only if you'll use development projects with agentmemory).
 
-After install, restart Claude Code so it picks up the new global `/new-project` skill.
+After install, restart Claude Code so it picks up the new skills, then `cd <target-folder>` and start coding.
 
-## Install options
+## Modes
+
+### A. Global-only install (defer project scaffold to later)
 
 ```powershell
-# Default: install /new-project globally, no Drive default
-.\install-wiki.ps1
-
-# Enable Drive ingest by default (will walk you through OAuth on first /new-project)
-.\install-wiki.ps1 -DriveEnabled yes -DriveParentFolder "__FOR CLAUDE"
+.\install-wiki.ps1                              # just installs /new-project globally
 ```
 
-`install-wiki.sh` accepts equivalent `--drive-enabled` and `--drive-parent-folder` flags.
-
-Tool choice (claude-code vs cursor) and project type (research vs development) are NOT picked at install — they're per-project, asked by `/new-project`.
-
-## After install — scaffold a project
-
+Then later, in any project folder:
 ```
-cd <your-project-folder>
-claude       # or: cursor .
+claude
 > /new-project
 ```
 
-`/new-project` asks tool, project type, name, description, target, and Drive prefs. Then it creates the per-project layout and (for development projects) wires agentmemory.
+The conversational `/new-project` asks the same questions and scaffolds.
+
+### B. One-shot install + scaffold (the quick start above)
+
+```powershell
+.\install-wiki.ps1 -TargetFolder <path>             # interactive prompts
+.\install-wiki.ps1 -TargetFolder <path> `
+    -ProjectType development -ProjectName myproj `
+    -ProjectDescription "..." -DriveEnabled yes    # fully scripted, no prompts
+```
+
+`install-wiki.sh` accepts equivalent `--target-folder`, `--project-type`, `--project-name`, `--project-description`, `--drive-enabled`, `--drive-parent-folder`, `--tool` flags.
+
+### C. Existing install — refresh skills from current bootstrap
+
+```powershell
+.\install-wiki.ps1 -RefreshOnly                # idempotent re-copy
+```
+
+Or from inside Claude Code: `/new-project --sync` does the same.
+
+## What you get per project
+
+```
+<target>/
+├── .claude/skills/         (or .cursor/skills/)  ← 14 skills
+├── .claude/wiki-scripts/                          ← 15 scripts
+├── .claude/wiki-templates/
+├── .claude/wiki-config.json
+├── .claude/settings.json                          ← agentmemory MCP (dev only)
+├── llm-wiki/
+│   ├── README.md
+│   ├── how-to/                                    ← 6 usage docs
+│   ├── best-practices/                            ← 17 dev best practices
+│   └── wiki/                                      ← your project's research/dev entries
+├── CLAUDE.md
+├── README.md
+└── .gitignore
+```
 
 For each session afterward: `/wrap-up` at the end (dev projects) or `/wiki-cycle` for research projects.
 

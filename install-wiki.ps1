@@ -1,35 +1,62 @@
 <#
-install-wiki.ps1 — one-time machine install for the LLM-wiki framework.
+install-wiki.ps1 — install the LLM-wiki framework, optionally scaffold a project.
 
-What this does:
-  1. Installs the /new-project skill globally at ~/.claude/skills/new-project/
-  2. Records this package's path in ~/.claude/wiki-config.json as bootstrap_source
-  3. (Optional) Records a default Drive parent folder for ingest
+Two modes:
+  1. Global install only (no -TargetFolder):
+     Installs the /new-project skill at ~/.claude/skills/new-project/ and
+     records this package's path so /new-project can find it later.
+  2. One-shot install + scaffold (with -TargetFolder):
+     Does the global install AS NEEDED, then scaffolds the project at
+     -TargetFolder (skills + scripts + llm-wiki/ + CLAUDE.md + agentmemory
+     for dev projects + Drive OAuth if enabled).
 
-What this does NOT do:
-  - Scaffold any project. That happens per-project when you run /new-project
-    inside a project folder via Claude Code (or Cursor).
+Usage examples (from this package's root):
+  # Global install only
+  .\install-wiki.ps1
 
-After this script succeeds:
-  1. Restart Claude Code so it picks up the new global skill
-  2. cd to any project folder
-  3. Start Claude Code there
-  4. Run /new-project — it asks tool, type, name, Drive prefs and does the rest
+  # Install + scaffold a new project in one command (interactive prompts for
+  # anything not passed):
+  .\install-wiki.ps1 -TargetFolder C:\github.com\dnd-project
 
-Usage (from this package's root):
-  .\install-wiki.ps1                                     # no Drive default
-  .\install-wiki.ps1 -DriveEnabled yes                   # Drive ingest, default folder
-  .\install-wiki.ps1 -DriveEnabled yes -DriveParentFolder "MyDriveFolder"
+  # Fully scripted (no prompts):
+  .\install-wiki.ps1 -TargetFolder C:\github.com\dnd-project `
+      -ProjectType development -ProjectName dnd-project `
+      -ProjectDescription "D&D combat engine" -DriveEnabled yes
 
-Re-running the script:
-  By default, if the framework is already installed, you'll see the existing
-  install info and be prompted: Refresh / Skip / Force-reinstall.
+  # Re-run / refresh global skill from current bootstrap source:
+  .\install-wiki.ps1 -RefreshOnly
 
-  -Force          : skip prompt; wipe existing skill + reinstall fresh
-  -RefreshOnly    : skip prompt; refresh skill from current bootstrap (idempotent)
+After install (whether one-shot or two-step):
+  - Restart Claude Code so it picks up new skills
+  - cd to the project folder
+  - Start coding — /wrap-up at session end, /wiki-search to look things up
+
+Flags:
+  -TargetFolder      : enable scaffold; project root to create/populate
+  -Tool              : claude-code (default) | cursor
+  -ProjectType       : research | development (asked if not set + -TargetFolder)
+  -ProjectName       : project slug (defaults to target-folder leaf name)
+  -ProjectDescription: one-liner (asked if not set + -TargetFolder)
+  -DriveEnabled      : yes | no (default no)
+  -DriveParentFolder : Google Drive parent folder name (default "__FOR CLAUDE")
+  -Force             : skip already-installed prompt; wipe + reinstall skill
+  -RefreshOnly       : skip prompt; idempotent refresh
 #>
 
 param(
+    # Phase B (per-project scaffold) — set this to trigger the one-shot path
+    [string]$TargetFolder = "",
+
+    [ValidateSet("claude-code", "cursor")]
+    [string]$Tool = "claude-code",
+
+    [ValidateSet("research", "development")]
+    [string]$ProjectType = "",
+
+    [string]$ProjectName = "",
+
+    [string]$ProjectDescription = "",
+
     [ValidateSet("yes", "no")]
     [string]$DriveEnabled = "no",
 
@@ -117,14 +144,90 @@ Write-Host ""
 
 $exit = $LASTEXITCODE
 
-if ($exit -eq 0) {
+if ($exit -ne 0) {
+    exit $exit
+}
+
+# ---------- Phase B (per-project scaffold) — only if -TargetFolder provided ----------
+
+if (-not $TargetFolder) {
     Write-Host ""
-    Write-Host "Install complete." -ForegroundColor Green
+    Write-Host "Global install complete." -ForegroundColor Green
     Write-Host "Next steps:" -ForegroundColor Green
     Write-Host "  1. Restart Claude Code" -ForegroundColor Green
     Write-Host "  2. cd to any project folder" -ForegroundColor Green
-    Write-Host "  3. Start Claude Code there" -ForegroundColor Green
-    Write-Host "  4. Run /new-project — it asks tool, type, name, Drive prefs and does the rest" -ForegroundColor Green
+    Write-Host "  3. Run /new-project — it asks tool, type, name, Drive prefs and does the rest" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Or skip the two-step: re-run install-wiki.ps1 with -TargetFolder <path> to scaffold a project in one shot." -ForegroundColor DarkGray
+    exit 0
 }
 
-exit $exit
+Write-Host ""
+Write-Host "Scaffolding project at $TargetFolder..." -ForegroundColor Cyan
+
+# Interactive prompts for anything not provided
+if (-not $ProjectType) {
+    Write-Host ""
+    Write-Host "What kind of project is this?"
+    Write-Host "  1. research     — ingesting external content into a knowledge base"
+    Write-Host "  2. development  — building code, capturing design decisions"
+    $ptChoice = Read-Host "Pick (1 or 2)"
+    if ($ptChoice -eq "1" -or $ptChoice -eq "research") { $ProjectType = "research" }
+    elseif ($ptChoice -eq "2" -or $ptChoice -eq "development") { $ProjectType = "development" }
+    else { Write-Host "ERR: invalid choice" -ForegroundColor Red; exit 2 }
+}
+
+if (-not $ProjectName) {
+    $defaultName = (Split-Path $TargetFolder -Leaf).ToLower() -replace "[^a-z0-9]+", "-"
+    $defaultName = $defaultName.Trim("-")
+    $ProjectName = Read-Host "Project name (slug) [default: $defaultName]"
+    if (-not $ProjectName) { $ProjectName = $defaultName }
+}
+
+if (-not $ProjectDescription) {
+    $ProjectDescription = Read-Host "One-line description (optional)"
+}
+
+Write-Host ""
+Write-Host "About to scaffold:" -ForegroundColor Cyan
+Write-Host "  Tool:           $Tool"
+Write-Host "  Project type:   $ProjectType"
+Write-Host "  Project name:   $ProjectName"
+Write-Host "  Target folder:  $TargetFolder"
+Write-Host "  Description:    $ProjectDescription"
+Write-Host "  Drive ingest:   $DriveEnabled"
+Write-Host ""
+
+$phaseBArgs = @(
+    $Script,
+    "--phase", "B",
+    "--tool", $Tool,
+    "--project-name", $ProjectName,
+    "--project-description", $ProjectDescription,
+    "--project-type", $ProjectType,
+    "--target-folder", $TargetFolder,
+    "--bootstrap-source", $Bootstrap,
+    "--drive-enabled", $DriveEnabled,
+    "--drive-parent-folder", $DriveParentFolder
+)
+
+& $py.Source @phaseBArgs
+$phaseBExit = $LASTEXITCODE
+
+if ($phaseBExit -eq 0) {
+    Write-Host ""
+    Write-Host "Project scaffolded." -ForegroundColor Green
+    Write-Host "Next steps:" -ForegroundColor Green
+    Write-Host "  cd $TargetFolder" -ForegroundColor Green
+    if ($Tool -eq "claude-code") {
+        Write-Host "  claude       # start Claude Code in this project" -ForegroundColor Green
+    } else {
+        Write-Host "  cursor .     # open in Cursor" -ForegroundColor Green
+    }
+    Write-Host "  Read llm-wiki/README.md for an overview" -ForegroundColor Green
+} elseif ($phaseBExit -eq 2) {
+    Write-Host ""
+    Write-Host "RESTART CLAUDE CODE — agentmemory MCP was wired and needs a reload." -ForegroundColor Yellow
+}
+
+exit $phaseBExit

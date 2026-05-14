@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-05-13T23:38:02+00:00",
+  "built_at": "2026-05-14T15:49:25+00:00",
   "file_count": 62,
   "package_layout": {
     "scripts": "bootstrap\\workflows\\llm-wiki\\scripts",
@@ -9,5 +9,5 @@
   },
   "source_path": "bootstrap/workflows/llm-wiki/",
   "source_repo": "workflows-core",
-  "version": "2026-05-13"
+  "version": "2026-05-14"
 }

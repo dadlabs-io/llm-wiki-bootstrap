@@ -1,35 +1,37 @@
 #!/usr/bin/env bash
-# install-wiki.sh — one-time machine install for the LLM-wiki framework.
+# install-wiki.sh — install the LLM-wiki framework, optionally scaffold a project.
 #
-# What this does:
-#   1. Installs the /new-project skill globally at ~/.claude/skills/new-project/
-#   2. Records this package's path in ~/.claude/wiki-config.json as bootstrap_source
-#   3. (Optional) Records a default Drive parent folder for ingest
+# Two modes:
+#   1. Global install only (no --target-folder):
+#      Installs the /new-project skill at ~/.claude/skills/new-project/.
+#   2. One-shot install + scaffold (with --target-folder):
+#      Global install AS NEEDED, then scaffolds the project at --target-folder.
 #
-# What this does NOT do:
-#   - Scaffold any project. That happens per-project when you run /new-project
-#     inside a project folder via Claude Code (or Cursor).
+# Usage examples (from this package's root):
+#   ./install-wiki.sh                                        # global only
+#   ./install-wiki.sh --target-folder ~/proj/dnd-project     # install + scaffold (interactive)
+#   ./install-wiki.sh --target-folder ~/proj/dnd-project \
+#       --project-type development --project-name dnd-project \
+#       --project-description "D&D combat engine" --drive-enabled yes
 #
-# After this script succeeds:
-#   1. Restart Claude Code so it picks up the new global skill
-#   2. cd to any project folder
-#   3. Start Claude Code there
-#   4. Run /new-project — it asks tool, type, name, Drive prefs and does the rest
-#
-# Usage (from this package's root):
-#   ./install-wiki.sh                                       # no Drive default
-#   ./install-wiki.sh --drive-enabled yes                   # Drive ingest, default folder
-#   ./install-wiki.sh --drive-enabled yes --drive-parent-folder "MyDriveFolder"
-#
-# Re-running the script:
-#   By default, if the framework is already installed, you'll see the existing
-#   install info and be prompted: Refresh / Skip / Force-reinstall.
-#
-#   --force          : skip prompt; wipe existing skill + reinstall fresh
-#   --refresh-only   : skip prompt; refresh skill from current bootstrap (idempotent)
+# Flags:
+#   --target-folder       Enable scaffold; project root to create/populate
+#   --tool                claude-code (default) | cursor
+#   --project-type        research | development (asked if missing + --target-folder)
+#   --project-name        Project slug (defaults to target leaf name)
+#   --project-description One-liner (asked if missing + --target-folder)
+#   --drive-enabled       yes | no (default no)
+#   --drive-parent-folder Google Drive parent folder name (default "__FOR CLAUDE")
+#   --force               Skip already-installed prompt; wipe + reinstall skill
+#   --refresh-only        Skip prompt; idempotent refresh
 
 set -euo pipefail
 
+TARGET_FOLDER=""
+TOOL="claude-code"
+PROJECT_TYPE=""
+PROJECT_NAME=""
+PROJECT_DESCRIPTION=""
 DRIVE_ENABLED="no"
 DRIVE_PARENT_FOLDER="__FOR CLAUDE"
 FORCE="no"
@@ -37,6 +39,11 @@ REFRESH_ONLY="no"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --target-folder) TARGET_FOLDER="$2"; shift 2;;
+        --tool) TOOL="$2"; shift 2;;
+        --project-type) PROJECT_TYPE="$2"; shift 2;;
+        --project-name) PROJECT_NAME="$2"; shift 2;;
+        --project-description) PROJECT_DESCRIPTION="$2"; shift 2;;
         --drive-enabled) DRIVE_ENABLED="$2"; shift 2;;
         --drive-parent-folder) DRIVE_PARENT_FOLDER="$2"; shift 2;;
         --force) FORCE="yes"; shift;;
@@ -124,14 +131,88 @@ echo
 
 EXIT=$?
 
-if [[ $EXIT -eq 0 ]]; then
+if [[ $EXIT -ne 0 ]]; then
+    exit $EXIT
+fi
+
+# ---------- Phase B (per-project scaffold) — only if --target-folder provided ----------
+
+if [[ -z "$TARGET_FOLDER" ]]; then
     echo
-    echo "Install complete."
+    echo "Global install complete."
     echo "Next steps:"
     echo "  1. Restart Claude Code"
     echo "  2. cd to any project folder"
-    echo "  3. Start Claude Code there"
-    echo "  4. Run /new-project — it asks tool, type, name, Drive prefs and does the rest"
+    echo "  3. Run /new-project — it asks tool, type, name, Drive prefs and does the rest"
+    echo
+    echo "Or skip the two-step: re-run with --target-folder <path> to scaffold in one shot."
+    exit 0
 fi
 
-exit $EXIT
+echo
+echo "Scaffolding project at $TARGET_FOLDER..."
+
+# Interactive prompts for anything not provided
+if [[ -z "$PROJECT_TYPE" ]]; then
+    echo
+    echo "What kind of project is this?"
+    echo "  1. research     — ingesting external content into a knowledge base"
+    echo "  2. development  — building code, capturing design decisions"
+    read -p "Pick (1 or 2): " pt
+    case "$pt" in
+        1|research) PROJECT_TYPE="research" ;;
+        2|development) PROJECT_TYPE="development" ;;
+        *) echo "ERR: invalid choice" >&2; exit 2 ;;
+    esac
+fi
+
+if [[ -z "$PROJECT_NAME" ]]; then
+    DEFAULT_NAME=$(basename "$TARGET_FOLDER" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\+/-/g' | sed 's/^-\|-$//g')
+    read -p "Project name (slug) [default: $DEFAULT_NAME]: " PROJECT_NAME
+    PROJECT_NAME="${PROJECT_NAME:-$DEFAULT_NAME}"
+fi
+
+if [[ -z "$PROJECT_DESCRIPTION" ]]; then
+    read -p "One-line description (optional): " PROJECT_DESCRIPTION
+fi
+
+echo
+echo "About to scaffold:"
+echo "  Tool:           $TOOL"
+echo "  Project type:   $PROJECT_TYPE"
+echo "  Project name:   $PROJECT_NAME"
+echo "  Target folder:  $TARGET_FOLDER"
+echo "  Description:    $PROJECT_DESCRIPTION"
+echo "  Drive ingest:   $DRIVE_ENABLED"
+echo
+
+"$PY" "$SCRIPT" \
+    --phase B \
+    --tool "$TOOL" \
+    --project-name "$PROJECT_NAME" \
+    --project-description "$PROJECT_DESCRIPTION" \
+    --project-type "$PROJECT_TYPE" \
+    --target-folder "$TARGET_FOLDER" \
+    --bootstrap-source "$HERE" \
+    --drive-enabled "$DRIVE_ENABLED" \
+    --drive-parent-folder "$DRIVE_PARENT_FOLDER"
+
+PHASE_B_EXIT=$?
+
+if [[ $PHASE_B_EXIT -eq 0 ]]; then
+    echo
+    echo "Project scaffolded."
+    echo "Next steps:"
+    echo "  cd $TARGET_FOLDER"
+    if [[ "$TOOL" == "claude-code" ]]; then
+        echo "  claude       # start Claude Code in this project"
+    else
+        echo "  cursor .     # open in Cursor"
+    fi
+    echo "  Read llm-wiki/README.md for an overview"
+elif [[ $PHASE_B_EXIT -eq 2 ]]; then
+    echo
+    echo "RESTART CLAUDE CODE — agentmemory MCP was wired and needs a reload."
+fi
+
+exit $PHASE_B_EXIT
