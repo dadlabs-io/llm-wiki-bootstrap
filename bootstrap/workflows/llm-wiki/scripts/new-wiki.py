@@ -55,7 +55,7 @@ def project_paths(tool: str, target: Path) -> dict:
       <target>/.claude/wiki-scripts/   ← Python helpers
       <target>/.claude/wiki-templates/ ← project-bootstrap templates
       <target>/.claude/wiki-config.json
-      <target>/.claude/settings.json   ← MCP wiring (agentmemory)
+      <target>/.mcp.json               ← MCP wiring (agentmemory) at project root
       <target>/llm-wiki/               ← human-readable wiki content
         ├── README.md                  ← how to use this framework
         ├── how-to/                    ← seed how-to docs
@@ -70,7 +70,11 @@ def project_paths(tool: str, target: Path) -> dict:
     """
     if tool == "claude-code":
         tool_dir = target / ".claude"
-        settings = tool_dir / "settings.json"
+        # Claude Code reads project-scoped MCP servers from <target>/.mcp.json
+        # at the project root, NOT from <target>/.claude/settings.json (which
+        # is for permissions/hooks/env). See:
+        #   https://docs.claude.com/en/docs/claude-code/mcp#project-scope
+        settings = target / ".mcp.json"
     elif tool == "cursor":
         tool_dir = target / ".cursor"
         settings = tool_dir / "mcp.json"
@@ -391,7 +395,7 @@ def _install_agentmemory():
     on-demand via the `mcpServers` config entry when the editor launches in the
     project. There is no long-running HTTP listener to probe, so we don't try
     to start a server here. We just verify npx exists (so the on-demand spawn
-    will work later) and write the MCP entry to .claude/settings.json.
+    will work later) and write the MCP entry to <target>/.mcp.json.
     """
     _info("wiring agentmemory MCP server")
     _info("  repo:    https://github.com/rohitg00/agentmemory")
@@ -540,7 +544,7 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
 #   <target>/.claude/wiki-scripts/
 #   <target>/.claude/wiki-templates/
 #   <target>/.claude/wiki-config.json
-#   <target>/.claude/settings.json   (if dev project, agentmemory MCP wiring)
+#   <target>/.mcp.json               (if dev project, agentmemory MCP wiring at project root)
 #   <target>/llm-wiki/
 #     ├── README.md                  (rendered from seed/llm-wiki-readme.md.tmpl)
 #     ├── how-to/                    (seeded from seed/how-to/)
@@ -775,8 +779,8 @@ def phase_b(args):
     # B10 — agentmemory (development only)
     if project_type == "development" and args.no_agentmemory:
         _info("skipping agentmemory install (--no-agentmemory passed)")
-        _info("  wire it yourself later by adding to .claude/settings.json:")
-        _info('    "mcpServers": { "agentmemory": { "command": "npx", "args": ["-y", "@agentmemory/mcp"] } }')
+        _info("  wire it yourself later by adding to <target>/.mcp.json:")
+        _info('    { "mcpServers": { "agentmemory": { "command": "npx", "args": ["-y", "@agentmemory/mcp"] } } }')
     elif project_type == "development":
         if _agentmemory_wired(paths["settings"]):
             _ok("agentmemory already wired in this project")
