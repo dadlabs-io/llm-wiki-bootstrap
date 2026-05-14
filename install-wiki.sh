@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install-wiki.sh — install the LLM-wiki framework, optionally scaffold a project.
+# install-wiki.sh -- install the LLM-wiki framework, optionally scaffold a project.
 #
 # Two modes:
 #   1. Global install only (no --target-folder):
@@ -95,9 +95,9 @@ except Exception as e:
 "
     echo
     echo "Choose:"
-    echo "  [R] Refresh — re-copy /new-wiki skill from current bootstrap source (default)"
-    echo "  [S] Skip   — exit without changes"
-    echo "  [F] Force  — wipe existing install + reinstall fresh"
+    echo "  [R] Refresh -- re-copy /new-wiki skill from current bootstrap source (default)"
+    echo "  [S] Skip   -- exit without changes"
+    echo "  [F] Force  -- wipe existing install + reinstall fresh"
     read -p "Choice [R/S/F]: " choice
     case "$choice" in
         [Ss]*)
@@ -135,7 +135,7 @@ if [[ $EXIT -ne 0 ]]; then
     exit $EXIT
 fi
 
-# ---------- Phase B (per-project scaffold) — only if --target-folder provided ----------
+# ---------- Phase B (per-project scaffold) -- only if --target-folder provided ----------
 
 if [[ -z "$TARGET_FOLDER" ]]; then
     echo
@@ -143,7 +143,7 @@ if [[ -z "$TARGET_FOLDER" ]]; then
     echo "Next steps:"
     echo "  1. Restart Claude Code"
     echo "  2. cd to any project folder"
-    echo "  3. Run /new-wiki — it asks tool, type, name, Drive prefs and does the rest"
+    echo "  3. Run /new-wiki -- it asks tool, type, name, Drive prefs and does the rest"
     echo
     echo "Or skip the two-step: re-run with --target-folder <path> to scaffold in one shot."
     exit 0
@@ -156,8 +156,8 @@ echo "Scaffolding project at $TARGET_FOLDER..."
 if [[ -z "$PROJECT_TYPE" ]]; then
     echo
     echo "What kind of project is this?"
-    echo "  1. research     — ingesting external content into a knowledge base"
-    echo "  2. development  — building code, capturing design decisions"
+    echo "  1. research     -- ingesting external content into a knowledge base"
+    echo "  2. development  -- building code, capturing design decisions"
     read -p "Pick (1 or 2): " pt
     case "$pt" in
         1|research) PROJECT_TYPE="research" ;;
@@ -212,7 +212,7 @@ if [[ $PHASE_B_EXIT -eq 0 ]]; then
     echo "  Read llm-wiki/README.md for an overview"
 elif [[ $PHASE_B_EXIT -eq 2 ]]; then
     echo
-    echo "RESTART CLAUDE CODE — agentmemory MCP was wired and needs a reload."
+    echo "RESTART CLAUDE CODE -- agentmemory MCP was wired and needs a reload."
 fi
 
 exit $PHASE_B_EXIT

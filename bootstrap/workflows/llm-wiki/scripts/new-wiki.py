@@ -143,19 +143,19 @@ TAXONOMY = {
 # ---------- Helpers ----------
 
 def _info(msg):
-    print(f"[new-project] {msg}", file=sys.stderr)
+    print(f"[new-wiki] {msg}", file=sys.stderr)
 
 
 def _ok(msg):
-    print(f"[new-project] ✓ {msg}", file=sys.stderr)
+    print(f"[new-wiki] ✓ {msg}", file=sys.stderr)
 
 
 def _warn(msg):
-    print(f"[new-project] ! {msg}", file=sys.stderr)
+    print(f"[new-wiki] ! {msg}", file=sys.stderr)
 
 
 def _err(msg):
-    print(f"[new-project] ✗ {msg}", file=sys.stderr)
+    print(f"[new-wiki] ✗ {msg}", file=sys.stderr)
 
 
 def _load_config(config_path: Path = CC_GLOBAL_CONFIG_PATH):

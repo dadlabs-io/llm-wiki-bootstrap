@@ -1,5 +1,5 @@
-<#
-install-wiki.ps1 — install the LLM-wiki framework, optionally scaffold a project.
+﻿<#
+install-wiki.ps1 -- install the LLM-wiki framework, optionally scaffold a project.
 
 Two modes:
   1. Global install only (no -TargetFolder):
@@ -29,7 +29,7 @@ Usage examples (from this package's root):
 After install (whether one-shot or two-step):
   - Restart Claude Code so it picks up new skills
   - cd to the project folder
-  - Start coding — /wrap-up at session end, /wiki-search to look things up
+  - Start coding -- /wrap-up at session end, /wiki-search to look things up
 
 Flags:
   -TargetFolder      : enable scaffold; project root to create/populate
@@ -44,7 +44,7 @@ Flags:
 #>
 
 param(
-    # Phase B (per-project scaffold) — set this to trigger the one-shot path
+    # Phase B (per-project scaffold) -- set this to trigger the one-shot path
     [string]$TargetFolder = "",
 
     [ValidateSet("claude-code", "cursor")]
@@ -62,7 +62,7 @@ param(
 
     [string]$DriveParentFolder = "__FOR CLAUDE",
 
-    # Bypass the already-installed prompt — always refresh from current
+    # Bypass the already-installed prompt -- always refresh from current
     # bootstrap source without asking. Useful for scripted / unattended runs.
     [switch]$Force,
 
@@ -88,8 +88,8 @@ if (-not $py) {
     exit 2
 }
 
-# Idempotent install check — detect existing install and prompt if found
-$SkillPath = Join-Path $env:USERPROFILE ".claude\skills\new-project\SKILL.md"
+# Idempotent install check -- detect existing install and prompt if found
+$SkillPath = Join-Path $env:USERPROFILE ".claude\skills\new-wiki\SKILL.md"
 $ConfigPath = Join-Path $env:USERPROFILE ".claude\wiki-config.json"
 $AlreadyInstalled = (Test-Path $SkillPath) -and (Test-Path $ConfigPath)
 
@@ -106,9 +106,9 @@ if ($AlreadyInstalled -and -not $Force -and -not $RefreshOnly) {
     }
     Write-Host ""
     Write-Host "Choose:"
-    Write-Host "  [R] Refresh — re-copy /new-wiki skill from current bootstrap source (default)"
-    Write-Host "  [S] Skip   — exit without changes"
-    Write-Host "  [F] Force  — wipe existing install + reinstall fresh"
+    Write-Host "  [R] Refresh -- re-copy /new-wiki skill from current bootstrap source (default)"
+    Write-Host "  [S] Skip   -- exit without changes"
+    Write-Host "  [F] Force  -- wipe existing install + reinstall fresh"
     $choice = Read-Host "Choice [R/S/F]"
     switch -Regex ($choice) {
         '^[Ss]' {
@@ -117,9 +117,9 @@ if ($AlreadyInstalled -and -not $Force -and -not $RefreshOnly) {
         }
         '^[Ff]' {
             Write-Host "Wiping existing /new-wiki skill..." -ForegroundColor Yellow
-            $skillDir = Join-Path $env:USERPROFILE ".claude\skills\new-project"
+            $skillDir = Join-Path $env:USERPROFILE ".claude\skills\new-wiki"
             Remove-Item -Recurse -Force $skillDir -ErrorAction SilentlyContinue
-            # Keep wiki-config.json — it will be updated, not wiped (user settings live there)
+            # Keep wiki-config.json -- it will be updated, not wiped (user settings live there)
         }
         default {
             Write-Host "Refreshing existing install." -ForegroundColor Cyan
@@ -148,7 +148,7 @@ if ($exit -ne 0) {
     exit $exit
 }
 
-# ---------- Phase B (per-project scaffold) — only if -TargetFolder provided ----------
+# ---------- Phase B (per-project scaffold) -- only if -TargetFolder provided ----------
 
 if (-not $TargetFolder) {
     Write-Host ""
@@ -156,7 +156,7 @@ if (-not $TargetFolder) {
     Write-Host "Next steps:" -ForegroundColor Green
     Write-Host "  1. Restart Claude Code" -ForegroundColor Green
     Write-Host "  2. cd to any project folder" -ForegroundColor Green
-    Write-Host "  3. Run /new-wiki — it asks tool, type, name, Drive prefs and does the rest" -ForegroundColor Green
+    Write-Host "  3. Run /new-wiki -- it asks tool, type, name, Drive prefs and does the rest" -ForegroundColor Green
     Write-Host ""
     Write-Host "Or skip the two-step: re-run install-wiki.ps1 with -TargetFolder <path> to scaffold a project in one shot." -ForegroundColor DarkGray
     exit 0
@@ -169,8 +169,8 @@ Write-Host "Scaffolding project at $TargetFolder..." -ForegroundColor Cyan
 if (-not $ProjectType) {
     Write-Host ""
     Write-Host "What kind of project is this?"
-    Write-Host "  1. research     — ingesting external content into a knowledge base"
-    Write-Host "  2. development  — building code, capturing design decisions"
+    Write-Host "  1. research     -- ingesting external content into a knowledge base"
+    Write-Host "  2. development  -- building code, capturing design decisions"
     $ptChoice = Read-Host "Pick (1 or 2)"
     if ($ptChoice -eq "1" -or $ptChoice -eq "research") { $ProjectType = "research" }
     elseif ($ptChoice -eq "2" -or $ptChoice -eq "development") { $ProjectType = "development" }
@@ -227,7 +227,7 @@ if ($phaseBExit -eq 0) {
     Write-Host "  Read llm-wiki/README.md for an overview" -ForegroundColor Green
 } elseif ($phaseBExit -eq 2) {
     Write-Host ""
-    Write-Host "RESTART CLAUDE CODE — agentmemory MCP was wired and needs a reload." -ForegroundColor Yellow
+    Write-Host "RESTART CLAUDE CODE -- agentmemory MCP was wired and needs a reload." -ForegroundColor Yellow
 }
 
 exit $phaseBExit
