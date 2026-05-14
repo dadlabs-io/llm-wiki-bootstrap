@@ -28,60 +28,31 @@ Wiki content lives at `{{WIKI_PATH}}/`. Folders:
 
 ## Working rhythm
 
-1. **Start a session**: the wiki MAP is always-loaded above. If the agentmemory plugin is installed (see below), its SessionStart hook auto-injects relevant memories from prior sessions — no action needed.
-2. **Code + decide + investigate**: regular dev work. agentmemory's hooks auto-capture session events (tool calls, prompts, stop) and pipe them to the REST server; durable decisions you want crystallized into the project wiki happen via `/wrap-up` at the end.
-3. **End of session**: `/wrap-up` distills the session into proposed wiki entries.
-4. **Promote**: `/wiki-promote --review` to approve and move entries from proposed → wiki/.
+1. **Start a session**: the wiki MAP is always-loaded above; you get the orientation map of every entry without doing anything.
+2. **Code + decide + investigate**: regular dev work. **When you observe something durable — a decision the user makes, a constraint they discover, a pattern you settle on, a bug you trace to root cause — file a proposed entry to `llm-wiki/_inbox/proposed/<folder>/<slug>.md` IMMEDIATELY.** Don't wait for `/wrap-up`. Flag it to the user in one sentence so they know it landed. This is the proactive-listener pattern: the agent is the listener, the wiki is the store.
+3. **End of session**: the user runs `/wrap-up` to catch anything the inline filing missed (long sessions, late-emerging patterns).
+4. **Promote**: `/wiki-promote --review` to accept/reject the proposed entries — entries go to `wiki/`, backlinks reciprocate, indexes regenerate.
 
-## Agentmemory — install once per machine
+## What counts as "durable" (for inline filing)
 
-This project assumes the upstream agentmemory plugin is installed (rohitg00/agentmemory). It provides:
-- **12 Claude Code hooks** (SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop, SessionEnd, etc.) that auto-capture session events
-- **4 skills** for memory recall/search/save
-- A `.mcp.json` entry wiring the on-demand MCP server
+File a proposed entry when ANY of these happen:
 
-### Prerequisite: iii-engine runtime
+- **Decision** — user picks an approach over alternatives. Capture the decision, the alternatives considered, and the deciding factor. Folder: `decisions/`.
+- **Component built** — non-trivial module/class/script the project will keep. Capture its purpose, public interface, key invariants. Folder: `components/`.
+- **Pattern settled** — recurring approach we'll repeat (testing approach, naming convention, error-handling style). Folder: `patterns/`.
+- **Bug traced** — root cause + fix that future-you would want to look up. Folder: `troubleshooting/`.
+- **Architectural constraint** — something we can't change easily that scopes future work. Folder: `architecture/`.
 
-agentmemory needs an `iii-engine` REST server on `localhost:3111`. It runs that engine via EITHER Docker Desktop OR a native `iii.exe` binary. Pick one before you start the engine:
+**Don't file**:
+- Speculative ideas the user said "maybe" about
+- Ephemeral discoveries that got immediately undone
+- Things already in the wiki — search `/wiki-search "<query>"` first if unsure
 
-- **Docker path** (easiest if Docker Desktop is already installed): start Docker Desktop. Wait for the whale icon in your tray to be solid (not animating) — Docker reports "running" before the daemon is actually ready, and starting the engine too early gives a misleading "iii-engine did not become ready" error.
-- **Native path** (lighter, no Docker): download `iii.exe` v0.11.2 from https://github.com/iiidev/iii/releases, put it in `C:\Users\<you>\.local\bin\` (on PATH). agentmemory will find it and skip Docker entirely.
+When in doubt, file it — `/wiki-promote --review` is the gate, so a thin entry costs nothing.
 
-### Install steps
+## Why no agentmemory / no Docker / no API-key burn
 
-In a separate terminal (machine-global, one-time):
-```
-npx @agentmemory/agentmemory     # starts the iii-engine REST server on :3111
-```
-
-Then inside any project after starting `claude`:
-```
-/plugin marketplace add rohitg00/agentmemory
-/plugin install agentmemory
-```
-
-The REST server has to be running for any auto-capture to actually persist. Without it, hooks fire but their HTTP POSTs silently fail.
-
-See https://github.com/rohitg00/agentmemory for details.
-
-### Observations vs memories — two stores, two write paths
-
-agentmemory has **two separate stores** and they fill on different paths:
-
-| Store | Filled by | Lives where |
-|---|---|---|
-| `KV.observations` | The 12 lifecycle hooks (SessionStart, UserPromptSubmit, PostToolUse, etc.) — automatic | Raw events; viewable via `/agentmemory/observations?sessionId=...` |
-| `KV.memories` | Explicit `memory_save` MCP tool calls by the agent — deliberate | Structured memories; viewable via `/agentmemory/memories?project=...` |
-
-For observations to be promoted into structured memories (facts / concepts / narrative), the engine needs `AGENTMEMORY_AUTO_COMPRESS=true` set in `~/.agentmemory/.env` (the llm-wiki installer writes this). For context to flow BACK into new sessions, set `AGENTMEMORY_INJECT_CONTEXT=true` (also written by installer).
-
-**As the agent**: when the user says something durable ("remember that X", "for next time, do Y"), call `memory_save` directly — that's the explicit path and it's independent of the consolidation pipeline. Auto-capture from hooks is a bonus, not the primary mechanism.
-
-### Known issues (as of agentmemory 0.9.12 + iii-engine 0.11.2)
-
-- **#308 — SessionEnd unreliable**: `/sessions` may stay empty even when observations are arriving. Workaround: rely on explicit `memory_save` for important data; don't depend on session-end auto-summary.
-- **#338 — graph-stats broken**: `GRAPH_EXTRACTION_ENABLED=false` (default) avoids it. Log line `Function not found: mem::graph-stats` is the symptom; harmless if graph extraction is off.
-- **"Trigger scope does not match" log noise**: expected, ignore. iii fans events to all triggers and unmatched ones log a skip.
+We evaluated the rohitg00/agentmemory + iii-engine path 2026-05-14 and concluded: the infrastructure cost (Docker, three "OFF by default" env vars, upstream issues #138/#143/#308/#338, API-key compression burn at ~$5-20/mo) doesn't justify the marginal value over the proactive-listener pattern. The agent (you) is already in the conversation, already capable of judgment, and already has file-write tools. We just told you to use them. See the agentic-design wiki retrospective for the full reasoning.
 
 ## Conventions
 

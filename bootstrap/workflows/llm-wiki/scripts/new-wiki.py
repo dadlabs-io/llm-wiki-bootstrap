@@ -377,89 +377,14 @@ def phase_a(args):
     return 0
 
 
-def _agentmemory_wired(settings_path: Path = CC_GLOBAL_SETTINGS_PATH):
-    """Check if settings file has an agentmemory MCP entry."""
-    if not settings_path.exists():
-        return False
-    try:
-        data = json.loads(settings_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return False
-    return bool(data.get("mcpServers", {}).get("agentmemory"))
-
-
-def _install_agentmemory():
-    """Announce the agentmemory wiring + verify npx is on PATH.
-
-    agentmemory is a stdio MCP server — Claude Code (or Cursor) spawns it
-    on-demand via the `mcpServers` config entry when the editor launches in the
-    project. There is no long-running HTTP listener to probe, so we don't try
-    to start a server here. We just verify npx exists (so the on-demand spawn
-    will work later) and write the MCP entry to <target>/.mcp.json.
-    """
-    _info("wiring agentmemory MCP server")
-    _info("  repo:    https://github.com/rohitg00/agentmemory")
-    _info("  package: @agentmemory/mcp (stdio MCP shim; Claude Code spawns it on demand)")
-    _info("  why:     gives Claude long-term memory across sessions (used by /wrap-up etc.)")
-    _info("  scope:   MACHINE-GLOBAL once cached — first launch triggers an npx fetch into")
-    _info("           %USERPROFILE%\\AppData\\Roaming\\npm-cache; every project on this machine")
-    _info("           shares the same install after that")
-    _info("  skip:    re-run with --no-agentmemory if you want to wire it yourself")
-    # On Windows, npx is npx.cmd (not npx.exe). Python's subprocess on Windows
-    # doesn't honor PATHEXT; shutil.which does. We only need to confirm npx is
-    # resolvable here — we don't actually spawn it.
-    npx = shutil.which("npx")
-    if not npx:
-        _err("npx not found on PATH. Install Node.js first: https://nodejs.org/")
-        _err("After installing, ensure Node's install dir is on your PATH, then re-run.")
-        return False
-    _ok(f"found npx: {npx}")
-    _ok("agentmemory will be spawned on demand by Claude Code (or Cursor) when you next launch")
-    _ok("  first launch fetches the package (~30-90s); subsequent launches reuse the npm cache")
-    return True
-
-
-def _merge_agentmemory_mcp(settings_path: Path = CC_GLOBAL_SETTINGS_PATH, tool: str = "claude-code", target: Path = None):
-    """Add an agentmemory entry to mcpServers in the right settings file.
-    Format is identical for claude-code and cursor (both use mcpServers map).
-    Preserves existing entries.
-
-    If `target` is given, sets STANDALONE_PERSIST_PATH so the agentmemory
-    standalone server writes to <target>/llm-wiki/raw/sessions/agentmemory.json
-    instead of the machine-global default at ~/.agentmemory/standalone.json.
-    This keeps each project's memory isolated and bundled with the wiki.
-    """
-    if settings_path.exists():
-        try:
-            data = json.loads(settings_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            data = {}
-    else:
-        data = {}
-    mcp = data.setdefault("mcpServers", {})
-    # Canonical entry from rohitg00/agentmemory README:
-    # https://github.com/rohitg00/agentmemory#claude-desktop
-    # Package: @agentmemory/mcp (thin shim that exposes @agentmemory/agentmemory's MCP entrypoint)
-    entry = {
-        "command": "npx",
-        "args": ["-y", "@agentmemory/mcp"],
-    }
-    if target is not None:
-        # Per-project memory file under the wiki's existing raw/sessions/ folder.
-        # Without this env var, agentmemory defaults to ~/.agentmemory/standalone.json
-        # — a single machine-global store shared across every project. Per-project
-        # is what users almost always want.
-        persist_path = (target / "llm-wiki" / "raw" / "sessions" / "agentmemory.json").as_posix()
-        entry["env"] = {"STANDALONE_PERSIST_PATH": persist_path}
-    mcp["agentmemory"] = entry
-    settings_path.parent.mkdir(parents=True, exist_ok=True)
-    settings_path.write_text(
-        json.dumps(data, indent=2),
-        encoding="utf-8",
-    )
-    _ok(f"merged agentmemory entry into {settings_path}")
-    if target is not None:
-        _ok(f"  memory persists per-project at: {target}/llm-wiki/raw/sessions/agentmemory.json")
+# NOTE: agentmemory integration was removed 2026-05-14. The cost-benefit didn't
+# justify the complexity (Docker, iii-engine, three "OFF by default" env vars,
+# upstream issues #138/#143/#308/#338, API-key compression burn). The
+# "proactive listener" pattern in the CLAUDE.md template — agent files durable
+# items to _inbox/proposed/ inline — covers ~80% of the value at zero infra
+# cost. See agentic-design wiki for the full retrospective. Add back as an
+# opt-in flag if a future user actually wants the hook-driven auto-capture
+# path; the git history has the wiring (commit 9f94cb9 and earlier).
 
 
 # ---------- Google Drive OAuth walkthrough ----------
@@ -792,51 +717,21 @@ def phase_b(args):
 
     needs_restart = False
 
-    # B10 — agentmemory: official plugin path
-    #
-    # We previously hand-wired @agentmemory/mcp into .mcp.json, but that's only
-    # half of what's needed — auto-capture of session events requires the
-    # upstream's Claude Code plugin (which installs 12 hooks + 4 skills + .mcp.json)
-    # AND the iii-engine REST server running on localhost:3111. Hand-wiring just
-    # the MCP gives you a connected-but-dormant tool that the agent never calls.
-    #
-    # The official plugin (https://github.com/rohitg00/agentmemory) handles all
-    # three pieces correctly. We just nudge the user to install it.
-    if project_type == "development" and not args.no_agentmemory:
-        _info("agentmemory wiring — use the official plugin (not hand-wired)")
-        _info("  After scaffolding, the user should run from Claude Code (inside")
-        _info("  this project):")
-        _info("    /plugin marketplace add rohitg00/agentmemory")
-        _info("    /plugin install agentmemory")
-        _info("  And in a separate terminal (one-time, machine-global):")
-        _info("    npx @agentmemory/agentmemory     # starts the iii-engine REST server")
-        _info("  See https://github.com/rohitg00/agentmemory for details.")
+    # B10 — agentmemory was removed 2026-05-14. The proactive-listener pattern
+    # (agent files durable items to _inbox/proposed/ inline) replaces it.
+    # See the comment above _agentmemory_wired (deleted) for the retrospective.
 
     # B11 — summary + project-type-specific next steps
     start_cmd = "claude" if args.tool == "claude-code" else "cursor ."
 
     if project_type == "development":
         next_steps = [
-            # --- Prerequisite: Docker (or native iii.exe) must be running first ---
-            "PREREQUISITE: agentmemory's iii-engine needs EITHER Docker Desktop running OR a native iii.exe (v0.11.2) on PATH:",
-            "  Option A (easier): Start Docker Desktop. Wait for the whale icon to be solid (not animating).",
-            "  Option B (lighter): Download iii.exe v0.11.2 from https://github.com/iiidev/iii/releases and put it in `C:\\Users\\<you>\\.local\\bin\\` (on your PATH).",
-            "  Without one of these, `npx @agentmemory/agentmemory` fails with 'iii-engine did not become ready' and agentmemory won't capture anything.",
-            # --- Terminal phase (do all this BEFORE starting Claude Code) ---
-            "In a fresh terminal window, start the agentmemory REST engine:",
-            "  `npx @agentmemory/agentmemory`",
-            "Leave that terminal running (the engine needs to stay alive)",
-            # --- Claude Code phase (single context, no bouncing) ---
-            f"In another terminal: `cd {target}`",
+            f"cd {target}",
             f"Start Claude Code: `{start_cmd}`",
-            "Inside Claude Code, run: `/plugin marketplace add rohitg00/agentmemory`",
-            "Inside Claude Code, run: `/plugin install agentmemory`",
-            "Inside Claude Code, run: `/mcp` and verify `agentmemory` shows ✔ connected",
-            # --- Reading + working ---
             "Read `llm-wiki/README.md` for the project overview",
             "Read `llm-wiki/how-to/commands.md` for the full command reference",
-            "Code, decide, investigate as normal",
-            "At session-end, run `/wrap-up` to distill the session into proposed wiki entries",
+            "Code, decide, investigate as normal — the agent will proactively file durable items to `llm-wiki/_inbox/proposed/` as they come up (decisions, components, patterns, gotchas)",
+            "At session-end, run `/wrap-up` to distill anything the inline filing missed",
             "Run `/wiki-promote --review` to accept/reject the proposed entries",
             "Use `/wiki-search \"<query>\"` to look up prior decisions / components",
             "Use `/wiki-update <url>` to add an external reference (article, doc, paper)",
@@ -927,7 +822,7 @@ def main():
     parser.add_argument("--force", action="store_true",
                         help="Continue even if target folder has unexpected entries")
     parser.add_argument("--no-agentmemory", action="store_true",
-                        help="Skip agentmemory MCP install + wiring (dev projects only)")
+                        help="(deprecated, no-op as of 2026-05-14 — agentmemory removed)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print actions without writing")
     args = parser.parse_args()

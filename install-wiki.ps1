@@ -66,8 +66,8 @@ param(
     # bootstrap source without asking. Useful for scripted / unattended runs.
     [switch]$Force,
 
-    # Skip the agentmemory MCP install (dev projects only). User can wire it
-    # later by hand. See https://github.com/rohitg00/agentmemory.
+    # Deprecated as of 2026-05-14 -- agentmemory integration removed. Kept
+    # for backward-compat with old scripted invocations; no-op.
     [switch]$NoAgentmemory,
 
     # Refresh the skill files but don't change Drive config or other settings.
@@ -223,7 +223,7 @@ $phaseBArgs = @(
     "--drive-enabled", $DriveEnabled,
     "--drive-parent-folder", $DriveParentFolder
 )
-if ($NoAgentmemory) { $phaseBArgs += "--no-agentmemory" }
+# -NoAgentmemory is a deprecated no-op as of 2026-05-14, kept for back-compat.
 
 & $py.Source @phaseBArgs
 $phaseBExit = $LASTEXITCODE
@@ -240,73 +240,14 @@ if ($phaseBExit -eq 0) {
     }
     Write-Host "  Read llm-wiki/README.md for an overview" -ForegroundColor Green
 
-    # Register a Scheduled Task that auto-starts the agentmemory iii-engine
-    # at every Windows login. Machine-global, idempotent (skip if already
-    # registered). Only for development projects; only if -NoAgentmemory
-    # was not passed. Requires Docker Desktop OR native iii.exe to be
-    # available at run time -- we don't enforce that here, just register.
-    if (-not $NoAgentmemory -and $ProjectType -eq "development") {
-        # Write ~/.agentmemory/.env with the three "OFF by default" flags
-        # that need to be ON for auto-capture to actually do anything.
-        # Per rohitg00/agentmemory README + issues #138, #143.
-        $envDir = Join-Path $env:USERPROFILE ".agentmemory"
-        $envPath = Join-Path $envDir ".env"
-        if (-not (Test-Path $envPath)) {
-            New-Item -ItemType Directory -Force -Path $envDir | Out-Null
-            $envContent = @'
-# agentmemory engine configuration
-# Written by llm-wiki-bootstrap installer; safe to hand-edit.
-
-# Promote raw observations into structured memories (facts/concepts/narrative).
-# Without this, /memories stays empty forever -- only raw observations stored.
-AGENTMEMORY_AUTO_COMPRESS=true
-
-# Inject prior-session context back into the next SessionStart.
-# Without this, the agent never sees what it remembered last time.
-AGENTMEMORY_INJECT_CONTEXT=true
-
-# 4-tier consolidation timer (working -> episodic -> semantic -> procedural).
-CONSOLIDATION_ENABLED=true
-AUTO_FORGET_ENABLED=true
-
-# Graph extraction is broken on iii 0.11.2 + agentmemory 0.9.12 (#338).
-GRAPH_EXTRACTION_ENABLED=false
-
-# LLM provider keys are inherited from process env (ANTHROPIC_API_KEY etc.).
-'@
-            Set-Content -Path $envPath -Value $envContent -Encoding utf8
-            Write-Host "Wrote agentmemory config: $envPath" -ForegroundColor Cyan
-        } else {
-            Write-Host "agentmemory config already exists: $envPath (skipping)" -ForegroundColor Cyan
-        }
-
-        $taskName = "AgentMemoryEngine"
-        $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-        if ($existing) {
-            Write-Host ""
-            Write-Host "agentmemory auto-start: task '$taskName' already registered (skipping)." -ForegroundColor Cyan
-        } else {
-            Write-Host ""
-            Write-Host "Registering Scheduled Task '$taskName' to auto-start agentmemory at login..." -ForegroundColor Cyan
-            try {
-                $action = New-ScheduledTaskAction -Execute "npx" -Argument "@agentmemory/agentmemory"
-                $trigger = New-ScheduledTaskTrigger -AtLogon -User $env:USERNAME
-                $taskSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -DontStopOnIdleEnd -ExecutionTimeLimit ([TimeSpan]::Zero)
-                $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive
-                Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $taskSettings -Principal $principal -Description "agentmemory iii-engine REST server (auto-start at login)" | Out-Null
-                Start-ScheduledTask -TaskName $taskName
-                Write-Host "  Task registered + started. Engine will boot on every login from now on." -ForegroundColor Green
-                Write-Host "  To disable later: Unregister-ScheduledTask -TaskName '$taskName' -Confirm:`$false" -ForegroundColor Gray
-                Write-Host "  PREREQ: Docker Desktop running OR native iii.exe v0.11.2 on PATH" -ForegroundColor Gray
-            } catch {
-                Write-Host "  WARN: could not register Scheduled Task (need admin?). You can run agentmemory manually." -ForegroundColor Yellow
-                Write-Host "  Error: $_" -ForegroundColor Yellow
-            }
-        }
-    }
-    # Note: if agentmemory was wired, the Python script already printed the
-    # RESTART banner. We exit 0 either way so tool wrappers don't read it as
-    # a failure.
+    # agentmemory integration removed 2026-05-14 -- the proactive-listener
+    # pattern (agent files durable items to _inbox/proposed/ inline) replaces
+    # the auto-capture-via-hooks pipeline. No Docker, no iii-engine, no
+    # scheduled task, no API-key burn.
+    #
+    # Existing AgentMemoryEngine scheduled task on this machine from a prior
+    # install is left ALONE -- the user can keep it or remove it via:
+    #   Unregister-ScheduledTask -TaskName AgentMemoryEngine -Confirm:$false
 }
 
 exit $phaseBExit

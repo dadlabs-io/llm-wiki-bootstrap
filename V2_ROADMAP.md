@@ -81,7 +81,18 @@ agentskills.io (and similar registries) are emerging. V2: register the LLM-wiki 
 
 This is the "ecosystem" plays — make the framework's components consumable independently.
 
-### 7. Tag agentmemory sessions by actor
+### 7. Revisit hook-driven memory capture (was: agentmemory integration)
+
+V1: shipped a hook-based agentmemory integration on 2026-05-14 + removed it the same day. The cost-benefit didn't justify the complexity: Docker prereq, iii-engine v0.11.2 pin, three "OFF by default" env vars (`AGENTMEMORY_AUTO_COMPRESS`, `AGENTMEMORY_INJECT_CONTEXT`, `CONSOLIDATION_ENABLED`), upstream issues #138/#143/#308/#338 (graph extraction broken, SessionEnd unreliable), and ~$5-20/mo API-key burn for background compression. Replaced with the proactive-listener pattern: a paragraph in CLAUDE.md telling the agent to file durable items to `_inbox/proposed/` inline as they happen.
+
+V2 should revisit when one of three things is true:
+- Agentmemory upstream resolves #308 (SessionEnd reliability) AND ships a "no compression / no LLM-calls" mode that just observes
+- A Honcho/Mem0-style hosted alternative emerges with no Docker prereq and a clear "what's in this for me vs `/wrap-up`" story
+- We observe concrete failures of the proactive-listener pattern that auto-capture would have caught
+
+See agentic-design wiki retrospective entry for the full reasoning.
+
+### 8. Tag agentmemory sessions by actor (deferred indefinitely)
 
 V1: all memories written by the agentmemory MCP server land in the same per-project store (`<project>/llm-wiki/raw/sessions/agentmemory.json`) with no actor metadata. Fine when one human + one agent are the only writers.
 
