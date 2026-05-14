@@ -818,19 +818,20 @@ def phase_b(args):
     if project_type == "development":
         next_steps = [
             f"cd {target}",
-            start_cmd,
-            "Install agentmemory (one-time, recommended):",
-            "  /plugin marketplace add rohitg00/agentmemory",
-            "  /plugin install agentmemory",
-            "  In a separate terminal: `npx @agentmemory/agentmemory` (starts the REST server)",
-            "Read llm-wiki/README.md (project overview)",
-            "Read llm-wiki/how-to/commands.md (full command reference)",
-            "Code + decide + investigate as normal",
-            "/wrap-up at session-end — distills the session into proposed wiki entries (components, decisions, architecture, patterns, troubleshooting)",
-            "/wiki-promote --review — accept/reject the proposed entries",
-            "/wiki-search \"<query>\" — look up prior decisions / components",
-            "/wiki-update <url> — add an external reference (article, doc, paper)",
-            "Ask the agent in plain English anytime: 'what commands do I have', 'how do I X'",
+            f"Start Claude Code: `{start_cmd}`",
+            "Install agentmemory (one-time, recommended). Run these in Claude Code one at a time:",
+            "  Step 1: `/plugin marketplace add rohitg00/agentmemory`",
+            "  Step 2: `/plugin install agentmemory`",
+            "  Step 3: In a separate terminal, run `npx @agentmemory/agentmemory` (starts the REST engine on :3111)",
+            "  Step 4: Verify with `/mcp` — agentmemory should show ✔ connected",
+            "Read `llm-wiki/README.md` for the project overview",
+            "Read `llm-wiki/how-to/commands.md` for the full command reference",
+            "Code, decide, investigate as normal",
+            "At session-end, run `/wrap-up` to distill the session into proposed wiki entries",
+            "Run `/wiki-promote --review` to accept/reject the proposed entries",
+            "Use `/wiki-search \"<query>\"` to look up prior decisions / components",
+            "Use `/wiki-update <url>` to add an external reference (article, doc, paper)",
+            "Ask the agent in plain English anytime — e.g. 'what commands do I have', 'how do I X'",
         ]
     else:  # research
         next_steps = [
