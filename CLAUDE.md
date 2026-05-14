@@ -31,12 +31,19 @@ AskUserQuestion caps at 4 questions per call, so split into two rounds:
 - **Round 1 (4 questions)**: target folder, project type, project name (with default), drive ingest
 - **Round 2 (1 question)**: description (with default `"Wiki for <name>"`)
 
-For each question, supply 2–4 concrete options. Use `(Recommended)` suffix on the suggested default so it's selectable in one click. Examples:
-- Target folder: `C:\github.com\<slug>` (Recommended) / `~/proj/<slug>` / custom
+For each question, supply 2–4 **concrete, fully-resolved options** — never strategies, meta-instructions, or placeholders like `<slug>` or "use the folder leaf name as the slug". If you don't have a concrete value yet, resolve one BEFORE building the picker:
+
+- **Before building the picker, pick a working slug.** If the user gave a name in their message, slugify it. If they didn't, use `new-project` as the working slug and let them override via "Other". Never show `<slug>`, `<name>`, or `<new-project>` as literal placeholders in option labels — those leak through to the installer and break paths.
+- Use `(Recommended)` suffix on the suggested default so it's selectable in one click.
+
+Examples (assume the working slug is `test-project`):
+- Target folder: `C:\github.com\test-project` (Recommended) / `~/proj/test-project` / Other (free text)
 - Project type: `Research` / `Development (Recommended for code projects)` — never default; let user pick
-- Project name: `<slug-from-folder>` (Recommended) / custom
+- Project name (slug): `test-project` (Recommended) / Other (type a different slug)
 - Drive: `No (Recommended)` / `Yes`
-- Description: `Wiki for <name>` (Recommended) / custom
+- Description (Round 2): `Wiki for test-project` (Recommended) / `Development wiki for test-project` / Other (type your own)
+
+Round 2 (description) **must still fire even when the user accepted all Round-1 defaults**. Always show the description picker — never silently use the default.
 
 1. **Target folder** — where the new project goes (e.g., `C:\github.com\my-project`). If they gave it in their message, confirm by repeating it back.
 2. **Project type** — `research` or `development`. This is the most important call and the easiest to guess wrong. Ask explicitly: "Is this a research project (curating external content) or a development project (building code)?" Never default.
