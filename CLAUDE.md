@@ -23,12 +23,12 @@ Most common case.
 
 **STOP — ask the user explicitly for each of these BEFORE running anything. Do NOT guess from the folder name or other context. The user's answer is the source of truth.**
 
-Required discovery, in order:
+Required discovery, in order. **ALL FIVE are mandatory — you must ask the user for each, even when you can plausibly default. Showing a default is fine; silently using the default is not. Every question gets explicit user confirmation.**
 
 1. **Target folder** — where the new project goes (e.g., `C:\github.com\my-project`). If they gave it in their message, confirm by repeating it back.
 2. **Project type** — `research` or `development`. This is the most important call and the easiest to guess wrong. Ask explicitly: "Is this a research project (curating external content) or a development project (building code)?" Never default.
-3. **Project name** — defaults to the target folder leaf, slugified. Show the proposed default and let them override.
-4. **Description** — one-liner. Optional; if they don't have one, leave empty.
+3. **Project name** — slugified (lowercase, dashes). Propose a default from the target folder leaf, but **always show it and ask the user to confirm or override**. Do NOT silently use the default.
+4. **Description** — one-liner. Propose a default of `"Wiki for <name>"`, but **always show it and ask the user to confirm or override**. Do NOT silently use the default or leave it empty. A non-empty description is also required to avoid argument-bridge bugs when invoking the installer (see TOOL CHOICE below).
 5. **Drive ingest** — yes/no. Defaults to no. Ask only if it might apply.
 
 Once you have all the answers, run:
