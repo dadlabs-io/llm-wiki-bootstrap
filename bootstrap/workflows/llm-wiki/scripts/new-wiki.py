@@ -402,16 +402,22 @@ def _agentmemory_reachable():
 def _install_agentmemory():
     """Run `npx @agentmemory/agentmemory` and wait for /livez. Returns True on success."""
     _info("starting agentmemory via npx (this may take a minute on first run)...")
+    # On Windows, npx is npx.cmd (not npx.exe). subprocess.Popen with a bare
+    # "npx" arg won't find it without shell=True — Python's subprocess on
+    # Windows doesn't honor PATHEXT the way the shell does. shutil.which DOES
+    # honor PATHEXT, so it resolves to the full path of npx.cmd.
+    npx = shutil.which("npx") or "npx"
     try:
         # Start as a detached background process — npx will pull + run the server
         # On Windows we don't have a clean detach; use Popen and let it run.
         proc = subprocess.Popen(
-            ["npx", "-y", "@agentmemory/agentmemory"],
+            [npx, "-y", "@agentmemory/agentmemory"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
     except FileNotFoundError:
         _err("npx not found on PATH. Install Node.js first: https://nodejs.org/")
+        _err("After installing, ensure Node's install dir is on your PATH, then re-run.")
         return False
 
     # Poll /livez for up to 90 seconds
