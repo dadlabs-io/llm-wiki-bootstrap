@@ -37,7 +37,11 @@ For each question, supply 2–4 **concrete, fully-resolved options** — never s
 - Use `(Recommended)` suffix on the suggested default so it's selectable in one click.
 
 Examples (assume the working slug is `test-project`):
-- Target folder: `C:\github.com\test-project` (Recommended) / `~/proj/test-project` / Other (free text)
+- **Target folder** — three concrete options so the user never has to type the full path unless they really want a different parent dir:
+  1. `C:\github.com\test-project` (Recommended) — use the proposed slug under the default parent
+  2. `Use a different name under C:\github.com\` — selecting this triggers a free-text follow-up asking for just the slug, then constructs the path
+  3. `Other` — free text for a completely different parent path
+  (On macOS/Linux substitute `~/proj/` for `C:\github.com\`.)
 - Project type: `Research` / `Development (Recommended for code projects)` — never default; let user pick
 - Project name (slug): `test-project` (Recommended) / Other (type a different slug)
 - Drive: `No (Recommended)` / `Yes`
