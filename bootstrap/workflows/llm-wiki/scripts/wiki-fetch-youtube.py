@@ -27,6 +27,10 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
+
 
 def _default_vault():
     """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
@@ -271,8 +275,7 @@ def fetch_to_raw(vault_root, topic, url, ingested_by, slug_override=None):
     raw_path = unique_path(raw_dir / raw_filename)
 
     raw_content = render_raw_markdown(td, ingested_by)
-    raw_path.write_text(raw_content, encoding="utf-8")
-
+    atomic_write_text(raw_path, raw_content)
     print(f"Saved raw transcript: {raw_path}")
     print(f"  Title: {td['title']}")
     print(f"  Channel: {td['channel']}")

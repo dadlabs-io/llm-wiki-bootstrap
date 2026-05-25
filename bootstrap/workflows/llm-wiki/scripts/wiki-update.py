@@ -37,6 +37,10 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
+
 
 def _default_vault():
     """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
@@ -247,7 +251,7 @@ def acquire_source(source, raw_dir, slug_hint, skip_raw_copy=False):
         raw_path = unique_path(raw_dir / raw_filename)
         # Save with a small frontmatter pointing back to the ORIGINAL URL
         raw_content = f"---\nsource_url: {source}\nfetched_url: {fetch_url_actual}\nfetched: {datetime.now().isoformat()}\n---\n\n{body_text}\n"
-        raw_path.write_text(raw_content, encoding="utf-8")
+        atomic_write_text(raw_path, raw_content)
         print(f"  Saved raw: {raw_path}")
         return raw_path, body_text, suggested_title, source
 
@@ -354,8 +358,7 @@ def resolve_outbound_links(curated_path, wiki_dir):
             ))
 
     if new_content != content:
-        curated_path.write_text(new_content, encoding="utf-8")
-
+        atomic_write_text(curated_path, new_content)
     return fixed, warnings
 
 
@@ -616,7 +619,7 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
     footer = "\n".join(footer_parts) if (source_url or raw_path) else ""
 
     content = f"{fm}\n\n{body_stripped.rstrip()}\n{footer}\n"
-    target.write_text(content, encoding="utf-8")
+    atomic_write_text(target, content)
     print(f"  Filed:     {target}")
     return target
 

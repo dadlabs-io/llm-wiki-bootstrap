@@ -26,6 +26,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
+
 
 def _default_vault():
     """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
@@ -224,7 +228,7 @@ def copy_template_tree(template_dir: Path, topic_root: Path, topic_slug: str, de
                     "(Fill in — what's in-scope for this wiki, what's out-of-scope. Keep it specific; overly-broad scope leads to topic bleed.)",
                     description.strip(),
                 )
-            dest.write_text(content, encoding="utf-8")
+            atomic_write_text(dest, content)
         else:
             shutil.copy2(src, dest)
         copied += 1
@@ -246,7 +250,7 @@ def init_topic(vault_root, topic, description):
         print(f"Created vault root: {vault_root}")
     vault_readme = vault_root / "README.md"
     if not vault_readme.exists():
-        vault_readme.write_text(VAULT_README_TEMPLATE, encoding="utf-8")
+        atomic_write_text(vault_readme, VAULT_README_TEMPLATE)
         print(f"Wrote vault README: {vault_readme}")
 
     # Locate topic-template (the rich scaffold)

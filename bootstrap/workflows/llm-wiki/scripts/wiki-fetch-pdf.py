@@ -32,6 +32,10 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
 from typing import List, Optional, Tuple
 
 
@@ -318,8 +322,7 @@ def fetch_pdf(vault_root, topic, source, ingested_by, ocr_mode, quality_threshol
             "",
         ]
 
-        raw_path.write_text("\n".join(fm + body), encoding="utf-8")
-
+        atomic_write_text(raw_path, "\n".join(fm + body))
         # Optionally copy the source PDF alongside the .md
         if keep_pdf:
             pdf_dest = raw_path.with_suffix(".pdf")

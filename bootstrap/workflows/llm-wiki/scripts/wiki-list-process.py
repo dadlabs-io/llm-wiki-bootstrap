@@ -26,6 +26,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
+
 
 def _default_vault():
     """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
@@ -208,10 +212,7 @@ def process_queue(vault_root, topic, dry_run, limit):
                 move_queue_file(qpath, failed_dir, render_script, vault_root, topic)
                 # Drop an .error sidecar in the new location
                 err_path = failed_dir / (qpath.name + ".error")
-                err_path.write_text(
-                    f"# {datetime.now().isoformat()}\n{msg}\n",
-                    encoding="utf-8",
-                )
+                atomic_write_text(err_path, f"# {datetime.now().isoformat()}\n{msg}\n")
         print()
 
     # Regenerate index once at the end

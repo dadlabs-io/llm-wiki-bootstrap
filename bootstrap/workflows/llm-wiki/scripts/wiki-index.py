@@ -20,6 +20,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
+
 
 def _default_vault():
     """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
@@ -323,9 +327,7 @@ def generate_index(vault_root, topic):
 
     content = render_index(topic, grouped, len(metas), total_size_kb)
     index_path = topic_root / "_INDEX.md"
-    with open(index_path, "w", encoding="utf-8") as f:
-        f.write(content)
-
+    atomic_write_text(index_path, content)
     print(f"Wrote {index_path}")
     print(f"  Files: {len(metas)}")
     print(f"  Folders: {len(grouped)}")

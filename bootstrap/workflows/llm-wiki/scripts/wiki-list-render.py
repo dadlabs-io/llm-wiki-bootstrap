@@ -18,6 +18,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
+
 
 def _default_vault():
     """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
@@ -186,7 +190,7 @@ def render_pending_list(vault_root, topic):
     out.append("")
 
     target = topic_root / "_inbox" / "pending-list.md"
-    target.write_text("\n".join(out), encoding="utf-8")
+    atomic_write_text(target, "\n".join(out))
     print(f"Wrote: {target}")
     print(f"  Pending: {len(pending)}, Done: {len(done)}, Failed: {len(failed)}")
     return 0

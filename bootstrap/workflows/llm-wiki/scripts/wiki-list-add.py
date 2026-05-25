@@ -31,6 +31,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
+
 
 def _default_vault():
     """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
@@ -277,8 +281,7 @@ def add_to_queue(vault_root, topic, source, folder, title, tags, added_by, prior
     lines.append("")
     lines.append("_Awaiting processing. Will be moved to `_inbox/done/` when ingested._")
 
-    queue_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
+    atomic_write_text(queue_path, "\n".join(lines) + "\n")
     _write_activity_log({
         "topic": topic, "source": source, "added_by": added_by,
         "result": "queued", "pending_file": queue_path.name,

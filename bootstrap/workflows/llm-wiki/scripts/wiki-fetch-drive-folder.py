@@ -64,6 +64,10 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
 from urllib.parse import urlparse, urlunparse
 
 
@@ -210,7 +214,7 @@ def get_drive_service(client_secrets_path, token_cache_path, scopes):
         # run_local_server opens browser; user approves; flow returns creds
         creds = flow.run_local_server(port=0, prompt="consent")
         token_cache_path.parent.mkdir(parents=True, exist_ok=True)
-        token_cache_path.write_text(creds.to_json(), encoding="utf-8")
+        atomic_write_text(token_cache_path, creds.to_json())
         _info(f"Token cached at {token_cache_path}")
 
     return build("drive", "v3", credentials=creds, cache_discovery=False)
@@ -772,7 +776,7 @@ def main():
     if args.out:
         out_path = Path(args.out).expanduser()
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(md, encoding="utf-8")
+        atomic_write_text(out_path, md)
         _info(f"Wrote report: {out_path}")
         report_target = str(out_path)
     else:

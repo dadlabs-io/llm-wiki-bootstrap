@@ -25,6 +25,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
+
 
 def _default_vault():
     """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
@@ -549,8 +553,7 @@ def lint(vault_root, topic, strict=False):
     report_path = topic_root / "_inbox" / "lint-report.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_text = "\n".join(out)
-    report_path.write_text(report_text, encoding="utf-8")
-
+    atomic_write_text(report_path, report_text)
     # Print to stdout
     print(report_text)
     print()

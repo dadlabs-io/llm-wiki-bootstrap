@@ -29,6 +29,10 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
 from urllib.parse import urlparse
 
 # Force UTF-8 on Windows so emoji / unicode in templates don't crash printing
@@ -175,10 +179,7 @@ def _load_config(config_path: Path = CC_GLOBAL_CONFIG_PATH):
 
 def _save_config(cfg, config_path: Path = CC_GLOBAL_CONFIG_PATH):
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    config_path.write_text(
-        json.dumps(cfg, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
+    atomic_write_text(config_path, json.dumps(cfg, indent=2, sort_keys=True))
     _ok(f"wrote {config_path}")
 
 
@@ -226,7 +227,7 @@ def _skill_to_mdc(skill_md_path: Path, mdc_path: Path, dry_run: bool = False) ->
         print(f"WOULD write {mdc_path} ({len(mdc_text)} chars)")
         return True
     mdc_path.parent.mkdir(parents=True, exist_ok=True)
-    mdc_path.write_text(mdc_text, encoding="utf-8")
+    atomic_write_text(mdc_path, mdc_text)
     return True
 
 
@@ -792,7 +793,7 @@ def _render_template(src: Path, dst: Path, vars: dict, dry_run: bool):
         print(f"WOULD write {dst} ({len(text)} chars)")
     else:
         dst.parent.mkdir(parents=True, exist_ok=True)
-        dst.write_text(text, encoding="utf-8")
+        atomic_write_text(dst, text)
         _ok(f"wrote {dst}")
 
 
