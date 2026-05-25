@@ -170,7 +170,7 @@ def lint(vault_root, topic, strict=False):
 
     # Icarus schema (frontmatter §1 of icarus-integration-plan).
     # Optional fields, but when present must obey the enum + write-time invariants.
-    VALID_VERIFIED = {"unverified", "verified", "contradicted", "rolled_back"}
+    VALID_VERIFIED = {"unverified", "verified", "temporal", "contradicted", "rolled_back"}
     VALID_TYPE = {"decision", "observation", "attempt", "rollback", "review"}
 
     # Icarus validation tracking
@@ -179,7 +179,7 @@ def lint(vault_root, topic, strict=False):
     missing_contradicted_by = []  # (file,) — verified='contradicted' but no contradicted_by
     missing_revises_on_rollback = []  # (file,) — type='rollback' but no revises
     missing_review_of_on_review = []  # (file,) — type='review' but no review_of
-    broken_icarus_ref = []        # (file, field, ref_value) — revises/review_of/contradicted_by points at non-existent file
+    broken_icarus_ref = []        # (file, field, ref_value) — revises/review_of/contradicted_by/synthesis_of[i] points at non-existent file
 
     for f in files:
         try:
@@ -268,6 +268,26 @@ def lint(vault_root, topic, strict=False):
             ref_resolved = resolve_link(f, ref_value)
             if ref_resolved is None or not ref_resolved.exists():
                 broken_icarus_ref.append((f, ref_field, ref_value))
+
+        # synthesis_of: list of slugs (project entry distilling research entries).
+        # YAML inline-list parsed as "[a.md, b.md, c.md]" or block-list across lines.
+        # Our parse_frontmatter() returns the raw value as a string; detect both forms.
+        synthesis_of_raw = fm.get("synthesis_of", "").strip()
+        synthesis_refs = []
+        if synthesis_of_raw:
+            # Inline form: [item1, item2, ...]
+            if synthesis_of_raw.startswith("[") and synthesis_of_raw.endswith("]"):
+                inner = synthesis_of_raw[1:-1]
+                synthesis_refs = [s.strip().strip("\"' ") for s in inner.split(",") if s.strip()]
+            else:
+                # Single value treated as one ref
+                synthesis_refs = [synthesis_of_raw.strip("\"' ")]
+        for ref_value in synthesis_refs:
+            if not ref_value:
+                continue
+            ref_resolved = resolve_link(f, ref_value)
+            if ref_resolved is None or not ref_resolved.exists():
+                broken_icarus_ref.append((f, "synthesis_of", ref_value))
 
         # Check links
         for link_text, target in extract_links(content):
