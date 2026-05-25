@@ -87,17 +87,29 @@ def bucket(verified: str | None, surface_contradicted: bool, include_rolled_back
     """Returns bucket index (higher = ranked higher), or None to exclude.
 
     See wiki-search-bucket-rerank-spec.md §"Bucket function" for the canonical table.
+
+    Buckets (default sort):
+      4 - verified (canonical truth)
+      3 - unverified / unset (default for fresh entries)
+      2 - temporal (correct as-of-a-past-date but no longer current — cycle 2026-05-24-01 refinement)
+      1 - contradicted (older side of a contradiction pair — has a newer entry that contradicts)
+      None - rolled_back (excluded unless --include-rolled-back)
+
+    --surface-contradicted promotes contradicted to bucket 5 (above verified) for audit mode.
+    --include-rolled-back keeps rolled_back at bucket 0 (ranked last).
     """
     if verified == "verified":
-        return 3
+        return 4
     if verified == "unverified" or verified is None:
+        return 3
+    if verified == "temporal":
         return 2
     if verified == "contradicted":
-        return 4 if surface_contradicted else 1
+        return 5 if surface_contradicted else 1
     if verified == "rolled_back":
         return 0 if include_rolled_back else None
     # Unknown enum value: treat as unverified, don't fail-closed
-    return 2
+    return 3
 
 
 def rerank(payload: dict, surface_contradicted: bool, include_rolled_back: bool) -> dict:

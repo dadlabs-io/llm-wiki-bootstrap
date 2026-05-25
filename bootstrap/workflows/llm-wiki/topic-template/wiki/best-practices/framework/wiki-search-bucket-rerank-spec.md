@@ -36,16 +36,20 @@ def truth_bucket(entry) -> int | None:
     """
     verified = read_verified(entry)  # frontmatter, fall back to sidecar
     if verified == "verified":
-        return 3
+        return 4
     if verified == "unverified" or verified is None:
-        return 2
+        return 3
+    if verified == "temporal":
+        return 2  # was correct as-of-a-past-date but no longer current (cycle 2026-05-24-01)
     if verified == "contradicted":
         return 1
     if verified == "rolled_back":
         return None  # excluded by default; --include-rolled-back overrides
     # Unknown value: treat as unverified (don't fail-closed)
-    return 2
+    return 3
 ```
+
+The TEMPORAL bucket (2) sits below `unverified` because temporal-stale-but-not-wrong content is still slightly less useful than fresh-unverified content at the same relevance score (the unverified entry might be currently correct; the temporal one is known-stale). It sits above `contradicted` because temporal is "was right at the time", contradicted is "we now know it was wrong even then."
 
 Read order: prefer the frontmatter `verified:` field (no I/O beyond the entry); fall back to the sidecar `verified` field if frontmatter is unset. If neither is set, treat as `unverified` (bucket 2).
 
@@ -61,7 +65,7 @@ Where `candidates` excludes any entry whose bucket is `None` (i.e., `rolled_back
 
 With `--include-rolled-back`: keep entries with `verified: rolled_back` in the candidate set and assign them bucket `0` (below `contradicted`). Still ordered last unless their score is dramatically higher than other candidates.
 
-With `--surface-contradicted`: invert the bucket for `contradicted` entries — assign them bucket `4` (above `verified`). Use case: "I'm explicitly looking for the disagreements." All other bucket values unchanged. Mutually compatible with `--include-rolled-back`.
+With `--surface-contradicted`: invert the bucket for `contradicted` entries — assign them bucket `5` (above `verified`). Use case: "I'm explicitly looking for the disagreements." All other bucket values unchanged. Mutually compatible with `--include-rolled-back`.
 
 ## Tie-breaking
 
