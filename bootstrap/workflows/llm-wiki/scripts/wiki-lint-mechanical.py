@@ -136,7 +136,7 @@ def resolve_link(file_path, target):
         return None
 
 
-def lint(vault_root, topic):
+def lint(vault_root, topic, strict=False):
     topic_root = Path(vault_root) / topic
     wiki_root = topic_root / "wiki"
     if not wiki_root.exists():
@@ -167,6 +167,19 @@ def lint(vault_root, topic):
     REQUIRED_FM_FIELDS = ["title", "date"]  # source_url + ingested_by may be intentionally absent
     VALID_TIERS = {"1", "2", "3", "4", "self"}
     VALID_CONFIDENCE = {"high", "medium", "low"}
+
+    # Icarus schema (frontmatter §1 of icarus-integration-plan).
+    # Optional fields, but when present must obey the enum + write-time invariants.
+    VALID_VERIFIED = {"unverified", "verified", "contradicted", "rolled_back"}
+    VALID_TYPE = {"decision", "observation", "attempt", "rollback", "review"}
+
+    # Icarus validation tracking
+    invalid_verified = []         # (file, value)
+    invalid_type = []             # (file, value)
+    missing_contradicted_by = []  # (file,) — verified='contradicted' but no contradicted_by
+    missing_revises_on_rollback = []  # (file,) — type='rollback' but no revises
+    missing_review_of_on_review = []  # (file,) — type='review' but no review_of
+    broken_icarus_ref = []        # (file, field, ref_value) — revises/review_of/contradicted_by points at non-existent file
 
     for f in files:
         try:
@@ -224,6 +237,38 @@ def lint(vault_root, topic):
                 if any(ch in raw_value for ch in YAML_DANGER_CHARS):
                     unquoted_yaml.append((f, fm_key, raw_value))
 
+        # Check icarus schema fields (optional, but invariants apply when present)
+        verified_value = fm.get("verified", "").strip()
+        if verified_value and verified_value not in VALID_VERIFIED:
+            invalid_verified.append((f, verified_value))
+
+        type_value = fm.get("type", "").strip()
+        if type_value and type_value not in VALID_TYPE:
+            invalid_type.append((f, type_value))
+
+        contradicted_by = fm.get("contradicted_by", "").strip()
+        revises = fm.get("revises", "").strip()
+        review_of = fm.get("review_of", "").strip()
+
+        # Invariant: verified='contradicted' requires contradicted_by
+        if verified_value == "contradicted" and not contradicted_by:
+            missing_contradicted_by.append(f)
+        # Invariant: type='rollback' requires revises
+        if type_value == "rollback" and not revises:
+            missing_revises_on_rollback.append(f)
+        # Invariant: type='review' requires review_of
+        if type_value == "review" and not review_of:
+            missing_review_of_on_review.append(f)
+
+        # Reference integrity: revises / review_of / contradicted_by must resolve to existing files
+        for ref_field, ref_value in (("revises", revises), ("review_of", review_of), ("contradicted_by", contradicted_by)):
+            if not ref_value:
+                continue
+            # Resolve relative to the entry's folder (same as markdown link semantics)
+            ref_resolved = resolve_link(f, ref_value)
+            if ref_resolved is None or not ref_resolved.exists():
+                broken_icarus_ref.append((f, ref_field, ref_value))
+
         # Check links
         for link_text, target in extract_links(content):
             # Only check links that look like .md or directory paths
@@ -268,6 +313,15 @@ def lint(vault_root, topic):
     out.append(f"**Missing `raw_path`**: {len(missing_raw_path)}")
     out.append(f"**Phantom `raw_path` (file does not exist)**: {len(phantom_raw_path)}")
     out.append(f"**Explicit self-authored (no raw)**: {self_authored_count}")
+    icarus_total = (len(invalid_verified) + len(invalid_type) + len(missing_contradicted_by)
+                    + len(missing_revises_on_rollback) + len(missing_review_of_on_review)
+                    + len(broken_icarus_ref))
+    out.append(f"**Icarus schema issues**: {icarus_total}"
+               + (f" (invalid_verified={len(invalid_verified)}, invalid_type={len(invalid_type)}, "
+                  f"missing_contradicted_by={len(missing_contradicted_by)}, "
+                  f"missing_revises_on_rollback={len(missing_revises_on_rollback)}, "
+                  f"missing_review_of_on_review={len(missing_review_of_on_review)}, "
+                  f"broken_icarus_ref={len(broken_icarus_ref)})" if icarus_total else ""))
     out.append("")
     out.append("---")
     out.append("")
@@ -407,6 +461,70 @@ def lint(vault_root, topic):
             out.append("")
     out.append("")
 
+    # Section: icarus schema (truth-status + lineage)
+    out.append("## 🧬 Icarus Schema (truth-status + lineage)")
+    out.append("")
+    out.append("Fields adopted from icarus-memory-infra (MIT schema lift). See `wiki/best-practices/framework/icarus-integration-plan.md` §1 and §7. These checks WARN by default; pass `--strict` to fail the run on any of these (CI mode).")
+    out.append("")
+    if icarus_total == 0:
+        out.append("_All icarus-schema fields valid (or absent)._")
+    else:
+        if invalid_verified:
+            out.append(f"### Invalid `verified` values ({len(invalid_verified)})")
+            out.append("")
+            out.append("Must be one of `unverified | verified | contradicted | rolled_back` (or omit the field entirely).")
+            out.append("")
+            for f, v in invalid_verified:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}` — got `{v}`")
+            out.append("")
+        if invalid_type:
+            out.append(f"### Invalid `type` values ({len(invalid_type)})")
+            out.append("")
+            out.append("Must be one of `decision | observation | attempt | rollback | review` (or omit).")
+            out.append("")
+            for f, v in invalid_type:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}` — got `{v}`")
+            out.append("")
+        if missing_contradicted_by:
+            out.append(f"### `verified='contradicted'` missing `contradicted_by` ({len(missing_contradicted_by)})")
+            out.append("")
+            out.append("If you mark an entry as contradicted, you must point at the newer entry that contradicts it (so retrieval can present both sides).")
+            out.append("")
+            for f in missing_contradicted_by:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}`")
+            out.append("")
+        if missing_revises_on_rollback:
+            out.append(f"### `type='rollback'` missing `revises` ({len(missing_revises_on_rollback)})")
+            out.append("")
+            out.append("A rollback entry must point at the verified ancestor it restores via `revises:`.")
+            out.append("")
+            for f in missing_revises_on_rollback:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}`")
+            out.append("")
+        if missing_review_of_on_review:
+            out.append(f"### `type='review'` missing `review_of` ({len(missing_review_of_on_review)})")
+            out.append("")
+            out.append("A review entry must point at the audited target via `review_of:`.")
+            out.append("")
+            for f in missing_review_of_on_review:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}`")
+            out.append("")
+        if broken_icarus_ref:
+            out.append(f"### Broken icarus-ref ({len(broken_icarus_ref)})")
+            out.append("")
+            out.append("`revises`, `review_of`, and `contradicted_by` must each point at an existing wiki entry.")
+            out.append("")
+            for f, field, value in broken_icarus_ref:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}` — `{field}: {value}` (file not found)")
+            out.append("")
+    out.append("")
+
     # Save report
     report_path = topic_root / "_inbox" / "lint-report.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -417,15 +535,26 @@ def lint(vault_root, topic):
     print(report_text)
     print()
     print(f"Report saved to: {report_path}")
-    return 0 if (not broken_links and not stale_pending) else 0  # always 0 for now
+
+    # Exit code: strict mode fails on broken links OR any icarus invariant violation.
+    # Non-strict (default) always returns 0 — report is informational.
+    if strict:
+        if broken_links or icarus_total > 0:
+            return 1
+    return 0
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Lint a topic wiki for broken links, orphans, and stale claims")
+    parser = argparse.ArgumentParser(description="Lint a topic wiki for broken links, orphans, stale claims, and icarus-schema invariants")
     parser.add_argument("--topic", required=True)
     parser.add_argument("--vault", default=DEFAULT_VAULT)
+    parser.add_argument(
+        "--strict", action="store_true",
+        help="Fail (exit 1) if there are broken links or icarus-schema violations. "
+             "Use in CI. Default: always exit 0 (report-only mode).",
+    )
     args = parser.parse_args()
-    return lint(args.vault, args.topic)
+    return lint(args.vault, args.topic, strict=args.strict)
 
 
 if __name__ == "__main__":
