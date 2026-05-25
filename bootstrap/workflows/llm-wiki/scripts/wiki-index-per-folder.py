@@ -307,23 +307,27 @@ def main() -> int:
         print(f"error: wiki root not found: {wiki_root}", file=sys.stderr)
         return 2
 
-    # Process every subfolder containing .md files. Skip hidden + non-dir.
-    # Container folders (four-layer model: research/, project/, sessions/) hold subfolders
-    # instead of direct .md entries — recurse one level into those.
-    CONTAINER_FOLDERS = {"research", "project", "sessions"}
+    # Walk every folder under wiki/ recursively. Generate an _INDEX.md for any
+    # folder that contains at least one .md entry (excluding _INDEX.md / hidden).
+    # This handles both flat-tree wikis AND the four-layer model (research/<x>/,
+    # project/<x>/<y>/) uniformly without needing to enumerate container names.
     results = []
-    for child in sorted(wiki_root.iterdir()):
-        if not child.is_dir() or child.name.startswith("."):
+    seen_dirs = set()
+    for child in sorted(wiki_root.rglob("*")):
+        if not child.is_dir():
             continue
-        if child.name in CONTAINER_FOLDERS:
-            # Iterate subfolders of the container
-            for sub in sorted(child.iterdir()):
-                if sub.is_dir() and not sub.name.startswith(("_", ".")):
-                    r = process_folder(sub, wiki_root, dry_run=args.dry_run)
-                    results.append(r)
-        else:
-            r = process_folder(child, wiki_root, dry_run=args.dry_run)
-            results.append(r)
+        # Skip hidden, _-prefixed (e.g. _inbox), and already-processed.
+        if child.name.startswith((".", "_")):
+            continue
+        if child.resolve() in seen_dirs:
+            continue
+        seen_dirs.add(child.resolve())
+        # Skip directories with no direct .md entries (nothing to index here).
+        direct_mds = [p for p in child.glob("*.md") if p.name != "_INDEX.md" and not p.name.startswith(".")]
+        if not direct_mds:
+            continue
+        r = process_folder(child, wiki_root, dry_run=args.dry_run)
+        results.append(r)
 
     folders_scanned = len(results)
     folders_updated = sum(1 for r in results if r.get("changed"))
