@@ -76,6 +76,10 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Local helper for atomic writes (icarus integration plan §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
+
 MARKER_START = "<!-- BACKLINKS-AUTO START -->"
 MARKER_END = "<!-- BACKLINKS-AUTO END -->"
 LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+\.md)\)")
@@ -211,7 +215,7 @@ def rewrite_backlinks_section(
     changed = new_text != text
 
     if changed and not dry_run:
-        entry.write_text(new_text, encoding="utf-8")
+        atomic_write_text(entry, new_text)
 
     return changed, added, removed
 
@@ -236,9 +240,7 @@ def emit_cycle_json(
         "notes": "",
         "errors": [],
     }
-    (run_folder / "reciprocate-backlinks.json").write_text(
-        json.dumps(payload, indent=2), encoding="utf-8"
-    )
+    atomic_write_text(run_folder / "reciprocate-backlinks.json", json.dumps(payload, indent=2))
 
     md_lines = [
         f"# reciprocate-backlinks — {cycle_id}",
@@ -269,9 +271,7 @@ def emit_cycle_json(
         "_(none)_",
         "",
     ]
-    (run_folder / "reciprocate-backlinks.md").write_text(
-        "\n".join(md_lines), encoding="utf-8"
-    )
+    atomic_write_text(run_folder / "reciprocate-backlinks.md", "\n".join(md_lines))
 
 
 def main() -> int:

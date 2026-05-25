@@ -78,6 +78,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
+
 FM_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 TLDR_HEADING_RE = re.compile(r"^##+\s*TL;DR\s*$", re.MULTILINE | re.IGNORECASE)
 H1_RE = re.compile(r"^#\s+(.+)$", re.MULTILINE)
@@ -228,7 +232,7 @@ def process_folder(folder: Path, wiki_root: Path, dry_run: bool = False) -> dict
     changed = _strip_volatile(existing) != _strip_volatile(new_content)
 
     if changed and not dry_run:
-        index_path.write_text(new_content, encoding="utf-8")
+        atomic_write_text(index_path, new_content)
 
     return {
         "folder": folder.name,
@@ -263,9 +267,7 @@ def emit_cycle_artifacts(
         "notes": "",
         "errors": [],
     }
-    (run_folder / "index-per-folder.json").write_text(
-        json.dumps(payload, indent=2), encoding="utf-8"
-    )
+    atomic_write_text(run_folder / "index-per-folder.json", json.dumps(payload, indent=2))
     md = [
         f"# index-per-folder — {cycle_id}",
         "",
@@ -288,7 +290,7 @@ def emit_cycle_artifacts(
             f"{'regenerated' if r['changed'] else 'unchanged'} | {iso_now()} |"
         )
     md += ["", "## Skipped", "", "_(none)_", "", "## Deferred", "", "_(none)_", ""]
-    (run_folder / "index-per-folder.md").write_text("\n".join(md), encoding="utf-8")
+    atomic_write_text(run_folder / "index-per-folder.md", "\n".join(md))
 
 
 def main() -> int:
