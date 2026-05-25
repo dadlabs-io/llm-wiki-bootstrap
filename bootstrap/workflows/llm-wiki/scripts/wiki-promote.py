@@ -42,6 +42,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Atomic-write helper (icarus §8).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _atomic_io import atomic_write_text  # noqa: E402
+
 
 def _default_vault():
     """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
@@ -197,6 +201,60 @@ def _summarize_entry(md_path: Path, meta: dict) -> str:
     return f"{md_path.name}  →  {folder}/  [T{tier}]  ({n_backlinks} backlinks)  {title}"
 
 
+def _init_truth_status_sidecar(vault: Path, slug: str, dry_run: bool) -> Path | None:
+    """Mirror-on-create initialization for the icarus truth-status block (icarus §2).
+
+    Per the memory-signals-sidecar spec, the truth-status block is created EAGERLY
+    at promote time so the schema is uniform and lint can detect missing blocks
+    reliably. Initial values:
+      verified: "unverified"
+      verified_at: null
+      verified_by: (omitted)
+      contradicted_by: []
+      rolled_back_at: null
+
+    If a sidecar already exists (e.g., from a previous /wiki-update --staged flow
+    that pre-initialized it, or a carry-over from an earlier cycle), this function
+    is a no-op on the truth-status fields — recency-class fields are untouched
+    regardless, and any pre-existing truth-status fields are preserved.
+
+    Returns the sidecar path if created/updated, None on dry-run-no-action.
+    """
+    # Topic root = vault.parent if vault ends in /wiki; else vault itself.
+    # Sidecars live at <topic-root>/_signals/<slug>.json per the spec.
+    if vault.name == "wiki":
+        topic_root = vault.parent
+    else:
+        topic_root = vault
+    sc_path = topic_root / "_signals" / f"{slug}.json"
+
+    existing: dict = {}
+    if sc_path.exists():
+        try:
+            existing = json.loads(sc_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            existing = {}
+
+    # Don't clobber pre-existing truth-status fields if a verify/rollback already ran.
+    if "verified" not in existing:
+        existing.setdefault("slug", slug)
+        existing["verified"] = "unverified"
+        existing["verified_at"] = None
+        existing["contradicted_by"] = []
+        existing["rolled_back_at"] = None
+    else:
+        # Block exists; ensure structural fields are present without overwriting.
+        existing.setdefault("slug", slug)
+        existing.setdefault("contradicted_by", [])
+        existing.setdefault("rolled_back_at", None)
+
+    if dry_run:
+        return None
+    sc_path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write_text(sc_path, json.dumps(existing, indent=2))
+    return sc_path
+
+
 def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False) -> dict:
     """Promote one entry. Returns a result dict with counts."""
     folder = meta.get("target_folder") or ""
@@ -210,6 +268,7 @@ def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False)
         "moved": False,
         "backlinks_added": 0,
         "backlinks_skipped": 0,
+        "sidecar_initialized": False,
     }
 
     if not dry_run:
@@ -217,7 +276,7 @@ def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False)
         # Strip status: proposed from frontmatter
         text = md_path.read_text(encoding="utf-8")
         text = _strip_status_proposed(text)
-        target_path.write_text(text, encoding="utf-8")
+        atomic_write_text(target_path, text)
         md_path.unlink()
         # Clean up sidecar
         sidecar = md_path.with_suffix(".proposed_metadata.json")
@@ -232,6 +291,12 @@ def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False)
                 result["backlinks_added"] += 1
             else:
                 result["backlinks_skipped"] += 1
+
+        # icarus §2 mirror-on-create: initialize truth-status sidecar block.
+        sc = _init_truth_status_sidecar(vault, md_path.stem, dry_run=False)
+        if sc is not None:
+            result["sidecar_initialized"] = True
+            result["sidecar_path"] = str(sc)
     else:
         result["moved"] = True  # would have moved
         result["backlinks_added"] = len(meta.get("suggested_backlinks", []))
