@@ -64,10 +64,11 @@ Adopted from the [icarus-memory-infra schema](../../active/icarus-memory-infra-e
 
 | Field | Type | Values / format | Purpose |
 |---|---|---|---|
-| `verified` | enum | `unverified` (default) \| `verified` \| `contradicted` \| `rolled_back` | Truth-status. Default `unverified` when omitted. Production retrieval ranks `verified` highest, `unverified` middle, `contradicted` lowest, `rolled_back` excluded by default. |
+| `verified` | enum | `unverified` (default) \| `verified` \| `temporal` \| `contradicted` \| `rolled_back` | Truth-status. Default `unverified` when omitted. Production retrieval ranks `verified` highest, then `unverified`, then `temporal` (was correct as-of-a-past-date), then `contradicted` lowest, `rolled_back` excluded by default. The `temporal` value splits off "still correct but stale by date" from "was wrong" (cycle 2026-05-24-01 refinement, TDS Alexander 3-time-problems framing). |
 | `revises` | slug | Relative path to the older entry this one revises | Backward lineage. Used by rollback walks to reach the verified ancestor. |
 | `review_of` | slug | Relative path to the entry this one audits / re-evaluates | Forward lineage for `type: review` entries — the audited target. |
 | `contradicted_by` | slug | Relative path to the newer entry that contradicts this one | Set on the older side of a contradiction pair. **Required iff `verified='contradicted'`.** |
+| `synthesis_of` | list of slugs | Relative paths to the research entries this project entry distills | ACL lineage from project → research synthesis. When a `project/` entry draws claims from one or more `research/` entries, list them here so ACL-aware retrieval can detect distillation chains and propagate access constraints (e.g., NDA-bound, customer-private). Cycle 2026-05-24-01 refinement (Databricks Lakebase). |
 | `type` | enum | `decision` \| `observation` \| `attempt` \| `rollback` \| `review` | Entry kind. Default: not set (treated as a regular entry). |
 
 ### Write-time invariants
@@ -78,11 +79,7 @@ These must be checked at write time (during ingest / promote / hand-edit), not r
 2. **Contradiction needs a target** — if `verified: contradicted`, then `contradicted_by:` must be present and must point at an existing entry.
 3. **Rollback needs an ancestor** — if `type: rollback`, then `revises:` must be present and point at an existing entry (the verified ancestor it restores).
 4. **Review needs a target** — if `type: review`, then `review_of:` must be present and point at an existing entry (the audited target).
-5. **Reference integrity** — `revises`, `review_of`, and `contradicted_by` (when present) must each resolve to a real file under `wiki/`.
-
-### TODO — refinements identified in cycle 2026-05-24-01
-
-- **TEMPORAL `verified` value**: TDS Alexander's "three time problems" (expiration / temporality / versioning) argues that `rolled_back` collapses two distinct cases. Consider adding `verified: temporal` for entries that were correct-as-of-a-past-date but are no longer current, distinct from rolled-back entries that were retracted because they were wrong from the start. See icarus-integration-plan §1 refinement note.
+5. **Reference integrity** — `revises`, `review_of`, `contradicted_by`, and every entry in `synthesis_of` (when present) must each resolve to a real file under `wiki/`.
 
 ---
 
@@ -225,13 +222,13 @@ Mechanical checks `/wiki-lint` performs (or should perform):
 - `tags` has length ≥ 3
 
 **Icarus schema checks** (default WARN; `--strict` flips to error / non-zero exit):
-- `verified` (when present) is one of `unverified` \| `verified` \| `contradicted` \| `rolled_back`
+- `verified` (when present) is one of `unverified` \| `verified` \| `temporal` \| `contradicted` \| `rolled_back`
 - `type` (when present) is one of `decision` \| `observation` \| `attempt` \| `rollback` \| `review`
 - `verified: verified` is NOT set on initial write (reject — only `/wiki-verify` can flip this)
 - `verified: contradicted` requires `contradicted_by:` field present
 - `type: rollback` requires `revises:` field present
 - `type: review` requires `review_of:` field present
-- `revises`, `review_of`, `contradicted_by` (when present) point at existing files under `wiki/`
+- `revises`, `review_of`, `contradicted_by`, and every entry in `synthesis_of` (when present) point at existing files under `wiki/`
 
 Entries failing any check get listed in the next lint report for manual fix.
 
