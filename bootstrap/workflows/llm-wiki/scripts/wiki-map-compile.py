@@ -346,11 +346,23 @@ def render_map(wiki_root: Path, topic: str, folder_data: dict[str, list[dict]], 
 
 def process(wiki_root: Path, topic: str, dry_run: bool = False) -> dict:
     folder_data = {}
+    # Container folders (four-layer model: research/, project/, sessions/) hold subfolders
+    # instead of direct .md entries. Walk one level deeper into those.
+    CONTAINER_FOLDERS = {"research", "project", "sessions"}
     for child in sorted(wiki_root.iterdir()):
-        if child.is_dir() and not child.name.startswith("."):
-            entries = collect_folder_entries(child)
-            if entries:
-                folder_data[child.name] = entries
+        if not child.is_dir() or child.name.startswith("."):
+            continue
+        entries = collect_folder_entries(child)
+        if entries:
+            folder_data[child.name] = entries
+        elif child.name in CONTAINER_FOLDERS:
+            # Container folder: enumerate its subfolders as the actual category folders
+            for subfolder in sorted(child.iterdir()):
+                if not subfolder.is_dir() or subfolder.name.startswith(("_", ".")):
+                    continue
+                sub_entries = collect_folder_entries(subfolder)
+                if sub_entries:
+                    folder_data[f"{child.name}/{subfolder.name}"] = sub_entries
     root_entries = collect_root_entries(wiki_root)
 
     new_content = render_map(wiki_root, topic, folder_data, root_entries)

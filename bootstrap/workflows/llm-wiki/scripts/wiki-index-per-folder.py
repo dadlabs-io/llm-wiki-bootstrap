@@ -308,9 +308,20 @@ def main() -> int:
         return 2
 
     # Process every subfolder containing .md files. Skip hidden + non-dir.
+    # Container folders (four-layer model: research/, project/, sessions/) hold subfolders
+    # instead of direct .md entries — recurse one level into those.
+    CONTAINER_FOLDERS = {"research", "project", "sessions"}
     results = []
     for child in sorted(wiki_root.iterdir()):
-        if child.is_dir() and not child.name.startswith("."):
+        if not child.is_dir() or child.name.startswith("."):
+            continue
+        if child.name in CONTAINER_FOLDERS:
+            # Iterate subfolders of the container
+            for sub in sorted(child.iterdir()):
+                if sub.is_dir() and not sub.name.startswith(("_", ".")):
+                    r = process_folder(sub, wiki_root, dry_run=args.dry_run)
+                    results.append(r)
+        else:
             r = process_folder(child, wiki_root, dry_run=args.dry_run)
             results.append(r)
 
