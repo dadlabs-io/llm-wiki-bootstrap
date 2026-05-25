@@ -6,10 +6,10 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 1
-last_reviewed: 2026-04-21
-review_after: 2026-10-21
-tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec]
+framework-version: 2
+last_reviewed: 2026-05-24
+review_after: 2026-11-24
+tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
 
 # Wiki Frontmatter — Best Practices & Canonical Field Reference
@@ -55,8 +55,34 @@ Path is relative to the topic root (the folder containing `_INDEX.md`), **not** 
 | `aliases` | list | Alternate titles for search — include when the entry covers something known by multiple names. |
 | `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |
 | `superseded_by` | relative path | When an entry is retired in favor of another, point to the successor. Keep both entries per both-sides-stay (principle 4). |
-| `recall_count` | int | Reserved for future memory-signal tracking (principle 10 federation, memory architecture). Do not write manually yet. |
+| `recall_count` | int | Reserved for future memory-signal tracking (principle 10 federation, memory architecture). Do not write manually yet. See [memory-signals-sidecar-vs-frontmatter-pattern.md](./memory-signals-sidecar-vs-frontmatter-pattern.md) — the sidecar pattern is the production-bound implementation route; this field is the frontmatter mirror for entries where the signal is editorially-set, not telemetry-derived. |
 | `access_count` | int | Same as above — reserved. |
+
+## Optional fields — truth-status and lineage (icarus schema)
+
+Adopted from the [icarus-memory-infra schema](../../active/icarus-memory-infra-esaradev-2026.md) (MIT-licensed vocabulary lift; we do not take icarus as a runtime dependency — see [icarus-integration-plan.md](./icarus-integration-plan.md) §1). These five fields layer truth-status and forward/backward lineage onto entries; they are **optional** at the schema level but have **write-time invariants** when used.
+
+| Field | Type | Values / format | Purpose |
+|---|---|---|---|
+| `verified` | enum | `unverified` (default) \| `verified` \| `contradicted` \| `rolled_back` | Truth-status. Default `unverified` when omitted. Production retrieval ranks `verified` highest, `unverified` middle, `contradicted` lowest, `rolled_back` excluded by default. |
+| `revises` | slug | Relative path to the older entry this one revises | Backward lineage. Used by rollback walks to reach the verified ancestor. |
+| `review_of` | slug | Relative path to the entry this one audits / re-evaluates | Forward lineage for `type: review` entries — the audited target. |
+| `contradicted_by` | slug | Relative path to the newer entry that contradicts this one | Set on the older side of a contradiction pair. **Required iff `verified='contradicted'`.** |
+| `type` | enum | `decision` \| `observation` \| `attempt` \| `rollback` \| `review` | Entry kind. Default: not set (treated as a regular entry). |
+
+### Write-time invariants
+
+These must be checked at write time (during ingest / promote / hand-edit), not retrieval time. The `wiki-lint-mechanical.py` script enforces them with `--strict` mode failing CI:
+
+1. **No self-certification** — `verified: verified` cannot be set on the initial write of an entry. Only a separate verify step (e.g., `/wiki-verify <slug>`) can set it. This prevents an entry from asserting its own truth.
+2. **Contradiction needs a target** — if `verified: contradicted`, then `contradicted_by:` must be present and must point at an existing entry.
+3. **Rollback needs an ancestor** — if `type: rollback`, then `revises:` must be present and point at an existing entry (the verified ancestor it restores).
+4. **Review needs a target** — if `type: review`, then `review_of:` must be present and point at an existing entry (the audited target).
+5. **Reference integrity** — `revises`, `review_of`, and `contradicted_by` (when present) must each resolve to a real file under `wiki/`.
+
+### TODO — refinements identified in cycle 2026-05-24-01
+
+- **TEMPORAL `verified` value**: TDS Alexander's "three time problems" (expiration / temporality / versioning) argues that `rolled_back` collapses two distinct cases. Consider adding `verified: temporal` for entries that were correct-as-of-a-past-date but are no longer current, distinct from rolled-back entries that were retracted because they were wrong from the start. See icarus-integration-plan §1 refinement note.
 
 ---
 
@@ -187,6 +213,7 @@ tags: [implementation, agentmemory, session-memory, mcp, self-authored]
 
 Mechanical checks `/wiki-lint` performs (or should perform):
 
+**Core schema checks:**
 - All required fields present
 - `date`, `last_reviewed`, `review_after` are valid ISO dates
 - `tier` is `1`, `2`, `3`, `4`, or `self`
@@ -196,6 +223,15 @@ Mechanical checks `/wiki-lint` performs (or should perform):
 - `source_url` is either `http(s)://...` or `internal://...`
 - `ingested_by` is one of the known values
 - `tags` has length ≥ 3
+
+**Icarus schema checks** (default WARN; `--strict` flips to error / non-zero exit):
+- `verified` (when present) is one of `unverified` \| `verified` \| `contradicted` \| `rolled_back`
+- `type` (when present) is one of `decision` \| `observation` \| `attempt` \| `rollback` \| `review`
+- `verified: verified` is NOT set on initial write (reject — only `/wiki-verify` can flip this)
+- `verified: contradicted` requires `contradicted_by:` field present
+- `type: rollback` requires `revises:` field present
+- `type: review` requires `review_of:` field present
+- `revises`, `review_of`, `contradicted_by` (when present) point at existing files under `wiki/`
 
 Entries failing any check get listed in the next lint report for manual fix.
 
