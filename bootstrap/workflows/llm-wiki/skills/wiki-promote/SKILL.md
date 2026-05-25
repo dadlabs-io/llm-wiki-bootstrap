@@ -16,7 +16,22 @@ Promote staged entries from `_inbox/proposed/` into the live wiki. This is the s
 /wiki-promote all                # promote everything in proposed/
 /wiki-promote <filename>         # promote a specific entry
 /wiki-promote --review           # show details of each entry before prompting
+
+# §9 of icarus-integration-plan: promote-and-verify in one pass for tier-1 entries
+# with strong empirical backing. MOST entries should NOT be auto-verified at
+# promote time — verification is a deliberate later step. Use this flag only
+# when the human reviewing the promote can also vouch for the claims.
+/wiki-promote --verify --verify-by human --verify-evidence "<one line>"
+/wiki-promote --slug <slug> --auto --verify --verify-by tool --verify-evidence "Aardvark sandbox-verified PoCs"
 ```
+
+### --verify flag semantics
+
+- Runs `/wiki-verify` on each successfully-promoted entry as a sub-step
+- `--verify-by` is `human` by default (editorial signoff); use `agent` for LLM-judge, `tool` for sandbox/static-analyzer
+- `--verify-evidence` is the one-line note recorded in the sidecar
+- Failures during verify are logged + included in the result JSON but don't roll back the promotion (the entry stays promoted as `unverified`)
+- See [wiki-verify SKILL.md](../wiki-verify/SKILL.md) for the per-entry semantics
 
 ## What You Must Do When Invoked
 

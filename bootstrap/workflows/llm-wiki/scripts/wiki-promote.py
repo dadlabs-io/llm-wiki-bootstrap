@@ -272,6 +272,22 @@ def main():
     parser.add_argument("--slug", default=None, help="Only operate on this slug")
     parser.add_argument("--max", type=int, default=None, help="Stop after N promotions")
     parser.add_argument("--dry-run", action="store_true", help="Print actions without writing")
+    parser.add_argument(
+        "--verify", action="store_true",
+        help="Also run /wiki-verify on each successfully promoted entry. "
+             "Use for tier-1 entries with strong empirical backing where you're "
+             "willing to certify in the same human-review pass. Most entries "
+             "should NOT be auto-verified at promote time — verification is a "
+             "deliberate later step. icarus integration plan §9.",
+    )
+    parser.add_argument(
+        "--verify-by", default="human", choices=["human", "agent", "tool"],
+        help="Who is doing the verification when --verify is set. Default: human.",
+    )
+    parser.add_argument(
+        "--verify-evidence", default="",
+        help="Optional one-line evidence note recorded with the verification.",
+    )
     args = parser.parse_args()
 
     vault = Path(args.vault) if args.vault else Path(_default_vault())
@@ -339,6 +355,33 @@ def main():
             r = promote_entry(md_path, meta, vault, dry_run=args.dry_run)
             promoted.append(r)
             _info(f"PROMOTED  {summary}  (+{r['backlinks_added']} backlinks)")
+            # §9: optional verify-after-promote for tier-1 entries with strong empirical backing.
+            # Most entries should stay unverified post-promote; this flag is opt-in per cycle.
+            if args.verify and r.get("moved") and not args.dry_run:
+                try:
+                    import subprocess
+                    verify_cmd = [
+                        sys.executable,
+                        str(scripts_dir / "wiki-verify.py"),
+                        r["slug"],
+                        "--topic", topic,
+                        "--vault", str(vault.parent),  # wiki-verify wants the vault-of-topic-roots
+                        "--by", args.verify_by,
+                    ]
+                    if args.verify_evidence:
+                        verify_cmd += ["--evidence", args.verify_evidence]
+                    res = subprocess.run(verify_cmd, capture_output=True, text=True, check=False)
+                    if res.returncode == 0:
+                        r["verified"] = True
+                        _info(f"VERIFIED  {r['slug']}  (by={args.verify_by})")
+                    else:
+                        r["verified"] = False
+                        r["verify_error"] = res.stderr.strip().splitlines()[-1] if res.stderr else "(no stderr)"
+                        _warn(f"verify failed for {r['slug']}: {r['verify_error']}")
+                except Exception as e:
+                    r["verified"] = False
+                    r["verify_error"] = str(e)
+                    _warn(f"verify subprocess crashed for {r['slug']}: {e}")
             promote_count += 1
             if args.max and promote_count >= args.max:
                 _info(f"--max {args.max} reached, stopping")
