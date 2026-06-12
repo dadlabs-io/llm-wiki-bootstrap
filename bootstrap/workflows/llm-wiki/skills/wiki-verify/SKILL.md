@@ -53,7 +53,7 @@ Run the script with `--dry-run` first if you want to preview, otherwise go strai
 ### Step 2 — Run the verify
 
 ```bash
-python bootstrap/workflows/llm-wiki/scripts/wiki-verify.py "<slug>" \
+python {{WIKI_SCRIPTS_DIR}}/wiki-verify.py "<slug>" \
     --topic "<topic>" \
     --by "<human|agent|tool>" \
     [--evidence "<one-line description>"] \
@@ -84,7 +84,7 @@ Show the user: target, verified_by, verified_at, evidence, sidecar path. If `fro
 If the entry's frontmatter was mirrored (`--mirror`), re-run the integration scripts so the change propagates to backlinks/INDEX/MAP:
 
 ```bash
-python bootstrap/workflows/llm-wiki/scripts/wiki-reciprocate-backlinks.py --topic <topic> --vault <vault>
+python {{WIKI_SCRIPTS_DIR}}/wiki-reciprocate-backlinks.py --topic <topic> --vault <vault>
 ```
 
 (If only the sidecar was touched, no integration-script re-run needed — sidecars aren't indexed by those scripts.)

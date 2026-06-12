@@ -201,7 +201,7 @@ When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/discover.json
 After the user reviews the checklist (human review #1), queue the approved items:
 
 ```bash
-python .claude/wiki-scripts/wiki-list-add.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-list-add.py \
   --topic <topic> --vault llm-wiki/wiki \
   --source "<url>" --title "<title>" --priority <1-5> --tags "<tags>" --added-by claude-code
 ```
@@ -240,7 +240,7 @@ Discovery complete for <topic>
 - Pending queue: `llm-wiki/wiki/_inbox/pending/`
 - Done queue: `llm-wiki/wiki/_inbox/done/`
 - Concept gaps: `llm-wiki/wiki/concept-gaps-things-mentioned-not-yet-covered.md`
-- wiki-list-add script: `.claude/wiki-scripts/wiki-list-add.py`
+- wiki-list-add script: `{{WIKI_SCRIPTS_DIR}}/wiki-list-add.py`
 
 ## Integration with the research cycle
 

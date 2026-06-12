@@ -1,34 +1,46 @@
 #!/usr/bin/env bash
-# install-wiki.sh -- install the LLM-wiki framework, optionally scaffold a project.
+# install-wiki.sh -- install the LLM-wiki framework.
+#
+# Interactive flow:
+#   Q1: install target?  [1] global tooling (default)  |  [2] a specific project
+#   Q2: tool?            [1] claude-code (default)      |  [2] cursor (not yet supported -> exits)
 #
 # Two modes:
-#   1. Global install only (no --target-folder):
-#      Installs the /new-wiki skill at ~/.claude/skills/new-wiki/.
-#   2. One-shot install + scaffold (with --target-folder):
-#      Global install AS NEEDED, then scaffolds the project at --target-folder.
+#   1. Global tooling-only (DEFAULT):
+#      Installs ALL wiki skills into ~/.claude/skills/ and all wiki scripts into
+#      ~/.claude/wiki-scripts/. No project/content scaffold. Idempotent.
+#      -> new-wiki.py --mode tooling --tool claude-code
+#   2. A specific project (--target-folder, or pick [2]):
+#      Records this package as the global bootstrap source (Phase A), then
+#      scaffolds the project at --target-folder. The research-vs-development
+#      prompt has been removed; the project path uses a merged taxonomy default.
 #
 # Usage examples (from this package's root):
-#   ./install-wiki.sh                                        # global only
-#   ./install-wiki.sh --target-folder ~/proj/dnd-project     # install + scaffold (interactive)
+#   ./install-wiki.sh                                        # global tooling (default)
+#   ./install-wiki.sh --mode tooling                         # same, explicit
+#   ./install-wiki.sh --target-folder ~/proj/dnd-project     # scaffold a project (interactive)
 #   ./install-wiki.sh --target-folder ~/proj/dnd-project \
-#       --project-type development --project-name dnd-project \
+#       --project-name dnd-project \
 #       --project-description "D&D combat engine" --drive-enabled yes
 #
 # Flags:
-#   --target-folder       Enable scaffold; project root to create/populate
-#   --tool                claude-code (default) | cursor
-#   --project-type        research | development (asked if missing + --target-folder)
+#   --mode                tooling (default) | project
+#   --target-folder       Project root to create/populate (implies --mode project)
+#   --tool                claude-code (default) | cursor (cursor exits 0 -- not yet supported)
 #   --project-name        Project slug (defaults to target leaf name)
-#   --project-description One-liner (asked if missing + --target-folder)
+#   --project-description One-liner (asked if missing, interactive only)
+#   --project-type        research | development -- DEPRECATED prompt removed; still
+#                         accepted for scripted back-compat. TODO: merged taxonomy.
 #   --drive-enabled       yes | no (default no)
 #   --drive-parent-folder Google Drive parent folder name (default "__FOR CLAUDE")
-#   --force               Skip already-installed prompt; wipe + reinstall skill
-#   --refresh-only        Skip prompt; idempotent refresh
+#   --force / --refresh-only  retained for back-compat (no longer gate a prompt)
 
 set -euo pipefail
 
+MODE=""
 TARGET_FOLDER=""
 TOOL="claude-code"
+TOOL_SET="no"
 PROJECT_TYPE=""
 PROJECT_NAME=""
 PROJECT_DESCRIPTION=""
@@ -39,8 +51,9 @@ REFRESH_ONLY="no"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --mode) MODE="$2"; shift 2;;
         --target-folder) TARGET_FOLDER="$2"; shift 2;;
-        --tool) TOOL="$2"; shift 2;;
+        --tool) TOOL="$2"; TOOL_SET="yes"; shift 2;;
         --project-type) PROJECT_TYPE="$2"; shift 2;;
         --project-name) PROJECT_NAME="$2"; shift 2;;
         --project-description) PROJECT_DESCRIPTION="$2"; shift 2;;
@@ -73,48 +86,77 @@ else
     exit 2
 fi
 
-# Idempotent install check
-SKILL_PATH="$HOME/.claude/skills/new-wiki/SKILL.md"
-CONFIG_PATH="$HOME/.claude/wiki-config.json"
+# Detect non-interactive mode (no TTY on stdin). When run by an agent / CI /
+# piped, read hangs or returns empty, so default every prompt.
+if [[ -t 0 ]]; then NONINTERACTIVE="no"; else NONINTERACTIVE="yes"; fi
 
-if [[ -f "$SKILL_PATH" && -f "$CONFIG_PATH" && "$FORCE" != "yes" && "$REFRESH_ONLY" != "yes" ]]; then
-    echo "LLM-wiki framework is already installed on this machine."
-    # Use python to safely parse the JSON
-    "$PY" -c "
-import json, pathlib
-p = pathlib.Path('$CONFIG_PATH')
-try:
-    cfg = json.loads(p.read_text(encoding='utf-8'))
-    print(f'  bootstrap source: {cfg.get(\"bootstrap_source\", \"(unknown)\")}')
-    print(f'  install version:  {cfg.get(\"install_version\", \"(unknown)\")}')
-    print(f'  last installed:   {cfg.get(\"last_phase_a\", \"(unknown)\")}')
-    if cfg.get('bootstrap_source') and cfg['bootstrap_source'] != '$HERE':
-        print(f'  NOTE: previous bootstrap_source differs from current ($HERE)')
-except Exception as e:
-    print(f'  (config unreadable: {e})')
-"
-    echo
-    echo "Choose:"
-    echo "  [R] Refresh -- re-copy /new-wiki skill from current bootstrap source (default)"
-    echo "  [S] Skip   -- exit without changes"
-    echo "  [F] Force  -- wipe existing install + reinstall fresh"
-    read -p "Choice [R/S/F]: " choice
-    case "$choice" in
-        [Ss]*)
-            echo "Skipping."
-            exit 0
-            ;;
-        [Ff]*)
-            echo "Wiping existing /new-wiki skill..."
-            rm -rf "$HOME/.claude/skills/new-wiki"
-            ;;
-        *)
-            echo "Refreshing existing install."
-            ;;
-    esac
-    echo
+# ---------- Q1: install target ----------
+# Default is global tooling-only. --target-folder implies a project install.
+if [[ -z "$MODE" ]]; then
+    if [[ -n "$TARGET_FOLDER" ]]; then
+        MODE="project"
+    elif [[ "$NONINTERACTIVE" == "yes" ]]; then
+        MODE="tooling"
+        echo "Non-interactive run -- defaulting to global tooling install."
+    else
+        echo "What do you want to install?"
+        echo "  1. global tooling  -- all wiki skills + scripts into ~/.claude/ (default)"
+        echo "  2. a specific project -- scaffold an llm-wiki project folder"
+        read -p "Pick (1 or 2) [1]: " tchoice
+        case "$tchoice" in
+            2|project) MODE="project" ;;
+            *) MODE="tooling" ;;
+        esac
+    fi
 fi
 
+# ---------- Q2: tool ----------
+if [[ "$NONINTERACTIVE" != "yes" && "$TOOL_SET" != "yes" ]]; then
+    echo
+    echo "Which tool?"
+    echo "  1. claude-code (default)"
+    echo "  2. cursor"
+    read -p "Pick (1 or 2) [1]: " toolchoice
+    case "$toolchoice" in
+        2|cursor) TOOL="cursor" ;;
+        *) TOOL="claude-code" ;;
+    esac
+fi
+
+if [[ "$TOOL" == "cursor" ]]; then
+    echo "Cursor not supported yet -- exiting."
+    exit 0
+fi
+
+# ---------- Mode: global tooling-only ----------
+if [[ "$MODE" == "tooling" ]]; then
+    echo
+    echo "Installing LLM-wiki global tooling (skills + scripts)..."
+    echo "  Bootstrap source: $HERE"
+    echo
+    "$PY" "$SCRIPT" \
+        --mode tooling \
+        --tool claude-code \
+        --bootstrap-source "$HERE"
+    exit $?
+fi
+
+# ---------- Mode: project scaffold ----------
+if [[ -z "$TARGET_FOLDER" ]]; then
+    if [[ "$NONINTERACTIVE" == "yes" ]]; then
+        echo "ERR: project install requires --target-folder in non-interactive mode." >&2
+        exit 2
+    fi
+    read -p "Project target folder: " TARGET_FOLDER
+    if [[ -z "$TARGET_FOLDER" ]]; then
+        echo "ERR: a target folder is required for a project install." >&2
+        exit 2
+    fi
+fi
+
+# Project install still needs the global /new-wiki skill + recorded bootstrap
+# source (Phase A) before scaffolding (Phase B).
+echo
 echo "Installing LLM-wiki framework (global, one-time)..."
 echo "  Bootstrap source: $HERE"
 echo "  Drive ingest:     $DRIVE_ENABLED"
@@ -130,49 +172,34 @@ echo
     --drive-parent-folder "$DRIVE_PARENT_FOLDER"
 
 EXIT=$?
-
 if [[ $EXIT -ne 0 ]]; then
     exit $EXIT
-fi
-
-# ---------- Phase B (per-project scaffold) -- only if --target-folder provided ----------
-
-if [[ -z "$TARGET_FOLDER" ]]; then
-    echo
-    echo "Global install complete."
-    echo "Next steps:"
-    echo "  1. Restart Claude Code"
-    echo "  2. cd to any project folder"
-    echo "  3. Run /new-wiki -- it asks tool, type, name, Drive prefs and does the rest"
-    echo
-    echo "Or skip the two-step: re-run with --target-folder <path> to scaffold in one shot."
-    exit 0
 fi
 
 echo
 echo "Scaffolding project at $TARGET_FOLDER..."
 
-# Interactive prompts for anything not provided
+# Research-vs-development is no longer prompted. Default to a single merged
+# taxonomy. new-wiki.py Phase B still hard-requires a type, so we pass
+# "development" (the superset code+research taxonomy) as the merged default
+# unless --project-type was explicitly supplied for a scripted run.
+# TODO: merged taxonomy -- swap this default for a real combined taxonomy +
+# template once they exist; remove the research/development split entirely.
 if [[ -z "$PROJECT_TYPE" ]]; then
-    echo
-    echo "What kind of project is this?"
-    echo "  1. research     -- ingesting external content into a knowledge base"
-    echo "  2. development  -- building code, capturing design decisions"
-    read -p "Pick (1 or 2): " pt
-    case "$pt" in
-        1|research) PROJECT_TYPE="research" ;;
-        2|development) PROJECT_TYPE="development" ;;
-        *) echo "ERR: invalid choice" >&2; exit 2 ;;
-    esac
+    PROJECT_TYPE="development"
 fi
 
 if [[ -z "$PROJECT_NAME" ]]; then
     DEFAULT_NAME=$(basename "$TARGET_FOLDER" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\+/-/g' | sed 's/^-\|-$//g')
-    read -p "Project name (slug) [default: $DEFAULT_NAME]: " PROJECT_NAME
-    PROJECT_NAME="${PROJECT_NAME:-$DEFAULT_NAME}"
+    if [[ "$NONINTERACTIVE" == "yes" ]]; then
+        PROJECT_NAME="$DEFAULT_NAME"
+    else
+        read -p "Project name (slug) [default: $DEFAULT_NAME]: " PROJECT_NAME
+        PROJECT_NAME="${PROJECT_NAME:-$DEFAULT_NAME}"
+    fi
 fi
 
-if [[ -z "$PROJECT_DESCRIPTION" ]]; then
+if [[ -z "$PROJECT_DESCRIPTION" && "$NONINTERACTIVE" != "yes" ]]; then
     read -p "One-line description (optional): " PROJECT_DESCRIPTION
 fi
 
@@ -204,15 +231,8 @@ if [[ $PHASE_B_EXIT -eq 0 ]]; then
     echo "Project scaffolded."
     echo "Next steps:"
     echo "  cd $TARGET_FOLDER"
-    if [[ "$TOOL" == "claude-code" ]]; then
-        echo "  claude       # start Claude Code in this project"
-    else
-        echo "  cursor .     # open in Cursor"
-    fi
+    echo "  claude       # start Claude Code in this project"
     echo "  Read llm-wiki/README.md for an overview"
-elif [[ $PHASE_B_EXIT -eq 2 ]]; then
-    echo
-    echo "RESTART CLAUDE CODE -- agentmemory MCP was wired and needs a reload."
 fi
 
 exit $PHASE_B_EXIT

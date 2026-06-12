@@ -39,7 +39,7 @@ The user gives you a slug, a relative path, or a full path. Use the script's res
 ### Step 2 — Run the script
 
 ```bash
-python bootstrap/workflows/llm-wiki/scripts/wiki-rollback.py "<slug>" \
+python {{WIKI_SCRIPTS_DIR}}/wiki-rollback.py "<slug>" \
     --reason "<reason>" \
     --topic "<topic>" \
     [--cluster-walk] \
@@ -86,9 +86,9 @@ Don't retry. Tell the user:
 After a successful rollback, run the integration scripts so the rollback entry is indexed + cross-linked:
 
 ```bash
-python bootstrap/workflows/llm-wiki/scripts/wiki-reciprocate-backlinks.py --topic <topic> --vault <vault>
-python bootstrap/workflows/llm-wiki/scripts/wiki-index-per-folder.py --topic <topic> --vault <vault>
-python bootstrap/workflows/llm-wiki/scripts/wiki-map-compile.py --topic <topic> --vault <vault>
+python {{WIKI_SCRIPTS_DIR}}/wiki-reciprocate-backlinks.py --topic <topic> --vault <vault>
+python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py --topic <topic> --vault <vault>
+python {{WIKI_SCRIPTS_DIR}}/wiki-map-compile.py --topic <topic> --vault <vault>
 ```
 
 ### Step 6 — Commit

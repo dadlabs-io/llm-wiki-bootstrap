@@ -29,7 +29,7 @@ What to ask the user (only if not already provided):
 
 Run:
 ```bash
-python .claude/wiki-scripts/wiki-list-add.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-list-add.py \
   --topic <topic> \
   --source <url-or-path> \
   --vault llm-wiki/wiki \
@@ -50,7 +50,7 @@ What to ask:
 
 Dry run:
 ```bash
-python .claude/wiki-scripts/wiki-list-process.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-list-process.py \
   --topic <topic> \
   --vault llm-wiki/wiki \
   --dry-run
@@ -58,7 +58,7 @@ python .claude/wiki-scripts/wiki-list-process.py \
 
 Real run:
 ```bash
-python .claude/wiki-scripts/wiki-list-process.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-list-process.py \
   --topic <topic> \
   --vault llm-wiki/wiki
 ```
@@ -95,4 +95,4 @@ Format as a compact list. Tell the user the total count and remind them they can
 - Pending queue: `llm-wiki/wiki/_inbox/pending/`
 - Done: `llm-wiki/wiki/_inbox/done/`
 - Failed: `llm-wiki/wiki/_inbox/failed/` (with `.error` sidecars)
-- wiki-list-add.py / wiki-list-process.py: `.claude/wiki-scripts/`
+- wiki-list-add.py / wiki-list-process.py: `{{WIKI_SCRIPTS_DIR}}/`

@@ -36,7 +36,7 @@ find llm-wiki/wiki -name "*.md" ! -name "_INDEX.md" | wc -l
 
 **C. Mechanical lint** (fast, 2 seconds):
 ```bash
-python .claude/wiki-scripts/wiki-lint-mechanical.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
   --topic <topic> --vault llm-wiki/wiki
 ```
 

@@ -14,7 +14,7 @@ When the user says: `lint the wiki`, `/wiki-lint`, `quick wiki check`, `wiki hea
 Pure Python script. Fast, deterministic, no LLM in the loop. Reports only — never modifies files.
 
 ```bash
-python .claude/wiki-scripts/wiki-lint-mechanical.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
   --topic <topic> \
   --vault llm-wiki/wiki
 ```
@@ -190,7 +190,7 @@ After applying approved fixes, run `wiki-lint-mechanical.py` again to verify:
 
 ## Key paths
 
-- Mechanical script: `.claude/wiki-scripts/wiki-lint-mechanical.py`
+- Mechanical script: `{{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py`
 - Mechanical report: `<vault>/<topic>/_inbox/lint-report.md`
 - Semantic report: `<vault>/<topic>/_inbox/<agent>-semantic-lint-<date>.md`
 

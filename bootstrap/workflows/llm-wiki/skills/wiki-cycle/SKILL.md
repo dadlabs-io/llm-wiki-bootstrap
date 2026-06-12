@@ -188,7 +188,7 @@ Pull URLs the user dropped into Drive throughout the week, queue them into `_inb
 Invocation:
 
 ```bash
-python bootstrap/workflows/llm-wiki/scripts/wiki-fetch-drive-folder.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-drive-folder.py \
   --folder-name "__FOR CLAUDE" \
   --subfolder <topic> \
   --queue-into <topic> \

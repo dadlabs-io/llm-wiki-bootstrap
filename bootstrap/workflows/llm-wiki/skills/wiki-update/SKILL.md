@@ -123,7 +123,7 @@ With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks 
 Before writing cross-references in your synthesis, look up the canonical slug for each entry you want to link to:
 
 ```bash
-python .claude/wiki-scripts/wiki-update.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
   --topic <topic> --vault llm-wiki/wiki \
   --slug-for --title "Karpathy's LLM Wiki Pattern" --folder long-term
 ```
@@ -140,7 +140,7 @@ Use that exact slug in your cross-reference markdown links. **Never guess slugs 
 
 ### Step 1: Fetch raw
 ```bash
-python .claude/wiki-scripts/wiki-update.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
   --topic <topic> --vault llm-wiki/wiki \
   --source <url> --fetch-only
 ```
@@ -184,7 +184,7 @@ After a batch of 5+ ingests, also update the relevant **hub page** (e.g., `activ
 
 ### Step 6: File the curated entry
 ```bash
-python .claude/wiki-scripts/wiki-update.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
   --topic <topic> --folder <folder> \
   --source <synth file from step 4> \
   --source-url <original url> \
@@ -205,7 +205,7 @@ The script handles:
 ### Step 7: If from queue, move .queue file
 ```bash
 mv <topic>/_inbox/pending/<file>.md <topic>/_inbox/done/
-python .../wiki-list-render.py --topic <topic> --vault ...
+python {{WIKI_SCRIPTS_DIR}}/wiki-list-render.py --topic <topic> --vault ...
 ```
 
 ### Step 8: Clean up the temp file
@@ -242,7 +242,7 @@ For X.com, Twitter, Medium, Threads, etc. The fetch happens inside the openclaw 
 ### Step 1 — Fetch via Playwright in container
 
 ```bash
-MSYS_NO_PATHCONV=1 docker exec openclaw bash -c 'cd /home/node && node /home/node/.openclaw/agents-training/main/skills/research-wiki/wiki-fetch-page.js --topic <topic> --url <url> --vault llm-wiki/wiki --ingested-by claude-code'
+MSYS_NO_PATHCONV=1 docker exec openclaw bash -c 'cd /home/node && node {{WIKI_SCRIPTS_DIR}}/wiki-fetch-page.js --topic <topic> --url <url> --vault llm-wiki/wiki --ingested-by claude-code'
 ```
 
 The script prints `raw_path=<path>` — capture it. Note the `MSYS_NO_PATHCONV=1` is needed on Git Bash for Windows (prevents path mangling). On Linux/Mac it's a harmless no-op.
@@ -257,7 +257,7 @@ Length philosophy: same as YouTube — quality over word count.
 
 Same as the URL flow Step 6:
 ```bash
-python .claude/wiki-scripts/wiki-update.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
   --topic <topic> --folder <folder> \
   --source <synth file> \
   --source-url <original url> \
@@ -275,7 +275,7 @@ PDFs need text extraction first, then agent synthesis on top. Three steps, same 
 
 ```bash
 MSYS_NO_PATHCONV=1 docker exec openclaw python3 \
-  /home/node/.openclaw/agents-training/main/skills/research-wiki/wiki-fetch-pdf.py \
+  {{WIKI_SCRIPTS_DIR}}/wiki-fetch-pdf.py \
   --topic <topic> \
   --source <url-or-local-pdf-path> \
   --vault llm-wiki/wiki \
@@ -305,7 +305,7 @@ yt-dlp lives in the openclaw container. Run from there:
 
 ```bash
 docker exec openclaw python3 \
-  /home/node/.openclaw/agents-training/main/skills/research-wiki/wiki-fetch-youtube.py \
+  {{WIKI_SCRIPTS_DIR}}/wiki-fetch-youtube.py \
   --topic <topic> \
   --url <youtube-url> \
   --ingested-by claude-code
@@ -330,7 +330,7 @@ Write the summary to a temp file (e.g. `/tmp/wiki-yt-{slug}.md`).
 ### Step 3 — File the summary as a curated wiki entry
 
 ```bash
-python .claude/wiki-scripts/wiki-update.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
   --topic <topic> \
   --folder <folder> \
   --source /tmp/wiki-yt-<slug>.md \
@@ -383,8 +383,8 @@ Tell the user:
 ## Key paths
 
 - Wikis vault: `llm-wiki/wiki/`
-- wiki-update.py: `.claude/wiki-scripts/wiki-update.py`
-- wiki-fetch-youtube.py: `.claude/wiki-scripts/wiki-fetch-youtube.py`
+- wiki-update.py: `{{WIKI_SCRIPTS_DIR}}/wiki-update.py`
+- wiki-fetch-youtube.py: `{{WIKI_SCRIPTS_DIR}}/wiki-fetch-youtube.py`
 - Topic README (scope rules): `llm-wiki/wiki/README.md`
 
 

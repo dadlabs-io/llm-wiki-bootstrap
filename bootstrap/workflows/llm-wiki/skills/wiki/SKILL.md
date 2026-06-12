@@ -15,17 +15,17 @@ Display this project's wiki `_INDEX.md`. In per-project installs there is one wi
 3. Offer to read any specific file in the index if they want to drill in
 4. If `_INDEX.md` is missing or stale (modified before any `wiki/` file), regenerate it first:
    ```bash
-   python .claude/wiki-scripts/wiki-index-per-folder.py --vault llm-wiki/wiki
+   python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py --vault llm-wiki/wiki
    ```
 
 ### If the user wants to regenerate the index
 ```bash
-python .claude/wiki-scripts/wiki-index-per-folder.py --vault llm-wiki/wiki
+python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py --vault llm-wiki/wiki
 ```
 
 For the top-level orientation map (`_MAP.md`, always-loaded in CLAUDE.md):
 ```bash
-python .claude/wiki-scripts/wiki-map-compile.py --topic <project-slug> --vault llm-wiki/wiki
+python {{WIKI_SCRIPTS_DIR}}/wiki-map-compile.py --topic <project-slug> --vault llm-wiki/wiki
 ```
 
 ### Multi-wiki note (v2 feature, not in v1)
@@ -35,8 +35,8 @@ The v1 install model is **one wiki per project**, located at `llm-wiki/wiki/`. M
 ## Key paths (per-project install)
 
 - Wiki content: `llm-wiki/wiki/`
-- Index script: `.claude/wiki-scripts/wiki-index-per-folder.py`
-- MAP script: `.claude/wiki-scripts/wiki-map-compile.py`
+- Index script: `{{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py`
+- MAP script: `{{WIKI_SCRIPTS_DIR}}/wiki-map-compile.py`
 - Per-folder INDEX: `llm-wiki/wiki/<folder>/_INDEX.md`
 - Top-level MAP: `llm-wiki/wiki/_MAP.md`
 

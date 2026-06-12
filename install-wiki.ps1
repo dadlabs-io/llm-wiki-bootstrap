@@ -1,55 +1,69 @@
 ﻿<#
-install-wiki.ps1 -- install the LLM-wiki framework, optionally scaffold a project.
+install-wiki.ps1 -- install the LLM-wiki framework.
+
+Interactive flow:
+  Q1: install target?  [1] global tooling (default)  |  [2] a specific project
+  Q2: tool?            [1] claude-code (default)      |  [2] cursor (not yet supported -> exits)
 
 Two modes:
-  1. Global install only (no -TargetFolder):
-     Installs the /new-wiki skill at ~/.claude/skills/new-wiki/ and
-     records this package's path so /new-wiki can find it later.
-  2. One-shot install + scaffold (with -TargetFolder):
-     Does the global install AS NEEDED, then scaffolds the project at
-     -TargetFolder (skills + scripts + llm-wiki/ + CLAUDE.md + agentmemory
-     for dev projects + Drive OAuth if enabled).
+  1. Global tooling-only (DEFAULT):
+     Installs ALL wiki skills into ~/.claude/skills/ and all wiki scripts into
+     ~/.claude/wiki-scripts/. No project/content scaffold. Idempotent.
+     -> new-wiki.py --mode tooling --tool claude-code
+  2. A specific project (-TargetFolder, or pick [2]):
+     Records this package as the global bootstrap source (Phase A), then
+     scaffolds the project at -TargetFolder (skills + scripts + llm-wiki/ +
+     CLAUDE.md + Drive OAuth if enabled). The research-vs-development prompt
+     has been removed; the project path uses a single merged taxonomy default.
 
 Usage examples (from this package's root):
-  # Global install only
+  # Global tooling-only install (default -- just run it):
   .\install-wiki.ps1
+  .\install-wiki.ps1 -Mode tooling
 
-  # Install + scaffold a new project in one command (interactive prompts for
-  # anything not passed):
-  .\install-wiki.ps1 -TargetFolder C:\github.com\dnd-project
+  # Scaffold a project (interactive prompts for anything not passed):
+  .\install-wiki.ps1 -Mode project -TargetFolder C:\github.com\dnd-project
+  .\install-wiki.ps1 -TargetFolder C:\github.com\dnd-project   # -TargetFolder implies project
 
-  # Fully scripted (no prompts):
+  # Fully scripted project scaffold (no prompts):
   .\install-wiki.ps1 -TargetFolder C:\github.com\dnd-project `
-      -ProjectType development -ProjectName dnd-project `
-      -ProjectDescription "D&D combat engine" -DriveEnabled yes
+      -ProjectName dnd-project -ProjectDescription "D&D combat engine" -DriveEnabled yes
 
-  # Re-run / refresh global skill from current bootstrap source:
-  .\install-wiki.ps1 -RefreshOnly
-
-After install (whether one-shot or two-step):
-  - Restart Claude Code so it picks up new skills
-  - cd to the project folder
-  - Start coding -- /wrap-up at session end, /wiki-search to look things up
+After install:
+  - Restart Claude Code so it picks up new skills/scripts
+  - (project mode) cd to the project folder and start working
 
 Flags:
-  -TargetFolder      : enable scaffold; project root to create/populate
-  -Tool              : claude-code (default) | cursor
-  -ProjectType       : research | development (asked if not set + -TargetFolder)
+  -Mode              : tooling (default) | project
+  -TargetFolder      : project root to create/populate (implies -Mode project)
+  -Tool              : claude-code (default) | cursor (cursor exits 0 -- not yet supported)
   -ProjectName       : project slug (defaults to target-folder leaf name)
-  -ProjectDescription: one-liner (asked if not set + -TargetFolder)
+  -ProjectDescription: one-liner (asked if not set, interactive only)
+  -ProjectType       : research | development -- DEPRECATED prompt removed; still
+                       accepted for scripted back-compat. TODO: merged taxonomy.
   -DriveEnabled      : yes | no (default no)
   -DriveParentFolder : Google Drive parent folder name (default "__FOR CLAUDE")
-  -Force             : skip already-installed prompt; wipe + reinstall skill
-  -RefreshOnly       : skip prompt; idempotent refresh
+  -Force / -RefreshOnly : retained for back-compat (no longer gate a prompt)
 #>
 
 param(
-    # Phase B (per-project scaffold) -- set this to trigger the one-shot path
+    # Install target. "tooling" = global tooling-only install (default).
+    # "project" = scaffold a specific project (requires -TargetFolder).
+    [ValidateSet("tooling", "project")]
+    [string]$Mode = "",
+
+    # Phase B (per-project scaffold) -- set this to trigger the project path.
+    # If passed, implies -Mode project.
     [string]$TargetFolder = "",
 
     [ValidateSet("claude-code", "cursor")]
     [string]$Tool = "claude-code",
 
+    # Project taxonomy type. Research-vs-development is no longer prompted; the
+    # project path defaults to a single merged default. Still accepted for
+    # scripted runs that want the old per-type behaviour.
+    # TODO: merged taxonomy -- replace research/development split with one
+    # combined taxonomy + template once the merged template lands.
     [ValidateSet("research", "development")]
     [string]$ProjectType = "",
 
@@ -92,55 +106,74 @@ if (-not $py) {
     exit 2
 }
 
-# Idempotent install check -- detect existing install and prompt if found
-$SkillPath = Join-Path $env:USERPROFILE ".claude\skills\new-wiki\SKILL.md"
-$ConfigPath = Join-Path $env:USERPROFILE ".claude\wiki-config.json"
-$AlreadyInstalled = (Test-Path $SkillPath) -and (Test-Path $ConfigPath)
+# Detect non-interactive mode (stdin redirected / no console UI). When run by
+# an agent / CI / piped, Read-Host hangs forever, so we default every prompt.
+$nonInteractive = [Console]::IsInputRedirected -or -not [Environment]::UserInteractive
 
-if ($AlreadyInstalled -and -not $Force -and -not $RefreshOnly) {
-    try { $cfg = Get-Content $ConfigPath -Raw | ConvertFrom-Json } catch { $cfg = $null }
-    Write-Host "LLM-wiki framework is already installed on this machine." -ForegroundColor Yellow
-    if ($cfg) {
-        Write-Host "  bootstrap source: $($cfg.bootstrap_source)"
-        Write-Host "  install version:  $($cfg.install_version)"
-        Write-Host "  last installed:   $($cfg.last_phase_a)"
-        if ($cfg.bootstrap_source -ne $Bootstrap) {
-            Write-Host "  NOTE: previous bootstrap_source differs from current ($Bootstrap)" -ForegroundColor Cyan
-        }
-    }
-    Write-Host ""
-
-    # Detect non-interactive mode (stdin redirected, no console UI). When the
-    # script is run by an agent / CI / piped, Read-Host hangs forever. Default
-    # to Refresh in that case -- it's the safe idempotent path.
-    $nonInteractive = [Console]::IsInputRedirected -or -not [Environment]::UserInteractive
-    if ($nonInteractive) {
-        Write-Host "Non-interactive run detected -- defaulting to Refresh (pass -Force to wipe instead)." -ForegroundColor Cyan
+# ---------- Q1: install target ----------
+# Default is global tooling-only. -TargetFolder implies a project install.
+if (-not $Mode) {
+    if ($TargetFolder) {
+        $Mode = "project"
+    } elseif ($nonInteractive) {
+        $Mode = "tooling"
+        Write-Host "Non-interactive run -- defaulting to global tooling install." -ForegroundColor Cyan
     } else {
-        Write-Host "Choose:"
-        Write-Host "  [R] Refresh -- re-copy /new-wiki skill from current bootstrap source (default)"
-        Write-Host "  [S] Skip   -- exit without changes"
-        Write-Host "  [F] Force  -- wipe existing install + reinstall fresh"
-        $choice = Read-Host "Choice [R/S/F]"
-        switch -Regex ($choice) {
-            '^[Ss]' {
-                Write-Host "Skipping." -ForegroundColor Cyan
-                exit 0
-            }
-            '^[Ff]' {
-                Write-Host "Wiping existing /new-wiki skill..." -ForegroundColor Yellow
-                $skillDir = Join-Path $env:USERPROFILE ".claude\skills\new-wiki"
-                Remove-Item -Recurse -Force $skillDir -ErrorAction SilentlyContinue
-                # Keep wiki-config.json -- it will be updated, not wiped (user settings live there)
-            }
-            default {
-                Write-Host "Refreshing existing install." -ForegroundColor Cyan
-            }
-        }
+        Write-Host "What do you want to install?"
+        Write-Host "  1. global tooling  -- all wiki skills + scripts into ~/.claude/ (default)"
+        Write-Host "  2. a specific project -- scaffold an llm-wiki project folder"
+        $tChoice = Read-Host "Pick (1 or 2) [1]"
+        if ($tChoice -eq "2" -or $tChoice -eq "project") { $Mode = "project" }
+        else { $Mode = "tooling" }
     }
-    Write-Host ""
 }
 
+# ---------- Q2: tool ----------
+if (-not $nonInteractive -and -not $PSBoundParameters.ContainsKey("Tool")) {
+    Write-Host ""
+    Write-Host "Which tool?"
+    Write-Host "  1. claude-code (default)"
+    Write-Host "  2. cursor"
+    $toolChoice = Read-Host "Pick (1 or 2) [1]"
+    if ($toolChoice -eq "2" -or $toolChoice -eq "cursor") { $Tool = "cursor" }
+    else { $Tool = "claude-code" }
+}
+
+if ($Tool -eq "cursor") {
+    Write-Host "Cursor not supported yet -- exiting." -ForegroundColor Yellow
+    exit 0
+}
+
+# ---------- Mode: global tooling-only ----------
+if ($Mode -eq "tooling") {
+    Write-Host ""
+    Write-Host "Installing LLM-wiki global tooling (skills + scripts)..." -ForegroundColor Cyan
+    Write-Host "  Bootstrap source: $Bootstrap"
+    Write-Host ""
+
+    & $py.Source $Script `
+        --mode tooling `
+        --tool claude-code `
+        --bootstrap-source $Bootstrap
+    exit $LASTEXITCODE
+}
+
+# ---------- Mode: project scaffold ----------
+if (-not $TargetFolder) {
+    if ($nonInteractive) {
+        Write-Host "ERR: project install requires -TargetFolder in non-interactive mode." -ForegroundColor Red
+        exit 2
+    }
+    $TargetFolder = Read-Host "Project target folder"
+    if (-not $TargetFolder) {
+        Write-Host "ERR: a target folder is required for a project install." -ForegroundColor Red
+        exit 2
+    }
+}
+
+# Project install still needs the global /new-wiki skill + recorded bootstrap
+# source (Phase A) before scaffolding (Phase B).
+Write-Host ""
 Write-Host "Installing LLM-wiki framework (global, one-time)..." -ForegroundColor Cyan
 Write-Host "  Bootstrap source: $Bootstrap"
 Write-Host "  Drive ingest:     $DriveEnabled"
@@ -156,48 +189,35 @@ Write-Host ""
     --drive-parent-folder $DriveParentFolder
 
 $exit = $LASTEXITCODE
-
 if ($exit -ne 0) {
     exit $exit
-}
-
-# ---------- Phase B (per-project scaffold) -- only if -TargetFolder provided ----------
-
-if (-not $TargetFolder) {
-    Write-Host ""
-    Write-Host "Global install complete." -ForegroundColor Green
-    Write-Host "Next steps:" -ForegroundColor Green
-    Write-Host "  1. Restart Claude Code" -ForegroundColor Green
-    Write-Host "  2. cd to any project folder" -ForegroundColor Green
-    Write-Host "  3. Run /new-wiki -- it asks tool, type, name, Drive prefs and does the rest" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "Or skip the two-step: re-run install-wiki.ps1 with -TargetFolder <path> to scaffold a project in one shot." -ForegroundColor DarkGray
-    exit 0
 }
 
 Write-Host ""
 Write-Host "Scaffolding project at $TargetFolder..." -ForegroundColor Cyan
 
-# Interactive prompts for anything not provided
+# Research-vs-development is no longer prompted. Default to a single merged
+# taxonomy. The underlying new-wiki.py Phase B still hard-requires a type, so
+# we pass "development" (the superset code+research taxonomy) as the merged
+# default unless a -ProjectType was explicitly supplied for a scripted run.
+# TODO: merged taxonomy -- swap this default for a real combined taxonomy +
+# template once they exist; remove the research/development split entirely.
 if (-not $ProjectType) {
-    Write-Host ""
-    Write-Host "What kind of project is this?"
-    Write-Host "  1. research     -- ingesting external content into a knowledge base"
-    Write-Host "  2. development  -- building code, capturing design decisions"
-    $ptChoice = Read-Host "Pick (1 or 2)"
-    if ($ptChoice -eq "1" -or $ptChoice -eq "research") { $ProjectType = "research" }
-    elseif ($ptChoice -eq "2" -or $ptChoice -eq "development") { $ProjectType = "development" }
-    else { Write-Host "ERR: invalid choice" -ForegroundColor Red; exit 2 }
+    $ProjectType = "development"
 }
 
 if (-not $ProjectName) {
     $defaultName = (Split-Path $TargetFolder -Leaf).ToLower() -replace "[^a-z0-9]+", "-"
     $defaultName = $defaultName.Trim("-")
-    $ProjectName = Read-Host "Project name (slug) [default: $defaultName]"
-    if (-not $ProjectName) { $ProjectName = $defaultName }
+    if ($nonInteractive) {
+        $ProjectName = $defaultName
+    } else {
+        $ProjectName = Read-Host "Project name (slug) [default: $defaultName]"
+        if (-not $ProjectName) { $ProjectName = $defaultName }
+    }
 }
 
-if (-not $ProjectDescription) {
+if (-not $ProjectDescription -and -not $nonInteractive) {
     $ProjectDescription = Read-Host "One-line description (optional)"
 }
 

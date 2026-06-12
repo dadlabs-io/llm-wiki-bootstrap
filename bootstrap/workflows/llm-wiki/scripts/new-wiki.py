@@ -317,6 +317,156 @@ def _derive_bootstrap_source(args):
     return None
 
 
+# ---------- Mode: tooling (global tooling-only install) ----------
+# A GLOBAL Claude Code install with NO project/content scaffold. Installs the
+# full skill + script toolkit into ~/.claude/ so every project on the machine
+# can invoke /wiki-* without a per-project copy. Idempotent.
+#
+#   skills  → ~/.claude/skills/<skill>/   (per-skill via install-skill primitive)
+#   scripts → ~/.claude/wiki-scripts/     (TRAVEL_SCRIPTS + install-skill.py + _atomic_io.py)
+#
+# This intentionally does NOT scaffold llm-wiki/, CLAUDE.md, taxonomy folders,
+# or wiki-config content — it only lays down the reusable tooling.
+
+CC_GLOBAL_WIKI_SCRIPTS_DIR = CC_GLOBAL_DIR / "wiki-scripts"
+
+# Extra helper scripts copied alongside TRAVEL_SCRIPTS in tooling mode (not
+# directly user-invoked, but imported/called by the tooling). Copied only if
+# present in the package scripts dir.
+TOOLING_HELPER_SCRIPTS = ["install-skill.py", "_atomic_io.py"]
+
+
+def phase_tooling(args):
+    """Global tooling-only install: skills → ~/.claude/skills/, scripts →
+    ~/.claude/wiki-scripts/. No project scaffold. Idempotent."""
+    if args.tool == "cursor":
+        print("Cursor not supported yet.")
+        return 0
+    if args.tool != "claude-code":
+        _err(f"--tool must be 'claude-code' or 'cursor', got {args.tool!r}")
+        return 1
+
+    bootstrap = _derive_bootstrap_source(args)
+    if not bootstrap:
+        _err("could not find bootstrap source. Pass --bootstrap-source <path>.")
+        return 1
+
+    pkg = bootstrap / "bootstrap" / "workflows" / "llm-wiki"
+    scripts_src = pkg / "scripts"
+    skills_src = pkg / "skills"
+    if not scripts_src.is_dir() or not skills_src.is_dir():
+        _err(f"package scripts/ or skills/ missing under {pkg}")
+        return 1
+
+    skills_dest = CC_GLOBAL_SKILLS_DIR
+    scripts_dest = CC_GLOBAL_WIKI_SCRIPTS_DIR
+    scripts_dest_value = scripts_dest.expanduser().resolve().as_posix()
+
+    dry = args.dry_run
+    _info(f"bootstrap source: {bootstrap}")
+    _info(f"mode: tooling (global, claude-code)")
+    _info(f"skills  → {skills_dest}")
+    _info(f"scripts → {scripts_dest}")
+    print()
+
+    # 1) Copy scripts (TRAVEL_SCRIPTS + helpers) → ~/.claude/wiki-scripts/
+    if not dry:
+        scripts_dest.mkdir(parents=True, exist_ok=True)
+    script_names = list(TRAVEL_SCRIPTS)
+    for helper in TOOLING_HELPER_SCRIPTS:
+        if (scripts_src / helper).is_file():
+            script_names.append(helper)
+    travel_copied = 0
+    helpers_copied = 0
+    scripts_missing = []
+    for name in script_names:
+        s = scripts_src / name
+        if not s.is_file():
+            scripts_missing.append(name)
+            continue
+        d = scripts_dest / name
+        if dry:
+            print(f"  WOULD copy {s} -> {d}")
+        else:
+            shutil.copy2(s, d)
+        if name in TOOLING_HELPER_SCRIPTS:
+            helpers_copied += 1
+        else:
+            travel_copied += 1
+    if scripts_missing:
+        _warn(f"scripts not found in package (skipped): {scripts_missing}")
+
+    print()
+
+    # 2) Install each skill via the install-skill primitive (imported).
+    install_fn = _load_install_skill_fn(scripts_src)
+    skills_installed = 0
+    skills_failed = []
+    for skill in TRAVEL_SKILLS:
+        rc = install_fn(
+            skill=skill,
+            tool="claude-code",
+            skills_src=skills_src,
+            skills_dest=skills_dest,
+            scripts_dir=scripts_dest,
+            dry_run=dry,
+        )
+        if rc == 0:
+            skills_installed += 1
+        else:
+            skills_failed.append(skill)
+    if skills_failed:
+        _warn(f"skills that failed to install: {skills_failed}")
+
+    print()
+    print("=" * 60)
+    print("Global tooling-only install summary")
+    print("=" * 60)
+    verb = "would be copied" if dry else "copied"
+    print(f"  scripts {verb}:   {travel_copied}  (+ {helpers_copied} helpers)  → {scripts_dest}")
+    verb_s = "would be installed" if dry else "installed"
+    print(f"  skills {verb_s}: {skills_installed}  → {skills_dest}")
+    print(f"  placeholder {{{{WIKI_SCRIPTS_DIR}}}} → {scripts_dest_value}")
+    print()
+    print("  Restart Claude Code if these dirs are new so it picks up the")
+    print("  new skills + scripts.")
+    print("=" * 60)
+    return 0
+
+
+def _load_install_skill_fn(scripts_src: Path):
+    """Import install_skill() from the package's install-skill.py. Falls back to
+    a subprocess shim if the import fails for any reason (kept to one prefer-import
+    code path, but resilient)."""
+    install_path = scripts_src / "install-skill.py"
+    if install_path.is_file():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("_install_skill_mod", install_path)
+        if spec and spec.loader:
+            mod = importlib.util.module_from_spec(spec)
+            try:
+                spec.loader.exec_module(mod)
+                if hasattr(mod, "install_skill"):
+                    return mod.install_skill
+            except Exception as e:  # noqa: BLE001
+                _warn(f"could not import install_skill() ({e}); using subprocess fallback")
+
+    def _subprocess_install(skill, tool, skills_src, skills_dest, scripts_dir, dry_run):
+        cmd = [
+            sys.executable, str(install_path),
+            "--skill", skill,
+            "--tool", tool,
+            "--skills-src", str(skills_src),
+            "--skills-dest", str(skills_dest),
+            "--scripts-dir", str(scripts_dir),
+        ]
+        if dry_run:
+            cmd.append("--dry-run")
+        return subprocess.run(cmd).returncode
+
+    return _subprocess_install
+
+
 # ---------- Phase A (global) ----------
 # Phase A installs ONLY the /new-wiki creator skill globally + records
 # the bootstrap source so subsequent /new-wiki invocations can find it.
@@ -801,10 +951,14 @@ def _render_template(src: Path, dst: Path, vars: dict, dry_run: bool):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--phase", choices=["A", "B", "sync"], required=True,
+    parser.add_argument("--phase", choices=["A", "B", "sync"], default=None,
                         help="A = install /new-wiki skill globally + record bootstrap source. "
                              "B = scaffold a per-project install (skills/scripts/llm-wiki/) at --target-folder. "
-                             "sync = re-run A to refresh the global /new-wiki skill.")
+                             "sync = re-run A to refresh the global /new-wiki skill. "
+                             "Mutually exclusive with --mode.")
+    parser.add_argument("--mode", choices=["tooling"], default=None,
+                        help="tooling = GLOBAL tooling-only install (all skills + scripts into "
+                             "~/.claude/, no project scaffold). Mutually exclusive with --phase.")
     parser.add_argument("--tool", choices=["claude-code", "cursor"], default="claude-code",
                         help="Which AI tool to install for (default: claude-code)")
     parser.add_argument("--project-name")
@@ -828,6 +982,15 @@ def main():
                         help="Print actions without writing")
     args = parser.parse_args()
 
+    if args.mode and args.phase:
+        _err("pass exactly one of --mode or --phase, not both")
+        return 1
+    if not args.mode and not args.phase:
+        _err("one of --mode or --phase is required")
+        return 1
+
+    if args.mode == "tooling":
+        return phase_tooling(args)
     if args.phase == "A":
         return phase_a(args)
     if args.phase == "B":

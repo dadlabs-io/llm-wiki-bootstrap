@@ -90,7 +90,7 @@ For each entry to promote:
 
 6. **Regenerate INDEX**:
    ```bash
-   python .claude/wiki-scripts/wiki-index.py \
+   python {{WIKI_SCRIPTS_DIR}}/wiki-index.py \
      --topic <topic> --vault llm-wiki/wiki
    ```
 
@@ -127,7 +127,7 @@ If an entry in `proposed/` has no `_proposed_metadata.json`, it was probably pla
 - Proposed entries: `llm-wiki/wiki/_inbox/proposed/`
 - Rejected entries: `llm-wiki/wiki/_inbox/rejected/`
 - Metadata files: `<slug>_proposed_metadata.json` (adjacent to the entry)
-- INDEX script: `.claude/wiki-scripts/wiki-index.py`
+- INDEX script: `{{WIKI_SCRIPTS_DIR}}/wiki-index.py`
 
 ## Don't
 

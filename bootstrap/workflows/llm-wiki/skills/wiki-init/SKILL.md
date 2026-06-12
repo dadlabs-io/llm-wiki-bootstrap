@@ -18,7 +18,7 @@ Create the per-project wiki structure at `llm-wiki/wiki/<topic>/` and write its 
 ## Default usage (called by /new-wiki)
 
 ```bash
-python .claude/wiki-scripts/wiki-init.py \
+python {{WIKI_SCRIPTS_DIR}}/wiki-init.py \
   --topic <project-slug> \
   --description "<scope>" \
   --vault llm-wiki/wiki
@@ -30,7 +30,7 @@ python .claude/wiki-scripts/wiki-init.py \
 
 If you want to add a wiki to an existing project that doesn't have one, or rebuild the scaffold:
 
-1. **Verify project structure**: `<project>/.claude/wiki-scripts/wiki-init.py` should exist (created by `/new-wiki`). If not, run `/new-wiki --sync` first.
+1. **Verify project structure**: `{{WIKI_SCRIPTS_DIR}}/wiki-init.py` should exist (created by `/new-wiki`). If not, run `/new-wiki --sync` first.
 
 2. **Propose the plan**:
    ```
@@ -45,7 +45,7 @@ If you want to add a wiki to an existing project that doesn't have one, or rebui
 
 3. **Run after confirmation**:
    ```bash
-   python .claude/wiki-scripts/wiki-init.py \
+   python {{WIKI_SCRIPTS_DIR}}/wiki-init.py \
      --topic <slug> \
      --description "<scope>" \
      --vault llm-wiki/wiki
@@ -79,6 +79,6 @@ Examples:
 
 ## Key paths (per-project install)
 
-- wiki-init.py: `.claude/wiki-scripts/wiki-init.py`
+- wiki-init.py: `{{WIKI_SCRIPTS_DIR}}/wiki-init.py`
 - Default vault (per-project): `llm-wiki/wiki/`
 - Created topic: `llm-wiki/wiki/<topic>/`
