@@ -33,40 +33,13 @@ contract. Step name: "reciprocate-backlinks".
 from __future__ import annotations
 
 
-def _default_vault():
-    """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
-    otherwise fall back to CWD (project root). Per-project installs record
-    vault_root = <project-root>; combined with wiki_topic this gives
-    <project>/<topic>/wiki/ (default <topic> = 'llm-wiki')."""
-    import json as _json
-    cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
-    if cfg_path.exists():
-        try:
-            cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
-            v = cfg.get("vault_root")
-            if v:
-                return str(Path(v))
-        except (_json.JSONDecodeError, OSError):
-            pass
-    return str(Path.cwd())
-
-
-def _default_topic():
-    """Resolve wiki_topic from <cwd>/.claude/wiki-config.json if present,
-    otherwise fall back to 'llm-wiki' (the v1 per-project wiki folder name).
-    Used by scripts that take --topic as an arg to provide a sensible
-    default in per-project installs."""
-    import json as _json
-    cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
-    if cfg_path.exists():
-        try:
-            cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
-            t = cfg.get("wiki_topic")
-            if t:
-                return t
-        except (_json.JSONDecodeError, OSError):
-            pass
-    return "llm-wiki"
+# Path-resolution helpers live in the shared _wiki_config module (single
+# source of truth for the multi-wiki config schema). Re-exported under the
+# historical private names so the rest of this script is unchanged.
+import sys as _sys  # noqa: E402
+from pathlib import Path as _ShimPath  # noqa: E402
+_sys.path.insert(0, str(_ShimPath(__file__).resolve().parent))
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
 import argparse
 import json
 import re

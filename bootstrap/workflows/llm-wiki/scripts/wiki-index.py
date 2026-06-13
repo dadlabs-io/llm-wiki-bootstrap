@@ -25,40 +25,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
 
 
-def _default_vault():
-    """Resolve vault_root from <cwd>/.claude/wiki-config.json if present,
-    otherwise fall back to CWD (project root). Per-project installs record
-    vault_root = <project-root>; combined with wiki_topic this gives
-    <project>/<topic>/wiki/ (default <topic> = 'llm-wiki')."""
-    import json as _json
-    cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
-    if cfg_path.exists():
-        try:
-            cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
-            v = cfg.get("vault_root")
-            if v:
-                return str(Path(v))
-        except (_json.JSONDecodeError, OSError):
-            pass
-    return str(Path.cwd())
-
-
-def _default_topic():
-    """Resolve wiki_topic from <cwd>/.claude/wiki-config.json if present,
-    otherwise fall back to 'llm-wiki' (the v1 per-project wiki folder name).
-    Used by scripts that take --topic as an arg to provide a sensible
-    default in per-project installs."""
-    import json as _json
-    cfg_path = Path.cwd() / ".claude" / "wiki-config.json"
-    if cfg_path.exists():
-        try:
-            cfg = _json.loads(cfg_path.read_text(encoding="utf-8"))
-            t = cfg.get("wiki_topic")
-            if t:
-                return t
-        except (_json.JSONDecodeError, OSError):
-            pass
-    return "llm-wiki"
+# Path-resolution helpers live in the shared _wiki_config module (single
+# source of truth for the multi-wiki config schema). Re-exported under the
+# historical private names so the rest of this script is unchanged.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")

@@ -54,16 +54,10 @@ VERIFIED_RE = re.compile(r"^verified:\s*(\S+)\s*$", re.MULTILINE)
 REVISES_RE = re.compile(r"^revises:\s*(.+?)\s*$", re.MULTILINE)
 
 
-def _default_vault() -> str:
-    cfg = Path.cwd() / ".claude" / "wiki-config.json"
-    if cfg.exists():
-        try:
-            v = json.loads(cfg.read_text(encoding="utf-8")).get("vault_root")
-            if v:
-                return str(Path(v))
-        except (json.JSONDecodeError, OSError):
-            pass
-    return str(Path.cwd())
+# Path-resolution helper lives in the shared _wiki_config module (single
+# source of truth for the multi-wiki config schema).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _wiki_config import default_vault as _default_vault  # noqa: E402
 
 
 def iso_now() -> str:

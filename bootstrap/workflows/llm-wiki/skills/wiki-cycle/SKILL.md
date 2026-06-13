@@ -36,6 +36,26 @@ Run the full research cycle end-to-end. Discovers new sources, ingests approved 
 
 **`--full` mode**: adds Semantic lint (4 parallel AI agents by folder) + Claims scan + Refresh pass. ~30-40 min. Run weekly or when an ingest batch is ≥25 items, cross-cuts many existing entries, or semantic lint hasn't run in >7 days.
 
+## Multi-wiki (which wiki does a cycle run against?)
+
+Resolution is **per-project** — the cycle operates on whatever `<cwd>/.claude/wiki-config.json` declares. There is no global fallback; run the tooling from inside the project that owns the wiki. The shared resolver is `scripts/_wiki_config.py` (single source of truth — do not re-add per-script copies).
+
+Config schema (v2):
+
+```json
+{
+  "vault_root":    "<abs path to the folder that CONTAINS the topic folders>",
+  "default_topic": "agentic-design",
+  "topics":        ["agentic-design", "cottage-build"],
+  "wiki_topic":    "agentic-design"
+}
+```
+
+- A topic's root is always `<vault_root>/<topic>`. To move a wiki out of a repo (e.g. when it grows large enough to slow git), point `vault_root` at any absolute folder and relocate the topic folders there — names stay the same.
+- `default_topic` is used when `<topic>` is omitted. `wiki_topic` is the v1 alias kept for back-compat (`default_topic` wins if both present).
+- **Target a non-default wiki**: pass the topic as the positional modifier, e.g. `/wiki-cycle --full cottage-build`. The orchestrator passes `--topic cottage-build` to every step.
+- **Run every declared wiki** (`--all-topics`): iterate `_wiki_config.list_topics()` and run the chosen mode once per topic, each writing to its own `<topic>/_inbox/reports/` tree. Use only when you explicitly want to sweep all wikis; default is the single `default_topic`.
+
 ## Cycle ID and report folder
 
 Every cycle run is assigned a `cycle_id` in the form `<YYYY-MM-DD>-<NN>` where `NN` is `01` for the first run that day, `02` for the second, and so on. On start, the orchestrator scans `_inbox/reports/<YYYY-MM-DD>/` and picks the next unused `NN`.

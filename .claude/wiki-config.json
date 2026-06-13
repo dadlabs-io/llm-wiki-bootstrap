@@ -3,6 +3,8 @@
   "tool": "claude-code",
   "project_name": "llm-wiki-bootstrap",
   "vault_root": "C:/github.com/workflows-core/docker/shared/openclaw/vault/wikis",
+  "default_topic": "agentic-design",
+  "topics": ["agentic-design", "cottage-build"],
   "wiki_topic": "agentic-design",
   "drive": {
     "enabled": true,

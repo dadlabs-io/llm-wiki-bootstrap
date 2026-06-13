@@ -333,7 +333,12 @@ CC_GLOBAL_WIKI_SCRIPTS_DIR = CC_GLOBAL_DIR / "wiki-scripts"
 # Extra helper scripts copied alongside TRAVEL_SCRIPTS in tooling mode (not
 # directly user-invoked, but imported/called by the tooling). Copied only if
 # present in the package scripts dir.
-TOOLING_HELPER_SCRIPTS = ["install-skill.py", "_atomic_io.py"]
+TOOLING_HELPER_SCRIPTS = ["install-skill.py", "_atomic_io.py", "_wiki_config.py"]
+
+# Shared helper modules imported by the travel scripts (config + atomic IO).
+# These are NOT user-invoked but MUST ship anywhere the scripts run — both the
+# global tooling install and per-project Phase B.
+SHARED_HELPER_SCRIPTS = ["_atomic_io.py", "_wiki_config.py"]
 
 
 def phase_tooling(args):
@@ -715,9 +720,10 @@ def phase_b(args):
                 n += 1
         _ok(f"cursor rules generated: {n} .mdc files at {rules_dir}")
 
-    # B3 — copy scripts
+    # B3 — copy scripts (travel scripts + shared helper modules they import)
     _info(f"copying scripts: {scripts_src} -> {paths['scripts']}")
-    c, s = _copy_tree(scripts_src, paths["scripts"], names=TRAVEL_SCRIPTS, dry_run=args.dry_run)
+    c, s = _copy_tree(scripts_src, paths["scripts"],
+                      names=TRAVEL_SCRIPTS + SHARED_HELPER_SCRIPTS, dry_run=args.dry_run)
     _ok(f"scripts: {c} copied, {s} unchanged")
 
     # B4 — copy templates
@@ -837,6 +843,12 @@ def phase_b(args):
         # "llm-wiki" in the v1 single-wiki-per-project model; v2 may relax
         # this to support multi-wiki.
         "vault_root": str(target),
+        # default_topic + topics[] are the v2 multi-wiki keys; wiki_topic is the
+        # v1 alias kept for back-compat. A project starts with one wiki ("llm-wiki");
+        # add more folder names to topics[] (each lives at <vault_root>/<name>) and
+        # repoint default_topic to switch the default. See _wiki_config.py.
+        "default_topic": "llm-wiki",
+        "topics": ["llm-wiki"],
         "wiki_topic": "llm-wiki",
         "wiki_path": str(paths["llm_wiki_wiki"]),
         "skills_installed_at": str(paths["skills"]),
