@@ -1,0 +1,12 @@
+{
+  "_comment": "Path-resolution config for the global /wiki-* tooling. llm-wiki-bootstrap is the MASTER tooling repo (no own wiki content). This config points cwd-based script resolution at the real agentic-design vault in the sibling workflows-core repo, so the tooling can be smoke-tested against live content while editing it here. The scripts read vault_root + wiki_topic from <cwd>/.claude/wiki-config.json; vault_root + wiki_topic resolve to <vault_root>/<wiki_topic> = the topic root containing _inbox/ and wiki/. Absolute path so resolution is identical regardless of cwd. Mirror of workflows-core/.claude/wiki-config.json.",
+  "tool": "claude-code",
+  "project_name": "llm-wiki-bootstrap",
+  "vault_root": "C:/github.com/workflows-core/docker/shared/openclaw/vault/wikis",
+  "wiki_topic": "agentic-design",
+  "drive": {
+    "enabled": true,
+    "parent_folder": "__FOR CLAUDE",
+    "subfolder": "agentic-design"
+  }
+}
