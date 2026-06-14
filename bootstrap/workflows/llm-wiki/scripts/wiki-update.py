@@ -518,8 +518,11 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
     # Staged entries land in _inbox/proposed/ regardless of the requested folder;
     # the requested folder is preserved in the metadata sidecar so wiki-promote
     # knows where to move the entry on acceptance.
+    # CANONICAL: staging lives at the TOPIC ROOT (a sibling of wiki/ and _signals/),
+    # NOT nested under wiki/. wiki_dir is <topic_root>/wiki, so .parent = topic_root.
+    # This matches wiki-list-*/wiki-lint and where _signals/ already lives.
     if staged:
-        target_dir = wiki_dir / "_inbox" / "proposed"
+        target_dir = wiki_dir.parent / "_inbox" / "proposed"
     else:
         target_dir = wiki_dir / folder if folder else wiki_dir
     target_dir.mkdir(parents=True, exist_ok=True)

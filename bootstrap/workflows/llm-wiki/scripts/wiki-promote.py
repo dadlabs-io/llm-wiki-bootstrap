@@ -142,8 +142,11 @@ def _regenerate_indexes(scripts_dir: Path, topic: str, vault: Path, dry_run: boo
 
 
 def list_proposed(vault: Path):
-    """Return all proposed entries as (md_path, sidecar_path_or_None) tuples."""
-    proposed_dir = vault / "_inbox" / "proposed"
+    """Return all proposed entries as (md_path, sidecar_path_or_None) tuples.
+    Staging lives at the TOPIC ROOT (<topic_root>/_inbox/proposed), a sibling of
+    the wiki dir. `vault` is the wiki dir (<topic_root>/wiki)."""
+    topic_root = vault.parent if vault.name == "wiki" else vault
+    proposed_dir = topic_root / "_inbox" / "proposed"
     if not proposed_dir.exists():
         return []
     items = []
@@ -276,7 +279,8 @@ def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False)
 
 def reject_entry(md_path: Path, vault: Path, dry_run: bool = False) -> dict:
     """Move an entry to _inbox/rejected/. Sidecar moves with it."""
-    rejected_dir = vault / "_inbox" / "rejected"
+    topic_root = vault.parent if vault.name == "wiki" else vault
+    rejected_dir = topic_root / "_inbox" / "rejected"
     target_path = rejected_dir / md_path.name
     sidecar = md_path.with_suffix(".proposed_metadata.json")
 
@@ -326,7 +330,13 @@ def main():
     )
     args = parser.parse_args()
 
-    vault = Path(args.vault) if args.vault else Path(_default_vault())
+    if args.vault:
+        vault = Path(args.vault)
+    else:
+        # _default_vault() returns the vault_root (parent of the topic folders);
+        # promote operates on the wiki dir, so build <vault_root>/<topic>/wiki.
+        _topic = args.topic or _default_topic()
+        vault = Path(_default_vault()) / _topic / "wiki"
     if not vault.exists():
         _err(f"vault not found: {vault}")
         return 1
@@ -342,7 +352,8 @@ def main():
         _info("nothing in _inbox/proposed/ to promote")
         return 0
 
-    _info(f"found {len(items)} proposed entries in {vault}/_inbox/proposed/")
+    _proposed_root = (vault.parent if vault.name == "wiki" else vault) / "_inbox" / "proposed"
+    _info(f"found {len(items)} proposed entries in {_proposed_root}/")
     scripts_dir = Path(__file__).resolve().parent
 
     # Topic name fallback for index/map regen
