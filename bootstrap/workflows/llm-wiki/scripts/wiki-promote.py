@@ -258,10 +258,15 @@ def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False)
             sidecar.unlink()
         result["moved"] = True
 
-        # Apply backlinks
+        # Apply backlinks. The sidecar's link_target is the entry's BARE filename
+        # (its final folder isn't known at --staged time), so we must compute the
+        # link path RELATIVE TO each backlink source file's directory now that the
+        # entry's promoted location (target_path) is known. Using the bare filename
+        # would point every cross-folder backlink at the source's own folder = broken.
         for bl in meta.get("suggested_backlinks", []):
             target_file = vault / bl["file"]
-            if _add_backlink(target_file, bl["link_text"], bl["link_target"]):
+            rel_target = os.path.relpath(target_path, target_file.parent).replace(os.sep, "/")
+            if _add_backlink(target_file, bl["link_text"], rel_target):
                 result["backlinks_added"] += 1
             else:
                 result["backlinks_skipped"] += 1
