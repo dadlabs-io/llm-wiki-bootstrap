@@ -179,15 +179,9 @@ fi
 echo
 echo "Scaffolding project at $TARGET_FOLDER..."
 
-# Research-vs-development is no longer prompted. Default to a single merged
-# taxonomy. new-wiki.py Phase B still hard-requires a type, so we pass
-# "development" (the superset code+research taxonomy) as the merged default
-# unless --project-type was explicitly supplied for a scripted run.
-# TODO: merged taxonomy -- swap this default for a real combined taxonomy +
-# template once they exist; remove the research/development split entirely.
-if [[ -z "$PROJECT_TYPE" ]]; then
-    PROJECT_TYPE="development"
-fi
+# Research-vs-development split removed 2026-06-15. new-wiki.py Phase B applies a
+# single merged taxonomy (research/* + project/* + sessions/) and ignores
+# --project-type, so the wrapper no longer defaults/prints/passes it.
 
 if [[ -z "$PROJECT_NAME" ]]; then
     DEFAULT_NAME=$(basename "$TARGET_FOLDER" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\+/-/g' | sed 's/^-\|-$//g')
@@ -206,7 +200,6 @@ fi
 echo
 echo "About to scaffold:"
 echo "  Tool:           $TOOL"
-echo "  Project type:   $PROJECT_TYPE"
 echo "  Project name:   $PROJECT_NAME"
 echo "  Target folder:  $TARGET_FOLDER"
 echo "  Description:    $PROJECT_DESCRIPTION"
@@ -218,7 +211,6 @@ echo
     --tool "$TOOL" \
     --project-name "$PROJECT_NAME" \
     --project-description "$PROJECT_DESCRIPTION" \
-    --project-type "$PROJECT_TYPE" \
     --target-folder "$TARGET_FOLDER" \
     --bootstrap-source "$HERE" \
     --drive-enabled "$DRIVE_ENABLED" \

@@ -135,17 +135,21 @@ TRAVEL_SCRIPTS = [
     "wiki-update.py",
 ]
 
-# Folder taxonomies per project type
-TAXONOMY = {
-    "research": [
-        "active", "long-term", "tooling", "best-practices",
-        "implementation", "skills", "orchestration", "interesting-docs",
-    ],
-    "development": [
-        "components", "decisions", "architecture", "patterns",
-        "troubleshooting", "best-practices",
-    ],
-}
+# Single merged folder taxonomy (the research/development split was removed
+# 2026-06-15 — every project now gets BOTH capabilities). Four-layer memory
+# model: research/ = ingested external content, project/ = our own decisions +
+# components, sessions/ = episodic logs. Matches the live agentic-design layout.
+MERGED_TAXONOMY = [
+    # research/ — semantic memory (external): what we ingested
+    "research/active", "research/long-term", "research/tooling",
+    "research/best-practices", "research/implementation", "research/skills",
+    "research/orchestration", "research/interesting-docs",
+    # project/ — semantic memory (internal): what we built
+    "project/components", "project/decisions", "project/architecture",
+    "project/patterns", "project/troubleshooting", "project/best-practices",
+    # sessions/ — episodic memory (per-persona logs created on demand)
+    "sessions",
+]
 
 
 # ---------- Helpers ----------
@@ -677,10 +681,9 @@ def phase_b(args):
             return 1
 
     description = args.project_description or ""
-    project_type = args.project_type
-    if project_type not in TAXONOMY:
-        _err(f"--project-type must be 'research' or 'development', got {project_type!r}")
-        return 1
+    # research/development split removed 2026-06-15 — every project gets both.
+    # --project-type is accepted but ignored (back-compat); recorded as "merged".
+    project_type = "merged"
 
     wiki_src = bootstrap / "bootstrap" / "workflows" / "llm-wiki"
     skills_src = wiki_src / "skills"
@@ -755,8 +758,8 @@ def phase_b(args):
             paths["llm_wiki_best_practices"].mkdir(parents=True, exist_ok=True)
         _info("no seed/best-practices/ found in bootstrap — created empty folder")
 
-    # B6 — apply project-type folder taxonomy under llm-wiki/wiki/
-    folders = TAXONOMY[project_type]
+    # B6 — apply the single merged folder taxonomy under llm-wiki/wiki/
+    folders = MERGED_TAXONOMY
     wiki_root = paths["llm_wiki_wiki"]
     for sub in folders:
         path = wiki_root / sub
@@ -764,14 +767,14 @@ def phase_b(args):
             print(f"WOULD mkdir {path}")
         else:
             path.mkdir(parents=True, exist_ok=True)
-    # raw/sessions/ for development wrap-ups (sibling of wiki/, under llm-wiki/)
-    if project_type == "development":
-        sessions_dir = paths["llm_wiki"] / "raw" / "sessions"
-        if args.dry_run:
-            print(f"WOULD mkdir {sessions_dir}")
-        else:
-            sessions_dir.mkdir(parents=True, exist_ok=True)
-    _ok(f"wiki folder taxonomy applied ({project_type}): {len(folders)} folders")
+    # raw/sessions/ for session wrap-ups (sibling of wiki/, under llm-wiki/) —
+    # always created now that every project supports the episodic layer.
+    sessions_dir = paths["llm_wiki"] / "raw" / "sessions"
+    if args.dry_run:
+        print(f"WOULD mkdir {sessions_dir}")
+    else:
+        sessions_dir.mkdir(parents=True, exist_ok=True)
+    _ok(f"merged wiki folder taxonomy applied: {len(folders)} folders")
 
     # B6.5 — render wiki scaffold files (_MAP.md, _INDEX.md, README.md, HOME.md)
     # inside <target>/llm-wiki/wiki/ from seed/wiki/*.tmpl. These give the agent
@@ -804,9 +807,9 @@ def phase_b(args):
         "WIKI_PATH": "llm-wiki/wiki",
         "PROJECT_TYPE": project_type,
     }
-    _render_template(templates_src / f"CLAUDE.md.{project_type}.tmpl",
+    _render_template(templates_src / "CLAUDE.md.tmpl",
                      target / "CLAUDE.md", template_vars, args.dry_run)
-    _render_template(templates_src / f"README.md.{project_type}.tmpl",
+    _render_template(templates_src / "README.md.tmpl",
                      target / "README.md", template_vars, args.dry_run)
     _render_template(templates_src / ".gitignore.tmpl",
                      target / ".gitignore", template_vars, args.dry_run)
@@ -884,35 +887,21 @@ def phase_b(args):
     # (agent files durable items to _inbox/proposed/ inline) replaces it.
     # See the comment above _agentmemory_wired (deleted) for the retrospective.
 
-    # B11 — summary + project-type-specific next steps
+    # B11 — summary + next steps (single merged flow: ingest research AND
+    # capture project knowledge — every project does both).
     start_cmd = "claude" if args.tool == "claude-code" else "cursor ."
 
-    if project_type == "development":
-        next_steps = [
-            f"cd {target}",
-            f"Start Claude Code: `{start_cmd}`",
-            "Read `llm-wiki/README.md` for the project overview",
-            "Read `llm-wiki/how-to/commands.md` for the full command reference",
-            "Code, decide, investigate as normal — the agent will proactively file durable items to `llm-wiki/_inbox/proposed/` as they come up (decisions, components, patterns, gotchas)",
-            "At session-end, run `/wrap-up` to distill anything the inline filing missed",
-            "Run `/wiki-promote --review` to accept/reject the proposed entries",
-            "Use `/wiki-search \"<query>\"` to look up prior decisions / components",
-            "Use `/wiki-update <url>` to add an external reference (article, doc, paper)",
-            "Ask the agent in plain English anytime — e.g. 'what commands do I have', 'how do I X'",
-        ]
-    else:  # research
-        next_steps = [
-            f"cd {target}",
-            start_cmd,
-            "Read llm-wiki/README.md (project overview)",
-            "Read llm-wiki/how-to/commands.md (full command reference)",
-            "Add URLs: /wiki-update <url>  OR  drop links into Drive (__FOR CLAUDE/<project-slug>/)",
-            "/wiki-cycle once a day/week — discovers new sources, ingests, lints, promotes",
-            "Source tier rules: T1 peer-reviewed/primary, T2 vendor/official docs, T3 expert, T4 community — pass --tier on every ingest",
-            "/wiki-search \"<query>\" — hybrid BM25 + vector + LLM rerank",
-            "Both-sides-stay rule: never delete contradictory entries, cross-link them",
-            "Ask the agent in plain English anytime: 'how do I add a URL', 'show me the wiki', 'what's the discovery process'",
-        ]
+    next_steps = [
+        f"cd {target}",
+        f"Start Claude Code: `{start_cmd}`",
+        "Read `llm-wiki/README.md` (project overview) + `llm-wiki/how-to/commands.md` (command reference)",
+        "INGEST research: `/wiki-update <url>` ad-hoc, OR drop links into Drive (__FOR CLAUDE/<project-slug>/) and run `/wiki-cycle` to discover → ingest → lint → promote",
+        "CAPTURE project knowledge: as you code/decide/debug, the agent files durable items (decisions, components, patterns, gotchas) to `llm-wiki/wiki/_inbox/proposed/` inline; run `/wrap-up` at session-end to catch the rest",
+        "Promote: `/wiki-promote --review` accepts/rejects proposed entries (research → research/, project knowledge → project/)",
+        "Search: `/wiki-search \"<query>\"` (hybrid BM25 + vector + LLM rerank)",
+        "Source tiers (research): T1 peer-reviewed/primary, T2 vendor/official, T3 expert, T4 community. Both-sides-stay: never delete contradictory entries, cross-link them",
+        "Ask the agent in plain English anytime — 'what commands do I have', 'how do I X', 'show me the wiki'",
+    ]
 
     print(json.dumps({
         "status": "ok",
@@ -975,7 +964,9 @@ def main():
                         help="Which AI tool to install for (default: claude-code)")
     parser.add_argument("--project-name")
     parser.add_argument("--project-description", default="")
-    parser.add_argument("--project-type", choices=["research", "development"])
+    parser.add_argument("--project-type", default=None,
+                        help="(deprecated, ignored as of 2026-06-15 — research/development "
+                             "split removed; every project gets the merged taxonomy)")
     parser.add_argument("--target-folder",
                         help="Project root folder (required for --phase B)")
     parser.add_argument("--bootstrap-source",

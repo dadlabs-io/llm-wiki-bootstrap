@@ -196,15 +196,9 @@ if ($exit -ne 0) {
 Write-Host ""
 Write-Host "Scaffolding project at $TargetFolder..." -ForegroundColor Cyan
 
-# Research-vs-development is no longer prompted. Default to a single merged
-# taxonomy. The underlying new-wiki.py Phase B still hard-requires a type, so
-# we pass "development" (the superset code+research taxonomy) as the merged
-# default unless a -ProjectType was explicitly supplied for a scripted run.
-# TODO: merged taxonomy -- swap this default for a real combined taxonomy +
-# template once they exist; remove the research/development split entirely.
-if (-not $ProjectType) {
-    $ProjectType = "development"
-}
+# Research-vs-development split removed 2026-06-15. new-wiki.py Phase B now applies
+# a single merged taxonomy (research/* + project/* + sessions/) and ignores
+# --project-type entirely, so the wrapper no longer prompts, prints, or passes it.
 
 if (-not $ProjectName) {
     $defaultName = (Split-Path $TargetFolder -Leaf).ToLower() -replace "[^a-z0-9]+", "-"
@@ -224,7 +218,6 @@ if (-not $ProjectDescription -and -not $nonInteractive) {
 Write-Host ""
 Write-Host "About to scaffold:" -ForegroundColor Cyan
 Write-Host "  Tool:           $Tool"
-Write-Host "  Project type:   $ProjectType"
 Write-Host "  Project name:   $ProjectName"
 Write-Host "  Target folder:  $TargetFolder"
 Write-Host "  Description:    $ProjectDescription"
@@ -237,7 +230,6 @@ $phaseBArgs = @(
     "--tool", $Tool,
     "--project-name", $ProjectName,
     "--project-description", $ProjectDescription,
-    "--project-type", $ProjectType,
     "--target-folder", $TargetFolder,
     "--bootstrap-source", $Bootstrap,
     "--drive-enabled", $DriveEnabled,

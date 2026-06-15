@@ -1,0 +1,29 @@
+# {{PROJECT_NAME}}
+
+{{PROJECT_DESCRIPTION}}
+
+## Status
+
+In active development.
+
+## Wiki
+
+A unified wiki lives at `{{WIKI_PATH}}/` — it holds **both** ingested research and your own project knowledge (four-layer memory model):
+- `research/` — external content (articles, papers, videos): `active, long-term, tooling, best-practices, implementation, skills, orchestration, interesting-docs`
+- `project/` — what we build: `components, decisions, architecture, patterns, troubleshooting, best-practices`
+- `sessions/` — per-persona episodic logs
+
+For an orientation, read `{{LLM_WIKI_PATH}}/README.md`.
+
+## Working with this project
+
+- Ingest external references (articles, docs, papers): `/wiki-update <url>` ad-hoc, or `/wiki-cycle` for batched discover → ingest → lint → promote
+- Durable project decisions/components are filed inline as you work, and `/wrap-up` catches the rest at session end
+- Promote staged entries: `/wiki-promote --review`
+- Search prior research + decisions/components: `/wiki-search "<query>"`
+
+See `CLAUDE.md` for the full session rhythm and conventions.
+
+## License
+
+(set this)
