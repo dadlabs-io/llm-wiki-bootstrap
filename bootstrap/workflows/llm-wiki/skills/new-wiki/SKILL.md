@@ -42,7 +42,9 @@ Q1: tool? (claude-code | cursor)
 Q2: name? (if not given)
 Q3: description? (if not given)
 Q4: target folder? (default C:\github.com\<name>)
-Q5: Drive ingest? (yes/no) — if yes: parent folder name (default __FOR CLAUDE)
+Q5: skills install? (global [default] | bundled)  — see below
+Q6: wiki content location? (separate vault [default] | inside project)  — see below
+Q7: Drive ingest? (yes/no) — if yes: parent folder name (default __FOR CLAUDE)
    ↓
 Phase B — Per-project scaffold (Phase A already done by install-wiki.ps1)
    B1.  mkdir <target> + git init
@@ -97,7 +99,28 @@ Press enter to accept the default, or type your own:
 
 **Q5 — Target folder** (if not provided). Default is `C:\github.com\<slug>` on Windows, `~/proj/<slug>` on macOS/Linux. Confirm before proceeding.
 
-**Q6 — Drive ingest** (skip if user previously configured globally)
+**Q6 — Skills install** (claude-code only; cursor always bundles)
+```
+How should the wiki skills + scripts be installed?
+  1. global   — use the shared ~/.claude install (no per-project copy; recommended for personal use) [default]
+  2. bundled  — copy skills+scripts into the project (self-contained + version-pinned; for distribution)
+
+Pick (1 or 2) [1]:
+```
+→ passes `--skills-install global|bundled`. Global keeps the project to just `.claude/wiki-config.json` + content; the global skills/scripts handle everything, reading this project's config.
+
+**Q7 — Wiki content location**
+```
+Where should the wiki CONTENT live?
+  1. separate vault — keeps the wiki OUT of the code repo (recommended) [default]
+                      default root: C:\github.com\project-notebooks  → content at <root>\<slug>\
+  2. inside project — <target>\llm-wiki\  (self-contained code+wiki repo)
+
+Pick (1 or 2) [1]:
+```
+→ if separate, confirm the vault root (default `C:\github.com\project-notebooks`) and pass `--vault-root <root>`. Content then lives at `<root>\<slug>\wiki\`; the project carries only the config pointing at it. If inside, omit `--vault-root`.
+
+**Q8 — Drive ingest** (skip if user previously configured globally)
 ```
 Do you want to ingest from a Google Drive folder?
   1. yes — I drop links into a Drive folder throughout the day
@@ -131,9 +154,13 @@ python "<bootstrap_source>/bootstrap/workflows/llm-wiki/scripts/new-wiki.py" \
   --project-name <slug> \
   --project-description "<desc>" \
   --target-folder <path> \
+  --skills-install <global|bundled> \
+  --vault-root <root>   `# omit entirely for an in-project wiki` \
   --drive-enabled <yes|no> \
   --drive-subfolder <slug>
 ```
+
+`--skills-install` defaults to `global`. Omit `--vault-root` for an in-project wiki (`<target>/llm-wiki/`); include it (e.g. `C:\github.com\project-notebooks`) to put content at `<root>/<slug>/`.
 
 The script handles everything in the layout diagram above and returns a JSON summary on stdout.
 

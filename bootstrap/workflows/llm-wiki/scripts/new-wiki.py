@@ -51,8 +51,12 @@ CC_GLOBAL_CONFIG_PATH = CC_GLOBAL_DIR / "wiki-config.json"
 CC_GLOBAL_SETTINGS_PATH = CC_GLOBAL_DIR / "settings.json"
 
 
-def project_paths(tool: str, target: Path) -> dict:
-    """Per-project install layout. Always rooted at --target-folder.
+def project_paths(tool: str, target: Path, llm_wiki_root: Path = None) -> dict:
+    """Per-project install layout. The .claude/ (or .cursor/) tool dir is always
+    under --target-folder; the wiki CONTENT (llm_wiki) defaults to
+    <target>/llm-wiki/ but can be relocated anywhere via llm_wiki_root (e.g. a
+    separate `C:\\github.com\\project-notebooks\\<name>` so the wiki never bloats
+    the code repo).
 
     Layout for claude-code:
       <target>/.claude/skills/         ← runnable skills (Claude Code auto-loads)
@@ -85,7 +89,7 @@ def project_paths(tool: str, target: Path) -> dict:
     else:
         raise ValueError(f"unknown tool: {tool}")
 
-    llm_wiki = target / "llm-wiki"
+    llm_wiki = Path(llm_wiki_root) if llm_wiki_root else (target / "llm-wiki")
     return {
         "tool_dir": tool_dir,
         "skills": tool_dir / "skills",
@@ -666,12 +670,32 @@ def phase_b(args):
              "or run Phase A first to record it.")
         return 1
 
-    paths = project_paths(args.tool, target)
-
     name = _slugify(args.project_name or "")
     if not name:
         _err("--project-name is required")
         return 1
+
+    # Wiki content location: external (a separate vault folder, e.g.
+    # C:\github.com\project-notebooks\<name>) keeps the wiki out of the code repo.
+    # In-project (<target>/llm-wiki) is the self-contained default.
+    if args.vault_root:
+        external_vault = True
+        vault_root = Path(args.vault_root).resolve()
+        llm_wiki_root = vault_root / name
+    else:
+        external_vault = False
+        vault_root = target
+        llm_wiki_root = target / "llm-wiki"
+
+    # Skills install: 'global' (default) uses ~/.claude/skills + ~/.claude/wiki-scripts
+    # (shared, no per-project copy); 'bundled' copies them into the project
+    # (self-contained, version-pinned). Cursor always bundles (no global skill dir).
+    skills_install = (args.skills_install or "global")
+    if args.tool == "cursor":
+        skills_install = "bundled"
+    bundle = (skills_install == "bundled")
+
+    paths = project_paths(args.tool, target, llm_wiki_root=llm_wiki_root)
 
     if target.exists() and any(target.iterdir()) and not args.force:
         # Allow if the only entries are the dirs we're about to populate
@@ -701,38 +725,42 @@ def phase_b(args):
             subprocess.run(["git", "init"], cwd=target, capture_output=True, text=True)
         _ok(f"project folder ready: {target}")
 
-    # B2 — copy skills into <target>/.claude/skills/ (or .cursor/skills/)
-    _info(f"copying skills: {skills_src} -> {paths['skills']}")
-    c, s = _copy_tree(skills_src, paths["skills"], names=TRAVEL_SKILLS, dry_run=args.dry_run)
-    _ok(f"skills: {c} copied, {s} unchanged")
+    # B2/B3/B4 — copy skills + scripts + templates into the project ONLY when
+    # bundling. In 'global' mode (default for claude-code) the project uses the
+    # shared ~/.claude install and carries only wiki-config.json + content.
+    if not bundle:
+        _ok("skills:    using global ~/.claude/skills (no per-project copy)")
+        _ok("scripts:   using global ~/.claude/wiki-scripts (no per-project copy)")
+        _ok("templates: rendered from bootstrap at scaffold time (no per-project copy)")
+    else:
+        # B2 — copy skills into <target>/.claude/skills/ (or .cursor/skills/)
+        _info(f"copying skills: {skills_src} -> {paths['skills']}")
+        c, s = _copy_tree(skills_src, paths["skills"], names=TRAVEL_SKILLS, dry_run=args.dry_run)
+        _ok(f"skills: {c} copied, {s} unchanged")
 
-    if args.tool == "cursor":
-        # Cursor adapter: generate .cursor/rules/<name>.mdc for each skill so
-        # Cursor's agent picks them up natively. The .cursor/skills/<name>/
-        # SKILL.md copies remain as reference / source of truth for re-generation.
-        # Read from bootstrap source (skills_src) since we know all TRAVEL_SKILLS
-        # exist there — same source the copy step uses.
-        rules_dir = target / ".cursor" / "rules"
-        # Restrict to TRAVEL_SKILLS so we don't generate rules for skills we
-        # didn't install.
-        n = 0
-        for skill_name in TRAVEL_SKILLS:
-            skill_md = skills_src / skill_name / "SKILL.md"
-            mdc_path = rules_dir / f"{skill_name}.mdc"
-            if _skill_to_mdc(skill_md, mdc_path, dry_run=args.dry_run):
-                n += 1
-        _ok(f"cursor rules generated: {n} .mdc files at {rules_dir}")
+        if args.tool == "cursor":
+            # Cursor adapter: generate .cursor/rules/<name>.mdc for each skill so
+            # Cursor's agent picks them up natively. The .cursor/skills/<name>/
+            # SKILL.md copies remain as reference / source of truth for re-generation.
+            rules_dir = target / ".cursor" / "rules"
+            n = 0
+            for skill_name in TRAVEL_SKILLS:
+                skill_md = skills_src / skill_name / "SKILL.md"
+                mdc_path = rules_dir / f"{skill_name}.mdc"
+                if _skill_to_mdc(skill_md, mdc_path, dry_run=args.dry_run):
+                    n += 1
+            _ok(f"cursor rules generated: {n} .mdc files at {rules_dir}")
 
-    # B3 — copy scripts (travel scripts + shared helper modules they import)
-    _info(f"copying scripts: {scripts_src} -> {paths['scripts']}")
-    c, s = _copy_tree(scripts_src, paths["scripts"],
-                      names=TRAVEL_SCRIPTS + SHARED_HELPER_SCRIPTS, dry_run=args.dry_run)
-    _ok(f"scripts: {c} copied, {s} unchanged")
+        # B3 — copy scripts (travel scripts + shared helper modules they import)
+        _info(f"copying scripts: {scripts_src} -> {paths['scripts']}")
+        c, s = _copy_tree(scripts_src, paths["scripts"],
+                          names=TRAVEL_SCRIPTS + SHARED_HELPER_SCRIPTS, dry_run=args.dry_run)
+        _ok(f"scripts: {c} copied, {s} unchanged")
 
-    # B4 — copy templates
-    _info(f"copying templates: {templates_src} -> {paths['templates']}")
-    c, s = _copy_tree(templates_src, paths["templates"], dry_run=args.dry_run)
-    _ok(f"templates: {c} copied, {s} unchanged")
+        # B4 — copy templates
+        _info(f"copying templates: {templates_src} -> {paths['templates']}")
+        c, s = _copy_tree(templates_src, paths["templates"], dry_run=args.dry_run)
+        _ok(f"templates: {c} copied, {s} unchanged")
 
     # B5 — create <target>/llm-wiki/ with seed content
     if args.dry_run:
@@ -800,11 +828,19 @@ def phase_b(args):
         _warn(f"seed/wiki/ not found in bootstrap; wiki scaffold files skipped")
 
     # B7 — render top-level project files: CLAUDE.md / README.md / .gitignore
+    # CLAUDE.md @-imports: relative paths for an in-project wiki, absolute for an
+    # external vault (the wiki isn't under the project dir).
+    if external_vault:
+        llm_wiki_path_str = paths["llm_wiki"].as_posix()
+        wiki_path_str = paths["llm_wiki_wiki"].as_posix()
+    else:
+        llm_wiki_path_str = "llm-wiki"
+        wiki_path_str = "llm-wiki/wiki"
     template_vars = {
         "PROJECT_NAME": name,
         "PROJECT_DESCRIPTION": description,
-        "LLM_WIKI_PATH": "llm-wiki",
-        "WIKI_PATH": "llm-wiki/wiki",
+        "LLM_WIKI_PATH": llm_wiki_path_str,
+        "WIKI_PATH": wiki_path_str,
         "PROJECT_TYPE": project_type,
     }
     _render_template(templates_src / "CLAUDE.md.tmpl",
@@ -839,24 +875,25 @@ def phase_b(args):
         "project_description": description,
         "target_folder": str(target),
         "llm_wiki_root": str(paths["llm_wiki"]),
-        # vault_root + wiki_topic together resolve to <target>/llm-wiki/wiki/
-        # under the existing scripts' <vault>/<topic>/wiki/ assumption.
-        # We keep that layout so wiki-update, wiki-init, wiki-cycle, etc.
-        # work unchanged in a per-project install. wiki_topic is always
-        # "llm-wiki" in the v1 single-wiki-per-project model; v2 may relax
-        # this to support multi-wiki.
-        "vault_root": str(target),
+        # vault_root + wiki_topic resolve to <vault_root>/<wiki_topic>/wiki/ (the
+        # scripts' <vault>/<topic>/wiki/ assumption). Two layouts:
+        #   in-project  → vault_root=<target>,     wiki_topic="llm-wiki"  → <target>/llm-wiki/wiki/
+        #   external    → vault_root=<vault-root>, wiki_topic=<name>      → <vault-root>/<name>/wiki/
+        # External keeps the wiki out of the code repo (e.g. project-notebooks/).
+        "vault_root": str(vault_root) if external_vault else str(target),
         # default_topic + topics[] are the v2 multi-wiki keys; wiki_topic is the
-        # v1 alias kept for back-compat. A project starts with one wiki ("llm-wiki");
-        # add more folder names to topics[] (each lives at <vault_root>/<name>) and
-        # repoint default_topic to switch the default. See _wiki_config.py.
-        "default_topic": "llm-wiki",
-        "topics": ["llm-wiki"],
-        "wiki_topic": "llm-wiki",
+        # v1 alias kept for back-compat.
+        "default_topic": name if external_vault else "llm-wiki",
+        "topics": [name] if external_vault else ["llm-wiki"],
+        "wiki_topic": name if external_vault else "llm-wiki",
+        # skills_install: 'global' (shared ~/.claude) or 'bundled' (per-project copy).
+        "skills_install": skills_install,
+        "scripts_installed_at": str(paths["scripts"]) if bundle
+                                else str(CC_GLOBAL_DIR / "wiki-scripts"),
         "wiki_path": str(paths["llm_wiki_wiki"]),
-        "skills_installed_at": str(paths["skills"]),
-        "scripts_installed_at": str(paths["scripts"]),
-        "templates_installed_at": str(paths["templates"]),
+        "skills_installed_at": str(paths["skills"]) if bundle
+                               else str(CC_GLOBAL_SKILLS_DIR),
+        "templates_installed_at": str(paths["templates"]) if bundle else None,
         "bootstrap_source": str(bootstrap),
         "install_version": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "last_phase_b": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -969,6 +1006,14 @@ def main():
                              "split removed; every project gets the merged taxonomy)")
     parser.add_argument("--target-folder",
                         help="Project root folder (required for --phase B)")
+    parser.add_argument("--skills-install", choices=["global", "bundled"], default="global",
+                        help="global (default) = use shared ~/.claude/skills + wiki-scripts, "
+                             "no per-project copy; bundled = copy skills+scripts into the project "
+                             "(self-contained). Cursor always bundles.")
+    parser.add_argument("--vault-root", default=None,
+                        help="If set, the wiki CONTENT lives at <vault-root>/<name>/ instead of "
+                             "<target>/llm-wiki/ — keeps the wiki out of the code repo "
+                             "(e.g. C:\\github.com\\project-notebooks).")
     parser.add_argument("--bootstrap-source",
                         help="Path to the llm-wiki-bootstrap checkout (or workflows-core dev source)")
     parser.add_argument("--drive-enabled", choices=["yes", "no"], default=None,

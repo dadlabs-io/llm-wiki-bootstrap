@@ -71,6 +71,13 @@ param(
 
     [string]$ProjectDescription = "",
 
+    # Skills install: global (shared ~/.claude, default) | bundled (per-project copy).
+    [ValidateSet("global", "bundled")]
+    [string]$SkillsInstall = "global",
+
+    # If set, wiki content lives at <VaultRoot>/<name>/ instead of <target>/llm-wiki/.
+    [string]$VaultRoot = "",
+
     [ValidateSet("yes", "no")]
     [string]$DriveEnabled = "no",
 
@@ -231,10 +238,12 @@ $phaseBArgs = @(
     "--project-name", $ProjectName,
     "--project-description", $ProjectDescription,
     "--target-folder", $TargetFolder,
+    "--skills-install", $SkillsInstall,
     "--bootstrap-source", $Bootstrap,
     "--drive-enabled", $DriveEnabled,
     "--drive-parent-folder", $DriveParentFolder
 )
+if ($VaultRoot) { $phaseBArgs += @("--vault-root", $VaultRoot) }
 # -NoAgentmemory is a deprecated no-op as of 2026-05-14, kept for back-compat.
 
 & $py.Source @phaseBArgs

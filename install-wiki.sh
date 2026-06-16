@@ -44,6 +44,8 @@ TOOL_SET="no"
 PROJECT_TYPE=""
 PROJECT_NAME=""
 PROJECT_DESCRIPTION=""
+SKILLS_INSTALL="global"
+VAULT_ROOT=""
 DRIVE_ENABLED="no"
 DRIVE_PARENT_FOLDER="__FOR CLAUDE"
 FORCE="no"
@@ -57,6 +59,8 @@ while [[ $# -gt 0 ]]; do
         --project-type) PROJECT_TYPE="$2"; shift 2;;
         --project-name) PROJECT_NAME="$2"; shift 2;;
         --project-description) PROJECT_DESCRIPTION="$2"; shift 2;;
+        --skills-install) SKILLS_INSTALL="$2"; shift 2;;
+        --vault-root) VAULT_ROOT="$2"; shift 2;;
         --drive-enabled) DRIVE_ENABLED="$2"; shift 2;;
         --drive-parent-folder) DRIVE_PARENT_FOLDER="$2"; shift 2;;
         --force) FORCE="yes"; shift;;
@@ -206,12 +210,17 @@ echo "  Description:    $PROJECT_DESCRIPTION"
 echo "  Drive ingest:   $DRIVE_ENABLED"
 echo
 
+VAULT_ARGS=()
+if [[ -n "$VAULT_ROOT" ]]; then VAULT_ARGS=(--vault-root "$VAULT_ROOT"); fi
+
 "$PY" "$SCRIPT" \
     --phase B \
     --tool "$TOOL" \
     --project-name "$PROJECT_NAME" \
     --project-description "$PROJECT_DESCRIPTION" \
     --target-folder "$TARGET_FOLDER" \
+    --skills-install "$SKILLS_INSTALL" \
+    "${VAULT_ARGS[@]}" \
     --bootstrap-source "$HERE" \
     --drive-enabled "$DRIVE_ENABLED" \
     --drive-parent-folder "$DRIVE_PARENT_FOLDER"
