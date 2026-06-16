@@ -62,15 +62,14 @@ Source-of-truth: `bootstrap/workflows/llm-wiki/templates/`
 Install target: `~/.claude/wiki-templates/`
 Usage: copied/rendered into a new project at `/new-wiki` time
 
+Research/development split removed 2026-06-15 — one merged template set; every project gets the same unified wiki (research/* + project/* + sessions/).
+
 | Template | Purpose | When used |
 |---|---|---|
-| `CLAUDE.md.research.tmpl` | Project root CLAUDE.md for research topics | research project init |
-| `CLAUDE.md.development.tmpl` | Project root CLAUDE.md for dev topics | development project init |
-| `README.md.research.tmpl` | Project root README | research project init |
-| `README.md.development.tmpl` | Project root README | development project init |
-| `.gitignore.tmpl` | Project root .gitignore | both |
-| `wiki/_README.research.tmpl` | Topic-level README inside vault (research folder taxonomy) | both |
-| `wiki/_README.development.tmpl` | Topic-level README inside vault (dev folder taxonomy) | development project init |
+| `CLAUDE.md.tmpl` | Project root CLAUDE.md (unified — does both research + project) | every project init |
+| `README.md.tmpl` | Project root README | every project init |
+| `.gitignore.tmpl` | Project root .gitignore | every project init |
+| `seed/wiki/{HOME,README,_MAP,_INDEX}.md.tmpl` | Wiki scaffold files rendered inside `llm-wiki/wiki/` | every project init |
 
 Folder taxonomies per project type:
 
