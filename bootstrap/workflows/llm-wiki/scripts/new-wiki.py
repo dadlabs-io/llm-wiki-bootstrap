@@ -735,13 +735,22 @@ def phase_b(args):
     templates_src = wiki_src / "templates"
     seed_src = wiki_src / "seed"
 
-    # B1 — mkdir + git init
+    # B1 — mkdir + git init (skip if already inside a repo → no nested repo)
     _info(f"project folder: {target}")
     if args.dry_run:
-        print(f"WOULD mkdir {target} + git init")
+        print(f"WOULD mkdir {target} (+ git init only if not already inside a repo)")
     else:
         target.mkdir(parents=True, exist_ok=True)
-        if not (target / ".git").exists():
+        # Don't create a nested repo: if target already lives inside an existing git
+        # work tree (e.g. a notebook under project-notebooks), DON'T init a new one.
+        inside = subprocess.run(
+            ["git", "rev-parse", "--is-inside-work-tree"],
+            cwd=target, capture_output=True, text=True,
+        )
+        already_in_repo = inside.returncode == 0 and inside.stdout.strip() == "true"
+        if already_in_repo:
+            _info("target is inside an existing git repo — skipping git init (no nested repo)")
+        elif not (target / ".git").exists():
             subprocess.run(["git", "init"], cwd=target, capture_output=True, text=True)
         _ok(f"project folder ready: {target}")
 
