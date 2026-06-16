@@ -191,6 +191,26 @@ def _save_config(cfg, config_path: Path = CC_GLOBAL_CONFIG_PATH):
     _ok(f"wrote {config_path}")
 
 
+def _upsert_registry(registry_path: Path, name: str, root_value: str):
+    """Add/update one notebook in the shared linked-notebooks.json registry.
+    Preserves any existing entries + _comment. Creates the file if absent."""
+    data = {}
+    if registry_path.exists():
+        try:
+            data = json.loads(registry_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            data = {}
+    if "_comment" not in data:
+        data["_comment"] = ("Single registry of every notebook and its root, used to "
+                            "resolve ANY cross-notebook link. name -> root (relative paths "
+                            "resolve from this file's folder; absolute point outside). "
+                            "Standard layout under each root: wiki/, _inbox/, raw/.")
+    nbs = data.setdefault("notebooks", {})
+    nbs[name] = root_value
+    registry_path.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write_text(registry_path, json.dumps(data, indent=2))
+
+
 def _skill_to_mdc(skill_md_path: Path, mdc_path: Path, dry_run: bool = False) -> bool:
     """Convert a Claude-Code SKILL.md to a Cursor .mdc rule.
 
@@ -868,7 +888,43 @@ def phase_b(args):
     elif args.drive_enabled == "no":
         drive_enabled_global = False
 
-    project_cfg = {
+    if args.registry:
+        # v3 registry mode: the project's wiki-config is a THIN pointer; this
+        # notebook's location is recorded in the shared registry (single source of
+        # truth). Resolver: config.notebook + config.registry → registry[name] → root.
+        registry_path = Path(args.registry).resolve()
+        nb_root = paths["llm_wiki"]  # topic_root (holds wiki/, _inbox/, raw/)
+        try:
+            entry = nb_root.relative_to(registry_path.parent).as_posix()
+        except ValueError:
+            entry = nb_root.as_posix()
+        if args.dry_run:
+            print(f"WOULD register notebook '{name}' -> {entry} in {registry_path}")
+        else:
+            _upsert_registry(registry_path, name, entry)
+            _ok(f"registered '{name}' -> {entry} in {registry_path.name}")
+        project_cfg = {
+            "tool": args.tool,
+            "project_name": name,
+            "notebook": name,
+            "registry": registry_path.as_posix(),
+            "project_description": description,
+            "skills_install": skills_install,
+            "scripts_installed_at": str(paths["scripts"]) if bundle
+                                    else str(CC_GLOBAL_DIR / "wiki-scripts"),
+            "skills_installed_at": str(paths["skills"]) if bundle
+                                   else str(CC_GLOBAL_SKILLS_DIR),
+            "bootstrap_source": str(bootstrap),
+            "install_version": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "last_phase_b": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "drive": {
+                "enabled": bool(drive_enabled_global),
+                "parent_folder": drive_parent,
+                "subfolder": drive_subfolder if drive_enabled_global else None,
+            },
+        }
+    else:
+      project_cfg = {
         "tool": args.tool,
         "project_name": name,
         "project_type": project_type,
@@ -1014,6 +1070,11 @@ def main():
                         help="If set, the wiki CONTENT lives at <vault-root>/<name>/ instead of "
                              "<target>/llm-wiki/ — keeps the wiki out of the code repo "
                              "(e.g. C:\\github.com\\project-notebooks).")
+    parser.add_argument("--registry", default=None,
+                        help="Path to a shared linked-notebooks.json registry. When set, the "
+                             "project's wiki-config becomes a thin pointer (notebook + registry) "
+                             "and this notebook's root is recorded in the registry — the single "
+                             "source of truth for locations.")
     parser.add_argument("--bootstrap-source",
                         help="Path to the llm-wiki-bootstrap checkout (or workflows-core dev source)")
     parser.add_argument("--drive-enabled", choices=["yes", "no"], default=None,
