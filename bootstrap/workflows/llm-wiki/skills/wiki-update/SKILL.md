@@ -1,6 +1,6 @@
 ---
 name: wiki-update
-description: Update a topic wiki with new content. Auto-detects what to do based on what the user gives. URL → fetch + file. YouTube URL → fetch transcript + synthesize summary + file. Local file → file. Pasted text → file. Nothing → synthesize from current session (git log + handoff). Use when the user says "update the wiki", "add this to the wiki", "save this article", "wiki this", "wiki update", "save what we did to the wiki", "ingest this video", "add this YouTube video to the wiki". Replaces the old /wiki-add command.
+description: Ingest an EXTERNAL source into the wiki's research/ layer. Auto-detects from what the user gives. URL → fetch + file. YouTube URL → fetch transcript + synthesize summary + file. Local file → file. Pasted text → file. Requires a source — with nothing, it redirects to /wrap-up (for capturing our own session work). Use when the user says "update the wiki", "add this to the wiki", "save this article", "wiki this", "wiki update", "ingest this video", "add this YouTube video to the wiki". For "save what we did" / session work, use /wrap-up instead. Replaces the old /wiki-add command.
 ---
 
 Update (add) content to a topic wiki. The user shouldn't have to think about what type of source they have — figure it out from what they give you.
@@ -20,7 +20,7 @@ Required on every entry: `title`, `date`, `source_url`, `ingested_by`, `tier`, `
 | YouTube URL (single) | YouTube flow — fetch transcript + synthesize + file |
 | Local file path (single) | File flow — call wiki-update.py with --source PATH |
 | Pasted text | Text flow — write to a temp file, then call wiki-update.py with --source TEMP |
-| Nothing (just `/wiki-update`) | Session flow — synthesize from git log + handoff.md |
+| Nothing (just `/wiki-update`) | **Stop — wiki-update is for EXTERNAL sources only.** Tell the user: "`/wiki-update` needs a source (URL / file / pasted text). To capture what we did this session, use `/wrap-up`." Do NOT synthesize from the session. |
 
 ### Multi-URL detection
 
@@ -350,18 +350,13 @@ After this, the curated summary is in `wiki/<folder>/`, the verbatim transcript 
 
 Same as URL flow, just pass a local path as `--source`. For pasted text, write it to `_inbox/pending/<slug>.md` first then use that as the source (or `/tmp/<slug>.md` if you don't want it in the queue).
 
-## Session flow (no source)
+## No source? → redirect to `/wrap-up`
 
-1. Read these in parallel:
-   - `git log --oneline -20`
-   - `git diff --stat HEAD~5..HEAD`
-   - `memory-bank/short-term/_personas/{persona}/handoff.md`
-   - `memory-bank/short-term/_personas/{persona}/completed.md` (recent entries)
-   - `git status --porcelain`
-2. If handoff is stale, suggest running `/upd-docs` first.
-3. Decide topic + folder ((decide based on the entry's content and your wiki's folder taxonomy).
-4. **Synthesize a markdown file** capturing what was learned this session — not what was done, but what *insights* compounded. See "Length philosophy" above. Skip if nothing rises to the bar.
-5. File via wiki-update.py with `--source` as the temp summary file. No `--source-url`. Pass `--ingested-by claude-code`.
+`/wiki-update` ingests **external** content only (URL / file / pasted text → `research/`). It does **not** synthesize from the current session — that's `/wrap-up`'s job (it writes the session journal + extracts `project/` knowledge). If the user runs `/wiki-update` with nothing, respond:
+
+> `/wiki-update` needs a source (a URL, file path, or pasted text) — it's for ingesting external material into `research/`. To capture what we did this session, run `/wrap-up`.
+
+…and stop. Don't fall back to git-log/handoff synthesis.
 
 ## After running
 

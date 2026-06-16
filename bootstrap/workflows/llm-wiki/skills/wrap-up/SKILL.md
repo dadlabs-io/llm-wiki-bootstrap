@@ -1,6 +1,6 @@
 ---
 name: wrap-up
-description: Crystallize the current session's durable work into wiki entries for a development project. Identifies components built, decisions made, patterns established, bugs investigated, and files them to the project's wiki staging area for review and promotion. Use when the user says "wrap up", "wrap-up", "/wrap-up", "wrap this session", "document what we did", "crystallize this session", "save this work".
+description: Crystallize the current session's work into the project wiki. ALWAYS updates a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ (upserted every wrap-up so the "what we did" record builds as you go), AND extracts durable knowledge — components built, decisions made, patterns established, bugs investigated — staged to _inbox/proposed/ for review then promoted to wiki/project/<category>/. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says "wrap up", "wrap-up", "/wrap-up", "wrap this session", "document what we did", "crystallize this session", "save this work".
 ---
 
 # /wrap-up
@@ -23,12 +23,59 @@ A development project (codebase you're building) where session work produces dur
 | Field | How to get it |
 |---|---|
 | Project name (matches a wiki topic in the vault) | From CWD: read the project's `CLAUDE.md` for the topic reference. Fall back to asking the user. |
-| Vault root | From `~/.claude/wiki-config.json` (`vault_root`). Fall back to the topic's `CLAUDE.md` import path. |
-| Project type | From the wiki topic's `README.md` frontmatter (`project_type: development` vs `research`). |
+| Vault root | From `<cwd>/.claude/wiki-config.json` (`vault_root`) or `~/.claude/wiki-config.json`. Fall back to the topic's `CLAUDE.md` import path. |
 
-If `project_type: research` — refuse and point user at `/wiki-update`.
+There is **no project-type gate** (the research/development split was removed 2026-06-15 — every project's wiki does both). `/wrap-up` is for capturing *our own* work into `project/` + the session journal; `/wiki-update` is for ingesting *external* sources into `research/`. If a `/wrap-up` session turns out to be pure research with no durable project work, still write the session-journal entry (Step 0), then point the user at `/wiki-update` for the source itself.
 
 ## The flow
+
+### Step 0 — Update the session journal (ALWAYS — every `/wrap-up`)
+
+This runs on **every** wrap-up, before anything else, so the "what we did" record builds up *as you go* instead of being reconstructed once at the end. One journal entry **per session**, upserted.
+
+**Path**: `<vault>/<project>/wiki/sessions/<persona>/<YYYY-MM>/<YYYY-MM-DD>-<session-id>.md`
+- `persona` — the active persona if the project uses them (read from `active-context.md` / the user's sign-off tag); otherwise default to `main`.
+- `session-id` — a stable id for THIS Claude Code session. Use the session UUID from the transcript path if available; else a `<YYYY-MM-DD>-<short-slug>` derived on the first wrap-up. The point is that repeat wrap-ups in the same session resolve to the SAME file.
+
+**Upsert logic**:
+1. Resolve today's `<YYYY-MM>` folder under `sessions/<persona>/`. Glob it and look for an entry whose frontmatter `session_id:` matches the current session. (If you created it earlier this conversation, you already know the path.)
+2. **If it exists** → append a new dated block under `## Updates` with what's happened *since the last wrap-up* (don't rewrite earlier blocks — append). Refresh the `**Next:**` line.
+3. **If it doesn't** → create it with the frontmatter + skeleton below, seeding `**Goal:**` and the first update block.
+
+This entry goes **directly** to `wiki/sessions/` (NOT staged in `_inbox/proposed/`) — it's our own running log, not a curated artifact needing review.
+
+```yaml
+---
+title: "Session <YYYY-MM-DD> — <persona>"
+date: <YYYY-MM-DD>
+session_id: <id>
+persona: <persona>
+type: session-journal
+ingested_by: claude-code
+tier: self
+confidence: high
+last_reviewed: <YYYY-MM-DD>
+review_after: <YYYY-MM-DD+90>
+tags: [<project-name>, session-journal, <persona>]
+---
+
+# Session <YYYY-MM-DD> — <persona>
+
+**Goal:** <one line — what this session is trying to achieve; edit if it shifts>
+**Next:** <the single most important next action; refreshed every wrap-up>
+
+## Updates
+
+### Update <N> — <YYYY-MM-DD HH:MM if known, else just the sequence> — <short summary>
+- **Did:** <what happened since the last wrap-up>
+- **Decisions:** <any; link the project/decisions/ entries filed below>
+- **Files:** <key paths touched>
+- **Open:** <anything unresolved>
+```
+
+(For `HH:MM`, run `date '+%H:%M'` if you need a real clock — the model doesn't have one otherwise. If unavailable, just use the sequence number `Update 1`, `Update 2`, …)
+
+The journal is the chronological "what we did"; the `project/` entries below (Steps 1-3) are the distilled durable knowledge extracted from it. Both, every wrap-up.
 
 ### Step 1 — Scan the session for durable work
 
@@ -60,9 +107,9 @@ I see the following durable work from this session:
 
 | # | Category | Proposed title | Target folder |
 |---|---|---|---|
-| 1 | troubleshooting | OAuth re-prompt on every Drive scan — root cause + fix | wiki/troubleshooting/ |
-| 2 | decision | --move-handled default-ON for wiki-fetch-drive-folder | wiki/decisions/ |
-| 3 | pattern | URL-dedup at producer (wiki-list-add) — defense-in-depth against stale-requeue | wiki/patterns/ |
+| 1 | troubleshooting | OAuth re-prompt on every Drive scan — root cause + fix | wiki/project/troubleshooting/ |
+| 2 | decision | --move-handled default-ON for wiki-fetch-drive-folder | wiki/project/decisions/ |
+| 3 | pattern | URL-dedup at producer (wiki-list-add) — defense-in-depth against stale-requeue | wiki/project/patterns/ |
 
 **Bulk accept (default):** `go` / `all` / `keep all` / `roll them up` — files every proposed entry as-is.
 **Bulk reject:** `none` / `drop all` / `skip` — files nothing.
@@ -75,7 +122,7 @@ Wait for explicit confirmation. The user MUST get to veto before any wiki entry 
 
 ### Step 3 — File each kept candidate to `_inbox/proposed/`
 
-Same staging discipline as `/wiki-update` — entries go to `<vault>/<project>/_inbox/proposed/<folder>/<slug>.md`, NOT directly to `wiki/`. Promotion happens via `/wiki-promote`.
+Same staging discipline as `/wiki-update` — entries go to `<vault>/<project>/_inbox/proposed/<slug>.md`, NOT directly to `wiki/`. Promotion via `/wiki-promote` moves each to its target folder `wiki/project/<category>/` (components, decisions, architecture, patterns, troubleshooting). The metadata sidecar records `target_folder: project/<category>`.
 
 Each entry has:
 
@@ -91,7 +138,6 @@ tier: self
 confidence: <high|medium|low>
 last_reviewed: <YYYY-MM-DD>
 review_after: <YYYY-MM-DD+90>
-project_type: development
 category: <component|decision|architecture|pattern|troubleshooting>
 tags: [<project-name>, <category>, <topic-tags>]
 ---
@@ -125,13 +171,14 @@ Show the user:
 
 ```
 Wrapped up:
-  3 entries filed to _inbox/proposed/<project>/
+  Session journal updated: wiki/sessions/main/2026-05/2026-05-12-<session-id>.md  (Update 3)
+  3 entries staged to _inbox/proposed/ (→ wiki/project/<category>/ on promote):
   - troubleshooting/oauth-re-prompt-root-cause-2026-05-12.md
   - decisions/move-handled-default-on-2026-05-12.md
   - patterns/url-dedup-at-producer-2026-05-12.md
 
 Raw snapshot: raw/sessions/2026-05-12-drive-cleanup-session.md
-Next: run /wiki-promote --review to approve & promote.
+Next: run /wiki-promote --review to approve & promote the project entries.
 ```
 
 ## Slug naming
