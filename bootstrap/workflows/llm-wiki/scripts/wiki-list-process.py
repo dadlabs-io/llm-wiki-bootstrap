@@ -183,7 +183,7 @@ def process_queue(vault_root, topic, dry_run, limit):
                 move_queue_file(qpath, failed_dir, render_script, vault_root, topic)
                 # Drop an .error sidecar in the new location
                 err_path = failed_dir / (qpath.name + ".error")
-                atomic_write_text(err_path, f"# {datetime.now().isoformat()}\n{msg}\n")
+                atomic_write_text(err_path, f"# {datetime.now().astimezone().isoformat()}\n{msg}\n")
         print()
 
     # Regenerate index once at the end

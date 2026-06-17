@@ -221,7 +221,7 @@ def acquire_source(source, raw_dir, slug_hint, skip_raw_copy=False):
         raw_filename = f"{timestamp}-{slug}.md"
         raw_path = unique_path(raw_dir / raw_filename)
         # Save with a small frontmatter pointing back to the ORIGINAL URL
-        raw_content = f"---\nsource_url: {source}\nfetched_url: {fetch_url_actual}\nfetched: {datetime.now().isoformat()}\n---\n\n{body_text}\n"
+        raw_content = f"---\nsource_url: {source}\nfetched_url: {fetch_url_actual}\nfetched: {datetime.now().astimezone().isoformat()}\n---\n\n{body_text}\n"
         atomic_write_text(raw_path, raw_content)
         print(f"  Saved raw: {raw_path}")
         return raw_path, body_text, suggested_title, source
@@ -758,7 +758,7 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
                 }
                 for path, _term, _snippet in inbound[:50]
             ],
-            "created": datetime.now().isoformat(timespec="seconds"),
+            "created": datetime.now().astimezone().isoformat(timespec="seconds"),
         }
         sidecar.write_text(json.dumps(meta, indent=2, ensure_ascii=False),
                            encoding="utf-8")

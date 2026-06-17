@@ -529,8 +529,8 @@ def phase_a(args):
     cfg = _load_config(CC_GLOBAL_CONFIG_PATH) or {}
     cfg.update({
         "bootstrap_source": str(bootstrap),
-        "install_version": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "last_phase_a": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "install_version": datetime.now().strftime("%Y-%m-%d"),
+        "last_phase_a": datetime.now().astimezone().isoformat(timespec="seconds"),
     })
     # Preserve any default drive config from prior installs
     if args.drive_enabled == "yes":
@@ -929,8 +929,8 @@ def phase_b(args):
             "skills_installed_at": str(paths["skills"]) if bundle
                                    else str(CC_GLOBAL_SKILLS_DIR),
             "bootstrap_source": str(bootstrap),
-            "install_version": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-            "last_phase_b": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "install_version": datetime.now().strftime("%Y-%m-%d"),
+            "last_phase_b": datetime.now().astimezone().isoformat(timespec="seconds"),
             "drive": {
                 "enabled": bool(drive_enabled_global),
                 "parent_folder": drive_parent,
@@ -965,8 +965,8 @@ def phase_b(args):
                                else str(CC_GLOBAL_SKILLS_DIR),
         "templates_installed_at": str(paths["templates"]) if bundle else None,
         "bootstrap_source": str(bootstrap),
-        "install_version": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "last_phase_b": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "install_version": datetime.now().strftime("%Y-%m-%d"),
+        "last_phase_b": datetime.now().astimezone().isoformat(timespec="seconds"),
         "drive": {
             "enabled": bool(drive_enabled_global),
             "parent_folder": drive_parent,

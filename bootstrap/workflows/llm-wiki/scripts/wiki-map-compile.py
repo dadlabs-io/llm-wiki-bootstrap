@@ -133,7 +133,7 @@ def topic_blurb(wiki_root: Path, topic: str) -> str:
 
 
 def iso_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 def parse_frontmatter(text: str) -> dict:

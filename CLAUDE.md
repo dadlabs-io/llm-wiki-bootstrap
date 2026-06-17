@@ -112,6 +112,12 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 - `bootstrap/workflows/llm-wiki/seed/` — content that lands in each per-project `llm-wiki/` folder
 - `bootstrap/workflows/llm-wiki/templates/` — `CLAUDE.md`, `README.md`, `.gitignore` templates
 
+## Conventions (when editing the scripts)
+
+- **Date/time** — single rule, helpers in `scripts/_wiki_config.py`:
+  - **Date labels** (calendar day a human organizes by — cycle ids, report folders, `date:`/`last_reviewed:`/`review_after:` frontmatter) → **local** date, `today_label()`. Never `datetime.now(timezone.utc)` for a date label (it rolls a night-time run to tomorrow's UTC day).
+  - **Timestamps** (a precise instant — `created`, `*_at`, run stamps) → `now_stamp()`: **local time with an explicit UTC offset** (tz-aware ISO-8601, e.g. `2026-06-17T00:05:07-04:00`). Never a naive `.isoformat()` — the zone must always be labelled.
+
 ## Don't
 
 - Don't edit `bootstrap/workflows/llm-wiki/` files unless the user explicitly wants to modify the framework. This is a release package — changes here will be overwritten on the next build from workflows-core.

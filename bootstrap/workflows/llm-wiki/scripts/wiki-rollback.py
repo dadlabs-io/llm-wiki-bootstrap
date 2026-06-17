@@ -61,7 +61,7 @@ from _wiki_config import default_vault as _default_vault  # noqa: E402
 
 
 def iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 def resolve_entry(topic_root: Path, slug_or_path: str) -> Path | None:
@@ -190,7 +190,7 @@ def mark_rolled_back(topic_root: Path, entry: Path, dry_run: bool) -> Path:
 def write_rollback_entry(topic_root: Path, verified_ancestor: Path, rolled_back_entries: list[Path],
                           reason: str, dry_run: bool) -> Path:
     """Write a new entry with type: rollback pointing at the verified ancestor."""
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now().strftime("%Y-%m-%d")
     short = uuid.uuid4().hex[:6]
     ancestor_slug = verified_ancestor.stem
     new_slug = f"rollback-to-{ancestor_slug}-{today}-{short}"

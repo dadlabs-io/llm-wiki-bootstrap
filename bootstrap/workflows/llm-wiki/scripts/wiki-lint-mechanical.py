@@ -294,7 +294,7 @@ def lint(vault_root, topic, strict=False):
     out = []
     out.append(f"# Wiki Lint Report — {topic}")
     out.append("")
-    out.append(f"**Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    out.append(f"**Generated**: {datetime.now().astimezone().isoformat(timespec='minutes')}")
     out.append(f"**Files scanned**: {len(files)}")
     out.append(f"**Broken links**: {len(broken_links)}")
     out.append(f"**Orphan pages**: {len(orphans)}")

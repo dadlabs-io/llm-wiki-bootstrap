@@ -59,7 +59,7 @@ LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+\.md)\)")
 
 
 def iso_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 def read_frontmatter_title(path: Path) -> str:

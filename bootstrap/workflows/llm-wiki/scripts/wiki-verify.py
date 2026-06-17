@@ -60,7 +60,7 @@ from _wiki_config import default_vault as _default_vault  # noqa: E402
 
 
 def iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 def resolve_entry(topic_root: Path, slug_or_path: str) -> Path | None:

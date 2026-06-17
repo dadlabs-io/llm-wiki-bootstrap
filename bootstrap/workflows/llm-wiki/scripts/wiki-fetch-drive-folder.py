@@ -114,7 +114,7 @@ def _write_activity_log(entry):
     Best-effort — never fails the script."""
     try:
         ACTIVITY_LOG.parent.mkdir(parents=True, exist_ok=True)
-        entry.setdefault("ts", datetime.now(timezone.utc).isoformat(timespec="seconds"))
+        entry.setdefault("ts", datetime.now().astimezone().isoformat(timespec="seconds"))
         with ACTIVITY_LOG.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     except OSError:
@@ -634,7 +634,7 @@ def main():
     )
     args = parser.parse_args()
 
-    started = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    started = datetime.now().astimezone().isoformat(timespec="seconds")
 
     # Pick the narrowest scope that covers what we'll do.
     # --auth-only always requests full scope so the cached token works for

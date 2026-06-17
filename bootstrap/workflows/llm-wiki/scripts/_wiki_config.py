@@ -34,9 +34,33 @@ Resolution order in every helper: registry (if ``notebook`` + ``registry`` prese
 → explicit ``vault_root`` → cwd. So existing v1/v2 configs keep working unchanged.
 """
 import json
+from datetime import datetime
 from pathlib import Path
 
 DEFAULT_TOPIC_FALLBACK = "llm-wiki"
+
+
+# ---------- Canonical date/time standard (single source) ----------
+# THE RULE for all llm-wiki tooling:
+#   * DATE LABELS (calendar day a human reads/organizes by — cycle ids, report
+#     folders, `date:`/`last_reviewed:`/`review_after:` frontmatter): use LOCAL
+#     date via today_label(). A cycle run at 8pm local files under the local day,
+#     never tomorrow's UTC day.
+#   * TIMESTAMPS (a precise instant for audit/ordering — `created`, `*_at`, run
+#     stamps): use now_stamp() — LOCAL time WITH an explicit UTC offset (tz-aware,
+#     ISO-8601). Never a naive timestamp; the zone is always labelled.
+# Do NOT use datetime.now(timezone.utc) for human date labels (off-by-one at night)
+# and never emit a naive .isoformat() (ambiguous zone). New code: import these.
+
+def today_label() -> str:
+    """Local calendar date, e.g. '2026-06-17'. For human-facing date labels."""
+    return datetime.now().strftime("%Y-%m-%d")
+
+
+def now_stamp(timespec: str = "seconds") -> str:
+    """Local timestamp WITH explicit offset, e.g. '2026-06-17T00:05:07-04:00'.
+    tz-aware (never naive) so the zone is always labelled. For audit/event fields."""
+    return datetime.now().astimezone().isoformat(timespec=timespec)
 
 # Canonical wiki folder taxonomy — the SINGLE source of truth for the structure a
 # new wiki gets. Both scaffolders (new-wiki.py phase B, wiki-init.py) import this

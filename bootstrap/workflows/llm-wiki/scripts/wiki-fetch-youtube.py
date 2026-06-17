@@ -184,7 +184,7 @@ def render_raw_markdown(td, ingested_by):
     """Build the verbatim raw transcript markdown file content."""
     duration_min = td["duration"] // 60 if td["duration"] else 0
     duration_str = f"{duration_min}m" if duration_min else "?"
-    fetched_at = datetime.now().isoformat(timespec="seconds")
+    fetched_at = datetime.now().astimezone().isoformat(timespec="seconds")
 
     fm = [
         "---",

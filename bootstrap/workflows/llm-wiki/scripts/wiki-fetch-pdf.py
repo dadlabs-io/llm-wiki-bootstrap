@@ -276,7 +276,7 @@ def fetch_pdf(vault_root, topic, source, ingested_by, ocr_mode, quality_threshol
             f"extraction_pypdf: {stats['pypdf']}",
             f"extraction_ocr: {stats['ocr']}",
             f"extraction_empty: {stats['empty']}",
-            f"fetched: {datetime.now().isoformat(timespec='seconds')}",
+            f"fetched: {datetime.now().astimezone().isoformat(timespec='seconds')}",
             f"ingested_by: {ingested_by}",
             "---",
             "",

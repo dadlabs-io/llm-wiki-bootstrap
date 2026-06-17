@@ -464,7 +464,7 @@ def main():
         "promoted": promoted,
         "rejected": rejected,
         "skipped": skipped,
-        "completed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "completed_at": datetime.now().astimezone().isoformat(timespec="seconds"),
     }, indent=2))
     return 0
 

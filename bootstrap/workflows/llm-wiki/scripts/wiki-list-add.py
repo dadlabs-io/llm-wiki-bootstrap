@@ -60,7 +60,7 @@ def _write_activity_log(entry):
     try:
         log_path = Path(ACTIVITY_LOG)
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        entry.setdefault("ts", datetime.now(timezone.utc).isoformat(timespec="seconds"))
+        entry.setdefault("ts", datetime.now().astimezone().isoformat(timespec="seconds"))
         with log_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     except OSError:
@@ -238,7 +238,7 @@ def add_to_queue(vault_root, topic, source, folder, title, tags, added_by, prior
     if tags:
         lines.append(f"tags: {', '.join(tags)}")
     lines.append(f"priority: {priority}")
-    lines.append(f"added_at: {datetime.now().isoformat(timespec='seconds')}")
+    lines.append(f"added_at: {datetime.now().astimezone().isoformat(timespec='seconds')}")
     lines.append(f"added_by: {added_by}")
     lines.append("---")
     lines.append("")
@@ -248,7 +248,7 @@ def add_to_queue(vault_root, topic, source, folder, title, tags, added_by, prior
     lines.append("")
     lines.append(f"**Source**: <{source}>")
     lines.append("")
-    lines.append(f"_Queued by `{added_by}` at {datetime.now().isoformat(timespec='seconds')}, priority {priority}._")
+    lines.append(f"_Queued by `{added_by}` at {datetime.now().astimezone().isoformat(timespec='seconds')}, priority {priority}._")
     lines.append("")
     lines.append("_Awaiting processing. Will be moved to `_inbox/done/` when ingested._")
 
