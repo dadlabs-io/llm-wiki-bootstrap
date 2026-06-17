@@ -35,7 +35,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY  # noqa: E402
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -215,14 +215,17 @@ def init_topic(vault_root, topic, description):
         print(f"ERROR: topic already exists at {topic_root}", file=sys.stderr)
         return 1
 
-    # Create vault root + top-level README if missing
+    # Create vault root + top-level README ONLY when we actually create the vault
+    # (a fresh standalone vault). In a shared multi-notebook hub (e.g. project-
+    # notebooks/notebooks/) the vault already exists and owns its own README — don't
+    # inject a vault README OUTSIDE the topic folder. (Fix P4.)
     if not vault_root.exists():
         vault_root.mkdir(parents=True, exist_ok=True)
         print(f"Created vault root: {vault_root}")
-    vault_readme = vault_root / "README.md"
-    if not vault_readme.exists():
-        atomic_write_text(vault_readme, VAULT_README_TEMPLATE)
-        print(f"Wrote vault README: {vault_readme}")
+        vault_readme = vault_root / "README.md"
+        if not vault_readme.exists():
+            atomic_write_text(vault_readme, VAULT_README_TEMPLATE)
+            print(f"Wrote vault README: {vault_readme}")
 
     # Locate topic-template (the rich scaffold)
     template_dir = find_topic_template()
@@ -238,6 +241,10 @@ def init_topic(vault_root, topic, description):
     ]
     for sub in subdirs:
         (topic_root / sub).mkdir(parents=True, exist_ok=True)
+    # Canonical wiki taxonomy — shared with new-wiki.py via _wiki_config so the two
+    # scaffolders produce the SAME structure (Fix P5/P7). project/* + research/* + sessions.
+    for sub in MERGED_TAXONOMY:
+        (topic_root / "wiki" / sub).mkdir(parents=True, exist_ok=True)
     print(f"Created topic structure: {topic_root}")
 
     if template_dir:

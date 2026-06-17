@@ -33,6 +33,7 @@ from pathlib import Path
 # Atomic-write helper (icarus §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
+from _wiki_config import MERGED_TAXONOMY  # noqa: E402 — single canonical taxonomy
 from urllib.parse import urlparse
 
 # Force UTF-8 on Windows so emoji / unicode in templates don't crash printing
@@ -143,17 +144,8 @@ TRAVEL_SCRIPTS = [
 # 2026-06-15 — every project now gets BOTH capabilities). Four-layer memory
 # model: research/ = ingested external content, project/ = our own decisions +
 # components, sessions/ = episodic logs. Matches the live agentic-design layout.
-MERGED_TAXONOMY = [
-    # research/ — semantic memory (external): what we ingested
-    "research/active", "research/long-term", "research/tooling",
-    "research/best-practices", "research/implementation", "research/skills",
-    "research/orchestration", "research/interesting-docs",
-    # project/ — semantic memory (internal): what we built
-    "project/components", "project/decisions", "project/architecture",
-    "project/patterns", "project/troubleshooting", "project/best-practices",
-    # sessions/ — episodic memory (per-persona logs created on demand)
-    "sessions",
-]
+# Canonical taxonomy now lives in _wiki_config (single source shared with wiki-init
+# so the two scaffolders can't drift). Imported below near the other helpers.
 
 
 # ---------- Helpers ----------
@@ -281,7 +273,8 @@ def _copy_tree(src: Path, dst: Path, names=None, dry_run=False):
     if not src.exists():
         _warn(f"source missing: {src}")
         return 0, 0
-    dst.mkdir(parents=True, exist_ok=True)
+    if not dry_run:                       # P6 — keep --dry-run fully dry (no dir creation)
+        dst.mkdir(parents=True, exist_ok=True)
 
     if names is None:
         names = [p.name for p in src.iterdir()]
@@ -721,7 +714,10 @@ def phase_b(args):
         # Allow if the only entries are the dirs we're about to populate
         unexpected = [p for p in target.iterdir() if p.name not in (".git", ".claude", ".cursor", "llm-wiki")]
         if unexpected:
-            _err(f"target folder {target} has unexpected entries (use --force to override): {[p.name for p in unexpected][:5]}")
+            _err(f"target folder {target} has unexpected entries: {[p.name for p in unexpected][:5]}")
+            _info("This looks like an existing project (migration / re-run). Re-run with --force — "
+                  "it is now NON-DESTRUCTIVE: existing CLAUDE.md / README.md / .gitignore are preserved, "
+                  "not overwritten (P2 fix).")
             return 1
 
     description = args.project_description or ""
@@ -872,12 +868,21 @@ def phase_b(args):
         "WIKI_PATH": wiki_path_str,
         "PROJECT_TYPE": project_type,
     }
-    _render_template(templates_src / "CLAUDE.md.tmpl",
-                     target / "CLAUDE.md", template_vars, args.dry_run)
+    # Non-destructive: never overwrite a CLAUDE.md / README.md / .gitignore that
+    # already exists in the target repo (migrating into an established project, or
+    # re-running to pick up framework updates). skip_if_exists preserves the user's
+    # hand-authored files. (Fix P2 — clobbering tracked files is too sharp.)
+    claude_existed = (target / "CLAUDE.md").exists()
+    wrote_claude = _render_template(templates_src / "CLAUDE.md.tmpl",
+                     target / "CLAUDE.md", template_vars, args.dry_run, skip_if_exists=True)
     _render_template(templates_src / "README.md.tmpl",
-                     target / "README.md", template_vars, args.dry_run)
+                     target / "README.md", template_vars, args.dry_run, skip_if_exists=True)
     _render_template(templates_src / ".gitignore.tmpl",
-                     target / ".gitignore", template_vars, args.dry_run)
+                     target / ".gitignore", template_vars, args.dry_run, skip_if_exists=True)
+    if claude_existed and not wrote_claude:
+        _info(f"NOTE: existing CLAUDE.md preserved. To wire the wiki, manually add an "
+              f"@-import of `{wiki_path_str}/_MAP.md` (and the memory/how-to pointers) "
+              f"into it — see templates/CLAUDE.md.tmpl for the canonical block.")
 
     # B7.5 — render llm-wiki/README.md from seed template
     seed_readme = seed_src / "llm-wiki-readme.md.tmpl"
@@ -1035,10 +1040,20 @@ def phase_b(args):
     return 0
 
 
-def _render_template(src: Path, dst: Path, vars: dict, dry_run: bool):
+def _render_template(src: Path, dst: Path, vars: dict, dry_run: bool, skip_if_exists: bool = False):
+    """Render a {{VAR}} template to dst. If skip_if_exists is True and dst already
+    exists, DON'T overwrite it (non-destructive — preserves a user's hand-authored
+    file when scaffolding into an existing repo, or re-running to pick up updates).
+    Returns True if it wrote (or would write), False if it skipped an existing file."""
     if not src.exists():
         _warn(f"template missing: {src}")
-        return
+        return False
+    if skip_if_exists and dst.exists():
+        if dry_run:
+            print(f"WOULD SKIP {dst} (already exists — not overwriting)")
+        else:
+            _warn(f"{dst.name} already exists — preserved (not overwritten)")
+        return False
     text = src.read_text(encoding="utf-8")
     for k, v in vars.items():
         text = text.replace(f"{{{{{k}}}}}", v)
@@ -1048,6 +1063,7 @@ def _render_template(src: Path, dst: Path, vars: dict, dry_run: bool):
         dst.parent.mkdir(parents=True, exist_ok=True)
         atomic_write_text(dst, text)
         _ok(f"wrote {dst}")
+    return True
 
 
 # ---------- Main ----------

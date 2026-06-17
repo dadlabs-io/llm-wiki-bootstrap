@@ -38,6 +38,21 @@ from pathlib import Path
 
 DEFAULT_TOPIC_FALLBACK = "llm-wiki"
 
+# Canonical wiki folder taxonomy — the SINGLE source of truth for the structure a
+# new wiki gets. Both scaffolders (new-wiki.py phase B, wiki-init.py) import this
+# so they can't drift apart. (Fix P5/P7 — there were two divergent taxonomies.)
+#   research/  — semantic memory (external): what we ingested
+#   project/   — semantic memory (internal): what we built
+#   sessions/  — episodic memory (per-persona logs, created on demand)
+MERGED_TAXONOMY = [
+    "research/active", "research/long-term", "research/tooling",
+    "research/best-practices", "research/implementation", "research/skills",
+    "research/orchestration", "research/interesting-docs",
+    "project/components", "project/decisions", "project/architecture",
+    "project/patterns", "project/troubleshooting", "project/best-practices",
+    "sessions",
+]
+
 
 def load_config(cwd=None):
     """Parsed wiki-config.json dict for the given cwd (default: real cwd), or {}."""
