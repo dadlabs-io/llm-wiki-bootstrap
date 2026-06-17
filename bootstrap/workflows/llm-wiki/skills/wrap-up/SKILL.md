@@ -39,7 +39,7 @@ This runs on **every** wrap-up, before anything else, so the "what we did" recor
 
 **Upsert logic**:
 1. Resolve today's `<YYYY-MM>` folder under `sessions/<persona>/`. Glob it and look for an entry whose frontmatter `session_id:` matches the current session. (If you created it earlier this conversation, you already know the path.)
-2. **If it exists** → append a new dated block under `## Updates` with what's happened *since the last wrap-up* (don't rewrite earlier blocks — append). Refresh the `**Next:**` line.
+2. **If it exists** → append a new dated block under `## Updates` with what's happened *since the last wrap-up* (don't rewrite earlier blocks — append). Refresh the `**Next:**` line, keeping it self-sufficient per the skeleton (exact files to read + steps).
 3. **If it doesn't** → create it with the frontmatter + skeleton below, seeding `**Goal:**` and the first update block.
 
 This entry goes **directly** to `wiki/sessions/` (NOT staged in `_inbox/proposed/`) — it's our own running log, not a curated artifact needing review.
@@ -62,7 +62,10 @@ tags: [<project-name>, session-journal, <persona>]
 # Session <YYYY-MM-DD> — <persona>
 
 **Goal:** <one line — what this session is trying to achieve; edit if it shifts>
-**Next:** <the single most important next action; refreshed every wrap-up>
+**Next:** <the single most important next action — MUST be self-sufficient for a COLD START (fresh,
+non-resume session): name the exact files to READ (full paths) AND the concrete STEPS. Never just
+"build X" — always "read A, B, C → then do 1, 2, 3" so the next session continues with ZERO
+inference. Refreshed every wrap-up.>
 
 ## Updates
 
