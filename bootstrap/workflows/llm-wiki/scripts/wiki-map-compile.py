@@ -329,13 +329,16 @@ def process(wiki_root: Path, topic: str, dry_run: bool = False) -> dict:
         if entries:
             folder_data[child.name] = entries
         elif child.name in CONTAINER_FOLDERS:
-            # Container folder: enumerate its subfolders as the actual category folders
-            for subfolder in sorted(child.iterdir()):
-                if not subfolder.is_dir() or subfolder.name.startswith(("_", ".")):
+            # Container folder: enumerate ALL descendant category folders at ANY depth,
+            # keyed by path relative to wiki_root. Recurses so deeply-nested clusters
+            # (e.g. project/components/hints/techniques/) still appear in the map.
+            for subfolder in sorted(d for d in child.rglob("*") if d.is_dir()):
+                rel = subfolder.relative_to(wiki_root)
+                if any(part.startswith(("_", ".")) for part in rel.parts):
                     continue
                 sub_entries = collect_folder_entries(subfolder)
                 if sub_entries:
-                    folder_data[f"{child.name}/{subfolder.name}"] = sub_entries
+                    folder_data[rel.as_posix()] = sub_entries
     root_entries = collect_root_entries(wiki_root)
 
     new_content = render_map(wiki_root, topic, folder_data, root_entries)
