@@ -123,13 +123,21 @@ def _add_backlink(target_file: Path, link_text: str, link_target: str) -> bool:
 
 def _regenerate_indexes(scripts_dir: Path, topic: str, vault: Path, dry_run: bool):
     """Run wiki-index-per-folder.py + wiki-map-compile.py to refresh the
-    index and map after a promotion. Best-effort — warns on failure."""
+    index and map after a promotion. Best-effort — warns on failure.
+
+    `vault` here is the topic's wiki dir (<topic_root>/wiki). The index/map
+    scripts resolve their wiki root as <vault>/<topic>, so they need the
+    VAULT-OF-TOPIC-ROOTS (the notebooks/ dir that CONTAINS the topic folder),
+    not the wiki dir itself. Passing the wiki dir double-nests it to
+    <topic>/wiki/<topic>/wiki and fails ('wiki root not found')."""
+    topic_root = vault.parent if vault.name == "wiki" else vault
+    roots_vault = topic_root.parent
     for script_name in ("wiki-index-per-folder.py", "wiki-map-compile.py"):
         script = scripts_dir / script_name
         if not script.exists():
             _warn(f"{script_name} not found at {script}; skipping regen")
             continue
-        cmd = [sys.executable, str(script), "--topic", topic, "--vault", str(vault)]
+        cmd = [sys.executable, str(script), "--topic", topic, "--vault", str(roots_vault)]
         if dry_run:
             print(f"  WOULD run: {' '.join(cmd)}")
             continue
