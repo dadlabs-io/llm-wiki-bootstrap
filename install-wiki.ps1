@@ -3,13 +3,13 @@ install-wiki.ps1 -- install the LLM-wiki framework.
 
 Interactive flow:
   Q1: install target?  [1] global tooling (default)  |  [2] a specific project
-  Q2: tool?            [1] claude-code (default)      |  [2] cursor (not yet supported -> exits)
+  Q2: tool?            [1] claude-code (default)      |  [2] cursor
 
 Two modes:
   1. Global tooling-only (DEFAULT):
      Installs ALL wiki skills into ~/.claude/skills/ and all wiki scripts into
      ~/.claude/wiki-scripts/. No project/content scaffold. Idempotent.
-     -> new-wiki.py --mode tooling --tool claude-code
+     -> new-wiki.py --mode tooling --tool <claude-code|cursor>
   2. A specific project (-TargetFolder, or pick [2]):
      Records this package as the global bootstrap source (Phase A), then
      scaffolds the project at -TargetFolder (skills + scripts + llm-wiki/ +
@@ -36,7 +36,7 @@ After install:
 Flags:
   -Mode              : tooling (default) | project
   -TargetFolder      : project root to create/populate (implies -Mode project)
-  -Tool              : claude-code (default) | cursor (cursor exits 0 -- not yet supported)
+  -Tool              : claude-code (default) | cursor
   -ProjectName       : project slug (defaults to target-folder leaf name)
   -ProjectDescription: one-liner (asked if not set, interactive only)
   -ProjectType       : research | development -- DEPRECATED prompt removed; still
@@ -146,21 +146,21 @@ if (-not $nonInteractive -and -not $PSBoundParameters.ContainsKey("Tool")) {
     else { $Tool = "claude-code" }
 }
 
-if ($Tool -eq "cursor") {
-    Write-Host "Cursor not supported yet -- exiting." -ForegroundColor Yellow
-    exit 0
-}
-
 # ---------- Mode: global tooling-only ----------
 if ($Mode -eq "tooling") {
     Write-Host ""
-    Write-Host "Installing LLM-wiki global tooling (skills + scripts)..." -ForegroundColor Cyan
+    if ($Tool -eq "cursor") {
+        Write-Host "Installing LLM-wiki global Cursor tooling (rules + scripts)..." -ForegroundColor Cyan
+    } else {
+        Write-Host "Installing LLM-wiki global tooling (skills + scripts)..." -ForegroundColor Cyan
+    }
     Write-Host "  Bootstrap source: $Bootstrap"
+    Write-Host "  Tool:             $Tool"
     Write-Host ""
 
     & $py.Source $Script `
         --mode tooling `
-        --tool claude-code `
+        --tool $Tool `
         --bootstrap-source $Bootstrap
     exit $LASTEXITCODE
 }
@@ -191,6 +191,7 @@ Write-Host ""
 
 & $py.Source $Script `
     --phase A `
+    --tool $Tool `
     --bootstrap-source $Bootstrap `
     --drive-enabled $DriveEnabled `
     --drive-parent-folder $DriveParentFolder

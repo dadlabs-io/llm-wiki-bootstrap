@@ -338,6 +338,93 @@ def _derive_bootstrap_source(args):
     return None
 
 
+# ---------- Cursor global paths ----------
+CURSOR_GLOBAL_DIR = Path.home() / ".cursor"
+CURSOR_GLOBAL_RULES_DIR = CURSOR_GLOBAL_DIR / "rules"
+CURSOR_GLOBAL_SCRIPTS_DIR = CURSOR_GLOBAL_DIR / "wiki-scripts"
+
+
+def _phase_tooling_cursor(args):
+    """Global Cursor tooling install: generate .mdc rules → ~/.cursor/rules/,
+    copy scripts → ~/.cursor/wiki-scripts/. No project scaffold. Idempotent."""
+    bootstrap = _derive_bootstrap_source(args)
+    if not bootstrap:
+        _err("could not find bootstrap source. Pass --bootstrap-source <path>.")
+        return 1
+
+    pkg = bootstrap / "bootstrap" / "workflows" / "llm-wiki"
+    scripts_src = pkg / "scripts"
+    skills_src = pkg / "skills"
+    if not scripts_src.is_dir() or not skills_src.is_dir():
+        _err(f"package scripts/ or skills/ missing under {pkg}")
+        return 1
+
+    rules_dir = CURSOR_GLOBAL_RULES_DIR
+    scripts_dest = CURSOR_GLOBAL_SCRIPTS_DIR
+    dry = args.dry_run
+
+    _info(f"bootstrap source: {bootstrap}")
+    _info(f"mode: tooling (global, cursor)")
+    _info(f"rules   → {rules_dir}")
+    _info(f"scripts → {scripts_dest}")
+    print()
+
+    # 1) Copy scripts (TRAVEL_SCRIPTS + helpers) → ~/.cursor/wiki-scripts/
+    if not dry:
+        scripts_dest.mkdir(parents=True, exist_ok=True)
+    script_names = list(TRAVEL_SCRIPTS)
+    for helper in TOOLING_HELPER_SCRIPTS:
+        if (scripts_src / helper).is_file():
+            script_names.append(helper)
+    travel_copied = 0
+    helpers_copied = 0
+    scripts_missing = []
+    for name in script_names:
+        s = scripts_src / name
+        if not s.is_file():
+            scripts_missing.append(name)
+            continue
+        d = scripts_dest / name
+        if dry:
+            print(f"  WOULD copy {s} -> {d}")
+        else:
+            shutil.copy2(s, d)
+        if name in TOOLING_HELPER_SCRIPTS:
+            helpers_copied += 1
+        else:
+            travel_copied += 1
+    if scripts_missing:
+        _warn(f"scripts not found in package (skipped): {scripts_missing}")
+
+    print()
+
+    # 2) Generate .mdc rules from each travel skill → ~/.cursor/rules/
+    if not dry:
+        rules_dir.mkdir(parents=True, exist_ok=True)
+    n = 0
+    for skill_name in TRAVEL_SKILLS:
+        skill_md = skills_src / skill_name / "SKILL.md"
+        mdc_path = rules_dir / f"{skill_name}.mdc"
+        if _skill_to_mdc(skill_md, mdc_path, dry_run=dry):
+            n += 1
+    if n == 0 and not dry:
+        _warn("no SKILL.md files found to convert — check TRAVEL_SKILLS paths")
+
+    print()
+    print("=" * 60)
+    print("Global tooling-only install summary (cursor)")
+    print("=" * 60)
+    verb = "would be copied" if dry else "copied"
+    print(f"  scripts {verb}:  {travel_copied}  (+ {helpers_copied} helpers)  → {scripts_dest}")
+    verb_r = "would be generated" if dry else "generated"
+    print(f"  rules {verb_r}: {n} .mdc files  → {rules_dir}")
+    print()
+    print("  Restart Cursor or reload the window for rules to register.")
+    print("  Skills invoke via '/skill-name' in Cursor Agent chat.")
+    print("=" * 60)
+    return 0
+
+
 # ---------- Mode: tooling (global tooling-only install) ----------
 # A GLOBAL Claude Code install with NO project/content scaffold. Installs the
 # full skill + script toolkit into ~/.claude/ so every project on the machine
@@ -363,14 +450,18 @@ SHARED_HELPER_SCRIPTS = ["_atomic_io.py", "_wiki_config.py"]
 
 
 def phase_tooling(args):
-    """Global tooling-only install: skills → ~/.claude/skills/, scripts →
-    ~/.claude/wiki-scripts/. No project scaffold. Idempotent."""
-    if args.tool == "cursor":
-        print("Cursor not supported yet.")
-        return 0
-    if args.tool != "claude-code":
+    """Global tooling-only install.
+
+    claude-code: skills → ~/.claude/skills/, scripts → ~/.claude/wiki-scripts/
+    cursor:      rules  → ~/.cursor/rules/,  scripts → ~/.cursor/wiki-scripts/
+    No project scaffold in either case. Idempotent.
+    """
+    if args.tool not in ("claude-code", "cursor"):
         _err(f"--tool must be 'claude-code' or 'cursor', got {args.tool!r}")
         return 1
+
+    if args.tool == "cursor":
+        return _phase_tooling_cursor(args)
 
     bootstrap = _derive_bootstrap_source(args)
     if not bootstrap:
@@ -521,9 +612,24 @@ def phase_a(args):
         _err(f"new-wiki skill missing in bootstrap source: {new_project_skill_src}")
         return 1
 
-    _info(f"installing /new-wiki skill: {new_project_skill_src} -> {new_project_skill_dst}")
-    c, s = _copy_tree(new_project_skill_src, new_project_skill_dst, dry_run=args.dry_run)
-    _ok(f"/new-wiki skill: {c} files copied, {s} unchanged")
+    if args.tool == "cursor":
+        # Cursor: install /new-wiki as a global .mdc rule → ~/.cursor/rules/new-wiki.mdc
+        # so the user can invoke /new-wiki from Cursor Agent chat in any new project.
+        new_wiki_mdc_dst = CURSOR_GLOBAL_RULES_DIR / "new-wiki.mdc"
+        _info(f"installing /new-wiki rule: {new_project_skill_src / 'SKILL.md'} -> {new_wiki_mdc_dst}")
+        if not args.dry_run:
+            CURSOR_GLOBAL_RULES_DIR.mkdir(parents=True, exist_ok=True)
+        ok = _skill_to_mdc(new_project_skill_src / "SKILL.md", new_wiki_mdc_dst,
+                           dry_run=args.dry_run)
+        if ok:
+            _ok(f"/new-wiki rule: {new_wiki_mdc_dst}")
+        else:
+            _warn(f"could not generate /new-wiki.mdc (SKILL.md missing?)")
+    else:
+        # Claude Code: install /new-wiki skill folder → ~/.claude/skills/new-wiki/
+        _info(f"installing /new-wiki skill: {new_project_skill_src} -> {new_project_skill_dst}")
+        c, s = _copy_tree(new_project_skill_src, new_project_skill_dst, dry_run=args.dry_run)
+        _ok(f"/new-wiki skill: {c} files copied, {s} unchanged")
 
     # Persist bootstrap source path so the skill can find it next time
     cfg = _load_config(CC_GLOBAL_CONFIG_PATH) or {}
@@ -549,8 +655,12 @@ def phase_a(args):
     print()
     print("Next steps:")
     print("  1. cd <your-project-folder>")
-    print("  2. Start Claude Code (or Cursor) in that folder")
-    print("  3. Run /new-wiki to scaffold per-project structure")
+    if args.tool == "cursor":
+        print("  2. Open the folder in Cursor")
+        print("  3. Open Agent chat and run /new-wiki to scaffold per-project structure")
+    else:
+        print("  2. Start Claude Code: `claude`")
+        print("  3. Run /new-wiki to scaffold per-project structure")
     return 0
 
 
