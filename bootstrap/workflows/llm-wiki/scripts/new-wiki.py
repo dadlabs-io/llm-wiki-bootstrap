@@ -1034,6 +1034,9 @@ def phase_b(args):
             "registry": registry_path.as_posix(),
             "project_description": description,
             "skills_install": skills_install,
+            # Review gate for /wrap-up: ask (prompt) | true (auto-promote) | false (stay staged).
+            # Changeable anytime by editing this key or asking the agent.
+            "wrap_up_auto_promote": args.wrap_up_auto_promote,
             "scripts_installed_at": str(paths["scripts"]) if bundle
                                     else str(CC_GLOBAL_DIR / "wiki-scripts"),
             "skills_installed_at": str(paths["skills"]) if bundle
@@ -1068,6 +1071,8 @@ def phase_b(args):
         "wiki_topic": name if external_vault else "llm-wiki",
         # skills_install: 'global' (shared ~/.claude) or 'bundled' (per-project copy).
         "skills_install": skills_install,
+        # Review gate for /wrap-up: ask (prompt) | true (auto-promote) | false (stay staged).
+        "wrap_up_auto_promote": args.wrap_up_auto_promote,
         "scripts_installed_at": str(paths["scripts"]) if bundle
                                 else str(CC_GLOBAL_DIR / "wiki-scripts"),
         "wiki_path": str(paths["llm_wiki_wiki"]),
@@ -1197,6 +1202,10 @@ def main():
                              "split removed; every project gets the merged taxonomy)")
     parser.add_argument("--target-folder",
                         help="Project root folder (required for --phase B)")
+    parser.add_argument("--wrap-up-auto-promote", choices=["ask", "true", "false"], default="ask",
+                        help="Review gate for /wrap-up's staged entries: 'ask' (prompt each time — "
+                             "manual review, default), 'true' (auto-promote, no prompt), 'false' "
+                             "(stay staged, promote later). Written to wiki-config.json; changeable anytime.")
     parser.add_argument("--skills-install", choices=["global", "bundled"], default="global",
                         help="global (default) = use shared ~/.claude/skills + wiki-scripts, "
                              "no per-project copy; bundled = copy skills+scripts into the project "

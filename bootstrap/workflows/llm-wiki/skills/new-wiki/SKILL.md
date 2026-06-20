@@ -45,6 +45,7 @@ Q4: target folder? (default C:\github.com\<name>)
 Q5: skills install? (global [default] | bundled)  — see below
 Q6: wiki content location? (separate vault [default] | inside project)  — see below
 Q7: Drive ingest? (yes/no) — if yes: parent folder name (default __FOR CLAUDE)
+Q8: Review gate? manually review before publishing (yes [default] / no auto-publish) — sets wrap_up_auto_promote; changeable anytime
    ↓
 Phase B — Per-project scaffold (Phase A already done by install-wiki.ps1)
    B1.  mkdir <target> + git init
@@ -135,6 +136,17 @@ Parent folder name in your Drive? (default: __FOR CLAUDE)
 The script will look for: <parent>/<project-slug>/  (so this project: __FOR CLAUDE/<slug>/)
 ```
 
+**Q9 — Review gate** (how new wiki entries get published)
+```
+Do you want to manually review items before they're published to the wiki?
+  1. yes — show me staged entries and let me approve before they go live  [default]
+  2. no  — auto-publish; just promote them for me
+
+(You can change this anytime — just ask, or edit `wrap_up_auto_promote` in .claude/wiki-config.json.)
+Pick (1 or 2):
+```
+→ 1 maps to `--wrap-up-auto-promote ask` (the default — `/wrap-up` will prompt you before promoting). 2 maps to `--wrap-up-auto-promote true` (auto-promote, no prompt). (A third value, `false` = stay staged and never prompt, isn't offered here but is settable later.) This governs `/wrap-up`'s Step 6 promote offer.
+
 Show the proposed plan and wait for "yes" / "go" / "create" before proceeding.
 
 ### Step 1 — Run Phase B
@@ -155,6 +167,7 @@ python "<bootstrap_source>/bootstrap/workflows/llm-wiki/scripts/new-wiki.py" \
   --project-description "<desc>" \
   --target-folder <path> \
   --skills-install <global|bundled> \
+  --wrap-up-auto-promote <ask|true|false>   `# Q9 review gate; defaults to ask` \
   --vault-root <root>   `# omit entirely for an in-project wiki` \
   --drive-enabled <yes|no> \
   --drive-subfolder <slug>
