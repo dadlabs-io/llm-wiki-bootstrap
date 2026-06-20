@@ -1,6 +1,6 @@
 ---
 name: wrap-up
-description: Crystallize the current session's work into the project wiki. ALWAYS updates a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ (upserted every wrap-up so the "what we did" record builds as you go), AND extracts durable knowledge — components built, decisions made, patterns established, bugs investigated — staged to _inbox/proposed/ for review then promoted to wiki/project/<category>/. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says "wrap up", "wrap-up", "/wrap-up", "wrap this session", "document what we did", "crystallize this session", "save this work".
+description: Crystallize the current session's work into the project wiki. ALWAYS updates a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ (upserted every wrap-up so the "what we did" record builds as you go), AND extracts durable knowledge — components built, decisions made, patterns established, bugs investigated — staged to _inbox/proposed/ for review then promoted to wiki/project/<category>/. After staging it OFFERS to promote inline (yes/no/pick), configurable per-notebook via `wrap_up_auto_promote`. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says "wrap up", "wrap-up", "/wrap-up", "wrap this session", "document what we did", "crystallize this session", "save this work".
 ---
 
 # /wrap-up
@@ -181,8 +181,61 @@ Wrapped up:
   - patterns/url-dedup-at-producer-2026-05-12.md
 
 Raw snapshot: raw/sessions/2026-05-12-drive-cleanup-session.md
-Next: run /wiki-promote --review to approve & promote the project entries.
 ```
+
+Then go straight to Step 6 — don't end on "run /wiki-promote later"; offer to promote now.
+
+### Step 6 — Offer to promote (inline)
+
+Staging isn't the finish line — an entry in `_inbox/proposed/` does nothing until it's promoted into `wiki/`. The old two-step (`/wrap-up` then separately `/wiki-promote`) was easy to forget. So offer promotion right here.
+
+**Mode** is read per-notebook from `wrap_up_auto_promote` in `<cwd>/.claude/wiki-config.json` (default `ask` when the key is absent):
+
+| `wrap_up_auto_promote` | Behaviour |
+|---|---|
+| `ask` (default / unset) | Show the prompt below and wait for the user. |
+| `true` | Promote ALL staged entries inline automatically — no prompt. Report what moved. |
+| `false` | Skip — leave entries staged, print the manual `/wiki-promote` pointer, done. |
+
+**Skip Step 6 entirely if nothing was staged** (e.g. journal-only wrap-up).
+
+**The prompt (`ask` mode):**
+
+```
+4 entries staged to _inbox/proposed/. Promote them now?
+  1. reading-list-includes-mechanism-2026-06-20.md      → project/architecture/
+  2. agents-library-pre-submodule-staging-2026-06-20.md → project/architecture/
+  3. agent-to-mdc-py-component-2026-06-20.md            → project/components/
+  4. msys2-spurious-root-file-2026-06-20.md             → project/troubleshooting/
+
+Promote all now?  (yes / no / pick numbers e.g. "1 3")
+```
+
+- **yes / all** → promote every staged entry.
+- **no** → leave them staged; print `Run /wiki-promote --review when you're ready.` Done.
+- **pick numbers** (`1 3`) → promote only those; leave the rest in `_inbox/proposed/`.
+
+**Promote mechanism — reuse the promote script, don't reimplement** move/sidecar/backlink logic:
+
+- All: `python <wiki-scripts>/wiki-promote.py --auto`
+- Subset: one call per pick — `python <wiki-scripts>/wiki-promote.py --slug <slug> --auto`
+
+(`<wiki-scripts>` = `~/.claude/wiki-scripts` for global installs, or `<project>/.claude/wiki-scripts` if bundled. Read the path from `scripts_installed_at` in wiki-config.json, else default to `~/.claude/wiki-scripts`.) This moves each entry to its `target_folder`, wires backlinks, and regenerates `_INDEX.md` + `_MAP.md`.
+
+**Then commit** the promoted result — **scope the add to the notebook path** so unrelated in-flight work isn't swept in (a `git add -A` here will bundle another session's uncommitted files):
+
+```bash
+git -C <notebook-repo> add <notebook-root>/        # NOT add -A
+git -C <notebook-repo> commit -m "wiki(<notebook>): wrap-up <YYYY-MM-DD> — promote N session entries"
+```
+
+If the notebook repo has unrelated uncommitted changes, add only the wrapped/promoted paths. Don't push (that's the user's call).
+
+**Offer to remember (`ask` mode only):** after a clean all-`yes` or all-`no`, offer ONCE:
+
+> Make this the default for **<notebook>**? I can set `wrap_up_auto_promote: <true|false>` in `.claude/wiki-config.json` so future wrap-ups skip this prompt.
+
+Only write the key if they say yes. Never set it silently.
 
 ## Slug naming
 
@@ -218,7 +271,7 @@ Never silently file empty / thin entries. Better to say "nothing here merits a w
 
 - Don't auto-file without the user's explicit confirmation of the proposal table.
 - Don't write the conversation transcript into the wiki — distill, don't dump.
-- Don't promote directly to `wiki/` — always stage in `_inbox/proposed/` and let the user promote via `/wiki-promote`.
+- Don't SKIP staging — entries always land in `_inbox/proposed/` first (Step 3). Promotion happens only in Step 6, gated by the user's answer (`ask` mode) or an explicit `wrap_up_auto_promote: true` they configured. Never silently promote when the mode is `ask`.
 - Don't run `/wrap-up` on the agentic-design topic — that's research; use `/wiki-update` instead.
 - Don't write to `~/.claude/projects/*/memory/MEMORY.md` (that's auto-memory's job, different layer). `/wrap-up` writes to the project wiki.
 
