@@ -183,9 +183,15 @@ def _save_config(cfg, config_path: Path = CC_GLOBAL_CONFIG_PATH):
     _ok(f"wrote {config_path}")
 
 
-def _upsert_registry(registry_path: Path, name: str, root_value: str):
+def _upsert_registry(registry_path: Path, name: str, root_value: str, options: dict = None):
     """Add/update one notebook in the shared linked-notebooks.json registry.
-    Preserves any existing entries + _comment. Creates the file if absent."""
+    Preserves any existing entries + _comment. Creates the file if absent.
+
+    If ``options`` is given, the entry is written as an object
+    ``{"root": <root_value>, **options}`` so per-notebook settings (e.g.
+    wrap_up_auto_promote) live in the registry — the single source of truth that
+    travels with the notebook. Without options it stays a flat string (back-compat).
+    An existing object entry is merged (root + options updated, other keys kept)."""
     data = {}
     if registry_path.exists():
         try:
@@ -193,12 +199,20 @@ def _upsert_registry(registry_path: Path, name: str, root_value: str):
         except (json.JSONDecodeError, OSError):
             data = {}
     if "_comment" not in data:
-        data["_comment"] = ("Single registry of every notebook and its root, used to "
-                            "resolve ANY cross-notebook link. name -> root (relative paths "
-                            "resolve from this file's folder; absolute point outside). "
-                            "Standard layout under each root: wiki/, _inbox/, raw/.")
+        data["_comment"] = ("Single registry of every notebook and its root + per-notebook "
+                            "settings, used to resolve ANY cross-notebook link. Entry is either "
+                            "a flat \"root\" string OR an object {\"root\": <path>, <settings...>} "
+                            "(e.g. wrap_up_auto_promote). Relative roots resolve from this file's "
+                            "folder; absolute point outside. Standard layout: wiki/, _inbox/, raw/.")
     nbs = data.setdefault("notebooks", {})
-    nbs[name] = root_value
+    if options:
+        existing = nbs.get(name)
+        merged = dict(existing) if isinstance(existing, dict) else {}
+        merged["root"] = root_value
+        merged.update(options)
+        nbs[name] = merged
+    else:
+        nbs[name] = root_value
     registry_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_text(registry_path, json.dumps(data, indent=2))
 
@@ -1022,11 +1036,14 @@ def phase_b(args):
             entry = nb_root.relative_to(registry_path.parent).as_posix()
         except ValueError:
             entry = nb_root.as_posix()
+        nb_options = {"wrap_up_auto_promote": args.wrap_up_auto_promote}
         if args.dry_run:
-            print(f"WOULD register notebook '{name}' -> {entry} in {registry_path}")
+            print(f"WOULD register notebook '{name}' -> {{root: {entry}, "
+                  f"wrap_up_auto_promote: {args.wrap_up_auto_promote}}} in {registry_path}")
         else:
-            _upsert_registry(registry_path, name, entry)
-            _ok(f"registered '{name}' -> {entry} in {registry_path.name}")
+            _upsert_registry(registry_path, name, entry, options=nb_options)
+            _ok(f"registered '{name}' -> {entry} (wrap_up_auto_promote={args.wrap_up_auto_promote}) "
+                f"in {registry_path.name}")
         project_cfg = {
             "tool": args.tool,
             "project_name": name,
@@ -1034,9 +1051,8 @@ def phase_b(args):
             "registry": registry_path.as_posix(),
             "project_description": description,
             "skills_install": skills_install,
-            # Review gate for /wrap-up: ask (prompt) | true (auto-promote) | false (stay staged).
-            # Changeable anytime by editing this key or asking the agent.
-            "wrap_up_auto_promote": args.wrap_up_auto_promote,
+            # NOTE: wrap_up_auto_promote lives in the REGISTRY entry (per-notebook,
+            # travels with the notebook), not here — see _upsert_registry above.
             "scripts_installed_at": str(paths["scripts"]) if bundle
                                     else str(CC_GLOBAL_DIR / "wiki-scripts"),
             "skills_installed_at": str(paths["skills"]) if bundle

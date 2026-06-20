@@ -142,10 +142,10 @@ Do you want to manually review items before they're published to the wiki?
   1. yes — show me staged entries and let me approve before they go live  [default]
   2. no  — auto-publish; just promote them for me
 
-(You can change this anytime — just ask, or edit `wrap_up_auto_promote` in .claude/wiki-config.json.)
+(You can change this anytime — just ask, or edit the notebook's entry in linked-notebooks.json.)
 Pick (1 or 2):
 ```
-→ 1 maps to `--wrap-up-auto-promote ask` (the default — `/wrap-up` will prompt you before promoting). 2 maps to `--wrap-up-auto-promote true` (auto-promote, no prompt). (A third value, `false` = stay staged and never prompt, isn't offered here but is settable later.) This governs `/wrap-up`'s Step 6 promote offer.
+→ 1 maps to `--wrap-up-auto-promote ask` (the default — `/wrap-up` will prompt you before promoting). 2 maps to `--wrap-up-auto-promote true` (auto-promote, no prompt). (A third value, `false` = stay staged and never prompt, isn't offered here but is settable later.) This governs `/wrap-up`'s Step 6 promote offer. For registry notebooks the value is stored in the **registry entry** (`linked-notebooks.json`) — the per-notebook home that travels with the notebook; for legacy in-project wikis it goes in `.claude/wiki-config.json`.
 
 Show the proposed plan and wait for "yes" / "go" / "create" before proceeding.
 

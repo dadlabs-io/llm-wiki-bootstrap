@@ -189,7 +189,12 @@ Then go straight to Step 6 — don't end on "run /wiki-promote later"; offer to 
 
 Staging isn't the finish line — an entry in `_inbox/proposed/` does nothing until it's promoted into `wiki/`. The old two-step (`/wrap-up` then separately `/wiki-promote`) was easy to forget. So offer promotion right here.
 
-**Mode** is read per-notebook from `wrap_up_auto_promote` in `<cwd>/.claude/wiki-config.json` (default `ask` when the key is absent):
+**Mode** is `wrap_up_auto_promote`, a per-notebook setting. Resolve it in this order:
+1. **Registry (canonical home)** — read `<cwd>/.claude/wiki-config.json` for `notebook` + `registry`, open the registry (`linked-notebooks.json`), find the notebook's entry; if it's an object with `wrap_up_auto_promote`, use that. (This is where `/new-wiki` writes it, so it travels with the notebook.)
+2. **Project config fallback** — for a legacy in-project wiki with no registry, read `wrap_up_auto_promote` from `<cwd>/.claude/wiki-config.json` directly.
+3. **Default** — `ask` if neither is set.
+
+To CHANGE it: edit the notebook's entry in `linked-notebooks.json` (registry notebooks) or the project's `wiki-config.json` (in-project), or just ask the agent.
 
 | `wrap_up_auto_promote` | Behaviour |
 |---|---|
