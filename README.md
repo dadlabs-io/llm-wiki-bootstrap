@@ -1,122 +1,131 @@
 # llm-wiki-bootstrap
 
-Install the LLM-wiki framework on a fresh machine. Ships /new-wiki, /wrap-up, /wiki-cycle, /wiki-search, /wiki-update, and the supporting scripts + templates + seed content. After install, you scaffold per-project with `/new-wiki` inside any project folder.
+Install the LLM-wiki framework on a fresh machine. Ships `/new-wiki`, `/wrap-up`,
+`/wiki-cycle`, `/wiki-search`, `/wiki-update`, and the supporting scripts + templates
++ seed content.
+
+**Install this first** — other tools (e.g. [agent-builder-bootstrap](https://github.com/dadlabs-io/agent-builder-bootstrap))
+depend on the wiki skills this puts in place.
 
 **Version:** `2026-05-14`
-**Source repo:** [dadlabs-io/workflows-core](https://github.com/dadlabs-io/workflows-core) (this package is generated from `bootstrap/workflows/llm-wiki/`)
+**Source repo:** [dadlabs-io/workflows-core](https://github.com/dadlabs-io/workflows-core)
 
-## Install model
-
-- **One-time per machine**: `install-wiki.ps1` (or `.sh`) puts the `/new-wiki` creator skill in `~/.claude/skills/` and records this package's path as `bootstrap_source` in `~/.claude/wiki-config.json`.
-- **Per-project, conversational**: `/new-wiki` inside any project folder asks tool (claude-code/cursor), type (research/development), Drive prefs, etc., then scaffolds:
-  - `<project>/.claude/skills/` (all 13 skills, per-project)
-  - `<project>/.claude/wiki-scripts/`, `wiki-templates/`
-  - `<project>/llm-wiki/{README, how-to/, best-practices/, wiki/}/`
-  - `<project>/CLAUDE.md`, `README.md`, `.gitignore`
-
-This means: skills + scripts live PER PROJECT (not globally). Updates to one project don't affect others.
-
-## Quick start — one command
+## Quick start — global install (recommended first step)
 
 ```powershell
-git clone https://github.com/dadlabs-io/llm-wiki-bootstrap.git ~/llm-wiki-bootstrap
-cd ~/llm-wiki-bootstrap
-
-# Install + scaffold a new project in one shot (interactive prompts):
-.\install-wiki.ps1 -TargetFolder C:\github.com\my-new-project
+# Windows
+git clone https://github.com/dadlabs-io/llm-wiki-bootstrap.git C:\github.com\llm-wiki-bootstrap
+cd C:\github.com\llm-wiki-bootstrap
+.\install-wiki.ps1
 ```
 
-Mac / Linux:
 ```bash
+# Mac / Linux
 git clone https://github.com/dadlabs-io/llm-wiki-bootstrap.git ~/llm-wiki-bootstrap
 cd ~/llm-wiki-bootstrap
-./install-wiki.sh --target-folder ~/proj/my-new-project
+./install-wiki.sh
 ```
 
-Requires: Python 3.10+, Git, Node.js (only if you'll use development projects with agentmemory).
+No flags needed. This puts all wiki skills into `~/.claude/skills/` and records
+this package's path in `~/.claude/wiki-config.json`.
 
-After install, restart Claude Code so it picks up the new skills, then `cd <target-folder>` and start coding.
+Restart Claude Code after install so it picks up the new skills.
 
-## Modes
+**Requires:** Python 3.10+, Git.
 
-### A. Global-only install (defer project scaffold to later)
+## What you get globally
 
-```powershell
-.\install-wiki.ps1                              # just installs /new-wiki globally
-```
+After install, these slash-commands are available in **every** Claude Code project:
 
-Then later, in any project folder:
-```
-claude
-> /new-wiki
-```
+| Skill | When to use |
+|---|---|
+| `/new-wiki` | One-time per project: scaffold a wiki + CLAUDE.md + .gitignore |
+| `/wrap-up` | End of every dev session: write journal, capture next steps |
+| `/wiki-update` | File a durable decision or finding to the wiki |
+| `/wiki-search` | Search wiki entries before starting work |
+| `/wiki-cycle` | Research projects: search → read → capture loop |
 
-The conversational `/new-wiki` asks the same questions and scaffolds.
+## Set up a project wiki
 
-### B. One-shot install + scaffold (the quick start above)
-
-```powershell
-.\install-wiki.ps1 -TargetFolder <path>             # interactive prompts
-.\install-wiki.ps1 -TargetFolder <path> `
-    -ProjectType development -ProjectName myproj `
-    -ProjectDescription "..." -DriveEnabled yes    # fully scripted, no prompts
-```
-
-`install-wiki.sh` accepts equivalent `--target-folder`, `--project-type`, `--project-name`, `--project-description`, `--drive-enabled`, `--drive-parent-folder`, `--tool` flags.
-
-### C. Existing install — refresh skills from current bootstrap
-
-```powershell
-.\install-wiki.ps1 -RefreshOnly                # idempotent re-copy
-```
-
-Or from inside Claude Code: `/new-wiki --sync` does the same.
-
-## What you get per project
+After the global install, open any project folder in Claude Code and run:
 
 ```
-<target>/
-├── .claude/skills/         (or .cursor/skills/)  ← 14 skills
-├── .claude/wiki-scripts/                          ← 15 scripts
+/new-wiki
+```
+
+It asks a few questions (project name, description, Drive preferences) and
+scaffolds:
+
+```
+<project>/
+├── .claude/skills/          ← all wiki skills, project-local copy
+├── .claude/wiki-scripts/    ← Python helper scripts
 ├── .claude/wiki-templates/
 ├── .claude/wiki-config.json
-├── .claude/settings.json                          ← agentmemory MCP (dev only)
 ├── llm-wiki/
 │   ├── README.md
-│   ├── how-to/                                    ← 6 usage docs
-│   ├── best-practices/                            ← 17 dev best practices
-│   └── wiki/                                      ← your project's research/dev entries
+│   ├── how-to/              ← usage docs
+│   ├── best-practices/      ← curated dev best practices
+│   └── wiki/                ← your project's entries
 ├── CLAUDE.md
 ├── README.md
 └── .gitignore
 ```
 
-For each session afterward: `/wrap-up` at the end (dev projects) or `/wiki-cycle` for research projects.
+For each session afterward: `/wrap-up` at the end.
 
-## What ships in `bootstrap/workflows/llm-wiki/`
+## Modes
 
-| Folder | What |
-|---|---|
-| `skills/` | 13 slash-command skills (`new-wiki`, `wrap-up`, `wiki-cycle`, `wiki-update`, `wiki-search`, `wiki-init`, plus internal `wiki-*` helpers) |
-| `scripts/` | 14 Python helpers (`new-wiki.py`, `wiki-init.py`, `wiki-fetch-drive-folder.py`, `wiki-cycle` step scripts, etc.) |
-| `templates/` | Project-bootstrap templates (CLAUDE.md, README.md, .gitignore, research/development variants) |
-| `seed/` | Per-project seed content: `llm-wiki-readme.md.tmpl`, `how-to/*.md` (getting-started + per-command docs), `best-practices/*.md` (curated dev best practices) |
+### Global-only install (the quick start above)
+
+```powershell
+.\install-wiki.ps1           # or: .\install-wiki.ps1 -Mode tooling
+```
+
+Installs skills + scripts to `~/.claude/`. No project scaffold. Use `/new-wiki`
+later when you're in a project.
+
+### One-shot install + project scaffold
+
+```powershell
+.\install-wiki.ps1 -TargetFolder C:\github.com\my-new-project
+# interactive prompts for project name / description
+
+.\install-wiki.ps1 -TargetFolder C:\github.com\my-new-project `
+    -ProjectName myproj -ProjectDescription "..." -DriveEnabled yes
+# fully scripted, no prompts
+```
+
+Mac / Linux equivalent flags: `--target-folder`, `--project-name`,
+`--project-description`, `--drive-enabled`, `--drive-parent-folder`, `--tool`.
+
+### Refresh an existing install
+
+```powershell
+.\install-wiki.ps1           # idempotent re-run updates ~/.claude/skills/
+```
+
+Or from inside Claude Code: `/new-wiki --sync` rebuilds the project-local skills
+from the current bootstrap source.
 
 ## Updating
 
-When you pull new versions of this repo:
 ```powershell
-cd ~/llm-wiki-bootstrap
+cd C:\github.com\llm-wiki-bootstrap   # or wherever you cloned it
 git pull
-.\install-wiki.ps1     # idempotent re-run of Phase A
+.\install-wiki.ps1                    # idempotent re-install
 ```
 
-To sync an EXISTING per-project install with the latest bootstrap:
-```
-# Inside the project, with Claude Code running:
-/new-wiki --sync   # rebuilds <project>/.claude/skills/ etc. from current bootstrap
-```
+## Next step
+
+With the wiki skills installed, set up the **agent factory**:
+
+→ [agent-builder-bootstrap](https://github.com/dadlabs-io/agent-builder-bootstrap)
+— adds the `agent-builder` agent + `build-agent`, `build-skill`, `promote-agent`
+skills so you can scaffold and install Claude Code agents from any project.
 
 ## Source of truth
 
-This repo is a release artifact built from [dadlabs-io/workflows-core](https://github.com/dadlabs-io/workflows-core)'s `bootstrap/workflows/llm-wiki/` tree. To contribute changes, send PRs against the source repo; the maintainer rebuilds + republishes this repo on each release.
+This repo is a release artifact built from [dadlabs-io/workflows-core](https://github.com/dadlabs-io/workflows-core)'s
+`bootstrap/workflows/llm-wiki/` tree. To contribute changes, send PRs against the
+source repo; the maintainer rebuilds + republishes this repo on each release.
