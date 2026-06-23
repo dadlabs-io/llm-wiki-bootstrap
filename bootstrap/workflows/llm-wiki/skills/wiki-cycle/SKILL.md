@@ -12,7 +12,7 @@ Run the full research cycle end-to-end. Discovers new sources, ingests approved 
 ```
 # Mode flags (pick one; --quick is default)
 /wiki-cycle                       # default: quick cycle (discover → confirm → ingest → lint → backlinks → indexes → map → report)
-/wiki-cycle --full                # + semantic lint + claims + refresh (weekly / big batches)
+/wiki-cycle --full                # COMPLETE cycle: + semantic lint + claims + best-practices synthesis + refresh. "full" means FULL. (also accepts `/wiki-cycle full`)
 /wiki-cycle --lint-only           # mechanical lint only; print report; done
 /wiki-cycle --lint-only --semantic # + 4-agent semantic pass
 /wiki-cycle --discover-only       # discovery only — produces checklist, stops before ingest
@@ -34,7 +34,7 @@ Run the full research cycle end-to-end. Discovers new sources, ingests approved 
 
 **Default behavior (`--quick`)**: Discover → Confirm → Ingest → Mechanical lint → Reciprocate backlinks → Per-folder INDEX regen → _MAP.md regen → Morning report. ~5-10 min for ≤20 items. Entries go to `_inbox/proposed/` (staged) by default. User reviews in the morning via `/wiki-promote`. Pass `--direct` to bypass staging.
 
-**`--full` mode**: adds Semantic lint (4 parallel AI agents by folder) + Claims scan + Refresh pass. ~30-40 min. Run weekly or when an ingest batch is ≥25 items, cross-cuts many existing entries, or semantic lint hasn't run in >7 days.
+**`--full` mode** (also written `/wiki-cycle full`): the COMPLETE pipeline. Adds Semantic lint (parallel agents by folder) + Claims scan + **Best-Practices Synthesis** (review the new research against the canonical `project/best-practices/*` pages and propose watch-notes / doctrine updates — see Step 6.5) + Refresh pass. ~40-50 min. **"full" means full — it MUST include the synthesis step; do not skip it.** Run weekly or when an ingest batch is ≥25 items, cross-cuts many existing entries, or semantic lint hasn't run in >7 days.
 
 ## Multi-wiki (which wiki does a cycle run against?)
 
@@ -151,6 +151,14 @@ The scratchpad is updated after EVERY phase. If the session dies mid-cycle, the 
 - **Claims extracted**: N
 - **Contradictions found**: N (high N, medium N, low N)
 - **Report**: _inbox/claims-report-<date>.md
+
+### Phase 7.5: Best-Practices Synthesis (`--full` only)
+- **Status**: pending | running | done | skipped
+- **Pages reviewed**: N
+- **Proposed changes**: N (watch-notes N, doctrine N, confirm-only N)
+- **Approved + applied**: N
+- **Deferred to candidate-concepts**: N
+- **Report**: _inbox/reports/<cycle-id>/synthesis-*.md
 
 ### Phase 8: Refresh scan
 - **Status**: pending | done | skipped
@@ -294,6 +302,19 @@ Run `/wiki-claims`. If this is the first run (no claims-index.json), do a full e
 
 Update scratchpad Phase 7.
 
+### Step 6.5 — Best-Practices Synthesis (`--full` mode only — DO NOT SKIP)
+
+This is the step that turns ingested **research** into updated **canon**. A cycle WITHOUT this only grows `research/`; "full" requires it. (User-flagged 2026-06-23: "full wiki cycle" means complete, including this synthesis.)
+
+Spawn synthesis agents (REPORT-ONLY — they do NOT edit the canon) that review the cycle's new `research/` entries against the canonical `project/best-practices/*` pages:
+1. For each best-practices page whose domain the new entries touch, ask: does the new research (a) CONFIRM existing doctrine, (b) warrant a new dated **watch-note** (emerging / single-source / contested), or (c) warrant an actual DOCTRINE CHANGE (well-corroborated, shifts a stated position)? Be conservative — prefer watch-notes; flag contradictions both-sides-stay.
+2. Net-new doctrine areas with no home page, and design-gaps, go to `project/best-practices/best-practices-candidate-concepts.md` (the integration backlog), NOT a shoehorned edit.
+3. Agents write a proposed-diff report to the run folder (e.g. `synthesis-<area>.md`): exact section, proposed text in the page's voice + dated, source entry, rationale + confidence.
+
+**HUMAN GATE:** present the consolidated proposed diff to the user (take-all / pick / none). Apply ONLY what they approve to the `project/best-practices/*` pages; bump each touched page's `last_reviewed`. Log deferred items to candidate-concepts. (In `--no-confirm` / headless runs, write the proposal to the run folder and leave canon unchanged for later review — never auto-write canon.)
+
+Update scratchpad Phase 7.5.
+
 ### Step 7 — Refresh scan
 
 Run `/wiki-refresh --overdue-only`. Flag stale entries in the scratchpad.
@@ -308,10 +329,12 @@ Update scratchpad Phase 9.
 
 ### Step 9 — Commit
 
-Stage all changes and commit with a summary message:
+**Stray-file sweep FIRST.** Before staging, run `git status --short` and delete any 0-byte / junk droppings from shell-redirect or quoting artifacts (own or sub-agent: e.g. files named `output`, `#`, `${...}`, a stray word, etc.). These are tooling junk, not content — clean them yourself, don't leave them for the user or commit them.
+
+Then **scope the add to the notebook path** (NOT `git add -A` — other notebooks/sessions may have uncommitted work) and commit:
 
 ```
-Wiki cycle <date> — N ingested, N fixes, N contradictions, wiki at N entries
+Wiki cycle <date> — N ingested, N fixes, N contradictions, N synthesis changes, wiki at N entries
 ```
 
 Update scratchpad Phase 10. Set overall status to `completed`.
