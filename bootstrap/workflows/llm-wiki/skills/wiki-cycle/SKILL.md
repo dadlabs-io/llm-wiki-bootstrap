@@ -74,7 +74,7 @@ This folder holds:
 
 Every cycle run creates a scratchpad at:
 ```
-llm-wiki/wiki/_inbox/reports/<YYYY-MM-DD>/<YYYY-MM-DD>-<NN>/scratchpad.md
+_inbox/reports/<YYYY-MM-DD>/<YYYY-MM-DD>-<NN>/scratchpad.md
 ```
 
 The scratchpad is updated after EVERY phase. If the session dies mid-cycle, the next session can `--resume <cycle_id>` from where it left off. The scratchpad lives inside the cycle's report folder so it's archived with the rest of the cycle's artifacts.
@@ -189,11 +189,11 @@ The scratchpad is updated after EVERY phase. If the session dies mid-cycle, the 
 ### Step 0 — Assign cycle_id + create run folder
 
 1. Compute today's date in `YYYY-MM-DD` format.
-2. Scan `llm-wiki/wiki/_inbox/reports/<date>/` for existing `<date>-NN` subfolders. Pick the next unused `NN` (starts at `01`).
+2. Scan `_inbox/reports/<date>/` for existing `<date>-NN` subfolders. Pick the next unused `NN` (starts at `01`).
 3. Create the run folder:
 
 ```bash
-mkdir -p llm-wiki/wiki/_inbox/reports/<date>/<date>-<NN>/
+mkdir -p _inbox/reports/<date>/<date>-<NN>/
 ```
 
 4. Create the scratchpad at `<run-folder>/scratchpad.md`. Set status to `in_progress`, record the `cycle_id`.
@@ -375,7 +375,7 @@ Always use `subagent_type="general-purpose"` and `run_in_background=true`.
 
 ## Key paths
 
-- Scratchpad: `llm-wiki/wiki/_inbox/runs/<date>-cycle.md`
+- Scratchpad: `_inbox/runs/<date>-cycle.md`
 - All other paths inherited from the sub-skills (discover, update, lint, claims, refresh, report)
 
 ## Don't

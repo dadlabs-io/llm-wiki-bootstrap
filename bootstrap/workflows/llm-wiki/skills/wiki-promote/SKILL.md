@@ -38,7 +38,7 @@ Promote staged entries from `_inbox/proposed/` into the live wiki. This is the s
 ### Step 1 — List what's in proposed/
 
 ```bash
-ls llm-wiki/wiki/_inbox/proposed/*.md 2>/dev/null | grep -v README
+ls _inbox/proposed/*.md 2>/dev/null | grep -v README
 ```
 
 If empty, say "Nothing in staging — all entries are going direct to wiki." and stop.
@@ -125,8 +125,8 @@ If an entry in `proposed/` has no `<slug>.proposed_metadata.json`, it was probab
 
 ## Key paths
 
-- Proposed entries: `llm-wiki/wiki/_inbox/proposed/`
-- Rejected entries: `llm-wiki/wiki/_inbox/rejected/`
+- Proposed entries: `_inbox/proposed/`
+- Rejected entries: `_inbox/rejected/`
 - Metadata files: `<slug>.proposed_metadata.json` (DOT form, adjacent to the entry)
 - INDEX script: `{{WIKI_SCRIPTS_DIR}}/wiki-index.py`
 

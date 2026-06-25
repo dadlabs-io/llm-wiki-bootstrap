@@ -435,10 +435,14 @@ def queue_entries_into_topic(entries, topic, vault, priority, added_by):
             sys.executable, str(add_script),
             "--topic", topic,
             "--source", e["url"],
-            "--vault", vault,
             "--added-by", added_by,
             "--priority", str(priority),
         ]
+        # Only pass --vault when explicitly provided; otherwise let
+        # wiki-list-add.py resolve the topic root via the registry (avoids the
+        # path-doubling bug when the topic lives outside the default vault).
+        if vault:
+            cmd += ["--vault", vault]
         if e.get("title"):
             cmd.extend(["--title", e["title"]])
         try:
@@ -594,8 +598,9 @@ def main():
              "via wiki-list-add.py (e.g. --queue-into agentic-design)",
     )
     parser.add_argument(
-        "--queue-vault", default=DEFAULT_VAULT,
-        help=f"Vault root for --queue-into (default: {DEFAULT_VAULT})",
+        "--queue-vault", default=None,
+        help="Vault root for --queue-into. Default: let wiki-list-add.py resolve the "
+             f"topic root via the registry. Pass to override (default vault: {DEFAULT_VAULT}).",
     )
     parser.add_argument(
         "--queue-priority", default="3",

@@ -40,7 +40,11 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
+from _wiki_config import (  # noqa: E402
+    default_vault as _default_vault,
+    default_topic as _default_topic,
+    topic_root as _resolve_topic_root,
+)
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -168,7 +172,16 @@ def _find_existing_url(topic_root, source):
 
 
 def add_to_queue(vault_root, topic, source, folder, title, tags, added_by, priority):
-    topic_root = Path(vault_root) / topic
+    # Registry-aware resolution. When --vault isn't explicitly overridden
+    # (vault_root is None), resolve the topic root through the shared config —
+    # this handles cross-notebook registry layouts where a topic lives outside
+    # the default vault (e.g. project-notebooks), which a literal
+    # <vault>/<topic> join gets wrong (the "path doubling" bug). An explicit
+    # --vault still wins, for non-registry topics or deliberate overrides.
+    if vault_root:
+        topic_root = Path(vault_root) / topic
+    else:
+        topic_root = Path(_resolve_topic_root(topic))
     if not topic_root.exists():
         msg = f"topic '{topic}' not found at {topic_root}"
         print(f"Error: {msg}", file=sys.stderr)
@@ -286,7 +299,9 @@ def main():
     parser.add_argument("--title", default="", help="Optional title override")
     parser.add_argument("--tags", default="", help="Comma-separated tags")
     parser.add_argument("--priority", default="", help="Priority 1-5 (1=highest, default 3)")
-    parser.add_argument("--vault", default=DEFAULT_VAULT, help=f"Vault root (default: {DEFAULT_VAULT})")
+    parser.add_argument("--vault", default=None,
+                        help="Vault root. Default: resolve the topic root via the registry "
+                             f"(_wiki_config.topic_root). Pass to override (legacy <vault>/<topic>; default vault: {DEFAULT_VAULT}).")
     parser.add_argument("--added-by", default="cli", help="Who added this (e.g. 'clawd', 'cli', 'discord')")
     args = parser.parse_args()
 
