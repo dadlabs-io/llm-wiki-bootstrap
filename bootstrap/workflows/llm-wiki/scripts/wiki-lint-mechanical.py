@@ -34,7 +34,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir  # noqa: E402
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -112,8 +112,11 @@ def resolve_link(file_path, target):
 
 
 def lint(vault_root, topic, strict=False):
-    topic_root = Path(vault_root) / topic
-    wiki_root = topic_root / "wiki"
+    # Registry-aware: resolve the wiki via _wiki_config.wiki_dir (honors the
+    # linked-notebooks registry, incl. notebooks rooted at .../<name>/llm-wiki).
+    # An explicit vault_root forces the legacy <vault>/<topic>/wiki join.
+    wiki_root = Path(_wiki_dir(topic, vault=vault_root))
+    topic_root = wiki_root.parent
     if not wiki_root.exists():
         print(f"ERROR: wiki/ folder not found at {wiki_root}", file=sys.stderr)
         return 1
@@ -541,7 +544,9 @@ def lint(vault_root, topic, strict=False):
 def main():
     parser = argparse.ArgumentParser(description="Lint a topic wiki for broken links, orphans, stale claims, and icarus-schema invariants")
     parser.add_argument("--topic", required=True)
-    parser.add_argument("--vault", default=DEFAULT_VAULT)
+    parser.add_argument("--vault", default=None,
+                        help="Vault override (legacy <vault>/<topic>/wiki). Default: resolve "
+                             "the wiki via the registry (_wiki_config.wiki_dir).")
     parser.add_argument(
         "--strict", action="store_true",
         help="Fail (exit 1) if there are broken links or icarus-schema violations. "

@@ -204,6 +204,19 @@ def topic_root(topic=None, cwd=None):
     return str(Path(default_vault(cwd)) / t)
 
 
+def wiki_dir(topic=None, vault=None, cwd=None):
+    """Absolute path to a topic's ``wiki/`` folder.
+
+    Registry-aware: resolves the topic root via ``topic_root()`` (which honors
+    the linked-notebooks registry, including notebooks whose root has an extra
+    path segment like ``.../<name>/llm-wiki``). Pass an explicit ``vault`` to
+    force the legacy ``<vault>/<topic>/wiki`` join (override / non-registry use).
+    """
+    if vault:
+        return str(Path(vault) / (topic or default_topic(cwd)) / "wiki")
+    return str(Path(topic_root(topic, cwd)) / "wiki")
+
+
 def list_topics(cwd=None):
     """All known notebooks/topics: registry keys → explicit topics[] →
     [default_topic()]."""

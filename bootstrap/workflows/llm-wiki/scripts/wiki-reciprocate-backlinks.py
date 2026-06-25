@@ -39,7 +39,7 @@ from __future__ import annotations
 import sys as _sys  # noqa: E402
 from pathlib import Path as _ShimPath  # noqa: E402
 _sys.path.insert(0, str(_ShimPath(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir  # noqa: E402
 import argparse
 import json
 import re
@@ -250,7 +250,9 @@ def emit_cycle_json(
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--topic", required=True)
-    ap.add_argument("--vault", default=_default_vault())
+    ap.add_argument("--vault", default=None,
+                    help="Vault override (legacy <vault>/<topic>/wiki). Default: resolve "
+                         "the wiki via the registry (_wiki_config.wiki_dir).")
     ap.add_argument(
         "--since-hours",
         type=float,
@@ -262,8 +264,7 @@ def main() -> int:
     ap.add_argument("--run-folder", default=None)
     args = ap.parse_args()
 
-    vault = Path(args.vault).resolve()
-    wiki_root = (vault / args.topic / "wiki").resolve()
+    wiki_root = Path(_wiki_dir(args.topic, vault=args.vault)).resolve()
     if not wiki_root.is_dir():
         print(f"error: wiki root not found: {wiki_root}", file=sys.stderr)
         return 2
