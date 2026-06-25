@@ -105,7 +105,7 @@ function todayDate() {
     await page.waitForTimeout(2000);
 
     const title = (await page.title()) || '';
-    const bodyText = await page.evaluate(() => {
+    let bodyText = await page.evaluate(() => {
       // Strip script/style/noscript and grab visible text
       document.querySelectorAll('script,style,noscript').forEach(el => el.remove());
       return document.body ? document.body.innerText : '';
@@ -119,6 +119,48 @@ function todayDate() {
       return m ? m.getAttribute('content') : null;
     }).catch(() => null);
 
+    // Paywall / truncation fallback. Soft JS walls render fine in Chromium, but
+    // hard paywalls (some Substack / news sites) return only a teaser stub. If the
+    // body is suspiciously short or carries paywall markers, retry through an
+    // archive proxy and keep whichever render has more text. (Note: Exa
+    // web_fetch_exa already clears many *soft* walls upstream; this tier targets
+    // *hard* gates that reach the Playwright fetcher.)
+    let fetchedVia = 'playwright-chromium';
+    let paywallNote = null;
+    const lower = (bodyText || '').toLowerCase();
+    const PAYWALL_MARKERS = [
+      'subscribe to read', 'subscribe to continue', 'members only',
+      'this post is for paid', 'this story is for', 'create a free account',
+      'to continue reading', 'already a subscriber', 'this is a preview',
+    ];
+    const looksPaywalled =
+      (bodyText || '').trim().length < 600 ||
+      PAYWALL_MARKERS.some(m => lower.includes(m));
+    if (looksPaywalled) {
+      const proxyUrl = `https://archive.ph/newest/${args.url}`;
+      console.log(`  Possible paywall/truncation (len=${(bodyText || '').trim().length}); trying archive proxy: ${proxyUrl}`);
+      try {
+        await page.goto(proxyUrl, { waitUntil: 'domcontentloaded', timeout: args.timeout });
+        await page.waitForTimeout(3000);
+        const proxyText = await page.evaluate(() => {
+          document.querySelectorAll('script,style,noscript').forEach(el => el.remove());
+          return document.body ? document.body.innerText : '';
+        });
+        if (proxyText && proxyText.trim().length > (bodyText || '').trim().length) {
+          bodyText = proxyText;
+          fetchedVia = 'playwright-chromium+archive.ph';
+          paywallNote = `recovered via archive.ph (original render was ${(lower).trim().length} chars)`;
+          console.log(`  archive proxy recovered ${proxyText.trim().length} chars`);
+        } else {
+          paywallNote = 'suspected paywall; archive proxy yielded no more text — PARKED for review';
+          console.log('  archive proxy did not improve on original; keeping original (flagged)');
+        }
+      } catch (e) {
+        paywallNote = `suspected paywall; archive proxy failed (${e.message}) — PARKED for review`;
+        console.log(`  archive proxy failed: ${e.message}`);
+      }
+    }
+
     await browser.close();
     browser = null;
 
@@ -130,11 +172,12 @@ function todayDate() {
       '---',
       `title: "${(title || '').replace(/"/g, '\\"')}"`,
       `source_url: ${args.url}`,
-      `fetched_via: playwright-chromium`,
+      `fetched_via: ${fetchedVia}`,
       `fetched: ${isoNow()}`,
       `ingested_by: ${args.ingestedBy}`,
       'type: web-page',
     ];
+    if (paywallNote) fmLines.push(`paywall_fallback: "${paywallNote.replace(/"/g, '\\"')}"`);
     if (metaDescription) fmLines.push(`meta_description: "${metaDescription.replace(/"/g, '\\"').slice(0, 300)}"`);
     if (ogImage) fmLines.push(`og_image: ${ogImage}`);
     fmLines.push('---', '');
