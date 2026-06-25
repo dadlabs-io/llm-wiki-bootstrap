@@ -73,9 +73,28 @@ With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks 
 | Default (direct) | `wiki/<folder>/` | Added immediately | Manual sessions, you're reviewing |
 | `--staged` | `_inbox/proposed/` | Deferred until promotion | Automated runs, batch ingestion, uncertain quality |
 
-**When the user says `--staged`**: follow steps 1-4 as normal, then skip steps 5-6 (backlinks), and in step 7 file to `_inbox/proposed/` instead of `wiki/`. Add `status: proposed` to frontmatter. Save a `_proposed_metadata.json` alongside the entry with: target folder, inbound candidates list, suggested backlinks — so `/wiki-promote` knows what to do later.
+**When the user says `--staged`**: follow steps 1-4 as normal, then skip steps 5-6 (backlinks), and in step 7 file to `_inbox/proposed/` instead of `wiki/`. Add `status: proposed` to frontmatter, and write a sidecar per the **Staged-ingest sidecar contract** below so `/wiki-promote` can finish the integration later.
 
 **When the user doesn't say `--staged`**: follow the full 8-step flow below (current behavior, unchanged).
+
+### Staged-ingest sidecar contract (canonical — read this before hand-authoring a sidecar)
+
+`wiki-update.py --staged` writes a conforming sidecar automatically. **Follow this schema exactly when hand-authoring one** (e.g. parallel ingest agents in a cycle) — every field below caused a real promote failure when an agent improvised.
+
+- **Sidecar filename = `<slug>.proposed_metadata.json`** (DOT form). Both `wiki-update.py` and `wiki-promote.py` resolve it via `Path("<slug>.md").with_suffix(".proposed_metadata.json")`. The underscore form `<slug>_proposed_metadata.json` is **NOT read** — an entry with an underscore sidecar promotes as if it had no metadata (dumps to wiki root).
+- **`target_folder` = the FULL taxonomy path under `wiki/`** — `research/<sub>` or `project/<sub>` (e.g. `research/long-term`, `research/orchestration`, `project/best-practices`). **Never a bare leaf** like `long-term` — a bare leaf creates a phantom top-level folder.
+- **`suggested_backlinks[]` items are OBJECTS, never bare strings**: `{ "file": "<path under wiki/>", "link_text": "<anchor text>", "link_target": "<this entry's BARE filename>" }`. `wiki-promote` recomputes the correct relative path from `link_target` at promote time.
+- **Body cross-links: author by BARE slug/filename** (`[Title](<other-slug>.md)`) — do NOT hand-compute `../folder/` depth. `wiki-update.py` (`resolve_outbound_links`) + `wiki-reciprocate-backlinks.py` normalize paths mechanically. Hand-computed relative paths are the #1 source of broken links.
+
+```json
+{
+  "target_folder": "research/long-term",
+  "inbound_candidates": ["research/long-term/foo.md", "..."],
+  "suggested_backlinks": [
+    { "file": "research/long-term/foo.md", "link_text": "Foo (Author)", "link_target": "<slug>.md" }
+  ]
+}
+```
 
 ## CRITICAL: integrate, don't isolate
 
@@ -109,7 +128,7 @@ With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks 
 7. **Update those existing entries** via Edit — add the new entry to their Related sections. **Skip this step if `--staged`.**
 8. **File the new curated entry** via `wiki-update.py`:
    - **Direct mode (default)**: file to `wiki/<folder>/` as before.
-   - **Staged mode (`--staged`)**: file to `_inbox/proposed/` instead. Add `status: proposed` to frontmatter. Write a `_proposed_metadata.json` next to the entry containing `{"target_folder": "<folder>", "inbound_candidates": [...], "suggested_backlinks": [...]}` so `/wiki-promote` can finish the integration later.
+   - **Staged mode (`--staged`)**: file to `_inbox/proposed/` instead. Add `status: proposed` to frontmatter. Write the sidecar `<slug>.proposed_metadata.json` per the **Staged-ingest sidecar contract** above (dot-form filename, full-path `target_folder`, typed `suggested_backlinks`) so `/wiki-promote` can finish the integration later.
    The script will print:
    - `wiki_path=<path>` — the canonical path of the new entry
    - `wiki_slug=<slug>` — the canonical slug

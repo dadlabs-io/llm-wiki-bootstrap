@@ -61,14 +61,15 @@ If `--review`: for each entry, show the full TL;DR + Related section before aski
 
 For each entry to promote:
 
-1. **Read the metadata file** (`_proposed_metadata.json` next to the entry):
+1. **Read the metadata file** (`<slug>.proposed_metadata.json` — DOT form — next to the entry):
    ```json
    {
-     "target_folder": "tooling",
-     "inbound_candidates": ["file1.md", "file2.md", ...],
-     "suggested_backlinks": [{"file": "...", "link_text": "..."}]
+     "target_folder": "research/tooling",
+     "inbound_candidates": ["file1.md", "file2.md", "..."],
+     "suggested_backlinks": [{"file": "research/tooling/other.md", "link_text": "Other (Author)", "link_target": "<slug>.md"}]
    }
    ```
+   `target_folder` is the FULL taxonomy path (`research/<sub>` or `project/<sub>`). `suggested_backlinks[]` items are objects (see the staged-ingest sidecar contract in `wiki-update/SKILL.md`). `wiki-promote.py` tolerates legacy/hand-authored variants (underscore filename, bare-string backlinks, bare-leaf `target_folder`) by normalizing them, but new sidecars should conform.
 
 2. **Move the entry** from `_inbox/proposed/` to `wiki/<target_folder>/`:
    ```bash
@@ -85,7 +86,7 @@ For each entry to promote:
 
 5. **Delete the metadata file**:
    ```bash
-   rm <topic>/_inbox/proposed/<slug>_proposed_metadata.json
+   rm <topic>/_inbox/proposed/<slug>.proposed_metadata.json
    ```
 
 6. **Regenerate INDEX**:
@@ -110,14 +111,14 @@ If the user says "reject" or "delete" for an entry:
 
 ```bash
 mv <topic>/_inbox/proposed/<slug>.md <topic>/_inbox/rejected/<slug>.md
-rm <topic>/_inbox/proposed/<slug>_proposed_metadata.json
+rm <topic>/_inbox/proposed/<slug>.proposed_metadata.json
 ```
 
 Create `_inbox/rejected/` if it doesn't exist. Rejected entries are kept (not deleted) for audit trail.
 
 ## If metadata file is missing
 
-If an entry in `proposed/` has no `_proposed_metadata.json`, it was probably placed there manually or by an older flow. In this case:
+If an entry in `proposed/` has no `<slug>.proposed_metadata.json`, it was probably placed there manually or by an older flow. In this case:
 - Ask the user which folder to promote to
 - Run a quick qmd search to identify backlink candidates
 - Proceed with promotion as normal
@@ -126,7 +127,7 @@ If an entry in `proposed/` has no `_proposed_metadata.json`, it was probably pla
 
 - Proposed entries: `llm-wiki/wiki/_inbox/proposed/`
 - Rejected entries: `llm-wiki/wiki/_inbox/rejected/`
-- Metadata files: `<slug>_proposed_metadata.json` (adjacent to the entry)
+- Metadata files: `<slug>.proposed_metadata.json` (DOT form, adjacent to the entry)
 - INDEX script: `{{WIKI_SCRIPTS_DIR}}/wiki-index.py`
 
 ## Don't
