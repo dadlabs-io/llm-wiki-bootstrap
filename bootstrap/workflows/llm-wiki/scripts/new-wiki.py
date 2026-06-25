@@ -34,6 +34,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
 from _wiki_config import MERGED_TAXONOMY  # noqa: E402 — single canonical taxonomy
+# Tooling-install manifests + loop live in _install_tooling (shared with
+# wiki-upgrade.py — the standalone upgrade command). Single source of truth.
+from _install_tooling import (  # noqa: E402
+    TRAVEL_SKILLS, TRAVEL_SCRIPTS, TOOLING_HELPER_SCRIPTS, SHARED_HELPER_SCRIPTS,
+    install_tooling as _install_tooling,
+    print_summary as _print_tooling_summary,
+)
 from urllib.parse import urlparse
 
 # Force UTF-8 on Windows so emoji / unicode in templates don't crash printing
@@ -109,36 +116,8 @@ def project_paths(tool: str, target: Path, llm_wiki_root: Path = None) -> dict:
 DEFAULT_DRIVE_PARENT = "__FOR CLAUDE"
 
 # Skills that travel — keep in sync with INSTALL-INVENTORY.md.
-# `wiki` is the browse-the-wiki helper (invoked by /wiki-cycle); it must
-# travel so /wiki-cycle works in per-project installs.
-TRAVEL_SKILLS = [
-    "new-wiki", "wrap-up",
-    "wiki", "wiki-init", "wiki-update", "wiki-search", "wiki-cycle",
-    "wiki-discover", "wiki-list", "wiki-claims", "wiki-refresh",
-    "wiki-report", "wiki-lint", "wiki-promote",
-]
-
-# Scripts that travel — kept in sync with the actual contents of
-# bootstrap/workflows/llm-wiki/scripts/. Verified via build-wiki-package.py
-# on each release. wiki-promote.py is intentionally OMITTED until the
-# /wiki-promote skill grows a backing script.
-TRAVEL_SCRIPTS = [
-    "new-wiki.py",
-    "wiki-init.py",
-    "wiki-fetch-drive-folder.py",
-    "wiki-fetch-pdf.py",
-    "wiki-fetch-youtube.py",
-    "wiki-index.py",
-    "wiki-index-per-folder.py",
-    "wiki-lint-mechanical.py",
-    "wiki-list-add.py",
-    "wiki-list-process.py",
-    "wiki-list-render.py",
-    "wiki-map-compile.py",
-    "wiki-promote.py",
-    "wiki-reciprocate-backlinks.py",
-    "wiki-update.py",
-]
+# TRAVEL_SKILLS / TRAVEL_SCRIPTS are imported from _install_tooling above
+# (single source of truth, shared with wiki-upgrade.py).
 
 # Single merged folder taxonomy (the research/development split was removed
 # 2026-06-15 — every project now gets BOTH capabilities). Four-layer memory
@@ -452,15 +431,8 @@ def _phase_tooling_cursor(args):
 
 CC_GLOBAL_WIKI_SCRIPTS_DIR = CC_GLOBAL_DIR / "wiki-scripts"
 
-# Extra helper scripts copied alongside TRAVEL_SCRIPTS in tooling mode (not
-# directly user-invoked, but imported/called by the tooling). Copied only if
-# present in the package scripts dir.
-TOOLING_HELPER_SCRIPTS = ["install-skill.py", "_atomic_io.py", "_wiki_config.py"]
-
-# Shared helper modules imported by the travel scripts (config + atomic IO).
-# These are NOT user-invoked but MUST ship anywhere the scripts run — both the
-# global tooling install and per-project Phase B.
-SHARED_HELPER_SCRIPTS = ["_atomic_io.py", "_wiki_config.py"]
+# TOOLING_HELPER_SCRIPTS / SHARED_HELPER_SCRIPTS are imported from
+# _install_tooling above (single source of truth).
 
 
 def phase_tooling(args):
@@ -482,120 +454,23 @@ def phase_tooling(args):
         _err("could not find bootstrap source. Pass --bootstrap-source <path>.")
         return 1
 
-    pkg = bootstrap / "bootstrap" / "workflows" / "llm-wiki"
-    scripts_src = pkg / "scripts"
-    skills_src = pkg / "skills"
-    if not scripts_src.is_dir() or not skills_src.is_dir():
-        _err(f"package scripts/ or skills/ missing under {pkg}")
-        return 1
-
-    skills_dest = CC_GLOBAL_SKILLS_DIR
-    scripts_dest = CC_GLOBAL_WIKI_SCRIPTS_DIR
-    scripts_dest_value = scripts_dest.expanduser().resolve().as_posix()
-
-    dry = args.dry_run
+    # Delegate the actual copy/install to the shared _install_tooling module
+    # (same implementation wiki-upgrade.py uses — single source of truth).
     _info(f"bootstrap source: {bootstrap}")
-    _info(f"mode: tooling (global, claude-code)")
-    _info(f"skills  → {skills_dest}")
-    _info(f"scripts → {scripts_dest}")
+    _info("mode: tooling (global, claude-code)")
+    _info("Tip: the standalone `wiki-upgrade.py` runs this same install — prefer it for "
+          "refreshing global tooling (this --mode tooling path is kept for back-compat).")
     print()
-
-    # 1) Copy scripts (TRAVEL_SCRIPTS + helpers) → ~/.claude/wiki-scripts/
-    if not dry:
-        scripts_dest.mkdir(parents=True, exist_ok=True)
-    script_names = list(TRAVEL_SCRIPTS)
-    for helper in TOOLING_HELPER_SCRIPTS:
-        if (scripts_src / helper).is_file():
-            script_names.append(helper)
-    travel_copied = 0
-    helpers_copied = 0
-    scripts_missing = []
-    for name in script_names:
-        s = scripts_src / name
-        if not s.is_file():
-            scripts_missing.append(name)
-            continue
-        d = scripts_dest / name
-        if dry:
-            print(f"  WOULD copy {s} -> {d}")
-        else:
-            shutil.copy2(s, d)
-        if name in TOOLING_HELPER_SCRIPTS:
-            helpers_copied += 1
-        else:
-            travel_copied += 1
-    if scripts_missing:
-        _warn(f"scripts not found in package (skipped): {scripts_missing}")
-
-    print()
-
-    # 2) Install each skill via the install-skill primitive (imported).
-    install_fn = _load_install_skill_fn(scripts_src)
-    skills_installed = 0
-    skills_failed = []
-    for skill in TRAVEL_SKILLS:
-        rc = install_fn(
-            skill=skill,
-            tool="claude-code",
-            skills_src=skills_src,
-            skills_dest=skills_dest,
-            scripts_dir=scripts_dest,
-            dry_run=dry,
+    try:
+        summary = _install_tooling(
+            bootstrap, dry_run=args.dry_run,
+            skills_dest=CC_GLOBAL_SKILLS_DIR, scripts_dest=CC_GLOBAL_WIKI_SCRIPTS_DIR,
         )
-        if rc == 0:
-            skills_installed += 1
-        else:
-            skills_failed.append(skill)
-    if skills_failed:
-        _warn(f"skills that failed to install: {skills_failed}")
-
-    print()
-    print("=" * 60)
-    print("Global tooling-only install summary")
-    print("=" * 60)
-    verb = "would be copied" if dry else "copied"
-    print(f"  scripts {verb}:   {travel_copied}  (+ {helpers_copied} helpers)  → {scripts_dest}")
-    verb_s = "would be installed" if dry else "installed"
-    print(f"  skills {verb_s}: {skills_installed}  → {skills_dest}")
-    print(f"  placeholder {{{{WIKI_SCRIPTS_DIR}}}} → {scripts_dest_value}")
-    print()
-    print("  Restart Claude Code if these dirs are new so it picks up the")
-    print("  new skills + scripts.")
-    print("=" * 60)
+    except FileNotFoundError as e:
+        _err(str(e))
+        return 1
+    _print_tooling_summary(summary)
     return 0
-
-
-def _load_install_skill_fn(scripts_src: Path):
-    """Import install_skill() from the package's install-skill.py. Falls back to
-    a subprocess shim if the import fails for any reason (kept to one prefer-import
-    code path, but resilient)."""
-    install_path = scripts_src / "install-skill.py"
-    if install_path.is_file():
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("_install_skill_mod", install_path)
-        if spec and spec.loader:
-            mod = importlib.util.module_from_spec(spec)
-            try:
-                spec.loader.exec_module(mod)
-                if hasattr(mod, "install_skill"):
-                    return mod.install_skill
-            except Exception as e:  # noqa: BLE001
-                _warn(f"could not import install_skill() ({e}); using subprocess fallback")
-
-    def _subprocess_install(skill, tool, skills_src, skills_dest, scripts_dir, dry_run):
-        cmd = [
-            sys.executable, str(install_path),
-            "--skill", skill,
-            "--tool", tool,
-            "--skills-src", str(skills_src),
-            "--skills-dest", str(skills_dest),
-            "--scripts-dir", str(scripts_dir),
-        ]
-        if dry_run:
-            cmd.append("--dry-run")
-        return subprocess.run(cmd).returncode
-
-    return _subprocess_install
 
 
 # ---------- Phase A (global) ----------
