@@ -34,7 +34,7 @@ import subprocess
 import sys
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 # Atomic-write helper (icarus §8).
@@ -556,6 +556,17 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
         fm_lines.append(f"tier: {tier}")
     if confidence is not None:
         fm_lines.append(f"confidence: {confidence}")
+    # Lifecycle fields — required on every entry (SKILL.md) and keyed by
+    # wiki-refresh. Written in BOTH staged and direct paths. review_after
+    # cadence scales with tier: higher-trust sources need re-checking less often.
+    _now = datetime.now()
+    fm_lines.append(f"last_reviewed: {_now.strftime('%Y-%m-%d')}")
+    _cadence_days = {1: 90, 2: 120, 3: 180, 4: 365}
+    try:
+        _days = _cadence_days.get(int(tier), 365)
+    except (TypeError, ValueError):
+        _days = 365  # tier 'self' or unset
+    fm_lines.append(f"review_after: {(_now + timedelta(days=_days)).strftime('%Y-%m-%d')}")
     if staged:
         fm_lines.append("status: proposed")
     if tags:
