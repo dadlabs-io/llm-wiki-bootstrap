@@ -51,7 +51,70 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
+from _wiki_config import (  # noqa: E402
+    default_vault as _default_vault,
+    default_topic as _default_topic,
+    MERGED_TAXONOMY,
+)
+
+
+# --- Defensive sidecar normalization (A2) -------------------------------------
+# wiki-update.py writes conforming sidecars, but agents that hand-author them in
+# batch ingests have produced three recurring deviations that used to break or
+# mis-file promotion. We normalize rather than trust. See the staged-ingest
+# sidecar contract in skills/wiki-update/SKILL.md.
+
+_SIDECAR_SUFFIXES = (".proposed_metadata.json", "_proposed_metadata.json")
+
+
+def _find_sidecar(md: Path) -> Path | None:
+    """Return the entry's sidecar, accepting BOTH the canonical dot form
+    (<slug>.proposed_metadata.json) and the legacy underscore form."""
+    dot = md.with_suffix(".proposed_metadata.json")
+    if dot.exists():
+        return dot
+    under = md.with_name(md.stem + "_proposed_metadata.json")
+    if under.exists():
+        return under
+    return None
+
+
+def _normalize_target_folder(folder: str) -> tuple[str, str | None]:
+    """Validate target_folder against the taxonomy. Returns (folder, warning).
+    A bare leaf like 'long-term' is auto-prefixed to its 'research/<leaf>' (or
+    'project/<leaf>') home if exactly one match exists; otherwise left as-is
+    with a warning so it never silently dumps to the wiki root."""
+    if not folder:
+        return "", None
+    folder = folder.strip("/").replace("\\", "/")
+    if folder in MERGED_TAXONOMY or folder == "sessions":
+        return folder, None
+    if "/" not in folder:
+        matches = [t for t in MERGED_TAXONOMY if t.rsplit("/", 1)[-1] == folder]
+        if len(matches) == 1:
+            return matches[0], f"target_folder '{folder}' auto-prefixed to '{matches[0]}'"
+    return folder, f"target_folder '{folder}' is not a known taxonomy path — promoting as-is (verify placement)"
+
+
+def _normalize_backlinks(meta: dict, entry_title: str, slug: str) -> list[dict]:
+    """Coerce suggested_backlinks into a list of {file, link_text, link_target}
+    dicts. Tolerates bare-string items (file path only) and dicts missing keys;
+    drops items with no resolvable 'file'."""
+    out = []
+    for bl in meta.get("suggested_backlinks", []) or []:
+        if isinstance(bl, str):
+            file, link_text, link_target = bl, entry_title, slug + ".md"
+        elif isinstance(bl, dict):
+            file = bl.get("file") or bl.get("target") or bl.get("path")
+            link_text = bl.get("link_text") or entry_title
+            link_target = bl.get("link_target") or (slug + ".md")
+        else:
+            continue
+        if not file:
+            continue
+        out.append({"file": str(file).replace("\\", "/").lstrip("/"),
+                    "link_text": link_text, "link_target": link_target})
+    return out
 
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -159,8 +222,7 @@ def list_proposed(vault: Path):
         return []
     items = []
     for md in sorted(proposed_dir.glob("*.md")):
-        sidecar = md.with_suffix(".proposed_metadata.json")
-        items.append((md, sidecar if sidecar.exists() else None))
+        items.append((md, _find_sidecar(md)))
     return items
 
 
@@ -239,7 +301,9 @@ def _init_truth_status_sidecar(vault: Path, slug: str, dry_run: bool) -> Path | 
 
 def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False) -> dict:
     """Promote one entry. Returns a result dict with counts."""
-    folder = meta.get("target_folder") or ""
+    folder, folder_warning = _normalize_target_folder(meta.get("target_folder") or "")
+    if folder_warning:
+        _warn(f"{md_path.name}: {folder_warning}")
     target_dir = vault / folder if folder else vault
     target_path = target_dir / md_path.name
 
@@ -260,9 +324,9 @@ def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False)
         text = _strip_status_proposed(text)
         atomic_write_text(target_path, text)
         md_path.unlink()
-        # Clean up sidecar
-        sidecar = md_path.with_suffix(".proposed_metadata.json")
-        if sidecar.exists():
+        # Clean up sidecar (either canonical dot form or legacy underscore form)
+        sidecar = _find_sidecar(md_path)
+        if sidecar and sidecar.exists():
             sidecar.unlink()
         result["moved"] = True
 
@@ -271,8 +335,12 @@ def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False)
         # link path RELATIVE TO each backlink source file's directory now that the
         # entry's promoted location (target_path) is known. Using the bare filename
         # would point every cross-folder backlink at the source's own folder = broken.
-        for bl in meta.get("suggested_backlinks", []):
+        entry_title = meta.get("title") or md_path.stem
+        for bl in _normalize_backlinks(meta, entry_title, md_path.stem):
             target_file = vault / bl["file"]
+            if not target_file.exists():
+                result["backlinks_skipped"] += 1
+                continue
             rel_target = os.path.relpath(target_path, target_file.parent).replace(os.sep, "/")
             if _add_backlink(target_file, bl["link_text"], rel_target):
                 result["backlinks_added"] += 1
@@ -396,10 +464,11 @@ def main():
                 print(f"  Source: {meta['source_url']}")
             if meta.get("suggested_backlinks"):
                 print(f"  Backlinks to add:")
-                for bl in meta["suggested_backlinks"][:5]:
+                _bls = _normalize_backlinks(meta, meta.get("title") or md_path.stem, md_path.stem)
+                for bl in _bls[:5]:
                     print(f"    - {bl['file']}")
-                if len(meta["suggested_backlinks"]) > 5:
-                    print(f"    ... and {len(meta['suggested_backlinks']) - 5} more")
+                if len(_bls) > 5:
+                    print(f"    ... and {len(_bls) - 5} more")
             choice = input("  [P]romote / [R]eject / [S]kip / [Q]uit: ").strip().lower()
             if choice.startswith("q"):
                 _info("user quit")
