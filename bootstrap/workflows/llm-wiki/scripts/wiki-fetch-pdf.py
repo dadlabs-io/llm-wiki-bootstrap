@@ -85,7 +85,10 @@ class PageResult:
 
 
 def has_command(cmd):
-    return subprocess.run(["bash", "-lc", f"command -v {cmd}"], capture_output=True).returncode == 0
+    # shutil.which is cross-platform (Windows host + Linux container); the old
+    # `bash -lc command -v` probe failed on the Windows host where bash isn't the
+    # shell, which forced PDF ingests through a docker-exec workaround.
+    return shutil.which(cmd) is not None
 
 
 def normalize_text(text):
@@ -152,8 +155,13 @@ def extract_hybrid(pdf_path, quality_threshold, ocr_mode):
     except ImportError as e:
         raise RuntimeError("pypdf is required. Install: pip install pypdf") from e
 
-    if not has_command("pdftotext"):
-        raise RuntimeError("pdftotext not found. Install poppler-utils (apt-get install poppler-utils).")
+    # pdftotext (poppler) is preferred for layout fidelity, but it's optional:
+    # when absent (e.g. a Windows host without poppler) we fall back to pure
+    # pypdf rather than hard-failing — pypdf alone handles most digital PDFs.
+    have_pdftotext = has_command("pdftotext")
+    if not have_pdftotext:
+        sys.stderr.write("[wiki-fetch-pdf] pdftotext not found; using pypdf-only extraction "
+                         "(install poppler-utils for higher-fidelity layout extraction).\n")
 
     ocr_enabled = False
     if ocr_mode == "tesseract":
@@ -170,13 +178,17 @@ def extract_hybrid(pdf_path, quality_threshold, ocr_mode):
 
     with tempfile.TemporaryDirectory(prefix="wiki-fetch-pdf-") as ocr_temp:
         for page in range(1, total_pages + 1):
-            text = extract_page_pdftotext(pdf_path, page)
-            method = "pdftotext"
-            if is_low_quality(text, quality_threshold):
-                pypdf_text = extract_page_pypdf(reader, page)
-                if text_quality_score(pypdf_text) > text_quality_score(text):
-                    text = pypdf_text
-                    method = "pypdf"
+            if have_pdftotext:
+                text = extract_page_pdftotext(pdf_path, page)
+                method = "pdftotext"
+                if is_low_quality(text, quality_threshold):
+                    pypdf_text = extract_page_pypdf(reader, page)
+                    if text_quality_score(pypdf_text) > text_quality_score(text):
+                        text = pypdf_text
+                        method = "pypdf"
+            else:
+                text = extract_page_pypdf(reader, page)
+                method = "pypdf"
             if is_low_quality(text, quality_threshold) and ocr_enabled:
                 ocr_text = extract_page_ocr_tesseract(pdf_path, page, ocr_temp)
                 if text_quality_score(ocr_text) > text_quality_score(text):
