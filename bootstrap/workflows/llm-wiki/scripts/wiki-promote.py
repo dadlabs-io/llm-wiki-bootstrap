@@ -161,17 +161,42 @@ def _strip_status_proposed(text: str) -> str:
 _REL_LINK_RE = re.compile(r'(\]\()(\.{1,2}/[^)\s]+)(\))')
 
 
-def _recompute_relative_links(text: str, from_dir: Path, to_dir: Path) -> str:
+def _build_basename_index(vault: Path):
+    """basename -> list[abs Path] across the wiki (minus _inbox) + sibling raw/.
+    Used as a fallback when naive relative-path recomputation would produce a
+    path that doesn't actually resolve (see _recompute_relative_links)."""
+    idx = {}
+    raw_dir = vault.parent / "raw"
+    for base in (vault, raw_dir):
+        if not base.exists():
+            continue
+        for f in base.rglob("*.md"):
+            if "_inbox" in f.parts:
+                continue
+            idx.setdefault(f.name, []).append(f)
+    return idx
+
+
+def _recompute_relative_links(text: str, from_dir: Path, to_dir: Path,
+                              basename_index: dict | None = None) -> str:
     """Rewrite relative markdown-link targets so they resolve to the SAME file
     after the entry moves from ``from_dir`` to ``to_dir``.
 
-    Staged entries are written with paths relative to ``_inbox/proposed/`` (2
-    levels under the topic root); on promote to ``wiki/<folder>/`` (3 levels)
-    the depth changes, so e.g. the raw footer ``[..](../../raw/x.md)`` must
-    become ``../../../raw/x.md``. Without this the moved entry's own raw_path
-    footer link (and any relative body cross-links) break. Fixes A3 — the
-    recurring "N broken raw-links after promote" bug. Only ``./``/``../`` link
-    targets are touched; absolute / http / anchor links are left alone."""
+    Staged entries are written with paths relative to ``_inbox/proposed/``; on
+    promote to ``wiki/<folder>/`` the depth changes, so e.g. the raw footer
+    ``[..](../../raw/x.md)`` must become ``../../../raw/x.md``.
+
+    ROBUSTNESS (fixes A3 double-shift): a naive depth shift assumes the staged
+    link was written relative to ``from_dir``. But ``wiki-update.py`` sometimes
+    writes footers at the FINAL folder depth (it varies with the cwd the ingest
+    ran from), so a blind ``os.path.relpath((from_dir/target), to_dir)`` can emit
+    a path that resolves nowhere (the ``../../../../raw`` over-shoot seen in cycle
+    2026-07-02). So we VERIFY: if the recomputed target exists, use it; if not,
+    fall back to resolving the link's basename against the real corpus
+    (``basename_index``); if that's unique, emit its correct relpath; otherwise
+    leave the original untouched (never emit a known-broken path). This mirrors
+    ``wiki-fix-links.py`` — which is also run as a cycle step and is the canonical
+    comprehensive normalizer (it additionally handles BARE-slug links)."""
     if from_dir == to_dir:
         return text
 
@@ -179,7 +204,17 @@ def _recompute_relative_links(text: str, from_dir: Path, to_dir: Path) -> str:
         target = m.group(2)
         abs_target = (from_dir / target).resolve()
         new_rel = os.path.relpath(abs_target, to_dir).replace(os.sep, "/")
-        return m.group(1) + new_rel + m.group(3)
+        # Verify the recomputed target actually exists; if so, trust it.
+        if (to_dir / new_rel).resolve().exists():
+            return m.group(1) + new_rel + m.group(3)
+        # Fall back to basename resolution against the real corpus.
+        if basename_index is not None:
+            matches = basename_index.get(target.rsplit("/", 1)[-1], [])
+            if len(matches) == 1:
+                fixed = os.path.relpath(matches[0], to_dir).replace(os.sep, "/")
+                return m.group(1) + fixed + m.group(3)
+        # Unknown / ambiguous — leave the original as-is rather than break it.
+        return m.group(0)
 
     return _REL_LINK_RE.sub(_fix, text)
 
@@ -350,7 +385,10 @@ def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False)
         text = _strip_status_proposed(text)
         # A3: recompute the entry's own relative links for the new (deeper) folder
         # depth so the raw_path footer + relative cross-links don't break on move.
-        text = _recompute_relative_links(text, md_path.parent, target_path.parent)
+        # Pass a corpus basename index so a wrong-depth staged link resolves to the
+        # REAL file instead of being blindly depth-shifted into a broken path.
+        text = _recompute_relative_links(text, md_path.parent, target_path.parent,
+                                         _build_basename_index(vault))
         atomic_write_text(target_path, text)
         md_path.unlink()
         # Clean up sidecar (either canonical dot form or legacy underscore form)

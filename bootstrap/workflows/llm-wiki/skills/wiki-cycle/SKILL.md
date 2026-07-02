@@ -266,9 +266,27 @@ Each agent follows the full `/wiki-update` flow including the eval gate (step 5)
 
 Update scratchpad Phase 3 with each completion.
 
+### Step 2.5 — Dequeue ingested items (ALWAYS run after ingest)
+
+```bash
+python C:/Users/mark/.claude/wiki-scripts/wiki-dequeue.py --topic <topic>
+```
+
+Moves every `_inbox/pending/` item whose `source:` URL now matches an ingested entry (in `wiki/` OR staged in `_inbox/proposed/`) into `_inbox/done/`. Genuinely-unprocessed and deferred items (e.g. unreadable X links) stay put.
+
+**Why this exists**: the `--staged` batch path does NOT run `wiki-update.py`'s from-queue Step-9 dequeue, so ingested items otherwise pile up in `pending/` and every later cycle has to hand-reconcile them (this bit cycles 2026-07-01 and 2026-07-02, 61 stale items each). `wiki-dequeue.py` is the permanent, idempotent, source_url-based reconciler — run it here so the queue always reflects reality. Safe to run standalone any time.
+
 ### Step 3 — Mechanical lint
 
 Run `wiki-lint-mechanical.py`. Update scratchpad Phase 4.
+
+**If any entries were promoted into `wiki/` this cycle** (`--direct`, or an in-cycle `/wiki-promote`), run the link normalizer FIRST so mechanical lint sees clean links:
+
+```bash
+python C:/Users/mark/.claude/wiki-scripts/wiki-fix-links.py --topic <topic>
+```
+
+`wiki-fix-links.py` resolves every bare-slug / wrong-depth markdown link to its correct relative path (bare `](slug.md)` → `](../folder/slug.md)`, and depth over/under-shoots). Ingest agents author cross-links by BARE slug per contract; that normalization was historically NOT happening end-to-end (≈50 broken links per cycle, hand-fixed each time). This tool is the permanent fix. Idempotent, 0-ambiguous/0-missing on a clean run. (In default `--quick` staging mode entries aren't promoted in-cycle, so this runs at `/wiki-promote` time instead — see wiki-promote SKILL.)
 
 ### Step 3.5 — Integration scripts (Phase 5 — always run, cheap)
 
