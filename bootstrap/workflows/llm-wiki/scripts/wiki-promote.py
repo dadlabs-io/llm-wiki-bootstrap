@@ -158,6 +158,32 @@ def _strip_status_proposed(text: str) -> str:
     return f"---{new_header}---{text[end + 3:]}"
 
 
+_REL_LINK_RE = re.compile(r'(\]\()(\.{1,2}/[^)\s]+)(\))')
+
+
+def _recompute_relative_links(text: str, from_dir: Path, to_dir: Path) -> str:
+    """Rewrite relative markdown-link targets so they resolve to the SAME file
+    after the entry moves from ``from_dir`` to ``to_dir``.
+
+    Staged entries are written with paths relative to ``_inbox/proposed/`` (2
+    levels under the topic root); on promote to ``wiki/<folder>/`` (3 levels)
+    the depth changes, so e.g. the raw footer ``[..](../../raw/x.md)`` must
+    become ``../../../raw/x.md``. Without this the moved entry's own raw_path
+    footer link (and any relative body cross-links) break. Fixes A3 — the
+    recurring "N broken raw-links after promote" bug. Only ``./``/``../`` link
+    targets are touched; absolute / http / anchor links are left alone."""
+    if from_dir == to_dir:
+        return text
+
+    def _fix(m):
+        target = m.group(2)
+        abs_target = (from_dir / target).resolve()
+        new_rel = os.path.relpath(abs_target, to_dir).replace(os.sep, "/")
+        return m.group(1) + new_rel + m.group(3)
+
+    return _REL_LINK_RE.sub(_fix, text)
+
+
 def _add_backlink(target_file: Path, link_text: str, link_target: str) -> bool:
     """Add a one-line `See also` link to the target file. Idempotent — skips
     if the link target already appears anywhere in the file. Returns True if
@@ -322,6 +348,9 @@ def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False)
         # Strip status: proposed from frontmatter
         text = md_path.read_text(encoding="utf-8")
         text = _strip_status_proposed(text)
+        # A3: recompute the entry's own relative links for the new (deeper) folder
+        # depth so the raw_path footer + relative cross-links don't break on move.
+        text = _recompute_relative_links(text, md_path.parent, target_path.parent)
         atomic_write_text(target_path, text)
         md_path.unlink()
         # Clean up sidecar (either canonical dot form or legacy underscore form)

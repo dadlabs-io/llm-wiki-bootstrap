@@ -78,11 +78,26 @@ MERGED_TAXONOMY = [
 ]
 
 
-def load_config(cwd=None):
-    """Parsed wiki-config.json dict for the given cwd (default: real cwd), or {}."""
+def _find_config_path(cwd=None):
+    """Walk up from cwd to the filesystem root; return the first existing
+    ``.claude/wiki-config.json`` Path, or None. Makes resolution robust to being
+    run from a NESTED cwd (e.g. from inside a notebook folder that has no config
+    of its own but sits under a project/hub that does). Fixes B11 — without this,
+    a nested cwd found no registry and ``topic_root`` fell back to ``cwd/topic``,
+    silently DOUBLING the path (e.g. ``notebooks/agentic-design/agentic-design``)."""
     base = Path(cwd) if cwd else Path.cwd()
-    cfg_path = base / ".claude" / "wiki-config.json"
-    if cfg_path.exists():
+    for d in [base, *base.parents]:
+        p = d / ".claude" / "wiki-config.json"
+        if p.exists():
+            return p
+    return None
+
+
+def load_config(cwd=None):
+    """Parsed wiki-config.json dict for the given cwd (default: real cwd), or {}.
+    Walks up parent dirs to find the NEAREST ``.claude/wiki-config.json`` (B11)."""
+    cfg_path = _find_config_path(cwd)
+    if cfg_path:
         try:
             return json.loads(cfg_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
@@ -101,7 +116,10 @@ def load_registry(cwd=None, cfg=None):
         return None, None
     rp = Path(reg_path)
     if not rp.is_absolute():
-        base = Path(cwd) if cwd else Path.cwd()
+        # Resolve a relative registry path against the config FILE's project root
+        # (the dir above .claude/), not the cwd — so a nested cwd still resolves it.
+        cfg_path = _find_config_path(cwd)
+        base = cfg_path.parent.parent if cfg_path else (Path(cwd) if cwd else Path.cwd())
         rp = base / reg_path
     if rp.exists():
         try:
