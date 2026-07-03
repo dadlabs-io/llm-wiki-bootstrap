@@ -39,6 +39,8 @@ TRAVEL_SCRIPTS = [
     "wiki-index.py",
     "wiki-index-per-folder.py",
     "wiki-lint-mechanical.py",
+    "wiki-fix-links.py",
+    "wiki-dequeue.py",
     "wiki-list-add.py",
     "wiki-list-process.py",
     "wiki-list-render.py",
@@ -51,7 +53,7 @@ TRAVEL_SCRIPTS = [
 
 # Skill directories that travel to every install.
 TRAVEL_SKILLS = [
-    "new-wiki", "wrap-up",
+    "new-wiki", "wrap-up", "upd-docs",
     "wiki", "wiki-init", "wiki-update", "wiki-search", "wiki-cycle",
     "wiki-discover", "wiki-list", "wiki-claims", "wiki-refresh",
     "wiki-report", "wiki-lint", "wiki-promote",
