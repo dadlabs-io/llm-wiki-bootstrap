@@ -59,8 +59,8 @@ Two human checkpoints per cycle. Everything else is automated.
 | 1 | Discover | Search trusted feeds (configured in `_config/feeds.md`) for new content within the date window. Staleness-first ordering: feeds with the oldest `To` date go first. | `/wiki-discover` (internal) |
 | 2 | Filter | Dedupe candidates against existing wiki + pending queue. Drop low-tier-irrelevant. | (part of discover) |
 | 3 | **Human review #1 (URLs)** | Orchestrator pauses, shows Queued/Skipped/Deferred tables. User approves before any fetching happens. | (interactive checkpoint) |
-| 4 | Ingest | Fetch each approved URL, synthesize a wiki entry with proper frontmatter, file under appropriate folder, save raw to `raw/`. | `/wiki-update` (internal call) |
-| 5 | Integrate | Reciprocate backlinks across the wiki (every outbound `.md` link gets an inbound link in target's `BACKLINKS-AUTO` section). Regenerate per-folder _INDEX.md and the always-loaded _MAP.md. | scripts: `wiki-reciprocate-backlinks.py`, `wiki-index-per-folder.py`, `wiki-map-compile.py` |
+| 4 | Ingest | Fetch each approved URL, synthesize a wiki entry with proper frontmatter, file under appropriate folder (staged to `_inbox/proposed/` by default), save raw to `raw/`. Then **dequeue** every processed item from `_inbox/pending/` to `_inbox/done/`. | `/wiki-update` (internal call), then `wiki-dequeue.py` |
+| 5 | Integrate | **Normalize links** (resolve bare-slug / wrong-depth cross-links to correct relative paths) → **reciprocate backlinks** (every outbound `.md` link gets an inbound link in target's `BACKLINKS-AUTO` section) → regenerate per-folder _INDEX.md and the always-loaded _MAP.md. | scripts: `wiki-fix-links.py`, `wiki-reciprocate-backlinks.py`, `wiki-index-per-folder.py`, `wiki-map-compile.py` |
 | 6 | Self-assess (mechanical) | Broken links, orphans, missing frontmatter, missing tier/confidence. | `wiki-lint-mechanical.py` |
 | 6 | Self-assess (semantic) | _`--full` only._ 4 parallel agents read each folder, find contradictions / missing cross-refs / thin coverage / concept gaps / tier issues. | `/wiki-lint --full` (internal) |
 | 6b | Contradiction hunt | _`--full` only._ Claim-level extraction + cross-claim contradiction detection. | `/wiki-claims` (internal) |
@@ -160,7 +160,7 @@ llm-wiki is built around Chappy Asel's [self-improving AI stack](https://x.com/c
 ├── _inbox/
 │   ├── pending/                     — queued items waiting for ingest
 │   ├── proposed/                    — staged entries pending human approval (Phase 7)
-│   ├── done/                        — historical record of what was queued
+│   ├── done/                        — items already ingested (moved here on dequeue; audit trail)
 │   ├── discovered/                  — discovery checklists (Phase 1 output)
 │   ├── reports/<date>/<cycle_id>/   — per-cycle artifacts (JSON + MD sidecars + final report)
 │   └── lint-report.md               — latest mechanical lint output
@@ -187,6 +187,8 @@ llm-wiki is built around Chappy Asel's [self-improving AI stack](https://x.com/c
 
 - `raw/` is **append-only**. Never edit or delete a raw file. The agent fetches; humans don't touch.
 - `_inbox/proposed/` is **staging**. Human approves via `/wiki-promote` before entries reach `wiki/`.
+- **Queue lifecycle**: an item lives in `_inbox/pending/` until it's ingested, then moves to `_inbox/done/`. `/wiki-cycle` runs `wiki-dequeue.py` after ingest to do this automatically (it matches a pending item's `source:` URL against ingested entries in `wiki/` or `_inbox/proposed/`). If you ever see already-ingested items lingering in `pending/`, run `wiki-dequeue.py --topic <topic>` to reconcile — genuinely-unprocessed and unreadable-deferral items stay put.
+- **Cross-links are authored by bare slug** — the markdown link target is just the bare filename (`some-entry.md`), no folder path; `wiki-fix-links.py` (run on promote / in the cycle's Integrate phase) resolves them to correct relative paths. If a promoted entry shows broken links, run `wiki-fix-links.py --topic <topic>` — it's deterministic and idempotent.
 - `wiki/<folder>/_INDEX.md` and `wiki/_MAP.md` are **auto-regenerated**. Don't hand-edit; changes get overwritten.
 - `BACKLINKS-AUTO` blocks inside any entry are **machine-managed**. Edit only outside the markers.
 - `best-practices/framework/*.md` are **framework contracts**. Don't edit unless you intend to fork the framework.

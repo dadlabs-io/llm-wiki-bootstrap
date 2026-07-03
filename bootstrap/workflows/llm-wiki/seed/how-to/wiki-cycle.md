@@ -8,7 +8,7 @@ The main pipeline. Discover new sources, ingest approved items, lint, fix, gener
 /wiki-cycle
 ```
 
-Default `--quick` mode: Drive-fetch → Discover → Confirm → Ingest → Mechanical lint → Reciprocate backlinks → INDEX regen → MAP regen → Morning report → Promote checkpoint. ~5-10 min for ≤20 items.
+Default `--quick` mode: Drive-fetch → Discover → Confirm → Ingest → **Dequeue** (move ingested items `pending/`→`done/`) → Mechanical lint → **Normalize links** (`wiki-fix-links.py`) → Reciprocate backlinks → INDEX regen → MAP regen → Morning report → Promote checkpoint. ~5-10 min for ≤20 items.
 
 ## Mode flags
 
