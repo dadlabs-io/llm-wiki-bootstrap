@@ -34,7 +34,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions  # noqa: E402
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -79,6 +79,9 @@ def collect_md_files(wiki_root):
     for path in sorted(wiki_root.rglob("*.md")):
         if path.name in {"_INDEX.md", "_MAP.md"}:
             continue  # skip auto-generated index/map files
+        rel = path.relative_to(wiki_root)
+        if "_inbox" in rel.parts or _in_sessions(rel):
+            continue  # _inbox = scratch/reports; sessions/ = non-curated working/episodic memory
         yield path
 
 

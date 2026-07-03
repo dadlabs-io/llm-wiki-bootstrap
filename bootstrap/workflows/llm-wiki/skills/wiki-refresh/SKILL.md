@@ -165,6 +165,7 @@ The `/wiki-report` morning report references this skill's output — the "Stale 
 - Don't re-fetch URLs without asking — some sources may be paywalled or rate-limited
 - Don't treat "overdue" as "wrong" — it just means the scheduled review hasn't happened yet
 - Don't scan raw/ files — only wiki/ entries have lifecycle metadata
+- Don't scan `sessions/` — it's non-curated working/episodic memory (like `_inbox/`); its dashboards and journals have no `review_after` lifecycle and must not be flagged as stale
 
 
 ## Cycle contract

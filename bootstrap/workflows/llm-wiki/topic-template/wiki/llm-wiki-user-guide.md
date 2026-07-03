@@ -179,6 +179,15 @@ llm-wiki is built around Chappy Asel's [self-improving AI stack](https://x.com/c
     │   │   ├── cycle-step-return-format.md
     │   │   └── tiered-context-loading.md
     │   └── ...                      — reference patterns (free to edit, ingested from external authors)
+    ├── sessions/                    — MEMORY layer (non-curated; exempt from the pipeline like _inbox/)
+    │   ├── active-context.md        — cross-persona dashboard          (MUTABLE)
+    │   └── <persona>/               — created on demand by the running persona (no fixed list)
+    │       ├── task.md              — NOW + QUEUE                       (MUTABLE, overwrite)
+    │       ├── handoff.md           — resume-here / survival dump       (MUTABLE, overwrite)
+    │       ├── BACKLOG.md           — persona backlog                   (MUTABLE)
+    │       ├── reading-list.json    — session-start context load
+    │       ├── incoming/            — inter-persona handoff (CRs)
+    │       └── <YYYY-MM>/<date>-<sid>.md  — episodic journals (APPEND; written by /wrap-up)
     └── <topic-folders>/             — your content; folder taxonomy is up to you
         └── <folder>/_INDEX.md        — auto-generated tier-2 maps
 ```
@@ -191,6 +200,7 @@ llm-wiki is built around Chappy Asel's [self-improving AI stack](https://x.com/c
 - **Cross-links are authored by bare slug** — the markdown link target is just the bare filename (`some-entry.md`), no folder path; `wiki-fix-links.py` (run on promote / in the cycle's Integrate phase) resolves them to correct relative paths. If a promoted entry shows broken links, run `wiki-fix-links.py --topic <topic>` — it's deterministic and idempotent.
 - `wiki/<folder>/_INDEX.md` and `wiki/_MAP.md` are **auto-regenerated**. Don't hand-edit; changes get overwritten.
 - `BACKLINKS-AUTO` blocks inside any entry are **machine-managed**. Edit only outside the markers.
+- **`sessions/` is the memory layer, not curated content.** It holds *working memory* (persona-root `task.md`/`handoff.md`/`BACKLOG.md`/`reading-list.json` + `active-context.md` — MUTABLE, overwrite-in-place, written by `/upd-docs`) and *episodic memory* (dated `<YYYY-MM>/` journals — append-only, written by `/wrap-up`). The whole `sessions/` tree is **exempt from the curated pipeline** the same way `_inbox/` is — lint/map/index/reciprocate/refresh skip it — while qmd still indexes it so it stays searchable. Persona folders are created **on demand** (a new persona just makes its own folder); there is no fixed persona list. There is **no `completed.md`** — the completed record is the `/wrap-up` journals (searchable by `session_id`/`date`/`persona`).
 - `best-practices/framework/*.md` are **framework contracts**. Don't edit unless you intend to fork the framework.
 
 ## When you're stuck

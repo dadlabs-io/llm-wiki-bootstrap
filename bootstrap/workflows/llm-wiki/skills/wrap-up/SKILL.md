@@ -266,6 +266,10 @@ If the user types `/wrap-up` but the session was:
 
 Never silently file empty / thin entries. Better to say "nothing here merits a wiki entry yet" than to clutter the wiki.
 
+## Relationship to `/upd-docs`
+
+`/wrap-up` owns the **episodic** tier of `sessions/` (the dated journal) + durable `project/*` extraction. `/upd-docs` owns the **working-memory** tier (the mutable `sessions/<persona>/{task,handoff}.md` + `active-context.md`). The journal's work-completed section IS the completed record — there is no separate `completed.md`. For a quick "save my live task state / resume point" without crystallizing knowledge, use `/upd-docs`; for "document what we built this session," use `/wrap-up`.
+
 ## Cross-link to the wider system
 
 - Reciprocate-backlinks runs automatically after entries are filed (same as wiki-update).

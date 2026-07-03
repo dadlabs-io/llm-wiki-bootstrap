@@ -39,7 +39,7 @@ from __future__ import annotations
 import sys as _sys  # noqa: E402
 from pathlib import Path as _ShimPath  # noqa: E402
 _sys.path.insert(0, str(_ShimPath(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions  # noqa: E402
 import argparse
 import json
 import re
@@ -87,6 +87,7 @@ def find_wiki_entries(wiki_root: Path) -> list[Path]:
     return sorted(
         p for p in wiki_root.rglob("*.md")
         if not p.name.startswith(".") and p.name not in skip_names
+        and not _in_sessions(p.relative_to(wiki_root))  # sessions/ = non-curated working/episodic memory
     )
 
 

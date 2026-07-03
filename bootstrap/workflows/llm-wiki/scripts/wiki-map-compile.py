@@ -46,7 +46,7 @@ from __future__ import annotations
 import sys as _sys  # noqa: E402
 from pathlib import Path as _ShimPath  # noqa: E402
 _sys.path.insert(0, str(_ShimPath(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions  # noqa: E402
 import argparse
 import json
 import re
@@ -319,12 +319,15 @@ def render_map(wiki_root: Path, topic: str, folder_data: dict[str, list[dict]], 
 
 def process(wiki_root: Path, topic: str, dry_run: bool = False) -> dict:
     folder_data = {}
-    # Container folders (four-layer model: research/, project/, sessions/) hold subfolders
-    # instead of direct .md entries. Walk one level deeper into those.
-    CONTAINER_FOLDERS = {"research", "project", "sessions"}
+    # Container folders (research/, project/) hold subfolders instead of direct
+    # .md entries. Walk one level deeper into those. sessions/ is NON-CURATED
+    # (working + episodic memory) and is excluded from the map entirely.
+    CONTAINER_FOLDERS = {"research", "project"}
     for child in sorted(wiki_root.iterdir()):
         if not child.is_dir() or child.name.startswith("."):
             continue
+        if child.name == "sessions":
+            continue  # non-curated working/episodic memory — not orientation knowledge
         entries = collect_folder_entries(child)
         if entries:
             folder_data[child.name] = entries

@@ -34,6 +34,7 @@ Resolution order in every helper: registry (if ``notebook`` + ``registry`` prese
 → explicit ``vault_root`` → cwd. So existing v1/v2 configs keep working unchanged.
 """
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -76,6 +77,37 @@ MERGED_TAXONOMY = [
     "project/patterns", "project/troubleshooting", "project/best-practices",
     "sessions",
 ]
+
+
+# ---------- sessions/ classification (working + episodic memory) ----------
+# sessions/ holds NON-CURATED memory and is exempt from the curated pipeline the
+# same way _inbox/ is — lint/map/index/reciprocate skip it (and /wiki-refresh),
+# while qmd still indexes it so it stays searchable. Two tiers, by folder depth:
+#   * persona-root dashboards — sessions/<persona>/{task,handoff,BACKLOG}.md,
+#     sessions/<persona>/reading-list.json, sessions/active-context.md — MUTABLE
+#     working memory, overwrite-in-place, owned by /upd-docs.
+#   * dated journals — sessions/<persona>/<YYYY-MM>/*.md — append-only episodic
+#     memory, owned by /wrap-up.
+# Persona folders are created ON DEMAND by the running persona (no fixed list).
+_SESSION_MONTH_RE = re.compile(r"\d{4}-\d{2}")
+
+
+def in_sessions(path) -> bool:
+    """True if ``path`` is anywhere under a ``sessions/`` folder."""
+    return "sessions" in Path(path).parts
+
+
+def is_session_journal(path) -> bool:
+    """True for a dated episodic journal (``sessions/<persona>/<YYYY-MM>/*.md``)."""
+    p = Path(path)
+    return "sessions" in p.parts and any(_SESSION_MONTH_RE.fullmatch(part) for part in p.parts)
+
+
+def is_session_dashboard(path) -> bool:
+    """True for a persona-root mutable working-memory file — anything under
+    ``sessions/`` that is NOT a dated journal (task/handoff/BACKLOG/reading-list/
+    active-context)."""
+    return in_sessions(path) and not is_session_journal(path)
 
 
 def _find_config_path(cwd=None):
