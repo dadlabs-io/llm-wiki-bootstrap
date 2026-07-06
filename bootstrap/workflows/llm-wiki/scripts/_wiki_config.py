@@ -85,9 +85,10 @@ MERGED_TAXONOMY = [
 # while qmd still indexes it so it stays searchable. Two tiers, by folder depth:
 #   * persona-root dashboards — sessions/<persona>/{task,handoff,BACKLOG}.md,
 #     sessions/<persona>/reading-list.json, sessions/active-context.md — MUTABLE
-#     working memory, overwrite-in-place, owned by /upd-docs.
+#     working memory, overwrite-in-place, written by /wrap-up (Step 0.5).
 #   * dated journals — sessions/<persona>/<YYYY-MM>/*.md — append-only episodic
-#     memory, owned by /wrap-up.
+#     memory, written by /wrap-up (Step 0). (The old /upd-docs skill that owned the
+#     dashboards was folded into /wrap-up on 2026-07-06.)
 # Persona folders are created ON DEMAND by the running persona (no fixed list).
 _SESSION_MONTH_RE = re.compile(r"\d{4}-\d{2}")
 

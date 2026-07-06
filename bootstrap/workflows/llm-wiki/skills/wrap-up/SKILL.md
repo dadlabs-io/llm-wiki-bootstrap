@@ -1,6 +1,6 @@
 ---
 name: wrap-up
-description: Crystallize the current session's work into the project wiki. ALWAYS updates a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ (upserted every wrap-up so the "what we did" record builds as you go), AND extracts durable knowledge — components built, decisions made, patterns established, bugs investigated — staged to _inbox/proposed/ for review then promoted to wiki/project/<category>/. After staging it OFFERS to promote inline (yes/no/pick), configurable per-notebook via `wrap_up_auto_promote`. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says "wrap up", "wrap-up", "/wrap-up", "wrap this session", "document what we did", "crystallize this session", "save this work".
+description: Crystallize the current session's work into the project wiki AND refresh the working-memory dashboards. ALWAYS (1) upserts a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ so the "what we did" record builds as you go, (2) refreshes the mutable working-memory dashboards — sessions/<persona>/handoff.md + task.md + sessions/active-context.md (the resume pointer; the memory-bank replacement), and (3) extracts durable knowledge — components/decisions/patterns/bugs — staged to _inbox/proposed/ then promoted to wiki/project/<category>/ (auto-promote configurable per-notebook via `wrap_up_auto_promote`). This is the ONE session-close command — it absorbs the retired /upd-docs. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says "wrap up", "wrap-up", "/wrap-up", "wrap this session", "document what we did", "crystallize this session", "save this work", "save progress", "save state", "update docs", "upd-docs".
 ---
 
 # /wrap-up
@@ -79,6 +79,50 @@ inference. Refreshed every wrap-up.>
 (For `HH:MM`, run `date '+%H:%M'` if you need a real clock — the model doesn't have one otherwise. If unavailable, just use the sequence number `Update 1`, `Update 2`, …)
 
 The journal is the chronological "what we did"; the `project/` entries below (Steps 1-3) are the distilled durable knowledge extracted from it. Both, every wrap-up.
+
+### Step 0.5 — Refresh the working-memory dashboards (ALWAYS — every `/wrap-up`)
+
+Right after the journal, refresh the **working-memory** tier of `sessions/` — the mutable dashboards that answer "where do I resume." These are the direct replacement for the old `memory-bank/short-term/_personas/*` + `active-context.md`, so `/wrap-up` keeps them current on every run. (This work used to be a separate `/upd-docs` skill; it was folded in here so session-close is a single command — a wrap-up must never leave the resume pointer stale.)
+
+All three are **overwrite-in-place**, written **directly** to `sessions/` (NOT staged in `_inbox/proposed/`), and exempt from the curated pipeline (lint/map/index/reciprocate/refresh skip `sessions/` like `_inbox/`; qmd still indexes it). Resolve `<persona>` (same as Step 0) and create the folder on demand — a new persona just works, there is no fixed list:
+
+```bash
+mkdir -p <wiki_dir>/sessions/<persona>
+```
+
+**(a) `sessions/<persona>/handoff.md` — OVERWRITE** with a full resume dump. This is survival insurance and the stable-path resume pointer: a cold-start session reads THIS (not the newest dated journal, which it would have to glob for) to know where to pick up.
+
+```
+HANDOFF — <PERSONA> — <DATE>
+GOAL: [one sentence — what to do next]
+WORK COMPLETED (this session): [what was done, file paths, key decisions]
+CURRENT STATE: [what's running / broken / blocked]
+PENDING: [planned-but-not-done, blockers]
+KEY FILES: [path — role] (max 10)
+CONTEXT FOR CONTINUATION: [what the next session needs; gotchas; references]
+```
+
+First person; workspace-relative paths; no secrets; it's a snapshot, not a log — overwrite.
+
+**(b) `sessions/<persona>/task.md` — READ first, then update in place** (don't blind-overwrite):
+
+```
+## NOW
+[Single thing being actively worked — or "Awaiting next task"]
+
+## QUEUE
+1. [Next priority]
+2. [After that]
+3. [Backlog]
+```
+
+Promote the next QUEUE item to NOW as work completes.
+
+**(c) `sessions/active-context.md` — update ONLY your persona's lines** (Status / Recent / Next) in the cross-persona dashboard. Do NOT touch other personas' sections; do NOT rewrite the file. Skip if your section already describes what you're doing.
+
+These restate the same `Goal` / `Next` / completed info you just wrote into the journal — but in the **stable-path** dashboards, so a fresh session finds the resume pointer without hunting through dated journals. There is **no `completed.md`** — the journal's work-completed record covers it; never create one.
+
+**First-run note:** the very first `/wrap-up` after this was folded in (or for a brand-new persona) has to author `handoff.md` + `task.md` from scratch, so it writes a bit more than a normal incremental refresh. That's expected — subsequent runs just update in place.
 
 ### Step 1 — Scan the session for durable work
 
@@ -175,6 +219,7 @@ Show the user:
 ```
 Wrapped up:
   Session journal updated: wiki/sessions/main/2026-05/2026-05-12-<session-id>.md  (Update 3)
+  Working memory refreshed: sessions/main/{handoff,task}.md + active-context.md
   3 entries staged to _inbox/proposed/ (→ wiki/project/<category>/ on promote):
   - troubleshooting/oauth-re-prompt-root-cause-2026-05-12.md
   - decisions/move-handled-default-on-2026-05-12.md
@@ -266,9 +311,19 @@ If the user types `/wrap-up` but the session was:
 
 Never silently file empty / thin entries. Better to say "nothing here merits a wiki entry yet" than to clutter the wiki.
 
-## Relationship to `/upd-docs`
+## The three memory tiers this writes (`/upd-docs` is retired — folded in here)
 
-`/wrap-up` owns the **episodic** tier of `sessions/` (the dated journal) + durable `project/*` extraction. `/upd-docs` owns the **working-memory** tier (the mutable `sessions/<persona>/{task,handoff}.md` + `active-context.md`). The journal's work-completed section IS the completed record — there is no separate `completed.md`. For a quick "save my live task state / resume point" without crystallizing knowledge, use `/upd-docs`; for "document what we built this session," use `/wrap-up`.
+`/wrap-up` is the single session-close command. It writes all of `sessions/` plus the durable layer:
+
+| Tier | Files | Lifecycle | Step |
+|---|---|---|---|
+| **Working memory** | `sessions/<persona>/{handoff,task}.md` + `sessions/active-context.md` | MUTABLE — overwrite in place | Step 0.5 |
+| **Episodic** | `sessions/<persona>/<YYYY-MM>/<date>-<sid>.md` (the journal) | APPEND — one entry per session | Step 0 |
+| **Semantic (durable)** | `project/<category>/*` (staged → promoted) | curated, reviewed | Steps 1-6 |
+
+The working-memory dashboards are the direct replacement for `memory-bank/short-term/_personas/*` + `active-context.md`. There used to be a separate `/upd-docs` skill for the working tier; it was **retired** and folded into Step 0.5 so a wrap-up always leaves the resume pointer fresh (a wrap-up that updated the journal but left `handoff.md` stale was the failure mode that motivated the merge). The journal's work-completed section IS the completed record — there is **no** `completed.md`.
+
+If you just want the fast working-memory refresh without the durable-extraction proposal flow, that's fine: run `/wrap-up` and answer `none` at the proposal table (Step 2) — Steps 0 + 0.5 still run (journal + dashboards), and nothing gets staged.
 
 ## Cross-link to the wider system
 

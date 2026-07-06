@@ -72,7 +72,7 @@ It is critical that the **DEV** persona maintains working notes.
 
 ### Shared Dashboard (Human-Facing)
 
-`memory-bank/short-term/active-context.md` is the **human dashboard** — a cross-persona status overview. Each persona updates **ONLY their section** during the `/upd-docs` workflow.
+`sessions/active-context.md` is the **human dashboard** — a cross-persona status overview. Each persona updates **ONLY their section** during the `/wrap-up` workflow (Step 0.5).
 
 - **DEV**: `short-term/_personas/dev/task.md`, status, and active implementation plan link.
 - **ARCH**: `short-term/_personas/arch/task.md`, status, and system map health.

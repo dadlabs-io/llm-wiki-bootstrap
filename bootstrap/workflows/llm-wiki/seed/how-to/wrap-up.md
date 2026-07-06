@@ -1,6 +1,12 @@
-# /wrap-up — end-of-session distillation (development projects)
+# /wrap-up — end-of-session distillation + working-memory refresh
 
-Crystallize what happened in the current session into proposed wiki entries. The session log goes to `raw/sessions/`; the distilled entries get staged to `wiki/_inbox/proposed/` for review.
+The single session-close command. It writes all three memory tiers under `sessions/` plus the durable layer, and (since 2026-07-06) absorbs the retired `/upd-docs`:
+
+1. **Episodic journal** (always) — upserts `wiki/sessions/<persona>/<YYYY-MM>/<date>-<sid>.md`, the append-only "what we did" log.
+2. **Working-memory dashboards** (always, Step 0.5) — refreshes the mutable resume pointer: `sessions/<persona>/handoff.md` (overwrite), `sessions/<persona>/task.md` (NOW/QUEUE, update in place), and your section of `sessions/active-context.md`. These are the memory-bank replacement — a wrap-up never leaves them stale.
+3. **Durable knowledge** (optional) — distills components/decisions/patterns/bugs, staged to `wiki/_inbox/proposed/` then promoted to `wiki/project/<category>/`.
+
+If you only want the fast working-memory refresh, run `/wrap-up` and answer `none` at the proposal table — the journal + dashboards still update, nothing gets staged.
 
 ## When to run
 

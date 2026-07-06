@@ -53,7 +53,7 @@ TRAVEL_SCRIPTS = [
 
 # Skill directories that travel to every install.
 TRAVEL_SKILLS = [
-    "new-wiki", "wrap-up", "upd-docs",
+    "new-wiki", "wrap-up",
     "wiki", "wiki-init", "wiki-update", "wiki-search", "wiki-cycle",
     "wiki-discover", "wiki-list", "wiki-claims", "wiki-refresh",
     "wiki-report", "wiki-lint", "wiki-promote",
