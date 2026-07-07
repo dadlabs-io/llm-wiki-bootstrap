@@ -47,8 +47,10 @@ TRAVEL_SCRIPTS = [
     "wiki-map-compile.py",
     "wiki-promote.py",
     "wiki-reciprocate-backlinks.py",
+    "wiki-rollback.py",
     "wiki-update.py",
     "wiki-upgrade.py",
+    "wiki-verify.py",
 ]
 
 # Skill directories that travel to every install.
@@ -57,6 +59,7 @@ TRAVEL_SKILLS = [
     "wiki", "wiki-init", "wiki-update", "wiki-search", "wiki-cycle",
     "wiki-discover", "wiki-list", "wiki-claims", "wiki-refresh",
     "wiki-report", "wiki-lint", "wiki-promote",
+    "wiki-rollback", "wiki-verify",
 ]
 
 # Helper scripts copied alongside TRAVEL_SCRIPTS in a tooling install (not

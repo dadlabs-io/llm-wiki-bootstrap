@@ -35,7 +35,9 @@ Install target: `~/.claude/skills/<skill>/SKILL.md`
 | `wiki-refresh` | both | Stale-entry scan — internal to cycle |
 | `wiki-report` | research | Morning report — internal to cycle |
 | `wiki-lint` | both | Mechanical + semantic lint |
-| `wiki-promote` | both | Stage → promote with backlink + INDEX regen |
+| `wiki-promote` | both | Stage → promote with backlink + INDEX regen (runs `/wiki-verify` as a sub-step) |
+| `wiki-verify` | both | Flip an entry unverified → verified via sidecar (truth-status lifecycle; added 2026-05-25, registered to travel 2026-07-07) |
+| `wiki-rollback` | both | Roll an entry back to its verified ancestor (pairs with `wiki-verify`; added 2026-05-25, registered to travel 2026-07-07) |
 | `wrap-up` | development | Session-end distillation into wiki entries (written 2026-05-12) |
 
 ## B. Global scripts
@@ -54,6 +56,8 @@ Install target: `~/.claude/wiki-scripts/<script>.py`
 | `wiki-map-compile.py` | Regenerate root-level `_MAP.md` (~2900 tokens, always-loaded) |
 | `wiki-fetch-drive-folder.py` | Google Drive `__FOR CLAUDE/<topic>/` → pending queue + cleanup |
 | `wiki-promote.py` | Move `_inbox/proposed/<folder>/<slug>.md` → `wiki/<folder>/<slug>.md` + backlinks |
+| `wiki-verify.py` | Sidecar update flipping truth-status to verified (called by /wiki-verify) |
+| `wiki-rollback.py` | Walk `revises:` chain to verified ancestor + write rollback entry (called by /wiki-rollback) |
 | `new-wiki.py` | The bootstrap helper (to be written) |
 
 ## C. Templates
