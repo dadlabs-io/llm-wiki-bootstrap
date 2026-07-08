@@ -169,9 +169,40 @@ Wait for explicit confirmation. The user MUST get to veto before any wiki entry 
 
 ### Step 3 — File each kept candidate to `_inbox/proposed/`
 
-Same staging discipline as `/wiki-update` — entries go to `<vault>/<project>/_inbox/proposed/<slug>.md`, NOT directly to `wiki/`. Promotion via `/wiki-promote` moves each to its target folder `wiki/project/<category>/` (components, decisions, architecture, patterns, troubleshooting). The metadata sidecar records `target_folder: project/<category>`.
+Same staging discipline as `/wiki-update` — entries go to `<topic_root>/_inbox/proposed/<slug>.md`.
+**`<topic_root>` is a SIBLING of `wiki/`, NOT nested inside it** — i.e.
+`<topic_root>/_inbox/proposed/`, never `<topic_root>/wiki/_inbox/proposed/`. To resolve
+`<topic_root>`: read `<cwd>/.claude/wiki-config.json` for `notebook` + `registry`; look up
+`notebooks[<name>]` in the registry (`.root`, or `.vault_root` + `.topic`) — that resolved path
+IS `<topic_root>` (the wiki itself lives one level down, at `<topic_root>/wiki/`). Get this wrong
+and `/wiki-promote` reports "nothing in `_inbox/proposed/` to promote" even though the file exists
+(it's looking one level up from where you put it).
 
-Each entry has:
+Promotion via `/wiki-promote` moves each entry to its target folder `wiki/project/<category>/`
+(components, decisions, architecture, patterns, troubleshooting) — **but only if you write the
+sidecar in this step**. `wiki-promote.py` reads the target folder from a
+`<slug>.proposed_metadata.json` sidecar next to the `.md` file, NOT from the `.md`'s own
+frontmatter `category:` field — an entry staged without a sidecar silently promotes to the **wiki
+root** instead of `project/<category>/`. Write both files:
+
+```json
+// <slug>.proposed_metadata.json — same folder as the .md, same slug stem
+{
+  "target_folder": "project/<category>",
+  "title": "<same as the .md's title>",
+  "tier": "self",
+  "confidence": "<high|medium|low>",
+  "inbound_candidates": [],
+  "suggested_backlinks": [],
+  "created": "<ISO-8601 local timestamp with UTC offset>"
+}
+```
+
+(`inbound_candidates`/`suggested_backlinks` can stay empty arrays — `/wiki-update`'s ingest-time
+mention-scan populates them for external sources; `/wrap-up` entries don't need it unless you've
+already identified specific files to backlink.)
+
+Each `.md` entry has:
 
 ```yaml
 ---
