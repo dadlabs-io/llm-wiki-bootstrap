@@ -261,10 +261,33 @@ def wiki_dir(topic=None, vault=None, cwd=None):
     Registry-aware: resolves the topic root via ``topic_root()`` (which honors
     the linked-notebooks registry, including notebooks whose root has an extra
     path segment like ``.../<name>/llm-wiki``). Pass an explicit ``vault`` to
-    force the legacy ``<vault>/<topic>/wiki`` join (override / non-registry use).
+    force the legacy ``<vault>/<topic>/wiki`` join (override / non-registry use)
+    — this is the convention most ``wiki-*.py`` scripts' own ``--vault`` flag
+    uses: ``vault`` = the VAULT-OF-TOPIC-ROOTS (the dir that CONTAINS the topic
+    folder), e.g. ``notebooks/``.
+
+    ``wiki-promote.py``'s own top-level ``--vault`` flag means something
+    different — the topic's ``wiki/`` dir itself (``<topic_root>/wiki``) — and
+    internally translates before calling scripts that use this function. If a
+    caller passes that shape here instead (a common mix-up — see
+    llm-wiki-bootstrap issue "wiki-map-compile.py --vault CLI inconsistency"),
+    the legacy join below produces a doubled, nonexistent path. Recognize the
+    two most common misuse shapes (``vault`` already IS ``<topic_root>/wiki``,
+    or already IS ``<topic_root>``) before falling back to the legacy path —
+    gated on the folder name actually matching the topic, so a genuine
+    vault-of-topic-roots whose own name happens to collide isn't misread.
     """
     if vault:
-        return str(Path(vault) / (topic or default_topic(cwd)) / "wiki")
+        t = topic or default_topic(cwd)
+        legacy = Path(vault) / t / "wiki"
+        if legacy.is_dir():
+            return str(legacy)
+        direct = Path(vault)
+        if direct.name == "wiki" and direct.parent.name == t and direct.is_dir():
+            return str(direct)  # vault was already "<topic_root>/wiki"
+        if direct.name == t and (direct / "wiki").is_dir():
+            return str(direct / "wiki")  # vault was already "<topic_root>"
+        return str(legacy)  # nothing resolved — keep the expected-path error honest
     return str(Path(topic_root(topic, cwd)) / "wiki")
 
 

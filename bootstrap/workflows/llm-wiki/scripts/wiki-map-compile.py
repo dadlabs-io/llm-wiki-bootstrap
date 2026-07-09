@@ -429,8 +429,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--topic", required=True)
     ap.add_argument("--vault", default=None,
-                    help="Vault override (legacy <vault>/<topic>/wiki). Default: resolve "
-                         "the wiki via the registry (_wiki_config.wiki_dir).")
+                    help="Vault-of-topic-roots override (legacy <vault>/<topic>/wiki join — "
+                         "the dir that CONTAINS the topic folder, e.g. 'notebooks/'). NOT the "
+                         "same shape as wiki-promote.py's own --vault (which is the topic's "
+                         "wiki/ dir itself) — both shapes are now auto-recognized by "
+                         "_wiki_config.wiki_dir(), but omitting --vault entirely and relying on "
+                         "registry-based resolution is the simplest correct default.")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--cycle-id", default=None)
     ap.add_argument("--run-folder", default=None)
