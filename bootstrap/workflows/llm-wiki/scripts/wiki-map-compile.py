@@ -446,7 +446,10 @@ def main() -> int:
         return 2
 
     result = process(wiki_root, args.topic, dry_run=args.dry_run)
-    state = "↻ regenerated" if result["changed"] else "· unchanged"
+    # ASCII-only: Windows cp1252 consoles raise UnicodeEncodeError on
+    # U+21BB "↻" / U+00B7 "·" in print(), crashing AFTER the regen above
+    # already wrote its output (same class of bug as wiki-index-per-folder.py).
+    state = "regenerated" if result["changed"] else "unchanged"
     print(f"_MAP.md: {state}  |  {result['entries_total']} entries across {result['folders']} folders  |  ~{result['approx_tokens']} tokens")
 
     if args.cycle_id and args.run_folder:

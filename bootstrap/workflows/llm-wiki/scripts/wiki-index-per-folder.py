@@ -314,7 +314,13 @@ def main() -> int:
           f"indexed {entries_indexed} entries total.")
     for r in results:
         if r.get("entries", 0) > 0:
-            state = "↻" if r["changed"] else "·"
+            # ASCII-only markers: Windows consoles commonly run a cp1252 (not
+            # UTF-8) stdout encoding, where U+21BB "↻" / U+00B7 "·" raise
+            # UnicodeEncodeError on print() and crash the script AFTER the
+            # actual regeneration work above already completed and was
+            # written to disk. Silent-but-crashing summary output is worse
+            # than a plain marker; keep this line ASCII-only.
+            state = "*" if r["changed"] else "-"
             print(f"  {state} {r['folder']}/ ({r['entries']} entries)")
 
     if args.cycle_id and args.run_folder:
