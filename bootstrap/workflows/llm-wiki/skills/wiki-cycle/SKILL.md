@@ -314,6 +314,43 @@ Spawn fix agents for the issues found (same pattern as today — backlinks agent
 
 Update scratchpad Phase 6.
 
+### Step 5.5 — Promote staged entries (required before Steps 6/6.5 in `--full` mode)
+
+**Bug discovered + fixed 2026-07-11 (cycle 2026-07-10-01): Steps 6 (claims) and 6.5 (synthesis) both
+operate on "the wiki" / "new `research/` entries" — but the default ingest path (Step 2, `--staged`)
+files new entries to `_inbox/proposed/`, NOT `wiki/research/`. Nothing between Step 2 and Step 6
+promoted them. Result: synthesis agents wrote proposed-diff text that cross-linked staged entries by
+their eventual `wiki/research/<folder>/` path, which didn't exist yet — 7 broken links surfaced only
+at the post-synthesis mechanical re-lint, several steps after the mistake was made.**
+
+**Rule**: if this cycle run will execute Step 6 and/or Step 6.5 (i.e. any `--full` run, or `--quick`
+run with `--include-claims`/`--include-synthesis`), **promote all of this cycle's staged entries
+before running them**:
+
+```bash
+python C:/Users/mark/.claude/wiki-scripts/wiki-promote.py --vault <topic_root>/wiki --auto
+python C:/Users/mark/.claude/wiki-scripts/wiki-fix-links.py --topic <topic> --vault <vault_root>
+python C:/Users/mark/.claude/wiki-scripts/wiki-lint-mechanical.py --topic <topic> --vault <vault_root>  # confirm 0 broken links before proceeding
+```
+
+Note `wiki-promote.py --vault` wants the **wiki dir itself** (`<topic_root>/wiki`), not the
+vault_root — different convention from `wiki-update.py`/`wiki-lint-mechanical.py`, which want
+vault_root + `--topic`. Get this wrong and the script silently reports "nothing to promote."
+
+This is a deliberate exception to the normal staged-entries-wait-for-morning-review discipline
+(Step 2's rationale still holds for `--quick` runs where no human is watching) — but a `--full` run
+already has the human present in the same session (Step 1.5's discovery gate, and the Step 6.5
+synthesis human-gate that follows), and Steps 6/6.5 need live `wiki/research/` content to cite
+correctly. If the human explicitly wants staged entries held back from promotion even in a `--full`
+run, tell Steps 6/6.5's agents to treat everything still in `_inbox/proposed/` as out-of-scope
+(confirm-only "will review once promoted," no cross-links into it) rather than promoting — but
+promoting first is simpler and is what actually happened when this bug was fixed.
+
+After promoting: re-run Step 3.5's integration scripts (backlinks/index/map) since promotion adds a
+large batch of new entries + backlinks at once.
+
+Update scratchpad Phase 6 (or a new sub-phase) with promotion counts.
+
 ### Step 6 — Claims extraction (if claims index exists or first run)
 
 Run `/wiki-claims`. If this is the first run (no claims-index.json), do a full extraction. If index exists, run `--compare` for just the new entries.
