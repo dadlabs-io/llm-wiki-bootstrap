@@ -25,6 +25,7 @@ import os
 import re
 import shutil
 import sys
+import urllib.parse
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -32,18 +33,48 @@ import _wiki_config  # noqa: E402
 
 
 def _norm(u: str) -> str:
-    """Normalize a URL for matching: strip scheme/www, collapse arxiv ids and
-    github user/repo, drop query/fragment."""
+    """Normalize a URL for matching: strip scheme/www, decode %-escapes,
+    collapse arxiv ids, drop query/fragment.
+
+    GitHub URLs: keep the full blob/tree path when one is present (only
+    normalizing away the `blob/<branch>/` or `tree/<branch>/` noise) — do
+    NOT collapse to a bare `github:user/repo` key unless the URL genuinely
+    has no path beyond the repo root. Collapsing every `github.com/u/r/...`
+    URL to `github:u/r` was the root cause of a real over-match bug (2026-07-10,
+    see wiki/project/troubleshooting/wiki-dequeue-url-over-match-bug-2026-07-10.md):
+    a queue item citing `.../blob/main/skills/codex-first/SKILL.md` matched
+    an unrelated existing entry whose source_url was `.../skills/codex-review/SKILL.md`
+    — same repo, different file, silently treated as already-ingested and
+    dequeued without ever being ingested. wiki-update.py never rewrites a
+    filed entry's `source_url` away from what the user/caller originally gave
+    it (see wiki-update.py's acquire_source(), which returns the ORIGINAL
+    `source` string, not the fetch-rewritten URL) — so a bare repo-root
+    citation and a deep-link into the same repo are never the same intended
+    URL, and must not share a match key. This does mean a bare
+    `github.com/user/repo` queue item and a `.../blob/main/README.md` entry
+    for the "same" content will now be treated as different keys (they were
+    conflated before) — that's the safer direction to err: a false negative
+    here just means an already-covered item gets manually re-checked and
+    re-queued (recoverable); a false positive silently drops a genuinely new
+    source (not recoverable without exactly this kind of forensic dig).
+    """
     u = (u or "").strip().lower().rstrip("/")
     u = re.sub(r"^https?://", "", u)
     u = re.sub(r"^www\.", "", u)
+    u = u.split("?")[0].split("#")[0]
+    u = urllib.parse.unquote(u)  # decode %2F etc. BEFORE matching, not after
     m = re.search(r"arxiv\.org/(?:abs|pdf|html)/(\d+\.\d+)", u)
     if m:
         return "arxiv:" + m.group(1)
-    m = re.search(r"github\.com/([^/]+/[^/]+)", u)
+    m = re.match(r"github\.com/([^/]+)/([^/]+)(/.*)?$", u)
     if m:
-        return "github:" + m.group(1).replace(".git", "")
-    return u.split("?")[0].split("#")[0]
+        user, repo, rest = m.group(1), m.group(2), m.group(3) or ""
+        repo = repo.replace(".git", "")
+        if rest:
+            rest = re.sub(r"^/(?:blob|tree)/[^/]+/", "/", rest)
+            return f"github:{user}/{repo}{rest}"
+        return f"github:{user}/{repo}"
+    return u
 
 
 def _ingested_source_urls(wiki_dir: Path, proposed_dir: Path):
