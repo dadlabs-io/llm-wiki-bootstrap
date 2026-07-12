@@ -242,7 +242,7 @@ rm <topic>/_inbox/temp/<slug>.md
 |---|---|---|
 | `youtube.com`, `youtu.be` | `wiki-fetch-youtube.py` (yt-dlp in container) | YouTube needs transcript extraction, not page scraping |
 | **PDF URL** (`*.pdf`, `arxiv.org/pdf/*`) or local `.pdf` file | `wiki-fetch-pdf.py` (pdftotext + pypdf in container) | Hybrid extraction with quality-based fallback |
-| `x.com`, `twitter.com` | `wiki-fetch-page.js` (Playwright in container) | Fully JS-rendered, urllib gets "JavaScript is not available" |
+| `x.com`, `twitter.com` | `wiki-fetch-tweet.js` (syndication API, **runs on host, no Docker/browser**) | No login, no Chromium — see "X/Twitter flow" below. **Do NOT default to the Playwright recipe for X/Twitter** — it's the fallback only (protected/deleted tweets), not the default. Running it 4-way parallel across a batch is what spiked 15-20+ Chromium processes and hung the operator's machine on 2026-07-10 — the syndication API has no such cost. |
 | `medium.com`, `*.medium.com` | `wiki-fetch-page.js` | Heavy JS, paywall walls |
 | `threads.net`, `instagram.com`, `bsky.app` | `wiki-fetch-page.js` | All SPA-rendered |
 | `linkedin.com` | `wiki-fetch-page.js` | Auth gates, JS-rendered |
@@ -254,17 +254,40 @@ rm <topic>/_inbox/temp/<slug>.md
 
 **When in doubt, try urllib first (`wiki-update.py --fetch-only`), check the raw — if it's < 1KB or contains "JavaScript is not available" / "enable JavaScript" / mostly chrome navigation, switch to playwright.**
 
-## Playwright flow (JS-rendered pages)
+## X/Twitter flow (syndication API — default, added 2026-07-11)
 
-For X.com, Twitter, Medium, Threads, etc. The fetch happens inside the openclaw container where Playwright + Chromium are installed. Three steps (same shape as YouTube):
+For `x.com`/`twitter.com` status URLs. Runs on the **host directly** (Node is available natively — no `docker exec`, no Playwright, no Chromium). Single plain HTTPS GET to the public syndication endpoint, returns JSON.
+
+### Step 1 — Fetch via the syndication script
+
+```bash
+node {{WIKI_SCRIPTS_DIR}}/wiki-fetch-tweet.js --topic <topic> --url <url> --vault <vault_root> --ingested-by claude-code
+```
+
+`--vault` here is the **vault_root** (same convention as `wiki-update.py`/`wiki-fetch-youtube.py` — `<vault_root>/<topic>`), NOT the topic's `wiki/` dir. Prints `raw_path=<path>` on success.
+
+**When this fails** (deleted tweet, protected/private account, or a transient block — the script prints a clear reason and exits non-zero): fall back to the Playwright recipe below for that one URL. Don't retry the syndication script blindly, and don't reach for Playwright as the default — it's the exception path.
+
+**Long-form "Article"/note-tweet caveat**: if the raw file's body ends with the note about an untruncated `note_tweet` payload, the `text` field may be shorter than the actual post. If the content reads as cut off, re-fetch that one URL via the Playwright recipe to get the full body.
+
+### Step 2 — Read, synthesize, file
+
+Same as any other source: read the raw file, synthesize a curated summary, file via `wiki-update.py` per the standard flow below.
+
+## Playwright flow (JS-rendered pages — Medium, Threads, Notion, LinkedIn, and X/Twitter fallback)
+
+For Medium, Threads, Notion, LinkedIn, Instagram, Bluesky, and as the **fallback** for X/Twitter posts the syndication script can't reach. The fetch happens inside the `openclaw` Docker container where Playwright + Chromium are installed. Three steps (same shape as YouTube):
 
 ### Step 1 — Fetch via Playwright in container
 
 ```bash
-MSYS_NO_PATHCONV=1 docker exec openclaw bash -c 'cd /home/node && node {{WIKI_SCRIPTS_DIR}}/wiki-fetch-page.js --topic <topic> --url <url> --vault llm-wiki/wiki --ingested-by claude-code'
+MSYS_NO_PATHCONV=1 docker exec openclaw bash -c 'mkdir -p /tmp/scratch-vault/<topic> && node /home/node/.openclaw/agents-training/main/skills/research-wiki/wiki-fetch-page.js --topic <topic> --url <url> --vault /tmp/scratch-vault --ingested-by claude-code'
+docker cp openclaw:/tmp/scratch-vault/<topic>/raw/<file>.md "<vault_root>/<topic>/raw/<file>.md"
 ```
 
-The script prints `raw_path=<path>` — capture it. Note the `MSYS_NO_PATHCONV=1` is needed on Git Bash for Windows (prevents path mangling). On Linux/Mac it's a harmless no-op.
+**Path note (bug found + fixed 2026-07-10)**: the script does NOT live at `{{WIKI_SCRIPTS_DIR}}/wiki-fetch-page.js` inside the container — that Windows host path doesn't exist there. Its real location inside the container is `/home/node/.openclaw/agents-training/main/skills/research-wiki/wiki-fetch-page.js`. Also, the script's own `--vault` default (`/shared/openclaw/vault/wikis`) is a disconnected legacy vault with no topic folders for this project — `project-notebooks` is not mounted into the `openclaw` container at all. Use a scratch vault inside the container (`/tmp/scratch-vault`) and `docker cp` the resulting raw file out to the real host vault path, per the two-line recipe above. The script prints `raw_path=<path>` (the in-container scratch path) — that's just for your own tracking; the file you actually want is the one you `docker cp`'d out.
+
+Note the `MSYS_NO_PATHCONV=1` is needed on Git Bash for Windows (prevents path mangling). On Linux/Mac it's a harmless no-op.
 
 ### Step 2 — Read the raw page and synthesize a curated summary
 
