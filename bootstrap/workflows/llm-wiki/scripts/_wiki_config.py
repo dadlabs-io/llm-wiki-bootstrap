@@ -181,7 +181,8 @@ def _registry_resolve(name, cwd=None, cfg=None):
         return (str(root.parent), root.name)
     if isinstance(entry, dict):
         # Object entry. Two accepted shapes (both may also carry per-notebook
-        # options like wrap_up_auto_promote, which are ignored here):
+        # options like confirm_before_create / confirm_before_promote, which are
+        # ignored here):
         #   {"root": "notebooks/<name>"}      → flat topic_root (preferred)
         #   {"vault_root": "...", "topic": ".."}  → split form (back-compat)
         if entry.get("root"):
@@ -193,8 +194,8 @@ def _registry_resolve(name, cwd=None, cfg=None):
 
 
 def notebook_option(name, key, default=None, cwd=None, cfg=None):
-    """Read a per-notebook option (e.g. 'wrap_up_auto_promote') from the registry
-    entry for ``name``. Returns ``default`` if the entry is a flat string, the key
+    """Read a per-notebook option (e.g. 'confirm_before_create', 'confirm_before_promote')
+    from the registry entry for ``name``. Returns ``default`` if the entry is a flat string, the key
     is absent, or the registry can't be read. The registry is the single home for
     per-notebook settings so they travel with the notebook, not the calling project."""
     cfg = cfg if cfg is not None else load_config(cwd)

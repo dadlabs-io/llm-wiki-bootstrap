@@ -45,7 +45,7 @@ Q4: target folder? (default C:\github.com\<name>)
 Q5: skills install? (global [default] | bundled)  — see below
 Q6: wiki content location? (separate vault [default] | inside project)  — see below
 Q7: Drive ingest? (yes/no) — if yes: parent folder name (default __FOR CLAUDE)
-Q8: Review gate? manually review before publishing (yes [default] / no auto-publish) — sets wrap_up_auto_promote; changeable anytime
+Q8: Review gate? manually review before publishing (yes [default] / no auto-publish) — sets confirm_before_create + confirm_before_promote; changeable anytime, independently, later
    ↓
 Phase B — Per-project scaffold (Phase A already done by install-wiki.ps1)
    B1.  mkdir <target> + git init
@@ -136,16 +136,29 @@ Parent folder name in your Drive? (default: __FOR CLAUDE)
 The script will look for: <parent>/<project-slug>/  (so this project: __FOR CLAUDE/<slug>/)
 ```
 
-**Q9 — Review gate** (how new wiki entries get published)
+**Q9 — Review gate** (how new wiki entries get filed + published)
 ```
-Do you want to manually review items before they're published to the wiki?
-  1. yes — show me staged entries and let me approve before they go live  [default]
-  2. no  — auto-publish; just promote them for me
+Do you want to manually review items before they're filed and published to the wiki?
+  1. yes — show me candidates, let me accept/reject, then confirm again before publishing  [default]
+  2. no  — auto-file AND auto-publish; just do it for me
 
-(You can change this anytime — just ask, or edit the notebook's entry in linked-notebooks.json.)
+(You can change this anytime — just ask, or edit the notebook's entry in linked-notebooks.json.
+The two steps below are independently overridable later even though this question sets them
+together.)
 Pick (1 or 2):
 ```
-→ 1 maps to `--wrap-up-auto-promote ask` (the default — `/wrap-up` will prompt you before promoting). 2 maps to `--wrap-up-auto-promote true` (auto-promote, no prompt). (A third value, `false` = stay staged and never prompt, isn't offered here but is settable later.) This governs `/wrap-up`'s Step 6 promote offer. For registry notebooks the value is stored in the **registry entry** (`linked-notebooks.json`) — the per-notebook home that travels with the notebook; for legacy in-project wikis it goes in `.claude/wiki-config.json`.
+→ This single question sets **two** underlying booleans together (both default `true`, i.e. fully
+manual): `confirm_before_create` governs `/wrap-up` Step 2 (the durable-work proposal table — "file
+these candidate entries at all?"); `confirm_before_promote` governs Step 6 (moving staged entries
+into the canonical `wiki/project/<category>/` tree + committing). 1 maps to
+`--confirm-before-create true --confirm-before-promote true` (ask at both steps — the default). 2
+maps to `--confirm-before-create false --confirm-before-promote false` (auto-file AND auto-promote,
+no prompts at either step). A user who wants a split posture (e.g. auto-file but still confirm
+before publishing) can ask the agent to flip just one of the two keys after creation — the registry
+entry supports them independently even though this interview only offers the all-or-nothing
+combination. For registry notebooks the values are stored in the **registry entry**
+(`linked-notebooks.json`) — the per-notebook home that travels with the notebook; for legacy
+in-project wikis they go in `.claude/wiki-config.json`.
 
 Show the proposed plan and wait for "yes" / "go" / "create" before proceeding.
 
@@ -167,7 +180,8 @@ python "<bootstrap_source>/bootstrap/workflows/llm-wiki/scripts/new-wiki.py" \
   --project-description "<desc>" \
   --target-folder <path> \
   --skills-install <global|bundled> \
-  --wrap-up-auto-promote <ask|true|false>   `# Q9 review gate; defaults to ask` \
+  --confirm-before-create <true|false>    `# Q9 review gate (Step 2 filing); defaults to true` \
+  --confirm-before-promote <true|false>   `# Q9 review gate (Step 6 promote); defaults to true` \
   --vault-root <root>   `# omit entirely for an in-project wiki` \
   --drive-enabled <yes|no> \
   --drive-subfolder <slug>

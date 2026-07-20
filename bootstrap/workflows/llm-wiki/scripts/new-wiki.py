@@ -168,9 +168,10 @@ def _upsert_registry(registry_path: Path, name: str, root_value: str, options: d
 
     If ``options`` is given, the entry is written as an object
     ``{"root": <root_value>, **options}`` so per-notebook settings (e.g.
-    wrap_up_auto_promote) live in the registry — the single source of truth that
-    travels with the notebook. Without options it stays a flat string (back-compat).
-    An existing object entry is merged (root + options updated, other keys kept)."""
+    confirm_before_create, confirm_before_promote) live in the registry — the single
+    source of truth that travels with the notebook. Without options it stays a flat
+    string (back-compat). An existing object entry is merged (root + options updated,
+    other keys kept)."""
     data = {}
     if registry_path.exists():
         try:
@@ -181,8 +182,9 @@ def _upsert_registry(registry_path: Path, name: str, root_value: str, options: d
         data["_comment"] = ("Single registry of every notebook and its root + per-notebook "
                             "settings, used to resolve ANY cross-notebook link. Entry is either "
                             "a flat \"root\" string OR an object {\"root\": <path>, <settings...>} "
-                            "(e.g. wrap_up_auto_promote). Relative roots resolve from this file's "
-                            "folder; absolute point outside. Standard layout: wiki/, _inbox/, raw/.")
+                            "(booleans confirm_before_create + confirm_before_promote, both "
+                            "default true). Relative roots resolve from this file's folder; "
+                            "absolute point outside. Standard layout: wiki/, _inbox/, raw/.")
     nbs = data.setdefault("notebooks", {})
     if options:
         existing = nbs.get(name)
@@ -911,14 +913,19 @@ def phase_b(args):
             entry = nb_root.relative_to(registry_path.parent).as_posix()
         except ValueError:
             entry = nb_root.as_posix()
-        nb_options = {"wrap_up_auto_promote": args.wrap_up_auto_promote}
+        nb_options = {
+            "confirm_before_create": args.confirm_before_create == "true",
+            "confirm_before_promote": args.confirm_before_promote == "true",
+        }
         if args.dry_run:
             print(f"WOULD register notebook '{name}' -> {{root: {entry}, "
-                  f"wrap_up_auto_promote: {args.wrap_up_auto_promote}}} in {registry_path}")
+                  f"confirm_before_create: {nb_options['confirm_before_create']}, "
+                  f"confirm_before_promote: {nb_options['confirm_before_promote']}}} in {registry_path}")
         else:
             _upsert_registry(registry_path, name, entry, options=nb_options)
-            _ok(f"registered '{name}' -> {entry} (wrap_up_auto_promote={args.wrap_up_auto_promote}) "
-                f"in {registry_path.name}")
+            _ok(f"registered '{name}' -> {entry} (confirm_before_create="
+                f"{nb_options['confirm_before_create']}, confirm_before_promote="
+                f"{nb_options['confirm_before_promote']}) in {registry_path.name}")
         project_cfg = {
             "tool": args.tool,
             "project_name": name,
@@ -926,8 +933,9 @@ def phase_b(args):
             "registry": registry_path.as_posix(),
             "project_description": description,
             "skills_install": skills_install,
-            # NOTE: wrap_up_auto_promote lives in the REGISTRY entry (per-notebook,
-            # travels with the notebook), not here — see _upsert_registry above.
+            # NOTE: confirm_before_create / confirm_before_promote live in the REGISTRY
+            # entry (per-notebook, travels with the notebook), not here — see
+            # _upsert_registry above.
             "scripts_installed_at": str(paths["scripts"]) if bundle
                                     else str(CC_GLOBAL_DIR / "wiki-scripts"),
             "skills_installed_at": str(paths["skills"]) if bundle
@@ -962,8 +970,10 @@ def phase_b(args):
         "wiki_topic": name if external_vault else "llm-wiki",
         # skills_install: 'global' (shared ~/.claude) or 'bundled' (per-project copy).
         "skills_install": skills_install,
-        # Review gate for /wrap-up: ask (prompt) | true (auto-promote) | false (stay staged).
-        "wrap_up_auto_promote": args.wrap_up_auto_promote,
+        # Review gates for /wrap-up: confirm_before_create (Step 2 filing) + confirm_before_promote
+        # (Step 6 promote-to-canonical), both boolean, default true (prompt/ask).
+        "confirm_before_create": args.confirm_before_create == "true",
+        "confirm_before_promote": args.confirm_before_promote == "true",
         "scripts_installed_at": str(paths["scripts"]) if bundle
                                 else str(CC_GLOBAL_DIR / "wiki-scripts"),
         "wiki_path": str(paths["llm_wiki_wiki"]),
@@ -1093,10 +1103,17 @@ def main():
                              "split removed; every project gets the merged taxonomy)")
     parser.add_argument("--target-folder",
                         help="Project root folder (required for --phase B)")
-    parser.add_argument("--wrap-up-auto-promote", choices=["ask", "true", "false"], default="ask",
-                        help="Review gate for /wrap-up's staged entries: 'ask' (prompt each time — "
-                             "manual review, default), 'true' (auto-promote, no prompt), 'false' "
-                             "(stay staged, promote later). Written to wiki-config.json; changeable anytime.")
+    parser.add_argument("--confirm-before-create", choices=["true", "false"], default="true",
+                        help="Review gate for /wrap-up's Step 2 (the durable-work proposal table): "
+                             "'true' (prompt + wait before filing anything, default), 'false' "
+                             "(auto-accept every candidate, still print the table, skip the wait). "
+                             "Written to the registry (or wiki-config.json for in-project wikis); "
+                             "changeable anytime.")
+    parser.add_argument("--confirm-before-promote", choices=["true", "false"], default="true",
+                        help="Review gate for /wrap-up's Step 6 (promoting staged entries into the "
+                             "canonical wiki/ + committing): 'true' (prompt each time, default), "
+                             "'false' (auto-promote + commit, no prompt). Written to the registry "
+                             "(or wiki-config.json for in-project wikis); changeable anytime.")
     parser.add_argument("--skills-install", choices=["global", "bundled"], default="global",
                         help="global (default) = use shared ~/.claude/skills + wiki-scripts, "
                              "no per-project copy; bundled = copy skills+scripts into the project "
