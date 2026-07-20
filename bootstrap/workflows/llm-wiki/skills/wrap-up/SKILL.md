@@ -1,6 +1,6 @@
 ---
 name: wrap-up
-description: Crystallize the current session's work into the project wiki AND refresh the working-memory dashboards. ALWAYS (1) upserts a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ so the "what we did" record builds as you go, (2) refreshes the mutable working-memory dashboards — sessions/<persona>/handoff.md + task.md + sessions/active-context.md (the resume pointer; the memory-bank replacement), and (3) extracts durable knowledge — components/decisions/patterns/bugs — staged to _inbox/proposed/ then promoted to wiki/project/<category>/ (auto-promote configurable per-notebook via `wrap_up_auto_promote`). This is the ONE session-close command — it absorbs the retired /upd-docs. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says "wrap up", "wrap-up", "/wrap-up", "wrap this session", "document what we did", "crystallize this session", "save this work", "save progress", "save state", "update docs", "upd-docs".
+description: Crystallize the current session's work into the project wiki AND refresh the working-memory dashboards. ALWAYS (1) upserts a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ so the "what we did" record builds as you go, (2) refreshes the mutable working-memory dashboards — sessions/<persona>/handoff.md + task.md + sessions/active-context.md (the resume pointer; the memory-bank replacement), and (3) extracts durable knowledge — components/decisions/patterns/bugs — staged to _inbox/proposed/ then promoted to wiki/project/<category>/ (gated by two per-notebook booleans: `confirm_before_create` for Step 2's filing decision, `confirm_before_promote` for Step 6's promotion decision). This is the ONE session-close command — it absorbs the retired /upd-docs. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says "wrap up", "wrap-up", "/wrap-up", "wrap this session", "document what we did", "crystallize this session", "save this work", "save progress", "save state", "update docs", "upd-docs".
 ---
 
 # /wrap-up
@@ -147,6 +147,8 @@ Identify candidates by category. Each candidate gets ONE row in a proposal table
 
 ### Step 2 — Present the proposal table
 
+**Mode** is `confirm_before_create`, a per-notebook boolean setting (default `true`). Resolve it the same way as `confirm_before_promote` (Step 6): registry (`linked-notebooks.json`, via `<cwd>/.claude/wiki-config.json`'s `notebook` + `registry`) → project `wiki-config.json` fallback → default `true`. To CHANGE it: edit the notebook's entry in `linked-notebooks.json` (registry notebooks) or the project's `wiki-config.json` (in-project), or just ask the agent.
+
 Show the user:
 
 ```
@@ -165,7 +167,8 @@ I see the following durable work from this session:
 Show the bulk-accept option first so a one-word `go` is the obvious path. Per-item syntax is the escape hatch, not the default.
 ```
 
-Wait for explicit confirmation. The user MUST get to veto before any wiki entry is filed — but a one-word `go` is a valid veto-not-exercised.
+- **`confirm_before_create: true` (default)** — wait for explicit confirmation. The user MUST get to veto before any wiki entry is filed — but a one-word `go` is a valid veto-not-exercised.
+- **`confirm_before_create: false`** — still print the proposal table above (transparency: you always see what got filed, even unattended) but don't wait for a reply — treat every candidate as kept and proceed straight to Step 3 automatically.
 
 ### Step 3 — File each kept candidate to `_inbox/proposed/`
 
@@ -265,22 +268,23 @@ Then go straight to Step 6 — don't end on "run /wiki-promote later"; offer to 
 
 Staging isn't the finish line — an entry in `_inbox/proposed/` does nothing until it's promoted into `wiki/`. The old two-step (`/wrap-up` then separately `/wiki-promote`) was easy to forget. So offer promotion right here.
 
-**Mode** is `wrap_up_auto_promote`, a per-notebook setting. Resolve it in this order:
-1. **Registry (canonical home)** — read `<cwd>/.claude/wiki-config.json` for `notebook` + `registry`, open the registry (`linked-notebooks.json`), find the notebook's entry; if it's an object with `wrap_up_auto_promote`, use that. (This is where `/new-wiki` writes it, so it travels with the notebook.)
-2. **Project config fallback** — for a legacy in-project wiki with no registry, read `wrap_up_auto_promote` from `<cwd>/.claude/wiki-config.json` directly.
-3. **Default** — `ask` if neither is set.
+**Mode** is `confirm_before_promote`, a per-notebook boolean setting (default `true`). Resolve it in this order:
+1. **Registry (canonical home)** — read `<cwd>/.claude/wiki-config.json` for `notebook` + `registry`, open the registry (`linked-notebooks.json`), find the notebook's entry; if it's an object with `confirm_before_promote`, use that. (This is where `/new-wiki` writes it, so it travels with the notebook.)
+2. **Project config fallback** — for a legacy in-project wiki with no registry, read `confirm_before_promote` from `<cwd>/.claude/wiki-config.json` directly.
+3. **Default** — `true` if neither is set.
+
+(Migration note: before 2026-07-20 this setting was named `wrap_up_auto_promote` and was three-valued — `ask` / `true` / `false`, where `false` meant "leave staged forever, never promote, don't even ask." That third state was never actually configured by any notebook and was dropped when the setting was renamed + repolarized to a plain boolean: `confirm_before_promote: true` ~ old `ask`; `confirm_before_promote: false` ~ old `true`. If a notebook still carries the old key name, treat it as needing this migration.)
 
 To CHANGE it: edit the notebook's entry in `linked-notebooks.json` (registry notebooks) or the project's `wiki-config.json` (in-project), or just ask the agent.
 
-| `wrap_up_auto_promote` | Behaviour |
+| `confirm_before_promote` | Behaviour |
 |---|---|
-| `ask` (default / unset) | Show the prompt below and wait for the user. |
-| `true` | Promote ALL staged entries inline automatically — no prompt. Report what moved. |
-| `false` | Skip — leave entries staged, print the manual `/wiki-promote` pointer, done. |
+| `true` (default / unset) | Show the prompt below and wait for the user. |
+| `false` | Promote ALL staged entries inline automatically — no prompt. Report what moved. |
 
 **Skip Step 6 entirely if nothing was staged** (e.g. journal-only wrap-up).
 
-**The prompt (`ask` mode):**
+**The prompt (`true` mode):**
 
 ```
 4 entries staged to _inbox/proposed/. Promote them now?
@@ -312,9 +316,9 @@ git -C <notebook-repo> commit -m "wiki(<notebook>): wrap-up <YYYY-MM-DD> — pro
 
 If the notebook repo has unrelated uncommitted changes, add only the wrapped/promoted paths. Don't push (that's the user's call).
 
-**Offer to remember (`ask` mode only):** after a clean all-`yes` or all-`no`, offer ONCE:
+**Offer to remember (`true` mode only):** after a clean all-`yes` or all-`no`, offer ONCE:
 
-> Make this the default for **<notebook>**? I can set `wrap_up_auto_promote: <true|false>` in `.claude/wiki-config.json` so future wrap-ups skip this prompt.
+> Make this the default for **<notebook>**? I can set `confirm_before_promote: <true|false>` in `.claude/wiki-config.json` so future wrap-ups skip this prompt.
 
 Only write the key if they say yes. Never set it silently.
 
@@ -364,9 +368,9 @@ If you just want the fast working-memory refresh without the durable-extraction 
 
 ## Don't
 
-- Don't auto-file without the user's explicit confirmation of the proposal table.
+- Don't auto-file without the user's explicit confirmation of the proposal table — unless `confirm_before_create: false` is explicitly configured for the notebook (Step 2).
 - Don't write the conversation transcript into the wiki — distill, don't dump.
-- Don't SKIP staging — entries always land in `_inbox/proposed/` first (Step 3). Promotion happens only in Step 6, gated by the user's answer (`ask` mode) or an explicit `wrap_up_auto_promote: true` they configured. Never silently promote when the mode is `ask`.
+- Don't SKIP staging — entries always land in `_inbox/proposed/` first (Step 3). Promotion happens only in Step 6, gated by the user's answer (`confirm_before_promote: true` mode) or an explicit `confirm_before_promote: false` they configured. Never silently promote when the mode is `true`.
 - Don't run `/wrap-up` on the agentic-design topic — that's research; use `/wiki-update` instead.
 - Don't write to `~/.claude/projects/*/memory/MEMORY.md` (that's auto-memory's job, different layer). `/wrap-up` writes to the project wiki.
 
