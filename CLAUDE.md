@@ -135,4 +135,9 @@ Or just walk them through running `install-wiki.ps1` with the right flags.
 
 ## Source
 
-This file is the agent-onboarding doc for llm-wiki-bootstrap. Built from `workflows-core/bootstrap/workflows/llm-wiki/CLAUDE.md` by `scripts/build-wiki-package.py`. Don't hand-edit the copy in the package — edit the source in workflows-core.
+This file is the agent-onboarding doc for llm-wiki-bootstrap. **`llm-wiki-bootstrap` is the gold
+copy** — edit directly here. (Historical note: this repo was originally generated from
+`workflows-core/bootstrap/workflows/llm-wiki/` by `scripts/build-wiki-package.py`; that pipeline
+has been retired and changes now land here directly — see `git log` for the active commit
+history. `manifest.json` and parts of `README.md` still describe the old build-from-workflows-core
+model and need the same correction.)

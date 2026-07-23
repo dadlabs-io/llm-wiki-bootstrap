@@ -1,4 +1,5 @@
 {
+  "_note": "Historical build snapshot only. The build-wiki-package.py pipeline that generated this file has been retired — this repo (llm-wiki-bootstrap) is now the gold copy, maintained and committed to directly. See `git log` for actual current history; this manifest is no longer regenerated and does not reflect current state.",
   "built_at": "2026-06-12T00:00:00+00:00",
   "file_count": 66,
   "package_layout": {
@@ -8,6 +9,6 @@
     "templates": "bootstrap\\workflows\\llm-wiki\\templates"
   },
   "source_path": "bootstrap/workflows/llm-wiki/",
-  "source_repo": "workflows-core",
-  "version": "2026-06-12"
+  "source_repo": "workflows-core (historical — pipeline retired as of this repo's direct-commit model; see _note)",
+  "version": "2026-06-12 (last build before pipeline retirement; not updated since)"
 }

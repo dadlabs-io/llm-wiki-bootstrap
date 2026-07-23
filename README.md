@@ -8,8 +8,8 @@ Install the LLM-wiki framework on a fresh machine. Ships `/new-wiki`, `/wrap-up`
 [agent-builder-bootstrap](https://github.com/dadlabs-io/agent-builder-bootstrap))
 depend on the wiki skills this puts in place.
 
-**Version:** `2026-05-14` &nbsp;·&nbsp;
-**Source:** [dadlabs-io/workflows-core](https://github.com/dadlabs-io/workflows-core)
+**This repo is the gold copy** — maintained and committed to directly (see `git log` for history);
+it is no longer generated from `workflows-core`.
 
 ---
 
@@ -164,7 +164,8 @@ skills so you can scaffold and install Claude Code agents from any project.
 
 ## Source of truth
 
-This repo is a release artifact built from
+**This repo (`llm-wiki-bootstrap`) is the gold copy.** To contribute changes, send PRs directly
+against this repo. (Historical note: it was originally generated from
 [dadlabs-io/workflows-core](https://github.com/dadlabs-io/workflows-core)'s
-`bootstrap/workflows/llm-wiki/` tree. To contribute changes, send PRs against
-the source repo; the maintainer rebuilds + publishes this repo on each release.
+`bootstrap/workflows/llm-wiki/` tree by a build script; that pipeline has been retired — changes
+now land here directly, per the active commit history in `git log`.)
