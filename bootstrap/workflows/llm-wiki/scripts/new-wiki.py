@@ -803,6 +803,27 @@ def phase_b(args):
             paths["llm_wiki_how_to"].mkdir(parents=True, exist_ok=True)
         _info("no seed/how-to/ found in bootstrap — created empty folder")
 
+    # Seed: pack usage docs (wiki-seed convention — standard across packs).
+    # Assembled from pages CO-LOCATED with their artifacts, mirroring how the
+    # agent-factory's promote-agent assembles pack docs:
+    #   pack page:  <wiki_src>/wiki-seed/llm-wiki.md         -> how-to/llm-wiki/llm-wiki.md
+    #   per-skill:  <wiki_src>/skills/<name>/wiki-seed/*.md  -> how-to/llm-wiki/skills/<name>.md
+    pack_docs_dst = paths["llm_wiki_how_to"] / "llm-wiki"
+    pack_seed_src = wiki_src / "wiki-seed"
+    if pack_seed_src.exists():
+        c, s = _copy_tree(pack_seed_src, pack_docs_dst, dry_run=args.dry_run)
+        _ok(f"seeded pack page(s): {c} copied, {s} unchanged")
+    n_pages = 0
+    n_skipped = 0
+    if skills_src.exists():
+        for skill_dir in sorted(skills_src.iterdir()):
+            page_src = skill_dir / "wiki-seed"
+            if skill_dir.is_dir() and page_src.exists():
+                c, s = _copy_tree(page_src, pack_docs_dst / "skills", dry_run=args.dry_run)
+                n_pages += c
+                n_skipped += s
+        _ok(f"seeded per-skill usage pages: {n_pages} copied, {n_skipped} unchanged")
+
     # Seed: best-practices/
     if seed_src.exists() and (seed_src / "best-practices").exists():
         c, s = _copy_tree(seed_src / "best-practices", paths["llm_wiki_best_practices"], dry_run=args.dry_run)
