@@ -11,6 +11,8 @@ The LLM-wiki framework installer. Ships:
 - 15 Python helper scripts (vault management, lint, indexing, Drive ingest)
 - Templates for `CLAUDE.md`, `README.md`, `.gitignore` in research/development variants
 - Seed content for the per-project `llm-wiki/` folder (how-to docs + 17 curated best-practices)
+- Pack usage docs (wiki-seed): one page per skill (`skills/<name>/wiki-seed/`) + a pack overview
+  (`wiki-seed/llm-wiki.md`), assembled into each project's `llm-wiki/how-to/llm-wiki/` on install
 - `install-wiki.ps1` (Windows) and `install-wiki.sh` (Mac/Linux) — the installer entry points
 
 ## What the user probably wants
