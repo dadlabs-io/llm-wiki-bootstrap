@@ -110,6 +110,11 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 - `bootstrap/workflows/llm-wiki/skills/` — every skill that ships
 - `bootstrap/workflows/llm-wiki/scripts/` — Python helpers behind the skills
 - `bootstrap/workflows/llm-wiki/seed/` — content that lands in each per-project `llm-wiki/` folder
+- `bootstrap/workflows/llm-wiki/wiki-seed/` + `skills/<name>/wiki-seed/` — pack usage docs
+  (standard wiki-seed convention, shared with the agent-factory): `wiki-seed/llm-wiki.md` is
+  the pack entry page, each skill carries its own one-page usage doc; `new-wiki.py` assembles
+  them into `<target>/llm-wiki/how-to/llm-wiki/{,skills/}` on install and refresh. Distinct
+  from `seed/` (the broader project scaffold) — one name per mechanism.
 - `bootstrap/workflows/llm-wiki/templates/` — `CLAUDE.md`, `README.md`, `.gitignore` templates
 
 ## Conventions (when editing the scripts)
