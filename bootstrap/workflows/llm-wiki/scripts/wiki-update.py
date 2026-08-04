@@ -46,7 +46,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY  # noqa: E402
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -493,6 +493,72 @@ def find_existing_by_url(wiki_root, url):
 # ── Curated wiki file ────────────────────────────────────────────────────────
 
 
+def validate_folder(wiki_dir, folder, allow_new_top_folder=False):
+    """Guard against the 'bare leaf creates a phantom top-level folder' bug
+    (found 2026-08-03: `--folder orchestration` silently created wiki/orchestration/
+    instead of nesting under the existing wiki/research/orchestration/, because
+    write_curated's `wiki_dir / folder` join has zero validation).
+
+    Mirrors wiki-promote.py's `_normalize_target_folder` (same MERGED_TAXONOMY,
+    same auto-prefix-if-unambiguous behavior) but goes one step further: direct
+    mode (this script) has no staging safety net the way `--staged` does, so an
+    unrecognized NEW top-level folder segment is a hard error here, not just a
+    warning — unless the caller passes --allow-new-top-folder to confirm it's
+    intentional (e.g. this topic's wiki genuinely doesn't follow the merged
+    research/project taxonomy, as with some older per-project topic folders).
+
+    Returns (folder, None) on success — folder may be auto-corrected.
+    Returns (None, error_message) if the caller should abort.
+    """
+    if not folder:
+        return folder, None
+    folder = folder.strip("/").replace("\\", "/")
+    wiki_dir = Path(wiki_dir)
+    top = folder.split("/", 1)[0]
+
+    # Case 1: top segment already exists on disk under this topic's wiki/ —
+    # safe regardless of taxonomy (covers both canonical folders and
+    # bespoke per-topic top-level folders like cottage-build's `regulations/`).
+    if (wiki_dir / top).is_dir():
+        return folder, None
+
+    # Case 2: the full path is already a known canonical taxonomy entry
+    # (first entry ever filed there is expected to not exist on disk yet).
+    if folder in MERGED_TAXONOMY or folder == "sessions":
+        return folder, None
+
+    # Case 3: bare leaf (no "/") that unambiguously matches exactly one
+    # canonical taxonomy path by its last segment — auto-prefix, same as
+    # wiki-promote.py's behavior, so 'orchestration' silently becomes
+    # 'research/orchestration' instead of creating a phantom top folder.
+    if "/" not in folder:
+        matches = [t for t in MERGED_TAXONOMY if t.rsplit("/", 1)[-1] == folder]
+        if len(matches) == 1:
+            print(f"  Note: --folder '{folder}' auto-prefixed to '{matches[0]}' "
+                  f"(unambiguous taxonomy match; use the full path to silence this).",
+                  file=sys.stderr)
+            return matches[0], None
+
+    # Case 4: genuinely unrecognized — this would create a NEW top-level
+    # folder under wiki/. Refuse by default.
+    if allow_new_top_folder:
+        print(f"  Warning: '{folder}' is not an existing folder or a known taxonomy "
+              f"path — creating a new top-level folder because --allow-new-top-folder "
+              f"was passed. Verify this is intentional.", file=sys.stderr)
+        return folder, None
+
+    existing_tops = sorted(p.name for p in wiki_dir.iterdir() if p.is_dir()) if wiki_dir.is_dir() else []
+    msg = (
+        f"Error: --folder '{folder}' would create a NEW top-level folder "
+        f"'{wiki_dir / top}' — it does not match any existing subfolder of "
+        f"{wiki_dir} and is not a recognized taxonomy path.\n"
+        f"  Existing top-level folders here: {', '.join(existing_tops) or '(none)'}\n"
+        f"  Did you mean a nested path, e.g. 'research/{folder}' or 'project/{folder}'?\n"
+        f"  If a new top-level folder is genuinely intended, re-run with --allow-new-top-folder."
+    )
+    return None, msg
+
+
 def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
                   ingested_by=None, raw_path=None, tier=None, confidence=None,
                   staged=False):
@@ -637,7 +703,7 @@ def print_slug_for(vault_root, topic, folder, title):
 def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
                 ingested_by=None, source_url_override=None, raw_path_override=None,
                 force=False, fetch_only=False, no_raw=False, skip_integration=False,
-                tier=None, confidence=None, staged=False):
+                tier=None, confidence=None, staged=False, allow_new_top_folder=False):
     topic_root = Path(vault_root) / topic
     if not topic_root.exists():
         print(f"Error: topic '{topic}' not found at {topic_root}", file=sys.stderr)
@@ -646,6 +712,17 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
 
     raw_dir = topic_root / "raw"
     wiki_dir = topic_root / "wiki"
+
+    # Fail fast on a folder that would create a phantom new top-level wiki
+    # folder (direct mode has no staging safety net to catch it later).
+    # Staged mode already gets a soft warning + auto-fix at promote time via
+    # wiki-promote.py's _normalize_target_folder, so only guard direct mode here.
+    if folder and not staged:
+        validated_folder, folder_error = validate_folder(wiki_dir, folder, allow_new_top_folder)
+        if folder_error:
+            print(folder_error, file=sys.stderr)
+            return 1
+        folder = validated_folder
 
     # Dedup: if --source-url override (or source itself if it's a URL) is already
     # in the wiki, skip unless --force. Skipped in fetch-only mode (raw fetches
@@ -810,7 +887,8 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
 def main():
     parser = argparse.ArgumentParser(description="Update (add) a source to a topic wiki")
     parser.add_argument("--topic", required=True, help="Topic name (folder under vault)")
-    parser.add_argument("--folder", default="", help="Concept subfolder under wiki/ (e.g. 'memory-systems')")
+    parser.add_argument("--folder", default="", help="Concept subfolder under wiki/ — pass the FULL taxonomy path (e.g. 'research/orchestration'), never a bare leaf ('orchestration'). A bare leaf that unambiguously matches one canonical folder is auto-prefixed with a printed note; anything else that doesn't already exist under wiki/ is refused (see --allow-new-top-folder) to prevent silently creating a phantom top-level folder.")
+    parser.add_argument("--allow-new-top-folder", action="store_true", help="Confirm that --folder should create a genuinely new top-level folder under wiki/ (bypasses the phantom-folder guard). Use only when you actually mean a new top-level taxonomy branch, not a typo.")
     parser.add_argument("--source", required=False, help="URL or local file path (the body content). Not required for --slug-for mode.")
     parser.add_argument("--source-url", default=None, help="Override source URL stored in frontmatter (use when --source is a local synthesized summary but the canonical URL is elsewhere — e.g. YouTube case)")
     parser.add_argument("--raw-path", default=None, help="Override raw archive path stored in frontmatter and footer link (e.g. pre-fetched YouTube transcript path)")
@@ -853,6 +931,7 @@ def main():
         tier=args.tier,
         confidence=args.confidence,
         staged=args.staged,
+        allow_new_top_folder=args.allow_new_top_folder,
     )
 
 
