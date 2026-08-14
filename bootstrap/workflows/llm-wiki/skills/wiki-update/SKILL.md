@@ -7,7 +7,7 @@ Update (add) content to a topic wiki. The user shouldn't have to think about wha
 
 ## Frontmatter — authoritative reference
 
-Every entry's YAML frontmatter MUST conform to the canonical spec at `<vault>/<topic>/wiki/best-practices/framework/wiki-frontmatter-best-practices.md`. That doc is the single source of truth for required fields, tier rubric, review cadence, and `raw_path` handling. When in doubt, read it — do not invent new fields or drop required ones.
+Every entry's YAML frontmatter MUST conform to the canonical spec at `<vault>/<topic>/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`. That doc is the single source of truth for required fields, tier rubric, review cadence, and `raw_path` handling. When in doubt, read it — do not invent new fields or drop required ones.
 
 Required on every entry: `title`, `date`, `source_url`, `ingested_by`, `tier`, `confidence`, `last_reviewed`, `review_after`, `tags`. Plus `raw_path` for external ingests (omit for self-authored with `tier: self`).
 
