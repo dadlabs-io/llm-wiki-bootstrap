@@ -76,8 +76,8 @@ Read `wiki/concept-gaps-things-mentioned-not-yet-covered.md` — count rows in C
 **J. Best practices gap analysis**:
 Compare what the wiki recommends as best practice against what our system actually does. Read the key best-practice entries and cross-check against current implementation state:
 
-1. Read `wiki/implementation/research-cycle-setup.md` — what does the cycle say we should have? What's built, what's not?
-2. Read `wiki/implementation/getting-started.md` — is the "Current status" table accurate?
+1. Read `wiki/research/implementation/research-cycle-setup.md` — what does the cycle say we should have? What's built, what's not?
+2. Read `wiki/research/implementation/getting-started.md` — is the "Current status" table accurate?
 3. Scan recent ingests — did any new entry introduce a best practice we're not following? Look for entries with tags containing `best-practice`, `architecture`, `pattern`, or `recommendation`.
 4. Check if any newly ingested entry contradicts or updates an existing best practice. For example: if we ingested an article saying "staging is essential" and we're not using staging, that's a gap.
 5. Check automation table — compare the checklist (feeds, discovery, ingestion, lint, staging, eval, claims, report, refresh, scratchpad, cron) against actual working state.

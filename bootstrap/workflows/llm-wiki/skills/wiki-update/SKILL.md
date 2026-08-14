@@ -11,6 +11,31 @@ Every entry's YAML frontmatter MUST conform to the canonical spec at `<vault>/<t
 
 Required on every entry: `title`, `date`, `source_url`, `ingested_by`, `tier`, `confidence`, `last_reviewed`, `review_after`, `tags`. Plus `raw_path` for external ingests (omit for self-authored with `tier: self`).
 
+## `raw/` file safety — check by FILENAME before deleting, not by URL
+
+**Bug found 2026-07-18 (agentic-design wiki-cycle cleanup)**: when clearing out dead-end pending-queue items (a URL that never produced a filed entry — 403, no captions, etc.), it's tempting to also delete any `raw/*.md` fetch artifact left behind by the failed attempt. Before doing that, grep for the raw file's **filename** as a `raw_path:` value across `wiki/` — do NOT only grep for the dead URL in entry bodies.
+
+Why this matters: a `raw/` filename can collide with, or simply *not* signal, what it's actually backing. In the incident that surfaced this, a raw file named after one dead-end ingest attempt (`raw/2026-07-10-multi-agent-openai-api.md`, from a URL that later 403'd/thin-fetched on retry) turned out to be the **legitimate `raw_path` for a different, already-filed wiki entry** — one that had synthesized the same underlying source under a different title and framing in an earlier cycle. A URL-only grep found nothing (correctly — no entry's *body* mentioned the dead URL), but the entry's frontmatter `raw_path:` field pointed straight at the file. Deleting it produced a broken link + phantom `raw_path` on the very next mechanical lint pass.
+
+**The correct check before deleting any `raw/<file>.md`**:
+```bash
+grep -rl "raw_path:.*<exact-filename>" <topic>/wiki/
+```
+Only delete if this returns nothing. If you've already deleted and lint flags a phantom `raw_path`, the file is very likely recoverable from git history (`git show <last-good-commit>:<path/to/raw/file>.md > <path>`) rather than lost — this repo's `_inbox/reports/` and `wiki/` are committed on every cycle.
+
+## HARD RULE: read before you reject
+
+No title-pattern rejections, no URL-pattern guesses, no domain-quality heuristic as a standalone
+basis for skipping a queued item. The user has already curated at queue-add time; the ingest
+agent's job is to render the item, not re-litigate whether it belongs. **Every queued item is
+fully fetched and read before any tier / cluster / skip decision, and every rejection is
+content-grounded: a quoted passage from the fetched source plus the slug of the existing entry
+it overlaps.**
+
+Why this rule exists: on 2026-04-29 a cycle agent rejected 22 of 26 user-curated URLs on title
+patterns alone. An agent confidently rejecting 85% of a curated list at title-screening is not
+high-precision curation — it is shallow heuristics overriding the human in the loop.
+
 ## Dispatch table — figure out what to do
 
 | User gave you... | Do this |
@@ -44,7 +69,18 @@ Any pattern with 2+ URLs → batch-queue mode. Use a simple regex like `https?:/
    ```bash
    ls llm-wiki/wiki/
    ```
-   If none fit, propose a new folder name based on content.
+   If none fit, propose a new folder name based on content. **Always pass the FULL taxonomy path** (`research/<sub>` or `project/<sub>`, e.g. `research/orchestration`), **never a bare leaf** (`orchestration`) — see "`--folder` guard" below for what happens if you do and why it's now safe either way.
+
+### `--folder` guard (bug found + fixed 2026-08-03)
+
+**Bug**: `wiki-update.py --folder orchestration` (bare leaf, meaning to target the existing `wiki/research/orchestration/`) used to silently create a **phantom new top-level `wiki/orchestration/`** folder instead — `write_curated()`'s `wiki_dir / folder` path join had zero validation. This is the CLI-flag counterpart of the staged-sidecar `target_folder` bare-leaf bug documented below; that one was already guarded (via `wiki-promote.py`'s `_normalize_target_folder`), this one wasn't.
+
+**Fix**: `wiki-update.py` now validates `--folder` before writing (`validate_folder()`, direct mode only — staged mode already gets the sidecar-time guard at promote):
+- An existing subfolder (canonical **or** a topic's own bespoke top-level folder, e.g. cottage-build's `regulations/`) — passes through unchanged.
+- A bare leaf that unambiguously matches exactly one canonical taxonomy path (`MERGED_TAXONOMY` in `_wiki_config.py`) — **auto-prefixed** with a printed note (`orchestration` → `research/orchestration`), so the original bug's exact trigger now self-corrects instead of silently creating a phantom folder.
+- Anything else that doesn't already exist under this topic's `wiki/` — **hard error**, refuses to write, lists the topic's actual existing top-level folders, and tells you to either use the full path or pass `--allow-new-top-folder` if a new top-level branch is genuinely intended.
+
+You should still always pass the full path — the auto-prefix is a safety net, not a reason to rely on bare leaves.
 3. **Title** — let the script auto-detect, override only if obviously wrong.
 4. **Always pass `--ingested-by claude-code`** (when called from this slash command).
 5. **Always pass `--tier <1|2|3|4|self>`** and **`--confidence <high|medium|low>`**.
@@ -85,6 +121,7 @@ With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks 
 - **`target_folder` = the FULL taxonomy path under `wiki/`** — `research/<sub>` or `project/<sub>` (e.g. `research/long-term`, `research/orchestration`, `project/best-practices`). **Never a bare leaf** like `long-term` — a bare leaf creates a phantom top-level folder.
 - **`suggested_backlinks[]` items are OBJECTS, never bare strings**: `{ "file": "<path under wiki/>", "link_text": "<anchor text>", "link_target": "<this entry's BARE filename>" }`. `wiki-promote` recomputes the correct relative path from `link_target` at promote time.
 - **Body cross-links: author by BARE slug/filename** (`[Title](<other-slug>.md)`) — do NOT hand-compute `../folder/` depth. `wiki-update.py` (`resolve_outbound_links`) + `wiki-reciprocate-backlinks.py` normalize paths mechanically. Hand-computed relative paths are the #1 source of broken links.
+- **`suggested_backlinks` is a CURATED list, capped at ~8** — each target must be genuinely related to the entry's content (an entry you'd cite in its "Related in this wiki" section), never a directory listing. **Never include machine-generated files** (`_MAP.md`, `_INDEX.md`, `HOME.md`) or hub/system pages the entry doesn't specifically extend. (Added 2026-08-13: a cycle-2026-08-04-01 ingest agent shipped a sidecar with 50 `suggested_backlinks` that was just an alphabetical directory sweep including `_MAP.md` — 50 near-random entries would each have been edited at promote time. Caught only because the promote was dry-run first.)
 
 ```json
 {
@@ -106,7 +143,7 @@ With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks 
 2. **Read the raw file** to understand what's actually in the source.
 3. **Search the wiki** for related concepts using `qmd query`. Extract 3-5 key terms from the source and search each. qmd uses hybrid BM25 + vector search, so it finds entries by meaning, not just exact keywords.
 4. **Synthesize the curated summary** with explicit cross-links to those existing entries in a "Related in this wiki" section. Don't just summarize in isolation — mention where this new source agrees/disagrees/extends what's already in the wiki. **Use `wiki-update.py --slug-for --title "<other entry title>" --topic <topic> --folder <folder>` to look up the canonical slug of any entry you want to link to** — don't guess slugs from titles. (Guessing is the bug that caused 39 broken links in the 2026-04-08 batch ingest.)
-5. **Eval gate — score against the rubric** (see `wiki/implementation/eval-rubric.md`). Before filing, evaluate your synthesis against 5 dimensions (1-5 each):
+5. **Eval gate — score against the rubric** (see `wiki/research/implementation/eval-rubric.md`). Before filing, evaluate your synthesis against 5 dimensions (1-5 each):
 
    | Dimension | What to check |
    |---|---|
@@ -357,6 +394,17 @@ The script will print `raw_path=<path>` on success — capture it. The transcrip
 
 ### Step 2 — Read the transcript and synthesize a curated summary
 
+**ASR quote-integrity check FIRST (added 2026-08-13).** Auto-captions mis-hear domain vocabulary
+**systematically**: "Claude Code" arrives as "Cloud Code"/"Quad Code", `CLAUDE.md` as
+"quadmd"/"CloudMD"/"clawed MD". Before placing ANY transcript passage inside a `>` blockquote, scan
+the transcript for mishearings of the entry's own key terms and correct each to the intended word
+(disambiguated by context). Disclose the correction ONCE in a dated transcription note near the top
+of the entry — never annotate every instance, and never silently clean. If a passage can't be
+disambiguated with confidence, it's `sourced`, not `direct-quote`: paraphrase, drop the blockquote.
+(Canon: `wiki-authoring-best-practices.md` principle 5, added after cycle 2026-08-04-01 found ~19
+ASR corruptions presented as verbatim quotes across two entries. Template note:
+`boris-cherny-on-claude-code-y-combinator-lightcone.md`.)
+
 Read the raw transcript file (from host: `llm-wiki/raw/<file>`). Then write a curated markdown summary that captures what's actually important:
 
 - **TL;DR** (1-2 sentences — what is this video about, why does it matter)
@@ -416,6 +464,7 @@ Tell the user:
 - Don't pad summaries to hit a word count
 - Don't ingest if dedup found a match unless the user explicitly says "force" or "anyway"
 - Don't run `/wiki-update` blindly when the user just typed a URL — confirm topic + folder if not obvious
+- Don't delete a `raw/*.md` file by checking only for its source URL in wiki body text — grep for its FILENAME as a `raw_path:` value first (see "`raw/` file safety" above); a different entry may legitimately depend on it
 
 ## Key paths
 

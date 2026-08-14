@@ -220,13 +220,14 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-drive-folder.py \
   --folder-name "__FOR CLAUDE" \
   --subfolder <topic> \
   --queue-into <topic> \
-  --queue-vault llm-wiki/wiki \
   --queue-priority 3 \
   --queue-added-by drive-fetch \
   --move-handled \
   --archive-subfolder <cycle_id> \
   --out <run-folder>/drive-fetch.md
 ```
+
+(**`--queue-vault` removed from this example 2026-08-13** — the script's registry-aware default resolves the topic's real root; the hardcoded `llm-wiki/wiki` value this example used to show pointed cross-notebook topics at the WRONG vault. Omit it unless deliberately overriding.)
 
 Behavior:
 
@@ -304,7 +305,7 @@ Update scratchpad Phase 5 with results.
 
 **In default `--quick` mode, skip this step.** Semantic lint is expensive (4 parallel AI agents reading ~60 files each, 20-30 min wall-clock). Run weekly or when the wiki has grown substantially, not every cycle.
 
-In `--full` mode: Spawn 4 parallel agents by folder (active/, long-term/, tooling/, orchestration+impl+root).
+In `--full` mode: Spawn N parallel agents (4 is the proven pattern) partitioned over `research/*` + `project/*` + wiki-root files, **balanced by file count per agent for the wiki's current shape** — the partition is chosen per run, not a frozen folder list. (Reworded 2026-08-13: this line previously froze a four-way folder split that no longer matched the taxonomy — a three-way disagreement between this file, `cycle-step-return-format.md`, and actual dispatch, caught by the 2026-08-04-01 drift-watch pass. Distribute any drift-watch deep-compare entries across the agents too.)
 
 Update scratchpad Phase 5 with results (or note "skipped — quick mode").
 
@@ -413,7 +414,7 @@ This is human review checkpoint #2. The cycle did all the work overnight; the mo
 ## Resuming an interrupted cycle
 
 If `--resume`:
-1. Read the latest scratchpad in `_inbox/runs/`
+1. Read the scratchpad in the cycle's run folder (`_inbox/reports/<date>/<cycle_id>/scratchpad.md`)
 2. Find the last phase with status `done`
 3. Start from the next phase
 4. The scratchpad has all the state needed — which items were approved, which agents completed, etc.
@@ -430,7 +431,7 @@ Always use `subagent_type="general-purpose"` and `run_in_background=true`.
 
 ## Key paths
 
-- Scratchpad: `_inbox/runs/<date>-cycle.md`
+- Scratchpad: `_inbox/reports/<YYYY-MM-DD>/<cycle_id>/scratchpad.md` (corrected 2026-08-13 — two references in this file previously said `_inbox/runs/`, an obsolete location contradicting Step 0; caught by the 2026-08-04-01 semantic lint's drift-watch pass)
 - All other paths inherited from the sub-skills (discover, update, lint, claims, refresh, report)
 
 ## Don't

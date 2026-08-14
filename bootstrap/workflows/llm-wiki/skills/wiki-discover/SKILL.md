@@ -244,7 +244,7 @@ Discovery complete for <topic>
 
 ## Integration with the research cycle
 
-This skill implements **Phase 1 (Discover) + Phase 2 (Filter)** of the research cycle documented in `wiki/implementation/research-cycle-setup.md`. The output (discovery checklist) is the input to **Phase 3 (Human review #1)**.
+This skill implements **Phase 1 (Discover) + Phase 2 (Filter)** of the research cycle documented in `wiki/research/implementation/research-cycle-setup.md`. The output (discovery checklist) is the input to **Phase 3 (Human review #1)**.
 
 ```
 /wiki-discover  →  _inbox/discovered/<date>.md  →  human reviews  →  /wiki-list add  →  /wiki-update

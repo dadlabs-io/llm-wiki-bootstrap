@@ -162,6 +162,20 @@ def lint(vault_root, topic, strict=False):
     missing_review_of_on_review = []  # (file,) — type='review' but no review_of
     broken_icarus_ref = []        # (file, field, ref_value) — revises/review_of/contradicted_by/synthesis_of[i] points at non-existent file
 
+    # Spec-enforcement additions (2026-08-13, cycle 2026-08-04-01 retrofit).
+    # Root finding of that cycle's semantic lint: "everything the lint script
+    # checks is clean; everything it doesn't check has decayed" (168 out-of-enum
+    # ingested_by, 26+67 missing lifecycle fields, 52 lint-invisible wikilinks).
+    # These close the gap between wiki-frontmatter-best-practices.md and what is
+    # actually enforced. All WARN by default; --strict fails only on
+    # invalid_ingested_by (a true spec violation) — the presence checks stay
+    # warn-only until their backlogs are backfilled.
+    VALID_INGESTED_BY = {"claude-code", "clawd", "cli", "human"}
+    invalid_ingested_by = []  # (file, value) — out-of-enum ingested_by
+    missing_tags = []         # (file,) — no tags: field at all (spec wants >=3; presence is the mechanical check)
+    missing_lifecycle = []    # (file, [fields]) — last_reviewed / review_after absent → invisible to /wiki-refresh
+    live_wikilinks = []       # (file, count, sample) — [[wikilink]] outside code spans/fences, invisible to the link checker
+
     for f in files:
         try:
             content = f.read_text(encoding="utf-8")
@@ -189,6 +203,36 @@ def lint(vault_root, topic, strict=False):
             missing_confidence.append(f)
         elif conf_value not in VALID_CONFIDENCE:
             invalid_confidence.append((f, conf_value))
+
+        # Spec enforcement (2026-08-13): ingested_by enum
+        ib_value = fm.get("ingested_by", "").strip()
+        if ib_value and ib_value not in VALID_INGESTED_BY:
+            invalid_ingested_by.append((f, ib_value))
+
+        # Spec enforcement: tags presence (>=3 items is the spec; presence is the mechanical half)
+        if "tags" not in fm:
+            missing_tags.append(f)
+
+        # Spec enforcement: lifecycle fields — without both, /wiki-refresh can never surface the entry
+        lifecycle_gap = [k for k in ("last_reviewed", "review_after") if k not in fm]
+        if lifecycle_gap:
+            missing_lifecycle.append((f, lifecycle_gap))
+
+        # Spec enforcement: live [[wikilink]] syntax. The markdown link checker
+        # above cannot see these, so "0 broken links" was silently incomplete for
+        # any file using them. Fenced blocks and inline code spans are stripped
+        # first — a backticked/quoted [[...]] is a syntax MENTION, not a link, and
+        # must NOT be flagged (10 such files existed when this check was added).
+        body_no_code = re.sub(r"```.*?```", "", body, flags=re.DOTALL)
+        body_no_code = re.sub(r"`[^`\n]*`", "", body_no_code)
+        # Blockquote lines are verbatim SOURCE text in this wiki (principle 5/8)
+        # — a [[...]] inside one is the source's own syntax, not our live link.
+        body_no_code = "\n".join(l for l in body_no_code.splitlines()
+                                 if not l.lstrip().startswith(">"))
+        wl_matches = [m for m in re.findall(r"\[\[([^\[\]\n]+)\]\]", body_no_code)
+                      if m.strip() and not m.startswith(" ")]
+        if wl_matches:
+            live_wikilinks.append((f, len(wl_matches), wl_matches[0][:60]))
 
         # Check raw_path — load-bearing for the no-deletion rule
         # (see wiki/best-practices/memory-architecture-best-practices.md Principle 2 carve-out).
@@ -323,6 +367,13 @@ def lint(vault_root, topic, strict=False):
                   f"missing_revises_on_rollback={len(missing_revises_on_rollback)}, "
                   f"missing_review_of_on_review={len(missing_review_of_on_review)}, "
                   f"broken_icarus_ref={len(broken_icarus_ref)})" if icarus_total else ""))
+    spec_total = (len(invalid_ingested_by) + len(missing_tags)
+                  + len(missing_lifecycle) + len(live_wikilinks))
+    out.append(f"**Spec enforcement (added 2026-08-13)**: "
+               f"invalid `ingested_by`={len(invalid_ingested_by)}, "
+               f"missing `tags`={len(missing_tags)}, "
+               f"missing lifecycle fields={len(missing_lifecycle)}, "
+               f"files with live wikilinks={len(live_wikilinks)}")
     out.append("")
     out.append("---")
     out.append("")
@@ -526,6 +577,56 @@ def lint(vault_root, topic, strict=False):
             out.append("")
     out.append("")
 
+    # Section: spec enforcement (2026-08-13 retrofit)
+    out.append("## 📐 Spec Enforcement (frontmatter spec vs reality)")
+    out.append("")
+    out.append("Added 2026-08-13 (cycle 2026-08-04-01 retrofit) after that cycle's semantic lint found the spec's unenforced fields had silently decayed at scale while every enforced field stayed clean. `invalid_ingested_by` fails `--strict`; the presence checks warn only (backfill their backlogs first — see that cycle's refresh report).")
+    out.append("")
+    if spec_total == 0:
+        out.append("_All spec-enforcement checks clean._")
+    else:
+        if invalid_ingested_by:
+            out.append(f"### Invalid `ingested_by` ({len(invalid_ingested_by)})")
+            out.append("")
+            out.append("Must be one of `claude-code | clawd | cli | human`. Cycle provenance belongs in `cycle_id:` / `origin:`, not here.")
+            out.append("")
+            for f, v in invalid_ingested_by:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}` — got `{v}`")
+            out.append("")
+        if missing_tags:
+            out.append(f"### Missing `tags` ({len(missing_tags)})")
+            out.append("")
+            out.append("Spec requires >=3 tags; these entries have no `tags:` field at all.")
+            out.append("")
+            for f in missing_tags[:30]:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}`")
+            if len(missing_tags) > 30:
+                out.append(f"- … and {len(missing_tags) - 30} more")
+            out.append("")
+        if missing_lifecycle:
+            out.append(f"### Missing lifecycle fields ({len(missing_lifecycle)})")
+            out.append("")
+            out.append("Entries missing `last_reviewed` and/or `review_after` are structurally invisible to `/wiki-refresh` — they can never be flagged as stale. Backfill with `last_reviewed: <today>` + tier-cadence `review_after` (t1=6mo, t2/t3=3mo, t4=2mo).")
+            out.append("")
+            for f, gap in missing_lifecycle[:30]:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}` — missing {', '.join(gap)}")
+            if len(missing_lifecycle) > 30:
+                out.append(f"- … and {len(missing_lifecycle) - 30} more")
+            out.append("")
+        if live_wikilinks:
+            out.append(f"### Live `[[wikilink]]` syntax ({len(live_wikilinks)} files)")
+            out.append("")
+            out.append("These links are invisible to the broken-link checker above — a \"0 broken links\" result does not cover them. Convert to bare-slug markdown links (`[text](slug.md)`) and run `wiki-fix-links.py`. Backticked/fenced `[[…]]` (syntax mentions) are already excluded; if a listed match is still a prose mention rather than a link, leave it and flag here as false-positive.")
+            out.append("")
+            for f, n, sample in live_wikilinks:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}` — {n} match(es), first: `[[{sample}]]`")
+            out.append("")
+    out.append("")
+
     # Save report
     report_path = topic_root / "_inbox" / "lint-report.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -536,10 +637,13 @@ def lint(vault_root, topic, strict=False):
     print()
     print(f"Report saved to: {report_path}")
 
-    # Exit code: strict mode fails on broken links OR any icarus invariant violation.
+    # Exit code: strict mode fails on broken links, any icarus invariant
+    # violation, or an out-of-enum ingested_by (2026-08-13). The presence checks
+    # (tags/lifecycle/wikilinks) stay warn-only in strict mode until their
+    # backlogs are backfilled — flipping them is a one-line change here.
     # Non-strict (default) always returns 0 — report is informational.
     if strict:
-        if broken_links or icarus_total > 0:
+        if broken_links or icarus_total > 0 or invalid_ingested_by:
             return 1
     return 0
 
