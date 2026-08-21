@@ -309,7 +309,7 @@ def _slugify(text):
 def _derive_bootstrap_source(args):
     """Find the workflows-core bootstrap path. Checks in order: --bootstrap-source
     arg, wiki-config.json bootstrap_source, walking up from script location,
-    walking up from CWD looking for `.git` + `bootstrap/workflows/llm-wiki`."""
+    walking up looking for `bootstrap/scripts/new-wiki.py` (layout flattened 2026-08-20)."""
     if args.bootstrap_source:
         return Path(args.bootstrap_source).resolve()
 
@@ -320,14 +320,14 @@ def _derive_bootstrap_source(args):
     # Try: am I inside a workflows-core checkout?
     here = Path(__file__).resolve()
     for parent in [here.parent, *here.parents]:
-        candidate = parent / "bootstrap" / "workflows" / "llm-wiki"
-        if candidate.is_dir():
+        candidate = parent / "bootstrap" / "scripts" / "new-wiki.py"
+        if candidate.is_file():
             return parent.resolve()
 
     cwd_root = Path.cwd()
     for parent in [cwd_root, *cwd_root.parents]:
-        candidate = parent / "bootstrap" / "workflows" / "llm-wiki"
-        if candidate.is_dir():
+        candidate = parent / "bootstrap" / "scripts" / "new-wiki.py"
+        if candidate.is_file():
             return parent.resolve()
 
     return None
@@ -347,7 +347,7 @@ def _phase_tooling_cursor(args):
         _err("could not find bootstrap source. Pass --bootstrap-source <path>.")
         return 1
 
-    pkg = bootstrap / "bootstrap" / "workflows" / "llm-wiki"
+    pkg = bootstrap / "bootstrap"
     scripts_src = pkg / "scripts"
     skills_src = pkg / "skills"
     if not scripts_src.is_dir() or not skills_src.is_dir():
@@ -495,7 +495,7 @@ def phase_a(args):
         return 1
     _info(f"bootstrap source: {bootstrap}")
 
-    skills_src = bootstrap / "bootstrap" / "workflows" / "llm-wiki" / "skills"
+    skills_src = bootstrap / "bootstrap" / "skills"
     new_project_skill_src = skills_src / "new-wiki"
     new_project_skill_dst = CC_GLOBAL_SKILLS_DIR / "new-wiki"
 
@@ -726,7 +726,7 @@ def phase_b(args):
     # --project-type is accepted but ignored (back-compat); recorded as "merged".
     project_type = "merged"
 
-    wiki_src = bootstrap / "bootstrap" / "workflows" / "llm-wiki"
+    wiki_src = bootstrap / "bootstrap"
     skills_src = wiki_src / "skills"
     scripts_src = wiki_src / "scripts"
     templates_src = wiki_src / "templates"

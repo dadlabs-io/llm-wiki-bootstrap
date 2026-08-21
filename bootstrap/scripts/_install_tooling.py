@@ -26,6 +26,7 @@ from pathlib import Path
 CC_GLOBAL_DIR = Path.home() / ".claude"
 CC_GLOBAL_SKILLS_DIR = CC_GLOBAL_DIR / "skills"
 CC_GLOBAL_WIKI_SCRIPTS_DIR = CC_GLOBAL_DIR / "wiki-scripts"
+CC_GLOBAL_AGENTS_DIR = CC_GLOBAL_DIR / "agents"
 CC_GLOBAL_CONFIG_PATH = CC_GLOBAL_DIR / "wiki-config.json"
 
 # ---------- Manifests (single source of truth) ----------
@@ -62,6 +63,14 @@ TRAVEL_SKILLS = [
     "wiki-rollback", "wiki-verify",
 ]
 
+# Agent definitions that travel to every claude-code install (→ ~/.claude/agents/).
+# Each entry is a folder under the package's agents/ dir containing AGENT.md
+# (installed renamed to <name>.md) plus sidecar files (<name>-reading-list.json,
+# <name>-config.json — copied as-is if present). evals/ stays gold-only.
+TRAVEL_AGENTS = [
+    "wiki-ingester",
+]
+
 # Helper scripts copied alongside TRAVEL_SCRIPTS in a tooling install (not
 # user-invoked; imported/called by the tooling). Copied only if present.
 TOOLING_HELPER_SCRIPTS = ["install-skill.py", "_atomic_io.py", "_wiki_config.py", "_install_tooling.py"]
@@ -78,7 +87,7 @@ def _log(msg):
 def derive_bootstrap_source(explicit=None):
     """Find the workflows-core / llm-wiki-bootstrap source. Order: explicit arg,
     ~/.claude/wiki-config.json `bootstrap_source`, walk up from this script,
-    walk up from CWD — looking for `bootstrap/workflows/llm-wiki`."""
+    walk up — looking for `bootstrap/scripts/new-wiki.py` (layout flattened 2026-08-20)."""
     if explicit:
         return Path(explicit).resolve()
     try:
@@ -90,11 +99,11 @@ def derive_bootstrap_source(explicit=None):
         pass
     here = Path(__file__).resolve()
     for parent in [here.parent, *here.parents]:
-        if (parent / "bootstrap" / "workflows" / "llm-wiki").is_dir():
+        if (parent / "bootstrap" / "scripts" / "new-wiki.py").is_file():
             return parent.resolve()
     cwd_root = Path.cwd()
     for parent in [cwd_root, *cwd_root.parents]:
-        if (parent / "bootstrap" / "workflows" / "llm-wiki").is_dir():
+        if (parent / "bootstrap" / "scripts" / "new-wiki.py").is_file():
             return parent.resolve()
     return None
 
@@ -134,7 +143,7 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
     the scripts dir and install each TRAVEL_SKILLS dir via the install-skill
     primitive. Idempotent. Returns a summary dict (caller prints)."""
     bootstrap = Path(bootstrap_source)
-    pkg = bootstrap / "bootstrap" / "workflows" / "llm-wiki"
+    pkg = bootstrap / "bootstrap"
     scripts_src = pkg / "scripts"
     skills_src = pkg / "skills"
     if not scripts_src.is_dir() or not skills_src.is_dir():
@@ -179,6 +188,30 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
         else:
             skills_failed.append(skill)
 
+    # 3) Install agents (TRAVEL_AGENTS) → ~/.claude/agents/
+    #    AGENT.md → <name>.md; sidecars (<name>-*.json) copied as-is; evals/ not installed.
+    agents_src = pkg / "agents"
+    agents_dest = CC_GLOBAL_AGENTS_DIR
+    agents_installed = 0
+    agents_failed = []
+    for agent in TRAVEL_AGENTS:
+        src_dir = agents_src / agent
+        agent_md = src_dir / "AGENT.md"
+        if not agent_md.is_file():
+            agents_failed.append(agent)
+            continue
+        sidecars = sorted(p for p in src_dir.glob(f"{agent}-*.json") if p.is_file())
+        if dry_run:
+            print(f"  WOULD copy {agent_md} -> {agents_dest / (agent + '.md')}")
+            for sc in sidecars:
+                print(f"  WOULD copy {sc} -> {agents_dest / sc.name}")
+        else:
+            agents_dest.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(agent_md, agents_dest / f"{agent}.md")
+            for sc in sidecars:
+                shutil.copy2(sc, agents_dest / sc.name)
+        agents_installed += 1
+
     return {
         "bootstrap": str(bootstrap),
         "scripts_copied": travel_copied,
@@ -186,8 +219,11 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
         "skills_installed": skills_installed,
         "skills_failed": skills_failed,
         "scripts_missing": scripts_missing,
+        "agents_installed": agents_installed,
+        "agents_failed": agents_failed,
         "scripts_dest": str(scripts_dest),
         "skills_dest": str(skills_dest),
+        "agents_dest": str(agents_dest),
         "scripts_dest_value": scripts_dest_value,
         "dry_run": dry_run,
     }
@@ -199,6 +235,8 @@ def print_summary(summary: dict):
         _log(f"WARN: scripts not found in package (skipped): {summary['scripts_missing']}")
     if summary.get("skills_failed"):
         _log(f"WARN: skills that failed to install: {summary['skills_failed']}")
+    if summary.get("agents_failed"):
+        _log(f"WARN: agents that failed to install (missing AGENT.md): {summary['agents_failed']}")
     print()
     print("=" * 60)
     print("Global tooling install summary")
@@ -207,6 +245,7 @@ def print_summary(summary: dict):
     print(f"  scripts {verb}:   {summary['scripts_copied']}  (+ {summary['helpers_copied']} helpers)  → {summary['scripts_dest']}")
     verb_s = "would be installed" if dry else "installed"
     print(f"  skills {verb_s}: {summary['skills_installed']}  → {summary['skills_dest']}")
+    print(f"  agents {verb_s}: {summary.get('agents_installed', 0)}  → {summary.get('agents_dest', '')}")
     print(f"  placeholder {{{{WIKI_SCRIPTS_DIR}}}} → {summary['scripts_dest_value']}")
     print()
     print("  Restart Claude Code if these dirs are new so it picks up the")

@@ -261,6 +261,8 @@ Update scratchpad Phase 2 with the user's decision.
 
 Queue approved items via `wiki-list-add.py`, then ingest via parallel agents (4 at a time, same pattern as today's session).
 
+**Spawn ingest workers as `subagent_type="wiki-ingester"`** (the dedicated ingest agent, installed to `~/.claude/agents/` by this framework) — fall back to `general-purpose` only if it isn't installed. Spawner contract: read `~/.claude/agents/wiki-ingester-config.json` first; if `confirm_model_each_run` is true, ask the user which model to use for this batch (default = `model_default`) and pass it as the Agent tool's spawn-time `model` override.
+
 Each agent follows the full `/wiki-update` flow including the eval gate (step 5).
 
 **Staging**: unless `--direct` was passed, all agents use `--staged` so entries land in `_inbox/proposed/`. This is the default — overnight runs should never file directly to wiki/ without morning review.
@@ -427,7 +429,7 @@ If `--resume`:
 | Semantic lint | 4 | Wiki folder (active, long-term, tooling, orch+impl+root) |
 | Lint fixes | 3 | Fix category (backlinks, stale data, concept gaps) |
 
-Always use `subagent_type="general-purpose"` and `run_in_background=true`.
+Use `subagent_type="wiki-ingester"` for ingestion workers (fallback: `general-purpose` if not installed — see Step 2); `subagent_type="general-purpose"` for all other worker types. Always `run_in_background=true`.
 
 ## Key paths
 

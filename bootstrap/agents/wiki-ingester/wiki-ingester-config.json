@@ -1,0 +1,5 @@
+{
+  "_comment": "Runtime configuration for the wiki-ingester worker, read by the SPAWNER (wiki-cycle or an interactive session) BEFORE launching workers — not by the worker itself. model_default: any model name the harness's Agent tool accepts (e.g. 'sonnet', 'opus', 'haiku', 'fable' — update freely as new models release; this file exists precisely so a model change is a config edit, not an agent-definition edit). confirm_model_each_run: true = the spawner asks the user which model to use for this batch, offering model_default as the default; false = use model_default silently. The chosen model is passed as the Agent tool's spawn-time 'model' override. Fallback if this file is missing or unread: the AGENT.md frontmatter (model: sonnet).",
+  "model_default": "sonnet",
+  "confirm_model_each_run": true
+}

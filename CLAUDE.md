@@ -109,15 +109,18 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 
 - `README.md` — the user-facing install README (what someone reads when they land on the GitHub page)
 - `V2_ROADMAP.md` — deferred V2 ideas (wiki-agent, multi-wiki, antigravity adapter, etc.)
-- `bootstrap/workflows/llm-wiki/skills/` — every skill that ships
-- `bootstrap/workflows/llm-wiki/scripts/` — Python helpers behind the skills
-- `bootstrap/workflows/llm-wiki/seed/` — content that lands in each per-project `llm-wiki/` folder
-- `bootstrap/workflows/llm-wiki/wiki-seed/` + `skills/<name>/wiki-seed/` — pack usage docs
+- `bootstrap/skills/` — every skill that ships
+- `bootstrap/agents/` — agent definitions that ship (→ `~/.claude/agents/`; `TRAVEL_AGENTS`
+  manifest in `_install_tooling.py`). First: `wiki-ingester`, the spawnable batch-ingest worker
+  `/wiki-cycle` delegates to (added 2026-08-20)
+- `bootstrap/scripts/` — Python helpers behind the skills
+- `bootstrap/seed/` — content that lands in each per-project `llm-wiki/` folder
+- `bootstrap/wiki-seed/` + `skills/<name>/wiki-seed/` — pack usage docs
   (standard wiki-seed convention, shared with the agent-factory): `wiki-seed/llm-wiki.md` is
   the pack entry page, each skill carries its own one-page usage doc; `new-wiki.py` assembles
   them into `<target>/llm-wiki/how-to/llm-wiki/{,skills/}` on install and refresh. Distinct
   from `seed/` (the broader project scaffold) — one name per mechanism.
-- `bootstrap/workflows/llm-wiki/templates/` — `CLAUDE.md`, `README.md`, `.gitignore` templates
+- `bootstrap/templates/` — `CLAUDE.md`, `README.md`, `.gitignore` templates
 
 ## Conventions (when editing the scripts)
 
@@ -127,7 +130,7 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 
 ## Don't
 
-- Don't edit `bootstrap/workflows/llm-wiki/` files unless the user explicitly wants to modify the framework. This is a release package — changes here will be overwritten on the next build from workflows-core.
+- Don't edit `bootstrap/` files unless the user explicitly wants to modify the framework. This is a release package — changes here will be overwritten on the next build from workflows-core.
 - Don't try to run the per-project skills (`/wiki-update`, `/wrap-up`, etc.) inside this repo — those are for installed projects, not for the bootstrap itself.
 - Don't push changes to this repo on the user's behalf without explicit instruction — it's published.
 
@@ -135,8 +138,8 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 
 Point them at:
 - `README.md` for the install overview
-- `bootstrap/workflows/llm-wiki/seed/how-to/commands.md` for the per-command reference
-- `bootstrap/workflows/llm-wiki/seed/how-to/getting-started.md` for the first-hour walkthrough
+- `bootstrap/seed/how-to/commands.md` for the per-command reference
+- `bootstrap/seed/how-to/getting-started.md` for the first-hour walkthrough
 
 Or just walk them through running `install-wiki.ps1` with the right flags.
 
@@ -144,7 +147,7 @@ Or just walk them through running `install-wiki.ps1` with the right flags.
 
 This file is the agent-onboarding doc for llm-wiki-bootstrap. **`llm-wiki-bootstrap` is the gold
 copy** — edit directly here. (Historical note: this repo was originally generated from
-`workflows-core/bootstrap/workflows/llm-wiki/` by `scripts/build-wiki-package.py`; that pipeline
+`workflows-core/bootstrap/` by `scripts/build-wiki-package.py`; that pipeline
 has been retired and changes now land here directly — see `git log` for the active commit
 history. `manifest.json` and parts of `README.md` still describe the old build-from-workflows-core
 model and need the same correction.)

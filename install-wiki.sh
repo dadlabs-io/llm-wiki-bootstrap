@@ -73,7 +73,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT="$HERE/bootstrap/workflows/llm-wiki/scripts/new-wiki.py"
+SCRIPT="$HERE/bootstrap/scripts/new-wiki.py"
 
 if [[ ! -f "$SCRIPT" ]]; then
     echo "ERR: new-wiki.py not found at $SCRIPT" >&2

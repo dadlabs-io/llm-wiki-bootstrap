@@ -3,12 +3,14 @@
   "built_at": "2026-06-12T00:00:00+00:00",
   "file_count": 66,
   "package_layout": {
-    "scripts": "bootstrap\\workflows\\llm-wiki\\scripts",
-    "seed": "bootstrap\\workflows\\llm-wiki\\seed",
-    "skills": "bootstrap\\workflows\\llm-wiki\\skills",
-    "templates": "bootstrap\\workflows\\llm-wiki\\templates"
+    "_layout_note": "Flattened 2026-08-20: bootstrap/workflows/llm-wiki/* moved to bootstrap/* (agents/ added same day).",
+    "agents": "bootstrap\\agents",
+    "scripts": "bootstrap\\scripts",
+    "seed": "bootstrap\\seed",
+    "skills": "bootstrap\\skills",
+    "templates": "bootstrap\\templates"
   },
-  "source_path": "bootstrap/workflows/llm-wiki/",
+  "source_path": "bootstrap/",
   "source_repo": "workflows-core (historical — pipeline retired as of this repo's direct-commit model; see _note)",
   "version": "2026-06-12 (last build before pipeline retirement; not updated since)"
 }

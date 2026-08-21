@@ -58,7 +58,7 @@ def find_topic_template():
     here = Path(__file__).resolve()
     candidates = [
         here.parent / "topic-template",                                    # colocated
-        here.parents[6] / "workflows" / "llm-wiki" / "topic-template",     # in-repo
+        here.parents[1] / "topic-template",                                # in-repo (flattened 2026-08-20)
         here.parents[1] / "topic-template",                                # package layout
     ]
     for c in candidates:

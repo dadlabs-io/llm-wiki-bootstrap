@@ -19,7 +19,7 @@ Authored 2026-05-12. The complete list of pieces that travel when `/new-wiki` ru
 
 ## A. Global skills
 
-Source-of-truth: `bootstrap/workflows/llm-wiki/skills/<skill>/SKILL.md`
+Source-of-truth: `bootstrap/skills/<skill>/SKILL.md`
 Install target: `~/.claude/skills/<skill>/SKILL.md`
 
 | Skill | Project type | Purpose |
@@ -40,9 +40,19 @@ Install target: `~/.claude/skills/<skill>/SKILL.md`
 | `wiki-rollback` | both | Roll an entry back to its verified ancestor (pairs with `wiki-verify`; added 2026-05-25, registered to travel 2026-07-07) |
 | `wrap-up` | development | Session-end distillation into wiki entries (written 2026-05-12) |
 
+## A2. Global agents
+
+Source-of-truth: `bootstrap/agents/<name>/AGENT.md` (+ sidecars; `evals/` stays gold-only)
+Install target: `~/.claude/agents/<name>.md` (AGENT.md renamed) + `<name>-*.json` sidecars
+Manifest: `TRAVEL_AGENTS` in `bootstrap/scripts/_install_tooling.py` (added 2026-08-20)
+
+| Agent | Project type | Purpose |
+|---|---|---|
+| `wiki-ingester` | research (primary), both | Spawnable subagent for delegated batch ingestion — full /wiki-update flow per source, one at a time, full-depth reads, staged output, compressed receipt. `/wiki-cycle` Step 2 spawns it (falls back to `general-purpose` if absent). Sidecars: `wiki-ingester-reading-list.json` (skills + pre-reading), `wiki-ingester-config.json` (model_default + confirm_model_each_run — the spawner reads this and asks the user per batch while the confirm flag is true) |
+
 ## B. Global scripts
 
-Source-of-truth: `bootstrap/workflows/llm-wiki/scripts/<script>.py`
+Source-of-truth: `bootstrap/scripts/<script>.py`
 Install target: `~/.claude/wiki-scripts/<script>.py`
 
 | Script | Purpose |
@@ -62,7 +72,7 @@ Install target: `~/.claude/wiki-scripts/<script>.py`
 
 ## C. Templates
 
-Source-of-truth: `bootstrap/workflows/llm-wiki/templates/`
+Source-of-truth: `bootstrap/templates/`
 Install target: `~/.claude/wiki-templates/`
 Usage: copied/rendered into a new project at `/new-wiki` time
 
@@ -113,7 +123,7 @@ Shape of `~/.claude/wiki-config.json` (proposal):
   "agentmemory_wired": true,
   "agentmemory_server_url": "http://localhost:7890",
   "install_version": "2026-05-12",
-  "bootstrap_source": "C:/github.com/workflows-core/bootstrap/workflows/llm-wiki"
+  "bootstrap_source": "C:/github.com/llm-wiki-bootstrap"
 }
 ```
 
@@ -162,16 +172,16 @@ Plus, **per-project codebase** (separate folder, e.g. `C:\github.com\<project>\`
 
 ## Update mechanism
 
-**Source-of-truth lives in `bootstrap/workflows/llm-wiki/`.** When you edit a skill or script there, the installed copies at `~/.claude/skills/` and `~/.claude/wiki-scripts/` go stale.
+**Source-of-truth lives in `bootstrap/`.** When you edit a skill or script there, the installed copies at `~/.claude/skills/` and `~/.claude/wiki-scripts/` go stale.
 
 Proposed: `/new-wiki --sync` (or `/install-sync` as a sister skill).
 
 ```
 /install-sync
   → reads ~/.claude/wiki-config.json for bootstrap_source path
-  → diffs bootstrap/workflows/llm-wiki/skills/ vs ~/.claude/skills/
-  → diffs bootstrap/workflows/llm-wiki/scripts/ vs ~/.claude/wiki-scripts/
-  → diffs bootstrap/workflows/llm-wiki/templates/ vs ~/.claude/wiki-templates/
+  → diffs bootstrap/skills/ vs ~/.claude/skills/
+  → diffs bootstrap/scripts/ vs ~/.claude/wiki-scripts/
+  → diffs bootstrap/templates/ vs ~/.claude/wiki-templates/
   → shows the diff
   → asks: "sync these? (yes/no/review)"
   → on yes: copies bootstrap → installed

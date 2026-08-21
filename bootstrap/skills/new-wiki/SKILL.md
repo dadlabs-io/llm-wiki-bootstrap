@@ -173,7 +173,7 @@ The global Phase A install (which put this skill in `~/.claude/skills/`) also re
 Then:
 
 ```bash
-python "<bootstrap_source>/bootstrap/workflows/llm-wiki/scripts/new-wiki.py" \
+python "<bootstrap_source>/bootstrap/scripts/new-wiki.py" \
   --phase B \
   --tool <claude-code|cursor> \
   --project-name <slug> \
@@ -215,7 +215,7 @@ End with: "Read `llm-wiki/how-to/commands.md` for the full command reference, or
 - Don't proceed without explicit confirmation at discovery
 - Don't overwrite an existing project folder without `--force` unless user explicitly OKs it
 - Don't ask the user to pick a project type — that distinction was removed; every project gets the merged taxonomy
-- Don't edit `<target>/.claude/skills/` manually — that's an installed copy; edit in `<bootstrap_source>/bootstrap/workflows/llm-wiki/skills/` and re-sync
+- Don't edit `<target>/.claude/skills/` manually — that's an installed copy; edit in `<bootstrap_source>/bootstrap/skills/` and re-sync
 
 ## Drive OAuth walkthrough (Phase B, only if `--drive-enabled yes`)
 

@@ -19,7 +19,7 @@ Cursor:
 Usage:
   python install-skill.py --skill wiki-cycle
   python install-skill.py --skill wiki-update --tool claude-code \
-      --skills-src  <pkg>/bootstrap/workflows/llm-wiki/skills \
+      --skills-src  <pkg>/bootstrap/skills \
       --skills-dest ~/.claude/skills \
       --scripts-dir ~/.claude/wiki-scripts \
       [--dry-run]

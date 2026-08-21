@@ -49,8 +49,9 @@ cd ~/llm-wiki-bootstrap
 ./install-wiki.sh
 ```
 
-No flags needed. Installs all wiki skills to `~/.claude/skills/` and all wiki
-scripts to `~/.claude/wiki-scripts/`. Idempotent.
+No flags needed. Installs all wiki skills to `~/.claude/skills/`, all wiki
+scripts to `~/.claude/wiki-scripts/`, and the wiki agents to `~/.claude/agents/`.
+Idempotent.
 
 Restart Claude Code after install so it picks up the new skills.
 
@@ -63,6 +64,10 @@ Restart Claude Code after install so it picks up the new skills.
 | `/wiki-update` | File a durable decision or finding to the wiki |
 | `/wiki-search` | Search wiki entries before starting work |
 | `/wiki-cycle` | Research projects: search → read → capture loop |
+
+| Agent | What it's for |
+|---|---|
+| `wiki-ingester` | Spawnable subagent for batch ingestion — `/wiki-cycle` (or any session) delegates queue drains / multi-URL batches to it; each source is read in full and staged for review |
 
 ### Set up a project wiki
 

@@ -1,0 +1,63 @@
+{
+  "_comment": "Capability manifest for wiki-ingester: the SKILLS it can call + PRE-READING it must load. Static 'how to do the job'. Docs live in the TARGET notebook (per-topic framework contracts installed by llm-wiki); this POINTS to them (no copies). This agent is generic across notebooks — its working notebook is resolved AT RUNTIME from the calling project's .claude/wiki-config.json (or the caller's explicit topic argument), so every notebook reference below means that runtime-resolved target notebook.",
+  "name": "wiki-ingester-reading-list",
+  "description": "What the wiki-ingester worker reads and can call to ingest external sources into a notebook's research layer: the wiki-update procedure + queue mechanics + search, and the frontmatter/eval/authoring specs it must conform to.",
+  "pre_reading": [
+    {
+      "notebook": "(runtime-resolved target notebook)",
+      "title": "Wiki frontmatter best practices (canonical spec)",
+      "link": "wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md (older layouts: wiki/best-practices/framework/)",
+      "required": true,
+      "why": "Single source of truth for required frontmatter fields, tier rubric, review cadence, raw_path handling. A per-topic framework contract — read the TARGET topic's copy."
+    },
+    {
+      "notebook": "(runtime-resolved target notebook)",
+      "title": "Wiki authoring best practices",
+      "link": "wiki/project/best-practices/framework/wiki-authoring-best-practices.md (older layouts: wiki/best-practices/framework/)",
+      "required": true,
+      "why": "Synthesis-vs-direct-quote conventions, blockquoted-numbers rule, and the ASR quote-integrity check applied to every transcript before blockquoting."
+    },
+    {
+      "notebook": "(runtime-resolved target notebook)",
+      "title": "Eval rubric (the 5-dimension ingest gate)",
+      "link": "wiki/research/implementation/eval-rubric.md",
+      "required": false,
+      "why": "Every synthesis is scored against this before staging — pass = avg >= 3.0 and no dimension at 1. If the target topic lacks this file, use the rubric table inlined in wiki-update/SKILL.md step 5 (same 5 dimensions)."
+    },
+    {
+      "notebook": "(runtime-resolved target notebook)",
+      "title": "Cycle Step Return Format",
+      "link": "wiki/project/best-practices/framework/cycle-step-return-format.md (older layouts: wiki/best-practices/framework/)",
+      "required": false,
+      "why": "Only when invoked inside /wiki-cycle — the run-folder step-return contract (<step>.json/<step>.md shape, counters, queued/skipped/deferred semantics)."
+    }
+  ],
+  "skills": [
+    {
+      "name": "wiki-update",
+      "status": "active",
+      "description": "THE core procedure: the full 8-step ingest flow — fetcher dispatch table, read-raw-in-full, qmd integration search, synthesis conventions, eval gate, staged-sidecar contract. Installed globally at ~/.claude/skills/wiki-update."
+    },
+    {
+      "name": "wiki-search",
+      "status": "active",
+      "description": "qmd hybrid BM25/vector search used in the integration step (3-5 key terms per source) so entries cross-link instead of landing isolated. Installed globally at ~/.claude/skills/wiki-search."
+    },
+    {
+      "name": "wiki-list",
+      "status": "active",
+      "description": "Pending-queue mechanics: pull next item from _inbox/pending/, move to _inbox/done/ on completion, regen the pending view — the resumability backbone for batch drains. Installed globally at ~/.claude/skills/wiki-list."
+    }
+  ],
+  "project_wiki": {
+    "notebook": "(runtime-resolved target notebook)",
+    "path": "wiki",
+    "start_at": "_MAP.md",
+    "note": "Dynamic status/context of the TARGET notebook the batch writes into. Consult for CONTEXT (topic scope rules, taxonomy folders), not capabilities."
+  },
+  "task_journal": {
+    "notebook": "(runtime-resolved target notebook)",
+    "path": "wiki/sessions/wiki-ingester",
+    "note": "On startup, read the latest journal here (if present) to RESUME an interrupted batch. Ground truth for batch state is the queue itself: _inbox/pending/ vs _inbox/done/ — trust the disk over recollection."
+  }
+}
