@@ -3,17 +3,18 @@ title: "llm-wiki — the skill pack"
 type: how-to
 pack: llm-wiki
 installed_by: install-wiki
-date: 2026-07-31
+date: 2026-08-20
 ---
 
 # llm-wiki — the skill pack
 
 The LLM-wiki framework's skills: everything for capturing, ingesting, verifying, and maintaining
-this project's durable knowledge in its wiki. This is a **skills-only pack** — no workflow, no
-dedicated agents. The skills are meant for **every** agent and session, which is why they're
-normally installed to the **global** skills area (`~/.claude/skills/`) rather than per-project:
-one install serves all your projects, and each project's `.claude/wiki-config.json` points the
-shared skills at that project's own wiki.
+this project's durable knowledge in its wiki. The pack is **skills plus one worker agent** (no
+workflow): the skills are meant for **every** agent and session, which is why they're normally
+installed to the **global** skills area (`~/.claude/skills/`) rather than per-project — one
+install serves all your projects, and each project's `.claude/wiki-config.json` points the
+shared skills at that project's own wiki. The agent (below) is the pack's one dedicated
+subagent, installed to `~/.claude/agents/` (added 2026-08-20).
 
 Every skill has its own page in the sibling `skills/` folder — linked below. For the guided
 version of this list, see [`../commands.md`](../commands.md) (the full command reference) and
@@ -47,6 +48,12 @@ version of this list, see [`../commands.md`](../commands.md) (the full command r
 | [`wiki-claims`](./skills/wiki-claims.md) | Extract + classify factual claims, flag contradictions between entries |
 | [`wiki-verify`](./skills/wiki-verify.md) | Flip an entry unverified → verified (entries can never self-certify) |
 | [`wiki-rollback`](./skills/wiki-rollback.md) | Roll an entry back to its verified ancestor along the `revises:` chain |
+
+## Agents
+
+| Agent | One line |
+|---|---|
+| `wiki-ingester` | Spawnable worker for **delegated batch ingestion**: `/wiki-cycle` (or any session) hands it a queue slice or URL list; it runs the full `wiki-update` flow per source — one at a time, each read in FULL (whole repos, full transcripts, all PDF pages) — stages results to `_inbox/proposed/`, and returns a compressed receipt. Its model is set in `~/.claude/agents/wiki-ingester-config.json` (`model_default` + `confirm_model_each_run`). For a single source you're watching live, just run `/wiki-update` inline instead. |
 
 ## Setup & lifecycle
 
