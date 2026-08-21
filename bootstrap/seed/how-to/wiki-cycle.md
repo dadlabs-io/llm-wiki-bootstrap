@@ -10,6 +10,11 @@ The main pipeline. Discover new sources, ingest approved items, lint, fix, gener
 
 Default `--quick` mode: Drive-fetch → Discover → Confirm → Ingest → **Dequeue** (move ingested items `pending/`→`done/`) → Mechanical lint → **Normalize links** (`wiki-fix-links.py`) → Reciprocate backlinks → INDEX regen → MAP regen → Morning report → Promote checkpoint. ~5-10 min for ≤20 items.
 
+Ingest runs via the **`wiki-ingester` subagent** (installed to `~/.claude/agents/` with this
+framework; falls back to a general-purpose worker if absent). Before the workers launch you may be
+asked which model to use for the batch — the default and the ask-every-time flag live in
+`~/.claude/agents/wiki-ingester-config.json` (`model_default`, `confirm_model_each_run`).
+
 ## Mode flags
 
 | Flag | Effect |
