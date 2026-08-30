@@ -17,7 +17,7 @@ tags: [memory-signals, recall-count, last-accessed, ebbinghaus, sidecar-pattern,
 
 Our canonical position on **where** access-frequency signals (recall_count, last_accessed) should live in a markdown-first knowledge wiki, and **who** writes them. Synthesised 2026-05-07 from a research brief covering 9 production memory frameworks plus 2 reference implementations.
 
-This entry operationalises [memory-architecture-best-practices.md Principle 3](../memory-architecture-best-practices.md) ("Memory signals — make forgetting measurable"). The principle says every memory entry should have at least `recall_count`, `last_accessed`, and `confidence`. We have `confidence` (frontmatter, author-driven). This doc covers the other two.
+This entry operationalises memory-architecture-best-practices.md Principle 3 *(agentic-design :: wiki/project/best-practices/memory-architecture-best-practices.md)* ("Memory signals — make forgetting measurable"). The principle says every memory entry should have at least `recall_count`, `last_accessed`, and `confidence`. We have `confidence` (frontmatter, author-driven). This doc covers the other two.
 
 ## TL;DR
 
@@ -125,14 +125,14 @@ where  λ_eff = base_λ × (1 − importance × 0.8)   ← important memories de
        base_λ varies by content type — see below
 ```
 
-YourMemory's `base_λ` values: `fact=0.16, strategy=0.10, assumption=0.20, failure=0.35`. Architecture decisions decay slow; ephemeral failure logs decay fast. (The same per-content-type-decay logic is what the [confidence-scoring](../../active/confidence-scoring-ebbinghaus-forgetting-curve-for-wiki-lifecycle.md) entry calls Level 4.)
+YourMemory's `base_λ` values: `fact=0.16, strategy=0.10, assumption=0.20, failure=0.35`. Architecture decisions decay slow; ephemeral failure logs decay fast. (The same per-content-type-decay logic is what the confidence-scoring *(agentic-design :: wiki/research/active/confidence-scoring-ebbinghaus-forgetting-curve-for-wiki-lifecycle.md)* entry calls Level 4.)
 
 **The contested question — strength's role in ranking — has two opposing production answers. Both ship. Both win. Both-sides-stay applies.** (Updated 2026-05-11 after re-reading the Oblivion paper raw; earlier framing on 2026-05-07 incorrectly described Oblivion as also excluding strength from ranking.)
 
 | System | Strength's effect on ranking | Strength's effect on storage | Granularity |
 |---|---|---|---|
-| [**YourMemory**](../../active/yourmemory-ebbinghaus-decay-recall-count-implementation-2026.md) | **NONE** — `0.4 × bm25_norm + 0.6 × cosine` (similarity-pure). Their BENCHMARKS.md: *"multiplying cosine by strength would penalise old-but-valid memories below newer irrelevant ones."* | 24h prune job at strength threshold 0.05 | Per-entry |
-| [**Oblivion**](../../long-term/oblivion-decay-driven-activation-arxiv-2604-00131.md) | **YES** — §2.2: *"neglected ones see R_t(c) decline, making their memories less prominent in retrieval ranking."* Plus uncertainty `u_t(c)` separately gates the read-path (whether to retrieve at all). | Eviction during curation, *"yet never deleted, preserving reactivatability when future interactions reinforce them"* | Per L1 cluster |
+| **YourMemory** *(agentic-design :: wiki/research/active/yourmemory-ebbinghaus-decay-recall-count-implementation-2026.md)* | **NONE** — `0.4 × bm25_norm + 0.6 × cosine` (similarity-pure). Their BENCHMARKS.md: *"multiplying cosine by strength would penalise old-but-valid memories below newer irrelevant ones."* | 24h prune job at strength threshold 0.05 | Per-entry |
+| **Oblivion** *(agentic-design :: wiki/research/long-term/oblivion-decay-driven-activation-arxiv-2604-00131.md)* | **YES** — §2.2: *"neglected ones see R_t(c) decline, making their memories less prominent in retrieval ranking."* Plus uncertainty `u_t(c)` separately gates the read-path (whether to retrieve at all). | Eviction during curation, *"yet never deleted, preserving reactivatability when future interactions reinforce them"* | Per L1 cluster |
 
 The benchmark wins:
 - **YourMemory** (similarity-pure ranking, decay-only-prunes): 59% Recall@5 vs Zep Cloud 28% (+31pp absolute, 2.1× relative) on LoCoMo-10.
@@ -188,14 +188,14 @@ Three actors, three responsibilities:
 | **Contradiction marker** (manual or agent-driven) | sidecar `verified: contradicted` + appends to `contradicted_by[]` array | frontmatter + sidecar |
 | `/wiki-lint` | nothing — read-only | both; reports drift between frontmatter `verified:` and sidecar `verified` |
 
-This separation is the load-bearing decision. It mirrors the [provider-vs-manager split](../memory-architecture-best-practices.md#4-provider-vs-manager-split--name-it) — the entry is the provider (the durable substrate); qmd + the decay batch are the managers (the code that moves information).
+This separation is the load-bearing decision. It mirrors the provider-vs-manager split *(agentic-design :: wiki/project/best-practices/memory-architecture-best-practices.md)* — the entry is the provider (the durable substrate); qmd + the decay batch are the managers (the code that moves information).
 
 ## Downstream uses (in order of payoff)
 
 1. **Decay-weighted ranking.** `qmd` returns top-K by `score`, not raw cosine similarity. This is the benchmark-winning use. **Highest priority.**
-2. **Auto-pruning / forgetting-candidate selection.** `/wiki-signals-decay` flags entries below strength 0.05 as archive candidates. Per [memory-architecture-best-practices.md Principle 2](../memory-architecture-best-practices.md), candidates move to `wiki/archive/`, not deletion (still searchable, de-emphasised in ranking).
+2. **Auto-pruning / forgetting-candidate selection.** `/wiki-signals-decay` flags entries below strength 0.05 as archive candidates. Per memory-architecture-best-practices.md Principle 2 *(agentic-design :: wiki/project/best-practices/memory-architecture-best-practices.md)*, candidates move to `wiki/archive/`, not deletion (still searchable, de-emphasised in ranking).
 3. **Lint flags for never-retrieved entries.** `/wiki-lint` flags `recall_count == 0 AND age > 90d` as "is this paying its keep?" Cheap, mechanical.
-4. **Heatmaps for human review.** Per [MemGuard](../../tooling/memguard-memory-validation-sidecar-mem0-letta-zep-2026.md): frequently-retrieved-but-stale = highest truth-decay risk. The signals + `last_reviewed` cross-product surfaces these.
+4. **Heatmaps for human review.** Per MemGuard *(agentic-design :: wiki/research/tooling/memguard-memory-validation-sidecar-mem0-letta-zep-2026.md)*: frequently-retrieved-but-stale = highest truth-decay risk. The signals + `last_reviewed` cross-product surfaces these.
 
 ## Open questions (defer to design phase)
 
@@ -222,7 +222,7 @@ This puts us **ahead of canonical practitioner shipping reality**, not behind it
 
 ## Implementation roadmap
 
-Following the [confidence-scoring spectrum](../../active/confidence-scoring-ebbinghaus-forgetting-curve-for-wiki-lifecycle.md) (Levels 1-4):
+Following the confidence-scoring spectrum *(agentic-design :: wiki/research/active/confidence-scoring-ebbinghaus-forgetting-curve-for-wiki-lifecycle.md)* (Levels 1-4):
 
 | Level | What | Status |
 |---|---|---|
@@ -236,19 +236,19 @@ Level 2 is the load-bearing build: it wires qmd to write signals on retrieval. W
 ## Source entries
 
 Production reference impls:
-- [YourMemory — Ebbinghaus Decay + recall_count Reference Implementation (+16pp Recall vs Mem0)](../../active/yourmemory-ebbinghaus-decay-recall-count-implementation-2026.md) — the production-shipping reference; this entry's most direct prior art
-- [Oblivion — Decay-Driven Activation (+3.9pp LongMemEval, +36.97pp GoodAILTM)](../../long-term/oblivion-decay-driven-activation-arxiv-2604-00131.md) — academic/empirical backing
+- YourMemory — Ebbinghaus Decay + recall_count Reference Implementation (+16pp Recall vs Mem0) *(agentic-design :: wiki/research/active/yourmemory-ebbinghaus-decay-recall-count-implementation-2026.md)* — the production-shipping reference; this entry's most direct prior art
+- Oblivion — Decay-Driven Activation (+3.9pp LongMemEval, +36.97pp GoodAILTM) *(agentic-design :: wiki/research/long-term/oblivion-decay-driven-activation-arxiv-2604-00131.md)* — academic/empirical backing
 
 Wiki framework + adjacent:
-- [Memory Architecture Best Practices](../memory-architecture-best-practices.md) — Principle 3 (this doc operationalises it), Principle 2 (no-deletion / archive-not-delete)
-- [Confidence Scoring + Ebbinghaus Forgetting Curve for Wiki Lifecycle](../../active/confidence-scoring-ebbinghaus-forgetting-curve-for-wiki-lifecycle.md) — the level-spectrum framing
-- [MemGuard — Open-Source Memory Validation Sidecar](../../tooling/memguard-memory-validation-sidecar-mem0-letta-zep-2026.md) — the truth-decay axis (complementary, not overlap)
+- Memory Architecture Best Practices *(agentic-design :: wiki/project/best-practices/memory-architecture-best-practices.md)* — Principle 3 (this doc operationalises it), Principle 2 (no-deletion / archive-not-delete)
+- Confidence Scoring + Ebbinghaus Forgetting Curve for Wiki Lifecycle *(agentic-design :: wiki/research/active/confidence-scoring-ebbinghaus-forgetting-curve-for-wiki-lifecycle.md)* — the level-spectrum framing
+- MemGuard — Open-Source Memory Validation Sidecar *(agentic-design :: wiki/research/tooling/memguard-memory-validation-sidecar-mem0-letta-zep-2026.md)* — the truth-decay axis (complementary, not overlap)
 - [Wiki Authoring Best Practices](./wiki-authoring-best-practices.md) — Principle 9 (build-artifact dependency tracking) — sidecar pattern extends this
 
 Production-systems-that-deliberately-don't:
-- [Mem0](../../active/mem0ai-mem0-intelligent-memory-layer-for-ai-agents.md) — ADD-only, no signals
-- [Letta / MemGPT](../../active/letta-ai-letta-formerly-memgpt-stateful-agents-with-os-tiered-memory.md) — block versioning, no per-block read counter
-- [Zep / Graphiti](../../active/getzep-graphiti-temporal-context-graphs-for-ai-agents.md) — bi-temporal validity windows for truth decay, not access decay
+- Mem0 *(agentic-design :: wiki/research/active/mem0ai-mem0-intelligent-memory-layer-for-ai-agents.md)* — ADD-only, no signals
+- Letta / MemGPT *(agentic-design :: wiki/research/active/letta-ai-letta-formerly-memgpt-stateful-agents-with-os-tiered-memory.md)* — block versioning, no per-block read counter
+- Zep / Graphiti *(agentic-design :: wiki/research/active/getzep-graphiti-temporal-context-graphs-for-ai-agents.md)* — bi-temporal validity windows for truth decay, not access decay
 
 ## Related
 
@@ -265,19 +265,19 @@ Production-systems-that-deliberately-don't:
 
 _Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._
 
-- [auto-memory — Zero-Dependency Recall Layer for GitHub Copilot CLI](../../tooling/auto-memory-zero-dependency-recall-layer-for-github-copilot-cli.md)
-- [Codex Chronicle — Screen-Aware Ambient Memory for Codex Mac](../../tooling/codex-chronicle-screen-aware-ambient-memory.md)
-- [MemAlign — Building Better LLM Judges From Human Feedback With Scalable Memory (Databricks 2026-02-03)](../../tooling/databricks-memalign-llm-judges-memory-2026.md)
-- [Honcho — Plastic Labs' Dialectic User Modeling for Stateful Agents](../../tooling/honcho-plastic-labs-dialectic-user-modeling.md)
-- [Icarus Integration Plan — Concrete Changes to Adopt Icarus's Schema + Patterns](../../best-practices/framework/icarus-integration-plan.md)
-- [Mem0 Memory Plugin for OpenClaw — Persistent Memory in 30 Seconds (Deshraj Yadav, Mem0, 2026-02-06)](../../tooling/mem0-openclaw-plugin-yadav-2026.md)
-- [MemGuard — Open-Source Memory Validation Sidecar for Mem0/Letta/Zep (5-Strategy Trust Scoring)](../../tooling/memguard-memory-validation-sidecar-mem0-letta-zep-2026.md)
-- [MemoRizz — Richmond Alake's Memory-Layer Library for AI Agents](../../tooling/memorizz-richmond-alake-memory-layer-library.md)
-- [Agent Memory Architecture — Best Practices](../../best-practices/memory-architecture-best-practices.md)
-- [OpenClaw 2026.4.10 — Active Memory Plugin (Memory Sub-Agent for Ongoing Chats)](../../tooling/openclaw-2026-4-10-active-memory-plugin.md)
-- [SMFS (Supermemory) — Agent Memory Exposed as a Filesystem with Semantic grep](../../tooling/smfs-supermemory-agent-memory-exposed-as-a-filesystem-with-semantic-grep.md)
-- [Vision — Iterative Self-Improving Research Cycle](../../vision-nightly-self-improving-research-cycle.md)
+- auto-memory — Zero-Dependency Recall Layer for GitHub Copilot CLI *(agentic-design :: wiki/research/tooling/auto-memory-zero-dependency-recall-layer-for-github-copilot-cli.md)*
+- Codex Chronicle — Screen-Aware Ambient Memory for Codex Mac *(agentic-design :: wiki/research/tooling/codex-chronicle-screen-aware-ambient-memory.md)*
+- MemAlign — Building Better LLM Judges From Human Feedback With Scalable Memory (Databricks 2026-02-03) *(agentic-design :: wiki/research/tooling/databricks-memalign-llm-judges-memory-2026.md)*
+- Honcho — Plastic Labs' Dialectic User Modeling for Stateful Agents *(agentic-design :: wiki/research/tooling/honcho-plastic-labs-dialectic-user-modeling.md)*
+- Icarus Integration Plan — Concrete Changes to Adopt Icarus's Schema + Patterns *(agentic-design :: wiki/project/best-practices/framework/icarus-integration-plan.md)*
+- Mem0 Memory Plugin for OpenClaw — Persistent Memory in 30 Seconds (Deshraj Yadav, Mem0, 2026-02-06) *(agentic-design :: wiki/research/tooling/mem0-openclaw-plugin-yadav-2026.md)*
+- MemGuard — Open-Source Memory Validation Sidecar for Mem0/Letta/Zep (5-Strategy Trust Scoring) *(agentic-design :: wiki/research/tooling/memguard-memory-validation-sidecar-mem0-letta-zep-2026.md)*
+- MemoRizz — Richmond Alake's Memory-Layer Library for AI Agents *(agentic-design :: wiki/research/tooling/memorizz-richmond-alake-memory-layer-library.md)*
+- Agent Memory Architecture — Best Practices *(agentic-design :: wiki/project/best-practices/memory-architecture-best-practices.md)*
+- OpenClaw 2026.4.10 — Active Memory Plugin (Memory Sub-Agent for Ongoing Chats) *(agentic-design :: wiki/research/tooling/openclaw-2026-4-10-active-memory-plugin.md)*
+- SMFS (Supermemory) — Agent Memory Exposed as a Filesystem with Semantic grep *(agentic-design :: wiki/research/tooling/smfs-supermemory-agent-memory-exposed-as-a-filesystem-with-semantic-grep.md)*
+- Vision — Iterative Self-Improving Research Cycle *(agentic-design :: wiki/project/architecture/vision-nightly-self-improving-research-cycle.md)*
 - [Wiki Frontmatter — Best Practices & Canonical Field Reference](../../best-practices/framework/wiki-frontmatter-best-practices.md)
-- [YourMemory — Ebbinghaus Decay + recall_count Reference Implementation (+16pp Recall vs Mem0 on LoCoMo)](../../active/yourmemory-ebbinghaus-decay-recall-count-implementation-2026.md)
+- YourMemory — Ebbinghaus Decay + recall_count Reference Implementation (+16pp Recall vs Mem0 on LoCoMo) *(agentic-design :: wiki/research/active/yourmemory-ebbinghaus-decay-recall-count-implementation-2026.md)*
 
 <!-- BACKLINKS-AUTO END -->

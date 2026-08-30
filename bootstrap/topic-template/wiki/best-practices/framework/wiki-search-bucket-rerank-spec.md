@@ -15,7 +15,7 @@ tags: [best-practices, framework, search, retrieval, icarus-schema, truth-status
 
 # Wiki Search — Bucket-Aware Retrieval Sort Spec
 
-Implementation contract for §3 of [icarus-integration-plan.md](./icarus-integration-plan.md). Defines the sort-key semantics that any wiki-search surface (qmd wrapper, `/wiki-search` skill, future native search layer) must honor when truth-status fields are present.
+Implementation contract for §3 of icarus-integration-plan.md *(agentic-design :: wiki/project/best-practices/framework/icarus-integration-plan.md)*. Defines the sort-key semantics that any wiki-search surface (qmd wrapper, `/wiki-search` skill, future native search layer) must honor when truth-status fields are present.
 
 ## TL;DR
 
@@ -124,7 +124,7 @@ So the default-sort change is **safe to deploy** before any entries actually car
 
 ## Related
 
-- [icarus-integration-plan.md §3](./icarus-integration-plan.md#3-recall--retrieval--new-sort-key) — the plan section this spec realizes
+- icarus-integration-plan.md §3 *(agentic-design :: wiki/project/best-practices/framework/icarus-integration-plan.md)* — the plan section this spec realizes
 - [memory-signals-sidecar-vs-frontmatter-pattern.md](./memory-signals-sidecar-vs-frontmatter-pattern.md) — sidecar that holds the authoritative `verified` value when frontmatter is stale
 - [wiki-frontmatter-best-practices.md](./wiki-frontmatter-best-practices.md) — the optional `verified:` field on the entry itself
 

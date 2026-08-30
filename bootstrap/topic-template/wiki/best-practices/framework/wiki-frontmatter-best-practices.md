@@ -60,7 +60,7 @@ Path is relative to the topic root (the folder containing `_INDEX.md`), **not** 
 
 ## Optional fields — truth-status and lineage (icarus schema)
 
-Adopted from the [icarus-memory-infra schema](../../active/icarus-memory-infra-esaradev-2026.md) (MIT-licensed vocabulary lift; we do not take icarus as a runtime dependency — see [icarus-integration-plan.md](./icarus-integration-plan.md) §1). These five fields layer truth-status and forward/backward lineage onto entries; they are **optional** at the schema level but have **write-time invariants** when used.
+Adopted from the icarus-memory-infra schema *(agentic-design :: wiki/research/active/icarus-memory-infra-esaradev-2026.md)* (MIT-licensed vocabulary lift; we do not take icarus as a runtime dependency — see icarus-integration-plan.md *(agentic-design :: wiki/project/best-practices/framework/icarus-integration-plan.md)* §1). These five fields layer truth-status and forward/backward lineage onto entries; they are **optional** at the schema level but have **write-time invariants** when used.
 
 | Field | Type | Values / format | Purpose |
 |---|---|---|---|
