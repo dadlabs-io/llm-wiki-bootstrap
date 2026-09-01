@@ -35,7 +35,7 @@ Resolution order in every helper: registry (if ``notebook`` + ``registry`` prese
 """
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 DEFAULT_TOPIC_FALLBACK = "llm-wiki"
@@ -62,6 +62,15 @@ def now_stamp(timespec: str = "seconds") -> str:
     """Local timestamp WITH explicit offset, e.g. '2026-06-17T00:05:07-04:00'.
     tz-aware (never naive) so the zone is always labelled. For audit/event fields."""
     return datetime.now().astimezone().isoformat(timespec=timespec)
+
+
+def future_label(days: int = 90) -> str:
+    """Local date label N DAYS out, e.g. for `review_after:` frontmatter.
+    Day-based by decision (2026-09-01): plain timedelta arithmetic — no
+    calendar-month edge cases (Aug 31 + 3mo, Feb 29 + 1yr) and no drift between
+    scripts. Conventions: 90 ≈ 3 months, 365 ≈ 1 year; tier cadences pass their
+    own day counts (see wiki-update.py)."""
+    return (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
 
 # Canonical wiki folder taxonomy — the SINGLE source of truth for the structure a
 # new wiki gets. Both scaffolders (new-wiki.py phase B, wiki-init.py) import this

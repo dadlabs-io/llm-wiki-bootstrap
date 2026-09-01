@@ -43,7 +43,7 @@ from __future__ import annotations
 import sys as _sys  # noqa: E402
 from pathlib import Path as _ShimPath  # noqa: E402
 _sys.path.insert(0, str(_ShimPath(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, future_label as _future_label  # noqa: E402
 import argparse
 import json
 import re
@@ -141,7 +141,7 @@ def collect_entries(folder: Path, wiki_root: Path) -> list[dict]:
 
 def render_index(folder_name: str, entries: list[dict], wiki_root: Path) -> str:
     today = datetime.now().strftime("%Y-%m-%d")
-    review = datetime.now().replace(month=min(datetime.now().month + 3, 12)).strftime("%Y-%m-%d")
+    review = _future_label(90)
 
     # Group by tier (sorted)
     by_tier: dict[str, list[dict]] = {}

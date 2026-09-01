@@ -46,7 +46,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label  # noqa: E402
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -632,7 +632,7 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
         _days = _cadence_days.get(int(tier), 365)
     except (TypeError, ValueError):
         _days = 365  # tier 'self' or unset
-    fm_lines.append(f"review_after: {(_now + timedelta(days=_days)).strftime('%Y-%m-%d')}")
+    fm_lines.append(f"review_after: {_future_label(_days)}")
     if staged:
         fm_lines.append("status: proposed")
     if tags:

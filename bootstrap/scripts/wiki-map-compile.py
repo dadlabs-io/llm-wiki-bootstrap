@@ -46,7 +46,7 @@ from __future__ import annotations
 import sys as _sys  # noqa: E402
 from pathlib import Path as _ShimPath  # noqa: E402
 _sys.path.insert(0, str(_ShimPath(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, future_label as _future_label  # noqa: E402
 import argparse
 import json
 import re
@@ -236,7 +236,7 @@ def render_map(wiki_root: Path, topic: str, folder_data: dict[str, list[dict]], 
         "tier: self",
         "confidence: high",
         f"last_reviewed: {today}",
-        "review_after: 2026-10-24",
+        f"review_after: {_future_label(90)}",
         "tags: [map, index, orientation, auto-generated, always-loaded]",
         "---",
         "",
@@ -332,10 +332,13 @@ def process(wiki_root: Path, topic: str, dry_run: bool = False) -> dict:
         entries = collect_folder_entries(child)
         if entries:
             folder_data[child.name] = entries
-        elif child.name in CONTAINER_FOLDERS:
+        if child.name in CONTAINER_FOLDERS:
             # Container folder: enumerate ALL descendant category folders at ANY depth,
             # keyed by path relative to wiki_root. Recurses so deeply-nested clusters
             # (e.g. project/components/hints/techniques/) still appear in the map.
+            # NOT elif — a container can hold BOTH loose entries (e.g. project/roadmap.md)
+            # and subfolders; the old elif silently dropped every nested entry whenever
+            # one loose .md existed (agent-builder-bootstrap showed 3 entries, not ~100).
             for subfolder in sorted(d for d in child.rglob("*") if d.is_dir()):
                 rel = subfolder.relative_to(wiki_root)
                 if any(part.startswith(("_", ".")) for part in rel.parts):

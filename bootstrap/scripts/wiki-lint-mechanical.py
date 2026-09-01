@@ -70,7 +70,12 @@ def parse_frontmatter(content):
         if not line.strip() or line.strip().startswith("#") or ":" not in line:
             continue
         key, _, value = line.partition(":")
-        fm[key.strip().lower()] = value.strip()
+        value = value.strip()
+        # Strip one matching pair of surrounding quotes — YAML-quoted values
+        # (raw_path: "raw/x.md", title: "...") must compare/resolve unquoted.
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        fm[key.strip().lower()] = value
     return fm, body
 
 

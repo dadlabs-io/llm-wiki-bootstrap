@@ -1,11 +1,10 @@
 {
-  "_comment": "Path-resolution config for the global /wiki-* tooling. llm-wiki-bootstrap is the MASTER tooling repo (no own wiki content). This config points cwd-based script resolution at the real agentic-design vault in the sibling workflows-core repo, so the tooling can be smoke-tested against live content while editing it here. The scripts read vault_root + wiki_topic from <cwd>/.claude/wiki-config.json; vault_root + wiki_topic resolve to <vault_root>/<wiki_topic> = the topic root containing _inbox/ and wiki/. Absolute path so resolution is identical regardless of cwd. Mirror of workflows-core/.claude/wiki-config.json.",
+  "_comment": "llm-wiki-bootstrap's OWN notebook is 'llm-wiki-bootstrap' (in project-notebooks, via the shared registry) — the default for ALL /wiki-* from this cwd; /wrap-up writes our own project/session memory there. This repo is the gold-copy tooling repo, so its notebook holds framework-dev notes; historical framework knowledge from the workflows-core era lives in the 'workflows-core' notebook. 'agentic-design' is a SEPARATE research notebook, still handy for smoke-testing the tooling against live content — it only receives entries when explicitly targeted with `--topic agentic-design`. The drive block configures the __FOR CLAUDE/agentic-design fetch used by those explicit agentic-design cycles. (Replaced the pre-registry v2 config that pointed vault_root at the retired workflows-core docker vault path, 2026-08-31.)",
   "tool": "claude-code",
   "project_name": "llm-wiki-bootstrap",
-  "vault_root": "C:/github.com/workflows-core/docker/shared/openclaw/vault/wikis",
-  "default_topic": "agentic-design",
-  "topics": ["agentic-design", "cottage-build"],
-  "wiki_topic": "agentic-design",
+  "notebook": "llm-wiki-bootstrap",
+  "registry": "C:/github.com/project-notebooks/linked-notebooks.json",
+  "skills_install": "global",
   "drive": {
     "enabled": true,
     "parent_folder": "__FOR CLAUDE",

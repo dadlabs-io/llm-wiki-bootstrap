@@ -113,6 +113,27 @@ def project_paths(tool: str, target: Path, llm_wiki_root: Path = None) -> dict:
     }
 
 
+def _enclosing_notebook_vault(target, registry_arg=None):
+    """The notebooks-vault folder governing ``target``, or None.
+
+    A target is a notebook-in-a-vault when a ``linked-notebooks.json`` registry
+    lives in an ancestor folder (or --registry points at one that does/will).
+    Such targets get the FLAT layout — wiki/, raw/, _inbox/, _signals/ directly
+    at the notebook root — instead of the in-project <target>/llm-wiki/ nesting.
+    """
+    target = Path(target).resolve()
+    for d in target.parents:
+        if (d / "linked-notebooks.json").exists():
+            return d
+    if registry_arg:
+        # Registry may not exist yet on a first install — trust the pointer if
+        # its folder contains the target.
+        reg_dir = Path(registry_arg).resolve().parent
+        if reg_dir in target.parents:
+            return reg_dir
+    return None
+
+
 DEFAULT_DRIVE_PARENT = "__FOR CLAUDE"
 
 # Skills that travel — keep in sync with INSTALL-INVENTORY.md.
@@ -697,9 +718,27 @@ def phase_b(args):
         vault_root = Path(args.vault_root).resolve()
         llm_wiki_root = vault_root / name
     else:
-        external_vault = False
-        vault_root = target
-        llm_wiki_root = target / "llm-wiki"
+        # Notebook-vault detection: when the target ITSELF is a notebook inside a
+        # notebooks vault (a linked-notebooks.json in an ancestor, or --registry
+        # pointing at one), scaffold FLAT at the notebook root — wiki/, raw/,
+        # _inbox/, _signals/ as direct children, NO intermediate llm-wiki/ level.
+        # The nested <target>/llm-wiki/ default applies only to true in-project
+        # installs (a wiki living inside a code repo). Without this branch, a
+        # notebook-vault install produced <notebook>/llm-wiki/wiki while migrated
+        # notebooks are <notebook>/wiki — two path shapes for every downstream
+        # rule (qmd collections, _inbox/ staging, _signals/ sidecars). That is
+        # how agent-builder-bootstrap got its snowflake nested layout.
+        vault_dir = _enclosing_notebook_vault(target, args.registry)
+        if vault_dir is not None:
+            external_vault = True
+            vault_root = target.parent
+            llm_wiki_root = target
+            _info(f"target is a notebook inside a vault ({vault_dir}) — "
+                  f"scaffolding FLAT at the notebook root, no llm-wiki/ level")
+        else:
+            external_vault = False
+            vault_root = target
+            llm_wiki_root = target / "llm-wiki"
 
     # Skills install: 'global' (default) uses ~/.claude/skills + ~/.claude/wiki-scripts
     # (shared, no per-project copy); 'bundled' copies them into the project

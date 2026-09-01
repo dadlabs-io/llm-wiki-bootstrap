@@ -35,7 +35,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label  # noqa: E402
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -175,7 +175,7 @@ def copy_template_tree(template_dir: Path, topic_root: Path, topic_slug: str, de
     """Walk topic-template and copy every file into the new topic, with placeholder
     substitution for the small set of templated files."""
     today = datetime.now().strftime("%Y-%m-%d")
-    review_after = datetime.now().replace(year=datetime.now().year + 1).strftime("%Y-%m-%d")
+    review_after = _future_label(365)
 
     copied = 0
     for src in template_dir.rglob("*"):
