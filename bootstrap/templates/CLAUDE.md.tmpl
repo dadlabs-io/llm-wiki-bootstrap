@@ -56,9 +56,10 @@ Synthesis docs that cite research to inform a decision live in `project/` becaus
 ## Working rhythm
 
 1. **Start a session**: the wiki MAP is always-loaded above; you get the orientation map of every entry without doing anything.
-2. **Code + decide + investigate**: regular dev work. **When you observe something durable — a decision the user makes, a constraint they discover, a pattern you settle on, a bug you trace to root cause — file a proposed entry to `llm-wiki/_inbox/proposed/<folder>/<slug>.md` IMMEDIATELY.** Don't wait for `/wrap-up`. Flag it to the user in one sentence so they know it landed. This is the proactive-listener pattern: the agent is the listener, the wiki is the store.
-3. **End of session**: the user runs `/wrap-up` to catch anything the inline filing missed (long sessions, late-emerging patterns).
-4. **Promote**: `/wiki-promote --review` to accept/reject the proposed entries — entries go to `wiki/`, backlinks reciprocate, indexes regenerate.
+2. **Look it up before answering**: any "what do we know about X", "have we decided X", or "how does X work here" question gets a `/wiki-search "<query>"` FIRST — the wiki, not your memory, is the source of truth. Answering from memory when the wiki holds the answer is the failure mode this whole system exists to prevent.
+3. **Code + decide + investigate**: regular dev work. **When you observe something durable — a decision the user makes, a constraint they discover, a pattern you settle on, a bug you trace to root cause — file a proposed entry to `llm-wiki/_inbox/proposed/<folder>/<slug>.md` IMMEDIATELY.** Don't wait for `/wrap-up`. Flag it to the user in one sentence so they know it landed. This is the proactive-listener pattern: the agent is the listener, the wiki is the store.
+4. **End of session**: the user runs `/wrap-up` to catch anything the inline filing missed (long sessions, late-emerging patterns).
+5. **Promote**: `/wiki-promote --review` to accept/reject the proposed entries — entries go to `wiki/`, backlinks reciprocate, indexes regenerate.
 
 ## What counts as "durable" (for inline filing)
 
@@ -155,6 +156,7 @@ The four-layer split is load-bearing: it makes "what to load on session start" s
 
 ## Don't
 
+- Don't answer questions about prior decisions, research, or project history from memory — `/wiki-search` first (Working rhythm step 2).
 - Don't paste session transcripts into wiki entries — `/wrap-up` distills them. Transcripts go to `{{LLM_WIKI_PATH}}/raw/sessions/`.
 - Don't promote directly to `{{WIKI_PATH}}/` — always stage in `{{WIKI_PATH}}/_inbox/proposed/` and let `/wiki-promote` move them.
 - Don't edit `_MAP.md` or `_INDEX.md` by hand — they're auto-generated.
