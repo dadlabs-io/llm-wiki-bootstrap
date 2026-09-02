@@ -13,7 +13,7 @@ Pulls every factual assertion out of your wiki entries, labels each one by how w
 
 **Trigger:** */wiki-claims*, or natural phrasings like "extract claims", "find contradictions", "what contradicts what". Scope it with a folder name, `--entry <file>` for a single entry, `--compare <file>` to check one entry against what is already indexed, or `--contradictions-only` to rescan the existing index without re-extracting.
 
-**Input / Output:** Reads entries under `llm-wiki/wiki/`. Writes a structured claims index to `llm-wiki/wiki/_inbox/claims-index.json` (appended to, never rebuilt from scratch in single-entry modes) and a human-readable report to `llm-wiki/wiki/_inbox/claims-report-<date>.md` grouping contradictions by severity and listing every inference claim for periodic review.
+**Input / Output:** Reads entries under `llm-wiki/wiki/`. Writes a structured claims index to `llm-wiki/wiki/_inbox/claims-index.json` (appended to, never rebuilt from scratch in single-entry modes) and a human-readable report to `llm-wiki/wiki/_inbox/reports/claims-report-<date>.md` grouping contradictions by severity and listing every inference claim for periodic review.
 
 **Works with:** [`wiki-update`](./wiki-update.md) can call it in `--compare` mode during ingestion, surfacing conflicts at the evaluation gate before a new entry is filed. [`wiki-lint`](./wiki-lint.md) in full semantic mode can delegate its contradiction check here, which is more precise than reading entries and guessing. [`wiki-cycle`](./wiki-cycle.md) runs it as a step and collects its queued findings.
 

@@ -108,7 +108,7 @@ The scratchpad is updated after EVERY phase. If the session dies mid-cycle, the 
 - **Status**: pending | running | done | skipped
 - **Queries run**: N
 - **Candidates found**: N (after dedup: N)
-- **Checklist**: _inbox/discovered/<date>-discovery.md
+- **Checklist(s)**: _inbox/intake-<bucket>/<date>-discovery.md (legacy: _inbox/discovered/<date>-discovery.md); stats+decisions: _inbox/reports/discovery-<date>.md
 - **Notes**: <anything notable>
 
 ### Phase 2: Human review #1 (URL approval)
@@ -138,7 +138,7 @@ The scratchpad is updated after EVERY phase. If the session dies mid-cycle, the 
 - **Status**: pending | running | done | skipped
 - **Agents dispatched**: N (by folder)
 - **Issues found**: contradictions N, missing cross-refs N, thin N, gaps N, tier N, other N
-- **Reports**: _inbox/semantic-lint-*-<date>.md
+- **Reports**: _inbox/reports/<agent>-semantic-lint-<date>.md
 
 ### Phase 6: Fix lint issues
 - **Status**: pending | running | done
@@ -150,7 +150,7 @@ The scratchpad is updated after EVERY phase. If the session dies mid-cycle, the 
 - **Status**: pending | running | done | skipped
 - **Claims extracted**: N
 - **Contradictions found**: N (high N, medium N, low N)
-- **Report**: _inbox/claims-report-<date>.md
+- **Report**: _inbox/reports/claims-report-<date>.md
 
 ### Phase 7.5: Best-Practices Synthesis (`--full` only)
 - **Status**: pending | running | done | skipped
@@ -272,7 +272,7 @@ Update scratchpad Phase 3 with each completion.
 ### Step 2.5 — Dequeue ingested items (ALWAYS run after ingest)
 
 ```bash
-python C:/Users/mark/.claude/wiki-scripts/wiki-dequeue.py --topic <topic>
+python {{WIKI_SCRIPTS_DIR}}/wiki-dequeue.py --topic <topic>
 ```
 
 Moves every `_inbox/pending/` item whose `source:` URL now matches an ingested entry (in `wiki/` OR staged in `_inbox/proposed/`) into `_inbox/done/`. Genuinely-unprocessed and deferred items (e.g. unreadable X links) stay put.
@@ -286,7 +286,7 @@ Run `wiki-lint-mechanical.py`. Update scratchpad Phase 4.
 **If any entries were promoted into `wiki/` this cycle** (`--direct`, or an in-cycle `/wiki-promote`), run the link normalizer FIRST so mechanical lint sees clean links:
 
 ```bash
-python C:/Users/mark/.claude/wiki-scripts/wiki-fix-links.py --topic <topic>
+python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <topic>
 ```
 
 `wiki-fix-links.py` resolves every bare-slug / wrong-depth markdown link to its correct relative path (bare `](slug.md)` → `](../folder/slug.md)`, and depth over/under-shoots). Ingest agents author cross-links by BARE slug per contract; that normalization was historically NOT happening end-to-end (≈50 broken links per cycle, hand-fixed each time). This tool is the permanent fix. Idempotent, 0-ambiguous/0-missing on a clean run. (In default `--quick` staging mode entries aren't promoted in-cycle, so this runs at `/wiki-promote` time instead — see wiki-promote SKILL.)
@@ -331,9 +331,9 @@ run with `--include-claims`/`--include-synthesis`), **promote all of this cycle'
 before running them**:
 
 ```bash
-python C:/Users/mark/.claude/wiki-scripts/wiki-promote.py --vault <topic_root>/wiki --auto
-python C:/Users/mark/.claude/wiki-scripts/wiki-fix-links.py --topic <topic> --vault <vault_root>
-python C:/Users/mark/.claude/wiki-scripts/wiki-lint-mechanical.py --topic <topic> --vault <vault_root>  # confirm 0 broken links before proceeding
+python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --vault <topic_root>/wiki --auto
+python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <topic> --vault <vault_root>
+python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <topic> --vault <vault_root>  # confirm 0 broken links before proceeding
 ```
 
 Note `wiki-promote.py --vault` wants the **wiki dir itself** (`<topic_root>/wiki`), not the

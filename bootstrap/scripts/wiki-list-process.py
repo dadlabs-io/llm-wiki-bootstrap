@@ -67,7 +67,7 @@ def parse_queue_file(path):
 def move_queue_file(queue_path, target_dir, render_script, vault_root, topic):
     """Move a queue file to target_dir AND re-render the pending-list view.
 
-    These two operations are bundled because the rendered view (`pending-list.md`)
+    These two operations are bundled because the rendered view (`pending/_pending-list.md`)
     must always reflect the current state of `_inbox/pending/`, `_inbox/done/`,
     and `_inbox/failed/`. If you move a queue file without re-rendering, the view
     drifts. By making "move + render" a single function, that drift is impossible
@@ -136,7 +136,7 @@ def process_queue(vault_root, topic, dry_run, limit):
         return 0
 
     # Accept both .md (current) and .queue (legacy) extensions
-    queue_files = sorted(p for p in pending_dir.iterdir() if p.suffix in (".md", ".queue"))
+    queue_files = sorted(p for p in pending_dir.iterdir() if p.suffix in (".md", ".queue") and not p.name.startswith("_"))
     if not queue_files:
         print(f"Queue is empty: {pending_dir}")
         return 0
@@ -201,7 +201,7 @@ def process_queue(vault_root, topic, dry_run, limit):
             else:
                 print(f"  Warning: index regen failed: {r.stderr.strip()}")
 
-    # Note: pending-list.md is re-rendered after every item inside the loop above,
+    # Note: pending/_pending-list.md is re-rendered after every item inside the loop above,
     # so it's already up to date. No need for a final batch-end render.
 
     print()

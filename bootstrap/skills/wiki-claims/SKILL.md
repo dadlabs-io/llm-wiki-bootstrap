@@ -147,7 +147,7 @@ The internal `type` collapses into the cycle-contract `reason` field.
 
 ### Step 6 — Write the report
 
-Save to `_inbox/claims-report-<date>.md`:
+Save to `_inbox/reports/claims-report-<date>.md`:
 
 ```markdown
 # Claims Report — <date>
@@ -186,7 +186,7 @@ Claims extraction complete
   Entries: N
   Claims: N (quote: N, sourced: N, synthesis: N, inference: N)
   Contradictions: N (high: N, medium: N, low: N)
-  Report: _inbox/claims-report-<date>.md
+  Report: _inbox/reports/claims-report-<date>.md
   Index: _inbox/claims-index.json
 ```
 
@@ -213,7 +213,7 @@ This is more precise than the agent reading entries and guessing at contradictio
 ## Key paths
 
 - Claims index: `llm-wiki/wiki/_inbox/claims-index.json`
-- Claims report: `llm-wiki/wiki/_inbox/claims-report-<date>.md`
+- Claims report: `llm-wiki/wiki/_inbox/reports/claims-report-<date>.md`
 - Wiki entries: `llm-wiki/wiki/`
 
 ## Don't

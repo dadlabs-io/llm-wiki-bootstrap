@@ -10,7 +10,7 @@ Walks the wiki and reports:
   4. Missing frontmatter fields (no source_url, no ingested_by, etc.)
   5. Files outside the canonical structure (e.g. .md at unexpected paths)
 
-Output: a markdown report printed to stdout AND saved at <topic>/_inbox/lint-report.md
+Output: a markdown report printed to stdout AND saved at <topic>/_inbox/reports/lint-report.md
 so you can open it in Obsidian.
 
 Usage:
@@ -633,7 +633,7 @@ def lint(vault_root, topic, strict=False):
     out.append("")
 
     # Save report
-    report_path = topic_root / "_inbox" / "lint-report.md"
+    report_path = topic_root / "_inbox" / "reports" / "lint-report.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_text = "\n".join(out)
     atomic_write_text(report_path, report_text)

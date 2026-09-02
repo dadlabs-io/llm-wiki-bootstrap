@@ -118,6 +118,8 @@ def main():
 
     moved, kept = [], []
     for p in sorted(pending.glob("*.md")):
+        if p.name.startswith("_"):  # _pending-list.md is a view, not a queue item
+            continue
         txt = p.read_text(encoding="utf-8", errors="ignore")
         m = re.search(r"^source:\s*(\S+)", txt, re.M)
         src = m.group(1) if m else ""

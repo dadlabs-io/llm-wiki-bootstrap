@@ -441,6 +441,30 @@ def reject_entry(md_path: Path, vault: Path, dry_run: bool = False) -> dict:
     return {"slug": md_path.stem, "moved_to": str(target_path)}
 
 
+def cleanup_empty_inbox_dirs(vault: Path, dry_run: bool = False) -> None:
+    """Create-on-demand convention (2026-09-01): proposed/ and rejected/ exist
+    only while they hold items — the folder's presence IS the signal. Writers
+    mkdir -p before writing; this removes each dir once empty. A lone
+    `.gitkeep` counts as empty (it is removed along with the dir)."""
+    if dry_run:
+        return
+    topic_root = vault.parent if vault.name == "wiki" else vault
+    for name in ("proposed", "rejected"):
+        d = topic_root / "_inbox" / name
+        try:
+            if not d.exists():
+                continue
+            leftovers = list(d.iterdir())
+            if any(p.name != ".gitkeep" for p in leftovers):
+                continue
+            for p in leftovers:
+                p.unlink()
+            d.rmdir()
+            _info(f"{name}/ empty — removed (create-on-demand)")
+        except OSError:
+            pass
+
+
 # ---------- Main ----------
 
 
@@ -498,6 +522,7 @@ def main():
         items = [(m, s) for m, s in items if m.stem == args.slug]
     if not items:
         _info("nothing in _inbox/proposed/ to promote")
+        cleanup_empty_inbox_dirs(vault, args.dry_run)
         return 0
 
     _proposed_root = (vault.parent if vault.name == "wiki" else vault) / "_inbox" / "proposed"
@@ -594,6 +619,8 @@ def main():
     if promoted and not args.dry_run:
         _info("regenerating _INDEX.md + _MAP.md...")
         _regenerate_indexes(scripts_dir, topic, vault, args.dry_run)
+
+    cleanup_empty_inbox_dirs(vault, args.dry_run)
 
     # JSON summary for orchestrator
     print(json.dumps({

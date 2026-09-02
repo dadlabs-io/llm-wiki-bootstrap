@@ -130,7 +130,7 @@ Discover → ingest → mechanical lint → 4-agent semantic lint → claims ext
 ```
 /wiki-cycle --discover-only
 ```
-Searches feeds, produces checklist in `_inbox/discovered/`. You review, then later run `--ingest-only` to drain.
+Searches feeds, produces per-bucket checklists in `_inbox/intake-<bucket>/` (or one combined checklist in `_inbox/discovered/` when the topic has no intake folders). You review, then later run `--ingest-only` to drain.
 
 ### "What does the wiki say about X"
 ```
@@ -159,11 +159,17 @@ llm-wiki is built around Chappy Asel's [self-improving AI stack](https://x.com/c
 │   └── feeds.md                     — your trusted sources for discovery
 ├── _inbox/
 │   ├── pending/                     — queued items waiting for ingest
-│   ├── proposed/                    — staged entries pending human approval (Phase 7)
-│   ├── done/                        — items already ingested (moved here on dequeue; audit trail)
-│   ├── discovered/                  — discovery checklists (Phase 1 output)
-│   ├── reports/<date>/<cycle_id>/   — per-cycle artifacts (JSON + MD sidecars + final report)
-│   └── lint-report.md               — latest mechanical lint output
+│   │   └── _pending-list.md         — auto-rendered view of the queue (pending + failed); never hand-edit
+│   ├── done/                        — items already ingested (machine ledger; the URL-dedup source — never prune casually)
+│   ├── failed/                      — items that failed ingest, with .error sidecars
+│   ├── proposed/                    — staged entries pending human approval (Phase 7) — CREATE-ON-DEMAND: exists only while items wait
+│   ├── rejected/                    — entries declined at promote (audit trail) — create-on-demand
+│   ├── intake-<bucket>/             — per-bucket discovery checklists (Phase 1 output), one owner per bucket; set up by hand per topic
+│   ├── discovered/                  — legacy single combined checklist, used only when no intake-*/ folders exist — create-on-demand
+│   ├── reports/                     — EVERY generated report: lint-report.md, <agent>-semantic-lint-<date>.md,
+│   │   │                              claims-report-<date>.md, discovery-<date>.md, refresh-report-<date>.md
+│   │   └── <date>/<cycle_id>/       — per-cycle artifacts (JSON + MD sidecars + final report)
+│   └── archive/                     — hand-parked old reports/checklists you want out of the way but not deleted
 ├── raw/                             — verbatim source dumps (append-only; never edit)
 └── wiki/
     ├── HOME.md                     — landing page
@@ -196,6 +202,9 @@ llm-wiki is built around Chappy Asel's [self-improving AI stack](https://x.com/c
 
 - `raw/` is **append-only**. Never edit or delete a raw file. The agent fetches; humans don't touch.
 - `_inbox/proposed/` is **staging**. Human approves via `/wiki-promote` before entries reach `wiki/`.
+- **Create-on-demand folders** (`proposed/`, `rejected/`, `discovered/`): they exist only while they hold items. Writers `mkdir -p` before writing; `/wiki-promote` removes `proposed/` and `rejected/` once empty. So a folder's *presence* in `_inbox/` is itself the signal that something awaits action — no need to open it to know.
+- **Underscore-prefixed files are views, not items.** `_inbox/pending/_pending-list.md` is the auto-rendered queue view (pending + failed; done shows as a count only). Every queue reader (`wiki-list-add`, `wiki-list-process`, `wiki-list-render`, `wiki-dequeue`) skips `_`-prefixed files — any new queue reader must too.
+- **All generated reports go under `_inbox/reports/`** (lint, semantic lint, claims, discovery stats, refresh, per-cycle runs). Nothing derived sits loose in `_inbox/`.
 - **Queue lifecycle**: an item lives in `_inbox/pending/` until it's ingested, then moves to `_inbox/done/`. `/wiki-cycle` runs `wiki-dequeue.py` after ingest to do this automatically (it matches a pending item's `source:` URL against ingested entries in `wiki/` or `_inbox/proposed/`). If you ever see already-ingested items lingering in `pending/`, run `wiki-dequeue.py --topic <topic>` to reconcile — genuinely-unprocessed and unreadable-deferral items stay put.
 - **Cross-links are authored by bare slug** — the markdown link target is just the bare filename (`some-entry.md`), no folder path; `wiki-fix-links.py` (run on promote / in the cycle's Integrate phase) resolves them to correct relative paths. If a promoted entry shows broken links, run `wiki-fix-links.py --topic <topic>` — it's deterministic and idempotent.
 - `wiki/<folder>/_INDEX.md` and `wiki/_MAP.md` are **auto-regenerated**. Don't hand-edit; changes get overwritten.

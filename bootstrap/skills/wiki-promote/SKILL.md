@@ -100,7 +100,7 @@ For each entry to promote:
 After moving entries into `wiki/`, run the link normalizer:
 
 ```bash
-python C:/Users/mark/.claude/wiki-scripts/wiki-fix-links.py --topic <topic>
+python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <topic>
 ```
 
 Ingest agents author cross-links by BARE slug (`[Title](other-slug.md)`) per the staged-ingest contract. `wiki-promote.py` recomputes the entry's own relative links (raw_path footer + `./`/`../` links) robustly on move, but BARE-slug body links to entries in OTHER folders only become valid once resolved to `../folder/slug.md`. `wiki-fix-links.py` does that resolution deterministically (idempotent; 0-ambiguous/0-missing on a clean run). Skipping it is the recurring "~50 broken links after promote" bug. Then re-run `wiki-lint-mechanical.py` to confirm 0 broken links before reciprocate/index/map.

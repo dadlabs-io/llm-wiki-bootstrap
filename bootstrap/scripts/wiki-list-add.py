@@ -159,7 +159,7 @@ def _find_existing_url(topic_root, source):
     # queued"; in proposed/ is "already ingested but unpromoted"; in wiki/ is
     # "already published"; in done/ is "queue ticket cleaned up after ingest".
     locations = [
-        ("pending/", pending_dir.glob("*.md"), ("source:",)),
+        ("pending/", (p for p in pending_dir.glob("*.md") if not p.name.startswith("_")), ("source:",)),
         ("proposed/", proposed_dir.rglob("*.md"), ("source_url:", "source:")),
         ("wiki/", wiki_dir.rglob("*.md"), ("source_url:",)),
         ("done/", done_dir.glob("*.md"), ("source:",)),
@@ -282,7 +282,7 @@ def add_to_queue(vault_root, topic, source, folder, title, tags, added_by, prior
         print(f"  priority: {priority}")
 
     # Show how many items in queue now (accept .md current + .queue legacy)
-    pending_count = sum(1 for p in pending_dir.iterdir() if p.suffix in (".md", ".queue"))
+    pending_count = sum(1 for p in pending_dir.iterdir() if p.suffix in (".md", ".queue") and not p.name.startswith("_"))
     print(f"\nPending queue items: {pending_count}")
     print(f"Process with: wiki-list-process.py --topic {topic}")
 

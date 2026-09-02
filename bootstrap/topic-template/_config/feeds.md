@@ -55,7 +55,7 @@ Default `/wiki-discover` run: **staleness-first** — feeds with the oldest `To`
 
 ## Feed management rules
 
-1. **Tier 1-3** can auto-queue to `_inbox/discovered/` after dedup.
+1. **Tier 1-3** can auto-queue to the discovery checklist (`_inbox/intake-<bucket>/`, or legacy `_inbox/discovered/`) after dedup.
 2. **Tier 4** (community, Reddit, Hacker News, Medium, DEV) MUST go to human review before queuing.
 3. **YouTube** fetches via `wiki-fetch-youtube.py` (transcripts).
 4. **arXiv PDFs** fetch via `wiki-fetch-pdf.py`.

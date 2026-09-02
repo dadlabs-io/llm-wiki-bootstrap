@@ -52,7 +52,7 @@ ls llm-wiki/wiki/_inbox/proposed/*.md 2>/dev/null | grep -v README | wc -l
 
 **F. Discovery checklist** (if exists):
 ```bash
-ls llm-wiki/wiki/_inbox/discovered/*.md 2>/dev/null | head -5
+ls llm-wiki/wiki/_inbox/intake-*/*discovery*.md llm-wiki/wiki/_inbox/discovered/*.md 2>/dev/null | head -5
 ```
 
 **G. Stale entries** (review_after date has passed):
@@ -67,7 +67,7 @@ done
 
 **H. Claims report** (if exists):
 ```bash
-ls llm-wiki/wiki/_inbox/claims-report-*.md 2>/dev/null | tail -1
+ls llm-wiki/wiki/_inbox/reports/claims-report-*.md 2>/dev/null | tail -1
 ```
 
 **I. Concept gaps count**:
@@ -144,7 +144,7 @@ Pulled from `<cycle_id>/<step>.json` files. Click through to see the Queued / Sk
 |---|---|---|
 | `_inbox/pending/` | N | Ingest via `/wiki-update` or `/wiki-list process` |
 | `_inbox/proposed/` | N | Review via `/wiki-promote` |
-| `_inbox/discovered/` | N checklists | Review candidates, approve/reject |
+| `_inbox/intake-*/` (legacy `discovered/`) | N checklists | Review candidates, approve/reject (per bucket owner) |
 | Concept gaps | N open | Ingest or mark as not-needed |
 
 ---
@@ -278,8 +278,8 @@ This skill implements **Phase 8 (Human review #2)** of the research cycle. It's 
 ## Key paths
 
 - Reports: `llm-wiki/wiki/_inbox/reports/`
-- Lint report: `llm-wiki/wiki/_inbox/lint-report.md`
-- Claims report: `llm-wiki/wiki/_inbox/claims-report-*.md`
+- Lint report: `llm-wiki/wiki/_inbox/reports/lint-report.md`
+- Claims report: `llm-wiki/wiki/_inbox/reports/claims-report-*.md`
 - Claims index: `llm-wiki/wiki/_inbox/claims-index.json`
 - Concept gaps: `llm-wiki/wiki/concept-gaps-things-mentioned-not-yet-covered.md`
 

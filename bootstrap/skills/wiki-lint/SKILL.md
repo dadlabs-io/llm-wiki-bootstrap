@@ -26,7 +26,7 @@ Checks:
 - Missing frontmatter fields (`title`, `date`)
 - Missing or invalid `tier` values (must be `1`, `2`, `3`, `4`, or `self`)
 
-Output: report printed to stdout + saved at `<topic>/_inbox/lint-report.md`.
+Output: report printed to stdout + saved at `<topic>/_inbox/reports/lint-report.md`.
 
 After running: show the user the summary counts. Don't auto-fix.
 
@@ -84,7 +84,7 @@ If a drift-watch entry passes deep-compare cleanly, log it as "no drift detected
 
 ### Step 4: Write the report
 
-Save findings to: `<topic>/_inbox/<agent>-semantic-lint-<date>.md`
+Save findings to: `<topic>/_inbox/reports/<agent>-semantic-lint-<date>.md` (all generated reports live under `_inbox/reports/` — decision 2026-09-01)
 
 Use `claude-semantic-lint-YYYY-MM-DD.md` when run from Claude Code.
 
@@ -191,8 +191,8 @@ After applying approved fixes, run `wiki-lint-mechanical.py` again to verify:
 ## Key paths
 
 - Mechanical script: `{{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py`
-- Mechanical report: `<vault>/<topic>/_inbox/lint-report.md`
-- Semantic report: `<vault>/<topic>/_inbox/<agent>-semantic-lint-<date>.md`
+- Mechanical report: `<vault>/<topic>/_inbox/reports/lint-report.md`
+- Semantic report: `<vault>/<topic>/_inbox/reports/<agent>-semantic-lint-<date>.md`
 
 
 ## Cycle contract

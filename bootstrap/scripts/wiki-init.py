@@ -87,9 +87,12 @@ Each subfolder is a topic — a long-running research area you curate over time.
 ├── wiki/            # Curated .md files, organized by concept folder
 ├── answers/         # Agent-authored answers filed back here
 └── _inbox/
-    ├── pending/     # Queue items waiting to be processed
-    ├── done/        # Successfully processed
-    └── failed/      # Failed with .error sidecars
+    ├── pending/     # Queue items waiting to be processed (+ _pending-list.md, the rendered view)
+    ├── done/        # Successfully processed (machine ledger; URL-dedup source)
+    ├── failed/      # Failed with .error sidecars
+    ├── reports/     # Every generated report (lint, claims, discovery, refresh, per-cycle runs)
+    ├── archive/     # Hand-parked old reports/checklists
+    └── proposed/, rejected/, discovered/  # create-on-demand: present only while they hold items
 ```
 
 ## Creating a new topic
@@ -139,9 +142,12 @@ TOPIC_README_TEMPLATE = """# {title} Wiki
 ├── wiki/           ← curated .md files, organized by concept folder
 ├── answers/        ← agent-authored answers (write-back loop)
 └── _inbox/
-    ├── pending/    ← queued for ingestion
-    ├── done/       ← successfully processed
-    └── failed/     ← processing errors
+    ├── pending/    ← queued for ingestion (+ _pending-list.md, the rendered view)
+    ├── done/       ← successfully processed (machine ledger; URL-dedup source)
+    ├── failed/     ← processing errors (.error sidecars)
+    ├── reports/    ← every generated report (lint, claims, discovery, refresh, cycle runs)
+    ├── archive/    ← hand-parked old reports/checklists
+    └── proposed/, rejected/, discovered/  ← create-on-demand: present only while they hold items
 ```
 
 ---
@@ -238,6 +244,10 @@ def init_topic(vault_root, topic, description):
         "_inbox/pending",
         "_inbox/done",
         "_inbox/failed",
+        "_inbox/reports",
+        "_inbox/archive",
+        # proposed/, rejected/, discovered/ are create-on-demand (2026-09-01):
+        # writers mkdir -p; the folder's presence signals items await action.
     ]
     for sub in subdirs:
         (topic_root / sub).mkdir(parents=True, exist_ok=True)

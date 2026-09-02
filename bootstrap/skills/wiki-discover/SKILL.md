@@ -7,7 +7,7 @@ description: Discover new content for a topic wiki by searching trusted feeds, d
 
 # /wiki-discover
 
-Search trusted sources for new content relevant to a topic wiki. Dedupes against existing entries, queues candidates to `_inbox/discovered/`, and generates a review checklist.
+Search trusted sources for new content relevant to a topic wiki. Dedupes against existing entries, and queues candidates for human review — routed into the topic's `_inbox/intake-*/` folders when they exist (per-bucket checklists), else a combined checklist in `_inbox/discovered/`.
 
 ## Usage
 
@@ -134,9 +134,11 @@ If a pairing looks wrong, re-examine the source search result. Do NOT queue mism
 
 **Drop** any candidate with relevance LOW unless it's from a tier 1 source.
 
-### Step 6 — Generate the discovery checklist
+### Step 6 — Generate the discovery checklist(s)
 
-Write a markdown file to `_inbox/discovered/<date>-discovery.md`:
+**Intake routing (2026-09-01).** If the topic has `_inbox/intake-*/` folders (e.g. agentic-design's `intake-agent-builder/`, `intake-llm-wiki/`, `intake-other/`), classify each candidate by bucket (agent-building = agents/workflows/skills/harnesses; llm-wiki = memory systems/retrieval/wiki-framework; other = everything else) and write **one checklist per bucket that has candidates**: `_inbox/intake-<bucket>/<date>-discovery.md` containing only that bucket's candidates (same format below, plus the classification rationale in the **Why** line). Each intake folder's owning session reviews its own checklist. The run's stats + full decisions log go to `_inbox/reports/discovery-<date>.md` — NOT into the intake folders.
+
+**Legacy fallback**: if the topic has no `intake-*` folders, write the single combined checklist to `_inbox/discovered/<date>-discovery.md` as before:
 
 ```markdown
 # Discovery Queue — <date>
@@ -221,7 +223,7 @@ Discovery complete for <topic>
   High relevance: N
   Medium relevance: N
   Skipped (already covered): N
-  Checklist: _inbox/discovered/<date>-discovery.md
+  Checklist(s): _inbox/intake-<bucket>/<date>-discovery.md (or legacy _inbox/discovered/<date>-discovery.md); stats+decisions: _inbox/reports/discovery-<date>.md
   
   Next: review the checklist, then run /wiki-list process to ingest approved items.
 ```
@@ -236,7 +238,7 @@ Discovery complete for <topic>
 ## Key paths
 
 - Feeds config: `llm-wiki/wiki/_config/feeds.md`
-- Discovery output: `llm-wiki/wiki/_inbox/discovered/`
+- Discovery output: `_inbox/intake-*/` per-bucket checklists (legacy: `_inbox/discovered/`); run stats: `_inbox/reports/`
 - Pending queue: `llm-wiki/wiki/_inbox/pending/`
 - Done queue: `llm-wiki/wiki/_inbox/done/`
 - Concept gaps: `llm-wiki/wiki/concept-gaps-things-mentioned-not-yet-covered.md`
@@ -247,7 +249,7 @@ Discovery complete for <topic>
 This skill implements **Phase 1 (Discover) + Phase 2 (Filter)** of the research cycle documented in `wiki/research/implementation/research-cycle-setup.md`. The output (discovery checklist) is the input to **Phase 3 (Human review #1)**.
 
 ```
-/wiki-discover  →  _inbox/discovered/<date>.md  →  human reviews  →  /wiki-list add  →  /wiki-update
+/wiki-discover  →  _inbox/intake-<bucket>/<date>-discovery.md  →  bucket owner reviews  →  /wiki-list add  →  /wiki-update
      Phase 1+2          Phase 2 output               Phase 3            Phase 4 prep      Phase 4
 ```
 
