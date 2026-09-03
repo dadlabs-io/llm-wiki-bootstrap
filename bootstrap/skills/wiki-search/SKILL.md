@@ -1,6 +1,9 @@
 ---
 name: wiki-search
 description: Search a topic wiki using qmd (hybrid BM25/vector + LLM reranking). Use when the user asks "what does the wiki say about X", "search the wiki for Y", "find Z in the wiki", or wants to look up something in a curated knowledge base. Replaces the old grep-based wiki-search.py.
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 Search a topic wiki using qmd — hybrid BM25 keyword + vector similarity + LLM reranking. Finds entries by meaning, not just exact keywords.

@@ -63,7 +63,7 @@ with TodoWrite. For each item:
 3. **Search the wiki** (qmd, 3–5 key terms) for related entries — integrate, don't isolate.
 4. **Synthesize** per the wiki-update flow: TL;DR, blockquoted numbers/quotes with attribution,
    "Related in this wiki" cross-links via `--slug-for` lookups (never guess slugs).
-5. **Eval gate** — score the 5-dimension rubric. Pass (avg ≥ 3.0, no 1s) → continue. Fail → one
+5. **Eval gate** — two halves since 2026-09-02: `wiki-update.py` runs the mechanical checks itself (TL;DR, Related with 2+ links, tags, stub marking, numbers in blockquotes — `_entry_checks.py`) and REFUSES to file on an error; fix the draft rather than passing `--no-gate` (if you must, give the reason). You score only the judgment dimensions (extraction fidelity, synthesis value) and that score is advisory. Legacy wording for the recorded scores: score the 5-dimension rubric. Pass (avg ≥ 3.0, no 1s) → continue. Fail → one
    fix-and-rescore round; if still failing, do NOT stage. The user curated this source — a
    below-bar verdict is a claim you must argue, not a quiet veto. Write a **review note** at
    `_inbox/temp/<slug>.eval-failed.md` containing: what the source actually is, the per-dimension

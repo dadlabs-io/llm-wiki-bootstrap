@@ -8,7 +8,7 @@ The LLM-wiki framework installer. Ships:
 
 - The `/new-wiki` creator skill (installs globally so the user can scaffold projects from anywhere)
 - 14 per-project skills (`wiki-update`, `wiki-cycle`, `wrap-up`, `wiki-search`, `wiki-promote`, etc.)
-- 15 Python helper scripts (vault management, lint, indexing, Drive ingest)
+- 16 Python helper scripts (vault management, lint, indexing, Drive ingest), including `_entry_checks.py`, the shared mechanical eval gate used by both `wiki-update.py` (refuse-to-file) and `wiki-lint-mechanical.py` (backlog view)
 - Templates for `CLAUDE.md`, `README.md`, `.gitignore` in research/development variants
 - Seed content for the per-project `llm-wiki/` folder (how-to docs + 17 curated best-practices)
 - Pack usage docs (wiki-seed): one page per skill (`skills/<name>/wiki-seed/`) + a pack overview

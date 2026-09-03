@@ -1,6 +1,9 @@
 ---
 name: wiki-verify
 description: Verify a wiki entry — flip its truth-status from unverified → verified via sidecar update, recording who certified, when, and (optionally) what evidence. Enforces the icarus invariant that entries CANNOT self-certify on initial write. Use when the user says "verify this entry", "wiki-verify", "/wiki-verify", "mark X as verified".
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 > **🛠️ Public-facing skill.** Invoked by the user (or by an automated process like Aardvark-style PoC validation) when an entry's claims have been confirmed against evidence.

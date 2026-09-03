@@ -68,7 +68,7 @@ from pathlib import Path
 # Atomic-write helper (icarus §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse, parse_qs
 
 
 # Path-resolution helpers live in the shared _wiki_config module (single
@@ -105,8 +105,20 @@ TRACKING_PARAMS_TO_STRIP = {
     # Google Discover share-tracking (added by share.google)
     "shem",
     # Standard UTM
-    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id",
+    # HubSpot email tracking (newsletter links — The New Stack, TDS, etc.).
+    # Added 2026-09-02: a link carrying these re-queued an article already in
+    # the wiki because the exact-string dedup saw a "different" URL.
+    "_hsenc", "_hsmi", "_hsq",
+    # YouTube share token (same incident — `&si=` re-queued an ingested video)
+    "si",
+    # Ad-click / mail-merge identifiers
+    "fbclid", "gclid", "gbraid", "wbraid", "msclkid", "ttclid", "twclid",
+    "igshid", "mc_cid", "mc_eid", "ref_src", "ref_url", "yclid",
 }
+
+YOUTUBE_HOSTS = {"youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be"}
+YOUTUBE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{6,}$")
 
 
 def _write_activity_log(entry):
@@ -225,7 +237,10 @@ def move_handled_files(service, queue_results, entries, scan_folder_id,
 
     file_ids_to_move = []
     for (fid, status, _msg) in queue_results:
-        if status != "queued":
+        # "known" = already in the wiki (2026-09-02 dedup-against-wiki check):
+        # handled, nothing to queue, but the Drive file is done and must move
+        # or it will be re-scanned every cycle.
+        if status not in ("queued", "known"):
             continue
         file_ids_to_move.append(fid)
         file_ids_to_move.extend(dup_map.get(fid, []))
@@ -375,6 +390,41 @@ def strip_tracking(url):
     return urlunparse(parts._replace(query=new_query))
 
 
+def canonical_url(url):
+    """Canonical form used for queueing AND dedup (2026-09-02):
+    tracking params stripped, host lowercased, fragment dropped, and any
+    YouTube form (watch?v=, youtu.be/, /shorts/, /live/, /embed/, extra
+    params) collapsed to `https://www.youtube.com/watch?v=<id>` — the form
+    wiki-fetch-youtube.py writes into `source_url`, so the two compare equal."""
+    url = strip_tracking(url)
+    try:
+        parts = urlparse(url)
+    except Exception:
+        return url
+    host = parts.netloc.lower()
+    host_bare = host[4:] if host.startswith("www.") else host
+    if host_bare in YOUTUBE_HOSTS:
+        vid = None
+        if host_bare == "youtu.be":
+            vid = parts.path.strip("/").split("/")[0] if parts.path.strip("/") else None
+        else:
+            vid = parse_qs(parts.query).get("v", [None])[0]
+            if not vid:
+                segs = [s for s in parts.path.split("/") if s]
+                if len(segs) >= 2 and segs[0] in ("shorts", "live", "embed", "v"):
+                    vid = segs[1]
+        if vid and YOUTUBE_ID_RE.match(vid):
+            return f"https://www.youtube.com/watch?v={vid}"
+    return urlunparse(parts._replace(netloc=host, fragment=""))
+
+
+def url_dedup_key(url):
+    """Comparison key: canonical URL, scheme-insensitive, trailing slash dropped."""
+    c = canonical_url(url or "")
+    c = re.sub(r"^https?://", "", c)
+    return c.rstrip("/")
+
+
 def resolve_url(url, timeout=25):
     """Follow redirects with a browser UA. Return final URL or original
     on failure."""
@@ -416,6 +466,44 @@ def derive_title(file_name, file_text, source_url):
     if name.lower().endswith(".txt"):
         name = name[:-4].strip()
     return name or source_url
+
+
+def wiki_source_url_keys(topic, vault=None):
+    """Set of url_dedup_key() values for every `source_url:` in the topic's
+    wiki/ (and its staged _inbox/proposed/). Used to skip Drive links whose
+    article is already ingested — the check the 2026-09-01 triage did by hand
+    (and missed twice, because it compared raw strings)."""
+    try:
+        from _wiki_config import wiki_dir as _wiki_dir  # noqa: E402
+        wiki_root = Path(_wiki_dir(topic, vault=vault))
+    except Exception as exc:  # registry miss, bad vault, etc. — degrade to no filtering
+        _info(f"  could not resolve wiki for '{topic}' ({exc}); skipping already-in-wiki check")
+        return set()
+    roots = [wiki_root, wiki_root.parent / "_inbox" / "proposed"]
+    keys = set()
+    src_re = re.compile(r"^source_url:\s*(.+)$", re.MULTILINE)
+    for root in roots:
+        if not root.exists():
+            continue
+        for path in root.rglob("*.md"):
+            try:
+                head = path.read_text(encoding="utf-8")[:2000]
+            except (UnicodeDecodeError, OSError):
+                continue
+            m = src_re.search(head)
+            if m:
+                val = m.group(1).strip().strip("\"'<>")
+                if val.startswith(("http://", "https://")):
+                    keys.add(url_dedup_key(val))
+    return keys
+
+
+def split_known_entries(entries, known_keys):
+    """Partition scan entries into (new, already_in_wiki) by canonical URL key."""
+    new, known = [], []
+    for e in entries:
+        (known if url_dedup_key(e["url"]) in known_keys else new).append(e)
+    return new, known
 
 
 def queue_entries_into_topic(entries, topic, vault, priority, added_by):
@@ -468,8 +556,12 @@ def queue_entries_into_topic(entries, topic, vault, priority, added_by):
 
 def render_markdown(folder_name, folder_id, entries, duplicates, scanned_at,
                      queued_into=None, queued_count=None, queue_failed=None,
-                     moved_into=None, moved_count=None, move_failed=None):
+                     moved_into=None, moved_count=None, move_failed=None,
+                     known_entries=None):
     """Return the report as a Markdown string."""
+    known_entries = known_entries or []
+    known_ids = {e["file_id"] for e in known_entries}
+    entries = [e for e in entries if e["file_id"] not in known_ids]
     lines = []
     lines.append(f"# Drive Folder Scan — `{folder_name}`")
     lines.append("")
@@ -477,6 +569,7 @@ def render_markdown(folder_name, folder_id, entries, duplicates, scanned_at,
     lines.append(f"**Folder ID:** `{folder_id}`")
     lines.append(f"**Unique URLs:** {len(entries)}")
     lines.append(f"**Duplicates collapsed:** {len(duplicates)}")
+    lines.append(f"**Already in wiki (not queued):** {len(known_entries)}")
     if queued_into:
         if queue_failed:
             lines.append(f"**Queued into:** `{queued_into}/_inbox/pending/` — {queued_count} queued, {queue_failed} failed")
@@ -489,8 +582,11 @@ def render_markdown(folder_name, folder_id, entries, duplicates, scanned_at,
             lines.append(f"**Moved to:** `{moved_into}/` — {moved_count} moved (only successfully-queued files are moved)")
     lines.append("")
     lines.append("Source: each Drive file is read, URLs are extracted, "
-                 "short-URLs are followed to their destination, share-tracking "
-                 "(`?shem=…`, UTM) is stripped, and duplicates are collapsed.")
+                 "short-URLs are followed to their destination, tracking params "
+                 "(`?shem=…`, UTM, HubSpot `_hsenc`/`_hsmi`, YouTube `si`, ad-click ids) "
+                 "are stripped, YouTube links are collapsed to `watch?v=<id>`, duplicates "
+                 "are collapsed, and URLs whose canonical form already appears as a "
+                 "`source_url` in the target wiki are reported as known and not re-queued.")
     lines.append("")
     lines.append("## Articles")
     lines.append("")
@@ -499,6 +595,15 @@ def render_markdown(folder_name, folder_id, entries, duplicates, scanned_at,
     for i, e in enumerate(entries, start=1):
         title = (e["title"] or "").replace("|", "\\|").replace("\n", " ").strip()
         lines.append(f"| {i} | {title} | {e['url']} |")
+    if known_entries:
+        lines.append("")
+        lines.append("## Already in wiki (not queued)")
+        lines.append("")
+        lines.append("| Title | URL |")
+        lines.append("|---|---|")
+        for e in known_entries:
+            title = (e["title"] or "").replace("|", "\\|").replace("\n", " ").strip()
+            lines.append(f"| {title} | {e['url']} |")
     if duplicates:
         lines.append("")
         lines.append("## Duplicates collapsed")
@@ -538,7 +643,7 @@ def scan_folder(service, folder_name, folder_id):
             resolved = resolve_url(raw_url)
         else:
             resolved = raw_url
-        final = strip_tracking(resolved)
+        final = canonical_url(resolved)
         title = derive_title(f.get("name", ""), text, final)
 
         if final in seen_urls:
@@ -609,6 +714,13 @@ def main():
     parser.add_argument(
         "--queue-added-by", default="drive-fetch",
         help="added_by label on queued entries (default 'drive-fetch')",
+    )
+    parser.add_argument(
+        "--requeue-known", action="store_true",
+        help="Skip the already-in-wiki check and queue every scanned URL even if an "
+             "entry with the same canonical source_url exists in --queue-into's wiki/ "
+             "or _inbox/proposed/. Default: known URLs are reported, not queued, and "
+             "their Drive files are archived with the handled ones.",
     )
     parser.add_argument(
         "--auth-only", action="store_true",
@@ -712,6 +824,18 @@ def main():
 
     entries, duplicates = scan_folder(service, scan_label, folder_id)
 
+    # Already-in-wiki filter (2026-09-02). Compare canonical URL keys against
+    # every source_url in the target topic before queueing, so a newsletter
+    # link with fresh tracking params does not re-queue an ingested article.
+    known_entries = []
+    if args.queue_into and entries and not args.requeue_known:
+        known_keys = wiki_source_url_keys(args.queue_into, args.queue_vault)
+        entries, known_entries = split_known_entries(entries, known_keys)
+        if known_entries:
+            _info(f"Already in wiki (skipped, will be archived): {len(known_entries)}")
+            for e in known_entries:
+                _info(f"  known: {e['url']}")
+
     queued_count = None
     queue_failed = None
     queue_results = None
@@ -722,6 +846,12 @@ def main():
             args.queue_priority, args.queue_added_by,
         )
         _info(f"Queue result: {queued_count} queued, {queue_failed} failed.")
+    if known_entries:
+        # Mark known items handled so the move step archives their Drive files.
+        queue_results = (queue_results or []) + [
+            (e["file_id"], "known", "already in wiki") for e in known_entries
+        ]
+        entries = entries + known_entries  # move_handled_files needs dup_file_ids for all
 
     moved_count = None
     move_failed = None
@@ -747,6 +877,7 @@ def main():
         queued_count=queued_count, queue_failed=queue_failed,
         moved_into=moved_into_path,
         moved_count=moved_count, move_failed=move_failed,
+        known_entries=known_entries,
     )
 
     if args.out:

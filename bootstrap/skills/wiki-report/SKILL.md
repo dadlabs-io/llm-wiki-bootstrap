@@ -1,6 +1,9 @@
 ---
 name: wiki-report
 description: Generate a morning report summarizing wiki health, recent changes, pending items, contradictions, stale entries, and promotion candidates. The batch summary for human review checkpoint #2. Use when the user says "morning report", "wiki report", "wiki status", "what changed in the wiki", "wiki-report", "show me the wiki health".
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.

@@ -1,6 +1,9 @@
 ---
 name: wiki
 description: Show this project's wiki INDEX (folder tree + curated file list with summaries). Use when the user says "show me the wiki", "what's in the wiki", "list wiki topics", or wants to browse what's been captured.
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.

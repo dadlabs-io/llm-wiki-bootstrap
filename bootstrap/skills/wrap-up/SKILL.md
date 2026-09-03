@@ -1,6 +1,9 @@
 ---
 name: wrap-up
 description: Crystallize the current session's work into the project wiki AND refresh the working-memory dashboards. ALWAYS (1) upserts a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ so the "what we did" record builds as you go, (2) refreshes the mutable working-memory dashboards — sessions/<persona>/handoff.md + task.md + sessions/active-context.md (the resume pointer; the memory-bank replacement), and (3) extracts durable knowledge — components/decisions/patterns/bugs — staged to _inbox/proposed/ then promoted to wiki/project/<category>/ (gated by two per-notebook booleans: `confirm_before_create` for Step 2's filing decision, `confirm_before_promote` for Step 6's promotion decision). This is the ONE session-close command — it absorbs the retired /upd-docs. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says "wrap up", "wrap-up", "/wrap-up", "wrap this session", "document what we did", "crystallize this session", "save this work", "save progress", "save state", "update docs", "upd-docs".
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 # /wrap-up

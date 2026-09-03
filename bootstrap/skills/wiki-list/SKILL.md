@@ -1,6 +1,9 @@
 ---
 name: wiki-list
 description: Manage the pending ingestion list for a topic wiki — add items, process the list, or show what's queued. Use when the user says "add to the wiki list", "queue this for the wiki", "process the wiki list", "drain the queue", "what's in the wiki list", "show wiki list", "wiki list add", "wiki list process". Producer/consumer split for low-friction capture (drop URLs throughout the day, batch process later).
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.

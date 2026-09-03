@@ -1,6 +1,9 @@
 ---
 name: upd-docs
 description: RETIRED — folded into /wrap-up (2026-07-06). The working-memory dashboards (sessions/<persona>/handoff.md + task.md + sessions/active-context.md) are now refreshed by /wrap-up Step 0.5 on every wrap-up. If the user says "upd-docs", "update docs", "save progress", or "save state", run /wrap-up instead.
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 # /upd-docs — RETIRED (use `/wrap-up`)

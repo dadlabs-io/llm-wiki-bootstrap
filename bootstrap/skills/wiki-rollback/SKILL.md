@@ -1,6 +1,9 @@
 ---
 name: wiki-rollback
 description: Roll back a wiki entry to its verified ancestor. Walks the `revises:` chain backward, marks intermediates `verified: rolled_back` in their sidecars (no frontmatter mutation, no content deletion), then writes a new `type: rollback` entry documenting what was rolled back and why. Use when the user says "rollback the X entry", "wiki-rollback", "this entry is wrong, restore the previous version", "/wiki-rollback".
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 > **🛠️ Public-facing skill.** Invoked by the user directly when an entry is found to be wrong and needs to be reverted to the last verified state. The rollback is non-destructive — rolled-back entries stay on disk and remain searchable with `--include-rolled-back` (audit view).

@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 2
-last_reviewed: 2026-05-24
-review_after: 2026-11-24
+framework-version: 3
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
 
@@ -104,6 +104,10 @@ From [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practi
 | 3 | `3` | Well-sourced commentary (established blogs, secondary analysis with citations) |
 | 4 | `4` | Opinion pieces, marketing content, unsourced claims — **never auto-ingest**, human review only |
 | self | `self` | Self-authored synthesis, plans, specs, session notes |
+
+When unsure between two adjacent tiers, prefer the LOWER tier (more conservative). Tiers 1–3 are auto-ingestible; tier 4 always queues for human approval.
+
+**Restatement rule (2026-08-01; template synced to v3 on 2026-09-02).** This table is the only place the tier rubric is defined, and the confidence scale below is the only place confidence is defined. Folder READMEs, `_INDEX` files, eval rubrics, skill definitions and entry bodies **link here; they do not restate it.** A paraphrase cannot be lint-checked, ages independently of the thing it paraphrases, and — where it also claims to be "the same as elsewhere" — actively deters verification. The same rule applies to any rule in this document. If a folder needs a rubric this table does not support, that is a gap to close here, not a local variant to publish there. (Why it matters: on 2026-09-02 the `wiki-update` skill's own paraphrase of the confidence scale had drifted from this table and an ingest had to guess which won. Precedence is now stated in the project CLAUDE.md: framework-contract docs first.)
 
 ### confidence scale
 
@@ -221,6 +225,14 @@ Mechanical checks `/wiki-lint` performs (or should perform):
 - `ingested_by` is one of the known values
 - `tags` has length ≥ 3
 
+**Body checks (2026-09-02, `_entry_checks.py`)** — the mechanical half of the eval rubric, shared verbatim between `wiki-update.py` (hard pre-write gate: refuses to file on an error unless `--no-gate '<reason>'`) and `wiki-lint-mechanical.py` (warn-only backlog view over existing entries):
+- `## TL;DR` section present (a bold `**TL;DR**` lead also counts) — error
+- `## Related …` section with ≥ 2 links to wiki entries — error (warning when `tier: self`)
+- `tags` ≥ 3 — warning
+- fewer than 30 non-blank body lines and no `stub` tag — warning
+- numeric claims in prose outside a `>` blockquote — warning (numbers are quoted and attributed, never paraphrased)
+Exempt: wiki-root hub pages, `_`-prefixed system files, `framework-contract: true` docs, `type: rollback|review` entries.
+
 **Icarus schema checks** (default WARN; `--strict` flips to error / non-zero exit):
 - `verified` (when present) is one of `unverified` \| `verified` \| `temporal` \| `contradicted` \| `rolled_back`
 - `type` (when present) is one of `decision` \| `observation` \| `attempt` \| `rollback` \| `review`
@@ -232,6 +244,10 @@ Mechanical checks `/wiki-lint` performs (or should perform):
 
 Entries failing any check get listed in the next lint report for manual fix.
 
+## Skill definitions carry lifecycle fields too (2026-09-02)
+
+The `SKILL.md` files that govern every ingest are governance artifacts and decay like entries do. Each shipped skill's frontmatter carries `last_reviewed`, `review_after` (3-month cadence, same as self-authored specs), and `reviewed_for_model` (the model id the skill's procedure was last checked against — harness behaviour is model-relative). `/wiki-refresh` scans them alongside entries and lists overdue skills in its report. Claude Code ignores the extra keys; the Cursor rule converter reads only `description`.
+
 ## Related
 
-- [wiki-authoring-best-practices.md](./wiki-authoring-best-practices.md) — the 10 principles this spec enforces (especially principle 9)
+- [wiki-authoring-best-practices.md](./wiki-authoring-best-practices.md) — the 11 principles this spec enforces (especially principles 9 and 11)

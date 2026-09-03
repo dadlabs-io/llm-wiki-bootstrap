@@ -73,11 +73,11 @@ TRAVEL_AGENTS = [
 
 # Helper scripts copied alongside TRAVEL_SCRIPTS in a tooling install (not
 # user-invoked; imported/called by the tooling). Copied only if present.
-TOOLING_HELPER_SCRIPTS = ["install-skill.py", "_atomic_io.py", "_wiki_config.py", "_install_tooling.py"]
+TOOLING_HELPER_SCRIPTS = ["install-skill.py", "_atomic_io.py", "_wiki_config.py", "_entry_checks.py", "_install_tooling.py"]
 
 # Shared helper modules imported by the travel scripts — MUST ship anywhere the
 # scripts run (both global tooling install and per-project Phase B).
-SHARED_HELPER_SCRIPTS = ["_atomic_io.py", "_wiki_config.py", "_install_tooling.py"]
+SHARED_HELPER_SCRIPTS = ["_atomic_io.py", "_wiki_config.py", "_entry_checks.py", "_install_tooling.py"]
 
 
 def _log(msg):

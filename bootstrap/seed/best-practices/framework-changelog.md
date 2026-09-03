@@ -9,6 +9,20 @@
 
 ---
 
+## 2026-09-02
+
+### Build-time governance pass (from "Context as Code", Huk, O'Reilly Radar — agentic-design `research/best-practices/`)
+- **Mechanical eval gate**: new shared module `_entry_checks.py`. `wiki-update.py` now refuses to file an entry with no `## TL;DR` or with fewer than two wiki links in its `## Related` section (`--no-gate '<reason>'` overrides, and prints the reason); it warns on <3 tags, unmarked stubs, and numeric claims outside blockquotes. `wiki-lint-mechanical.py` runs the same checks over existing entries as a warn-only backlog view. The agent's rubric self-score now covers only extraction fidelity and synthesis value, and is advisory.
+- **Precedence**: `CLAUDE.md` template gains a "When guidance conflicts" section (framework-contract docs > SKILL.md > CLAUDE.md/how-to > memory; mechanical enforcement outranks prose). The `wiki-update` skill's restated tier/confidence definitions were replaced with a link to the frontmatter spec.
+- **Lifecycle on skills**: every shipped `SKILL.md` carries `last_reviewed`, `review_after`, `reviewed_for_model`; `/wiki-refresh` Step 1b scans them.
+- **Principle 11** added to the authoring best-practices: every hard rule is a hybrid artifact (prose + a paired mechanical check).
+- **Migration**: existing wikis show a body-check backlog in the next `/wiki-lint` (warn-only, nothing fails). Re-run `install-wiki.ps1 -RefreshOnly` to pick up the new script and skills. Frontmatter spec template synced to v3 (restatement rule).
+
+### Bugs fixed in the same pass
+- Drive triage dedup missed HubSpot (`_hsenc`/`_hsmi`) and YouTube (`si`) tracking tokens and re-queued two ingested sources. `wiki-fetch-drive-folder.py` now strips those plus ad-click ids, collapses any YouTube URL form to `watch?v=<id>`, and checks canonical URLs against the target wiki's `source_url`s before queueing (`--requeue-known` to bypass); known items are reported and their Drive files archived.
+- `wiki-update.py --raw-path raw/<file>.md` resolved against the shell cwd, not the topic root, producing a footer link into the wrong repo.
+- `wiki-update.py`'s outbound-link resolver only examined links starting with `./` or `../`, so bare-slug links to entries in other folders shipped broken with `outbound_warnings=0`.
+
 ## 2026-02-07
 
 ### Per-Agent Active Context

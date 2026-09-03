@@ -35,6 +35,9 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions  # noqa: E402
+# Body-level rubric checks — shared with wiki-update.py's pre-write gate so the
+# lint backlog view and the gate enforce ONE rule set (_entry_checks.py, 2026-09-02).
+from _entry_checks import check_entry_body, is_exempt  # noqa: E402
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -181,6 +184,15 @@ def lint(vault_root, topic, strict=False):
     missing_lifecycle = []    # (file, [fields]) — last_reviewed / review_after absent → invisible to /wiki-refresh
     live_wikilinks = []       # (file, count, sample) — [[wikilink]] outside code spans/fences, invisible to the link checker
 
+    # Body checks (2026-09-02): the mechanical half of the eval rubric —
+    # TL;DR present, Related section with >=2 wiki links, >=3 tags, stub
+    # marking, numeric claims outside blockquotes. Same code as the
+    # wiki-update.py pre-write gate (_entry_checks.py). Here they are the
+    # BACKLOG VIEW over existing entries: warn-only (strict does not fail on
+    # them until the backlog is backfilled — flipping is one line in the exit
+    # block). New entries are hard-gated at write time instead.
+    body_issues = []          # (file, [errors], [warnings])
+
     for f in files:
         try:
             content = f.read_text(encoding="utf-8")
@@ -217,6 +229,17 @@ def lint(vault_root, topic, strict=False):
         # Spec enforcement: tags presence (>=3 items is the spec; presence is the mechanical half)
         if "tags" not in fm:
             missing_tags.append(f)
+
+        # Body checks (see body_issues above). System/hub pages and
+        # framework-contract docs are exempt.
+        if not is_exempt(f, fm, wiki_root=wiki_root):
+            _tags_raw = fm.get("tags")
+            _tags = None
+            if _tags_raw is not None:
+                _tags = [t.strip().strip("\"'") for t in _tags_raw.strip().strip("[]").split(",") if t.strip()]
+            _chk = check_entry_body(body, tags=_tags, tier=tier_value or None)
+            if _chk["errors"] or _chk["warnings"]:
+                body_issues.append((f, _chk["errors"], _chk["warnings"]))
 
         # Spec enforcement: lifecycle fields — without both, /wiki-refresh can never surface the entry
         lifecycle_gap = [k for k in ("last_reviewed", "review_after") if k not in fm]
@@ -379,6 +402,10 @@ def lint(vault_root, topic, strict=False):
                f"missing `tags`={len(missing_tags)}, "
                f"missing lifecycle fields={len(missing_lifecycle)}, "
                f"files with live wikilinks={len(live_wikilinks)}")
+    body_err_files = sum(1 for _f, e, _w in body_issues if e)
+    body_warn_files = sum(1 for _f, e, w in body_issues if w and not e)
+    out.append(f"**Body checks (added 2026-09-02)**: "
+               f"entries failing a hard rule={body_err_files}, warnings-only={body_warn_files}")
     out.append("")
     out.append("---")
     out.append("")
@@ -629,6 +656,38 @@ def lint(vault_root, topic, strict=False):
             for f, n, sample in live_wikilinks:
                 rel = f.relative_to(wiki_root)
                 out.append(f"- `{rel.as_posix()}` — {n} match(es), first: `[[{sample}]]`")
+            out.append("")
+    out.append("")
+
+    # Section: body checks (2026-09-02)
+    out.append("## 📝 Body Checks (mechanical half of the eval rubric)")
+    out.append("")
+    out.append("Added 2026-09-02. The eval rubric's structural rules (TL;DR present, `## Related` with >=2 wiki links, >=3 tags, entries under 30 lines tagged `stub`, numbers quoted + attributed rather than paraphrased) were prose-only and self-scored by the agent that wrote the entry. They are now checked by `_entry_checks.py` — the same code `wiki-update.py` runs as a hard pre-write gate on every NEW entry. This section is the backlog view over EXISTING entries: warn-only, tier-`self` entries get warnings instead of errors for the Related rule. Fix by editing the entry, not by relaxing the rule; a genuinely exempt page belongs in `_entry_checks.SYSTEM_STEMS` or carries `framework-contract: true`.")
+    out.append("")
+    if not body_issues:
+        out.append("_All entries pass the body checks._")
+    else:
+        hard = [(f, e, w) for f, e, w in body_issues if e]
+        soft = [(f, e, w) for f, e, w in body_issues if not e]
+        if hard:
+            out.append(f"### Failing a hard rule ({len(hard)} entries)")
+            out.append("")
+            out.append("These would be REFUSED by `wiki-update.py` if filed today.")
+            out.append("")
+            for f, e, w in hard[:60]:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}` — " + "; ".join(e))
+            if len(hard) > 60:
+                out.append(f"- … and {len(hard) - 60} more")
+            out.append("")
+        if soft:
+            out.append(f"### Warnings only ({len(soft)} entries)")
+            out.append("")
+            for f, e, w in soft[:40]:
+                rel = f.relative_to(wiki_root)
+                out.append(f"- `{rel.as_posix()}` — " + "; ".join(w))
+            if len(soft) > 40:
+                out.append(f"- … and {len(soft) - 40} more")
             out.append("")
     out.append("")
 

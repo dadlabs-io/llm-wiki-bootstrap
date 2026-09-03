@@ -1,6 +1,9 @@
 ---
 name: wiki-lint
 description: Run a health check on a topic wiki. Two modes — default is the fast mechanical pass (broken links, orphans, stale phrases, missing frontmatter, missing tiers). --full mode adds a semantic pass where the agent reads every entry, finds contradictions, missing cross-references, thin coverage, concept gaps, and tier accuracy, then writes a report. Use when the user says "lint the wiki", "wiki-lint", "wiki health check", "full wiki lint", "wiki-lint --full", "find missing connections in the wiki", "check the wiki for issues", "semantic lint".
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.
@@ -20,11 +23,15 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
 ```
 
 Checks:
-- Broken markdown links (to `.md` files that don't exist)
+- Broken markdown links (to `.md` files that don't exist) and live `[[wikilink]]` syntax the link checker can't see
 - Orphan pages (no inbound links from other entries)
 - Stale "pending" / "TODO" phrases
-- Missing frontmatter fields (`title`, `date`)
-- Missing or invalid `tier` values (must be `1`, `2`, `3`, `4`, or `self`)
+- Missing frontmatter fields (`title`, `date`); missing/invalid `tier`, `confidence`, `ingested_by`; missing `tags`; missing lifecycle fields (`last_reviewed` / `review_after`); unquoted YAML specials in `title`
+- `raw_path` integrity (present for non-self entries, resolves to a real file)
+- Icarus schema invariants (`verified` / `type` enums, `contradicted_by` / `revises` / `review_of` / `synthesis_of` references)
+- **Body checks (added 2026-09-02)** — the mechanical half of the eval rubric, via `_entry_checks.py`, the SAME code `wiki-update.py` runs as a hard pre-write gate on every new entry: `## TL;DR` present (bold `**TL;DR**` lead accepted), `## Related` with 2+ wiki links (warning for `tier: self`), 3+ tags, entries under 30 lines tagged `stub`, numeric claims outside a `>` blockquote. Here they are the **backlog view** over existing entries and warn only; wiki-root hub pages and `framework-contract: true` docs are exempt.
+
+Exit code: `--strict` fails on broken links, icarus invariant violations, and out-of-enum `ingested_by`. Presence and body checks stay warn-only in strict mode until their backlogs are worked down (one-line flip in the script's exit block). New entries never join the backlog: the gate in `wiki-update.py` refuses them at write time.
 
 Output: report printed to stdout + saved at `<topic>/_inbox/reports/lint-report.md`.
 

@@ -1,6 +1,9 @@
 ---
 name: wiki-cycle
 description: Run the full research cycle — discover, ingest, lint, fix, report. Maintains a scratchpad so the run can be resumed if interrupted. This is the "update the wiki" command. Use when the user says "update the database", "run the cycle", "wiki-cycle", "update the wiki", "full wiki update".
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 # /wiki-cycle
@@ -263,7 +266,7 @@ Queue approved items via `wiki-list-add.py`, then ingest via parallel agents (4 
 
 **Spawn ingest workers as `subagent_type="wiki-ingester"`** (the dedicated ingest agent, installed to `~/.claude/agents/` by this framework) — fall back to `general-purpose` only if it isn't installed. Spawner contract: read `~/.claude/agents/wiki-ingester-config.json` first; if `confirm_model_each_run` is true, ask the user which model to use for this batch (default = `model_default`) and pass it as the Agent tool's spawn-time `model` override.
 
-Each agent follows the full `/wiki-update` flow including the eval gate (step 5).
+Each agent follows the full `/wiki-update` flow including the eval gate (step 5 — since 2026-09-02 the script's mechanical checks refuse to file on a hard failure; the agent's self-score covers only fidelity and synthesis value).
 
 **Staging**: unless `--direct` was passed, all agents use `--staged` so entries land in `_inbox/proposed/`. This is the default — overnight runs should never file directly to wiki/ without morning review.
 

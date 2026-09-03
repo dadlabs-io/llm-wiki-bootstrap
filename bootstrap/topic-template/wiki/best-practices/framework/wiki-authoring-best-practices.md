@@ -37,7 +37,7 @@ Asel validated this empirically: a 313-star markdown + keyword-search repo beat 
 
 **Foundational principle**: compile, don't retrieve. The wiki is a **compounding artifact**, not a cache.
 
-## The ten operational principles
+## The eleven operational principles
 
 ### 1. Compile, don't retrieve, for bounded topics
 
@@ -133,6 +133,15 @@ The full-wiki-cycle system is a federation:
 
 Each agent is independently tunable. No monolith. If one piece fails, the others keep working.
 
+### 11. Every hard rule is a hybrid artifact — prose paired with a mechanical check
+
+A rule that exists only as prose in a SKILL.md or a best-practices doc is enforced only by the drafting agent's goodwill, and an agent scoring its own draft against that prose is circular. The 2026-08-13 lint retrofit measured the result: *"everything the lint script checks is clean; everything it doesn't check has decayed."* So every **must** / **never** gets a paired deterministic check — a lint rule, a script guard, a refusal at write time, a hook, a tool omission — or an explicit note that it is prose-only and why.
+
+- **The pattern**: the prose biases the agent; the check makes violations unfileable. Huk calls the pair a *hybrid artifact* — `boundaries.md` for the model, `semgrep-rule.yml` for CI ("Context as Code", O'Reilly Radar, 2026-06-03; in agentic-design under `research/best-practices/`).
+- **In this framework**: `_entry_checks.py` is one module used by both `wiki-update.py` (refuse to file) and `wiki-lint-mechanical.py` (backlog view), so the gate and the lint cannot disagree. The agent's eval self-score covers only the judgment dimensions (extraction fidelity, synthesis value) and is advisory, never the gate.
+- **When adding a rule**: state its enforcement mechanism next to it. `prose` is allowed, with a reason. A doc that says "the lint should catch this" describes a gap, not a control.
+- **Corollary — governance artifacts are code**: skill definitions carry `last_reviewed` / `review_after` / `reviewed_for_model` and are scanned by `/wiki-refresh`. A stale rule enforced strictly is context debt.
+
 ## Implementation status — what we do now vs what the principles say
 
 **Purpose**: one-stop view of principle-vs-reality, so gaps are visible at a glance and we know where to look when we want to improve. Update this section when state changes; don't let it drift.
@@ -151,13 +160,14 @@ Legend: ✅ implemented and enforced · ⚠️ partial / policy not fully automa
 | 8 | Synthesis vs direct claims distinguished in prose | ⚠️ | Retrofit done 2026-04-10 for 22 entries. Convention baked into `wiki-update` SKILL.md, but enforcement across new ingests relies on author discipline — not mechanically checked by lint. |
 | 9 | Dependency tracking (`last_reviewed` / `review_after` / `confidence`) | ⚠️ | 134/148 entries compliant. 14 entries missing lifecycle frontmatter (flagged by 2026-04-16 `/wiki-refresh` scan). `raw_path` pointer part of the principle 9 contract but **not yet in the frontmatter schema** — documented, not implemented. |
 | 10 | Federation of specialists (`/wiki-*` skills) | ✅ | All 10 skills exist as Claude Code skills: discover, update, lint, claims, refresh, promote, cycle, search, list, init. |
+| 11 | Hard rules are hybrid artifacts (prose + check) | ⚠️ | 2026-09-02: rubric's structural rules moved into `_entry_checks.py` (gate + lint); skill frontmatter carries lifecycle fields. Still prose-only: the claim-classification convention (principle 5) and most SKILL.md "don't" bullets — each needs an enforcement note or a check. |
 
 ### Explicit gaps (punch list — where improvement lives)
 
 1. **L5 self-improvement loop not built** (principle 10 culminating goal + Asel L5 on line ~160). Design doc lives in your wiki if you choose to define one. Orchestrator code is a future deliverable.
 2. **`raw_path` frontmatter field not enforced** (principle 9 contract gap). Entries link to raw sources via prose only; no machine-readable pointer. Lint can't verify raw-source integrity until this exists.
 3. **14 entries missing `last_reviewed` / `review_after`** (principle 9 compliance gap). Tracked in `memory-bank/short-term/_personas/arch/task.md` queue item 9.
-4. **Synthesis-vs-direct-claim prose distinction not mechanically verified** (principle 8 enforcement gap). `/wiki-lint` could add a rule that flags prose outside blockquotes / "Synthesis notes" sections that makes factual assertions — not built.
+4. **Synthesis-vs-direct-claim prose distinction only partly verified** (principle 8 enforcement gap). Partially closed 2026-09-02: `_entry_checks.py` flags numeric claims in prose outside a blockquote (gate + lint). Assertion-level detection for non-numeric claims is still not built.
 5. **Wiki-discover URL verification bug** (discovery correctness gap). 3 of 4 queue URLs mislabeled in 2026-04-16 cycle; worked around via host yt-dlp, root cause unfixed. Violates principle 3 (raw source integrity starts at discovery).
 6. ~~**Mem0 "(per MemPalace third-party)" qualifier not applied** to 4+ entries~~ **✅ RESOLVED 2026-04-22** — sweep applied across all 5 entries (Mem0, Zep/Graphiti, Mastra, session-memory-comparison x2, the-active-memory-layer). Each benchmark claim now carries explicit MemPalace-third-party attribution. (Principle 5 precision gap.) Tracked in arch task queue item 7.
 

@@ -1,6 +1,9 @@
 ---
 name: wiki-init
 description: Initialize the per-project wiki — scaffolds the folder structure and templated README. Use when the user says "wiki init", "create a new wiki", "init wiki". In v1 install model, each project has ONE wiki at llm-wiki/wiki/; this skill is run automatically by /new-wiki but can also be invoked directly.
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 > **⚙️ Internal skill.** Normally invoked by `/new-wiki` during per-project scaffold. Manual invocation is only useful if you want to add or rebuild a wiki layer in an existing project, or if you're (v2) adding a second wiki topic to a project.

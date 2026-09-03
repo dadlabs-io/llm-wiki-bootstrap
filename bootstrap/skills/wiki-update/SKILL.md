@@ -1,6 +1,9 @@
 ---
 name: wiki-update
 description: Ingest an EXTERNAL source into the wiki's research/ layer. Auto-detects from what the user gives. URL → fetch + file. YouTube URL → fetch transcript + synthesize summary + file. Local file → file. Pasted text → file. Requires a source — with nothing, it redirects to /wrap-up (for capturing our own session work). Use when the user says "update the wiki", "add this to the wiki", "save this article", "wiki this", "wiki update", "ingest this video", "add this YouTube video to the wiki". For "save what we did" / session work, use /wrap-up instead. Replaces the old /wiki-add command.
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 Update (add) content to a topic wiki. The user shouldn't have to think about what type of source they have — figure it out from what they give you.
@@ -85,18 +88,7 @@ You should still always pass the full path — the auto-prefix is a safety net, 
 4. **Always pass `--ingested-by claude-code`** (when called from this slash command).
 5. **Always pass `--tier <1|2|3|4|self>`** and **`--confidence <high|medium|low>`**.
 
-   **Confidence** measures how reliable OUR entry is (not the source — that's tier):
-   - `high` = primary source directly fetched + content verified or corroborated by other entries
-   - `medium` = single good source fetched, or describes plans/decisions
-   - `low` = synthesized from secondary references, source not fetched, or very thin. Tag with `stub` in tags.
-
-   **Tier** — pick the source quality tier:
-   - `1` = peer-reviewed / primary (papers, official spec docs, source code)
-   - `2` = established documentation (vendor docs, framework docs, official blog posts)
-   - `3` = reputable expert / first-hand (founder posts, expert blogs, conf talks, journalism — KDnuggets, VentureBeat, Karpathy gists, Simon Willison, Hamel Husain, Lance Martin)
-   - `4` = community / blog / forum (Medium, Reddit, anonymous gists)
-   - `self` = self-authored (our own design docs, syntheses, decisions — pair with `--no-raw`)
-   When unsure between two adjacent tiers, prefer the LOWER tier (more conservative). Tier 4 sources should never auto-ingest in the future nightly cycle — they queue for human approval. Tiers 1-3 are auto-ingestible.
+   **Tier** and **confidence** are defined in ONE place: the frontmatter spec (`<vault>/<topic>/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`, sections "tier rubric" and "confidence scale"). Read them there. This skill deliberately does not restate them — the restatement rule (spec, 2026-08-01) exists because a paraphrase here drifted from the spec and, on 2026-09-02, an ingest hit two conflicting definitions of `confidence` with nothing saying which won. Orientation only: tier = source quality (`1` primary … `4` community, `self` = our own synthesis, paired with `--no-raw`); confidence = how reliable OUR entry is, not the source. When unsure between adjacent tiers, prefer the lower. Tier 4 never auto-ingests. Thin entries get the `stub` tag.
 
 ## Staging mode (`--staged`)
 
@@ -120,7 +112,7 @@ With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks 
 - **Sidecar filename = `<slug>.proposed_metadata.json`** (DOT form). Both `wiki-update.py` and `wiki-promote.py` resolve it via `Path("<slug>.md").with_suffix(".proposed_metadata.json")`. The underscore form `<slug>_proposed_metadata.json` is **NOT read** — an entry with an underscore sidecar promotes as if it had no metadata (dumps to wiki root).
 - **`target_folder` = the FULL taxonomy path under `wiki/`** — `research/<sub>` or `project/<sub>` (e.g. `research/long-term`, `research/orchestration`, `project/best-practices`). **Never a bare leaf** like `long-term` — a bare leaf creates a phantom top-level folder.
 - **`suggested_backlinks[]` items are OBJECTS, never bare strings**: `{ "file": "<path under wiki/>", "link_text": "<anchor text>", "link_target": "<this entry's BARE filename>" }`. `wiki-promote` recomputes the correct relative path from `link_target` at promote time.
-- **Body cross-links: author by BARE slug/filename** (`[Title](<other-slug>.md)`) — do NOT hand-compute `../folder/` depth. `wiki-update.py` (`resolve_outbound_links`) + `wiki-reciprocate-backlinks.py` normalize paths mechanically. Hand-computed relative paths are the #1 source of broken links.
+- **Body cross-links: author by BARE slug/filename** (`[Title](<other-slug>.md)`) — do NOT hand-compute `../folder/` depth. `wiki-update.py` (`resolve_outbound_links`) + `wiki-reciprocate-backlinks.py` normalize paths mechanically. Hand-computed relative paths are the #1 source of broken links. (Until 2026-09-02 the resolver only looked at links starting with `./` or `../`, so a bare-slug link to an entry in another folder was silently left broken with `outbound_warnings=0`. Every relative `.md` link is now checked and rewritten; one it cannot resolve is listed under `outbound_warnings` — fix those by hand before moving on.)
 - **`suggested_backlinks` is a CURATED list, capped at ~8** — each target must be genuinely related to the entry's content (an entry you'd cite in its "Related in this wiki" section), never a directory listing. **Never include machine-generated files** (`_MAP.md`, `_INDEX.md`, `HOME.md`) or hub/system pages the entry doesn't specifically extend. (Added 2026-08-13: a cycle-2026-08-04-01 ingest agent shipped a sidecar with 50 `suggested_backlinks` that was just an alphabetical directory sweep including `_MAP.md` — 50 near-random entries would each have been edited at promote time. Caught only because the promote was dry-run first.)
 
 ```json
@@ -143,23 +135,25 @@ With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks 
 2. **Read the raw file** to understand what's actually in the source.
 3. **Search the wiki** for related concepts using `qmd query`. Extract 3-5 key terms from the source and search each. qmd uses hybrid BM25 + vector search, so it finds entries by meaning, not just exact keywords.
 4. **Synthesize the curated summary** with explicit cross-links to those existing entries in a "Related in this wiki" section. Don't just summarize in isolation — mention where this new source agrees/disagrees/extends what's already in the wiki. **Use `wiki-update.py --slug-for --title "<other entry title>" --topic <topic> --folder <folder>` to look up the canonical slug of any entry you want to link to** — don't guess slugs from titles. (Guessing is the bug that caused 39 broken links in the 2026-04-08 batch ingest.)
-5. **Eval gate — score against the rubric** (see `wiki/research/implementation/eval-rubric.md`). Before filing, evaluate your synthesis against 5 dimensions (1-5 each):
+5. **Eval gate — two halves (split 2026-09-02).** The rubric is `wiki/research/implementation/eval-rubric.md`. Its five dimensions are now enforced by two different mechanisms, and only one of them is you.
 
-   | Dimension | What to check |
+   **Mechanical half — the script is the gate.** `wiki-update.py` runs `_entry_checks.py` on the synthesis before writing and **refuses to file** on a hard failure (exit 1, `Refusing to file` on stderr):
+
+   | Rule (rubric dimension) | Severity |
    |---|---|
-   | Extraction fidelity | Every claim attributed? Numbers sourced? No hallucinated context? |
-   | Cross-link quality | 3+ relevant cross-links? Bidirectional? |
-   | Synthesis value | TL;DR tells you something the title doesn't? Positions source in landscape? |
-   | Structural completeness | TL;DR, blockquotes with attribution, Related section, clean headings? |
-   | Metadata accuracy | All frontmatter fields present? Tier justified? Confidence reflects certainty? |
+   | `## TL;DR` section present (a bold `**TL;DR**` lead also counts) — structure | error |
+   | `## Related …` section with 2+ links to wiki entries — cross-links | error (warning for `tier: self`) |
+   | 3+ tags — metadata | warning |
+   | Under 30 non-blank lines and not tagged `stub` — structure | warning |
+   | Numeric claims in prose outside a `>` blockquote — fidelity | warning |
 
-   **Pass**: average >= 3.0 AND no dimension scores 1.
-   **Fail**: average < 3.0 OR any dimension = 1.
+   Fix the entry and re-run. `--no-gate '<reason>'` overrides and prints the reason with the entry; it exists for the rare entry where a rule is genuinely wrong for that entry, not to save a step, and the reason is what a reviewer reads. The same checks run in `/wiki-lint` over every existing entry (warn-only) so the backlog stays visible.
 
-   If **pass**: print the scores and continue to step 6.
-   If **fail**: print the scores, flag which dimensions failed, and ask the user: "Entry scores below threshold — fix issues and re-score, or file anyway?"
+   **Judgment half — you score, but you do not certify.** Score the two dimensions a script cannot decide, 1-5 each, and print the scores:
+   - **Extraction fidelity** — every claim attributed, every number blockquoted from the source, no hallucinated context. Compare your blockquotes against the raw file.
+   - **Synthesis value** — the TL;DR says something the title doesn't; the entry positions the source against what the wiki already holds (agrees / extends / contradicts).
 
-   This step takes 10 seconds. It's the quality gate that prevents silent poisoning (pre-mortem failure mode #7).
+   If either is below 3: fix before filing, or ask the user. Why the split: the agent that wrote the draft scoring its own draft is the circular-review failure mode (Huk, "Context as Code", ingested into agentic-design 2026-09-02 — see `research/best-practices/`). A self-score is advisory input; the deterministic checks are the gate. This step still takes 10 seconds and still prevents silent poisoning (pre-mortem failure mode #7).
 
 6. **Identify which existing entries should be updated** to add a backlink to the new entry. (Usually the "Related" section of the layer concept page that this source belongs to, plus any entries that the new source explicitly addresses.) **Skip this step if `--staged`.**
 7. **Update those existing entries** via Edit — add the new entry to their Related sections. **Skip this step if `--staged`.**
@@ -200,7 +194,7 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
   --topic <topic> --vault llm-wiki/wiki \
   --source <url> --fetch-only
 ```
-Capture the `raw_path=...` line from the output.
+Capture the `raw_path=...` line from the output. When you pass it back in Step 6, `--raw-path` accepts either the absolute path printed or the topic-relative form the frontmatter uses (`raw/<file>.md`); a relative path resolves against the **topic root**, never the shell cwd (fixed 2026-09-02 — it used to write a footer link that climbed out of the notebook into whatever repo the agent was sitting in).
 
 ### Step 2: Read the raw file using the Read tool
 
@@ -253,6 +247,7 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
 ```
 
 The script handles:
+- The mechanical eval gate (step 5) — prints `Entry checks:` with any errors/warnings; on an error it prints `Refusing to file` and exits 1 without writing. Fix and re-run, or `--no-gate '<reason>'`.
 - Filing curated copy at `<topic>/wiki/<folder>/<slug>.md`
 - Frontmatter (title, date, source_url, raw_path, ingested_by, tags)
 - Footer with visible source + raw links

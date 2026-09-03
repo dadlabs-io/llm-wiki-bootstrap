@@ -47,6 +47,9 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label  # noqa: E402
+# Mechanical half of the eval rubric — shared with wiki-lint-mechanical.py so
+# the pre-write gate and the lint backlog view enforce ONE set of rules.
+from _entry_checks import check_entry_body, format_result  # noqa: E402
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -254,7 +257,13 @@ def acquire_source(source, raw_dir, slug_hint, skip_raw_copy=False):
 
 
 # Match `[text](./foo.md)` and `[text](../folder/foo.md)` style relative links
-LINK_RE = re.compile(r"\[([^\]]+)\]\((\.{1,2}/[^)]+\.md)\)")
+# Any relative markdown link to a .md file — bare slug (`slug.md`), `./x.md`,
+# or `../folder/x.md`. Absolute URLs, mailto:, and pure anchors are excluded.
+# Bug fixed 2026-09-02: the old pattern required a `./` or `../` prefix, so
+# bare-slug links — the exact form the SKILL.md tells agents to author — were
+# never examined, never rewritten, and never warned about. A cross-folder
+# Related section shipped broken with `outbound_warnings=0`.
+LINK_RE = re.compile(r"\[([^\]]+)\]\((?!https?://|mailto:|#)([^)\s]+\.md)(?:#[^)]*)?\)")
 
 
 def _build_slug_index(wiki_dir):
@@ -703,7 +712,8 @@ def print_slug_for(vault_root, topic, folder, title):
 def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
                 ingested_by=None, source_url_override=None, raw_path_override=None,
                 force=False, fetch_only=False, no_raw=False, skip_integration=False,
-                tier=None, confidence=None, staged=False, allow_new_top_folder=False):
+                tier=None, confidence=None, staged=False, allow_new_top_folder=False,
+                no_gate=None):
     topic_root = Path(vault_root) / topic
     if not topic_root.exists():
         print(f"Error: topic '{topic}' not found at {topic_root}", file=sys.stderr)
@@ -767,6 +777,37 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
         final_raw_path = None  # self-authored content has no raw archive
     else:
         final_raw_path = raw_path_override or (str(raw_path) if raw_path else None)
+
+    # A relative --raw-path is relative to the TOPIC ROOT (the frontmatter
+    # spec's convention: `raw/<file>.md`), NOT to the shell cwd. Bug fixed
+    # 2026-09-02: resolving against cwd wrote a footer link that climbed out
+    # of the notebook into whatever repo the agent happened to be sitting in.
+    if final_raw_path and not Path(final_raw_path).is_absolute():
+        topic_candidate = topic_root / final_raw_path
+        if topic_candidate.exists():
+            final_raw_path = str(topic_candidate.resolve())
+        elif not Path(final_raw_path).exists():
+            print(f"  Warning: --raw-path {final_raw_path} not found under topic root "
+                  f"({topic_root}) or cwd — frontmatter will carry a phantom raw_path.",
+                  file=sys.stderr)
+
+    # ── Pre-write gate (2026-09-02): the mechanical half of the eval rubric ──
+    # Deterministic checks shared with wiki-lint-mechanical.py (_entry_checks.py).
+    # The agent's self-score covers only the judgment dimensions (extraction
+    # fidelity, synthesis value); everything a script can decide is decided
+    # here, by the script, not by the agent that wrote the draft. Hard failures
+    # refuse to file. --no-gate '<reason>' overrides and prints the reason so
+    # the override is visible in the cycle log.
+    gate = check_entry_body(body, tags=tags, tier=tier)
+    print(format_result(gate, final_title))
+    if gate["errors"]:
+        if no_gate:
+            print(f"  GATE OVERRIDDEN (--no-gate): {no_gate}")
+        else:
+            print("  Refusing to file: entry fails the mechanical gate. Fix the errors "
+                  "above, or re-run with --no-gate '<reason>' to file anyway.",
+                  file=sys.stderr)
+            return 1
 
     if tier is None:
         print("  Warning: --tier not provided. New entries should always specify a source quality tier (1=primary, 2=vendor, 3=expert, 4=community, self=our own synthesis). Pre-mortem fix #6.", file=sys.stderr)
@@ -909,6 +950,10 @@ def main():
                              "Adds status: proposed to frontmatter and writes a .proposed_metadata.json sidecar "
                              "containing the target folder, inbound link candidates, and suggested backlinks "
                              "for /wiki-promote to finish the integration on acceptance. Safe for automated runs.")
+    parser.add_argument("--no-gate", nargs="?", const="no reason given", default=None, metavar="REASON",
+                        help="Override the pre-write mechanical gate (missing TL;DR, fewer than 2 Related links, "
+                             "etc. — see _entry_checks.py) and file anyway. Give a reason; it is printed with the "
+                             "entry so the override is visible in the cycle log. Warnings never block.")
     args = parser.parse_args()
 
     # Lookup mode — no ingestion, just print the slug + path
@@ -932,6 +977,7 @@ def main():
         confidence=args.confidence,
         staged=args.staged,
         allow_new_top_folder=args.allow_new_top_folder,
+        no_gate=args.no_gate,
     )
 
 

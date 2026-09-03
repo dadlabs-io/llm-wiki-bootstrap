@@ -1,6 +1,9 @@
 ---
 name: wiki-promote
 description: Promote staged wiki entries from _inbox/proposed/ to wiki/. Reviews what's pending, lets the user approve/reject, then moves approved entries to their target folder, adds backlinks, and regenerates INDEX. Use when the user says "promote", "approve wiki entries", "what's in proposed", "wiki-promote", "move proposed to wiki".
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.

@@ -1,6 +1,9 @@
 ---
 name: wiki-claims
 description: Extract factual claims from wiki entries, classify them (direct-quote/sourced/synthesis/inference), compare across entries, and flag contradictions at the sentence level. Use when the user says "extract claims", "find contradictions", "wiki-claims", "claim analysis", "what contradicts what".
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.

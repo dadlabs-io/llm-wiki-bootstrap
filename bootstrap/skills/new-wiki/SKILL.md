@@ -1,6 +1,9 @@
 ---
 name: new-wiki
 description: Scaffold a new project with the LLM-wiki framework. Asks tool (claude-code/cursor), name, target folder, and Drive ingest preferences (NO project-type question — every project gets one merged wiki that does both research ingest and project-knowledge capture). Sets up per-project .claude/skills + llm-wiki/ folder with notes, best-practices, and the project's wiki (research/* + project/* + sessions/). Use when the user says "new project", "create a new wiki", "install a new wiki", "set up a new wiki", "bootstrap a project", "start a new project", or types "/new-wiki".
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 # /new-wiki

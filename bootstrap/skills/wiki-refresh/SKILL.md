@@ -1,6 +1,9 @@
 ---
 name: wiki-refresh
 description: Scan wiki entries for stale content based on review_after dates, confidence decay, and source freshness. Flags entries that need re-checking, re-fetching, or updating. Use when the user says "refresh the wiki", "check for stale entries", "wiki-refresh", "what needs updating", "decay scan", "stale check".
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.
@@ -43,6 +46,20 @@ For each entry, record:
 - `confidence` (our certainty)
 - `source_url` (for re-fetch check)
 - `inbound_links` (count how many other entries link to this one)
+
+### Step 1b — Scan the skill definitions too (added 2026-09-02)
+
+The `SKILL.md` files are governance artifacts: a stale one is enforced on every ingest until someone notices. Each shipped skill carries `last_reviewed`, `review_after` (3-month cadence) and `reviewed_for_model` in its frontmatter. Read them from the installed locations:
+
+```bash
+for f in ~/.claude/skills/*/SKILL.md .claude/skills/*/SKILL.md; do
+  [ -f "$f" ] || continue
+  echo "---SKILL: $f"
+  sed -n '1,/^---$/p' "$f" | grep -E "^(name|last_reviewed|review_after|reviewed_for_model):"
+done
+```
+
+Classify with the same **Overdue** rule as entries (`review_after` < today), plus **Model drift** when `reviewed_for_model` is not the model running this session. A skill with no lifecycle fields at all is reported as **Unstamped** (it predates 2026-09-02 or was hand-edited). Do not change skill files from this scan — report, and let the user re-review the skill and bump the dates (skills are edited in the bootstrap repo, not in place).
 
 ### Step 2 — Classify each entry
 
@@ -114,6 +131,13 @@ Save to `_inbox/reports/refresh-report-<date>.md`:
 | <title> | <url> | <date> | Re-fetch and compare |
 ...
 
+## Skills (governance artifacts)
+
+| Skill | last_reviewed | review_after | reviewed_for_model | Status |
+|---|---|---|---|---|
+| <name> | <date> | <date> | <model> | overdue / model drift / unstamped / ok |
+...
+
 ## Current (no action needed)
 
 N entries are current and within their review window.
@@ -164,7 +188,7 @@ The `/wiki-report` morning report references this skill's output — the "Stale 
 - Don't delete stale entries — flag them for review, human decides
 - Don't re-fetch URLs without asking — some sources may be paywalled or rate-limited
 - Don't treat "overdue" as "wrong" — it just means the scheduled review hasn't happened yet
-- Don't scan raw/ files — only wiki/ entries have lifecycle metadata
+- Don't scan raw/ files — only wiki/ entries (and, since 2026-09-02, SKILL.md files) have lifecycle metadata
 - Don't scan `sessions/` — it's non-curated working/episodic memory (like `_inbox/`); its dashboards and journals have no `review_after` lifecycle and must not be flagged as stale
 
 

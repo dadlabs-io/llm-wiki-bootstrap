@@ -154,6 +154,17 @@ We evaluated the rohitg00/agentmemory + iii-engine path 2026-05-14 and concluded
 
 The four-layer split is load-bearing: it makes "what to load on session start" structurally clear (sessions + project = default, research = on-demand) instead of needing per-persona reading-list curation.
 
+## When guidance conflicts — precedence
+
+Rules for this project live in several places and will occasionally disagree. Do not average them or pick the friendlier one. Apply this order, and say which rule won:
+
+1. **Framework-contract docs** — entries under `{{WIKI_PATH}}/project/best-practices/framework/` carrying `framework-contract: true` (the frontmatter spec, the authoring principles, the cycle step contract). Canonical. Every other doc is supposed to link to them, never restate them.
+2. **Skill definitions** — `SKILL.md` files. A skill that restates a contract doc and drifts is a bug: follow the contract doc, flag the skill.
+3. **This CLAUDE.md** and the project's `llm-wiki/how-to/` docs.
+4. **Memory and session notes** — `sessions/`, agent memory. Background, never authority.
+
+Mechanical enforcement outranks prose at every level: if a lint check or a script gate rejects something a doc permits, the gate is right until the rule inside the gate is changed. (Added 2026-09-02 after an ingest hit two docs defining `confidence` differently with nothing saying which won.)
+
 ## Don't
 
 - Don't answer questions about prior decisions, research, or project history from memory — `/wiki-search` first (Working rhythm step 2).

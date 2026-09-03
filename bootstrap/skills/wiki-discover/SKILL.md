@@ -1,6 +1,9 @@
 ---
 name: wiki-discover
 description: Discover new content for a topic wiki by searching trusted feeds, deduping against existing entries, and queuing candidates for human review.
+last_reviewed: 2026-09-02
+review_after: 2026-12-02
+reviewed_for_model: claude-fable-5-1
 ---
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.
