@@ -144,7 +144,7 @@ With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks 
    | `## TL;DR` section present (a bold `**TL;DR**` lead also counts) — structure | error |
    | `## Related …` section with 2+ links to wiki entries — cross-links | error (warning for `tier: self`) |
    | 3+ tags — metadata | warning |
-   | Under 30 non-blank lines and not tagged `stub` — structure | warning |
+   | Under 30 non-blank lines AND under 300 words, not tagged `stub` — structure | warning |
    | Numeric claims in prose outside a `>` blockquote — fidelity | warning |
 
    Fix the entry and re-run. `--no-gate '<reason>'` overrides and prints the reason with the entry; it exists for the rare entry where a rule is genuinely wrong for that entry, not to save a step, and the reason is what a reviewer reads. The same checks run in `/wiki-lint` over every existing entry (warn-only) so the backlog stays visible.

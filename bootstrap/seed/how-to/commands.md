@@ -24,7 +24,7 @@ These are listed for completeness. `/wiki-cycle` invokes them in order; you can 
 |---|---|
 | `/wiki-discover` | Find new candidate URLs from RSS feeds + Drive folder |
 | `/wiki-list` | Manage the `_inbox/pending/` queue |
-| `/wiki-lint` | Mechanical lint (broken links, orphans, stale frontmatter) and optionally semantic lint |
+| `/wiki-lint` | Mechanical lint (broken links, orphans, frontmatter, and the body checks that mirror the ingest gate — TL;DR, Related links, tags, stubs, unquoted numbers) and optionally semantic lint |
 | `/wiki-claims` | Extract claims from entries, find contradictions |
 | `/wiki-refresh` | Scan for stale entries (`review_after` date passed) |
 | `/wiki-report` | Generate the morning report from a cycle run |

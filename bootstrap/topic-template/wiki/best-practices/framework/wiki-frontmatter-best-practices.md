@@ -229,7 +229,7 @@ Mechanical checks `/wiki-lint` performs (or should perform):
 - `## TL;DR` section present (a bold `**TL;DR**` lead also counts) — error
 - `## Related …` section with ≥ 2 links to wiki entries — error (warning when `tier: self`)
 - `tags` ≥ 3 — warning
-- fewer than 30 non-blank body lines and no `stub` tag — warning
+- fewer than 30 non-blank body lines AND fewer than 300 words, with no `stub` tag — warning
 - numeric claims in prose outside a `>` blockquote — warning (numbers are quoted and attributed, never paraphrased)
 Exempt: wiki-root hub pages, `_`-prefixed system files, `framework-contract: true` docs, `type: rollback|review` entries.
 

@@ -8,7 +8,7 @@ The main pipeline. Discover new sources, ingest approved items, lint, fix, gener
 /wiki-cycle
 ```
 
-Default `--quick` mode: Drive-fetch → Discover → Confirm → Ingest → **Dequeue** (move ingested items `pending/`→`done/`) → Mechanical lint → **Normalize links** (`wiki-fix-links.py`) → Reciprocate backlinks → INDEX regen → MAP regen → Morning report → Promote checkpoint. ~5-10 min for ≤20 items.
+Default `--quick` mode: Drive-fetch → Discover → Confirm → Ingest (each entry must pass the script's mechanical gate before it is written — see `wiki-update.md`) → **Dequeue** (move ingested items `pending/`→`done/`) → Mechanical lint → **Normalize links** (`wiki-fix-links.py`) → Reciprocate backlinks → INDEX regen → MAP regen → Morning report → Promote checkpoint. ~5-10 min for ≤20 items.
 
 Ingest runs via the **`wiki-ingester` subagent** (installed to `~/.claude/agents/` with this
 framework; falls back to a general-purpose worker if absent). Before the workers launch you may be
@@ -44,7 +44,7 @@ To skip both for trusted full-auto runs:
 
 ## Drive-fetch step
 
-If you enabled Drive ingest at `/new-wiki` time, the cycle starts by pulling URLs from `<parent-folder>/<project-slug>/` in your Drive. Files get deduped against pending/proposed/wiki/done and queued into `_inbox/pending/`. Processed files move to `_completed/<cycle-id>/`.
+If you enabled Drive ingest at `/new-wiki` time, the cycle starts by pulling URLs from `<parent-folder>/<project-slug>/` in your Drive. URLs are canonicalized first (tracking params such as UTM, HubSpot `_hsenc`/`_hsmi` and YouTube `si` stripped, every YouTube form collapsed to `watch?v=<id>`), then deduped against pending/proposed/wiki/done by that canonical form and queued into `_inbox/pending/`. A URL whose article is already in the wiki is reported as *known*, not re-queued, and its Drive file is archived with the rest. Processed files move to `_completed/<cycle-id>/`.
 
 ## Don't
 

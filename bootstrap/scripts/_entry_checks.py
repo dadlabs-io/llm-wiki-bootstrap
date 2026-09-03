@@ -26,7 +26,7 @@ Checks (rubric dimension → rule → severity):
                (tier `self` entries: WARNING — project notes may legitimately
                start thin, and the CLAUDE.md inline-filing flow files them)
   metadata   → >= 3 tags                                            → WARNING
-  structure  → < 30 non-blank body lines and no `stub` tag           → WARNING
+  structure  → < 30 non-blank lines AND < 300 words, no `stub` tag    → WARNING
   fidelity   → numeric claims in prose outside a `>` blockquote      → WARNING
                (numbers must be quoted + attributed; paraphrased numbers drift)
 
@@ -43,6 +43,7 @@ SYSTEM_STEMS = {"_INDEX", "_MAP", "HOME", "README", "index", "_pending-list"}
 MIN_RELATED_LINKS = 2
 MIN_TAGS = 3
 STUB_LINE_THRESHOLD = 30
+STUB_WORD_THRESHOLD = 300
 
 # A `## TL;DR` heading, or the older bold-lead style `**TL;DR**: …` at line
 # start (61 entries in agentic-design used it when this check was added).
@@ -193,10 +194,13 @@ def check_entry_body(body: str, *, tags=None, tier=None) -> dict:
     if tags is not None and len(tags) < MIN_TAGS:
         warnings.append(f"{len(tags)} tag(s); spec wants >= {MIN_TAGS}")
 
-    # structure → stub marking
+    # structure → stub marking. Both thresholds must trip: a dense entry with
+    # long paragraphs has few lines but plenty of words and is not a stub.
     nonblank = [l for l in body.splitlines() if l.strip()]
-    if len(nonblank) < STUB_LINE_THRESHOLD and tags is not None and "stub" not in tags:
-        warnings.append(f"only {len(nonblank)} non-blank lines but not tagged `stub`")
+    word_count = len(body.split())
+    if (len(nonblank) < STUB_LINE_THRESHOLD and word_count < STUB_WORD_THRESHOLD
+            and tags is not None and "stub" not in tags):
+        warnings.append(f"only {len(nonblank)} non-blank lines / {word_count} words but not tagged `stub`")
 
     # fidelity → numbers outside blockquotes
     prose = _prose_only(body)
