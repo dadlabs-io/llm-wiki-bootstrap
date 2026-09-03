@@ -342,8 +342,14 @@ def lint(vault_root, topic, strict=False):
             if ref_resolved is None or not ref_resolved.exists():
                 broken_icarus_ref.append((f, "synthesis_of", ref_value))
 
-        # Check links
-        for link_text, target in extract_links(content):
+        # Check links. Fenced blocks and inline code spans are stripped first
+        # (2026-09-02): a `[Title](slug.md)` inside backticks is a syntax
+        # MENTION — e.g. a troubleshooting entry documenting the link form —
+        # not a link, and was being reported as broken. Same rule the
+        # wikilink check above already applies.
+        content_no_code = re.sub(r"```.*?```", "", content, flags=re.DOTALL)
+        content_no_code = re.sub(r"`[^`\n]*`", "", content_no_code)
+        for link_text, target in extract_links(content_no_code):
             # Only check links that look like .md or directory paths
             if not (target.endswith(".md") or target.endswith("/") or "/" in target):
                 continue
