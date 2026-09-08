@@ -53,7 +53,7 @@ version of this list, see [`../commands.md`](../commands.md) (the full command r
 
 | Agent | One line |
 |---|---|
-| `wiki-ingester` | Spawnable worker for **delegated batch ingestion**: `/wiki-cycle` (or any session) hands it a queue slice or URL list; it runs the full `wiki-update` flow per source — one at a time, each read in FULL (whole repos, full transcripts, all PDF pages) — stages results to `_inbox/proposed/`, and returns a compressed receipt. Its model is set in `~/.claude/agents/wiki-ingester-config.json` (`model_default` + `confirm_model_each_run`). For a single source you're watching live, just run `/wiki-update` inline instead. |
+| [`wiki-ingester`](./agents/wiki-ingester.md) | Spawnable worker for **delegated batch ingestion**: `/wiki-cycle` (or any session) hands it a queue slice or URL list; it runs the full `wiki-update` flow per source — one at a time, each read in FULL (whole repos, full transcripts, all PDF pages) — stages results to `_inbox/proposed/`, and returns a compressed receipt. Its model is set in `~/.claude/agents/wiki-ingester-config.json` (`model_default` + `confirm_model_each_run`). For a single source you're watching live, just run `/wiki-update` inline instead. |
 
 ## Setup & lifecycle
 

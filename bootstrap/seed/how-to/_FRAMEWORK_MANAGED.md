@@ -8,7 +8,7 @@ confidence: high
 
 # ⚠️ This folder is framework-managed
 
-Everything in `llm-wiki/how-to/` (this folder) is shipped by the LLM-wiki framework on install. It will be **overwritten** on the next refresh (`install-wiki.ps1 -RefreshOnly` or `/new-wiki --sync`) to pick up the latest framework docs.
+Everything in `llm-wiki/how-to/` (this folder) is shipped by the LLM-wiki framework on install. It will be **overwritten** on the next refresh — re-running Phase B against the project with `--force` rewrites the whole tree, and `new-wiki.py --phase docs --target-folder <project>` rewrites only the pack usage docs under `how-to/llm-wiki/` — to pick up the latest framework docs. (`/new-wiki --sync` refreshes the global skills and never touches a project.) Other packs' usage docs installed here (`how-to/<package>/`, e.g. `how-to/agent-builder/`) belong to their own installer and are never removed by a refresh.
 
 ## Don't hand-edit files here
 

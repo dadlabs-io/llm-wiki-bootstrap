@@ -236,7 +236,7 @@ If `~/.config/wiki-cycle/client_secrets.json` is missing, the helper prints inst
 
 `/new-wiki --sync` re-runs Phase A — refreshes the global `/new-wiki` skill from the current `bootstrap_source`. Use after `git pull` on the llm-wiki-bootstrap clone.
 
-To sync a per-project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`.
+To sync a per-project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`. To refresh only a project's pack usage docs (`how-to/llm-wiki/`: the pack page, one page per skill, one per agent — a project created before 2026-07-31 has none), run `python <bootstrap_source>/bootstrap/scripts/new-wiki.py --phase docs --target-folder <project>`; it resolves the wiki through the project's `.claude/wiki-config.json` (or `llm-wiki/how-to/`, or a notebook root) and touches nothing else.
 
 ## Required: the bootstrap-source path
 

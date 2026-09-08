@@ -692,6 +692,110 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
 #     └── wiki/                      (project's research/dev wiki — was vault)
 #   <target>/CLAUDE.md, README.md, .gitignore (rendered from templates)
 
+def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False) -> int:
+    """Assemble the llm-wiki pack's usage docs into <how_to_root>/llm-wiki/ (wiki-seed
+    convention, shared with the agent-factory): the pack page from bootstrap/wiki-seed/,
+    one page per skill from skills/<name>/wiki-seed/ -> llm-wiki/skills/<name>.md, one page
+    per agent from agents/<name>/wiki-seed/ -> llm-wiki/agents/<name>.md. Every shipped
+    skill (a folder with SKILL.md) and agent (a folder with AGENT.md) is expected to carry a
+    page; each one that does not is named in a warning, because an artifact without a usage
+    page is installed undocumented (requirement added 2026-09-08). Returns the number of
+    pages copied. Used by Phase B (new project) and --phase docs (refresh an existing one)."""
+    wiki_src = bootstrap / "bootstrap"
+    skills_src = wiki_src / "skills"
+    agents_src = wiki_src / "agents"
+    pack_docs_dst = how_to_root / "llm-wiki"
+    pack_seed_src = wiki_src / "wiki-seed"
+    total = 0
+    if pack_seed_src.exists():
+        c, s = _copy_tree(pack_seed_src, pack_docs_dst, dry_run=dry_run)
+        total += c
+        _ok(f"seeded pack page(s): {c} copied, {s} unchanged")
+    else:
+        _warn(f"no pack page at {pack_seed_src} — the how-to folder has no entry point")
+    missing = []
+    for kind, src, main_file, sub in (("skill", skills_src, "SKILL.md", "skills"),
+                                      ("agent", agents_src, "AGENT.md", "agents")):
+        if not src.exists():
+            continue
+        n_pages = n_skipped = 0
+        for art_dir in sorted(src.iterdir()):
+            if not art_dir.is_dir() or not (art_dir / main_file).exists():
+                continue
+            page_src = art_dir / "wiki-seed"
+            if page_src.exists() and any(page_src.glob("*.md")):
+                c, s = _copy_tree(page_src, pack_docs_dst / sub, dry_run=dry_run)
+                n_pages += c
+                n_skipped += s
+            else:
+                missing.append(f"{kind} {art_dir.name}")
+        total += n_pages
+        _ok(f"seeded per-{kind} usage pages: {n_pages} copied, {n_skipped} unchanged")
+    if missing:
+        _warn("shipped without a usage page (add <artifact>/wiki-seed/<name>.md — every skill and "
+              "agent must carry one): " + ", ".join(missing))
+    return total
+
+
+def _resolve_how_to_root(target: Path, registry_arg=None):
+    """Where an EXISTING project's framework-managed how-to tree lives, in this order:
+    the project's thin-pointer .claude/wiki-config.json (notebook + registry -> the notebook root),
+    <target>/llm-wiki/how-to (an in-project wiki), or <target>/how-to when the target is itself a
+    notebook root (has wiki/). Returns None when nothing matches."""
+    cfg = target / ".claude" / "wiki-config.json"
+    if cfg.exists():
+        try:
+            data = json.loads(cfg.read_text(encoding="utf-8"))
+        except Exception as e:  # noqa: BLE001
+            _warn(f"could not read {cfg}: {e}")
+            data = {}
+        reg_path = Path(registry_arg or data.get("registry") or "")
+        name = data.get("notebook")
+        if name and reg_path and reg_path.exists():
+            try:
+                reg = json.loads(reg_path.read_text(encoding="utf-8"))
+                entry = (reg.get("notebooks") or reg).get(name)
+                root_val = entry.get("root") if isinstance(entry, dict) else entry
+                if root_val:
+                    root = Path(root_val)
+                    if not root.is_absolute():
+                        root = (reg_path.parent / root).resolve()
+                    if (root / "how-to").exists() or (root / "wiki").exists():
+                        return root / "how-to"
+            except Exception as e:  # noqa: BLE001
+                _warn(f"could not resolve notebook {name!r} through {reg_path}: {e}")
+    if (target / "llm-wiki" / "how-to").exists():
+        return target / "llm-wiki" / "how-to"
+    if (target / "wiki").exists():
+        return target / "how-to"
+    return None
+
+
+def phase_docs(args):
+    """--phase docs: refresh ONLY the pack usage docs (how-to/llm-wiki/) of an existing project.
+    --phase sync refreshes the global skills and never touches a project; re-running Phase B with
+    --force refreshes the whole how-to tree. This is the narrow path: a project created before
+    the wiki-seed convention (2026-07-31) gets its how-to/llm-wiki/ folder without anything else
+    being rewritten (2026-09-08)."""
+    target = Path(args.target_folder).resolve() if args.target_folder else None
+    if target is None:
+        _err("--target-folder is required for --phase docs (the project, or the notebook root)")
+        return 1
+    bootstrap = _derive_bootstrap_source(args)
+    if not bootstrap:
+        _err("could not find bootstrap source. Pass --bootstrap-source <path> or run Phase A first.")
+        return 1
+    how_to = _resolve_how_to_root(target, args.registry)
+    if how_to is None:
+        _err(f"no wiki found for {target}: expected .claude/wiki-config.json, llm-wiki/how-to/, or a "
+             "notebook root with wiki/ — run Phase B first")
+        return 1
+    _info(f"pack usage docs -> {how_to / 'llm-wiki'}")
+    n = seed_pack_docs(bootstrap, how_to, dry_run=args.dry_run)
+    _ok(f"docs refresh done: {n} page(s) copied into {how_to / 'llm-wiki'}")
+    return 0
+
+
 def phase_b(args):
     """Per-project scaffold."""
     target = Path(args.target_folder).resolve() if args.target_folder else None
@@ -842,26 +946,10 @@ def phase_b(args):
             paths["llm_wiki_how_to"].mkdir(parents=True, exist_ok=True)
         _info("no seed/how-to/ found in bootstrap — created empty folder")
 
-    # Seed: pack usage docs (wiki-seed convention — standard across packs).
-    # Assembled from pages CO-LOCATED with their artifacts, mirroring how the
-    # agent-factory's promote-agent assembles pack docs:
-    #   pack page:  <wiki_src>/wiki-seed/llm-wiki.md         -> how-to/llm-wiki/llm-wiki.md
-    #   per-skill:  <wiki_src>/skills/<name>/wiki-seed/*.md  -> how-to/llm-wiki/skills/<name>.md
-    pack_docs_dst = paths["llm_wiki_how_to"] / "llm-wiki"
-    pack_seed_src = wiki_src / "wiki-seed"
-    if pack_seed_src.exists():
-        c, s = _copy_tree(pack_seed_src, pack_docs_dst, dry_run=args.dry_run)
-        _ok(f"seeded pack page(s): {c} copied, {s} unchanged")
-    n_pages = 0
-    n_skipped = 0
-    if skills_src.exists():
-        for skill_dir in sorted(skills_src.iterdir()):
-            page_src = skill_dir / "wiki-seed"
-            if skill_dir.is_dir() and page_src.exists():
-                c, s = _copy_tree(page_src, pack_docs_dst / "skills", dry_run=args.dry_run)
-                n_pages += c
-                n_skipped += s
-        _ok(f"seeded per-skill usage pages: {n_pages} copied, {n_skipped} unchanged")
+    # Seed: pack usage docs (wiki-seed convention — standard across packs; the pack page,
+    # one page per skill, one page per agent; a shipped artifact without one is warned about).
+    # Same seeder as --phase docs, which refreshes an existing project's how-to/llm-wiki/.
+    seed_pack_docs(bootstrap, paths["llm_wiki_how_to"], dry_run=args.dry_run)
 
     # Seed: best-practices/
     if seed_src.exists() and (seed_src / "best-practices").exists():
@@ -1146,11 +1234,12 @@ def _render_template(src: Path, dst: Path, vars: dict, dry_run: bool, skip_if_ex
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--phase", choices=["A", "B", "sync"], default=None,
+    parser.add_argument("--phase", choices=["A", "B", "sync", "docs"], default=None,
                         help="A = install /new-wiki skill globally + record bootstrap source. "
                              "B = scaffold a per-project install (skills/scripts/llm-wiki/) at --target-folder. "
-                             "sync = re-run A to refresh the global /new-wiki skill. "
-                             "Mutually exclusive with --mode.")
+                             "sync = re-run A to refresh the global /new-wiki skill (touches no project). "
+                             "docs = refresh only the pack usage docs (how-to/llm-wiki/) of the existing "
+                             "project at --target-folder. Mutually exclusive with --mode.")
     parser.add_argument("--mode", choices=["tooling"], default=None,
                         help="tooling = GLOBAL tooling-only install (all skills + scripts into "
                              "~/.claude/, no project scaffold). Mutually exclusive with --phase.")
@@ -1219,6 +1308,8 @@ def main():
     if args.phase == "sync":
         # Re-run Phase A to refresh the global /new-wiki skill
         return phase_a(args)
+    if args.phase == "docs":
+        return phase_docs(args)
 
 
 if __name__ == "__main__":

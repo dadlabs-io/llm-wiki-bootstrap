@@ -50,6 +50,14 @@ Manifest: `TRAVEL_AGENTS` in `bootstrap/scripts/_install_tooling.py` (added 2026
 |---|---|---|
 | `wiki-ingester` | research (primary), both | Spawnable subagent for delegated batch ingestion — full /wiki-update flow per source, one at a time, full-depth reads, staged output, compressed receipt. `/wiki-cycle` Step 2 spawns it (falls back to `general-purpose` if absent). Sidecars: `wiki-ingester-reading-list.json` (skills + pre-reading), `wiki-ingester-config.json` (model_default + confirm_model_each_run — the spawner reads this and asks the user per batch while the confirm flag is true) |
 
+## A3. Pack usage docs (wiki-seed)
+
+Source-of-truth: `bootstrap/wiki-seed/llm-wiki.md` (the pack page) + `bootstrap/skills/<name>/wiki-seed/<name>.md` + `bootstrap/agents/<name>/wiki-seed/<name>.md`
+Install target: `<project how-to root>/llm-wiki/llm-wiki.md` + `llm-wiki/skills/<name>.md` + `llm-wiki/agents/<name>.md` (Phase B for a new project; `--phase docs --target-folder <project>` refreshes an existing one)
+Mechanism: `seed_pack_docs()` in `bootstrap/scripts/new-wiki.py` (added 2026-09-08; the per-skill copy dates from 2026-07-31)
+
+**Every skill in A and every agent in A2 ships a page; the seeder warns by name for any that does not.** One folder per installed package in the receiving how-to tree (`how-to/llm-wiki/` here; the agent-factory's packs land as `how-to/<pack>/` beside it); a framework refresh never removes another pack's folder.
+
 ## B. Global scripts
 
 Source-of-truth: `bootstrap/scripts/<script>.py`

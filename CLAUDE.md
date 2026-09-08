@@ -118,8 +118,16 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 - `bootstrap/wiki-seed/` + `skills/<name>/wiki-seed/` — pack usage docs
   (standard wiki-seed convention, shared with the agent-factory): `wiki-seed/llm-wiki.md` is
   the pack entry page, each skill carries its own one-page usage doc; `new-wiki.py` assembles
-  them into `<target>/llm-wiki/how-to/llm-wiki/{,skills/}` on install and refresh. Distinct
-  from `seed/` (the broader project scaffold) — one name per mechanism.
+  them into `<target>/llm-wiki/how-to/llm-wiki/{,skills/,agents/}` on install (Phase B) and on
+  `--phase docs` (refresh an existing project's pack docs only). Distinct from `seed/` (the
+  broader project scaffold) — one name per mechanism.
+  **Requirement (2026-09-08, shared with the agent-factory): every skill under `bootstrap/skills/`
+  and every agent under `bootstrap/agents/` ships `wiki-seed/<name>.md`, and the pack page
+  `wiki-seed/llm-wiki.md` lists it.** Adding a skill or agent means four files: the artifact, its
+  `wiki-seed/` page (what it does, trigger, inputs/outputs, when it skips itself — written for a
+  developer who has never seen this repo, no paths into it), its row in `INSTALL-INVENTORY.md`, and
+  its row in the pack page. `new-wiki.py` (`seed_pack_docs`) warns by name for every shipped skill or
+  agent without a page — an artifact without one is installed undocumented.
 - `bootstrap/templates/` — `CLAUDE.md`, `README.md`, `.gitignore` templates
 
 ## Conventions (when editing the scripts)
