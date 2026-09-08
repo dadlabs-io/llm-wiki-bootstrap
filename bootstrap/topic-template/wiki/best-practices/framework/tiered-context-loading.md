@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 1
-last_reviewed: 2026-04-24
-review_after: 2026-07-24
+framework-version: 2
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 tags: [framework-contract, best-practice, context-engineering, L3, tiered-loading, agent-guidance]
 ---
 
@@ -52,7 +52,8 @@ Agent receives a prompt/question touching the wiki
 │   │         Prefer qmd search over grep for conceptual lookup
 │   │         Prefer direct read when slug is known
 │   │
-│   └── NO → answer from tier-1/tier-2 only
+│   └── NO → answer from tier-1/tier-2 only — AND say so in the answer
+│            ("from the map/INDEX; I did not open the entries")
 │
 └── After reading: if new claims/concepts surface, check `concept-gaps-things-mentioned-not-yet-covered.md`
 ```
@@ -65,4 +66,26 @@ Within a single entry, the same 3-tier idea applies:
 |---|---|---|
 | abstract | `## TL;DR` (~100 tokens) | Always |
 | overview | Body sections between TL;DR and Related | Only if TL;DR doesn't answer the question |
-| drill-down | `## Related` + `
+| drill-down | `## Related` + backlinked/cross-referenced entries | Only when the overview doesn't answer and a specific linked entry needs pulling in — follow one link at a time, not the whole section |
+
+This mirrors the top-level pattern recursively: an entry's `## Related` section is itself a tier-2-style index into further tier-3 reads, so an agent drilling down from one entry to another is doing the same abstract→overview→full-content walk one level deeper.
+
+**Completion note (2026-08-05; carried into the framework template 2026-09-08)**: this document was truncated mid-table from the moment it was first authored (2026-04-24, `workflows-core@0900bd5c` — its own commit message reads "L3 is ~90% complete"). It was never finished, not corrupted later. The drill-down row and the closing sections were written on 2026-08-05 in the agentic-design copy, following the structure and voice of the two finished rows above and the sibling framework docs' closing pattern, and the framework's gold copy shipped the truncated version for another month until the 2026-09-08 reconciliation pass.
+
+## Say where you stopped (added 2026-08-13)
+
+The tiers above decide *what to load*. They do not, on their own, say anything about the answer that comes out — and an answer built from `_MAP.md` and a folder `_INDEX.md` is a different epistemic object from one built by reading the entries. **When an agent answers without drilling to tier 3, it says so.** One clause is enough: "from the map and the `active/` index; I did not open the entries." The same applies when a drill-down was attempted and came back thin — name the gap rather than smoothing over it.
+
+The rule is borrowed from a context compiler for coding agents, which reaches the same three-tier shape from a different direction — full source / signatures-and-docstrings skeleton / *excluded entirely*, the third tier being what a flat repo map lacks — and states the discipline that makes such a scheme safe:
+
+> "an incomplete map with explicit warnings is far more useful than a complete map that is secretly wrong." — Alexander, TDS *(agentic-design :: wiki/research/, the context-compiler entry)*
+
+Its worked case is a resolver that cannot see `getattr`-dispatched handlers: rather than guessing, it emits `MISSED (as expected)` and names where static analysis stopped, so an agent tracing a bug "does not get a correct handler by luck or a wrong handler delivered with false confidence." Tiered loading has exactly the same failure surface — a tier-2 read is a lossy projection of the entries, and an answer built from it is indistinguishable, at the point of use, from one built by reading them. This is the loading-side instance of the disclosure discipline already in the canon: `not_found` as a first-class output and the abstention gate (memory-architecture best practices, Principle 9 *(agentic-design :: wiki/project/best-practices/memory-architecture-best-practices.md)*), and the synthesis-vs-direct-claim distinction ([wiki-authoring principle 8](./wiki-authoring-best-practices.md)).
+
+The external source is worth reading for its architecture and not for its numbers: its prompt-reduction figures are measured only against a naive full-repo dump, and it runs no task-quality evaluation at all — see the entry's own caveat.
+
+## Related
+
+- [Wiki Frontmatter Best Practices](./wiki-frontmatter-best-practices.md) — sibling framework contract
+- [Cycle Step Return Format](./cycle-step-return-format.md) — sibling framework contract
+- [Wiki Authoring Best Practices](./wiki-authoring-best-practices.md) — principle 8 (synthesis vs direct claims), which "say where you stopped" extends to the loading side

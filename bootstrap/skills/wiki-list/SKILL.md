@@ -1,12 +1,14 @@
 ---
 name: wiki-list
 description: Manage the pending ingestion list for a topic wiki — add items, process the list, or show what's queued. Use when the user says "add to the wiki list", "queue this for the wiki", "process the wiki list", "drain the queue", "what's in the wiki list", "show wiki list", "wiki list add", "wiki list process". Producer/consumer split for low-friction capture (drop URLs throughout the day, batch process later).
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
 
-> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.
+> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback` and `/new-wiki`. This skill is documented + callable for programmatic use.
+
+> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
 
 Manage the wiki ingestion list. ONE command, behavior depends on the user's intent: add, process, or show.
 
@@ -35,7 +37,6 @@ Run:
 python {{WIKI_SCRIPTS_DIR}}/wiki-list-add.py \
   --topic <topic> \
   --source <url-or-path> \
-  --vault llm-wiki/wiki \
   --added-by claude-code \
   [--folder <folder>] \
   [--title "<title>"] \
@@ -55,15 +56,13 @@ Dry run:
 ```bash
 python {{WIKI_SCRIPTS_DIR}}/wiki-list-process.py \
   --topic <topic> \
-  --vault llm-wiki/wiki \
   --dry-run
 ```
 
 Real run:
 ```bash
 python {{WIKI_SCRIPTS_DIR}}/wiki-list-process.py \
-  --topic <topic> \
-  --vault llm-wiki/wiki
+  --topic <topic>
 ```
 
 The processor passes each item's `added_by` field through to wiki-update.py as `--ingested-by` so we know who originally captured it.

@@ -1,12 +1,14 @@
 ---
 name: wiki-report
-description: Generate a morning report summarizing wiki health, recent changes, pending items, contradictions, stale entries, and promotion candidates. The batch summary for human review checkpoint #2. Use when the user says "morning report", "wiki report", "wiki status", "what changed in the wiki", "wiki-report", "show me the wiki health".
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+description: "Generate a morning report summarizing wiki health, recent changes, pending items, contradictions, stale entries, and promotion candidates. The batch summary for human review checkpoint #2. Use when the user says \"morning report\", \"wiki report\", \"wiki status\", \"what changed in the wiki\", \"wiki-report\", \"show me the wiki health\"."
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
 
-> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.
+> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback` and `/new-wiki`. This skill is documented + callable for programmatic use.
+
+> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
 
 # /wiki-report
 
@@ -40,7 +42,7 @@ find llm-wiki/wiki -name "*.md" ! -name "_INDEX.md" | wc -l
 **C. Mechanical lint** (fast, 2 seconds):
 ```bash
 python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
-  --topic <topic> --vault llm-wiki/wiki
+  --topic <topic>
 ```
 
 **D. Pending queue**:
@@ -79,8 +81,8 @@ Read `wiki/concept-gaps-things-mentioned-not-yet-covered.md` — count rows in C
 **J. Best practices gap analysis**:
 Compare what the wiki recommends as best practice against what our system actually does. Read the key best-practice entries and cross-check against current implementation state:
 
-1. Read `wiki/research/implementation/research-cycle-setup.md` — what does the cycle say we should have? What's built, what's not?
-2. Read `wiki/research/implementation/getting-started.md` — is the "Current status" table accurate?
+1. If the wiki has a cycle-setup or system-overview page (agentic-design keeps `research/implementation/research-cycle-setup.md` and a root `wiki-cycle-system-overview.md`; other wikis may have neither — skip when absent), read it: what does it say the cycle should have? What's built, what's not?
+2. If the wiki has a getting-started / "Current status" page, read it — is its status table accurate?
 3. Scan recent ingests — did any new entry introduce a best practice we're not following? Look for entries with tags containing `best-practice`, `architecture`, `pattern`, or `recommendation`.
 4. Check if any newly ingested entry contradicts or updates an existing best practice. For example: if we ingested an article saying "staging is essential" and we're not using staging, that's a gap.
 5. Check automation table — compare the checklist (feeds, discovery, ingestion, lint, staging, eval, claims, report, refresh, scratchpad, cron) against actual working state.

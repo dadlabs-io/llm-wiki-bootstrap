@@ -1,12 +1,14 @@
 ---
 name: wiki
 description: Show this project's wiki INDEX (folder tree + curated file list with summaries). Use when the user says "show me the wiki", "what's in the wiki", "list wiki topics", or wants to browse what's been captured.
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
 
-> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.
+> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback` and `/new-wiki`. This skill is documented + callable for programmatic use.
+
+> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
 
 Display this project's wiki `_INDEX.md`. In per-project installs there is one wiki per project, rooted at `llm-wiki/wiki/`.
 
@@ -18,17 +20,17 @@ Display this project's wiki `_INDEX.md`. In per-project installs there is one wi
 3. Offer to read any specific file in the index if they want to drill in
 4. If `_INDEX.md` is missing or stale (modified before any `wiki/` file), regenerate it first:
    ```bash
-   python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py --vault llm-wiki/wiki
+   python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py
    ```
 
 ### If the user wants to regenerate the index
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py --vault llm-wiki/wiki
+python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py
 ```
 
 For the top-level orientation map (`_MAP.md`, always-loaded in CLAUDE.md):
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-map-compile.py --topic <project-slug> --vault llm-wiki/wiki
+python {{WIKI_SCRIPTS_DIR}}/wiki-map-compile.py --topic <project-slug>
 ```
 
 ### Multi-wiki note (v2 feature, not in v1)

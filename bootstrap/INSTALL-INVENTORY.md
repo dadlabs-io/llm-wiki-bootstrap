@@ -76,6 +76,7 @@ Install target: `~/.claude/wiki-scripts/<script>.py`
 | `wiki-promote.py` | Move `_inbox/proposed/<folder>/<slug>.md` → `wiki/<folder>/<slug>.md` + backlinks |
 | `wiki-verify.py` | Sidecar update flipping truth-status to verified (called by /wiki-verify) |
 | `wiki-rollback.py` | Walk `revises:` chain to verified ancestor + write rollback entry (called by /wiki-rollback) |
+| `wiki-search-rerank.py` | Post-filter qmd's `--json` output by truth-status bucket (verified > unverified > temporal > contradicted; rolled_back excluded unless `--include-rolled-back`) — the search spec's surface 1; shipped 2026-09-08 |
 | `new-wiki.py` | The bootstrap helper (to be written) |
 
 ## C. Templates

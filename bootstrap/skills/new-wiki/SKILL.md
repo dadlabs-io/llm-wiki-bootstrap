@@ -1,8 +1,8 @@
 ---
 name: new-wiki
 description: Scaffold a new project with the LLM-wiki framework. Asks tool (claude-code/cursor), name, target folder, and Drive ingest preferences (NO project-type question — every project gets one merged wiki that does both research ingest and project-knowledge capture). Sets up per-project .claude/skills + llm-wiki/ folder with notes, best-practices, and the project's wiki (research/* + project/* + sessions/). Use when the user says "new project", "create a new wiki", "install a new wiki", "set up a new wiki", "bootstrap a project", "start a new project", or types "/new-wiki".
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -15,8 +15,8 @@ Conversational scaffold for a new project. Everything is per-project — the onl
 ```
 <target>/                              ← user's project folder (e.g., C:\github.com\dnd-project)
 ├── .claude/                           ← claude-code tool config (per-project)
-│   ├── skills/                        ← 13 skills (wiki-cycle, wiki-update, wrap-up, etc.)
-│   ├── wiki-scripts/                  ← 14 Python helpers
+│   ├── skills/                        ← every skill in TRAVEL_SKILLS (wiki-cycle, wiki-update, wrap-up, …)
+│   ├── wiki-scripts/                  ← every script in TRAVEL_SCRIPTS + helpers (the manifests in _install_tooling.py are the count)
 │   ├── wiki-templates/                ← project-bootstrap templates
 │   ├── wiki-config.json
 │   └── settings.json                  ← agentmemory MCP wiring (dev projects only)
@@ -52,11 +52,12 @@ Q8: Review gate? manually review before publishing (yes [default] / no auto-publ
    ↓
 Phase B — Per-project scaffold (Phase A already done by install-wiki.ps1)
    B1.  mkdir <target> + git init
-   B2.  Copy 13 skills    → <target>/.claude/skills/   (or .cursor/skills/)
-   B3.  Copy 14 scripts   → <target>/.claude/wiki-scripts/
-   B4.  Copy templates    → <target>/.claude/wiki-templates/
-   B5.  mkdir llm-wiki/ + seed how-to/, best-practices/
+   B2.  Copy the skills   → <target>/.claude/skills/   (or .cursor/skills/)   — bundled mode only
+   B3.  Copy the scripts  → <target>/.claude/wiki-scripts/                     — bundled mode only
+   B4.  Copy templates    → <target>/.claude/wiki-templates/                   — bundled mode only
+   B5.  mkdir llm-wiki/ + seed how-to/ (pack usage docs), best-practices/
    B6.  Apply the single merged folder taxonomy under llm-wiki/wiki/ (research/* + project/* + sessions/)
+   B6.1 Land the framework-contract docs at wiki/project/best-practices/framework/ (2026-09-08)
    B7.  Render CLAUDE.md / README.md / .gitignore at <target>/
    B7.5 Render llm-wiki/README.md from seed template
    B8.  Write <target>/.claude/wiki-config.json
@@ -236,7 +237,7 @@ If `~/.config/wiki-cycle/client_secrets.json` is missing, the helper prints inst
 
 `/new-wiki --sync` re-runs Phase A — refreshes the global `/new-wiki` skill from the current `bootstrap_source`. Use after `git pull` on the llm-wiki-bootstrap clone.
 
-To sync a per-project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`. To refresh only a project's pack usage docs (`how-to/llm-wiki/`: the pack page, one page per skill, one per agent — a project created before 2026-07-31 has none), run `python <bootstrap_source>/bootstrap/scripts/new-wiki.py --phase docs --target-folder <project>`; it resolves the wiki through the project's `.claude/wiki-config.json` (or `llm-wiki/how-to/`, or a notebook root) and touches nothing else.
+To sync a per-project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`. To refresh only a project's **framework-managed docs** — the pack usage docs (`how-to/llm-wiki/`: the pack page, one page per skill, one per agent) and, since 2026-09-08, the six framework-contract docs at `wiki/project/best-practices/framework/` — run `python <bootstrap_source>/bootstrap/scripts/new-wiki.py --phase docs --target-folder <project>`; it resolves the wiki through the project's `.claude/wiki-config.json` (or `llm-wiki/how-to/`, or a notebook root), content-compares each framework doc and replaces the ones that differ (naming them, so a project-local edit is visible rather than silently lost), and touches nothing else. This is the Phase 2 / Phase 3 tool of the research-to-framework update process: run it per registered notebook after a framework change.
 
 ## Required: the bootstrap-source path
 

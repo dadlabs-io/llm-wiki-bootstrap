@@ -32,6 +32,13 @@ Checks (rubric dimension → rule → severity):
 
 System pages (HOME.md, README.md, _MAP.md, _INDEX.md, index.md) and
 framework-contract docs are skipped by `is_exempt()`.
+
+Also here (2026-09-08): `check_frontmatter_loadable()` — does the YAML block
+parse at all? Used by `_install_tooling.py` (refuses to install a skill/agent
+whose frontmatter the loader would drop) and by the lint (entries + installed
+skills/agents). Loadability is checked on the RAW block, not on the parsed
+dict — `split_frontmatter()` strips quotes, so a parsed value can't tell you
+whether it was quoted.
 """
 from __future__ import annotations
 
@@ -99,6 +106,72 @@ def split_frontmatter(text: str):
                         fm[key] = value.strip("\"'")
                     last_key = key
     return fm, body
+
+
+def check_frontmatter_loadable(text: str) -> list[tuple[str, str, str]]:
+    """Frontmatter LOADABILITY check — does the YAML block parse at all?
+
+    Returns [(severity, code, detail)] with severity "ERROR" or "WARNING".
+    An unparseable block is worse than a missing field: Claude Code's skill
+    loader drops EVERY field, so the skill is listed by its H1 instead of its
+    description and never triggers by description (found 2026-09-06: wrap-up,
+    wiki-rollback, wiki-ingester all shipped this way; rule from Trail of Bits'
+    plugin validator, via the agent-builder handoff of the same day).
+
+      ERROR   frontmatter-unquoted-scalar     top-level plain scalar contains `: `
+                                              (or ends with `:`) — "mapping values
+                                              are not allowed here"
+      ERROR   frontmatter-reserved-indicator  plain scalar starts with a YAML
+                                              indicator (* & ! % @ `)
+      WARNING description-comment-truncates   plain scalar contains ` #` — YAML
+                                              starts a comment there and silently
+                                              truncates the value
+      ERROR   frontmatter-yaml-parse          PyYAML (when installed) rejects the
+                                              block for any other reason
+
+    Only top-level `key: value` lines are inspected; quoted (" '), block (| >)
+    and flow ([ {) scalars are skipped — those forms are what the fix looks like.
+    """
+    findings: list[tuple[str, str, str]] = []
+    if not text.startswith("---"):
+        return findings
+    end = text.find("\n---", 3)
+    if end < 0:
+        return [("ERROR", "frontmatter-yaml-parse", "opening --- without a closing ---")]
+    header = text[3:end]
+    for raw_line in header.splitlines():
+        if not raw_line.strip() or raw_line.startswith((" ", "\t", "#", "-")):
+            continue  # continuation / list item / comment — not a top-level scalar
+        if ":" not in raw_line:
+            continue
+        key, value = raw_line.split(":", 1)
+        key = key.strip()
+        value = value.strip()
+        if not value or value[0] in "\"'|>[{":
+            continue  # empty (block follows), quoted, block scalar, or flow — safe
+        if value[0] in "*&!%@`":
+            findings.append(("ERROR", "frontmatter-reserved-indicator",
+                             f"`{key}:` starts with `{value[0]}` — quote the value"))
+            continue
+        if ": " in value or value.endswith(":"):
+            findings.append(("ERROR", "frontmatter-unquoted-scalar",
+                             f"`{key}:` contains `: ` unquoted — quote the value (every field is dropped otherwise)"))
+        if " #" in value:
+            findings.append(("WARNING", "description-comment-truncates",
+                             f"`{key}:` contains ` #` unquoted — YAML treats the rest as a comment"))
+    try:  # belt and braces: a real parser, when one is available
+        import yaml  # type: ignore
+        try:
+            parsed = yaml.safe_load(header)
+            if not isinstance(parsed, dict):
+                findings.append(("ERROR", "frontmatter-yaml-parse", "block does not parse to a mapping"))
+        except Exception as e:  # noqa: BLE001
+            msg = str(e).splitlines()[0][:100]
+            if not any(code == "frontmatter-unquoted-scalar" for _, code, _ in findings):
+                findings.append(("ERROR", "frontmatter-yaml-parse", msg))
+    except ImportError:
+        pass
+    return findings
 
 
 def is_exempt(path, fm: dict | None = None, wiki_root=None) -> bool:

@@ -1,10 +1,12 @@
 ---
 name: wiki-update
 description: Ingest an EXTERNAL source into the wiki's research/ layer. Auto-detects from what the user gives. URL → fetch + file. YouTube URL → fetch transcript + synthesize summary + file. Local file → file. Pasted text → file. Requires a source — with nothing, it redirects to /wrap-up (for capturing our own session work). Use when the user says "update the wiki", "add this to the wiki", "save this article", "wiki this", "wiki update", "ingest this video", "add this YouTube video to the wiki". For "save what we did" / session work, use /wrap-up instead. Replaces the old /wiki-add command.
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
+
+> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
 
 Update (add) content to a topic wiki. The user shouldn't have to think about what type of source they have — figure it out from what they give you.
 
@@ -174,7 +176,7 @@ Before writing cross-references in your synthesis, look up the canonical slug fo
 
 ```bash
 python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
-  --topic <topic> --vault llm-wiki/wiki \
+  --topic <topic> \
   --slug-for --title "Karpathy's LLM Wiki Pattern" --folder long-term
 ```
 
@@ -191,7 +193,7 @@ Use that exact slug in your cross-reference markdown links. **Never guess slugs 
 ### Step 1: Fetch raw
 ```bash
 python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
-  --topic <topic> --vault llm-wiki/wiki \
+  --topic <topic> \
   --source <url> --fetch-only
 ```
 Capture the `raw_path=...` line from the output. When you pass it back in Step 6, `--raw-path` accepts either the absolute path printed or the topic-relative form the frontmatter uses (`raw/<file>.md`); a relative path resolves against the **topic root**, never the shell cwd (fixed 2026-09-02 — it used to write a footer link that climbed out of the notebook into whatever repo the agent was sitting in).
@@ -239,7 +241,6 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
   --source <synth file from step 4> \
   --source-url <original url> \
   --raw-path <raw path from step 1> \
-  --vault llm-wiki/wiki \
   --ingested-by claude-code \
   --tier <1|2|3|4|self> \
   --confidence <high|medium|low> \
@@ -336,7 +337,6 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
   --source <synth file> \
   --source-url <original url> \
   --raw-path <raw path from step 1> \
-  --vault llm-wiki/wiki \
   --ingested-by claude-code \
   --title "<title>" --tags "<tags>"
 ```
@@ -352,7 +352,6 @@ MSYS_NO_PATHCONV=1 docker exec openclaw python3 \
   {{WIKI_SCRIPTS_DIR}}/wiki-fetch-pdf.py \
   --topic <topic> \
   --source <url-or-local-pdf-path> \
-  --vault llm-wiki/wiki \
   --ingested-by claude-code
 ```
 
@@ -421,7 +420,6 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
   --source /tmp/wiki-yt-<slug>.md \
   --source-url <youtube-url> \
   --raw-path <raw_path-from-step-1> \
-  --vault llm-wiki/wiki \
   --ingested-by claude-code \
   --title "<video title>" \
   --tags "youtube,<other tags>"

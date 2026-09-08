@@ -7,8 +7,9 @@ You're reading this from inside the llm-wiki-bootstrap repo (probably because th
 The LLM-wiki framework installer. Ships:
 
 - The `/new-wiki` creator skill (installs globally so the user can scaffold projects from anywhere)
-- 14 per-project skills (`wiki-update`, `wiki-cycle`, `wrap-up`, `wiki-search`, `wiki-promote`, etc.)
-- 16 Python helper scripts (vault management, lint, indexing, Drive ingest), including `_entry_checks.py`, the shared mechanical eval gate used by both `wiki-update.py` (refuse-to-file) and `wiki-lint-mechanical.py` (backlog view)
+- The per-project skills (`wiki-update`, `wiki-cycle`, `wrap-up`, `wiki-search`, `wiki-promote`, etc.) — the list is `TRAVEL_SKILLS` in `bootstrap/scripts/_install_tooling.py`; don't restate the count here (it was wrong twice)
+- The Python helper scripts (vault management, lint, indexing, Drive ingest) — `TRAVEL_SCRIPTS` in the same file — including `_entry_checks.py`, the shared mechanical gate used by `wiki-update.py` (refuse-to-file), `wiki-lint-mechanical.py` (backlog view) and, since 2026-09-08, `_install_tooling.py` (refuse to install a skill or agent whose frontmatter does not parse)
+- The six framework-contract docs (`bootstrap/topic-template/wiki/best-practices/framework/`, `framework-contract: true`, `framework-version`) — the gold copies; `new-wiki.py` lands them at every project's `wiki/project/best-practices/framework/` at scaffold time and on `--phase docs`, replacing a drifted project copy and naming it (2026-09-08)
 - Templates for `CLAUDE.md`, `README.md`, `.gitignore` in research/development variants
 - Seed content for the per-project `llm-wiki/` folder (the how-to marker + 17 curated best-practices; the how-to pages themselves are the pack docs below, since 2026-09-08)
 - Pack usage docs (wiki-seed): one page per skill (`skills/<name>/wiki-seed/`, each carrying its full

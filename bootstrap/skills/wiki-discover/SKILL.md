@@ -1,12 +1,14 @@
 ---
 name: wiki-discover
 description: Discover new content for a topic wiki by searching trusted feeds, deduping against existing entries, and queuing candidates for human review.
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
 
-> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.
+> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback` and `/new-wiki`. This skill is documented + callable for programmatic use.
+
+> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
 
 # /wiki-discover
 
@@ -207,7 +209,7 @@ After the user reviews the checklist (human review #1), queue the approved items
 
 ```bash
 python {{WIKI_SCRIPTS_DIR}}/wiki-list-add.py \
-  --topic <topic> --vault llm-wiki/wiki \
+  --topic <topic> \
   --source "<url>" --title "<title>" --priority <1-5> --tags "<tags>" --added-by claude-code
 ```
 

@@ -1,12 +1,14 @@
 ---
 name: wiki-lint
 description: Run a health check on a topic wiki. Two modes — default is the fast mechanical pass (broken links, orphans, stale phrases, missing frontmatter, missing tiers). --full mode adds a semantic pass where the agent reads every entry, finds contradictions, missing cross-references, thin coverage, concept gaps, and tier accuracy, then writes a report. Use when the user says "lint the wiki", "wiki-lint", "wiki health check", "full wiki lint", "wiki-lint --full", "find missing connections in the wiki", "check the wiki for issues", "semantic lint".
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
 
-> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.
+> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback` and `/new-wiki`. This skill is documented + callable for programmatic use.
+
+> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
 
 Two modes. Pick the right one based on what the user asked for.
 
@@ -18,15 +20,16 @@ Pure Python script. Fast, deterministic, no LLM in the loop. Reports only — ne
 
 ```bash
 python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
-  --topic <topic> \
-  --vault llm-wiki/wiki
+  --topic <topic>
 ```
 
 Checks:
 - Broken markdown links (to `.md` files that don't exist) and live `[[wikilink]]` syntax the link checker can't see
 - Orphan pages (no inbound links from other entries)
 - Stale "pending" / "TODO" phrases
-- Missing frontmatter fields (`title`, `date`); missing/invalid `tier`, `confidence`, `ingested_by`; missing `tags`; missing lifecycle fields (`last_reviewed` / `review_after`); unquoted YAML specials in `title`
+- Missing frontmatter fields (`title`, `date`); missing/invalid `tier`, `confidence`, `ingested_by`; missing `tags`; missing lifecycle fields (`last_reviewed` / `review_after`)
+- Frontmatter **loadability** — an unquoted top-level value containing `: ` (ERROR: a YAML loader drops every field) or ` #` (WARNING: silently truncated as a comment). Checked on entries AND on the installed `~/.claude/skills/*/SKILL.md` + `~/.claude/agents/*.md`, since a skill in that state never triggers by description (2026-09-08)
+- Search-index coverage — qmd's indexed file count for this wiki vs `.md` files on disk (empty index, mismatch, or "not a collection" are all reported; a check that inspects zero items fails loudly)
 - `raw_path` integrity (present for non-self entries, resolves to a real file)
 - Icarus schema invariants (`verified` / `type` enums, `contradicted_by` / `revises` / `review_of` / `synthesis_of` references)
 - **Body checks (added 2026-09-02)** — the mechanical half of the eval rubric, via `_entry_checks.py`, the SAME code `wiki-update.py` runs as a hard pre-write gate on every new entry: `## TL;DR` present (bold `**TL;DR**` lead accepted), `## Related` with 2+ wiki links (warning for `tier: self`), 3+ tags, thin entries (under 30 lines and under 300 words) tagged `stub`, numeric claims outside a `>` blockquote. Here they are the **backlog view** over existing entries and warn only; wiki-root hub pages and `framework-contract: true` docs are exempt.
@@ -73,7 +76,7 @@ For each file, evaluate:
 | 2 | **MISSING CROSS-REFERENCES** | Does this entry mention a topic that has its own dedicated page in the wiki but doesn't link to it? List each missing link with the target page. |
 | 3 | **THIN COVERAGE** | Are there sections that feel under-supported relative to peer entries on similar topics? Is the entry's depth appropriate for its tier and importance? |
 | 4 | **CONCEPT GAPS** | Does this entry mention a project, person, framework, or paper that should be tracked in `concept-gaps-things-mentioned-not-yet-covered.md` but isn't? List the term and where it's mentioned. |
-| 5 | **TIER REVIEW** | Is the assigned `tier` value in frontmatter defensible? Flag any you'd assign differently and explain why. Tier definitions: 1=peer-reviewed/primary, 2=vendor/official docs, 3=expert/first-hand, 4=community/blog, self=our own synthesis. |
+| 5 | **TIER REVIEW** | Is the assigned `tier` value in frontmatter defensible? Flag any you'd assign differently and explain why. Judge against the tier table in `project/best-practices/framework/wiki-frontmatter-best-practices.md` (the only place the rubric is defined; not restated here). |
 | 6 | **OTHER** | Anything else — broken external links, emoji inconsistency, stale tooling references, formatting issues. |
 
 ### Step 3.5: Deep-compare drift-watch entries

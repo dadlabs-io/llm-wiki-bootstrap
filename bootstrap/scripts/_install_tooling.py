@@ -49,6 +49,7 @@ TRAVEL_SCRIPTS = [
     "wiki-promote.py",
     "wiki-reciprocate-backlinks.py",
     "wiki-rollback.py",
+    "wiki-search-rerank.py",  # truth-status bucket sort over qmd JSON (search spec surface 1); shipped 2026-09-08
     "wiki-update.py",
     "wiki-upgrade.py",
     "wiki-verify.py",
@@ -106,6 +107,28 @@ def derive_bootstrap_source(explicit=None):
         if (parent / "bootstrap" / "scripts" / "new-wiki.py").is_file():
             return parent.resolve()
     return None
+
+
+def _load_frontmatter_checker(scripts_src: Path):
+    """Import check_frontmatter_loadable() from the PACKAGE's _entry_checks.py
+    (not whatever older copy may already sit in ~/.claude/wiki-scripts). Falls
+    back to a permissive no-op with a warning if the import fails — the gate
+    must never make the install impossible."""
+    path = scripts_src / "_entry_checks.py"
+    if path.is_file():
+        spec = importlib.util.spec_from_file_location("_entry_checks_pkg", path)
+        if spec and spec.loader:
+            mod = importlib.util.module_from_spec(spec)
+            try:
+                spec.loader.exec_module(mod)
+                fn = getattr(mod, "check_frontmatter_loadable", None)
+                if fn:
+                    return fn
+            except Exception as e:  # noqa: BLE001
+                _log(f"WARN: could not import check_frontmatter_loadable() ({e}); frontmatter gate disabled")
+    else:
+        _log("WARN: _entry_checks.py missing from package; frontmatter gate disabled")
+    return lambda text: []
 
 
 def load_install_skill_fn(scripts_src: Path):
@@ -177,10 +200,34 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
             travel_copied += 1
 
     # 2) Install each skill via the install-skill primitive
+    #    Gate (2026-09-08): a SKILL.md / AGENT.md whose frontmatter does not
+    #    parse is REFUSED — Claude Code's loader drops every field of an
+    #    unparseable block, so the artifact would install with no description
+    #    and never trigger by description. Installing it silently is worse
+    #    than not installing it; the previous copy stays in place.
+    check_loadable = _load_frontmatter_checker(scripts_src)
+    frontmatter_failed = []  # (artifact, [detail, ...])
+
+    def _frontmatter_ok(label: str, md_path: Path) -> bool:
+        try:
+            text = md_path.read_text(encoding="utf-8")
+        except OSError as e:
+            frontmatter_failed.append((label, [f"unreadable: {e}"]))
+            return False
+        errors = [f"{code}: {detail}" for sev, code, detail in check_loadable(text) if sev == "ERROR"]
+        if errors:
+            frontmatter_failed.append((label, errors))
+            _log(f"ERROR: {label} — frontmatter does not parse; NOT installed. " + "; ".join(errors))
+            return False
+        return True
+
     install_fn = load_install_skill_fn(scripts_src)
     skills_installed = 0
     skills_failed = []
     for skill in TRAVEL_SKILLS:
+        if not _frontmatter_ok(f"skill {skill}", skills_src / skill / "SKILL.md"):
+            skills_failed.append(skill)
+            continue
         rc = install_fn(skill=skill, tool="claude-code", skills_src=skills_src,
                         skills_dest=skills_dest, scripts_dir=scripts_dest, dry_run=dry_run)
         if rc == 0:
@@ -198,6 +245,9 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
         src_dir = agents_src / agent
         agent_md = src_dir / "AGENT.md"
         if not agent_md.is_file():
+            agents_failed.append(agent)
+            continue
+        if not _frontmatter_ok(f"agent {agent}", agent_md):
             agents_failed.append(agent)
             continue
         sidecars = sorted(p for p in src_dir.glob(f"{agent}-*.json") if p.is_file())
@@ -221,6 +271,7 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
         "scripts_missing": scripts_missing,
         "agents_installed": agents_installed,
         "agents_failed": agents_failed,
+        "frontmatter_failed": frontmatter_failed,
         "scripts_dest": str(scripts_dest),
         "skills_dest": str(skills_dest),
         "agents_dest": str(agents_dest),
@@ -236,7 +287,12 @@ def print_summary(summary: dict):
     if summary.get("skills_failed"):
         _log(f"WARN: skills that failed to install: {summary['skills_failed']}")
     if summary.get("agents_failed"):
-        _log(f"WARN: agents that failed to install (missing AGENT.md): {summary['agents_failed']}")
+        _log(f"WARN: agents that failed to install (missing AGENT.md or unparseable frontmatter): {summary['agents_failed']}")
+    if summary.get("frontmatter_failed"):
+        _log("ERROR: refused to install artifacts whose frontmatter does not parse "
+             "(the loader would drop every field — quote any value containing `: `):")
+        for label, errors in summary["frontmatter_failed"]:
+            _log(f"  - {label}: " + "; ".join(errors))
     print()
     print("=" * 60)
     print("Global tooling install summary")

@@ -1,12 +1,14 @@
 ---
 name: wiki-init
 description: Initialize the per-project wiki — scaffolds the folder structure and templated README. Use when the user says "wiki init", "create a new wiki", "init wiki". In v1 install model, each project has ONE wiki at llm-wiki/wiki/; this skill is run automatically by /new-wiki but can also be invoked directly.
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
 
 > **⚙️ Internal skill.** Normally invoked by `/new-wiki` during per-project scaffold. Manual invocation is only useful if you want to add or rebuild a wiki layer in an existing project, or if you're (v2) adding a second wiki topic to a project.
+
+> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
 
 Create the per-project wiki structure at `llm-wiki/wiki/<topic>/` and write its scaffold files.
 
@@ -23,8 +25,7 @@ Create the per-project wiki structure at `llm-wiki/wiki/<topic>/` and write its 
 ```bash
 python {{WIKI_SCRIPTS_DIR}}/wiki-init.py \
   --topic <project-slug> \
-  --description "<scope>" \
-  --vault llm-wiki/wiki
+  --description "<scope>"
 ```
 
 `new-wiki.py` Phase B calls this automatically with the right args. You usually don't run it by hand.
@@ -50,8 +51,7 @@ If you want to add a wiki to an existing project that doesn't have one, or rebui
    ```bash
    python {{WIKI_SCRIPTS_DIR}}/wiki-init.py \
      --topic <slug> \
-     --description "<scope>" \
-     --vault llm-wiki/wiki
+     --description "<scope>"
    ```
 
 ## Topic naming guidance

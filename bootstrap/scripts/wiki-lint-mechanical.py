@@ -37,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions  # noqa: E402
 # Body-level rubric checks — shared with wiki-update.py's pre-write gate so the
 # lint backlog view and the gate enforce ONE rule set (_entry_checks.py, 2026-09-02).
-from _entry_checks import check_entry_body, is_exempt  # noqa: E402
+from _entry_checks import check_entry_body, is_exempt, check_frontmatter_loadable  # noqa: E402
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -91,6 +91,65 @@ def collect_md_files(wiki_root):
         if "_inbox" in rel.parts or _in_sessions(rel):
             continue  # _inbox = scratch/reports; sessions/ = non-curated working/episodic memory
         yield path
+
+
+def scan_installed_frontmatter():
+    """Loadability check over the skill/agent files Claude Code actually loads.
+    Returns ([(display_path, code, detail)], files_scanned)."""
+    issues, scanned = [], 0
+    home = Path.home() / ".claude"
+    candidates = sorted((home / "skills").glob("*/SKILL.md")) + sorted((home / "agents").glob("*.md"))
+    for p in candidates:
+        try:
+            text = p.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        scanned += 1
+        rel = p.relative_to(home).as_posix()
+        for sev, code, detail in check_frontmatter_loadable(text):
+            issues.append((f"~/.claude/{rel}", f"{sev} {code}", detail))
+    return issues, scanned
+
+
+def qmd_index_coverage(wiki_root):
+    """Compare qmd's indexed file count for this wiki against `.md` files on disk.
+    Returns {"state": ok|missing|not-a-collection|error, ...}."""
+    import shutil
+    import subprocess
+    qmd = shutil.which("qmd")
+    if not qmd:
+        return {"state": "missing"}
+    # Launchers, in order. On Windows `which` returns npm's qmd.cmd, and qmd's
+    # .cmd shim execs /bin/sh — which cmd.exe cannot find — so fall back to the
+    # extension-less sh script beside it, run through bash/sh (Git Bash).
+    launchers = [[qmd, "ls"]]
+    stem = re.sub(r"\.(cmd|bat|ps1|exe)$", "", qmd, flags=re.IGNORECASE)
+    sh = shutil.which("bash") or shutil.which("sh")
+    if sh and stem != qmd and Path(stem).is_file():
+        launchers.append([sh, stem, "ls"])
+    proc, last_err = None, ""
+    for cmd in launchers:
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30,
+                                  encoding="utf-8", errors="replace")
+        except (OSError, subprocess.TimeoutExpired) as e:
+            last_err = str(e)
+            continue
+        if proc.returncode == 0:
+            break
+        last_err = (proc.stderr or proc.stdout).strip()[:200]
+    if proc is None or proc.returncode != 0:
+        return {"state": "error", "detail": last_err}
+    want = Path(wiki_root).resolve().as_posix().rstrip("/").lower()
+    for line in proc.stdout.splitlines():
+        m = re.search(r"qmd://(.+?)/?\s+\((\d+) files\)", line)
+        if not m:
+            continue
+        have = m.group(1).replace("\\", "/").rstrip("/").lower()
+        if have == want:
+            on_disk = sum(1 for _ in Path(wiki_root).rglob("*.md"))
+            return {"state": "ok", "indexed": int(m.group(2)), "on_disk": on_disk}
+    return {"state": "not-a-collection"}
 
 
 def extract_links(content):
@@ -281,14 +340,13 @@ def lint(vault_root, topic, strict=False):
             if not any(c.exists() for c in candidates):
                 phantom_raw_path.append((f, raw_path_value))
 
-        # Check for unquoted YAML special characters in frontmatter values
-        # Colons, apostrophes, and other chars break YAML parsing if not quoted
-        YAML_DANGER_CHARS = [":", "'", '"', "{", "}", "[", "]", "&", "*", "?", "|", ">", "!", "%", "@", "`"]
-        for fm_key in ("title",):  # title is the most common offender
-            raw_value = fm.get(fm_key, "")
-            if raw_value and not (raw_value.startswith('"') and raw_value.endswith('"')):
-                if any(ch in raw_value for ch in YAML_DANGER_CHARS):
-                    unquoted_yaml.append((f, fm_key, raw_value))
+        # Frontmatter LOADABILITY — does the YAML block parse at all? Checked on
+        # the RAW text via the shared checker (2026-09-08). The previous check
+        # here inspected the PARSED title, after parse_frontmatter() had already
+        # stripped the quotes, so a correctly quoted `title: "A: B"` was flagged
+        # and an unquoted `description: x: y` in a skill never was.
+        for sev, code, detail in check_frontmatter_loadable(content):
+            unquoted_yaml.append((f, f"{sev} {code}", detail))
 
         # Check icarus schema fields (optional, but invariants apply when present)
         verified_value = fm.get("verified", "").strip()
@@ -508,17 +566,59 @@ def lint(vault_root, topic, strict=False):
             out.append("")
     out.append("")
 
-    # Section: unquoted YAML values
-    out.append("## ⚠️ Unquoted YAML Values")
+    installed_fm_issues, installed_fm_scanned = scan_installed_frontmatter()
+    qmd_status = qmd_index_coverage(wiki_root)
+
+    # Section: frontmatter loadability (formerly "unquoted YAML values")
+    out.append("## ⚠️ Frontmatter Loadability (unquoted YAML)")
     out.append("")
     if not unquoted_yaml:
-        out.append("_All frontmatter values with special characters are properly quoted._")
+        out.append("_Every entry's frontmatter block parses as YAML._")
     else:
-        out.append(f"**{len(unquoted_yaml)} file(s)** have frontmatter values containing YAML special characters (`:`, `'`, etc.) that aren't quoted. Wrap them in double quotes to prevent Obsidian/YAML parsing issues.")
+        out.append(f"**{len(unquoted_yaml)} finding(s)** — an unparseable frontmatter block makes a YAML loader drop EVERY field, not just the bad one. Quote any value containing `: ` or ` #` (double quotes, escape inner `\"`).")
         out.append("")
-        for f, field, value in unquoted_yaml:
+        for f, code, detail in unquoted_yaml:
             rel = f.relative_to(wiki_root)
-            out.append(f"- `{rel.as_posix()}` — `{field}:` contains special chars: `{value[:60]}`")
+            out.append(f"- `{rel.as_posix()}` — {code}: {detail}")
+    out.append("")
+
+    # Section: installed skills / agents — same loadability check over the
+    # copies Claude Code actually loads (~/.claude/skills/*/SKILL.md and
+    # ~/.claude/agents/*.md). Not wiki entries, but the 2026-09-06 finding was
+    # exactly here: three shipped artifacts silently listed by H1 for months.
+    out.append("## 🧩 Installed Skill / Agent Frontmatter Loadability")
+    out.append("")
+    if not installed_fm_issues and installed_fm_scanned:
+        out.append(f"_All {installed_fm_scanned} installed SKILL.md / agent files parse._")
+    elif not installed_fm_scanned:
+        out.append("_No installed skills/agents found under ~/.claude — skipped._")
+    else:
+        out.append(f"**{len(installed_fm_issues)} finding(s)** across {installed_fm_scanned} installed files. A skill in this state only runs when typed by name; it never triggers by description. Fix the source in the bootstrap package and re-run the installer (`install-wiki.ps1 -RefreshOnly`).")
+        out.append("")
+        for p, code, detail in installed_fm_issues:
+            out.append(f"- `{p}` — {code}: {detail}")
+    out.append("")
+
+    # Section: search index coverage — indexed file count vs files on disk.
+    # Taskesen (agentic-design research/orchestration, 2026-09-06): encoding or
+    # pattern problems make an indexer skip whole documents SILENTLY; the only
+    # cheap detector is a count. A check that finds zero items must fail loudly.
+    out.append("## 🔎 Search Index Coverage (qmd)")
+    out.append("")
+    if qmd_status["state"] == "missing":
+        out.append("_`qmd` not on PATH — skipped. `/wiki-search` will not work on this machine._")
+    elif qmd_status["state"] == "not-a-collection":
+        out.append(f"_This wiki is NOT a qmd collection — `/wiki-search` returns nothing here. Register it: `qmd collection add \"{wiki_root}\"` (then `qmd embed`)._")
+    elif qmd_status["state"] == "error":
+        out.append(f"_Could not query qmd: {qmd_status['detail']}_")
+    else:
+        indexed, on_disk = qmd_status["indexed"], qmd_status["on_disk"]
+        if indexed == 0:
+            out.append(f"**Index is EMPTY** — 0 files indexed vs {on_disk} on disk. Run `qmd update && qmd embed`.")
+        elif indexed == on_disk:
+            out.append(f"_{indexed} files indexed = {on_disk} `.md` files on disk._")
+        else:
+            out.append(f"**Mismatch**: {indexed} files indexed vs {on_disk} `.md` files on disk (Δ {on_disk - indexed:+d}). Usually staleness (`qmd update`), but a persistent gap after an update means files are being skipped — check encodings and the collection pattern.")
     out.append("")
 
     # Section: raw_path integrity

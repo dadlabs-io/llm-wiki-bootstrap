@@ -1,8 +1,8 @@
 ---
 name: wiki-rollback
-description: Roll back a wiki entry to its verified ancestor. Walks the `revises:` chain backward, marks intermediates `verified: rolled_back` in their sidecars (no frontmatter mutation, no content deletion), then writes a new `type: rollback` entry documenting what was rolled back and why. Use when the user says "rollback the X entry", "wiki-rollback", "this entry is wrong, restore the previous version", "/wiki-rollback".
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+description: "Roll back a wiki entry to its verified ancestor. Walks the `revises:` chain backward, marks intermediates `verified: rolled_back` in their sidecars (no frontmatter mutation, no content deletion), then writes a new `type: rollback` entry documenting what was rolled back and why. Use when the user says \"rollback the X entry\", \"wiki-rollback\", \"this entry is wrong, restore the previous version\", \"/wiki-rollback\"."
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -10,7 +10,7 @@ reviewed_for_model: claude-fable-5-1
 
 # /wiki-rollback
 
-First-class rollback primitive per [icarus-integration-plan.md §4](../topic-template/wiki/best-practices/framework/icarus-integration-plan.md). Restores the verified state of an entry by walking its `revises:` chain backward, marking intermediates as rolled_back, and writing a new audit entry.
+First-class rollback primitive per [icarus-integration-plan.md §4](agentic-design :: wiki/project/best-practices/framework/icarus-integration-plan.md — not shipped with the framework). Restores the verified state of an entry by walking its `revises:` chain backward, marking intermediates as rolled_back, and writing a new audit entry.
 
 ## Usage
 
@@ -120,7 +120,7 @@ New entry: <path-to-rollback-entry>
 
 ## Related
 
-- [icarus-integration-plan.md §4](../topic-template/wiki/best-practices/framework/icarus-integration-plan.md)
-- [memory-signals-sidecar-vs-frontmatter-pattern.md](../topic-template/wiki/best-practices/framework/memory-signals-sidecar-vs-frontmatter-pattern.md) — sidecar truth-status block this updates
+- [icarus-integration-plan.md §4](agentic-design :: wiki/project/best-practices/framework/icarus-integration-plan.md — not shipped with the framework)
+- [memory-signals-sidecar-vs-frontmatter-pattern.md](`project/best-practices/framework/memory-signals-sidecar-vs-frontmatter-pattern.md` in every project wiki) — sidecar truth-status block this updates
 - [wiki-verify SKILL.md](../wiki-verify/SKILL.md) — the verify side; needed to create verified ancestors before rollback works
-- [wiki-search-bucket-rerank-spec.md](../topic-template/wiki/best-practices/framework/wiki-search-bucket-rerank-spec.md) — `--include-rolled-back` audit flag on the search side
+- [wiki-search-bucket-rerank-spec.md](`project/best-practices/framework/wiki-search-bucket-rerank-spec.md` in every project wiki) — `--include-rolled-back` audit flag on the search side

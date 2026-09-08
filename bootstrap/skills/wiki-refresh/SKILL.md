@@ -1,12 +1,12 @@
 ---
 name: wiki-refresh
 description: Scan wiki entries for stale content based on review_after dates, confidence decay, and source freshness. Flags entries that need re-checking, re-fetching, or updating. Use when the user says "refresh the wiki", "check for stale entries", "wiki-refresh", "what needs updating", "decay scan", "stale check".
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
 
-> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`. This skill is documented + callable for programmatic use.
+> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback` and `/new-wiki`. This skill is documented + callable for programmatic use.
 
 # /wiki-refresh
 
@@ -151,15 +151,7 @@ After showing the report:
 - "Want me to re-fetch any of the source URLs and check for changes?"
 - "Want me to search for corroborating sources for the low-confidence entries?"
 
-If the user approves batch updates, update `last_reviewed: <today>` and recalculate `review_after` based on tier:
-
-| Tier | Default review interval |
-|---|---|
-| 1 (paper) | 6 months |
-| 2 (vendor) | 3 months |
-| 3 (expert) | 3 months |
-| 4 (community) | 2 months |
-| self | 3 months |
+If the user approves batch updates, update `last_reviewed: <today>` and recalculate `review_after` using the **review cadence table in the frontmatter spec** (`project/best-practices/framework/wiki-frontmatter-best-practices.md`, "review cadence") — the only place the offsets are defined. Do not restate them here: until 2026-09-08 this skill carried its own table (6 / 3 / 3 / 2 / 3 months) that disagreed with the spec (12 / 6 / 6 / 3 / 3 months) on every row, and an agent following this file computed the wrong dates.
 
 ### Step 6 — Quick-refresh mode (for batch confirmation)
 

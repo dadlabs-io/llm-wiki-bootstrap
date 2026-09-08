@@ -6,15 +6,15 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 1
-last_reviewed: 2026-04-24
-review_after: 2026-07-24
+framework-version: 2
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 tags: [best-practice, architecture, orchestrator, wiki-cycle, schema, contract]
 ---
 
 # Cycle Step Return Format
 
-The contract between `/wiki-cycle` (orchestrator) and every step-skill it invokes (`/wiki-discover`, `/wiki-update`, `/wiki-lint`, `/wiki-refresh`, `/wiki-claims`). Any new step-skill joining the pipeline adheres to this format.
+The contract between `/wiki-cycle` (orchestrator) and every step-skill it invokes — `/wiki-discover`, `/wiki-update`, `/wiki-lint`, `/wiki-refresh`, `/wiki-claims`, plus **drive-fetch** (Step 1.0), the **three integration scripts** (Step 3.5), **promote** (Step 5.5) and **synthesis** (Step 6.5). Any new step-skill joining the pipeline adheres to this format.
 
 ## Why this contract exists
 
@@ -39,18 +39,30 @@ Each cycle run lives in a dated, iteration-numbered subfolder under `_inbox/repo
 _inbox/reports/
 └── 2026-04-24/
     └── 2026-04-24-01/
-        ├── discover.json
+        ├── scratchpad.md                          ← Step 0; rewritten after EVERY step, enables --resume
+        ├── drive-fetch.json                       ← Step 1.0
+        ├── drive-fetch.md
+        ├── discover.json                          ← Step 1
         ├── discover.md
-        ├── update.json
+        ├── update.json                            ← Step 2
         ├── update.md
-        ├── lint-mechanical.json
+        ├── lint-mechanical.json                   ← Step 3
         ├── lint-mechanical.md
-        ├── lint-semantic.json
+        ├── reciprocate-backlinks.json             ← Step 3.5 (integration scripts)
+        ├── reciprocate-backlinks.md
+        ├── index-per-folder.json
+        ├── index-per-folder.md
+        ├── map-compile.json
+        ├── map-compile.md
+        ├── lint-semantic.json                     ← Step 4
         ├── lint-semantic.md
-        ├── refresh.json
-        ├── refresh.md
-        ├── claims.json
+        ├── promote.json                           ← Step 5.5
+        ├── promote.md
+        ├── claims.json                            ← Step 6
         ├── claims.md
+        ├── synthesis-<topic>.md                   ← Step 6.5 (one or more)
+        ├── refresh.json                           ← Step 7
+        ├── refresh.md
         ├── 2026-04-24-01-run-cycle-report.md      ← orchestrator-assembled final
         └── 2026-04-24-01-run-cycle-report.json    ← aggregated JSON (union of step JSONs)
 ```
@@ -103,6 +115,14 @@ The iteration number (`01`, `02`, ...) increments for same-day re-runs. The orch
 - `deferred[]` includes fetch failures (reason: `"SOURCE_NOT_AVAILABLE"`, `"404"`, `"timeout"`)
 - `summary` keys: `feeds_searched`, `candidates_raw`, `candidates_after_dedup`, `queries_run`
 
+### drive-fetch (Step 1.0)
+
+- Writes `drive-fetch.json` + `drive-fetch.md`
+- `queued[]` = URLs pulled from `__FOR CLAUDE/<topic>/` and written into `_inbox/pending/`, after short-URL resolution and dedup
+- `skipped[]` = dedup hits against the existing wiki or the pending queue
+- `deferred[]` = items that couldn't be resolved (auth failure, unresolvable shortener)
+- `summary` keys: `files_seen`, `urls_resolved`, `urls_queued`, `urls_deduped`
+
 ### `/wiki-update`
 
 - `queued[].slug` is the new entry slug; `url` also included for trace; `reason` is a 1-line summary of what was ingested
@@ -115,17 +135,45 @@ The iteration number (`01`, `02`, ...) increments for same-day re-runs. The orch
 - `queued[]` is empty (mechanical lint doesn't produce items)
 - `skipped[]` is empty
 - `deferred[]` is empty
-- `summary` keys: `files_scanned`, `broken_links`, `orphans`, `stale_pending`, `missing_frontmatter`, `missing_tier`, `invalid_tier`, `missing_confidence`, `invalid_confidence`, `unquoted_yaml`
+- `summary` keys: `files_scanned`, `broken_links`, `orphans`, `stale_pending`, `missing_frontmatter`, `missing_tier`, `invalid_tier`, `missing_confidence`, `invalid_confidence`, `unquoted_yaml` (since 2026-09-08 this counter is the frontmatter-loadability findings — unquoted `: ` / ` #` in a top-level value — over entries; the installed-skill scan and the qmd index-coverage check are report sections, not counters)
 - The detailed findings live in sibling arrays: `broken_links: [{file, target, link_text}]`, `orphans: [file]`, etc.
 - `status: "completed"` with `summary.broken_links == 0 && summary.orphans <= 1` is a clean run
 
+### Integration scripts (Step 3.5) — `reciprocate-backlinks`, `index-per-folder`, `map-compile`
+
+All three are deterministic Python and **all three emit cycle-contract JSON when given `--cycle-id` + `--run-folder`**, each writing its own `<script-name>.json` + `.md` pair. They are steps in the contract, not side-effects.
+
+- `queued[]` / `skipped[]` / `deferred[]` are empty — these scripts mutate files rather than producing items
+- `reciprocate-backlinks` `summary` keys: `files_scanned`, `backlinks_added`, `entries_touched`
+- `index-per-folder` `summary` keys: `folders_indexed`, `entries_listed`
+- `map-compile` `summary` keys: `entries_total`, `folders`, `map_tokens`
+- ⚠️ Because these run unattended and rewrite entry bodies, a malfunction is silent — see failure mode FM#11 in the research-agent failure-modes pre-mortem *(agentic-design :: wiki/project/architecture/research-agent-failure-modes-pre-mortem.md)*. Treat a large unexplained `backlinks_added` as a signal, not a success.
+
 ### `/wiki-lint --full` (semantic)
 
-- Four parallel agents run (active / long-term / tooling / orch+impl+bp+root). Orchestrator merges their outputs.
+- N parallel agents run (4 is the proven pattern), partitioned over `research/*` + `project/*` + wiki-root files, balanced by file count for the wiki's current shape — the partition is chosen per run, not a frozen folder list (reworded 2026-08-13 to match `wiki-cycle/SKILL.md` Step 4; the frozen four-way list previously here disagreed with both canon and actual dispatch). Orchestrator merges their outputs.
 - `queued[]` is empty
 - Findings live in: `contradictions[]`, `missing_cross_refs[]`, `thin_coverage[]`, `concept_gaps[]`, `tier_review[]`, `other[]`
 - Each finding: `{ file, line, severity: "high|med|low", description, recommended_fix }`
 - `summary` keys: counts per category, per folder
+
+### `/wiki-promote` (Step 5.5)
+
+Writes `promote.json` + `promote.md`. On a `--full` run this step is **required before Steps 6 and 6.5** — those steps operate on "new `research/` entries", but ingest stages to `_inbox/proposed/`, so running them first produces cross-links to paths that don't exist yet.
+
+- `queued[]` = entries moved from `_inbox/proposed/` → `wiki/<folder>/`, each with `slug` and destination folder
+- `skipped[]` = staged entries deliberately held back
+- `deferred[]` = entries that failed to promote (destination conflict, malformed frontmatter)
+- `summary` keys: `staged_total`, `promoted`, `held`, `backlinks_added`
+- After promoting, the orchestrator re-runs Step 3.5's integration scripts, since promotion adds links
+
+### Synthesis (Step 6.5)
+
+Writes `synthesis-<topic>.md` (one or more; report-only, no JSON mutation of the wiki). Reviews the cycle's new `research/` entries against the canonical `project/best-practices/*` pages and proposes confirm / dated watch-note / doctrine-change diffs. A human gate approves what lands in canon.
+
+- `queued[]` = proposed doctrine changes awaiting the human gate
+- `skipped[]` = entries reviewed with no best-practices implication
+- `summary` keys: `entries_reviewed`, `confirmations`, `watch_notes`, `doctrine_changes_proposed`
 
 ### `/wiki-refresh`
 
@@ -189,18 +237,19 @@ The markdown sidecar always has three sections mirroring the JSON:
 If the human reviews the morning report and disagrees with a decision (e.g., a Skipped URL should be Queued):
 
 1. Edit the markdown — move the row from one section to another, update the Reason
-2. Run `/wiki-cycle --reconcile <cycle_id>` — re-parses the markdown, regenerates the JSON, replays downstream steps (ingest fires on items now in Queued)
-3. Alternatively: edit the JSON directly and regenerate the markdown with `/wiki-report --from-json <cycle_id>`
+2. Edit the JSON directly to match, then regenerate the markdown with `/wiki-report --from-json <cycle_id>`
+
+Because the JSON is authoritative, editing only the markdown has no effect on downstream steps — both must be updated. (A `--reconcile` mode that re-parses the markdown was described here earlier but never built; removed 2026-08-02.)
 
 ## Invariants
 
 1. **Every step emits both JSON and MD** — never just one
-2. **Timestamps are UTC ISO-8601** — no ambiguity
+2. **Timestamps are tz-aware ISO-8601** — local time with an explicit UTC offset, as `now_stamp()` in `_wiki_config.py` produces (e.g. `2026-09-08T16:32:07-04:00`). Never a naive timestamp; the zone must always be labelled. (Corrected 2026-09-08: this line said "UTC" while `cycle_id` and every date label are local-day values — a night-time run stamped in UTC lands on tomorrow's day. Date *labels* — `cycle_id`, report folders, frontmatter dates — are the local calendar day via `today_label()`.)
 3. **`cycle_id` is assigned by the orchestrator**, not by individual skills — ensures uniqueness even on same-day re-runs
 4. **Errors surface at the step level** — any non-empty `errors[]` flags the cycle as degraded but doesn't halt downstream steps that don't depend on this one
 5. **The aggregated cycle report is build from the per-step JSONs** — never scrape markdown sidecars for the final report
 
 ## Related
 
-- `/wiki-cycle` SKILL.md (in `.claude/skills/wiki-cycle/SKILL.md` at the repo root) — the orchestrator implementing this contract
+- `/wiki-cycle` SKILL.md — the orchestrator implementing this contract. Skills are installed **globally** at `~/.claude/skills/wiki-cycle/SKILL.md` (a bundled install puts a copy at `<project>/.claude/skills/`), not at the repo root.
 - [Wiki frontmatter best practices](./wiki-frontmatter-best-practices.md) — companion contract (for entry-level metadata)

@@ -55,9 +55,11 @@ SKILLS_DIR = WORKFLOW / "skills"
 # Files in topic-template that ARE framework contracts (always overwrite on update)
 FRAMEWORK_PATHS_RELATIVE_TO_TOPIC = [
     "wiki/best-practices/framework/cycle-step-return-format.md",
+    "wiki/best-practices/framework/memory-signals-sidecar-vs-frontmatter-pattern.md",
     "wiki/best-practices/framework/tiered-context-loading.md",
     "wiki/best-practices/framework/wiki-authoring-best-practices.md",
     "wiki/best-practices/framework/wiki-frontmatter-best-practices.md",
+    "wiki/best-practices/framework/wiki-search-bucket-rerank-spec.md",
     "wiki/llm-wiki-user-guide.md",
 ]
 

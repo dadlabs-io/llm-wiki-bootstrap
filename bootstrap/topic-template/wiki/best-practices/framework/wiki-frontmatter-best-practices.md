@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 3
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+framework-version: 4
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
 
@@ -99,10 +99,10 @@ From [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practi
 
 | Tier | Value | Source type |
 |---|---|---|
-| 1 | `1` | Primary research, peer-reviewed papers, official docs from authoritative sources |
-| 2 | `2` | Practitioner primary (direct quotes, talks by creators, first-party engineering writeups) |
-| 3 | `3` | Well-sourced commentary (established blogs, secondary analysis with citations) |
-| 4 | `4` | Opinion pieces, marketing content, unsourced claims — **never auto-ingest**, human review only |
+| 1 | `1` | Peer-reviewed / primary — papers, official spec docs, source code |
+| 2 | `2` | Established documentation — vendor/framework docs, official blog posts |
+| 3 | `3` | Reputable expert / first-hand — founder posts, expert blogs, conf talks, journalism (KDnuggets, VentureBeat, Karpathy gists, Simon Willison, Hamel Husain, Lance Martin) |
+| 4 | `4` | Community / blog / forum — Medium, Reddit, anonymous gists, an individual's repository — **never auto-ingest**, human review only |
 | self | `self` | Self-authored synthesis, plans, specs, session notes |
 
 When unsure between two adjacent tiers, prefer the LOWER tier (more conservative). Tiers 1–3 are auto-ingestible; tier 4 always queues for human approval.
@@ -119,10 +119,10 @@ When unsure between two adjacent tiers, prefer the LOWER tier (more conservative
 
 | Content type | Default offset |
 |---|---|
-| Peer-reviewed paper (tier 1) | +12 months |
-| Practitioner primary (tier 2) | +6 months |
-| Blog / commentary (tier 3) | +6 months |
-| Marketing / opinion (tier 4) | +3 months |
+| Peer-reviewed / primary (tier 1) | +12 months |
+| Established documentation (tier 2) | +6 months |
+| Reputable expert / first-hand (tier 3) | +6 months |
+| Community / blog / forum (tier 4) | +3 months |
 | Self-authored best-practices / spec | +3 months |
 | Self-authored session note / plan | +1 month |
 
@@ -214,6 +214,13 @@ tags: [implementation, agentmemory, session-memory, mcp, self-authored]
 
 Mechanical checks `/wiki-lint` performs (or should perform):
 
+**Loadability (2026-09-08, `_entry_checks.check_frontmatter_loadable()`)** — checked on the RAW block, before any field check, because an unparseable block makes a YAML loader drop *every* field:
+- a top-level plain (unquoted) value containing `: ` or ending in `:` — error `frontmatter-unquoted-scalar`
+- a top-level plain value starting with a YAML indicator (`* & ! % @` or a backtick) — error `frontmatter-reserved-indicator`
+- a top-level plain value containing ` #` — warning `description-comment-truncates` (YAML starts a comment; the value is silently cut)
+- anything else PyYAML rejects, when PyYAML is installed — error `frontmatter-yaml-parse`
+The same check runs over the installed `~/.claude/skills/*/SKILL.md` and `~/.claude/agents/*.md`, and the installer refuses to install a skill or agent that fails it (the loader would list the skill by its H1 and never trigger it by description — four shipped skills were in that state until this date). Fix: double-quote the value, escape inner `"`.
+
 **Core schema checks:**
 - All required fields present
 - `date`, `last_reviewed`, `review_after` are valid ISO dates
@@ -244,10 +251,16 @@ Exempt: wiki-root hub pages, `_`-prefixed system files, `framework-contract: tru
 
 Entries failing any check get listed in the next lint report for manual fix.
 
-## Skill definitions carry lifecycle fields too (2026-09-02)
+## Skill and agent definitions carry lifecycle fields too (2026-09-02; agents 2026-09-08)
 
-The `SKILL.md` files that govern every ingest are governance artifacts and decay like entries do. Each shipped skill's frontmatter carries `last_reviewed`, `review_after` (3-month cadence, same as self-authored specs), and `reviewed_for_model` (the model id the skill's procedure was last checked against — harness behaviour is model-relative). `/wiki-refresh` scans them alongside entries and lists overdue skills in its report. Claude Code ignores the extra keys; the Cursor rule converter reads only `description`.
+The `SKILL.md` files that govern every ingest, and the `AGENT.md` of every shipped agent, are governance artifacts and decay like entries do. Each carries `last_reviewed`, `review_after` (3-month cadence, same as self-authored specs), and `reviewed_for_model` (the model id the procedure was last checked against — harness behaviour is model-relative). `/wiki-refresh` scans them alongside entries and lists overdue ones in its report. Claude Code ignores the extra keys; the Cursor rule converter reads only `description`. Their frontmatter is also subject to the loadability check above — a governance artifact that does not parse governs nothing. The six framework-contract docs carry `framework-version` in addition; a project copy whose version is behind the template's is stale, and `new-wiki.py --phase docs` replaces it.
 
 ## Related
 
-- [wiki-authoring-best-practices.md](./wiki-authoring-best-practices.md) — the 11 principles this spec enforces (especially principles 9 and 11)
+The six framework-contract docs, of which this is one. They are installed together at `project/best-practices/framework/` in every project wiki by `new-wiki.py` and refreshed by `--phase docs`; this list is the hub so none of them is an orphan in a fresh wiki.
+
+- [wiki-authoring-best-practices.md](./wiki-authoring-best-practices.md) — the operational principles this spec enforces (especially principles 9 and 11)
+- [cycle-step-return-format.md](./cycle-step-return-format.md) — the orchestrator ↔ step-skill JSON contract
+- [tiered-context-loading.md](./tiered-context-loading.md) — how agents load the wiki (map → folder index → entry) and say where they stopped
+- [memory-signals-sidecar-vs-frontmatter-pattern.md](./memory-signals-sidecar-vs-frontmatter-pattern.md) — why access signals and truth-status events live in a sidecar, not here
+- [wiki-search-bucket-rerank-spec.md](./wiki-search-bucket-rerank-spec.md) — how the optional `verified:` field sorts search results

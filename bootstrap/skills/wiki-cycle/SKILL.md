@@ -1,8 +1,8 @@
 ---
 name: wiki-cycle
 description: Run the full research cycle — discover, ingest, lint, fix, report. Maintains a scratchpad so the run can be resumed if interrupted. This is the "update the wiki" command. Use when the user says "update the database", "run the cycle", "wiki-cycle", "update the wiki", "full wiki update".
-last_reviewed: 2026-09-02
-review_after: 2026-12-02
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -33,7 +33,7 @@ Run the full research cycle end-to-end. Discovers new sources, ingests approved 
 /wiki-cycle --since <hours>       # discovery window (default: 24h)
 ```
 
-**This is the universal interface.** The other `wiki-*` skills (discover, lint, claims, refresh, report, list, promote) are INTERNAL — they exist as scripts + SKILL.md for programmatic invocation, but users normally go through `/wiki-cycle` with the right flag. Public-facing user commands are just four: `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wiki-init`.
+**This is the universal interface.** The other `wiki-*` skills (discover, lint, claims, refresh, report, list, promote) are INTERNAL — they exist as scripts + SKILL.md for programmatic invocation, but users normally go through `/wiki-cycle` with the right flag. Public-facing user commands: `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback`, `/new-wiki`.
 
 **Default behavior (`--quick`)**: Discover → Confirm → Ingest → Mechanical lint → Reciprocate backlinks → Per-folder INDEX regen → _MAP.md regen → Morning report. ~5-10 min for ≤20 items. Entries go to `_inbox/proposed/` (staged) by default. User reviews in the morning via `/wiki-promote`. Pass `--direct` to bypass staging.
 
@@ -43,21 +43,20 @@ Run the full research cycle end-to-end. Discovers new sources, ingests approved 
 
 Resolution is **per-project** — the cycle operates on whatever `<cwd>/.claude/wiki-config.json` declares. There is no global fallback; run the tooling from inside the project that owns the wiki. The shared resolver is `scripts/_wiki_config.py` (single source of truth — do not re-add per-script copies).
 
-Config schema (v2):
+Config shape (registry model, current since 2026-08; rewritten here 2026-09-08 — the `vault_root` / `topics` schema this section used to show is the legacy in-project form):
 
 ```json
-{
-  "vault_root":    "<abs path to the folder that CONTAINS the topic folders>",
-  "default_topic": "agentic-design",
-  "topics":        ["agentic-design", "cottage-build"],
-  "wiki_topic":    "agentic-design"
-}
+// <project>/.claude/wiki-config.json — a thin pointer
+{ "notebook": "agentic-design", "registry": "C:/github.com/project-notebooks/linked-notebooks.json" }
+
+// linked-notebooks.json — the registry; one entry per notebook
+{ "notebooks": { "agentic-design": { "root": "notebooks/agentic-design", "confirm_before_create": true, "confirm_before_promote": true } } }
 ```
 
-- A topic's root is always `<vault_root>/<topic>`. To move a wiki out of a repo (e.g. when it grows large enough to slow git), point `vault_root` at any absolute folder and relocate the topic folders there — names stay the same.
-- `default_topic` is used when `<topic>` is omitted. `wiki_topic` is the v1 alias kept for back-compat (`default_topic` wins if both present).
-- **Target a non-default wiki**: pass the topic as the positional modifier, e.g. `/wiki-cycle --full cottage-build`. The orchestrator passes `--topic cottage-build` to every step.
-- **Run every declared wiki** (`--all-topics`): iterate `_wiki_config.list_topics()` and run the chosen mode once per topic, each writing to its own `<topic>/_inbox/reports/` tree. Use only when you explicitly want to sweep all wikis; default is the single `default_topic`.
+- A notebook's root is `notebooks[<name>].root`, resolved relative to the registry file; the wiki is `<root>/wiki/`, and `_inbox/`, `raw/`, `how-to/` are its siblings. Moving a wiki is editing `root`.
+- Legacy in-project wikis (no registry) still use `vault_root` + `default_topic` in the same file; `_wiki_config.py` handles both. A topic's root is then `<vault_root>/<topic>`.
+- **Target a non-default wiki**: pass the topic as the positional modifier, e.g. `/wiki-cycle --full cottage-build`. The orchestrator passes `--topic cottage-build` to every step, and every script resolves it through the registry — do **not** pass `--vault` (see the wiki-resolution note in the step skills).
+- **Run every registered wiki** (`--all-topics`): iterate `_wiki_config.list_topics()` and run the chosen mode once per notebook, each writing to its own `<root>/_inbox/reports/` tree. Use only when you explicitly want to sweep all wikis.
 
 ## Cycle ID and report folder
 
@@ -429,7 +428,7 @@ If `--resume`:
 | Task | Agent count | Split by |
 |---|---|---|
 | Ingestion | 4 at a time | Individual entries |
-| Semantic lint | 4 | Wiki folder (active, long-term, tooling, orch+impl+root) |
+| Semantic lint | 4 (proven) | Partition of `research/*` + `project/*` + wiki-root files, balanced by file count per run — never a frozen folder list (Step 4) |
 | Lint fixes | 3 | Fix category (backlinks, stale data, concept gaps) |
 
 Use `subagent_type="wiki-ingester"` for ingestion workers (fallback: `general-purpose` if not installed — see Step 2); `subagent_type="general-purpose"` for all other worker types. Always `run_in_background=true`.

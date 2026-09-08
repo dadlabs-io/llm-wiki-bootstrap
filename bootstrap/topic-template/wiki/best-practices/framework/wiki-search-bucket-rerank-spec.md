@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 1
-last_reviewed: 2026-05-25
-review_after: 2026-08-25
+framework-version: 2
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 raw_path: (none — self-authored)
 tags: [best-practices, framework, search, retrieval, icarus-schema, truth-status, qmd, self-authored]
 ---
@@ -51,7 +51,7 @@ def truth_bucket(entry) -> int | None:
 
 The TEMPORAL bucket (2) sits below `unverified` because temporal-stale-but-not-wrong content is still slightly less useful than fresh-unverified content at the same relevance score (the unverified entry might be currently correct; the temporal one is known-stale). It sits above `contradicted` because temporal is "was right at the time", contradicted is "we now know it was wrong even then."
 
-Read order: prefer the frontmatter `verified:` field (no I/O beyond the entry); fall back to the sidecar `verified` field if frontmatter is unset. If neither is set, treat as `unverified` (bucket 2).
+Read order: prefer the frontmatter `verified:` field (no I/O beyond the entry); fall back to the sidecar `verified` field if frontmatter is unset. If neither is set, treat as `unverified` (bucket 3). (Corrected 2026-09-08: this line and the two below said bucket 2 while the function above returns 3 — the agentic-design copy had already fixed it.)
 
 ## Sort key
 
@@ -102,25 +102,29 @@ filtered per the flags. Adds a `bucket` field to each result for transparency.
 
 Failure modes:
 - If a candidate path doesn't exist on disk → drop with WARN to stderr (don't crash)
-- If a candidate has no `verified` field anywhere → bucket = 2 (unverified default)
+- If a candidate has no `verified` field anywhere → bucket = 3 (unverified default)
 - If qmd's JSON doesn't have a `results` array → pass-through unchanged
 
-## Why this isn't built yet
+## Status (as of 2026-09-08)
 
-qmd is an external tool (we don't own its source). The bucket-rerank can ship as either:
-- (a) post-filter wrapper that adds latency proportional to result-set size (cheap; 50-200ms for a 100-candidate set)
-- (b) qmd plugin if its plugin API surfaces this (would need to check qmd's plugin spec)
+qmd is an external tool (we don't own its source), so the bucket-rerank could only ever ship as one of:
+- (a) post-filter wrapper that adds latency proportional to result-set size (cheap; bounded by candidate count, not corpus size)
+- (b) qmd plugin if its plugin API surfaces this (not investigated)
 - (c) native search layer if we ever build one (long-term)
 
-V1 should ship as (a). It unblocks every consumer immediately and the latency is bounded by candidate count, not corpus size.
+| Surface | State |
+|---|---|
+| 1 — post-filter wrapper | **Shipped.** `wiki-search-rerank.py` is in the framework's script manifest and installs to `~/.claude/wiki-scripts/` (added to the manifest 2026-09-08; the script itself existed earlier but did not travel). Pipe `qmd search "<q>" --json` into it; flags as specified above. |
+| 2 — `/wiki-search` skill | **Documented, opt-in.** The skill shows the pipe and both flags in a "Truth-status rerank" section but does not apply it by default. The open question below is resolved that way for now: on a wiki that has not started verifying, every entry lands in one bucket and the default order is unchanged, so there is nothing to gain from forcing the extra step. |
+| 3 — native bucket-aware search | Not built. |
 
 ## Migration story
 
-- Existing entries have no `verified:` field → all default to bucket `2` (unverified) → ranking changes for these are **zero** (everything's in the same bucket, sort falls back to score-only).
+- Existing entries have no `verified:` field → all default to bucket `3` (unverified) → ranking changes for these are **zero** (everything's in the same bucket, sort falls back to score-only).
 - New entries created post-icarus-§1 may carry `verified:` → those get bucketed normally.
 - `/wiki-verify` flow (icarus §5) is what populates `verified: verified` on existing entries — no batch migration needed.
 
-So the default-sort change is **safe to deploy** before any entries actually carry truth-status fields. The bucket function returns 2 for unset, and the sort degenerates to today's behavior. Adoption is incremental.
+So the default-sort change is **safe to deploy** before any entries actually carry truth-status fields. The bucket function returns 3 for unset, and the sort degenerates to today's behavior. Adoption is incremental.
 
 ## Related
 

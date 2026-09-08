@@ -7,9 +7,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 2
-last_reviewed: 2026-05-25
-review_after: 2026-08-25
+framework-version: 3
+last_reviewed: 2026-09-08
+review_after: 2026-12-08
 tags: [memory-signals, recall-count, last-accessed, ebbinghaus, sidecar-pattern, frontmatter, decay, qmd, principle-3, self-authored, icarus-schema, truth-status, verify, rollback]
 ---
 
@@ -91,7 +91,7 @@ Two signal classes share one sidecar file. The schema is **additive**: recency-c
 - `strength_computed_at` — when the batch last ran. If older than 7 days, lint flags the sidecar as stale.
 
 **Truth-status fields** (icarus §2 — written by `/wiki-verify`, `/wiki-rollback`, and contradiction-marking events; mirrored from frontmatter on initial write):
-- `verified` — enum mirror of the frontmatter `verified:` field (`unverified` | `verified` | `contradicted` | `rolled_back`). Lives in the sidecar so retrieval / verification can update it without touching the entry file itself (no git-noise per the same rule that motivates the sidecar pattern in the first place).
+- `verified` — enum mirror of the frontmatter `verified:` field (`unverified` | `verified` | `temporal` | `contradicted` | `rolled_back`). Lives in the sidecar so retrieval / verification can update it without touching the entry file itself (no git-noise per the same rule that motivates the sidecar pattern in the first place).
 - `verified_at` — ISO timestamp when `/wiki-verify` ran. Null until verified.
 - `verified_by` — `human` | `agent` | `tool`. Who certified the entry. (Tool means a sandboxed test or static analyzer; agent means an LLM judge; human means an editorial signoff. Aardvark-style PoC validation = `tool`.)
 - `contradicted_by` — **array** (not single value). A single entry can be contradicted by multiple later entries (one for each specific claim that gets revised). Each item is a relative path to the contradicting entry. Empty array = no contradictions.
@@ -257,27 +257,4 @@ Production-systems-that-deliberately-don't:
 
 ---
 
-**Source**: research brief at `memory-bank/short-term/memory-signals-research-brief-2026-05-07.md` (synthesised from 9 production framework analyses + YourMemory + Oblivion).
-
-<!-- BACKLINKS-AUTO START -->
-
-## Backlinks (auto-maintained)
-
-_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._
-
-- auto-memory — Zero-Dependency Recall Layer for GitHub Copilot CLI *(agentic-design :: wiki/research/tooling/auto-memory-zero-dependency-recall-layer-for-github-copilot-cli.md)*
-- Codex Chronicle — Screen-Aware Ambient Memory for Codex Mac *(agentic-design :: wiki/research/tooling/codex-chronicle-screen-aware-ambient-memory.md)*
-- MemAlign — Building Better LLM Judges From Human Feedback With Scalable Memory (Databricks 2026-02-03) *(agentic-design :: wiki/research/tooling/databricks-memalign-llm-judges-memory-2026.md)*
-- Honcho — Plastic Labs' Dialectic User Modeling for Stateful Agents *(agentic-design :: wiki/research/tooling/honcho-plastic-labs-dialectic-user-modeling.md)*
-- Icarus Integration Plan — Concrete Changes to Adopt Icarus's Schema + Patterns *(agentic-design :: wiki/project/best-practices/framework/icarus-integration-plan.md)*
-- Mem0 Memory Plugin for OpenClaw — Persistent Memory in 30 Seconds (Deshraj Yadav, Mem0, 2026-02-06) *(agentic-design :: wiki/research/tooling/mem0-openclaw-plugin-yadav-2026.md)*
-- MemGuard — Open-Source Memory Validation Sidecar for Mem0/Letta/Zep (5-Strategy Trust Scoring) *(agentic-design :: wiki/research/tooling/memguard-memory-validation-sidecar-mem0-letta-zep-2026.md)*
-- MemoRizz — Richmond Alake's Memory-Layer Library for AI Agents *(agentic-design :: wiki/research/tooling/memorizz-richmond-alake-memory-layer-library.md)*
-- Agent Memory Architecture — Best Practices *(agentic-design :: wiki/project/best-practices/memory-architecture-best-practices.md)*
-- OpenClaw 2026.4.10 — Active Memory Plugin (Memory Sub-Agent for Ongoing Chats) *(agentic-design :: wiki/research/tooling/openclaw-2026-4-10-active-memory-plugin.md)*
-- SMFS (Supermemory) — Agent Memory Exposed as a Filesystem with Semantic grep *(agentic-design :: wiki/research/tooling/smfs-supermemory-agent-memory-exposed-as-a-filesystem-with-semantic-grep.md)*
-- Vision — Iterative Self-Improving Research Cycle *(agentic-design :: wiki/project/architecture/vision-nightly-self-improving-research-cycle.md)*
-- [Wiki Frontmatter — Best Practices & Canonical Field Reference](../../best-practices/framework/wiki-frontmatter-best-practices.md)
-- YourMemory — Ebbinghaus Decay + recall_count Reference Implementation (+16pp Recall vs Mem0 on LoCoMo) *(agentic-design :: wiki/research/active/yourmemory-ebbinghaus-decay-recall-count-implementation-2026.md)*
-
-<!-- BACKLINKS-AUTO END -->
+**Source**: self-authored synthesis (2026-05-07) over the memory-framework entries cited above; the original research brief lived in a working-memory tree that has since been retired. Per-notebook backlink blocks are appended by `wiki-reciprocate-backlinks.py` in each project and are not part of this framework copy (a stale agentic-design block was removed from the template 2026-09-08).

@@ -493,6 +493,9 @@ def phase_tooling(args):
         _err(str(e))
         return 1
     _print_tooling_summary(summary)
+    if summary.get("frontmatter_failed"):
+        _err("one or more skills/agents were refused (frontmatter does not parse) — fix and re-run")
+        return 1
     return 0
 
 
@@ -754,6 +757,67 @@ def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False, pr
     return total
 
 
+FRAMEWORK_DOCS_SRC = Path("bootstrap") / "topic-template" / "wiki" / "best-practices" / "framework"
+FRAMEWORK_DOCS_DST = Path("project") / "best-practices" / "framework"
+
+
+def seed_framework_docs(bootstrap: Path, wiki_dir: Path, dry_run: bool = False) -> tuple[int, int, list]:
+    """Land the framework-contract docs (`framework-contract: true`, the frontmatter spec, the
+    authoring principles, the cycle step contract, ...) at <wiki_dir>/project/best-practices/framework/,
+    the path the CLAUDE.md template's precedence rule and every skill point at. Content-compared and
+    OVERWRITTEN when different — these are the framework's canonical copies (the gold copy is
+    bootstrap/topic-template/wiki/best-practices/framework/); a project keeps project-specific notes in
+    a sibling file, never by editing these. Reports every file it replaced so an edit that lived only in
+    a project copy is visible rather than silently lost (2026-09-08 — five of nine registered notebooks
+    had no framework docs at all, and the two that did had drifted in both directions).
+    Returns (written, unchanged, replaced_names)."""
+    src = bootstrap / FRAMEWORK_DOCS_SRC
+    dst = wiki_dir / FRAMEWORK_DOCS_DST
+    if not src.is_dir():
+        _warn(f"framework docs missing from package at {src} — nothing seeded")
+        return 0, 0, []
+    written = unchanged = 0
+    replaced = []
+    bl_start, bl_end = "<!-- BACKLINKS-AUTO START -->", "<!-- BACKLINKS-AUTO END -->"
+
+    def _split_backlinks(text: str):
+        """(body_without_block, block_or_empty). The block is per-project state written by
+        wiki-reciprocate-backlinks.py; it is neither compared nor discarded."""
+        i = text.find(bl_start)
+        if i < 0:
+            return text, ""
+        j = text.find(bl_end, i)
+        block = text[i:] if j < 0 else text[i:j + len(bl_end)]
+        return text[:i], block
+
+    def _norm(text: str) -> str:
+        return text.replace("\r\n", "\n").rstrip() + "\n"
+
+    for s in sorted(src.glob("*.md")):
+        d = dst / s.name
+        new_text = s.read_text(encoding="utf-8")
+        keep_block = ""
+        if d.exists():
+            old_body, keep_block = _split_backlinks(d.read_text(encoding="utf-8"))
+            if _norm(old_body) == _norm(new_text):
+                unchanged += 1
+                continue
+            replaced.append(s.name)
+        if dry_run:
+            print(f"  WOULD write {d}")
+        else:
+            d.parent.mkdir(parents=True, exist_ok=True)
+            out = new_text.rstrip() + "\n"
+            if keep_block:
+                out += "\n" + keep_block.rstrip() + "\n"
+            d.write_text(out, encoding="utf-8")
+        written += 1
+    if replaced:
+        _warn(f"framework docs replaced (project copy differed from the framework's): {', '.join(replaced)}")
+    _ok(f"framework-contract docs -> {dst}: {written} written, {unchanged} unchanged")
+    return written, unchanged, replaced
+
+
 def _resolve_how_to_root(target: Path, registry_arg=None):
     """Where an EXISTING project's framework-managed how-to tree lives, in this order:
     the project's thin-pointer .claude/wiki-config.json (notebook + registry -> the notebook root),
@@ -809,6 +873,13 @@ def phase_docs(args):
         return 1
     _info(f"pack usage docs -> {how_to / 'llm-wiki'}")
     n = seed_pack_docs(bootstrap, how_to, dry_run=args.dry_run, prune_retired=args.prune_retired)
+    # framework-contract docs live beside the how-to tree, at <wiki>/project/best-practices/framework/;
+    # the wiki is a sibling of how-to/ for a notebook root and for an in-project llm-wiki/ alike
+    wiki_dir = how_to.parent / "wiki"
+    if wiki_dir.is_dir():
+        seed_framework_docs(bootstrap, wiki_dir, dry_run=args.dry_run)
+    else:
+        _warn(f"no wiki/ beside {how_to} — framework-contract docs not refreshed")
     # the marker is the one framework file at the how-to root; it describes the tree, so it travels with the docs
     marker = bootstrap / "bootstrap" / "seed" / "how-to" / "_FRAMEWORK_MANAGED.md"
     if marker.exists():
@@ -999,6 +1070,10 @@ def phase_b(args):
     else:
         sessions_dir.mkdir(parents=True, exist_ok=True)
     _ok(f"merged wiki folder taxonomy applied: {len(folders)} folders")
+
+    # B6.1 — framework-contract docs into wiki/project/best-practices/framework/ (the precedence
+    # rule in CLAUDE.md and every skill's "read the spec" pointer assume they are there; 2026-09-08)
+    seed_framework_docs(bootstrap, wiki_root, dry_run=args.dry_run)
 
     # B6.5 — render wiki scaffold files (_MAP.md, _INDEX.md, README.md, HOME.md)
     # inside <target>/llm-wiki/wiki/ from seed/wiki/*.tmpl. These give the agent
