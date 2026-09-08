@@ -17,8 +17,8 @@ shared skills at that project's own wiki. The agent (below) is the pack's one de
 subagent, installed to `~/.claude/agents/` (added 2026-08-20).
 
 Every skill has its own page in the sibling `skills/` folder — linked below. For the guided
-version of this list, see [`../commands.md`](../commands.md) (the full command reference) and
-[`../getting-started.md`](../getting-started.md) (the first-hour walkthrough).
+version of this list, see [`commands.md`](./commands.md) (the full command reference) and
+[`getting-started.md`](./getting-started.md) (the first-hour walkthrough).
 
 ## Daily drivers
 

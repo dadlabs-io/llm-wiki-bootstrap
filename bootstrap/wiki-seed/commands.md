@@ -1,3 +1,11 @@
+---
+title: "Commands reference — llm-wiki"
+type: how-to
+pack: llm-wiki
+installed_by: install-wiki
+date: 2026-09-08
+---
+
 # Commands reference — every slash command
 
 > ⚠️ **Framework-managed file.** This is shipped by the LLM-wiki installer and may be overwritten when you refresh the framework. **Don't hand-edit.** To customize, see `llm-wiki/README.md` → "Framework-managed folders".
@@ -46,17 +54,17 @@ These are listed for completeness. `/wiki-cycle` invokes them in order; you can 
 
 ## See also (deeper docs per command)
 
-- `how-to/getting-started.md` — your first hour with a freshly-scaffolded project
-- `how-to/wiki-update.md` — `/wiki-update` in depth (staging, tier rules)
-- `how-to/wiki-cycle.md` — `/wiki-cycle` orchestrator + mode flags
-- `how-to/wrap-up.md` — `/wrap-up` categories + safety
-- `how-to/wiki-search.md` — `/wiki-search` ranking model
-- `how-to/drive-setup.md` — Google Drive OAuth one-time setup
-- `how-to/install.md` — installing the framework on a fresh machine
+- [`getting-started`](./getting-started.md) — your first hour with a freshly-scaffolded project
+- [`wiki-update`](./skills/wiki-update.md) — `/wiki-update` in depth (staging, tier rules)
+- [`wiki-cycle`](./skills/wiki-cycle.md) — `/wiki-cycle` orchestrator + mode flags
+- [`wrap-up`](./skills/wrap-up.md) — `/wrap-up` categories + safety
+- [`wiki-search`](./skills/wiki-search.md) — `/wiki-search` ranking model
+- [`drive-setup`](./drive-setup.md) — Google Drive OAuth one-time setup
+- [`install`](./install.md) — installing the framework on a fresh machine
 
 ## Where to ask the agent for help
 
-You can always ask in plain English. The agent has this file (and the rest of `llm-wiki/how-to/`) loaded as context for the project. Try things like:
+You can always ask in plain English. The agent has this file (and the rest of `llm-wiki/how-to/llm-wiki/`) loaded as context for the project. Try things like:
 
 - "How do I add a single URL to the wiki?"
 - "Show me what's in the wiki"

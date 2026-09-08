@@ -1,3 +1,11 @@
+---
+title: "Installing on a fresh machine — llm-wiki"
+type: how-to
+pack: llm-wiki
+installed_by: install-wiki
+date: 2026-09-08
+---
+
 # Installing on a fresh machine
 
 You already have this framework installed (you're reading this from inside an installed project). But if you (or someone you're helping) wants to install it elsewhere:
@@ -79,5 +87,5 @@ To refresh an existing per-project install with newer skills/scripts:
 
 - **`gh` / `git clone` fails with auth** — repo is public now, no auth needed; check your network
 - **`npx` not found** — install Node.js; the dev path needs it for agentmemory
-- **Drive OAuth fails** — see `how-to/drive-setup.md`
+- **Drive OAuth fails** — see [`drive-setup`](./drive-setup.md)
 - **`/new-wiki` doesn't trigger in Claude Code** — restart Claude Code after install so it picks up the new global skill

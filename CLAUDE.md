@@ -10,9 +10,10 @@ The LLM-wiki framework installer. Ships:
 - 14 per-project skills (`wiki-update`, `wiki-cycle`, `wrap-up`, `wiki-search`, `wiki-promote`, etc.)
 - 16 Python helper scripts (vault management, lint, indexing, Drive ingest), including `_entry_checks.py`, the shared mechanical eval gate used by both `wiki-update.py` (refuse-to-file) and `wiki-lint-mechanical.py` (backlog view)
 - Templates for `CLAUDE.md`, `README.md`, `.gitignore` in research/development variants
-- Seed content for the per-project `llm-wiki/` folder (how-to docs + 17 curated best-practices)
-- Pack usage docs (wiki-seed): one page per skill (`skills/<name>/wiki-seed/`) + a pack overview
-  (`wiki-seed/llm-wiki.md`), assembled into each project's `llm-wiki/how-to/llm-wiki/` on install
+- Seed content for the per-project `llm-wiki/` folder (the how-to marker + 17 curated best-practices; the how-to pages themselves are the pack docs below, since 2026-09-08)
+- Pack usage docs (wiki-seed): one page per skill (`skills/<name>/wiki-seed/`, each carrying its full
+  walkthrough), one per agent, the pack overview plus getting-started / commands / install / drive-setup
+  (`bootstrap/wiki-seed/`), assembled into each project's `llm-wiki/how-to/llm-wiki/` on install
 - `install-wiki.ps1` (Windows) and `install-wiki.sh` (Mac/Linux) — the installer entry points
 
 ## What the user probably wants
@@ -146,8 +147,8 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 
 Point them at:
 - `README.md` for the install overview
-- `bootstrap/seed/how-to/commands.md` for the per-command reference
-- `bootstrap/seed/how-to/getting-started.md` for the first-hour walkthrough
+- `bootstrap/wiki-seed/commands.md` for the per-command reference
+- `bootstrap/wiki-seed/getting-started.md` for the first-hour walkthrough
 
 Or just walk them through running `install-wiki.ps1` with the right flags.
 

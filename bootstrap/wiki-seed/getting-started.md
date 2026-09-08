@@ -1,3 +1,11 @@
+---
+title: "Getting started — llm-wiki"
+type: how-to
+pack: llm-wiki
+installed_by: install-wiki
+date: 2026-09-08
+---
+
 # Getting started
 
 You just ran `/new-wiki` and have a fresh project. Here's the first hour.
@@ -44,12 +52,12 @@ Don't write more than ~120 lines. CLAUDE.md is a shortcut, not a manual. Use `@i
 
 - **`/new-wiki` paths**: skills/scripts/templates live at `<project>/.claude/`. Don't hand-edit these — they get overwritten on re-install. Edit the bootstrap source instead.
 - **agentmemory restart**: if `/wrap-up` says "agentmemory not reachable", Claude Code didn't restart after install. Restart and try again.
-- **Drive OAuth**: if you opted into Drive ingest and the OAuth flow failed, see `how-to/drive-setup.md`.
+- **Drive OAuth**: if you opted into Drive ingest and the OAuth flow failed, see [`drive-setup`](./drive-setup.md).
 - **Multiple projects on one machine**: each project has its own `.claude/skills/`. Skills don't conflict between projects. The Drive OAuth token IS shared globally (good — sign in once).
 
 ## Next reading
 
-- `how-to/wiki-update.md` — adding a single URL
-- `how-to/wiki-cycle.md` — full ingest pipeline
-- `how-to/wrap-up.md` — end-of-session distillation
-- `how-to/wiki-search.md` — hybrid BM25 + vector + LLM rerank search
+- [`wiki-update`](./skills/wiki-update.md) — adding a single URL
+- [`wiki-cycle`](./skills/wiki-cycle.md) — full ingest pipeline
+- [`wrap-up`](./skills/wrap-up.md) — end-of-session distillation
+- [`wiki-search`](./skills/wiki-search.md) — hybrid BM25 + vector + LLM rerank search

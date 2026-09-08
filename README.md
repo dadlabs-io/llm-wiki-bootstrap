@@ -87,7 +87,7 @@ It asks a few questions (project name, description, Drive prefs) and scaffolds:
 ├── .claude/wiki-config.json
 ├── llm-wiki/
 │   ├── README.md
-│   ├── how-to/              ← usage docs
+│   ├── how-to/              ← usage docs, one folder per installed package (llm-wiki/ is the framework's)
 │   ├── best-practices/      ← curated dev best practices
 │   └── wiki/                ← your project's entries
 ├── CLAUDE.md

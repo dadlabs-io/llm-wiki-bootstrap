@@ -211,7 +211,7 @@ Tell the user:
 
 #### Universal closing
 
-End with: "Read `llm-wiki/how-to/commands.md` for the full command reference, or `llm-wiki/how-to/getting-started.md` for the first-hour walkthrough. You can also ask me anything in plain English — I have these docs loaded as context."
+End with: "Read `llm-wiki/how-to/llm-wiki/commands.md` for the full command reference, or `llm-wiki/how-to/llm-wiki/getting-started.md` for the first-hour walkthrough. You can also ask me anything in plain English — I have these docs loaded as context."
 
 ### Step 3 — Don't
 

@@ -692,7 +692,14 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
 #     └── wiki/                      (project's research/dev wiki — was vault)
 #   <target>/CLAUDE.md, README.md, .gitignore (rendered from templates)
 
-def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False) -> int:
+# Pages that sat flat at the how-to root before 2026-09-08 and now live under how-to/llm-wiki/ (the four
+# skill guides folded into their skill pages). A refresh never deletes, so they linger in an older project
+# until --prune-retired removes them; without the flag they are only reported.
+RETIRED_HOW_TO_PAGES = ["commands.md", "getting-started.md", "install.md", "drive-setup.md", "wiki-cycle.md",
+                        "wiki-search.md", "wiki-update.md", "wrap-up.md", "upd-docs.md"]
+
+
+def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False, prune_retired: bool = False) -> int:
     """Assemble the llm-wiki pack's usage docs into <how_to_root>/llm-wiki/ (wiki-seed
     convention, shared with the agent-factory): the pack page from bootstrap/wiki-seed/,
     one page per skill from skills/<name>/wiki-seed/ -> llm-wiki/skills/<name>.md, one page
@@ -734,6 +741,16 @@ def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False) ->
     if missing:
         _warn("shipped without a usage page (add <artifact>/wiki-seed/<name>.md — every skill and "
               "agent must carry one): " + ", ".join(missing))
+    retired = [n for n in RETIRED_HOW_TO_PAGES if (how_to_root / n).exists()]
+    if retired:
+        if prune_retired:
+            for n in retired:
+                if not dry_run:
+                    (how_to_root / n).unlink()
+            _ok(f"removed {len(retired)} retired root page(s) now under llm-wiki/: {', '.join(retired)}")
+        else:
+            _warn(f"{len(retired)} pre-2026-09-08 page(s) still at the how-to root, superseded by llm-wiki/: "
+                  f"{', '.join(retired)} — re-run with --prune-retired to remove them")
     return total
 
 
@@ -791,7 +808,12 @@ def phase_docs(args):
              "notebook root with wiki/ — run Phase B first")
         return 1
     _info(f"pack usage docs -> {how_to / 'llm-wiki'}")
-    n = seed_pack_docs(bootstrap, how_to, dry_run=args.dry_run)
+    n = seed_pack_docs(bootstrap, how_to, dry_run=args.dry_run, prune_retired=args.prune_retired)
+    # the marker is the one framework file at the how-to root; it describes the tree, so it travels with the docs
+    marker = bootstrap / "bootstrap" / "seed" / "how-to" / "_FRAMEWORK_MANAGED.md"
+    if marker.exists():
+        c, s = _copy_tree(marker.parent, how_to, names=[marker.name], dry_run=args.dry_run)
+        _ok(f"how-to root marker: {'refreshed' if c else 'unchanged'}")
     _ok(f"docs refresh done: {n} page(s) copied into {how_to / 'llm-wiki'}")
     return 0
 
@@ -949,7 +971,7 @@ def phase_b(args):
     # Seed: pack usage docs (wiki-seed convention — standard across packs; the pack page,
     # one page per skill, one page per agent; a shipped artifact without one is warned about).
     # Same seeder as --phase docs, which refreshes an existing project's how-to/llm-wiki/.
-    seed_pack_docs(bootstrap, paths["llm_wiki_how_to"], dry_run=args.dry_run)
+    seed_pack_docs(bootstrap, paths["llm_wiki_how_to"], dry_run=args.dry_run, prune_retired=args.prune_retired)
 
     # Seed: best-practices/
     if seed_src.exists() and (seed_src / "best-practices").exists():
@@ -1165,7 +1187,7 @@ def phase_b(args):
     next_steps = [
         f"cd {target}",
         f"Start Claude Code: `{start_cmd}`",
-        "Read `llm-wiki/README.md` (project overview) + `llm-wiki/how-to/commands.md` (command reference)",
+        "Read `llm-wiki/README.md` (project overview) + `llm-wiki/how-to/llm-wiki/commands.md` (command reference)",
         "INGEST research: `/wiki-update <url>` ad-hoc, OR drop links into Drive (__FOR CLAUDE/<project-slug>/) and run `/wiki-cycle` to discover → ingest → lint → promote",
         "CAPTURE project knowledge: as you code/decide/debug, the agent files durable items (decisions, components, patterns, gotchas) to `llm-wiki/wiki/_inbox/proposed/` inline; run `/wrap-up` at session-end to catch the rest",
         "Promote: `/wiki-promote --review` accepts/rejects proposed entries (research → research/, project knowledge → project/)",
@@ -1188,7 +1210,7 @@ def phase_b(args):
         "agentmemory_wired": project_cfg.get("agentmemory_wired", False) if project_type == "development" else None,
         "needs_restart": needs_restart,
         "next_steps": next_steps,
-        "help_anytime": "Ask in plain English. The agent has llm-wiki/how-to/*.md and llm-wiki/README.md loaded as context.",
+        "help_anytime": "Ask in plain English. The agent has llm-wiki/how-to/llm-wiki/*.md and llm-wiki/README.md loaded as context.",
     }, indent=2))
 
     if needs_restart:
@@ -1288,6 +1310,9 @@ def main():
                         help="Continue even if target folder has unexpected entries")
     parser.add_argument("--no-agentmemory", action="store_true",
                         help="(deprecated, no-op as of 2026-05-14 — agentmemory removed)")
+    parser.add_argument("--prune-retired", action="store_true",
+                        help="With --phase docs (or B --force): delete the pre-2026-09-08 pages at the how-to root "
+                             "that now live under how-to/llm-wiki/ (otherwise they are only reported)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print actions without writing")
     args = parser.parse_args()
