@@ -62,7 +62,7 @@ Mechanism: `seed_pack_docs()` in `bootstrap/scripts/new-wiki.py` (added 2026-09-
 
 Source-of-truth: `bootstrap/topic-template/wiki/best-practices/framework/*.md` (six docs, each `framework-contract: true` with a `framework-version`)
 Install target: `<wiki>/project/best-practices/framework/<name>.md` (Phase B for a new project; `--phase docs --target-folder <project>` refreshes an existing one)
-Mechanism: `seed_framework_docs()` in `bootstrap/scripts/new-wiki.py` (2026-09-08): content-compared, a differing project copy is overwritten and named; the reciprocation script's backlink block is ignored in the comparison and preserved. `--check` (same day) reports instead of writing — unchanged / ADD / REPLACE per doc with the version on both sides and a diff, exit 1 when a refresh would change anything. A wiki without `project/` is out of scope and skipped by name.
+Mechanism: `seed_framework_docs()` in `bootstrap/scripts/new-wiki.py` (2026-09-08): content-compared, a differing project copy is overwritten and named; the reciprocation script's backlink block is ignored in the comparison and preserved. `--check` (same day) reports instead of writing — unchanged / ADD / REPLACE per doc with the version on both sides and a diff, exit 1 when a refresh would change anything. A wiki without `project/` is out of scope and skipped by name. `--all-notebooks` runs check or refresh over every registered notebook with a summary — the standing procedure after a framework change is `--check --all-notebooks`, review, then refresh.
 
 **These are the framework's canonical copies.** A project keeps its own notes in a sibling file, never by editing one of these — the edit is lost on the next refresh (`--check` shows it first).
 

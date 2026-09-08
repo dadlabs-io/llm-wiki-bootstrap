@@ -134,6 +134,11 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 
 ## Conventions (when editing the scripts)
 
+- **After any change that lands in a notebook** (a framework-contract doc, a `wiki-seed/` page, the how-to
+  root marker, a skill or script), the standing procedure (SOP, 2026-09-08) is: `python bootstrap/scripts/new-wiki.py --phase docs --check --all-notebooks` (from this repo; the registry comes from `.claude/wiki-config.json`) → review every REPLACE line → the same command without `--check` → `.\install-wiki.ps1 -RefreshOnly`.
+  `--check` writes nothing and exits 1 when any notebook would change; a REPLACE at the *same*
+  `framework-version` is a project-local edit the refresh will lose — read it before refreshing. One
+  command, nine notebooks, a summary line each; never the hand loop.
 - **Date/time** — single rule, helpers in `scripts/_wiki_config.py`:
   - **Date labels** (calendar day a human organizes by — cycle ids, report folders, `date:`/`last_reviewed:`/`review_after:` frontmatter) → **local** date, `today_label()`. Never `datetime.now(timezone.utc)` for a date label (it rolls a night-time run to tomorrow's UTC day).
   - **Timestamps** (a precise instant — `created`, `*_at`, run stamps) → `now_stamp()`: **local time with an explicit UTC offset** (tz-aware ISO-8601, e.g. `2026-06-17T00:05:07-04:00`). Never a naive `.isoformat()` — the zone must always be labelled.

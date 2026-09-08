@@ -899,29 +899,18 @@ def _resolve_how_to_root(target: Path, registry_arg=None):
     return None
 
 
-def phase_docs(args):
-    """--phase docs: refresh ONLY the pack usage docs (how-to/llm-wiki/) of an existing project.
-    --phase sync refreshes the global skills and never touches a project; re-running Phase B with
-    --force refreshes the whole how-to tree. This is the narrow path: a project created before
-    the wiki-seed convention (2026-07-31) gets its how-to/llm-wiki/ folder without anything else
-    being rewritten (2026-09-08)."""
-    target = Path(args.target_folder).resolve() if args.target_folder else None
-    if target is None:
-        _err("--target-folder is required for --phase docs (the project, or the notebook root)")
-        return 1
-    bootstrap = _derive_bootstrap_source(args)
-    if not bootstrap:
-        _err("could not find bootstrap source. Pass --bootstrap-source <path> or run Phase A first.")
-        return 1
+def _docs_one(bootstrap: Path, target: Path, args, check: bool) -> tuple[int, int]:
+    """The docs refresh (or check) of ONE project / notebook root. Returns (rc, pending) where
+    pending is the number of files a refresh would write (check) or wrote (refresh); rc is 1 when
+    the target has no wiki, or under check when anything would change."""
     how_to = _resolve_how_to_root(target, args.registry)
     if how_to is None:
         _err(f"no wiki found for {target}: expected .claude/wiki-config.json, llm-wiki/how-to/, or a "
              "notebook root with wiki/ — run Phase B first")
-        return 1
+        return 1, 0
     # --check: report what a refresh would change and write nothing (pack docs and the marker go
     # through the plain dry-run path; the framework docs get the versioned, diffed report). Exit 1
     # when anything would change so a script can gate on it.
-    check = getattr(args, "check", False)
     dry = args.dry_run or check
     if check:
         _info(f"--check: reporting what a docs refresh of {how_to.parent} would change — nothing is written")
@@ -951,11 +940,111 @@ def phase_docs(args):
     if check:
         if pending:
             _warn(f"docs check: a refresh would write {pending} file(s) under {how_to.parent} — exit 1")
-            return 1
+            return 1, pending
         _ok(f"docs check: {how_to.parent} matches the framework — nothing to refresh")
-        return 0
+        return 0, 0
     _ok(f"docs refresh done: {n} page(s) copied into {how_to / 'llm-wiki'}")
-    return 0
+    return 0, pending
+
+
+def _registry_notebooks(args) -> list:
+    """[(name, root_path)] for every notebook in the linked-notebooks.json registry — --registry,
+    else the one the cwd's .claude/wiki-config.json points at. Roots resolve against the registry's
+    folder. Empty list (with an error printed) when no registry can be found."""
+    from _wiki_config import load_registry
+    reg = None
+    reg_path = None
+    if args.registry:
+        reg_path = Path(args.registry).resolve()
+        if reg_path.exists():
+            try:
+                data = json.loads(reg_path.read_text(encoding="utf-8"))
+                reg = data.get("notebooks", data)
+            except (json.JSONDecodeError, OSError) as e:
+                _err(f"could not read registry {reg_path}: {e}")
+                return []
+    else:
+        reg, reg_path = load_registry()
+    if not reg:
+        _err("no notebook registry: pass --registry <linked-notebooks.json>, or run from a project whose "
+             ".claude/wiki-config.json names one")
+        return []
+    out = []
+    for name, entry in reg.items():
+        if name.startswith("_"):
+            continue
+        root_val = entry.get("root") if isinstance(entry, dict) else entry
+        if not root_val:
+            _warn(f"registry entry {name!r} has no root — skipped")
+            continue
+        root = Path(root_val)
+        if not root.is_absolute():
+            root = (reg_path.parent / root).resolve()
+        out.append((name, root))
+    return out
+
+
+def phase_docs(args):
+    """--phase docs: refresh ONLY the framework-managed docs of an existing project — the pack usage
+    docs (how-to/llm-wiki/), the six framework-contract docs and the how-to root marker. --phase sync
+    refreshes the global skills and never touches a project; re-running Phase B with --force
+    refreshes the whole how-to tree. This is the narrow path: a project created before the
+    wiki-seed convention (2026-07-31) gets its how-to/llm-wiki/ folder without anything else being
+    rewritten (2026-09-08).
+
+    --all-notebooks runs it over every notebook in the registry (the standing procedure after a
+    framework change: `--check --all-notebooks` first, review every REPLACE, then `--all-notebooks`
+    to refresh), with a one-line-per-notebook summary and a single exit code: 1 when any notebook
+    would change under --check, or had no wiki."""
+    bootstrap = _derive_bootstrap_source(args)
+    if not bootstrap:
+        _err("could not find bootstrap source. Pass --bootstrap-source <path> or run Phase A first.")
+        return 1
+    check = getattr(args, "check", False)
+    # the report lines go to stdout and the status lines to stderr; keep them in order when piped
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except (AttributeError, ValueError):
+        pass
+    if not getattr(args, "all_notebooks", False):
+        if not args.target_folder:
+            _err("--target-folder is required for --phase docs (the project, or the notebook root), "
+                 "or --all-notebooks for every registered notebook")
+            return 1
+        rc, _pending = _docs_one(bootstrap, Path(args.target_folder).resolve(), args, check)
+        return rc
+    if args.target_folder:
+        _warn("--all-notebooks ignores --target-folder")
+    notebooks = _registry_notebooks(args)
+    if not notebooks:
+        return 1
+    rows = []
+    worst = 0
+    for name, root in notebooks:
+        print(f"\n=== {name} ({root}) ===", file=sys.stderr)
+        if not root.is_dir():
+            _err(f"{name}: root {root} does not exist — skipped")
+            rows.append((name, "MISSING ROOT"))
+            worst = 1
+            continue
+        rc, pending = _docs_one(bootstrap, root, args, check)
+        if rc:
+            worst = 1
+        if check:
+            status = "clean" if not pending else f"{pending} file(s) would change"
+        else:
+            status = "unchanged" if not pending else f"{pending} file(s) refreshed"
+        if rc and not pending:
+            status = "no wiki"
+        rows.append((name, status))
+    width = max(len(n) for n, _ in rows)
+    print(f"\n{'docs check' if check else 'docs refresh'} — {len(rows)} notebook(s):", file=sys.stderr)
+    for name, status in rows:
+        print(f"  {name.ljust(width)}  {status}", file=sys.stderr)
+    if check and worst:
+        _warn("at least one notebook would change (or has no wiki) — exit 1; review the REPLACE lines above, "
+              "then run the same command without --check to refresh")
+    return worst
 
 
 def phase_b(args):
@@ -1459,6 +1548,11 @@ def main():
                              "that now live under how-to/llm-wiki/ (otherwise they are only reported)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print actions without writing")
+    parser.add_argument("--all-notebooks", action="store_true",
+                        help="With --phase docs only: run over every notebook in the linked-notebooks.json "
+                             "registry (--registry, else the one the cwd's .claude/wiki-config.json names) "
+                             "instead of one --target-folder; prints a per-notebook summary, exit 1 if any "
+                             "would change under --check.")
     parser.add_argument("--check", action="store_true",
                         help="With --phase docs only: report what a refresh would change and write nothing. "
                              "Each framework-contract doc is listed as unchanged / ADD / REPLACE with the "
@@ -1474,6 +1568,9 @@ def main():
         return 1
     if args.check and args.phase != "docs":
         _err("--check is only meaningful with --phase docs")
+        return 1
+    if args.all_notebooks and args.phase != "docs":
+        _err("--all-notebooks is only meaningful with --phase docs")
         return 1
 
     if args.mode == "tooling":

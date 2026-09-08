@@ -32,6 +32,7 @@
 - **Bug fixed in the seeder's comparison.** Text appended *after* a doc's reciprocation backlink block was dropped from the comparison and silently deleted on refresh. It is now part of the compared body, so it shows in the `--check` diff and marks the doc REPLACE.
 - **A wiki without the `project/` taxonomy is out of scope for the framework docs.** `--phase docs` names it and skips them instead of creating a folder the notebook has no use for; its pack usage docs still refresh. `maggies-computer-notes` (a beginner's Python notes wiki with its own folders) stays out of scope — decided 2026-09-08.
 - All nine registered notebooks checked: eight match the framework; the ninth had one stale pack page (the `/wiki-search` usage page, edited after that notebook's morning refresh), now refreshed.
+- **`--all-notebooks`, and the SOP.** `--phase docs` (check or refresh) runs over every notebook in the registry with a one-line summary per notebook and one exit code. The standing procedure after any change that lands in a notebook is now `--phase docs --check --all-notebooks` → review every REPLACE → the same without `--check` → `install-wiki.ps1 -RefreshOnly`; recorded in CLAUDE.md, the `/new-wiki` skill and the process pattern. It replaces the hand-written shell loop that had to be corrected twice in the session that built it.
 
 ## 2026-09-02
 
