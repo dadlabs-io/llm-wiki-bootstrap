@@ -21,8 +21,9 @@ how-to/
 ```
 
 Each package's folder is written by that package's installer and **overwritten on its next refresh**
-(`new-wiki.py --phase docs --target-folder <project>` refreshes `llm-wiki/`; re-running Phase B with
-`--force` rewrites the whole framework tree; another pack's installer refreshes its own folder). A refresh
+(`new-wiki.py --phase docs --target-folder <project>` refreshes `llm-wiki/`, and with `--check` only reports
+what it would change; re-running Phase B with `--force` rewrites the whole framework tree; another pack's
+installer refreshes its own folder). A refresh
 never removes another package's folder. `/new-wiki --sync` refreshes the global skills and never touches a
 project.
 

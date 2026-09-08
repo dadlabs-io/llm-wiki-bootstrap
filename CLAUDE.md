@@ -121,7 +121,7 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
   (standard wiki-seed convention, shared with the agent-factory): `wiki-seed/llm-wiki.md` is
   the pack entry page, each skill carries its own one-page usage doc; `new-wiki.py` assembles
   them into `<target>/llm-wiki/how-to/llm-wiki/{,skills/,agents/}` on install (Phase B) and on
-  `--phase docs` (refresh an existing project's pack docs only). Distinct from `seed/` (the
+  `--phase docs` (refresh an existing project's pack docs only; `--check` reports without writing). Distinct from `seed/` (the
   broader project scaffold) — one name per mechanism.
   **Requirement (2026-09-08, shared with the agent-factory): every skill under `bootstrap/skills/`
   and every agent under `bootstrap/agents/` ships `wiki-seed/<name>.md`, and the pack page

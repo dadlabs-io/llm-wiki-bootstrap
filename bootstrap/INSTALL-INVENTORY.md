@@ -58,6 +58,14 @@ Mechanism: `seed_pack_docs()` in `bootstrap/scripts/new-wiki.py` (added 2026-09-
 
 **Every skill in A and every agent in A2 ships a page; the seeder warns by name for any that does not.** One folder per installed package in the receiving how-to tree (`how-to/llm-wiki/` here; the agent-factory's packs land as `how-to/<pack>/` beside it); a framework refresh never removes another pack's folder.
 
+## A4. Framework-contract docs
+
+Source-of-truth: `bootstrap/topic-template/wiki/best-practices/framework/*.md` (six docs, each `framework-contract: true` with a `framework-version`)
+Install target: `<wiki>/project/best-practices/framework/<name>.md` (Phase B for a new project; `--phase docs --target-folder <project>` refreshes an existing one)
+Mechanism: `seed_framework_docs()` in `bootstrap/scripts/new-wiki.py` (2026-09-08): content-compared, a differing project copy is overwritten and named; the reciprocation script's backlink block is ignored in the comparison and preserved. `--check` (same day) reports instead of writing — unchanged / ADD / REPLACE per doc with the version on both sides and a diff, exit 1 when a refresh would change anything. A wiki without `project/` is out of scope and skipped by name.
+
+**These are the framework's canonical copies.** A project keeps its own notes in a sibling file, never by editing one of these — the edit is lost on the next refresh (`--check` shows it first).
+
 ## B. Global scripts
 
 Source-of-truth: `bootstrap/scripts/<script>.py`

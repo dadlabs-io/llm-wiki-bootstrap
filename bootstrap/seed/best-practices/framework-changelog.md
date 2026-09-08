@@ -27,6 +27,12 @@
 - **`wiki-search-rerank.py` ships.** It existed in `bootstrap/scripts/` but was not in `TRAVEL_SCRIPTS`; now installed, with an inventory row and a "Truth-status rerank" section in `/wiki-search` (opt-in pipe).
 - **Accepted gap, recorded:** agentic-design has 208 pre-rubric entries with no `## TL;DR` and 72 with no `## Related`; that is a research-wiki content pass, warn-only by design, and is not part of this framework pass.
 
+### Post-package queue, same evening (seeder follow-ups from the Phase 2 decision's caveats)
+- **`new-wiki.py --phase docs --check`.** Review-first mode for a notebook owner: writes nothing, lists every framework-contract doc as unchanged / ADD / REPLACE with the `framework-version` on both sides and a unified diff of the body, names the pack pages a refresh would copy, and exits 1 when anything would change. A REPLACE at the same version means a project-local edit the refresh would lose; at a lower version, a stale copy. Run it per registered notebook after a framework change, then the refresh.
+- **Bug fixed in the seeder's comparison.** Text appended *after* a doc's reciprocation backlink block was dropped from the comparison and silently deleted on refresh. It is now part of the compared body, so it shows in the `--check` diff and marks the doc REPLACE.
+- **A wiki without the `project/` taxonomy is out of scope for the framework docs.** `--phase docs` names it and skips them instead of creating a folder the notebook has no use for; its pack usage docs still refresh. `maggies-computer-notes` (a beginner's Python notes wiki with its own folders) stays out of scope — decided 2026-09-08.
+- All nine registered notebooks checked: eight match the framework; the ninth had one stale pack page (the `/wiki-search` usage page, edited after that notebook's morning refresh), now refreshed.
+
 ## 2026-09-02
 
 ### Build-time governance pass (from "Context as Code", Huk, O'Reilly Radar — agentic-design `research/best-practices/`)

@@ -761,7 +761,15 @@ FRAMEWORK_DOCS_SRC = Path("bootstrap") / "topic-template" / "wiki" / "best-pract
 FRAMEWORK_DOCS_DST = Path("project") / "best-practices" / "framework"
 
 
-def seed_framework_docs(bootstrap: Path, wiki_dir: Path, dry_run: bool = False) -> tuple[int, int, list]:
+def _framework_version(text: str):
+    """The `framework-version:` value from a doc's frontmatter, or None when it has none."""
+    import re
+    m = re.search(r"^framework-version:\s*(\S+)\s*$", text, flags=re.M)
+    return m.group(1) if m else None
+
+
+def seed_framework_docs(bootstrap: Path, wiki_dir: Path, dry_run: bool = False,
+                        check: bool = False) -> tuple[int, int, list]:
     """Land the framework-contract docs (`framework-contract: true`, the frontmatter spec, the
     authoring principles, the cycle step contract, ...) at <wiki_dir>/project/best-practices/framework/,
     the path the CLAUDE.md template's precedence rule and every skill point at. Content-compared and
@@ -770,7 +778,15 @@ def seed_framework_docs(bootstrap: Path, wiki_dir: Path, dry_run: bool = False) 
     a sibling file, never by editing these. Reports every file it replaced so an edit that lived only in
     a project copy is visible rather than silently lost (2026-09-08 — five of nine registered notebooks
     had no framework docs at all, and the two that did had drifted in both directions).
-    Returns (written, unchanged, replaced_names)."""
+
+    check=True (--check, 2026-09-08) is the review-first mode for a notebook owner: nothing is written;
+    each doc is reported as unchanged, ADD (no project copy) or REPLACE, and a REPLACE names the
+    `framework-version` on both sides — a lower project version is a stale copy, the SAME version with
+    different content is a project-local edit that a refresh would lose — followed by a unified diff of
+    the body (backlink block excluded). dry_run only prints "WOULD write" lines; check explains why.
+    Returns (written, unchanged, replaced_names); under check, `written` counts the docs a refresh
+    would write."""
+    import difflib
     src = bootstrap / FRAMEWORK_DOCS_SRC
     dst = wiki_dir / FRAMEWORK_DOCS_DST
     if not src.is_dir():
@@ -778,17 +794,22 @@ def seed_framework_docs(bootstrap: Path, wiki_dir: Path, dry_run: bool = False) 
         return 0, 0, []
     written = unchanged = 0
     replaced = []
+    added = []
     bl_start, bl_end = "<!-- BACKLINKS-AUTO START -->", "<!-- BACKLINKS-AUTO END -->"
 
     def _split_backlinks(text: str):
         """(body_without_block, block_or_empty). The block is per-project state written by
-        wiki-reciprocate-backlinks.py; it is neither compared nor discarded."""
+        wiki-reciprocate-backlinks.py; it is neither compared nor discarded. Anything AFTER the
+        block stays in the body, so a note appended below it is compared (and shows in the --check
+        diff) instead of being dropped unseen — it was, before 2026-09-08."""
         i = text.find(bl_start)
         if i < 0:
             return text, ""
         j = text.find(bl_end, i)
-        block = text[i:] if j < 0 else text[i:j + len(bl_end)]
-        return text[:i], block
+        if j < 0:
+            return text[:i], text[i:]
+        end = j + len(bl_end)
+        return text[:i] + text[end:].lstrip("\r\n"), text[i:end]
 
     def _norm(text: str) -> str:
         return text.replace("\r\n", "\n").rstrip() + "\n"
@@ -797,13 +818,32 @@ def seed_framework_docs(bootstrap: Path, wiki_dir: Path, dry_run: bool = False) 
         d = dst / s.name
         new_text = s.read_text(encoding="utf-8")
         keep_block = ""
+        old_body = None
         if d.exists():
             old_body, keep_block = _split_backlinks(d.read_text(encoding="utf-8"))
             if _norm(old_body) == _norm(new_text):
                 unchanged += 1
+                if check:
+                    print(f"  unchanged  {s.name}")
                 continue
             replaced.append(s.name)
-        if dry_run:
+        else:
+            added.append(s.name)
+        if check:
+            new_v = _framework_version(new_text) or "?"
+            if old_body is None:
+                print(f"  ADD        {s.name}  (no project copy; framework v{new_v})")
+            else:
+                old_v = _framework_version(old_body) or "?"
+                why = ("stale copy" if old_v != new_v
+                       else "same version, content differs — a project-local edit a refresh would lose")
+                print(f"  REPLACE    {s.name}  (project v{old_v} -> framework v{new_v}; {why})")
+                diff = difflib.unified_diff(_norm(old_body).splitlines(), _norm(new_text).splitlines(),
+                                            fromfile=f"project/{s.name}", tofile=f"framework/{s.name}",
+                                            lineterm="", n=1)
+                for line in diff:
+                    print("      " + line)
+        elif dry_run:
             print(f"  WOULD write {d}")
         else:
             d.parent.mkdir(parents=True, exist_ok=True)
@@ -812,6 +852,13 @@ def seed_framework_docs(bootstrap: Path, wiki_dir: Path, dry_run: bool = False) 
                 out += "\n" + keep_block.rstrip() + "\n"
             d.write_text(out, encoding="utf-8")
         written += 1
+    if check:
+        if written:
+            _warn(f"framework-contract docs at {dst}: a refresh would write {written} "
+                  f"({len(added)} added, {len(replaced)} replaced), {unchanged} unchanged — nothing written (--check)")
+        else:
+            _ok(f"framework-contract docs at {dst}: all {unchanged} match the framework's (--check)")
+        return written, unchanged, replaced
     if replaced:
         _warn(f"framework docs replaced (project copy differed from the framework's): {', '.join(replaced)}")
     _ok(f"framework-contract docs -> {dst}: {written} written, {unchanged} unchanged")
@@ -871,20 +918,42 @@ def phase_docs(args):
         _err(f"no wiki found for {target}: expected .claude/wiki-config.json, llm-wiki/how-to/, or a "
              "notebook root with wiki/ — run Phase B first")
         return 1
+    # --check: report what a refresh would change and write nothing (pack docs and the marker go
+    # through the plain dry-run path; the framework docs get the versioned, diffed report). Exit 1
+    # when anything would change so a script can gate on it.
+    check = getattr(args, "check", False)
+    dry = args.dry_run or check
+    if check:
+        _info(f"--check: reporting what a docs refresh of {how_to.parent} would change — nothing is written")
     _info(f"pack usage docs -> {how_to / 'llm-wiki'}")
-    n = seed_pack_docs(bootstrap, how_to, dry_run=args.dry_run, prune_retired=args.prune_retired)
+    n = seed_pack_docs(bootstrap, how_to, dry_run=dry, prune_retired=args.prune_retired)
+    pending = n
     # framework-contract docs live beside the how-to tree, at <wiki>/project/best-practices/framework/;
-    # the wiki is a sibling of how-to/ for a notebook root and for an in-project llm-wiki/ alike
+    # the wiki is a sibling of how-to/ for a notebook root and for an in-project llm-wiki/ alike.
+    # They are only seeded into a wiki that carries the project/ taxonomy the precedence rule and
+    # the skills assume; a notebook without one (a plain notes wiki with its own folders) is out of
+    # the framework docs' scope and is named rather than given a folder it has no use for (2026-09-08).
     wiki_dir = how_to.parent / "wiki"
-    if wiki_dir.is_dir():
-        seed_framework_docs(bootstrap, wiki_dir, dry_run=args.dry_run)
-    else:
+    if not wiki_dir.is_dir():
         _warn(f"no wiki/ beside {how_to} — framework-contract docs not refreshed")
+    elif not (wiki_dir / "project").is_dir():
+        _warn(f"{wiki_dir} has no project/ taxonomy — framework-contract docs skipped (out of scope for a "
+              "notebook that does not use the framework's folders; re-run Phase B with --force to add them)")
+    else:
+        w, _u, _r = seed_framework_docs(bootstrap, wiki_dir, dry_run=dry, check=check)
+        pending += w
     # the marker is the one framework file at the how-to root; it describes the tree, so it travels with the docs
     marker = bootstrap / "bootstrap" / "seed" / "how-to" / "_FRAMEWORK_MANAGED.md"
     if marker.exists():
-        c, s = _copy_tree(marker.parent, how_to, names=[marker.name], dry_run=args.dry_run)
-        _ok(f"how-to root marker: {'refreshed' if c else 'unchanged'}")
+        c, s = _copy_tree(marker.parent, how_to, names=[marker.name], dry_run=dry)
+        pending += c
+        _ok(f"how-to root marker: {('would refresh' if dry else 'refreshed') if c else 'unchanged'}")
+    if check:
+        if pending:
+            _warn(f"docs check: a refresh would write {pending} file(s) under {how_to.parent} — exit 1")
+            return 1
+        _ok(f"docs check: {how_to.parent} matches the framework — nothing to refresh")
+        return 0
     _ok(f"docs refresh done: {n} page(s) copied into {how_to / 'llm-wiki'}")
     return 0
 
@@ -1390,6 +1459,11 @@ def main():
                              "that now live under how-to/llm-wiki/ (otherwise they are only reported)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print actions without writing")
+    parser.add_argument("--check", action="store_true",
+                        help="With --phase docs only: report what a refresh would change and write nothing. "
+                             "Each framework-contract doc is listed as unchanged / ADD / REPLACE with the "
+                             "framework-version on both sides and a diff (same version but different content "
+                             "= a project-local edit a refresh would lose). Exit 1 when anything would change.")
     args = parser.parse_args()
 
     if args.mode and args.phase:
@@ -1397,6 +1471,9 @@ def main():
         return 1
     if not args.mode and not args.phase:
         _err("one of --mode or --phase is required")
+        return 1
+    if args.check and args.phase != "docs":
+        _err("--check is only meaningful with --phase docs")
         return 1
 
     if args.mode == "tooling":
