@@ -1,10 +1,11 @@
 ---
-title: Framework-managed folder — do not hand-edit
-date: 2026-05-14
-ingested_by: install-wiki
-tier: self
-confidence: high
+title: "How-to folder — framework-managed, one folder per installed package"
+type: how-to
+pack: llm-wiki
+installed_by: install-wiki
+date: 2026-09-08
 ---
+
 # ⚠️ This folder is framework-managed
 
 `llm-wiki/how-to/` (this folder) is shipped and refreshed by the installed packs, and its layout is **one
