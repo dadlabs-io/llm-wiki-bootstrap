@@ -164,5 +164,6 @@ This file is the agent-onboarding doc for llm-wiki-bootstrap. **`llm-wiki-bootst
 copy** — edit directly here. (Historical note: this repo was originally generated from
 `workflows-core/bootstrap/` by `scripts/build-wiki-package.py`; that pipeline
 has been retired and changes now land here directly — see `git log` for the active commit
-history. `manifest.json` and parts of `README.md` still describe the old build-from-workflows-core
-model and need the same correction.)
+history. The build pipeline's `manifest.json` was deleted 2026-09-08 — nothing read it, and the
+install manifests in `_install_tooling.py` are the live lists; `README.md` and
+`bootstrap/INSTALL-INVENTORY.md` were corrected the same day.)

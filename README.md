@@ -1,8 +1,9 @@
 # llm-wiki-bootstrap
 
-Install the LLM-wiki framework on a fresh machine. Ships `/new-wiki`, `/wrap-up`,
-`/wiki-cycle`, `/wiki-search`, `/wiki-update`, and the supporting scripts + templates
-+ seed content. After install, scaffold a per-project wiki with `/new-wiki`.
+Install the LLM-wiki framework on a fresh machine. Ships the wiki skills (`/new-wiki`,
+`/wrap-up`, `/wiki-cycle`, `/wiki-search`, `/wiki-update` and the rest of the pack), the
+`wiki-ingester` agent, the Python helper scripts, the templates and the seed content.
+After install, scaffold a per-project wiki with `/new-wiki`.
 
 **Install this first** — other tools (e.g.
 [agent-builder-bootstrap](https://github.com/dadlabs-io/agent-builder-bootstrap))
@@ -65,6 +66,12 @@ Restart Claude Code after install so it picks up the new skills.
 | `/wiki-search` | Search wiki entries before starting work |
 | `/wiki-cycle` | Research projects: search → read → capture loop |
 
+Those are the five you will use daily. The rest of the pack installs with them — `/wiki`,
+`/wiki-lint`, `/wiki-promote`, `/wiki-refresh`, `/wiki-report`, `/wiki-claims`, `/wiki-verify`,
+`/wiki-rollback`, `/wiki-discover`, `/wiki-list`, `/wiki-init` — and every one has a usage page in
+`bootstrap/wiki-seed/` (also copied into each project's `how-to/llm-wiki/`). The install manifests
+are `TRAVEL_SKILLS`, `TRAVEL_SCRIPTS` and `TRAVEL_AGENTS` in `bootstrap/scripts/_install_tooling.py`.
+
 | Agent | What it's for |
 |---|---|
 | `wiki-ingester` | Spawnable subagent for batch ingestion — `/wiki-cycle` (or any session) delegates queue drains / multi-URL batches to it; each source is read in full and staged for review |
@@ -81,19 +88,23 @@ It asks a few questions (project name, description, Drive prefs) and scaffolds:
 
 ```
 <project>/
-├── .claude/skills/          ← all wiki skills, project-local copy
-├── .claude/wiki-scripts/    ← Python helper scripts
-├── .claude/wiki-templates/
-├── .claude/wiki-config.json
+├── .claude/wiki-config.json ← points at the global skills + scripts (no per-project copy)
 ├── llm-wiki/
 │   ├── README.md
 │   ├── how-to/              ← usage docs, one folder per installed package (llm-wiki/ is the framework's)
 │   ├── best-practices/      ← curated dev best practices
-│   └── wiki/                ← your project's entries
+│   ├── wiki/                ← your project's entries: research/, project/ (with the framework-contract docs), sessions/
+│   └── raw/sessions/        ← session snapshots
 ├── CLAUDE.md
 ├── README.md
 └── .gitignore
 ```
+
+Two variants. `--skills-install bundled` (and every Cursor install) copies the skills, scripts
+and templates into the project's `.claude/` (or `.cursor/`) instead of using the global ones. A
+target that sits inside a notebooks vault (a folder with a `linked-notebooks.json` registry above
+it) is scaffolded flat at the notebook root — `wiki/`, `raw/`, `_inbox/` as direct children, no
+`llm-wiki/` level — and registered there.
 
 For each session afterward: `/wrap-up` at the end.
 
@@ -143,9 +154,11 @@ available in Cursor without a separate install step.
 | Flag | Effect |
 |---|---|
 | _(no flags)_ | Global tooling install — skills + scripts to `~/.claude/` |
+| `-RefreshOnly` | Re-copy skills + scripts + agents from this clone (after `git pull`) |
 | `-Tool cursor` | Global install to `~/.cursor/` instead (Windows only) |
 | `-TargetFolder <path>` | Global install + scaffold a project at `<path>` |
 | `-ProjectName`, `-ProjectDescription` | Skip interactive prompts |
+| `-SkillsInstall bundled` | Copy skills + scripts into the project instead of using the global ones |
 | `-DriveEnabled yes` | Enable Google Drive sync for wiki content |
 
 ## Updating
@@ -153,11 +166,21 @@ available in Cursor without a separate install step.
 ```powershell
 cd C:\github.com\llm-wiki-bootstrap
 git pull
-.\install-wiki.ps1          # idempotent — re-copies skills + scripts
+.\install-wiki.ps1 -RefreshOnly   # idempotent — re-copies skills + scripts + agents
 ```
 
-Or from inside Claude Code: `/new-wiki --sync` rebuilds the project-local skills
-from the current bootstrap source.
+From inside Claude Code, `/new-wiki --sync` refreshes only the global `/new-wiki` skill from
+the recorded bootstrap source; the installer (or `wiki-upgrade.py`) refreshes everything.
+Neither touches a project. To bring a project's framework-managed
+docs (its `how-to/llm-wiki/` pages and the six framework-contract docs) up to date:
+
+```
+python bootstrap/scripts/new-wiki.py --phase docs --check --target-folder <project>   # preview
+python bootstrap/scripts/new-wiki.py --phase docs --target-folder <project>           # refresh
+```
+
+`--all-notebooks` does either for every notebook in a registry. A bundled install refreshes its
+project-local skills by re-running the scaffold against the same folder with `--force`.
 
 ## Next step
 

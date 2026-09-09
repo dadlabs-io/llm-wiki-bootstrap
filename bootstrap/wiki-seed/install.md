@@ -78,10 +78,16 @@ git pull
 .\install-wiki.ps1 -RefreshOnly      # refreshes the global /new-wiki skill
 ```
 
-To refresh an existing per-project install with newer skills/scripts:
+From inside Claude Code, `/new-wiki --sync` refreshes only the global `/new-wiki` skill;
+`-RefreshOnly` (or `wiki-upgrade.py`) refreshes every skill, script and agent. Neither touches a
+project. To refresh a project's framework-managed docs (the `how-to/llm-wiki/` pages and the six
+framework-contract docs), from the bootstrap clone:
 ```
-/new-wiki --sync                  # re-runs Phase B against the current target with --force
+python bootstrap/scripts/new-wiki.py --phase docs --check --target-folder <project>   # preview, writes nothing
+python bootstrap/scripts/new-wiki.py --phase docs --target-folder <project>           # refresh
 ```
+A bundled install (skills copied into the project) refreshes them by re-running the scaffold
+against the same folder with `--force`.
 
 ## Troubleshooting
 
