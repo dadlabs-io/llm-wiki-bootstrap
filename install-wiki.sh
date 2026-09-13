@@ -12,8 +12,11 @@
 #      -> new-wiki.py --mode tooling --tool claude-code
 #   2. A specific project (--target-folder, or pick [2]):
 #      Records this package as the global bootstrap source (Phase A), then
-#      scaffolds the project at --target-folder. The research-vs-development
-#      prompt has been removed; the project path uses a merged taxonomy default.
+#      scaffolds the project at --target-folder. With --skills-install global
+#      (the default) the project uses the tooling in ~/.claude/; if that tooling
+#      is missing or partial it is installed once, first (2026-09-09) — an
+#      installed set is never re-copied here (that is the tooling mode). The
+#      wiki's two halves are chosen with --project-folder / --research-folder.
 #
 # Usage examples (from this package's root):
 #   ./install-wiki.sh                                        # global tooling (default)
@@ -31,6 +34,11 @@
 #   --project-description One-liner (asked if missing, interactive only)
 #   --project-type        research | development -- DEPRECATED prompt removed; still
 #                         accepted for scripted back-compat. TODO: merged taxonomy.
+#   --skills-install      global (default) | bundled
+#   --vault-root          Put the wiki content at <root>/<name>/ instead of <target>/llm-wiki/
+#   --registry            A linked-notebooks.json to register the wiki in (with --vault-root)
+#   --project-folder      stubs (default) | empty | none — wiki/project/ (what we build)
+#   --research-folder     stubs (default) | empty | none — wiki/research/ (what we ingest)
 #   --drive-enabled       yes | no (default no)
 #   --drive-parent-folder Google Drive parent folder name (default "__FOR CLAUDE")
 #   --force / --refresh-only  retained for back-compat (no longer gate a prompt)
@@ -46,6 +54,9 @@ PROJECT_NAME=""
 PROJECT_DESCRIPTION=""
 SKILLS_INSTALL="global"
 VAULT_ROOT=""
+REGISTRY=""
+PROJECT_FOLDER="stubs"
+RESEARCH_FOLDER="stubs"
 DRIVE_ENABLED="no"
 DRIVE_PARENT_FOLDER="__FOR CLAUDE"
 FORCE="no"
@@ -61,6 +72,9 @@ while [[ $# -gt 0 ]]; do
         --project-description) PROJECT_DESCRIPTION="$2"; shift 2;;
         --skills-install) SKILLS_INSTALL="$2"; shift 2;;
         --vault-root) VAULT_ROOT="$2"; shift 2;;
+        --registry) REGISTRY="$2"; shift 2;;
+        --project-folder) PROJECT_FOLDER="$2"; shift 2;;
+        --research-folder) RESEARCH_FOLDER="$2"; shift 2;;
         --drive-enabled) DRIVE_ENABLED="$2"; shift 2;;
         --drive-parent-folder) DRIVE_PARENT_FOLDER="$2"; shift 2;;
         --force) FORCE="yes"; shift;;
@@ -207,11 +221,19 @@ echo "  Tool:           $TOOL"
 echo "  Project name:   $PROJECT_NAME"
 echo "  Target folder:  $TARGET_FOLDER"
 echo "  Description:    $PROJECT_DESCRIPTION"
+echo "  Skills:         $SKILLS_INSTALL"
+echo "  wiki/project:   $PROJECT_FOLDER"
+echo "  wiki/research:  $RESEARCH_FOLDER"
 echo "  Drive ingest:   $DRIVE_ENABLED"
 echo
 
 VAULT_ARGS=()
 if [[ -n "$VAULT_ROOT" ]]; then VAULT_ARGS=(--vault-root "$VAULT_ROOT"); fi
+if [[ -n "$REGISTRY" ]]; then VAULT_ARGS+=(--registry "$REGISTRY"); fi
+# Global mode: Phase A installs only /new-wiki, so on a fresh machine the rest of the
+# tooling is installed once here; an installed set is left alone (never re-copied).
+GLOBAL_ARGS=()
+if [[ "$SKILLS_INSTALL" == "global" ]]; then GLOBAL_ARGS=(--install-global-if-missing); fi
 
 "$PY" "$SCRIPT" \
     --phase B \
@@ -220,7 +242,10 @@ if [[ -n "$VAULT_ROOT" ]]; then VAULT_ARGS=(--vault-root "$VAULT_ROOT"); fi
     --project-description "$PROJECT_DESCRIPTION" \
     --target-folder "$TARGET_FOLDER" \
     --skills-install "$SKILLS_INSTALL" \
+    --project-folder "$PROJECT_FOLDER" \
+    --research-folder "$RESEARCH_FOLDER" \
     "${VAULT_ARGS[@]}" \
+    "${GLOBAL_ARGS[@]}" \
     --bootstrap-source "$HERE" \
     --drive-enabled "$DRIVE_ENABLED" \
     --drive-parent-folder "$DRIVE_PARENT_FOLDER"

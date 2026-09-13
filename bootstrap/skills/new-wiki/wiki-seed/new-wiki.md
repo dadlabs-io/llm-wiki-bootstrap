@@ -4,19 +4,23 @@ type: how-to
 artifact: skill
 name: new-wiki
 installed_by: install-wiki
-date: 2026-07-31
+date: 2026-09-09
 ---
 
 # new-wiki — skill
 
-Scaffolds a new project with the whole framework wired up. It walks you through a short interview and then builds the folder layout, installs the skills and helper scripts, seeds the documentation, and writes the config that ties it together — so a fresh project can ingest research and capture its own decisions from the first session. Every project gets the same merged wiki; there is no research-versus-development choice to make.
+Scaffolds a new project with the whole framework wired up. It first checks what the machine already has, then walks you through a short interview and builds the folder layout, seeds the documentation, and writes the config that ties it together — so a fresh project can ingest research and capture its own decisions from the first session. Every project gets the same merged wiki; there is no research-versus-development choice to make, but each half of the wiki is opt-in.
 
 **Trigger:** */new-wiki [name]*, plus natural phrasings like "new project", "set up a new wiki", or "bootstrap a project".
 
-**Input / Output:** consumes your answers to the interview — which tool (Claude Code or Cursor), project name and one-line description, target folder, whether skills install globally or bundle into the project, whether the wiki content lives in a separate vault or inside the project, whether to ingest from a Google Drive folder, and whether new entries need your review before being filed and published. Produces the project folder with a git repo, a `.claude/` (or `.cursor/`) directory holding the skills, scripts, templates and `wiki-config.json`, and an `llm-wiki/` tree containing the README, seeded `how-to/` and `best-practices/` docs, the wiki itself (`research/`, `project/`, `sessions/`), and `raw/sessions/`. It also renders a `CLAUDE.md`, `README.md`, and `.gitignore`, and walks you through Google Drive OAuth if you asked for Drive ingest. The Cursor variant additionally generates `.cursor/rules/*.mdc` so Cursor's agent picks the skills up on its own.
+**Before it asks anything** it checks the global tooling (the wiki skills, helper scripts and agent in your home folder) against the bootstrap clone and reports one of four states: installed, stale, partial or missing. When the tooling is installed — even if a few files differ from the clone — the project simply uses it and nothing is re-copied; refreshing an installed set is a separate command. Only when the tooling is partial or missing does it ask whether to install it once now (and use it) or bundle a private copy into the project.
+
+**Input / Output:** consumes your answers to a two-round interview — project name, then whether new entries need your review before being filed and published; then the description, whether you want a `project/` folder (what you build; with its default subfolders, empty, or not at all), whether you want a `research/` folder (what you ingest; the same three choices), and where the wiki content lives (a registered notebook in your notebooks vault, or inside the project). Drive ingest is asked only when Drive is already enabled on the machine. Everything else — the tool, the target folder, the skills line — is shown in a plan summary you confirm before anything runs, and any line can be changed by saying so. Produces the project folder with a git repo and a `.claude/wiki-config.json` (plus the skills and scripts themselves only in bundled mode), and the wiki root containing the README, the seeded `how-to/` and `best-practices/` docs, the wiki folders you chose (`sessions/` is always created), the framework-contract docs when `project/` exists, and `raw/sessions/`. It also renders a `CLAUDE.md`, `README.md`, and `.gitignore` for the project, and walks you through Google Drive OAuth if you asked for Drive ingest. The Cursor variant always bundles and additionally generates `.cursor/rules/*.mdc` so Cursor's agent picks the skills up on its own.
+
+The default `project/` stubs are components, decisions, architecture, patterns, troubleshooting and best-practices; the default `research/` stubs are active, long-term, tooling, best-practices and interesting-docs. An empty half gains subfolders as content arrives: `/wiki-update` proposes one on the first ingest, `/wrap-up` creates the category it files into. A wiki with neither half is a plain notes notebook.
 
 The review-gate answer sets two independent settings — one for whether candidate entries are proposed to you before filing, one for whether staged entries are promoted without asking. Either can be flipped later.
 
 **Works with:** the project it creates is ready for [`wiki-update`](./wiki-update.md) and [`wiki-cycle`](./wiki-cycle.md) to bring research in, [`wrap-up`](./wrap-up.md) to capture session work, and [`wiki-search`](./wiki-search.md) to look any of it back up.
 
-**Note:** this needs the one-time machine install (`install-wiki.ps1` on Windows, `install-wiki.sh` on Mac and Linux) to have run first — that is what records where the bootstrap source lives. Re-run `/new-wiki --sync` after pulling updates to refresh the global skill.
+**Note:** this needs the one-time machine install (`install-wiki.ps1` on Windows, `install-wiki.sh` on Mac and Linux) to have run first — that is what records where the bootstrap source lives. Re-run `/new-wiki --sync` after pulling updates to refresh this skill; `install-wiki.ps1 -RefreshOnly` refreshes the whole global tooling.

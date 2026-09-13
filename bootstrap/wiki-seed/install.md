@@ -3,7 +3,7 @@ title: "Installing on a fresh machine — llm-wiki"
 type: how-to
 pack: llm-wiki
 installed_by: install-wiki
-date: 2026-09-08
+date: 2026-09-09
 ---
 
 # Installing on a fresh machine
@@ -27,11 +27,10 @@ cd ~/llm-wiki-bootstrap
 ```
 
 That single command:
-1. Installs `/new-wiki` globally at `~/.claude/skills/new-wiki/` (if not already there)
-2. Asks 3 conversational questions (project type, name, description)
-3. Scaffolds the new project (skills, scripts, llm-wiki/, CLAUDE.md, etc.)
-4. (Development projects) Installs the agentmemory MCP server and wires it
-5. (Optional) Walks through Google Drive OAuth if `-DriveEnabled yes`
+1. Records where this clone lives and installs `/new-wiki` globally at `~/.claude/skills/new-wiki/`
+2. Installs the rest of the global tooling (every wiki skill, script and agent) **only if it is missing or partial** — an installed set is left alone, never re-copied
+3. Asks for anything not passed (name, description) and scaffolds the project (`llm-wiki/`, `CLAUDE.md`, config); `-ProjectFolder` / `-ResearchFolder` (`stubs` | `empty` | `none`, default `stubs`) choose the wiki's two halves
+4. (Optional) Walks through Google Drive OAuth if `-DriveEnabled yes`
 
 ## Two-step alternative
 
@@ -45,30 +44,45 @@ If you want the global install first, then create projects separately:
 > /new-wiki
 ```
 
-`/new-wiki` is a conversational skill — it'll ask all 6 questions (tool, type, name, description, target, Drive prefs) and scaffold the project.
+`/new-wiki` is a conversational skill. It checks the global tooling first (use it as is; install it once if missing; never re-copy), then asks two rounds of questions — name and review gate; description, a `project/` folder (with stubs, empty, or none), a `research/` folder (the same three), and where the wiki lives — shows the plan, and scaffolds on your go.
 
 ## What gets installed where
 
 **Globally (per machine):**
-- `~/.claude/skills/new-wiki/` — the creator skill
+- `~/.claude/skills/` — every wiki skill (the manifest is `TRAVEL_SKILLS` in the bootstrap's `_install_tooling.py`)
+- `~/.claude/wiki-scripts/` — the Python helpers behind them
+- `~/.claude/agents/` — the `wiki-ingester` agent
 - `~/.claude/wiki-config.json` — records where the bootstrap clone lives
 
 **Per project (when you scaffold one):**
-- `<project>/.claude/skills/` — 14 skills
-- `<project>/.claude/wiki-scripts/` — 15 Python helpers
-- `<project>/.claude/wiki-templates/` — templates
-- `<project>/.claude/wiki-config.json` — per-project config (vault_root, wiki_topic)
-- `<project>/.claude/settings.json` — agentmemory MCP wiring (dev only)
-- `<project>/llm-wiki/{README, how-to/, best-practices/, wiki/}/`
+- `<project>/.claude/wiki-config.json` — per-project config: which tooling it uses, where the wiki is, the two folder answers
 - `<project>/CLAUDE.md`, `README.md`, `.gitignore`
+- the wiki root — `<project>/llm-wiki/` or a registered notebook in your notebooks vault — with `README`, `how-to/`, `best-practices/`, `wiki/` (the folders you chose; `sessions/` always) and `raw/sessions/`
+- only with `-SkillsInstall bundled`: `<project>/.claude/skills/`, `wiki-scripts/`, `wiki-templates/` (a private copy of the tooling)
 
-For Cursor users: `.cursor/` replaces `.claude/`, and `.cursor/rules/*.mdc` are generated from the SKILL.md files so Cursor's agent picks them up natively.
+For Cursor users: `.cursor/` replaces `.claude/`, the skills are always bundled, and `.cursor/rules/*.mdc` are generated from the SKILL.md files so Cursor's agent picks them up natively.
 
 ## Prerequisites
 
 - Python 3.10+
 - Git
-- Node.js (only if you'll use development projects with agentmemory)
+- Node.js + `qmd` (`npm i -g @tobilu/qmd`) for wiki search
+
+### Optional: a GPU runtime for `qmd query` (search)
+
+Wiki search runs on [qmd](https://github.com/tobil/qmd) (`npm i -g @tobilu/qmd`), which bundles three small models and runs them on the machine through node-llama-cpp. Keyword search (`qmd search`) needs no model. The hybrid mode the skills use by default (`qmd query`) does, and it needs a GPU backend: on a Windows machine with an NVIDIA GPU install the CUDA runtime once, at machine level (not per project):
+
+```powershell
+winget install --id Nvidia.CUDA --version 13.2 --exact --accept-package-agreements --accept-source-agreements --override "-s cudart_13.2 cublas_13.2"
+```
+
+That installs only the runtime library and cuBLAS (no compiler, no driver; CUDA 13.1 or newer is what node-llama-cpp's prebuilt binary needs). Open a new terminal afterwards, then verify from qmd's package folder:
+
+```bash
+(cd "$(npm root -g)/@tobilu/qmd" && npx --no-install node-llama-cpp inspect gpu) | grep -E "^CUDA:"   # must print: CUDA: available
+```
+
+Without it node-llama-cpp falls back to Vulkan, where token generation can hang indefinitely at 100% CPU (seen 2026-09-12 on an RTX 4070 + Intel iGPU laptop). The `/wiki-search` skill runs this check before the first query and stops if it fails; it does not fall back. On a machine with no NVIDIA GPU, use `qmd search`.
 
 ## Updating
 
@@ -92,6 +106,6 @@ against the same folder with `--force`.
 ## Troubleshooting
 
 - **`gh` / `git clone` fails with auth** — repo is public now, no auth needed; check your network
-- **`npx` not found** — install Node.js; the dev path needs it for agentmemory
+- **`/new-wiki` says the global tooling is missing or partial** — run `.\install-wiki.ps1` (no flags) once, or let the skill install it; `python <clone>/bootstrap/scripts/new-wiki.py --mode status` shows what is installed, stale or missing
 - **Drive OAuth fails** — see [`drive-setup`](./drive-setup.md)
 - **`/new-wiki` doesn't trigger in Claude Code** — restart Claude Code after install so it picks up the new global skill

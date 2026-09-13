@@ -27,6 +27,22 @@ it is no longer generated from `workflows-core`.
 
 Python 3.10+, Git. No Node.js required for the global install.
 
+### Optional: a GPU runtime for `qmd query` (search)
+
+Wiki search runs on [qmd](https://github.com/tobil/qmd) (`npm i -g @tobilu/qmd`), which bundles three small models and runs them on the machine through node-llama-cpp. Keyword search (`qmd search`) needs no model. The hybrid mode the skills use by default (`qmd query`) does, and it needs a GPU backend: on a Windows machine with an NVIDIA GPU install the CUDA runtime once, at machine level (not per project):
+
+```powershell
+winget install --id Nvidia.CUDA --version 13.2 --exact --accept-package-agreements --accept-source-agreements --override "-s cudart_13.2 cublas_13.2"
+```
+
+That installs only the runtime library and cuBLAS (no compiler, no driver; CUDA 13.1 or newer is what node-llama-cpp's prebuilt binary needs). Open a new terminal afterwards, then verify from qmd's package folder:
+
+```bash
+(cd "$(npm root -g)/@tobilu/qmd" && npx --no-install node-llama-cpp inspect gpu) | grep -E "^CUDA:"   # must print: CUDA: available
+```
+
+Without it node-llama-cpp falls back to Vulkan, where token generation can hang indefinitely at 100% CPU (seen 2026-09-12 on an RTX 4070 + Intel iGPU laptop). The `/wiki-search` skill runs this check before the first query and stops if it fails; it does not fall back. On a machine with no NVIDIA GPU, use `qmd search`.
+
 ---
 
 <h2 id="claude-code">
@@ -84,7 +100,10 @@ After the global install, open any project folder in Claude Code and run:
 /new-wiki
 ```
 
-It asks a few questions (project name, description, Drive prefs) and scaffolds:
+It checks the global tooling first (uses it as is; installs it once if missing; never
+re-copies an installed set), then asks two rounds of questions — name and review gate; description,
+a `project/` folder (with stubs, empty, or none), a `research/` folder (the same three), and where
+the wiki lives — and scaffolds:
 
 ```
 <project>/
@@ -156,8 +175,10 @@ available in Cursor without a separate install step.
 | _(no flags)_ | Global tooling install — skills + scripts to `~/.claude/` |
 | `-RefreshOnly` | Re-copy skills + scripts + agents from this clone (after `git pull`) |
 | `-Tool cursor` | Global install to `~/.cursor/` instead (Windows only) |
-| `-TargetFolder <path>` | Global install + scaffold a project at `<path>` |
+| `-TargetFolder <path>` | Global install + scaffold a project at `<path>` (the full tooling is installed only if missing or partial) |
 | `-ProjectName`, `-ProjectDescription` | Skip interactive prompts |
+| `-ProjectFolder`, `-ResearchFolder` | `stubs` (default) / `empty` / `none` — the wiki's two halves |
+| `-VaultRoot <dir>`, `-Registry <linked-notebooks.json>` | Put the wiki in a notebooks vault and register it there, instead of `<project>/llm-wiki/` |
 | `-SkillsInstall bundled` | Copy skills + scripts into the project instead of using the global ones |
 | `-DriveEnabled yes` | Enable Google Drive sync for wiki content |
 
@@ -171,7 +192,8 @@ git pull
 
 From inside Claude Code, `/new-wiki --sync` refreshes only the global `/new-wiki` skill from
 the recorded bootstrap source; the installer (or `wiki-upgrade.py`) refreshes everything.
-Neither touches a project. To bring a project's framework-managed
+Neither touches a project. `python bootstrap/scripts/new-wiki.py --mode status` says whether a
+refresh is due (installed / stale / partial / missing, with the differing files named). To bring a project's framework-managed
 docs (its `how-to/llm-wiki/` pages and the six framework-contract docs) up to date:
 
 ```

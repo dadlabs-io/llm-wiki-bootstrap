@@ -78,14 +78,55 @@ def future_label(days: int = 90) -> str:
 #   research/  — semantic memory (external): what we ingested
 #   project/   — semantic memory (internal): what we built
 #   sessions/  — episodic memory (per-persona logs, created on demand)
-MERGED_TAXONOMY = [
-    "research/active", "research/long-term", "research/tooling",
-    "research/best-practices", "research/implementation", "research/skills",
-    "research/orchestration", "research/interesting-docs",
+#
+# Two halves, offered separately by /new-wiki (2026-09-09): each is created with
+# its default stubs, as an empty root, or not at all (new-wiki.py
+# --project-folder / --research-folder stubs|empty|none). sessions/ is always
+# created — /wrap-up writes there. A wiki with neither half is a plain notes
+# notebook (maggies-computer-notes is one); the framework docs skip it.
+PROJECT_TAXONOMY = [
     "project/components", "project/decisions", "project/architecture",
     "project/patterns", "project/troubleshooting", "project/best-practices",
-    "sessions",
 ]
+# The generic research stubs. implementation/, skills/ and orchestration/ were
+# the agentic-design notebook's topic map frozen into every new wiki; dropped
+# from the default set 2026-09-09 (still recognised below so existing wikis and
+# the bare-leaf auto-prefix keep working).
+RESEARCH_TAXONOMY = [
+    "research/active", "research/long-term", "research/tooling",
+    "research/best-practices", "research/interesting-docs",
+]
+LEGACY_RESEARCH_TAXONOMY = [
+    "research/implementation", "research/skills", "research/orchestration",
+]
+# What a default scaffold creates: both halves with stubs, plus sessions/.
+SCAFFOLD_TAXONOMY = RESEARCH_TAXONOMY + PROJECT_TAXONOMY + ["sessions"]
+# Every path the folder guards recognise (wiki-update.py validate_folder,
+# wiki-promote.py _normalize_target_folder): the scaffold set plus the legacy
+# research folders existing wikis still carry.
+MERGED_TAXONOMY = RESEARCH_TAXONOMY + LEGACY_RESEARCH_TAXONOMY + PROJECT_TAXONOMY + ["sessions"]
+
+FOLDER_CHOICES = ("stubs", "empty", "none")
+
+
+def taxonomy_for(project_folder: str = "stubs", research_folder: str = "stubs") -> list:
+    """The folders a scaffold creates for a pair of /new-wiki answers. Each answer
+    is 'stubs' (the half with its default subfolders), 'empty' (the half's root
+    only — subfolders appear on first use) or 'none'. sessions/ is always last."""
+    for label, value in (("project_folder", project_folder), ("research_folder", research_folder)):
+        if value not in FOLDER_CHOICES:
+            raise ValueError(f"{label} must be one of {FOLDER_CHOICES}, got {value!r}")
+    folders = []
+    if research_folder == "stubs":
+        folders += RESEARCH_TAXONOMY
+    elif research_folder == "empty":
+        folders.append("research")
+    if project_folder == "stubs":
+        folders += PROJECT_TAXONOMY
+    elif project_folder == "empty":
+        folders.append("project")
+    folders.append("sessions")
+    return folders
 
 
 # ---------- sessions/ classification (working + episodic memory) ----------

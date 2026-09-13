@@ -35,7 +35,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, SCAFFOLD_TAXONOMY, future_label as _future_label  # noqa: E402
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -252,8 +252,9 @@ def init_topic(vault_root, topic, description):
     for sub in subdirs:
         (topic_root / sub).mkdir(parents=True, exist_ok=True)
     # Canonical wiki taxonomy — shared with new-wiki.py via _wiki_config so the two
-    # scaffolders produce the SAME structure (Fix P5/P7). project/* + research/* + sessions.
-    for sub in MERGED_TAXONOMY:
+    # scaffolders produce the SAME structure (Fix P5/P7). project/* + research/* + sessions
+    # (the default stubs; the legacy research folders are recognised but not created, 2026-09-09).
+    for sub in SCAFFOLD_TAXONOMY:
         (topic_root / "wiki" / sub).mkdir(parents=True, exist_ok=True)
     print(f"Created topic structure: {topic_root}")
 

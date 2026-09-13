@@ -20,11 +20,21 @@ A retriever optimises **local** relevance. It answers "which entries mention X?"
 
 If a holistic question arrives here anyway, say which tool it wants and offer to run it. Do not answer it from the top five hits. (Source: Taskesen's lookup-vs-holistic distinction, agentic-design `research/orchestration/`, handed over by the agent-builder session 2026-09-06.)
 
+## CUDA preflight — before the first `qmd query`
+
+**CUDA preflight (2026-09-12).** `qmd query` runs three bundled models in-process through node-llama-cpp. Without a CUDA runtime it falls back to Vulkan, where token generation never returns on this laptop (every never-seen query hung at 100% CPU on all cores; CPU-only was minutes per query). Before the first `qmd query` of a session run:
+
+```bash
+(cd "$(npm root -g)/@tobilu/qmd" && npx --no-install node-llama-cpp inspect gpu) | grep -E "^CUDA:"   # must print `CUDA: available`
+```
+
+If it prints anything else, **stop and report it** — do not fall back to `qmd search`, a cloud model, or CPU mode and carry on. The known fix is the CUDA 13.2 runtime (`winget install --id Nvidia.CUDA --version 13.2 --exact --override "-s cudart_13.2 cublas_13.2"`; node-llama-cpp's prebuilt binary needs 13.1+), and a shell opened before that install lacks the CUDA PATH until restarted. Always run the query under a timeout (`timeout 120 qmd query "..."`) so a regression surfaces as an error, never a hang. Parallel workers (ingest batches) use `qmd search` (keyword, no model): four processes loading ~2 GB of models each do not fit one 8 GB GPU.
+
 ## Three search modes
 
 | Mode | Command | When to use |
 |---|---|---|
-| **Hybrid + rerank** (recommended) | `qmd query "<query>"` | Best quality. Combines keyword + semantic + reranking. Use by default. |
+| **Hybrid + rerank** (recommended) | `timeout 120 qmd query "<query>"` | Best quality. Combines keyword + semantic + reranking with qmd's bundled models on the GPU. Use by default — after the CUDA preflight below, and always under a timeout. |
 | **Keyword only** | `qmd search "<query>"` | Fast, no LLM. Good for exact terms, file names, specific phrases. |
 | **Semantic only** | `qmd vsearch "<query>"` | When you're searching by concept, not specific words ("how do agents handle stale knowledge"). |
 
@@ -36,8 +46,8 @@ If a holistic question arrives here anyway, say which tool it wants and offer to
 ## Run
 
 ```bash
-# Recommended — hybrid search
-qmd query "context engineering for agents"
+# Recommended — hybrid search (run the CUDA preflight first; timeout turns a regression into an error, not a hang)
+timeout 120 qmd query "context engineering for agents"
 
 # Keyword search (fast, no LLM)
 qmd search "silent poisoning mem0"

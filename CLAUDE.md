@@ -23,62 +23,62 @@ The user almost certainly wants one of three things:
 
 ### 1. Set up the framework + scaffold a new project (one shot)
 
-Most common case.
+Most common case. The interview is the same one `/new-wiki` runs — read
+`bootstrap/skills/new-wiki/SKILL.md` for the contract; this is the summary.
 
-**STOP — ask the user explicitly for each of these BEFORE running anything. Do NOT guess from the folder name or other context. The user's answer is the source of truth.**
+**Step 0 — state check, before any question.** Run `python bootstrap/scripts/new-wiki.py --mode status`
+(PowerShell tool on Windows). It writes nothing and reports the global tooling as `installed`, `stale`,
+`partial` or `missing`. Installed or stale → the project will use it and nothing is re-copied (a stale set is
+named in the plan summary with `-RefreshOnly` as the fix, never refreshed here). Partial or missing → the
+scaffold installs it once (the installer wrapper passes `--install-global-if-missing`) — say so in the plan.
+Never ask "global or bundled" when the state is installed or stale; that reinstall-every-time question is
+what the 2026-09-09 rewrite removed.
 
-Required discovery, in order. **ALL FIVE are mandatory — you must ask the user for each, even when you can plausibly default. Showing a default is fine; silently using the default is not. Every question gets explicit user confirmation.**
+**Use the `AskUserQuestion` tool with selectable options — do NOT ask via plain text.** Concrete,
+fully-resolved options only (never `<slug>` placeholders); `(Recommended)` on the default; don't add an
+`Other` option, the tool provides it. The name is asked first because everything else is built from it.
 
-**Use the `AskUserQuestion` tool with selectable options — do NOT ask the user via plain-text questions.** The tool's UI gives the user clear pre-built choices (radio buttons for type/drive, an "Other" escape hatch for free text, recommended-option highlighting). Plain-text Q&A loses that, makes the user retype the same answers every cycle, and is harder to scan.
+- **Round 1 (2 questions)**: project name (slug — slugify what the user said, `new-project` if nothing);
+  review gate (`Yes — review before filing and publishing (Recommended)` / `No — automatic`).
+- **Round 2 (4 questions, built from the slug)**: description (`Wiki for <slug> (Recommended)` + one plain
+  alternate); **project folder?** (`Yes, with the default stubs (Recommended)` / `Yes, empty` / `No`);
+  **research folder?** (the same three); where the wiki lives (`Notebook in the vault —
+  C:\github.com\project-notebooks\notebooks\<slug> (Recommended)` / `Inside the project —
+  C:\github.com\<slug>\llm-wiki`).
+- **Round 3 (only when needed)**: skills — only when the state is partial or missing (`Install the global
+  tooling now and use it (Recommended)` / `Bundle into this project`); Drive — only when
+  `~/.claude/wiki-config.json` has `drive.enabled: true`.
 
-AskUserQuestion caps at 4 questions per call. Because **target folder and description both depend on the project name**, ask the name FIRST in its own round, then everything else with the name resolved:
+Not asked, shown in the plan summary for override: the tool (`cursor` if a `.cursor/` folder is present,
+else `claude-code`), the target folder (`C:\github.com\<slug>`, or the cwd when its leaf name equals
+the slug), the skills line, the Drive line. Show the plan (with the folder tree the answers produce) and
+wait for "yes" / "go" / "create".
 
-- **Round 1 (1 question)**: Project name (slug). Default: slugify whatever the user said in their message; if they said nothing concrete, default to `new-project`. Always show as a concrete value with an `Other (type your own)` option.
-- **Round 2 (4 questions)**: Target folder, project type, Drive ingest, Description. All four now use the Round-1 slug to build concrete defaults (`C:\github.com\<slug>`, `Development wiki for <slug>`, etc.).
-
-Do NOT compress this into one round with placeholder names like "use a different name under C:\github.com\" — that leaves the user with nowhere to type the actual name and produces broken paths.
-
-For each question, supply 2–4 **concrete, fully-resolved options** — never strategies, meta-instructions, or placeholders like `<slug>` or "use the folder leaf name as the slug". If you don't have a concrete value yet, resolve one BEFORE building the picker:
-
-- **Before building the picker, pick a working slug.** If the user gave a name in their message, slugify it. If they didn't, use `new-project` as the working slug and let them override via "Other". Never show `<slug>`, `<name>`, or `<new-project>` as literal placeholders in option labels — those leak through to the installer and break paths.
-- Use `(Recommended)` suffix on the suggested default so it's selectable in one click.
-
-**Don't manually add `Other` to the options list — the AskUserQuestion tool provides `Other` automatically with a free-text input.** Selecting `Other` immediately prompts the user to type their answer. Do NOT write custom labels like `"Use a different name under C:\github.com\"` to simulate this — those are regular labels that don't trigger free-text and leave the user stuck.
-
-Examples (assume the user said "test-project" so the resolved slug is `test-project`). List only the concrete recommended values — the tool adds `Other` for you:
-
-Round 1:
-- Project name (slug): `test-project` (Recommended)
-
-Round 2 (built using the slug from Round 1):
-- Target folder: `C:\github.com\test-project` (Recommended). On macOS/Linux substitute `~/proj/test-project`.
-- Project type: `Research` / `Development (Recommended for code projects)` — never default; let user pick
-- Drive: `No (Recommended)` / `Yes`
-- Description (Round 2): list **only the description that matches the chosen project type** plus one neutral alternate. Do NOT list the opposite type. If the user picked Development → list `Development wiki for test-project` (Recommended) and `Wiki for test-project` (plain). If they picked Research → list `Research wiki for test-project` (Recommended) and `Wiki for test-project` (plain). Mixing types is misleading and lets the user accidentally pick a contradictory description. The user can always free-text via the auto-added `Other` for anything else.
-
-Round 2 (description) **must still fire even when the user accepted all Round-1 defaults**. Always show the description picker — never silently use the default. The default's wording always reflects the project type chosen in Round 1, and the alternatives never contradict that type.
-
-1. **Target folder** — where the new project goes (e.g., `C:\github.com\my-project`). If they gave it in their message, confirm by repeating it back.
-2. **Project type** — `research` or `development`. This is the most important call and the easiest to guess wrong. Ask explicitly: "Is this a research project (curating external content) or a development project (building code)?" Never default.
-3. **Project name** — slugified (lowercase, dashes). Propose a default from the target folder leaf, but **always show it and ask the user to confirm or override**. Do NOT silently use the default.
-4. **Description** — one-liner. Propose a default of `"Wiki for <name>"`, but **always show it and ask the user to confirm or override**. Do NOT silently use the default or leave it empty. A non-empty description is also required to avoid argument-bridge bugs when invoking the installer (see TOOL CHOICE below).
-5. **Drive ingest** — yes/no. Defaults to no. Ask only if it might apply.
-
-Once you have all the answers, run:
+Once confirmed, run:
 
 **Windows:**
 ```powershell
-.\install-wiki.ps1 -TargetFolder C:\github.com\<their-new-project> `
-    -ProjectType <research|development> -ProjectName <slug> `
-    -ProjectDescription "<one-liner>" -DriveEnabled <yes|no>
+.\install-wiki.ps1 -TargetFolder C:\github.com\<slug> `
+    -ProjectName <slug> -ProjectDescription "<one-liner>" `
+    -ProjectFolder <stubs|empty|none> -ResearchFolder <stubs|empty|none> `
+    -VaultRoot C:\github.com\project-notebooks\notebooks `
+    -Registry C:\github.com\project-notebooks\linked-notebooks.json `   # omit both for an in-project wiki
+    -DriveEnabled <yes|no>
 ```
 
 **Mac/Linux:**
 ```bash
-./install-wiki.sh --target-folder ~/proj/<their-new-project> \
-    --project-type <research|development> --project-name <slug> \
-    --project-description "<one-liner>" --drive-enabled <yes|no>
+./install-wiki.sh --target-folder ~/proj/<slug> \
+    --project-name <slug> --project-description "<one-liner>" \
+    --project-folder <stubs|empty|none> --research-folder <stubs|empty|none> \
+    --vault-root ~/proj/project-notebooks/notebooks \
+    --registry ~/proj/project-notebooks/linked-notebooks.json \
+    --drive-enabled <yes|no>
 ```
+
+(The review gate is a Phase B flag pair — `--confirm-before-create` / `--confirm-before-promote` — the
+wrappers don't expose; for a non-default gate call `python bootstrap/scripts/new-wiki.py --phase B ...`
+directly with the flag list in the skill. Both default to `true`.)
 
 Pass every value the user gave you — don't drop into the PowerShell `Read-Host` fallback if you can avoid it (it works, but it bypasses your role as the conversational layer).
 
@@ -87,7 +87,7 @@ Pass every value the user gave you — don't drop into the PowerShell `Read-Host
 - If the PowerShell tool gets denied by an auto-classifier, **ask the user to run the command themselves** in their terminal. Don't fall back to Bash → PowerShell.
 - Always pass a non-empty `-ProjectDescription` (default to `"Wiki for <name>"` if the user didn't provide one) so the bridge problem can't bite even if someone disregards the above.
 
-This installs the `/new-wiki` skill globally AND scaffolds the target project. After it completes, `/new-wiki` is available from any Claude Code session on this machine.
+This installs the `/new-wiki` skill globally (and the rest of the tooling if it was missing) AND scaffolds the target project. After it completes, `/new-wiki` is available from any Claude Code session on this machine.
 
 ### 2. Just the global install (no project yet)
 
@@ -167,3 +167,17 @@ has been retired and changes now land here directly — see `git log` for the ac
 history. The build pipeline's `manifest.json` was deleted 2026-09-08 — nothing read it, and the
 install manifests in `_install_tooling.py` are the live lists; `README.md` and
 `bootstrap/INSTALL-INVENTORY.md` were corrected the same day.)
+
+## Discord channel (this project's bot)
+
+This project has its own Discord bot (the `llm-wiki` application). Its plugin state lives in
+`~/.claude/channels/discord-llm-wiki/` — set by `DISCORD_STATE_DIR` in `.claude/settings.local.json`, not
+the plugin's default `~/.claude/channels/discord/` (that folder is the agent-builder bot's). The `/discord:access`
+skill hardcodes the default path: when running it here (`pair`, `policy`, `group add`, …), read and write
+`~/.claude/channels/discord-llm-wiki/access.json` and `.../approved/` instead. Launch with
+`claude --channels plugin:discord@claude-plugins-official` from this folder. The shared channel is `#agent-chat`
+(id 1548480711298777199); answer only messages addressed to this bot and ignore the rest silently. Other
+project bots reach this session only by @mentioning it (the patched plugin, `tools/discord-plugin/` in
+agent-builder-bootstrap); when answering another bot, @mention it only if you need an answer back — an
+unmentioned reply ends the exchange. Setup notes:
+the agent-builder-bootstrap wiki, `how-to/build-an-agent-and-connect-it-to-discord.md`.

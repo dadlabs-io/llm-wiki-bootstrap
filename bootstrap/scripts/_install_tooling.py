@@ -280,6 +280,111 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
     }
 
 
+def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
+                          scripts_dest: Path = None, agents_dest: Path = None) -> dict:
+    """What the global claude-code tooling looks like right now, against the
+    manifests: which skills / scripts / agents are installed, missing, or
+    stale (the installed copy differs from the package copy). Read-only.
+
+    Used by /new-wiki before it asks the global-vs-bundled question (so the
+    question is driven by the machine's state, not asked blind) and by Phase B
+    as the guard that refuses to point a project at an empty global folder.
+
+    A skill is compared with its {{WIKI_SCRIPTS_DIR}} placeholder substituted
+    the way install-skill.py writes it; scripts and agents are byte copies.
+    """
+    bootstrap = Path(bootstrap_source)
+    pkg = bootstrap / "bootstrap"
+    skills_src, scripts_src, agents_src = pkg / "skills", pkg / "scripts", pkg / "agents"
+    skills_dest = Path(skills_dest) if skills_dest else CC_GLOBAL_SKILLS_DIR
+    scripts_dest = Path(scripts_dest) if scripts_dest else CC_GLOBAL_WIKI_SCRIPTS_DIR
+    agents_dest = Path(agents_dest) if agents_dest else CC_GLOBAL_AGENTS_DIR
+    scripts_value = scripts_dest.expanduser().resolve().as_posix()
+
+    def _read(path: Path):
+        try:
+            return path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return None
+
+    missing_skills, stale_skills = [], []
+    for skill in TRAVEL_SKILLS:
+        src_md = skills_src / skill / "SKILL.md"
+        dst_md = skills_dest / skill / "SKILL.md"
+        if not dst_md.is_file():
+            missing_skills.append(skill)
+            continue
+        src_text, dst_text = _read(src_md), _read(dst_md)
+        if src_text is None:
+            continue  # package copy missing — the install would warn, not this check
+        if dst_text is None or src_text.replace("{{WIKI_SCRIPTS_DIR}}", scripts_value) != dst_text:
+            stale_skills.append(skill)
+
+    missing_scripts, stale_scripts = [], []
+    script_names = [n for n in TRAVEL_SCRIPTS + TOOLING_HELPER_SCRIPTS if (scripts_src / n).is_file()]
+    for name in script_names:
+        src, dst = scripts_src / name, scripts_dest / name
+        if not dst.is_file():
+            missing_scripts.append(name)
+        elif src.read_bytes() != dst.read_bytes():
+            stale_scripts.append(name)
+
+    missing_agents, stale_agents = [], []
+    for agent in TRAVEL_AGENTS:
+        src, dst = agents_src / agent / "AGENT.md", agents_dest / f"{agent}.md"
+        if not src.is_file():
+            continue
+        if not dst.is_file():
+            missing_agents.append(agent)
+        elif src.read_bytes() != dst.read_bytes():
+            stale_agents.append(agent)
+
+    missing = bool(missing_skills or missing_scripts or missing_agents)
+    stale = bool(stale_skills or stale_scripts or stale_agents)
+    if len(missing_skills) == len(TRAVEL_SKILLS):
+        state = "missing"
+    elif missing:
+        state = "partial"
+    elif stale:
+        state = "stale"
+    else:
+        state = "installed"
+    return {
+        "bootstrap": str(bootstrap),
+        "skills_dest": str(skills_dest),
+        "scripts_dest": str(scripts_dest),
+        "agents_dest": str(agents_dest),
+        "skills_expected": len(TRAVEL_SKILLS),
+        "scripts_expected": len(script_names),  # travel scripts + the helpers they import
+        "agents_expected": len(TRAVEL_AGENTS),
+        "missing_skills": missing_skills,
+        "stale_skills": stale_skills,
+        "missing_scripts": missing_scripts,
+        "stale_scripts": stale_scripts,
+        "missing_agents": missing_agents,
+        "stale_agents": stale_agents,
+        "complete": not missing,
+        "current": not missing and not stale,
+        # one word for the skill's question: installed | stale | partial | missing
+        "state": state,
+    }
+
+
+def format_tooling_status(status: dict) -> str:
+    """A few lines a person can read: what is installed, what is missing, what is stale."""
+    lines = [f"Global tooling: {status['state']} - "
+             f"{status['skills_expected'] - len(status['missing_skills'])}/{status['skills_expected']} skills, "
+             f"{status['scripts_expected'] - len(status['missing_scripts'])}/{status['scripts_expected']} scripts, "
+             f"{status['agents_expected'] - len(status['missing_agents'])}/{status['agents_expected']} agents "
+             f"at {status['skills_dest']}"]
+    for key, label in (("missing_skills", "missing skills"), ("missing_scripts", "missing scripts"),
+                       ("missing_agents", "missing agents"), ("stale_skills", "stale skills"),
+                       ("stale_scripts", "stale scripts"), ("stale_agents", "stale agents")):
+        if status[key]:
+            lines.append(f"  {label}: {', '.join(status[key])}")
+    return "\n".join(lines)
+
+
 def print_summary(summary: dict):
     dry = summary.get("dry_run")
     if summary.get("scripts_missing"):

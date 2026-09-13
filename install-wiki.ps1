@@ -12,9 +12,12 @@ Two modes:
      -> new-wiki.py --mode tooling --tool <claude-code|cursor>
   2. A specific project (-TargetFolder, or pick [2]):
      Records this package as the global bootstrap source (Phase A), then
-     scaffolds the project at -TargetFolder (skills + scripts + llm-wiki/ +
-     CLAUDE.md + Drive OAuth if enabled). The research-vs-development prompt
-     has been removed; the project path uses a single merged taxonomy default.
+     scaffolds the project at -TargetFolder (llm-wiki/ + CLAUDE.md + config +
+     Drive OAuth if enabled). With -SkillsInstall global (the default) the
+     project uses the tooling in ~/.claude/; if that tooling is missing or
+     partial it is installed once, first (2026-09-09) — an installed set is
+     never re-copied here (that is -RefreshOnly). The wiki's two halves are
+     chosen with -ProjectFolder / -ResearchFolder (stubs | empty | none).
 
 Usage examples (from this package's root):
   # Global tooling-only install (default -- just run it):
@@ -41,6 +44,11 @@ Flags:
   -ProjectDescription: one-liner (asked if not set, interactive only)
   -ProjectType       : research | development -- DEPRECATED prompt removed; still
                        accepted for scripted back-compat. TODO: merged taxonomy.
+  -VaultRoot         : put the wiki content at <VaultRoot>\<name>\ instead of <target>\llm-wiki\
+  -Registry          : a linked-notebooks.json to register the wiki in (with -VaultRoot; the
+                       notebooks-vault model — the project then carries only a thin config pointer)
+  -ProjectFolder     : stubs (default) | empty | none -- wiki/project/ (what we build)
+  -ResearchFolder    : stubs (default) | empty | none -- wiki/research/ (what we ingest)
   -DriveEnabled      : yes | no (default no)
   -DriveParentFolder : Google Drive parent folder name (default "__FOR CLAUDE")
   -Force / -RefreshOnly : retained for back-compat (no longer gate a prompt)
@@ -77,6 +85,17 @@ param(
 
     # If set, wiki content lives at <VaultRoot>/<name>/ instead of <target>/llm-wiki/.
     [string]$VaultRoot = "",
+
+    # A linked-notebooks.json registry to record the wiki in (vault model; with -VaultRoot).
+    [string]$Registry = "",
+
+    # The wiki's two halves: stubs = the folder with its default subfolders (default),
+    # empty = the folder only, none = leave it out. sessions/ is always created.
+    [ValidateSet("stubs", "empty", "none")]
+    [string]$ProjectFolder = "stubs",
+
+    [ValidateSet("stubs", "empty", "none")]
+    [string]$ResearchFolder = "stubs",
 
     [ValidateSet("yes", "no")]
     [string]$DriveEnabled = "no",
@@ -229,6 +248,9 @@ Write-Host "  Tool:           $Tool"
 Write-Host "  Project name:   $ProjectName"
 Write-Host "  Target folder:  $TargetFolder"
 Write-Host "  Description:    $ProjectDescription"
+Write-Host "  Skills:         $SkillsInstall"
+Write-Host "  wiki/project:   $ProjectFolder"
+Write-Host "  wiki/research:  $ResearchFolder"
 Write-Host "  Drive ingest:   $DriveEnabled"
 Write-Host ""
 
@@ -240,11 +262,17 @@ $phaseBArgs = @(
     "--project-description", $ProjectDescription,
     "--target-folder", $TargetFolder,
     "--skills-install", $SkillsInstall,
+    "--project-folder", $ProjectFolder,
+    "--research-folder", $ResearchFolder,
     "--bootstrap-source", $Bootstrap,
     "--drive-enabled", $DriveEnabled,
     "--drive-parent-folder", $DriveParentFolder
 )
 if ($VaultRoot) { $phaseBArgs += @("--vault-root", $VaultRoot) }
+if ($Registry) { $phaseBArgs += @("--registry", $Registry) }
+# Global mode: Phase A installs only /new-wiki, so on a fresh machine the rest of the
+# tooling is installed once here; an installed set is left alone (never re-copied).
+if ($SkillsInstall -eq "global") { $phaseBArgs += "--install-global-if-missing" }
 # -NoAgentmemory is a deprecated no-op as of 2026-05-14, kept for back-compat.
 
 & $py.Source @phaseBArgs

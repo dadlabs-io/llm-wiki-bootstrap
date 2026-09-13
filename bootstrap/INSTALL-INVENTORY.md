@@ -24,9 +24,9 @@ Install target: `~/.claude/skills/<skill>/SKILL.md`
 
 | Skill | Project type | Purpose |
 |---|---|---|
-| `new-wiki` | both | The bootstrap orchestrator: global tooling install (Phase A / tooling mode), per-project scaffold (Phase B), `--phase docs` refresh of a project's framework-managed docs |
+| `new-wiki` | both | The bootstrap orchestrator: global tooling install (Phase A / tooling mode), `--mode status` (is the global tooling installed / stale / partial / missing — read before the skills question, 2026-09-09), per-project scaffold (Phase B, with `--project-folder` / `--research-folder stubs\|empty\|none`), `--phase docs` refresh of a project's framework-managed docs |
 | `wiki` | both | Show the wiki's INDEX (browse rather than search) |
-| `wiki-init` | both | Scaffolds a topic folder structure from the same `MERGED_TAXONOMY` the `/new-wiki` scaffold applies (standalone; `/new-wiki` does not call it) |
+| `wiki-init` | both | Scaffolds a topic folder structure from the same `SCAFFOLD_TAXONOMY` a default `/new-wiki` applies (standalone; `/new-wiki` does not call it) |
 | `wiki-update` | research (primary), both | Ingests external URLs / files into wiki staging |
 | `wiki-search` | both | Hybrid BM25 + vector + LLM-rerank search via qmd |
 | `wiki-cycle` | research | Full research-cycle orchestrator (discover → ingest → lint → promote) |
@@ -94,7 +94,7 @@ Manifest: `TRAVEL_SCRIPTS` (the commands) + `TOOLING_HELPER_SCRIPTS` / `SHARED_H
 | `wiki-reciprocate-backlinks.py` | Ensure every outbound `.md` link has a reciprocal BACKLINKS-AUTO block |
 | `wiki-index.py` / `wiki-index-per-folder.py` | Regenerate `_INDEX.md` (root / per folder) |
 | `wiki-map-compile.py` | Regenerate the always-loaded root `_MAP.md` |
-| `wiki-search-rerank.py` | Post-filter qmd's `--json` output by truth-status bucket (verified > unverified > temporal > contradicted; rolled_back excluded unless `--include-rolled-back`) — the search spec's surface 1; shipped 2026-09-08 |
+| `wiki-search-rerank.py` | Post-filter qmd's `--json` output by truth-status bucket (verified > unverified > temporal > contradicted; rolled_back excluded unless `--include-rolled-back`) — the search spec's surface 1; shipped 2026-09-08. Accepts qmd 2.1's bare-list JSON and `qmd://` file URIs since 2026-09-12 |
 | `install-skill.py` (helper) | Copy ONE skill onto the local system with placeholder substitution — the per-skill primitive the installer loops over |
 | `_wiki_config.py`, `_entry_checks.py`, `_atomic_io.py`, `_install_tooling.py` (helpers) | Path/registry resolution and the date-time helpers; the shared mechanical entry checks (gate + lint); atomic writes; the install manifests and loop |
 
@@ -112,7 +112,7 @@ Research/development split removed 2026-06-15 — one merged template set; every
 | `.gitignore.tmpl` | Project root .gitignore | every project init |
 | `seed/wiki/{HOME,README,_MAP,_INDEX}.md.tmpl` | Wiki scaffold files rendered inside `wiki/` | every project init |
 
-The folder taxonomy under `wiki/` is `MERGED_TAXONOMY` in `_wiki_config.py` (the single copy; `wiki-init.py` and `new-wiki.py` both read it): `research/{active,long-term,tooling,best-practices,implementation,skills,orchestration,interesting-docs}`, `project/{components,decisions,architecture,patterns,troubleshooting,best-practices}`, `sessions/`. The six framework-contract docs land in `project/best-practices/framework/` (section A4).
+The folder taxonomy under `wiki/` lives in `_wiki_config.py` (the single copy; `wiki-init.py` and `new-wiki.py` both read it), in two halves since 2026-09-09: `PROJECT_TAXONOMY` = `project/{components,decisions,architecture,patterns,troubleshooting,best-practices}` and `RESEARCH_TAXONOMY` = `research/{active,long-term,tooling,best-practices,interesting-docs}`, plus `sessions/` always. `/new-wiki` asks for each half separately — `stubs` (the half with those subfolders), `empty` (the root only; subfolders appear as `/wiki-update` or `/wrap-up` file into them) or `none` — via `--project-folder` / `--research-folder`; `taxonomy_for()` turns the two answers into the folder list, and the answers are recorded in the project config as `wiki_folders`. `SCAFFOLD_TAXONOMY` is the default (both halves with stubs). `MERGED_TAXONOMY` is the superset the folder guards in `wiki-update.py` / `wiki-promote.py` recognise: it also carries `LEGACY_RESEARCH_TAXONOMY` = `research/{implementation,skills,orchestration}` — the agentic-design notebook's topics that every new wiki used to receive; recognised for existing wikis, no longer created. The six framework-contract docs land in `project/best-practices/framework/` whenever `project/` exists (section A4).
 
 ## D. Configuration
 
@@ -121,14 +121,14 @@ Three files, three scopes:
 | File | Scope | Written by | Carries |
 |---|---|---|---|
 | `~/.claude/wiki-config.json` | machine | Phase A / tooling install | `bootstrap_source` (where this clone lives — what `-RefreshOnly`, `/new-wiki --sync` and `--phase docs` read), `install_version`, `last_phase_a`, `drive` |
-| `<project>/.claude/wiki-config.json` | project | Phase B | a thin pointer: `tool`, `project_name`, `notebook` + `registry` (registry model) or the in-project wiki location, `skills_install`, `drive` |
+| `<project>/.claude/wiki-config.json` | project | Phase B | a thin pointer: `tool`, `project_name`, `notebook` + `registry` (registry model) or the in-project wiki location, `skills_install`, `wiki_folders` (the two `stubs\|empty\|none` answers), `drive` |
 | `<vault>/linked-notebooks.json` | vault | Phase B (`_upsert_registry`) | every notebook's root + its two booleans `confirm_before_create` / `confirm_before_promote`; the single source of truth for WHERE a wiki is — every `/wiki-*` script resolves through it (`_wiki_config.py`) |
 
 The agentmemory MCP wiring from the May draft was removed 2026-05-14 (`-NoAgentmemory` is a no-op kept for back-compat).
 
 ## E. Per-project structure (the empty scaffold)
 
-Created by `/new-wiki` Phase B. Two layouts, one taxonomy:
+Created by `/new-wiki` Phase B. Two layouts; the `wiki/` folders are whatever the two folder answers chose (section C — `sessions/` always, each half with stubs, empty, or absent):
 
 ```
 In-project (a wiki inside a code repo):        Notebook in a vault (linked-notebooks.json above it):
@@ -153,7 +153,8 @@ The flat layout exists so that every notebook in a vault has the same shape (qmd
 | Dependency | Used by | Notes |
 |---|---|---|
 | Python 3.10+, Git | everything | the only hard requirements for the global install |
-| `qmd` (host npm install) | `/wiki-search`, `wiki-search-rerank.py`, the lint's index-coverage section | each wiki is a qmd collection (`qmd collection add <wiki>`; `qmd update && qmd embed` after a batch); the standalone `query`/`vsearch` modes can hang for minutes — BM25 `search` does not (open, 2026-09-02) |
+| `qmd` (host npm install) | `/wiki-search`, `wiki-search-rerank.py`, the lint's index-coverage section | each wiki is a qmd collection (`qmd collection add <wiki>`; `qmd update && qmd embed` after a batch). `qmd query` runs three bundled models through node-llama-cpp and needs a GPU backend; without a CUDA runtime it falls back to Vulkan, where generation hung indefinitely (root-caused 2026-09-12, resolves the 2026-09-02 note). BM25 `search` needs no model |
+| CUDA 13.1+ runtime (`winget install --id Nvidia.CUDA --version 13.2 --exact --override "-s cudart_13.2 cublas_13.2"`) | `qmd query` via node-llama-cpp | machine-level, NVIDIA Windows only; runtime + cuBLAS is enough (no compiler, no driver). Verify: `node-llama-cpp inspect gpu` prints `CUDA: available`; `/wiki-search` runs that preflight and stops on failure. Optional — `qmd search` works without it |
 | `yt-dlp` (host) | `wiki-fetch-youtube.py` | transcript fetch |
 | Google OAuth client secrets | `wiki-fetch-drive-folder.py` | `~/.config/wiki-cycle/client_secrets.json`; see the `drive-setup` page |
 
@@ -161,7 +162,7 @@ The flat layout exists so that every notebook in a vault has the same shape (qmd
 
 **Source-of-truth lives in `bootstrap/`.** When a skill, script or doc changes there, the installed copies go stale in two places, each with its own refresh:
 
-- **Global tooling** (`~/.claude/skills/`, `~/.claude/wiki-scripts/`, `~/.claude/agents/`): `install-wiki.ps1 -RefreshOnly` / `install-wiki.sh`, or `wiki-upgrade.py` directly — the same copy loop (`_install_tooling.py`), which refuses any skill or agent whose frontmatter does not parse. `/new-wiki --sync` re-runs Phase A, which refreshes only the global `/new-wiki` skill. There is no content-drift detector for installed copies: the copy is idempotent, so re-running it *is* the check; the lint's installed-skill section verifies only that every installed SKILL.md / agent file parses.
+- **Global tooling** (`~/.claude/skills/`, `~/.claude/wiki-scripts/`, `~/.claude/agents/`): `install-wiki.ps1 -RefreshOnly` / `install-wiki.sh`, or `wiki-upgrade.py` directly — the same copy loop (`_install_tooling.py`), which refuses any skill or agent whose frontmatter does not parse. `/new-wiki --sync` re-runs Phase A, which refreshes only the global `/new-wiki` skill. `new-wiki.py --mode status` (`global_tooling_status()` in `_install_tooling.py`, 2026-09-09) is the drift detector: it compares every installed skill, script and agent with the clone and reports installed / stale / partial / missing. `/new-wiki` reads it before its skills question and Phase B in global mode refuses a partial or missing set (or installs it once with `--install-global-if-missing`, which the installer wrappers pass); a stale set is named, never re-copied by the scaffold. The lint's installed-skill section verifies only that every installed SKILL.md / agent file parses.
 - **Framework-managed docs inside a project** (`how-to/llm-wiki/`, the root marker, `wiki/project/best-practices/framework/`): `new-wiki.py --phase docs --target-folder <project>`; `--check` reports without writing; `--all-notebooks` covers every notebook in the registry. The standing procedure after any change that lands in a notebook is `--check --all-notebooks` → review every REPLACE → refresh → `-RefreshOnly`.
 - **A bundled install** (skills copied into the project): re-run Phase B against the same folder with `--force` (non-destructive: existing `CLAUDE.md` / `README.md` / `.gitignore` are kept).
 

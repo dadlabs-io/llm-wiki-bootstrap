@@ -4,7 +4,8 @@ new-wiki.py — bootstrap a new project with the LLM-wiki framework.
 
 Runs in two phases:
 
-  --phase A  : global install (skills + scripts + templates + config + agentmemory)
+  --phase A  : global install of the /new-wiki skill + record the bootstrap source
+  --mode status : report the global tooling state as JSON (what /new-wiki reads before its skills question)
   --phase B  : per-project scaffold (folder + git + wiki-init + CLAUDE.md/README/.gitignore)
 
 Both phases are idempotent. Phase A checks state before doing work; running
@@ -33,13 +34,14 @@ from pathlib import Path
 # Atomic-write helper (icarus §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
-from _wiki_config import MERGED_TAXONOMY  # noqa: E402 — single canonical taxonomy
+from _wiki_config import taxonomy_for, FOLDER_CHOICES, PROJECT_TAXONOMY, RESEARCH_TAXONOMY  # noqa: E402 — single canonical taxonomy
 # Tooling-install manifests + loop live in _install_tooling (shared with
 # wiki-upgrade.py — the standalone upgrade command). Single source of truth.
 from _install_tooling import (  # noqa: E402
     TRAVEL_SKILLS, TRAVEL_SCRIPTS, TOOLING_HELPER_SCRIPTS, SHARED_HELPER_SCRIPTS,
     install_tooling as _install_tooling,
     print_summary as _print_tooling_summary,
+    global_tooling_status, format_tooling_status,
 )
 from urllib.parse import urlparse
 
@@ -496,6 +498,25 @@ def phase_tooling(args):
     if summary.get("frontmatter_failed"):
         _err("one or more skills/agents were refused (frontmatter does not parse) — fix and re-run")
         return 1
+    return 0
+
+
+# ---------- --mode status (read-only) ----------
+
+def phase_status(args):
+    """Print the global tooling state as JSON: which skills / scripts / agents are
+    installed, missing or stale against the bootstrap source. Writes nothing.
+    /new-wiki runs this before its skills question so the question reflects the
+    machine (use the global install / refresh it / install it / bundle) instead
+    of being asked blind (2026-09-09)."""
+    bootstrap = _derive_bootstrap_source(args)
+    if not bootstrap:
+        print(json.dumps({"status": "error", "state": "no-bootstrap-source",
+                          "message": "could not find bootstrap source — run install-wiki.ps1 / install-wiki.sh once"}, indent=2))
+        return 1
+    status = global_tooling_status(bootstrap)
+    print(format_tooling_status(status), file=sys.stderr)
+    print(json.dumps({"status": "ok", **status}, indent=2))
     return 0
 
 
@@ -1103,6 +1124,48 @@ def phase_b(args):
         skills_install = "bundled"
     bundle = (skills_install == "bundled")
 
+    # Guard (2026-09-09): in global mode never point a project at a global folder that
+    # does not hold the tooling. Phase A installs only /new-wiki; the full tooling
+    # install is a separate step (install-wiki.ps1 with no flags, ./install-wiki.sh,
+    # or --mode tooling). Before this, a fresh machine's `install-wiki.ps1 -TargetFolder`
+    # produced a project whose config pointed at skills that did not exist. Refuse,
+    # unless --install-global-if-missing, which runs that install once and continues.
+    global_tooling_installed_now = False
+    tooling_state = None
+    if not bundle:
+        tooling = global_tooling_status(bootstrap)
+        tooling_state = tooling["state"]
+        if not tooling["complete"]:
+            print(format_tooling_status(tooling))
+            if not args.install_global_if_missing:
+                _err("global tooling is not installed (or only partly) — a project in global mode "
+                     "would point at skills that do not exist.")
+                _info("Install it once (`install-wiki.ps1` with no flags / `./install-wiki.sh` / "
+                      "`new-wiki.py --mode tooling`), or re-run with --install-global-if-missing, "
+                      "or pass --skills-install bundled.")
+                return 1
+            _info("global tooling incomplete — installing it now (--install-global-if-missing)")
+            if not args.dry_run:
+                try:
+                    summary = _install_tooling(bootstrap, skills_dest=CC_GLOBAL_SKILLS_DIR,
+                                               scripts_dest=CC_GLOBAL_WIKI_SCRIPTS_DIR)
+                except FileNotFoundError as e:
+                    _err(str(e))
+                    return 1
+                _print_tooling_summary(summary)
+                if summary.get("frontmatter_failed"):
+                    _err("one or more skills/agents were refused (frontmatter does not parse) — fix and re-run")
+                    return 1
+                global_tooling_installed_now = True
+                tooling_state = "installed"
+        elif not tooling["current"]:
+            _warn("global tooling is installed but differs from the bootstrap source "
+                  f"({', '.join(tooling['stale_skills'] + tooling['stale_scripts'] + tooling['stale_agents'])}) — "
+                  "not refreshed here; run `install-wiki.ps1 -RefreshOnly` when you want the current copies")
+        else:
+            _ok(f"global tooling: installed and current ({tooling['skills_expected']} skills, "
+                f"{tooling['scripts_expected']} scripts, {tooling['agents_expected']} agents)")
+
     paths = project_paths(args.tool, target, llm_wiki_root=llm_wiki_root)
 
     if target.exists() and any(target.iterdir()) and not args.force:
@@ -1211,8 +1274,10 @@ def phase_b(args):
             paths["llm_wiki_best_practices"].mkdir(parents=True, exist_ok=True)
         _info("no seed/best-practices/ found in bootstrap — created empty folder")
 
-    # B6 — apply the single merged folder taxonomy under llm-wiki/wiki/
-    folders = MERGED_TAXONOMY
+    # B6 — the wiki folders: each half (project/, research/) created with its default
+    # stubs, as an empty root, or not at all — the two /new-wiki questions (2026-09-09).
+    # sessions/ is always created (/wrap-up writes there).
+    folders = taxonomy_for(args.project_folder, args.research_folder)
     wiki_root = paths["llm_wiki_wiki"]
     for sub in folders:
         path = wiki_root / sub
@@ -1227,21 +1292,43 @@ def phase_b(args):
         print(f"WOULD mkdir {sessions_dir}")
     else:
         sessions_dir.mkdir(parents=True, exist_ok=True)
-    _ok(f"merged wiki folder taxonomy applied: {len(folders)} folders")
+    _ok(f"wiki folders applied: {len(folders)} (project/: {args.project_folder}, "
+        f"research/: {args.research_folder}, sessions/: always)")
 
     # B6.1 — framework-contract docs into wiki/project/best-practices/framework/ (the precedence
-    # rule in CLAUDE.md and every skill's "read the spec" pointer assume they are there; 2026-09-08)
-    seed_framework_docs(bootstrap, wiki_root, dry_run=args.dry_run)
+    # rule in CLAUDE.md and every skill's "read the spec" pointer assume they are there; 2026-09-08).
+    # They are docs, not stubs: they land whenever project/ exists (stubs or empty) and are skipped
+    # for a wiki without it — the same rule --phase docs applies.
+    if args.project_folder == "none":
+        _info("no project/ folder — framework-contract docs skipped (out of scope without it)")
+    else:
+        seed_framework_docs(bootstrap, wiki_root, dry_run=args.dry_run)
 
     # B6.5 — render wiki scaffold files (_MAP.md, _INDEX.md, README.md, HOME.md)
     # inside <target>/llm-wiki/wiki/ from seed/wiki/*.tmpl. These give the agent
     # orientation on day 1 and prevent the CLAUDE.md @-import from silently
     # failing on a fresh project. wiki-map-compile.py / wiki-index-per-folder.py
     # will regenerate _MAP.md and _INDEX.md once entries exist.
+    # A markdown list of the folders this scaffold actually created, for the READMEs
+    # (they used to print a fixed research list that no longer matched the wiki).
+    folder_notes = {
+        "research": "external content — articles, papers, videos (`/wiki-update`, `/wiki-cycle`)",
+        "project": "what we build — decisions, components, patterns, troubleshooting (`/wrap-up`)",
+        "sessions": "per-persona episodic logs and working-memory dashboards (`/wrap-up`)",
+    }
+    wiki_folders_md = "\n".join(
+        f"- `{f}/` — {folder_notes[f]}" if f in folder_notes else f"- `{f}/`"
+        for f in folders
+    )
+    if args.research_folder == "empty":
+        wiki_folders_md += "\n- (`research/` subfolders appear on the first ingest — `/wiki-update` proposes one)"
+    if args.project_folder == "empty":
+        wiki_folders_md += "\n- (`project/` subfolders appear as `/wrap-up` files into them)"
     wiki_scaffold_vars = {
         "PROJECT_NAME": name,
         "PROJECT_DESCRIPTION": description or f"{name} project wiki",
         "PROJECT_TYPE": project_type,
+        "WIKI_FOLDERS": wiki_folders_md,
     }
     wiki_seed = seed_src / "wiki"
     if wiki_seed.exists():
@@ -1271,6 +1358,7 @@ def phase_b(args):
         "LLM_WIKI_PATH": llm_wiki_path_str,
         "WIKI_PATH": wiki_path_str,
         "PROJECT_TYPE": project_type,
+        "WIKI_FOLDERS": wiki_folders_md,
     }
     # Non-destructive: never overwrite a CLAUDE.md / README.md / .gitignore that
     # already exists in the target repo (migrating into an established project, or
@@ -1336,6 +1424,9 @@ def phase_b(args):
             "registry": registry_path.as_posix(),
             "project_description": description,
             "skills_install": skills_install,
+            # the two /new-wiki folder answers (stubs | empty | none), so a re-scaffold or
+            # --phase docs can tell what this wiki was given (2026-09-09)
+            "wiki_folders": {"project": args.project_folder, "research": args.research_folder},
             # NOTE: confirm_before_create / confirm_before_promote live in the REGISTRY
             # entry (per-notebook, travels with the notebook), not here — see
             # _upsert_registry above.
@@ -1373,6 +1464,7 @@ def phase_b(args):
         "wiki_topic": name if external_vault else "llm-wiki",
         # skills_install: 'global' (shared ~/.claude) or 'bundled' (per-project copy).
         "skills_install": skills_install,
+        "wiki_folders": {"project": args.project_folder, "research": args.research_folder},
         # Review gates for /wrap-up: confirm_before_create (Step 2 filing) + confirm_before_promote
         # (Step 6 promote-to-canonical), both boolean, default true (prompt/ask).
         "confirm_before_create": args.confirm_before_create == "true",
@@ -1407,11 +1499,10 @@ def phase_b(args):
                 _warn("Drive auth did not complete. Project scaffold is still ready,")
                 _warn("but Drive ingest won't work until you fix the OAuth setup.")
 
-    needs_restart = False
-
-    # B10 — agentmemory was removed 2026-05-14. The proactive-listener pattern
-    # (agent files durable items to _inbox/proposed/ inline) replaces it.
-    # See the comment above _agentmemory_wired (deleted) for the retrospective.
+    # Claude Code only discovers ~/.claude/skills at startup: if the global tooling was
+    # installed during this run, the new skills are not visible until a restart.
+    # (agentmemory, the earlier reason for this flag, was removed 2026-05-14.)
+    needs_restart = global_tooling_installed_now
 
     # B11 — summary + next steps (single merged flow: ingest research AND
     # capture project knowledge — every project does both).
@@ -1421,11 +1512,19 @@ def phase_b(args):
         f"cd {target}",
         f"Start Claude Code: `{start_cmd}`",
         "Read `llm-wiki/README.md` (project overview) + `llm-wiki/how-to/llm-wiki/commands.md` (command reference)",
-        "INGEST research: `/wiki-update <url>` ad-hoc, OR drop links into Drive (__FOR CLAUDE/<project-slug>/) and run `/wiki-cycle` to discover → ingest → lint → promote",
-        "CAPTURE project knowledge: as you code/decide/debug, the agent files durable items (decisions, components, patterns, gotchas) to `llm-wiki/wiki/_inbox/proposed/` inline; run `/wrap-up` at session-end to catch the rest",
+    ]
+    if args.research_folder != "none":
+        next_steps += [
+            "INGEST research: `/wiki-update <url>` ad-hoc, OR drop links into Drive (__FOR CLAUDE/<project-slug>/) and run `/wiki-cycle` to discover → ingest → lint → promote",
+            "Source tiers (research): T1 peer-reviewed/primary, T2 vendor/official, T3 expert, T4 community. Both-sides-stay: never delete contradictory entries, cross-link them",
+        ]
+    if args.project_folder != "none":
+        next_steps += [
+            "CAPTURE project knowledge: as you code/decide/debug, the agent files durable items (decisions, components, patterns, gotchas) to `llm-wiki/wiki/_inbox/proposed/` inline; run `/wrap-up` at session-end to catch the rest",
+        ]
+    next_steps += [
         "Promote: `/wiki-promote --review` accepts/rejects proposed entries (research → research/, project knowledge → project/)",
         "Search: `/wiki-search \"<query>\"` (hybrid BM25 + vector + LLM rerank)",
-        "Source tiers (research): T1 peer-reviewed/primary, T2 vendor/official, T3 expert, T4 community. Both-sides-stay: never delete contradictory entries, cross-link them",
         "Ask the agent in plain English anytime — 'what commands do I have', 'how do I X', 'show me the wiki'",
     ]
 
@@ -1438,9 +1537,13 @@ def phase_b(args):
         "target_folder": str(target),
         "llm_wiki_root": str(paths["llm_wiki"]),
         "wiki_folders": folders,
+        "project_folder": args.project_folder,
+        "research_folder": args.research_folder,
+        "skills_install": skills_install,
+        "global_tooling": tooling_state,
+        "global_tooling_installed_now": global_tooling_installed_now,
         "drive_enabled": bool(drive_enabled_global),
         "drive_subfolder": drive_subfolder if drive_enabled_global else None,
-        "agentmemory_wired": project_cfg.get("agentmemory_wired", False) if project_type == "development" else None,
         "needs_restart": needs_restart,
         "next_steps": next_steps,
         "help_anytime": "Ask in plain English. The agent has llm-wiki/how-to/llm-wiki/*.md and llm-wiki/README.md loaded as context.",
@@ -1450,7 +1553,7 @@ def phase_b(args):
         restart_target = "Claude Code" if args.tool == "claude-code" else "Cursor"
         print()
         _info("===========================================")
-        _info(f"RESTART {restart_target.upper()} to load the new agentmemory MCP server.")
+        _info(f"RESTART {restart_target.upper()} so it picks up the newly installed global skills.")
         _info("===========================================")
         # Exit 0 even when restart needed — exit-2 was a clever signal that
         # gets misread as a script failure by tool wrappers. The restart
@@ -1495,9 +1598,11 @@ def main():
                              "sync = re-run A to refresh the global /new-wiki skill (touches no project). "
                              "docs = refresh only the pack usage docs (how-to/llm-wiki/) of the existing "
                              "project at --target-folder. Mutually exclusive with --mode.")
-    parser.add_argument("--mode", choices=["tooling"], default=None,
+    parser.add_argument("--mode", choices=["tooling", "status"], default=None,
                         help="tooling = GLOBAL tooling-only install (all skills + scripts into "
-                             "~/.claude/, no project scaffold). Mutually exclusive with --phase.")
+                             "~/.claude/, no project scaffold). status = report the global tooling "
+                             "state as JSON (installed / stale / partial / missing per manifest), "
+                             "writes nothing. Mutually exclusive with --phase.")
     parser.add_argument("--tool", choices=["claude-code", "cursor"], default="claude-code",
                         help="Which AI tool to install for (default: claude-code)")
     parser.add_argument("--project-name")
@@ -1521,7 +1626,25 @@ def main():
     parser.add_argument("--skills-install", choices=["global", "bundled"], default="global",
                         help="global (default) = use shared ~/.claude/skills + wiki-scripts, "
                              "no per-project copy; bundled = copy skills+scripts into the project "
-                             "(self-contained). Cursor always bundles.")
+                             "(self-contained). Cursor always bundles. In global mode Phase B "
+                             "refuses when the global tooling is missing or partial (see "
+                             "--install-global-if-missing).")
+    parser.add_argument("--install-global-if-missing", action="store_true",
+                        help="With --phase B --skills-install global: if the global tooling is "
+                             "missing or partial, run the tooling install once and continue "
+                             "(the installer wrappers pass this). Never refreshes an installed "
+                             "set that is merely stale — that is install-wiki.ps1 -RefreshOnly.")
+    parser.add_argument("--project-folder", choices=list(FOLDER_CHOICES), default="stubs",
+                        help="wiki/project/ (what we build; /wrap-up files here): stubs = create it "
+                             "with " + ", ".join(f.split("/")[1] for f in PROJECT_TAXONOMY) + " and the "
+                             "framework-contract docs (default); empty = the folder plus the framework "
+                             "docs, subfolders appear as /wrap-up files into them; none = no project/ "
+                             "(the framework docs are skipped too).")
+    parser.add_argument("--research-folder", choices=list(FOLDER_CHOICES), default="stubs",
+                        help="wiki/research/ (what we ingest; /wiki-update files here): stubs = create it "
+                             "with " + ", ".join(f.split("/")[1] for f in RESEARCH_TAXONOMY) + " (default); "
+                             "empty = the folder only, /wiki-update proposes a subfolder on the first "
+                             "ingest; none = no research/.")
     parser.add_argument("--vault-root", default=None,
                         help="If set, the wiki CONTENT lives at <vault-root>/<name>/ instead of "
                              "<target>/llm-wiki/ — keeps the wiki out of the code repo "
@@ -1575,6 +1698,8 @@ def main():
 
     if args.mode == "tooling":
         return phase_tooling(args)
+    if args.mode == "status":
+        return phase_status(args)
     if args.phase == "A":
         return phase_a(args)
     if args.phase == "B":

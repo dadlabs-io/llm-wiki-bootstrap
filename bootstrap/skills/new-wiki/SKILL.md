@@ -1,180 +1,172 @@
 ---
 name: new-wiki
-description: Scaffold a new project with the LLM-wiki framework. Asks tool (claude-code/cursor), name, target folder, and Drive ingest preferences (NO project-type question — every project gets one merged wiki that does both research ingest and project-knowledge capture). Sets up per-project .claude/skills + llm-wiki/ folder with notes, best-practices, and the project's wiki (research/* + project/* + sessions/). Use when the user says "new project", "create a new wiki", "install a new wiki", "set up a new wiki", "bootstrap a project", "start a new project", or types "/new-wiki".
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
+description: "Scaffold a new project with the LLM-wiki framework. Checks the global tooling first (use it, install it once, or bundle — never re-copies an installed set), then a two-round interview: name + review gate; description, project folder (stubs / empty / none), research folder (stubs / empty / none), where the wiki lives. Every project gets one merged wiki; each half is opt-in. Sets up llm-wiki/ (or a notebook in the vault), the wiki folders, CLAUDE.md and the project config. Use when the user says \"new project\", \"create a new wiki\", \"install a new wiki\", \"set up a new wiki\", \"bootstrap a project\", \"start a new project\", or types \"/new-wiki\"."
+last_reviewed: 2026-09-09
+review_after: 2026-12-09
 reviewed_for_model: claude-fable-5-1
 ---
 
 # /new-wiki
 
-Conversational scaffold for a new project. Everything is per-project — the only global thing is this skill itself (lives at `~/.claude/skills/new-wiki/` so you can invoke it from anywhere).
+Conversational scaffold for a new project. The only global thing is the tooling in `~/.claude/` (this skill, the other wiki skills, the scripts, the agent); everything else is per-project.
 
 ## Layout this skill creates
 
 ```
-<target>/                              ← user's project folder (e.g., C:\github.com\dnd-project)
-├── .claude/                           ← claude-code tool config (per-project)
-│   ├── skills/                        ← every skill in TRAVEL_SKILLS (wiki-cycle, wiki-update, wrap-up, …)
-│   ├── wiki-scripts/                  ← every script in TRAVEL_SCRIPTS + helpers (the manifests in _install_tooling.py are the count)
-│   ├── wiki-templates/                ← project-bootstrap templates
-│   ├── wiki-config.json
-│   └── settings.json                  ← agentmemory MCP wiring (dev projects only)
-├── llm-wiki/                          ← human-readable wiki content
-│   ├── README.md                      ← how to use the framework in this project
-│   ├── how-to/                        ← seeded usage docs
-│   ├── best-practices/                ← seeded software-dev best practices
-│   ├── wiki/                          ← this project's entries (merged taxonomy)
-│   │   ├── research/{active,long-term,tooling,best-practices,implementation,skills,orchestration,interesting-docs}/
-│   │   ├── project/{components,decisions,architecture,patterns,troubleshooting,best-practices}/
-│   │   └── sessions/                  ← per-persona episodic logs
-│   └── raw/sessions/                  ← session transcripts
-├── CLAUDE.md                          ← imports llm-wiki/README.md and wiki/_MAP.md
-├── README.md                          ← project README
+<target>/                              ← the code project (e.g., C:\github.com\fitness-app)
+├── .claude/
+│   ├── wiki-config.json               ← points at the global tooling + the wiki's location
+│   ├── skills/, wiki-scripts/, wiki-templates/   ← bundled mode ONLY (global mode copies nothing here)
+│   └── settings.json                  ← (legacy; not written any more)
+├── CLAUDE.md                          ← imports the wiki README and _MAP.md
+├── README.md
 └── .gitignore
+
+Wiki content, one of two places (Q6):
+  notebook in the vault (default)      C:\github.com\project-notebooks\notebooks\<slug>\   ← registered in linked-notebooks.json
+  inside the project                   <target>\llm-wiki\
+
+Either way the wiki root holds:
+├── README.md
+├── how-to/llm-wiki/                   ← pack usage docs (framework-managed)
+├── best-practices/                    ← seeded reference docs (framework-managed)
+├── wiki/
+│   ├── HOME.md, README.md, _MAP.md, _INDEX.md
+│   ├── project/                       ← Q4: stubs | empty | none   (what we build; /wrap-up files here)
+│   │   ├── components/ decisions/ architecture/ patterns/ troubleshooting/   ← "stubs"
+│   │   └── best-practices/framework/  ← the six framework-contract docs (stubs AND empty; skipped for none)
+│   ├── research/                      ← Q5: stubs | empty | none   (what we ingest; /wiki-update files here)
+│   │   └── active/ long-term/ tooling/ best-practices/ interesting-docs/    ← "stubs"
+│   └── sessions/                      ← always (per-persona journals + dashboards, /wrap-up)
+└── raw/sessions/
 ```
 
-Cursor variant: substitutes `.cursor/` for `.claude/`. Additionally generates `.cursor/rules/<skill-name>.mdc` files (Cursor's native rule format) from each SKILL.md so Cursor's agent picks them up automatically. `llm-wiki/` is identical to claude-code.
+Cursor variant: substitutes `.cursor/` for `.claude/`, always bundles, and generates `.cursor/rules/<skill-name>.mdc` from each SKILL.md.
+
+> **Both halves are opt-in.** A wiki with neither `project/` nor `research/` is a plain notes notebook (only `sessions/` is created; the framework-contract docs are skipped, the same rule `--phase docs` applies). A wiki that later needs the other half just creates the folder — every script resolves folders on disk first. Neither half is ever created with the old agentic-design research topics (implementation, skills, orchestration); those are recognised for existing wikis, not scaffolded.
 
 ## Flow at a glance
 
 ```
 User: /new-wiki [name]
    ↓
-Q1: tool? (claude-code | cursor)
-Q2: name? (if not given)
-Q3: description? (if not given)
-Q4: target folder? (default C:\github.com\<name>)
-Q5: skills install? (global [default] | bundled)  — see below
-Q6: wiki content location? (separate vault [default] | inside project)  — see below
-Q7: Drive ingest? (yes/no) — if yes: parent folder name (default __FOR CLAUDE)
-Q8: Review gate? manually review before publishing (yes [default] / no auto-publish) — sets confirm_before_create + confirm_before_promote; changeable anytime, independently, later
+Step 0.0  state check  — python new-wiki.py --mode status  (global tooling: installed | stale | partial | missing)
    ↓
-Phase B — Per-project scaffold (Phase A already done by install-wiki.ps1)
-   B1.  mkdir <target> + git init
-   B2.  Copy the skills   → <target>/.claude/skills/   (or .cursor/skills/)   — bundled mode only
-   B3.  Copy the scripts  → <target>/.claude/wiki-scripts/                     — bundled mode only
-   B4.  Copy templates    → <target>/.claude/wiki-templates/                   — bundled mode only
-   B5.  mkdir llm-wiki/ + seed how-to/ (pack usage docs), best-practices/
-   B6.  Apply the single merged folder taxonomy under llm-wiki/wiki/ (research/* + project/* + sessions/)
-   B6.1 Land the framework-contract docs at wiki/project/best-practices/framework/ (2026-09-08)
-   B7.  Render CLAUDE.md / README.md / .gitignore at <target>/
-   B7.5 Render llm-wiki/README.md from seed template
-   B8.  Write <target>/.claude/wiki-config.json
-   B9.  Drive OAuth walkthrough (if --drive-enabled yes; uses global token cache)
-   B11. Print ready-state + next steps
+Round 1 (AskUserQuestion, 2 questions)
+   Q1  project name (slug)
+   Q2  review gate (yes = manual, default | no = auto)
+Round 2 (AskUserQuestion, 4 questions — built from the slug)
+   Q3  description
+   Q4  project folder?   stubs (Recommended) | empty | none
+   Q5  research folder?  stubs (Recommended) | empty | none
+   Q6  where the wiki lives: notebook in the vault (Recommended) | inside the project
+Round 3 (only when needed, ≤2 questions)
+   Q7  skills — ONLY when the state check says partial or missing: install globally now + use it (Recommended) | bundle into the project
+   Q8  Drive — ONLY when ~/.claude/wiki-config.json has drive.enabled true: use Drive for this project? + subfolder
+   ↓
+Plan summary (tool, target folder, folder tree, skills line, Drive line) → wait for "yes" / "go" / "create"
+   ↓
+Phase B — python new-wiki.py --phase B ...   (Phase A already done by install-wiki.ps1)
+   B1.  mkdir <target> + git init (skipped inside an existing repo)
+   B2–4. Copy skills / scripts / templates into the project           — bundled mode only
+   B5.  Seed how-to/ (pack usage docs) + best-practices/
+   B6.  Create the wiki folders from Q4 + Q5 (+ sessions/)
+   B6.1 Land the framework-contract docs at wiki/project/best-practices/framework/ (when project/ exists)
+   B7.  Render CLAUDE.md / README.md / .gitignore (never overwrites an existing one)
+   B8.  Write .claude/wiki-config.json (+ the registry entry for a vault notebook)
+   B9.  Drive OAuth walkthrough (only if Drive is on)
+   B11. JSON summary + next steps
 ```
-
-> **No project-type question.** Every project gets the same merged wiki — it does both research ingest (`research/`) and project-knowledge capture (`project/`) at once. (The research/development split was removed 2026-06-15.)
 
 ## Step-by-step contract
 
-### Step 0 — Discovery (REQUIRED — ALWAYS ASK, never guess)
+### Step 0.0 — State check (run this BEFORE asking anything)
 
-**CRITICAL**: Never default values based on context (folder name, prior conversation, "reasonable guess"). Ask explicitly for every field below before running anything. The user's answer is the source of truth.
-
-Ask in this order:
-
-**Q1 — Tool**
-```
-Which tool are you installing for?
-  1. claude-code  — Anthropic's Claude Code CLI
-  2. cursor       — Cursor IDE
-
-Pick (1 or 2):
-```
-
-> **(No project-type question — removed 2026-06-15.)** Every project gets the merged taxonomy that does both research ingest and project-knowledge capture. Skip straight to name.
-
-**Q2 — Name (ALWAYS confirm)**
-Even if you can infer it from the user's input or the folder name, **always show the proposed name and ask for confirmation**. Slugify (lowercase, dashes for non-alphanumerics, strip leading/trailing dashes).
+Read `~/.claude/wiki-config.json` for `bootstrap_source` (see "Required: the bootstrap-source path" below if it is missing), then:
 
 ```
-Project name (slug): test-project
-Press enter to accept, or type a different slug:
+python "<bootstrap_source>/bootstrap/scripts/new-wiki.py" --mode status
 ```
 
-**Q4 — Description (ALWAYS ask, with a default)**
-Always prompt, never skip. Default is `"Wiki for <name>"`. User hits enter to accept or types their own.
+Writes nothing. Prints JSON with `state` — one of:
+
+| `state` | Meaning | What to do |
+|---|---|---|
+| `installed` | every skill, script and agent in the manifests is in `~/.claude/` and matches the bootstrap clone | use it; no question, no reinstall |
+| `stale` | all present, but some installed copies differ from the clone (`stale_skills` / `stale_scripts` / `stale_agents` list them) | use it; no question; the plan summary names the differing files and says `install-wiki.ps1 -RefreshOnly` refreshes them when the user wants |
+| `partial` | some pieces missing (`missing_*` list them) | ask Q7 |
+| `missing` | none of the wiki skills are installed (only `/new-wiki` from Phase A, or nothing) | ask Q7 |
+
+Also note whether the current folder has a `.cursor/` directory (→ tool `cursor`; otherwise `claude-code`). The tool is stated in the plan summary, not asked.
+
+**Never re-copy an installed set from here.** A user who wants the current copies runs `install-wiki.ps1 -RefreshOnly` (or `wiki-upgrade.py`); this skill only ever installs the tooling when it is partial or missing, once, via `--install-global-if-missing`.
+
+### Step 0 — Discovery (two rounds of `AskUserQuestion`; never plain-text Q&A, never silent defaults)
+
+**Use the `AskUserQuestion` tool with selectable options.** Every option is a concrete, fully-resolved value — no placeholders like `<slug>`. The tool adds `Other` (free text) itself; don't add one. Put `(Recommended)` on the default so it is one click. Round 2 depends on the slug, so the name is asked first.
+
+**Round 1 (2 questions)**
+
+**Q1 — Project name (slug).** Default: slugify what the user said (lowercase, dashes for non-alphanumerics, trimmed); `new-project` if they said nothing. Option: `fitness-app (Recommended)`.
+
+**Q2 — Review gate.** "Do you want to review new wiki entries before they are filed and published?"
+- `Yes — show me candidates and confirm before publishing (Recommended)` → `--confirm-before-create true --confirm-before-promote true`
+- `No — file and publish automatically` → both `false`
+
+This one answer sets two independent booleans (`confirm_before_create` for `/wrap-up` Step 2, `confirm_before_promote` for Step 6). They live in the registry entry for a vault notebook (`linked-notebooks.json`), in `.claude/wiki-config.json` for an in-project wiki, and either can be flipped later by asking.
+
+**Round 2 (4 questions, all built from the slug)**
+
+**Q3 — Description.** Options: `Wiki for fitness-app (Recommended)` and one plain alternate; the user free-texts anything else.
+
+**Q4 — Project folder?** "Do you want a `project/` folder (what we build — decisions, components, patterns, troubleshooting; `/wrap-up` files here)?"
+- `Yes, with the default stubs (Recommended)` → `--project-folder stubs`: `components/ decisions/ architecture/ patterns/ troubleshooting/ best-practices/`, plus the six framework-contract docs under `best-practices/framework/`
+- `Yes, empty` → `--project-folder empty`: `project/` plus the framework docs; subfolders appear as `/wrap-up` files into them
+- `No` → `--project-folder none`: no `project/`, framework docs skipped
+
+**Q5 — Research folder?** "Do you want a `research/` folder (what we ingest — articles, videos, papers; `/wiki-update` files here)?"
+- `Yes, with the default stubs (Recommended)` → `--research-folder stubs`: `active/ long-term/ tooling/ best-practices/ interesting-docs/`
+- `Yes, empty` → `--research-folder empty`: `research/` only; `/wiki-update` proposes and creates a subfolder on the first ingest
+- `No` → `--research-folder none`
+
+**Q6 — Where the wiki lives.**
+- `Notebook in the vault — C:\github.com\project-notebooks\notebooks\fitness-app (Recommended)` → `--vault-root C:\github.com\project-notebooks\notebooks --registry C:\github.com\project-notebooks\linked-notebooks.json`. The code project carries only `.claude/wiki-config.json` (+ CLAUDE.md etc.); the wiki is registered in `linked-notebooks.json`. macOS/Linux default vault: `~/proj/project-notebooks`.
+- `Inside the project — C:\github.com\fitness-app\llm-wiki` → neither flag.
+
+**Round 3 (only when needed)**
+
+**Q7 — Skills** (only when the state check said `partial` or `missing`):
+- `Install the global tooling now and use it (Recommended)` → `--skills-install global --install-global-if-missing` (one install into `~/.claude/`, then the project points at it; Claude Code needs a restart afterwards)
+- `Bundle the skills into this project` → `--skills-install bundled` (self-contained, version-pinned; Cursor always bundles)
+
+**Q8 — Drive** (only when `~/.claude/wiki-config.json` has `drive.enabled: true`): "Ingest from your Drive folder for this project?" `Yes — __FOR CLAUDE/fitness-app (Recommended)` / `No`. → `--drive-enabled yes --drive-subfolder fitness-app` or `--drive-enabled no`. When Drive is not enabled globally, don't ask; pass `--drive-enabled no`.
+
+### Step 0.5 — Plan summary, then wait
+
+Show one block and wait for "yes" / "go" / "create":
 
 ```
-One-line description for the wiki: [default: Wiki for test-project]
-Press enter to accept the default, or type your own:
+Tool:            claude-code
+Project:         fitness-app — "Wiki for fitness-app"
+Target folder:   C:\github.com\fitness-app          ← the cwd when its leaf name equals the slug, else C:\github.com\<slug>; say so to change it
+Wiki content:    C:\github.com\project-notebooks\notebooks\fitness-app  (registered notebook)
+Folders:         wiki/project/{components,decisions,architecture,patterns,troubleshooting,best-practices/framework}
+                 wiki/research/{active,long-term,tooling,best-practices,interesting-docs}
+                 wiki/sessions/
+Skills:          global — installed and current (16 skills, 26 scripts, 1 agent in ~/.claude)
+                 [or: installed; 4 files differ from the clone — `install-wiki.ps1 -RefreshOnly` refreshes them when you want]
+                 [or: will be installed now (missing), then used]
+Drive:           off
+Review gate:     manual (confirm before filing and before publishing)
 ```
 
-**Q5 — Target folder** (if not provided). Default is `C:\github.com\<slug>` on Windows, `~/proj/<slug>` on macOS/Linux. Confirm before proceeding.
-
-**Q6 — Skills install** (claude-code only; cursor always bundles)
-```
-How should the wiki skills + scripts be installed?
-  1. global   — use the shared ~/.claude install (no per-project copy; recommended for personal use) [default]
-  2. bundled  — copy skills+scripts into the project (self-contained + version-pinned; for distribution)
-
-Pick (1 or 2) [1]:
-```
-→ passes `--skills-install global|bundled`. Global keeps the project to just `.claude/wiki-config.json` + content; the global skills/scripts handle everything, reading this project's config.
-
-**Q7 — Wiki content location**
-```
-Where should the wiki CONTENT live?
-  1. separate vault — keeps the wiki OUT of the code repo (recommended) [default]
-                      default root: C:\github.com\project-notebooks  → content at <root>\<slug>\
-  2. inside project — <target>\llm-wiki\  (self-contained code+wiki repo)
-
-Pick (1 or 2) [1]:
-```
-→ if separate, confirm the vault root (default `C:\github.com\project-notebooks`) and pass `--vault-root <root>`. Content then lives at `<root>\<slug>\wiki\`; the project carries only the config pointing at it. If inside, omit `--vault-root`.
-
-**Q8 — Drive ingest** (skip if user previously configured globally)
-```
-Do you want to ingest from a Google Drive folder?
-  1. yes — I drop links into a Drive folder throughout the day
-  2. no  — I'll add URLs manually
-
-Pick (1 or 2):
-```
-
-If yes:
-```
-Parent folder name in your Drive? (default: __FOR CLAUDE)
-The script will look for: <parent>/<project-slug>/  (so this project: __FOR CLAUDE/<slug>/)
-```
-
-**Q9 — Review gate** (how new wiki entries get filed + published)
-```
-Do you want to manually review items before they're filed and published to the wiki?
-  1. yes — show me candidates, let me accept/reject, then confirm again before publishing  [default]
-  2. no  — auto-file AND auto-publish; just do it for me
-
-(You can change this anytime — just ask, or edit the notebook's entry in linked-notebooks.json.
-The two steps below are independently overridable later even though this question sets them
-together.)
-Pick (1 or 2):
-```
-→ This single question sets **two** underlying booleans together (both default `true`, i.e. fully
-manual): `confirm_before_create` governs `/wrap-up` Step 2 (the durable-work proposal table — "file
-these candidate entries at all?"); `confirm_before_promote` governs Step 6 (moving staged entries
-into the canonical `wiki/project/<category>/` tree + committing). 1 maps to
-`--confirm-before-create true --confirm-before-promote true` (ask at both steps — the default). 2
-maps to `--confirm-before-create false --confirm-before-promote false` (auto-file AND auto-promote,
-no prompts at either step). A user who wants a split posture (e.g. auto-file but still confirm
-before publishing) can ask the agent to flip just one of the two keys after creation — the registry
-entry supports them independently even though this interview only offers the all-or-nothing
-combination. For registry notebooks the values are stored in the **registry entry**
-(`linked-notebooks.json`) — the per-notebook home that travels with the notebook; for legacy
-in-project wikis they go in `.claude/wiki-config.json`.
-
-Show the proposed plan and wait for "yes" / "go" / "create" before proceeding.
+Every line is overridable by saying so; a changed line is re-shown before running.
 
 ### Step 1 — Run Phase B
 
-The global Phase A install (which put this skill in `~/.claude/skills/`) also recorded `bootstrap_source` in `~/.claude/wiki-config.json`. Read that to find where the bootstrap source lives.
-
 **TOOL CHOICE — IMPORTANT**:
-- **Windows**: invoke `python new-wiki.py ...` via the **PowerShell tool**, not the Bash tool. Bash → PowerShell argument bridging mangles empty quoted strings (e.g. `-ProjectDescription ""` collapses, so the next flag gets consumed as the description value, causing exit 2). If the PowerShell tool is denied by an auto-classifier, ask the user to run the command themselves in their terminal — do NOT fall back to `bash` → `powershell.exe ...`.
-- **macOS/Linux**: use the Bash tool directly — no shell-bridge issues.
-
-Then:
+- **Windows**: invoke `python new-wiki.py ...` via the **PowerShell tool**, not the Bash tool. Bash → PowerShell argument bridging mangles empty quoted strings (`--project-description ""` collapses, the next flag becomes the description, exit 2). If the PowerShell tool is denied, ask the user to run the command themselves — do NOT fall back to `bash` → `powershell.exe ...`.
+- **macOS/Linux**: the Bash tool directly.
 
 ```bash
 python "<bootstrap_source>/bootstrap/scripts/new-wiki.py" \
@@ -183,43 +175,38 @@ python "<bootstrap_source>/bootstrap/scripts/new-wiki.py" \
   --project-name <slug> \
   --project-description "<desc>" \
   --target-folder <path> \
+  --project-folder <stubs|empty|none> \
+  --research-folder <stubs|empty|none> \
   --skills-install <global|bundled> \
-  --confirm-before-create <true|false>    `# Q9 review gate (Step 2 filing); defaults to true` \
-  --confirm-before-promote <true|false>   `# Q9 review gate (Step 6 promote); defaults to true` \
-  --vault-root <root>   `# omit entirely for an in-project wiki` \
+  [--install-global-if-missing]            `# Q7 first option only` \
+  --confirm-before-create <true|false> \
+  --confirm-before-promote <true|false> \
+  [--vault-root <vault>/notebooks --registry <vault>/linked-notebooks.json]   `# Q6 notebook; omit both for in-project` \
   --drive-enabled <yes|no> \
-  --drive-subfolder <slug>
+  [--drive-subfolder <slug>]
 ```
 
-`--skills-install` defaults to `global`. Omit `--vault-root` for an in-project wiki (`<target>/llm-wiki/`); include it (e.g. `C:\github.com\project-notebooks`) to put content at `<root>/<slug>/`.
-
-The script handles everything in the layout diagram above and returns a JSON summary on stdout.
+Phase B in global mode checks the tooling itself: it refuses (exit 1, with the fix named) when the global set is partial or missing and `--install-global-if-missing` was not passed; it warns and continues when the set is merely stale; it never re-copies an installed set. The script returns a JSON summary on stdout (`wiki_folders`, `global_tooling`, `global_tooling_installed_now`, `needs_restart`, `next_steps`).
 
 ### Step 2 — Read back the summary + post-install reminders
 
-The JSON includes `needs_restart: true` if agentmemory was just installed. Surface that to the user — they need to restart Claude Code before /wrap-up etc. work.
+`needs_restart: true` means the global tooling was installed during this run — tell the user to restart Claude Code before the other `/wiki-*` skills will appear.
 
-**After printing the next-steps**, also give the user a tailored "you're ready" message based on project type:
+Then a tailored "you're ready" message, only for the halves that exist:
 
-#### Every project (single merged flow — does both)
+- **research/ present** — ingest: `/wiki-update <url>` ad-hoc, or drop links into Drive (`<parent>/<slug>/`) and `/wiki-cycle` to discover → ingest → lint → promote. Source tiers T1 primary / T2 vendor / T3 expert / T4 community, set with `--tier`. With `research/` empty: the first `/wiki-update` proposes a subfolder and creates it.
+- **project/ present** — capture: as you code/decide/debug, the agent files durable items (decisions, components, architecture, patterns, troubleshooting) to `wiki/_inbox/proposed/` inline; `/wrap-up` at session end catches the rest.
+- always — `/wiki-promote --review` to approve staged entries; `/wiki-search "<query>"` to look things up; ask in plain English ("what commands do I have", "show me the wiki").
 
-Tell the user:
-- **Ingest research**: drop URLs into Google Drive (`<parent>/<project-slug>/`) throughout the day OR `/wiki-update <url>` ad-hoc, then `/wiki-cycle` (daily/weekly) to discover → ingest → lint → promote. Source tiers T1 primary / T2 vendor / T3 expert / T4 community — set with `--tier`.
-- **Capture project knowledge**: as you code/decide/debug, the agent files durable items (decisions, components, architecture, patterns, troubleshooting) to `llm-wiki/wiki/_inbox/proposed/` inline; run `/wrap-up` at session-end to catch the rest.
-- `/wiki-promote --review` to approve proposed entries (research → `research/`, project knowledge → `project/`).
-- `/wiki-search "<query>"` to look up prior research + decisions/components.
-- **Ask the agent in natural language** anytime: "what commands do I have", "how do I add a URL", "show me the wiki".
-
-#### Universal closing
-
-End with: "Read `llm-wiki/how-to/llm-wiki/commands.md` for the full command reference, or `llm-wiki/how-to/llm-wiki/getting-started.md` for the first-hour walkthrough. You can also ask me anything in plain English — I have these docs loaded as context."
+End with: "Read `how-to/llm-wiki/commands.md` for the full command reference, or `how-to/llm-wiki/getting-started.md` for the first-hour walkthrough. You can also ask me anything in plain English — I have these docs loaded as context."
 
 ### Step 3 — Don't
 
-- Don't proceed without explicit confirmation at discovery
-- Don't overwrite an existing project folder without `--force` unless user explicitly OKs it
-- Don't ask the user to pick a project type — that distinction was removed; every project gets the merged taxonomy
-- Don't edit `<target>/.claude/skills/` manually — that's an installed copy; edit in `<bootstrap_source>/bootstrap/skills/` and re-sync
+- Don't skip the state check, and don't ask the skills question when the state is `installed` or `stale` — that is the "reinstall at the top every time" this skill was rewritten (2026-09-09) to stop.
+- Don't proceed without the plan summary being confirmed.
+- Don't overwrite an existing project folder without `--force` unless the user explicitly OKs it (`--force` is non-destructive to `CLAUDE.md` / `README.md` / `.gitignore`).
+- Don't ask for a project type — removed 2026-06-15; the two folder questions replaced the last trace of it.
+- Don't edit `<target>/.claude/skills/` by hand in a bundled install — edit `<bootstrap_source>/bootstrap/skills/` and re-sync.
 
 ## Drive OAuth walkthrough (Phase B, only if `--drive-enabled yes`)
 
@@ -235,9 +222,9 @@ If `~/.config/wiki-cycle/client_secrets.json` is missing, the helper prints inst
 
 ## Update mode
 
-`/new-wiki --sync` re-runs Phase A — refreshes the global `/new-wiki` skill from the current `bootstrap_source`. Use after `git pull` on the llm-wiki-bootstrap clone.
+`/new-wiki --sync` re-runs Phase A — refreshes the global `/new-wiki` skill from the current `bootstrap_source`. Use after `git pull` on the llm-wiki-bootstrap clone. The full global tooling (every skill, script and agent) is refreshed by `install-wiki.ps1 -RefreshOnly` / `wiki-upgrade.py`; `--mode status` shows whether that is needed.
 
-To sync a per-project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`. To refresh only a project's **framework-managed docs** — the pack usage docs (`how-to/llm-wiki/`: the pack page, one page per skill, one per agent) and, since 2026-09-08, the six framework-contract docs at `wiki/project/best-practices/framework/` — run `python <bootstrap_source>/bootstrap/scripts/new-wiki.py --phase docs --target-folder <project>`; it resolves the wiki through the project's `.claude/wiki-config.json` (or `llm-wiki/how-to/`, or a notebook root), content-compares each framework doc and replaces the ones that differ (naming them, so a project-local edit is visible rather than silently lost), and touches nothing else. Add `--check` to review first: it writes nothing, lists every framework doc as unchanged / ADD / REPLACE with the `framework-version` on both sides and a diff (a lower project version is a stale copy; the same version with different content is a project-local edit the refresh would lose), reports the pack pages a refresh would copy, and exits 1 when anything would change. A wiki without the `project/` taxonomy (a plain notes notebook) is named and its framework docs skipped — they are out of scope there; the pack usage docs still refresh. `--all-notebooks` runs either form over every notebook in the registry (`--registry <linked-notebooks.json>`, else the one the cwd's `.claude/wiki-config.json` names) with a one-line-per-notebook summary and a single exit code. This is the Phase 2 / Phase 3 tool of the research-to-framework update process, and the standing procedure after any framework change is `--phase docs --check --all-notebooks`, review every REPLACE, then the same command without `--check`.
+To sync a bundled project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`. To refresh only a project's **framework-managed docs** — the pack usage docs (`how-to/llm-wiki/`: the pack page, one page per skill, one per agent) and, since 2026-09-08, the six framework-contract docs at `wiki/project/best-practices/framework/` — run `python <bootstrap_source>/bootstrap/scripts/new-wiki.py --phase docs --target-folder <project>`; it resolves the wiki through the project's `.claude/wiki-config.json` (or `llm-wiki/how-to/`, or a notebook root), content-compares each framework doc and replaces the ones that differ (naming them, so a project-local edit is visible rather than silently lost), and touches nothing else. Add `--check` to review first: it writes nothing, lists every framework doc as unchanged / ADD / REPLACE with the `framework-version` on both sides and a diff (a lower project version is a stale copy; the same version with different content is a project-local edit the refresh would lose), reports the pack pages a refresh would copy, and exits 1 when anything would change. A wiki without `project/` (a plain notes notebook, or one scaffolded with `--project-folder none`) is named and its framework docs skipped — they are out of scope there; the pack usage docs still refresh. `--all-notebooks` runs either form over every notebook in the registry (`--registry <linked-notebooks.json>`, else the one the cwd's `.claude/wiki-config.json` names) with a one-line-per-notebook summary and a single exit code. This is the Phase 2 / Phase 3 tool of the research-to-framework update process, and the standing procedure after any framework change is `--phase docs --check --all-notebooks`, review every REPLACE, then the same command without `--check`.
 
 ## Required: the bootstrap-source path
 
@@ -256,4 +243,4 @@ After that one-time setup, `/new-wiki` works in any project folder.
 
 ## Source
 
-Authored 2026-05-12, restructured 2026-05-13 for the per-project model. Companion skills: `/wrap-up` (end-of-session distillation, dev projects), `/wiki-cycle` (research-project orchestrator), `/wiki-search`, `/wiki-update`.
+Authored 2026-05-12, restructured 2026-05-13 for the per-project model, 2026-09-09 for the state check and the six-question interview (the folder halves opt-in; the nine-question interview and the fixed research taxonomy retired). Companion skills: `/wrap-up` (end-of-session distillation), `/wiki-cycle` (research orchestrator), `/wiki-search`, `/wiki-update`.

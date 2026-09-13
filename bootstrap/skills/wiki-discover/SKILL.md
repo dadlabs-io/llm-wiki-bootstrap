@@ -108,7 +108,7 @@ For each candidate URL/title found in search results:
 
 2. **Title/concept dedup**: search the wiki for the key concept:
    ```bash
-   qmd query "<key terms from the candidate>"
+   timeout 120 qmd query "<key terms from the candidate>"   # needs the CUDA preflight from /wiki-search; a timeout is a stop-and-report, not a fallback
    ```
    If qmd returns a 80%+ match, the concept is already covered — skip unless the new source adds substantial new information.
 

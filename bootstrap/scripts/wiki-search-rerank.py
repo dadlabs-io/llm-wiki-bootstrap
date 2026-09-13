@@ -127,7 +127,11 @@ def rerank(payload: dict, surface_contradicted: bool, include_rolled_back: bool)
             r["bucket"] = 2
             enriched.append(r)
             continue
-        entry = Path(path_str)
+        if path_str.startswith("qmd://"):
+            # qmd 2.1 reports files as `qmd://C:\...` URIs; until 2026-09-12 every
+            # such row was dropped here as "does not exist on disk"
+            path_str = path_str[len("qmd://"):]
+        entry = Path(path_str.replace("\\", "/"))
         if not entry.exists():
             print(f"WARN: candidate path does not exist on disk: {path_str}", file=sys.stderr)
             continue  # drop
@@ -171,6 +175,10 @@ def main() -> int:
     except json.JSONDecodeError as e:
         print(f"ERROR: failed to parse stdin as JSON: {e}", file=sys.stderr)
         return 2
+    if isinstance(payload, list):
+        # qmd 2.1 `search --json` emits a bare list; wrap it so the bucket sort applies
+        # (until 2026-09-12 a bare list crashed here with AttributeError instead of sorting)
+        payload = {"results": payload}
 
     out = rerank(payload, args.surface_contradicted, args.include_rolled_back)
     json.dump(out, sys.stdout, indent=2)

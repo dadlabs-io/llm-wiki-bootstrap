@@ -135,7 +135,7 @@ With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks 
 
 1. **Fetch raw** via `wiki-update.py --fetch-only` (or `wiki-fetch-youtube.py` for YouTube). Get the verbatim raw saved to `<topic>/raw/`.
 2. **Read the raw file** to understand what's actually in the source.
-3. **Search the wiki** for related concepts using `qmd query`. Extract 3-5 key terms from the source and search each. qmd uses hybrid BM25 + vector search, so it finds entries by meaning, not just exact keywords.
+3. **Search the wiki** for related concepts using `timeout 120 qmd query "<term>"` (an interactive session) or `qmd search "<term>"` (a parallel ingest worker — several processes loading qmd's ~2 GB of models do not fit one GPU). Extract 3-5 key terms from the source and search each. qmd uses hybrid BM25 + vector search, so it finds entries by meaning, not just exact keywords. `qmd query` needs the CUDA runtime (see the CUDA preflight in the `/wiki-search` skill); if the preflight fails or the query times out, stop and report it — do not fall back and carry on.
 4. **Synthesize the curated summary** with explicit cross-links to those existing entries in a "Related in this wiki" section. Don't just summarize in isolation — mention where this new source agrees/disagrees/extends what's already in the wiki. **Use `wiki-update.py --slug-for --title "<other entry title>" --topic <topic> --folder <folder>` to look up the canonical slug of any entry you want to link to** — don't guess slugs from titles. (Guessing is the bug that caused 39 broken links in the 2026-04-08 batch ingest.)
 5. **Eval gate — two halves (split 2026-09-02).** The rubric is `wiki/research/implementation/eval-rubric.md`. Its five dimensions are now enforced by two different mechanisms, and only one of them is you.
 
@@ -203,7 +203,7 @@ Capture the `raw_path=...` line from the output. When you pass it back in Step 6
 ### Step 3: Search the wiki for related concepts
 For each of 3-5 key terms from the source:
 ```bash
-qmd query "<term>"
+timeout 120 qmd query "<term>"     # parallel workers: `qmd search "<term>"` instead
 ```
 qmd returns ranked results with file paths and snippets. List the existing entries that come back.
 

@@ -41,7 +41,7 @@
     {
       "name": "wiki-search",
       "status": "active",
-      "description": "qmd hybrid BM25/vector search used in the integration step (3-5 key terms per source) so entries cross-link instead of landing isolated. Installed globally at ~/.claude/skills/wiki-search."
+      "description": "qmd search used in the integration step (3-5 key terms per source) so entries cross-link instead of landing isolated. Workers use `qmd search` (keyword, no model); `qmd query` loads models onto the GPU per process and is reserved for the interactive session. Installed globally at ~/.claude/skills/wiki-search."
     },
     {
       "name": "wiki-list",
