@@ -2,6 +2,23 @@
 
 You're reading this from inside the llm-wiki-bootstrap repo (probably because the user opened this folder in Claude Code or Cursor).
 
+## Resuming — where we left off (do this on startup)
+
+Active persona: **main** (`sessions/<persona>/` is per persona; an installed role agent such as developer or
+architect reads its own folder).
+
+After this file and auto-memory load, before the first reply, read in order, each **if present** (`<notebook>` is
+`C:\github.com\project-notebooks
+otebooks\llm-wiki-bootstrap`, this repo's own notebook per `.claude/wiki-config.json`):
+1. `<notebook>/wiki/sessions/active-context.md` — cross-persona resume pointer
+2. `<notebook>/wiki/sessions/<persona>/handoff.md`, then `task.md` — goal, state, pending; NOW and QUEUE
+3. Project status doc, if this project keeps one: (none yet — e.g. `project/roadmap.md`)
+
+If `handoff.md` is missing (no wrap-up yet): read the newest journal under `sessions/<persona>/<YYYY-MM>/` if any,
+else treat the project as new. Journals otherwise stay on demand.
+Open the first reply, whatever the user said, with one paragraph on where we left off and what is next. A project
+with a Discord bot does its channel catch-up after this read.
+
 ## What this repo is
 
 The LLM-wiki framework installer. Ships:
