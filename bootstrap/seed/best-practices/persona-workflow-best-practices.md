@@ -10,12 +10,14 @@ This document defines how different AI personas (DEV, ARCH, QA, PM) interact, sh
 
 | Persona | Primary Territory | Workflow Artifacts |
 |---------|------------------|-------------------|
-| **DEV** | `unity-code/` | `short-term/_personas/dev/task.md`, `<task>-implementation-plan.md`, `<task>-working-notes.md` |
-| **ARCH**| `memory-bank/long-term/` | `short-term/_personas/arch/task.md`, Design docs, system-map.md |
-| **PM**  | `_personas/`, `.agent/workflows/` | `short-term/_personas/pm/task.md`, Persona definitions, workflows |
-| **CR**  | `.agent/workflows/CR/` | `short-term/_personas/cr/task.md`, Fix lists, release notes |
-| **QA**  | `memory-bank/short-term/` (Test) | `short-term/_personas/qa/task.md`, Test plans, checklists |
-| **DEPLOY** | `memory-bank/long-term/deployment/` | `short-term/_personas/deploy/task.md`, Release checklists, store guides |
+| **DEV** | the code tree | `sessions/dev/task.md`, `<task>-implementation-plan.md`, `<task>-working-notes.md` |
+| **ARCH**| `project/architecture/`, `project/decisions/` | `sessions/arch/task.md`, Design docs, system map |
+| **PM**  | persona definitions, workflows | `sessions/pm/task.md`, Persona definitions, workflows |
+| **CR**  | change-request workflow | `sessions/cr/task.md`, Fix lists, release notes |
+| **QA**  | test plans | `sessions/qa/task.md`, Test plans, checklists |
+| **DEPLOY** | deployment docs | `sessions/deploy/task.md`, Release checklists, store guides |
+
+Every persona's working files live under `sessions/<persona>/` in the wiki: `handoff.md` (resume dump), `task.md` (NOW / QUEUE) and the dated journals. `/wrap-up` Step 0.5 writes the first two; the Resuming step in CLAUDE.md reads them on startup.
 
 ---
 
@@ -74,37 +76,37 @@ It is critical that the **DEV** persona maintains working notes.
 
 `sessions/active-context.md` is the **human dashboard** — a cross-persona status overview. Each persona updates **ONLY their section** during the `/wrap-up` workflow (Step 0.5).
 
-- **DEV**: `short-term/_personas/dev/task.md`, status, and active implementation plan link.
-- **ARCH**: `short-term/_personas/arch/task.md`, status, and system map health.
-- **PM**: `short-term/_personas/pm/task.md`, status, and workflow health.
-- **QA**: `short-term/_personas/qa/task.md`, status, and testing progress.
+- **DEV**: `sessions/dev/task.md`, status, and active implementation plan link.
+- **ARCH**: `sessions/arch/task.md`, status, and system map health.
+- **PM**: `sessions/pm/task.md`, status, and workflow health.
+- **QA**: `sessions/qa/task.md`, status, and testing progress.
 
-### Per-Agent Active Context (Agent-Facing)
+### Per-Persona Resume Files (Agent-Facing)
 
-Each agent instance creates its own folder under `_personas/` with an `active-context.md`:
+Each persona has its own folder under `sessions/` in the wiki, created on demand by the first `/wrap-up` — there is no fixed list and no template file to copy:
 
 ```
-_personas/
-  persona-manager.md          ← shared template (from bootstrap)
-  dev-csharp-unity.md         ← shared template (from bootstrap)
-  _agent-template/            ← reference template for new agents
-    active-context.md
-  my-agent-name/              ← agent instance (runtime, NOT from bootstrap)
-    active-context.md         ← "what am I working on right now?"
+sessions/
+  active-context.md           ← shared dashboard, one section per persona
+  main/                       ← the default persona
+    handoff.md                ← full resume dump (overwritten every wrap-up)
+    task.md                   ← NOW / QUEUE (updated in place)
+    2026-09/                  ← dated session journals (append-only)
+  arch/                       ← any other persona: same three things
 ```
 
 **Rules:**
-- **Persona definitions** (`.md` files at root) = shared templates from bootstrap, synced
-- **Agent instance folders** (subdirectories) = runtime state, project-specific, never synced
-- The agent's `active-context.md` is their personal resume file — read it first on session start
-- Use `_personas/_agent-template/active-context.md` as a starting point
+- `handoff.md` is the persona's resume file — the Resuming step in CLAUDE.md reads it first on session start, before the first reply
+- `/wrap-up` Step 0.5 writes `handoff.md` and `task.md` and updates the persona's section of `active-context.md`; a wrap-up never leaves them stale
+- Before the first wrap-up none of them exist; a cold start then reads the newest journal if any, else treats the project as new
+- A persona's folder is runtime state, project-specific, never copied from the bootstrap
 
 ## 📂 Persona Subfolders
 
-To prevent "Checklist Collision" and maintain a clear individual context, each persona uses a subfolder in `memory-bank/short-term/_personas/`:
-- **Path**: `memory-bank/short-term/_personas/[persona-name]/`
-- **Primary file**: `task.md` (Role-specific session tracking).
-- **Rationale**: This allows personas to maintain their own "working brain" without polluting the root `short-term/` or overwriting other roles' checklists.
+To prevent "Checklist Collision" and maintain a clear individual context, each persona uses its own subfolder of `sessions/`:
+- **Path**: `sessions/<persona>/`
+- **Primary files**: `task.md` (role-specific NOW / QUEUE) and `handoff.md` (resume dump).
+- **Rationale**: This allows personas to maintain their own "working brain" without overwriting other roles' checklists; the shared `sessions/active-context.md` is the only file every persona touches, and only its own section.
 
 
 ---

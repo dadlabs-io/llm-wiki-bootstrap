@@ -51,7 +51,7 @@ We may end up coming back to one of these phases too as if we go through our pla
 
 **Step 1: Create Task List**
 
-Update `memory-bank/short-term/task.md`:
+Update `sessions/<persona>/task.md` (the persona's NOW / QUEUE dashboard; `/wrap-up` Step 0.5 keeps it current):
 - Add new task with checklist items
 - Break down into granular sub-tasks
 - Present to user for review
@@ -67,7 +67,7 @@ Include your recommendation:
 
 **Step 3: Create Implementation Plan (if needed)**
 
-Create/update `memory-bank/short-term/<task>-implementation-plan.md`:
+Create/update `sessions/<persona>/<task>-implementation-plan.md` (beside `task.md`, which links to it):
 - Goal description
 - Files to modify/create/delete
 - Specific changes per file
@@ -102,20 +102,18 @@ Create/update `memory-bank/short-term/<task>-implementation-plan.md`:
 
 | Artifact | Location | Purpose |
 |----------|----------|---------|
-| Active Tasks | `memory-bank/short-term/task.md` | Current work checklist |
-| Implementation Plan | `memory-bank/short-term/<task>-implementation-plan.md` | Detailed plan for current task |
-| Active Context | `memory-bank/short-term/active-context.md` | Session state summary |
-| Archived Plans | `memory-bank/archive/` | Completed implementation plans |
+| Active Tasks | `sessions/<persona>/task.md` | NOW / QUEUE checklist (updated in place by `/wrap-up` Step 0.5) |
+| Resume dump | `sessions/<persona>/handoff.md` | Goal, state, pending — what a cold start reads |
+| Implementation Plan | `sessions/<persona>/<task>-implementation-plan.md` | Detailed plan for current task, linked from `task.md` |
+| Active Context | `sessions/active-context.md` | Cross-persona status dashboard (each persona edits only its section) |
+| Completed work | `sessions/<persona>/<YYYY-MM>/` | The session journal is the completed record — there is no archive folder and no `completed.md` |
 
 ### Implementation Plan Lifecycle
 
 1. **Create** — When starting a non-trivial task
 2. **Update** — As planning evolves through discussion
 3. **Execute** — Once approved
-4. **Archive** — After completion:
-   - Move to `memory-bank/archive/implementation-plans/`
-   - Rename with format: `YYYY-MM-DD-<brief-description>.md`
-   - Example: `2025-12-24-validation-hint.md`
+4. **Close** — After completion: the session journal (`/wrap-up` Step 0) records what was done and links the plan; drop the plan from `task.md`'s NOW line. No archive folder — the journal is the record.
 
 ### When to Create an Implementation Plan
 

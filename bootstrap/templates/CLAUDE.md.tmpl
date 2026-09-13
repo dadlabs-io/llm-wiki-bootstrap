@@ -18,17 +18,30 @@ Both live in the four-layer memory model below.
 
 If the user asks for help (any phrasing — "how do I...", "what commands...", "help"), point them at `llm-wiki/how-to/llm-wiki/` — `commands.md` first, then the skill page under `skills/` that fits their question. You already have these loaded.
 
+## Resuming — where we left off (do this on startup)
+
+Active persona: **main** (`sessions/<persona>/` is per persona; an installed role agent such as developer or architect reads its own folder).
+
+After this file and auto-memory load, before the first reply, read in order, each **if present**:
+1. `{{WIKI_PATH}}/sessions/active-context.md` — cross-persona resume pointer
+2. `{{WIKI_PATH}}/sessions/<persona>/handoff.md`, then `task.md` — goal, state, pending; NOW and QUEUE
+3. Project status doc, if this project keeps one: (none yet — e.g. `project/roadmap.md`)
+
+If `handoff.md` is missing (no wrap-up yet): read the newest journal under `sessions/<persona>/<YYYY-MM>/` if any, else treat the project as new. Journals otherwise stay on demand.
+Open the first reply, whatever the user said, with one paragraph on where we left off and what is next. A project with a Discord bot does its channel catch-up after this read.
+
 Wiki content lives at `{{WIKI_PATH}}/`, organized into the **four-layer memory model** (icarus integration plan §6). The four layers map 1:1 to classical cognitive memory types:
 
 | Layer | Cognitive analogue | What goes here | Loaded by default? |
 |---|---|---|---|
 | **Working memory** | Working memory (literal) | This conversation — no on-disk location | (always — this is your context) |
-| **`sessions/`** | Episodic memory | "What happened when I tried X last Thursday" — per-persona session logs | ✅ your own persona's folder |
+| **`sessions/`** | Episodic + working memory | "What happened when I tried X last Thursday" — per-persona session journals, plus the mutable resume dashboards (`active-context.md`, `<persona>/handoff.md`, `<persona>/task.md`) that `/wrap-up` keeps current | ✅ your own persona's folder |
 | **`project/`** | Semantic memory (internal) | "What I know about THIS thing we're building" — components, decisions, architecture, patterns, troubleshooting, best-practices | ✅ all of it |
 | **`research/`** | Semantic memory (external) | "What I learned from things we ingested" — papers, vendor blogs, library writeups | ❌ only if task explicitly cites it |
 
 Folder structure under `{{WIKI_PATH}}/`:
 - **`sessions/<persona>/YYYY-MM/`** — per-agent episodic log; immutable once written
+- **`sessions/active-context.md`**, **`sessions/<persona>/{handoff,task}.md`** — the resume dashboards; overwritten in place by `/wrap-up` Step 0.5, read by the Resuming step above
 - **`project/components/`** — modules / classes / systems we've built
 - **`project/decisions/`** — ADR-style decisions with the *why* preserved
 - **`project/architecture/`** — system-level structural rules
@@ -55,7 +68,7 @@ Synthesis docs that cite research to inform a decision live in `project/` becaus
 
 ## Working rhythm
 
-1. **Start a session**: the wiki MAP is always-loaded above; you get the orientation map of every entry without doing anything.
+1. **Start a session**: do the Resuming read above; the MAP is already loaded.
 2. **Look it up before answering**: any "what do we know about X", "have we decided X", or "how does X work here" question gets a `/wiki-search "<query>"` FIRST — the wiki, not your memory, is the source of truth. Answering from memory when the wiki holds the answer is the failure mode this whole system exists to prevent.
 3. **Code + decide + investigate**: regular dev work. **When you observe something durable — a decision the user makes, a constraint they discover, a pattern you settle on, a bug you trace to root cause — file a proposed entry to `llm-wiki/_inbox/proposed/<folder>/<slug>.md` IMMEDIATELY.** Don't wait for `/wrap-up`. Flag it to the user in one sentence so they know it landed. This is the proactive-listener pattern: the agent is the listener, the wiki is the store.
 4. **End of session**: the user runs `/wrap-up` to catch anything the inline filing missed (long sessions, late-emerging patterns).
@@ -147,7 +160,7 @@ We evaluated the rohitg00/agentmemory + iii-engine path 2026-05-14 and concluded
 | Layer | Cognitive analogue | Where | Loaded by default? |
 |---|---|---|---|
 | **Working memory** | Working memory | Claude Code context window | (always) |
-| **Sessions** | Episodic | {{WIKI_PATH}}/sessions/<persona>/YYYY-MM/ | ✅ own persona only |
+| **Sessions** | Episodic + working | {{WIKI_PATH}}/sessions/<persona>/YYYY-MM/ (journals) + sessions/active-context.md, sessions/<persona>/{handoff,task}.md (dashboards) | ✅ own persona only |
 | **Project** | Semantic (internal — what we built) | {{WIKI_PATH}}/project/ | ✅ all |
 | **Research** | Semantic (external — what we ingested) | {{WIKI_PATH}}/research/ | ❌ on-demand only |
 | **Raw** | Immutable substrate | {{LLM_WIKI_PATH}}/raw/ | (never loaded — referenced via raw_path) |

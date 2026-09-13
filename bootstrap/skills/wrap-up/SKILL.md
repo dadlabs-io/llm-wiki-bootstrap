@@ -1,8 +1,8 @@
 ---
 name: wrap-up
 description: "Crystallize the current session's work into the project wiki AND refresh the working-memory dashboards. ALWAYS (1) upserts a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ so the \"what we did\" record builds as you go, (2) refreshes the mutable working-memory dashboards — sessions/<persona>/handoff.md + task.md + sessions/active-context.md (the resume pointer; the memory-bank replacement), and (3) extracts durable knowledge — components/decisions/patterns/bugs — staged to _inbox/proposed/ then promoted to wiki/project/<category>/ (gated by two per-notebook booleans: `confirm_before_create` for Step 2's filing decision, `confirm_before_promote` for Step 6's promotion decision). This is the ONE session-close command — it absorbs the retired /upd-docs. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says \"wrap up\", \"wrap-up\", \"/wrap-up\", \"wrap this session\", \"document what we did\", \"crystallize this session\", \"save this work\", \"save progress\", \"save state\", \"update docs\", \"upd-docs\"."
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
+last_reviewed: 2026-09-13
+review_after: 2026-12-13
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -123,9 +123,11 @@ Promote the next QUEUE item to NOW as work completes.
 
 **(c) `sessions/active-context.md` — update ONLY your persona's lines** (Status / Recent / Next) in the cross-persona dashboard. Do NOT touch other personas' sections; do NOT rewrite the file. Skip if your section already describes what you're doing.
 
+**Create it if it is missing (2026-09-13).** Nothing seeds this file — not `wiki-init`, not `new-wiki` — so the first `/wrap-up` of a project writes it: a one-line title (`# Active context — <project>`), a one-line note that each persona edits only its own section, then one section for the current persona (`## <persona>` with Status / Recent / Next). A missing file is never a reason to skip (c); a cold start's Resuming step reads this file first, and before this rule a project could reach its second session with `handoff.md` present and no `active-context.md`. The Resuming step in the project's CLAUDE.md tolerates all three dashboards being absent (it reads each **if present**, falls back to the newest journal under `sessions/<persona>/`, else treats the project as new), so this rule closes the gap from the writing side only.
+
 These restate the same `Goal` / `Next` / completed info you just wrote into the journal — but in the **stable-path** dashboards, so a fresh session finds the resume pointer without hunting through dated journals. There is **no `completed.md`** — the journal's work-completed record covers it; never create one.
 
-**First-run note:** the very first `/wrap-up` after this was folded in (or for a brand-new persona) has to author `handoff.md` + `task.md` from scratch, so it writes a bit more than a normal incremental refresh. That's expected — subsequent runs just update in place.
+**First-run note:** the very first `/wrap-up` after this was folded in (or for a brand-new persona) has to author `handoff.md` + `task.md` from scratch — and `active-context.md` when the project has none yet — so it writes a bit more than a normal incremental refresh. That's expected — subsequent runs just update in place. After the first wrap-up all three dashboard files exist; the Resuming step in CLAUDE.md relies on that.
 
 ### Step 1 — Scan the session for durable work
 
