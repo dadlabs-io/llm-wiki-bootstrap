@@ -35,7 +35,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -212,10 +212,13 @@ def process_queue(vault_root, topic, dry_run, limit):
 def main():
     parser = argparse.ArgumentParser(description="Process a wiki ingest queue")
     parser.add_argument("--topic", required=True, help="Topic name")
-    parser.add_argument("--vault", default=DEFAULT_VAULT, help=f"Vault root (default: {DEFAULT_VAULT})")
+    parser.add_argument("--vault", default=None, help=f"Vault root (default: {DEFAULT_VAULT})")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be processed without changing anything")
     parser.add_argument("--limit", type=int, default=0, help="Process at most N items (0 = all)")
     args = parser.parse_args()
+    # --topic <registry notebook> resolves through the registry from any cwd;
+    # an explicit --vault keeps the legacy <vault>/<topic> join (2026-09-13).
+    args.vault, args.topic = _resolve_vault_topic(args.topic, args.vault)
     return process_queue(args.vault, args.topic, args.dry_run, args.limit)
 
 

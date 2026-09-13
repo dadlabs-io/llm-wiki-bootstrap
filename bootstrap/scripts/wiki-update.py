@@ -46,7 +46,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
 # Mechanical half of the eval rubric — shared with wiki-lint-mechanical.py so
 # the pre-write gate and the lint backlog view enforce ONE set of rules.
 from _entry_checks import check_entry_body, format_result  # noqa: E402
@@ -476,6 +476,58 @@ def find_inbound_candidates(new_path, wiki_dir, title, max_results=15):
 # ── Dedup ────────────────────────────────────────────────────────────────────
 
 
+# Files a backlink must never be suggested for: machine-generated indexes and
+# hub/system pages. Wiki-ROOT pages (glossary, concept-gaps, user guide, cycle
+# overview) are excluded by position — they match every generic term.
+_NO_BACKLINK_FILES = {"_map.md", "_index.md", "home.md", "readme.md", "llm-wiki-user-guide.md"}
+# A matched term that hits more files than this is generic for the wiki.
+GENERIC_TERM_LIMIT = 25
+
+
+def _curate_backlink_candidates(inbound, wiki_dir, max_n=8, entry_path=None):
+    """The staged-ingest sidecar contract's curated list (defect 2 of the
+    2026-09-12 batch): `suggested_backlinks` is capped at ~8 genuinely related
+    entries, never a directory sweep, never a machine file.
+
+    Filter: only entries below the wiki root (not `sessions/`), no `_*` / hub
+    files. A single term that matched more than ``GENERIC_TERM_LIMIT`` files is
+    a generic word for this wiki (a tag like "architecture" hits hundreds) and
+    is not a backlink signal — its matches are dropped unless the file is one
+    the entry itself links to, or the match is a multi-word title/subtitle.
+
+    Rank: (1) files the new entry links to in its own body — the reciprocal
+    half of bidirectional linking; (2) multi-word title/subtitle matches;
+    (3) rarer matched term first (fewer files matched = more specific);
+    (4) longer term first. Returns the top ``max_n`` in that order.
+    """
+    wiki_dir = Path(wiki_dir)
+    outbound = set()
+    if entry_path:
+        try:
+            body = Path(entry_path).read_text(encoding="utf-8")
+            outbound = {Path(t).stem.lower() for t in re.findall(r"\]\(([^)#]+\.md)", body)}
+        except OSError:
+            pass
+    freq = {}
+    for _path, term, _snip in inbound:
+        freq[term] = freq.get(term, 0) + 1
+    kept = []
+    for path, term, snippet in inbound:
+        rel = path.relative_to(wiki_dir).as_posix()
+        name = path.name.lower()
+        if name in _NO_BACKLINK_FILES or name.startswith("_"):
+            continue
+        if "/" not in rel or rel.split("/", 1)[0] == "sessions":
+            continue
+        linked = path.stem.lower() in outbound
+        multiword = " " in term
+        if freq[term] > GENERIC_TERM_LIMIT and not (linked or multiword):
+            continue
+        kept.append((path, term, snippet, linked, multiword))
+    kept.sort(key=lambda c: (not c[3], not c[4], freq[c[1]], -len(c[1])))
+    return [(p, t, sn) for p, t, sn, _l, _m in kept[:max_n]]
+
+
 def find_existing_by_url(wiki_root, url):
     """Walk wiki/ and return the first file whose frontmatter source_url matches.
 
@@ -865,6 +917,14 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
     # backlinks (the same list, formatted for one-shot application).
     if staged:
         sidecar = curated_path.with_suffix(".proposed_metadata.json")
+        # Contract: inbound_candidates is the ranked shortlist (informational,
+        # up to 15); suggested_backlinks is the curated set wiki-promote will
+        # actually apply (up to 8). Both exclude machine/hub files (2026-09-13).
+        ranked = _curate_backlink_candidates(inbound, wiki_dir, max_n=15, entry_path=curated_path)
+        curated = ranked[:8]
+        if inbound:
+            print(f"  → sidecar: {len(curated)} suggested backlink(s) curated from "
+                  f"{len(inbound)} candidate(s) (hub/machine files excluded, cap 8)")
         meta = {
             "target_folder": folder or "",
             "target_path": str((wiki_dir / folder / curated_path.name) if folder
@@ -879,7 +939,7 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
                     "term": term,
                     "snippet": snippet,
                 }
-                for path, term, snippet in inbound[:50]
+                for path, term, snippet in ranked
             ],
             "suggested_backlinks": [
                 {
@@ -887,7 +947,7 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
                     "link_text": final_title,
                     "link_target": curated_path.name,
                 }
-                for path, _term, _snippet in inbound[:50]
+                for path, _term, _snippet in curated
             ],
             "created": datetime.now().astimezone().isoformat(timespec="seconds"),
         }
@@ -938,7 +998,7 @@ def main():
     parser.add_argument("--title", help="Override auto-detected title")
     parser.add_argument("--tags", default="", help="Comma-separated tags")
     parser.add_argument("--ingested-by", default=None, help="Who ingested this (claude-code, clawd, cli)")
-    parser.add_argument("--vault", default=DEFAULT_VAULT, help=f"Vault root (default: {DEFAULT_VAULT})")
+    parser.add_argument("--vault", default=None, help=f"Vault root (default: {DEFAULT_VAULT})")
     parser.add_argument("--no-index", action="store_true", help="Skip _INDEX.md regeneration")
     parser.add_argument("--force", action="store_true", help="Re-ingest even if source URL already in wiki")
     parser.add_argument("--fetch-only", action="store_true", help="Only fetch source to raw/, do NOT file a curated wiki entry. Prints raw_path= for the caller to read and synthesize on top of.")
@@ -958,6 +1018,9 @@ def main():
                              "entry so the override is visible in the cycle log. Warnings never block.")
     args = parser.parse_args()
 
+    # --topic <registry notebook> resolves through the registry from any cwd;
+    # an explicit --vault keeps the legacy <vault>/<topic> join (2026-09-13).
+    args.vault, args.topic = _resolve_vault_topic(args.topic, args.vault)
     # Lookup mode — no ingestion, just print the slug + path
     if args.slug_for:
         return print_slug_for(args.vault, args.topic, args.folder, args.title)

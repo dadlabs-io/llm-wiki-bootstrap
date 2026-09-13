@@ -56,7 +56,7 @@ VERIFIED_LINE_RE = re.compile(r"^verified:\s*\S+\s*$", re.MULTILINE)
 # Path-resolution helper lives in the shared _wiki_config module (single
 # source of truth for the multi-wiki config schema).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault  # noqa: E402
+from _wiki_config import default_vault as _default_vault, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
 
 
 def iso_now() -> str:
@@ -142,7 +142,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Verify a wiki entry (set verified=verified via sidecar)")
     ap.add_argument("slug", help="Entry to verify (slug, relative path, or absolute path)")
     ap.add_argument("--topic", required=True)
-    ap.add_argument("--vault", default=_default_vault())
+    ap.add_argument("--vault", default=None)
     ap.add_argument("--by", choices=["human", "agent", "tool"], default="human",
                     help="Who certified. Default: human (editorial signoff).")
     ap.add_argument("--evidence", default="",
@@ -152,6 +152,9 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
+    # --topic <registry notebook> resolves through the registry from any cwd;
+    # an explicit --vault keeps the legacy <vault>/<topic> join (2026-09-13).
+    args.vault, args.topic = _resolve_vault_topic(args.topic, args.vault)
     topic_root = (Path(args.vault) / args.topic).resolve()
     if not topic_root.exists():
         print(f"ERROR: topic root not found: {topic_root}", file=sys.stderr)

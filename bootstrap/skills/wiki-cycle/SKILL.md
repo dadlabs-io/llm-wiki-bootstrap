@@ -263,7 +263,7 @@ Update scratchpad Phase 2 with the user's decision.
 
 Queue approved items via `wiki-list-add.py`, then ingest via parallel agents (4 at a time, same pattern as today's session).
 
-**Spawn ingest workers as `subagent_type="wiki-ingester"`** (the dedicated ingest agent, installed to `~/.claude/agents/` by this framework) — fall back to `general-purpose` only if it isn't installed. Spawner contract: read `~/.claude/agents/wiki-ingester-config.json` first; if `confirm_model_each_run` is true, ask the user which model to use for this batch (default = `model_default`) and pass it as the Agent tool's spawn-time `model` override.
+**Spawn ingest workers as `subagent_type="wiki-ingester"`** (the dedicated ingest agent, installed to `~/.claude/agents/` by this framework) — fall back to `general-purpose` only if it isn't installed. Spawner contract: read `~/.claude/agents/wiki-ingester-config.json` first; if `confirm_model_each_run` is true and the session can ask, ask the user which model to use for this batch (default = `model_default`); a session that cannot ask (autonomous / unattended) uses `model_default` and names the model in its spawn receipt (2026-09-13); pass it as the Agent tool's spawn-time `model` override.
 
 Each agent follows the full `/wiki-update` flow including the eval gate (step 5 — since 2026-09-02 the script's mechanical checks refuse to file on a hard failure; the agent's self-score covers only fidelity and synthesis value).
 

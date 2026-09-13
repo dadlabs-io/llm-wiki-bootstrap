@@ -43,7 +43,7 @@ from typing import List, Optional, Tuple
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -327,7 +327,7 @@ def main():
     parser = argparse.ArgumentParser(description="Fetch a PDF and extract text to wiki raw/")
     parser.add_argument("--topic", required=True, help="Topic name")
     parser.add_argument("--source", required=True, help="URL or local file path")
-    parser.add_argument("--vault", default=DEFAULT_VAULT, help=f"Vault root (default: {DEFAULT_VAULT})")
+    parser.add_argument("--vault", default=None, help=f"Vault root (default: {DEFAULT_VAULT})")
     parser.add_argument("--ingested-by", default="cli", help="Who initiated this fetch")
     parser.add_argument("--slug", default=None, help="Override slug")
     parser.add_argument("--ocr", choices=["none", "auto", "tesseract"], default="auto", help="OCR fallback mode")
@@ -335,6 +335,9 @@ def main():
     parser.add_argument("--no-keep-pdf", dest="keep_pdf", action="store_false", default=True, help="Skip copying source PDF alongside extracted .md")
     args = parser.parse_args()
 
+    # --topic <registry notebook> resolves through the registry from any cwd;
+    # an explicit --vault keeps the legacy <vault>/<topic> join (2026-09-13).
+    args.vault, args.topic = _resolve_vault_topic(args.topic, args.vault)
     return fetch_pdf(args.vault, args.topic, args.source, args.ingested_by, args.ocr, args.quality_threshold, args.slug, args.keep_pdf)
 
 

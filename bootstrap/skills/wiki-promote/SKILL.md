@@ -8,7 +8,7 @@ reviewed_for_model: claude-fable-5-1
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback` and `/new-wiki`. This skill is documented + callable for programmatic use.
 
-> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
+> **Wiki resolution (2026-09-08; any-cwd since 2026-09-13).** The scripts resolve the wiki through the registry: `--topic <notebook>` is looked up in `linked-notebooks.json` first, found via the nearest `<cwd>/.claude/wiki-config.json` or, when there is none above the cwd, the machine config `~/.claude/wiki-config.json` (which records `registry` from the first registry-mode `/new-wiki`). So `wiki-promote.py --topic <notebook>` works from any folder. Omit `--vault`; pass it only for a legacy in-project vault that is not in the registry. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
 
 # /wiki-promote
 

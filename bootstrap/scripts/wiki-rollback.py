@@ -57,7 +57,7 @@ REVISES_RE = re.compile(r"^revises:\s*(.+?)\s*$", re.MULTILINE)
 # Path-resolution helper lives in the shared _wiki_config module (single
 # source of truth for the multi-wiki config schema).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault  # noqa: E402
+from _wiki_config import default_vault as _default_vault, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
 
 
 def iso_now() -> str:
@@ -270,13 +270,16 @@ def main() -> int:
     ap.add_argument("slug", help="Entry to roll back (slug, relative path, or absolute path)")
     ap.add_argument("--reason", required=True, help="One-paragraph explanation of why this rollback")
     ap.add_argument("--topic", required=True, help="Wiki topic name")
-    ap.add_argument("--vault", default=_default_vault(), help="Vault root containing the topic folder")
+    ap.add_argument("--vault", default=None, help="Vault root containing the topic folder")
     ap.add_argument("--cluster-walk", action="store_true",
                     help="Also flag sibling entries in the same folder(s) for human review (does NOT auto-roll them back). Refinement from cycle 2026-05-24-01 / Oblivion cluster-decay.")
     ap.add_argument("--dry-run", action="store_true",
                     help="Show what would change without writing.")
     args = ap.parse_args()
 
+    # --topic <registry notebook> resolves through the registry from any cwd;
+    # an explicit --vault keeps the legacy <vault>/<topic> join (2026-09-13).
+    args.vault, args.topic = _resolve_vault_topic(args.topic, args.vault)
     topic_root = (Path(args.vault) / args.topic).resolve()
     if not topic_root.exists():
         print(f"ERROR: topic root not found: {topic_root}", file=sys.stderr)

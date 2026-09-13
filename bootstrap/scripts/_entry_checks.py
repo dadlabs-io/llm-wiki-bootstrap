@@ -28,7 +28,9 @@ Checks (rubric dimension → rule → severity):
   metadata   → >= 3 tags                                            → WARNING
   structure  → < 30 non-blank lines AND < 300 words, no `stub` tag    → WARNING
   fidelity   → numeric claims in prose outside a `>` blockquote      → WARNING
-               (numbers must be quoted + attributed; paraphrased numbers drift)
+               (numbers must be quoted + attributed; paraphrased numbers drift.
+               Only a line starting with `>` counts as quoted — a number inside
+               inline quotation marks "like this" is still prose to this check)
 
 System pages (HOME.md, README.md, _MAP.md, _INDEX.md, index.md) and
 framework-contract docs are skipped by `is_exempt()`.
@@ -281,8 +283,9 @@ def check_entry_body(body: str, *, tags=None, tier=None) -> dict:
     if number_hits:
         sample = ", ".join(dict.fromkeys(number_hits[:3]))
         warnings.append(
-            f"{len(number_hits)} numeric claim(s) in prose outside a blockquote "
-            f"(e.g. {sample}) — quote + attribute, or drop (rubric: extraction fidelity)"
+            f"{len(number_hits)} numeric claim(s) in prose outside a `>` blockquote "
+            f"(e.g. {sample}) — put the figure on a `>` line with attribution, or drop it; "
+            f"inline quotation marks do not count (rubric: extraction fidelity)"
         )
 
     return {

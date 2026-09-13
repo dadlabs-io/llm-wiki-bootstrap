@@ -30,8 +30,10 @@ writes lands in `_inbox/proposed/`, and it returns a compressed receipt of what 
 ## How it is spawned
 
 Its model is set in `~/.claude/agents/wiki-ingester-config.json`. While that file's confirm flag is
-on, the session that spawns it asks you which model to use for the batch, defaulting to the
-configured one, and passes your choice at spawn time. Turn the flag off to stop being asked.
+on, an interactive session that spawns it asks you which model to use for the batch, defaulting to the
+configured one, and passes your choice at spawn time. A session that cannot ask (an autonomous or
+unattended run) uses the configured default without asking and names the model in the batch receipt,
+so you can see afterwards what ran. Turn the flag off to stop being asked in interactive sessions too.
 
 ## What you get back
 

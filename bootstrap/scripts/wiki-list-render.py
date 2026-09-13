@@ -27,7 +27,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -176,8 +176,11 @@ def render_pending_list(vault_root, topic):
 def main():
     parser = argparse.ArgumentParser(description="Render queue as a markdown table view")
     parser.add_argument("--topic", required=True)
-    parser.add_argument("--vault", default=DEFAULT_VAULT)
+    parser.add_argument("--vault", default=None)
     args = parser.parse_args()
+    # --topic <registry notebook> resolves through the registry from any cwd;
+    # an explicit --vault keeps the legacy <vault>/<topic> join (2026-09-13).
+    args.vault, args.topic = _resolve_vault_topic(args.topic, args.vault)
     return render_pending_list(args.vault, args.topic)
 
 

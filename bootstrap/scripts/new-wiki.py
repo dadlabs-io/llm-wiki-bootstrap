@@ -1417,6 +1417,17 @@ def phase_b(args):
             _ok(f"registered '{name}' -> {entry} (confirm_before_create="
                 f"{nb_options['confirm_before_create']}, confirm_before_promote="
                 f"{nb_options['confirm_before_promote']}) in {registry_path.name}")
+        # Record the registry machine-wide too (2026-09-13, defect 1 of the
+        # 2026-09-12 batch): a script run from a cwd with no project config (a
+        # foreign folder, a worker) falls back to ~/.claude/wiki-config.json for
+        # the registry pointer, so `--topic <notebook>` resolves without --vault.
+        if not global_cfg.get("registry"):
+            global_cfg["registry"] = registry_path.as_posix()
+            if args.dry_run:
+                print(f"WOULD record registry {registry_path.as_posix()} in {CC_GLOBAL_CONFIG_PATH}")
+            else:
+                _save_config(global_cfg, CC_GLOBAL_CONFIG_PATH)
+                _ok(f"registry recorded in {CC_GLOBAL_CONFIG_PATH.name} (machine-wide fallback)")
         project_cfg = {
             "tool": args.tool,
             "project_name": name,

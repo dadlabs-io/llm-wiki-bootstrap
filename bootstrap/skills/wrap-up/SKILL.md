@@ -194,7 +194,7 @@ root** instead of `project/<category>/`. Write both files:
 ```json
 // <slug>.proposed_metadata.json — same folder as the .md, same slug stem
 {
-  "target_folder": "project/<category>",
+  "target_folder": "project/components",   // the PLURAL folder name as it exists under wiki/project/ (components, decisions, patterns, architecture, troubleshooting) — NOT the singular category word from the .md's `category:` field. Three 2026-09-09 entries landed in phantom project/component/ and project/decision/ folders this way; wiki-promote.py maps a singular to its plural since 2026-09-13, but write the folder name.
   "title": "<same as the .md's title>",
   "tier": "self",
   "confidence": "<high|medium|low>",

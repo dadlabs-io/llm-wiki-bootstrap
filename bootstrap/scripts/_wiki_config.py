@@ -173,6 +173,13 @@ def _find_config_path(cwd=None):
         p = d / ".claude" / "wiki-config.json"
         if p.exists():
             return p
+    # No project config above cwd (a foreign folder, a worker's scratch dir, the
+    # vault root itself): fall back to the machine config, which carries the
+    # `registry` pointer since 2026-09-13 so `--topic <notebook>` still resolves
+    # through linked-notebooks.json without --vault (defect 1, 2026-09-12 batch).
+    g = Path.home() / ".claude" / "wiki-config.json"
+    if g.exists():
+        return g
     return None
 
 
@@ -304,6 +311,26 @@ def topic_root(topic=None, cwd=None):
             return str(Path(r[0]) / r[1])
     t = topic or default_topic(cwd)
     return str(Path(default_vault(cwd)) / t)
+
+
+def resolve_vault_topic(topic=None, vault=None, cwd=None):
+    """(vault_root, topic_folder) for a script's ``--topic`` / ``--vault`` pair.
+
+    Registry first (2026-09-13, defect 1 of the 2026-09-12 ingest batch): when
+    ``vault`` was not given and ``topic`` names a registry notebook, the pair is
+    that notebook's own vault root and folder name, whatever the cwd is — so
+    ``--topic agentic-design`` works from any folder and a notebook whose root
+    is not ``<vault>/<name>`` (an in-project ``llm-wiki``) resolves too. An
+    explicit ``vault`` is honoured unchanged (legacy ``<vault>/<topic>`` join).
+    Otherwise falls back to the cwd notebook's vault + the given/default topic.
+    """
+    if vault:
+        return str(Path(vault)), topic or default_topic(cwd)
+    if topic:
+        r = _registry_resolve(topic, cwd)
+        if r:
+            return r[0], r[1]
+    return default_vault(cwd), (topic or default_topic(cwd))
 
 
 def wiki_dir(topic=None, vault=None, cwd=None):

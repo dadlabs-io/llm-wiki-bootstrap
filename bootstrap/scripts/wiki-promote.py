@@ -52,6 +52,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import (  # noqa: E402
+    resolve_vault_topic as _resolve_vault_topic,
     default_vault as _default_vault,
     default_topic as _default_topic,
     MERGED_TAXONOMY,
@@ -93,6 +94,18 @@ def _normalize_target_folder(folder: str) -> tuple[str, str | None]:
         matches = [t for t in MERGED_TAXONOMY if t.rsplit("/", 1)[-1] == folder]
         if len(matches) == 1:
             return matches[0], f"target_folder '{folder}' auto-prefixed to '{matches[0]}'"
+    # Singular category names (defect 6, 2026-09-12 batch): /wrap-up's category
+    # vocabulary is singular (component, decision, pattern) while the folders are
+    # plural (components/, decisions/, patterns/). Three entries once landed in
+    # phantom project/component/ and project/decision/ folders. Map leaf -> leaf+s
+    # (and leaf+ies for a trailing y), within the given prefix when there is one.
+    prefix, _, leaf = folder.rpartition("/")
+    plurals = [leaf + "s"] + ([leaf[:-1] + "ies"] if leaf.endswith("y") else [])
+    for pl in plurals:
+        cands = [t for t in MERGED_TAXONOMY
+                 if t.rsplit("/", 1)[-1] == pl and (not prefix or t.startswith(prefix + "/"))]
+        if len(cands) == 1:
+            return cands[0], f"target_folder '{folder}' is the singular of '{cands[0]}' — mapped"
     return folder, f"target_folder '{folder}' is not a known taxonomy path — promoting as-is (verify placement)"
 
 
@@ -505,10 +518,12 @@ def main():
     if args.vault:
         vault = Path(args.vault)
     else:
-        # _default_vault() returns the vault_root (parent of the topic folders);
-        # promote operates on the wiki dir, so build <vault_root>/<topic>/wiki.
+        # promote operates on the wiki dir: <topic_root>/wiki. The topic root comes
+        # from the registry when --topic names a notebook (any cwd, 2026-09-13),
+        # else <default_vault>/<topic>.
         _topic = args.topic or _default_topic()
-        vault = Path(_default_vault()) / _topic / "wiki"
+        _root, _folder = _resolve_vault_topic(_topic, None)
+        vault = Path(_root) / _folder / "wiki"
     if not vault.exists():
         _err(f"vault not found: {vault}")
         return 1

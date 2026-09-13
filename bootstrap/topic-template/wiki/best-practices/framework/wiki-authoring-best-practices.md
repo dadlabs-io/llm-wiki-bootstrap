@@ -7,9 +7,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 3
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
+framework-version: 4
+last_reviewed: 2026-09-13
+review_after: 2026-12-13
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
 ---
 
@@ -76,7 +76,7 @@ Rationale: the minority view today may be right tomorrow. Auto-resolving contrad
 **Not described in any external source at our granularity.** workflows-core innovation, validated by `/wiki-claims` skill.
 
 Every factual assertion in every entry is classified as one of:
-- **direct-quote** — verbatim from source, in blockquotes
+- **direct-quote** — verbatim from source, in blockquotes (`>` lines). This is the only form the mechanical gate recognises: a number inside inline quotation marks in a prose sentence is still a numeric claim in prose to `_entry_checks.py`, and the entry fails the fidelity check until the figure sits on a `>` line with its attribution (clarified 2026-09-13)
 - **sourced** — paraphrased but cleanly attributed
 - **synthesis** — our conclusion drawn from multiple sources
 - **inference** — our own assertion, unsourced (highest drift risk)

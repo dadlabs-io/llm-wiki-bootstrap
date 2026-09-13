@@ -6,7 +6,7 @@ review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
 ---
 
-> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
+> **Wiki resolution (2026-09-08; any-cwd since 2026-09-13).** The scripts resolve the wiki through the registry: `--topic <notebook>` is looked up in `linked-notebooks.json` first, found via the nearest `<cwd>/.claude/wiki-config.json` or, when there is none above the cwd, the machine config `~/.claude/wiki-config.json` (which records `registry` from the first registry-mode `/new-wiki`). So a worker or a session in a foreign folder can target any registered notebook with `--topic` alone. Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault that is not in the registry. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
 
 Update (add) content to a topic wiki. The user shouldn't have to think about what type of source they have — figure it out from what they give you.
 
@@ -219,6 +219,7 @@ Write to `<topic>/_inbox/temp/<slug>.md` with sections:
 - Use `> blockquotes` for direct quotes from the source material — verbatim text with attribution
 - Use plain prose for YOUR synthesis, connections, and inferences
 - When citing a specific number (benchmark score, percentage, token count), always blockquote it from the source and name the source. NEVER paraphrase numbers — they drift across entries when paraphrased.
+- **Blockquote syntax only.** The mechanical gate (step 5) recognises a quoted number only on a line that starts with `>`. A figure inside inline quotation marks in a prose sentence ("the paper reports 26%") still counts as a numeric claim in prose and fails the check. Dense statistical sources (a benchmark write-up, a funding round-up) need their figures on `>` lines from the first draft, not reformatted after the gate refuses them (2026-09-13, defect 4 of the 2026-09-12 batch).
 - This distinction prevents silent poisoning (pre-mortem failure mode #7)
 
 **Do NOT include a Source/Raw footer** in your temp file. The script adds its own canonical footer — including one in your synthesis creates duplicates.
