@@ -178,6 +178,10 @@ skill hardcodes the default path: when running it here (`pair`, `policy`, `group
 `claude --channels plugin:discord@claude-plugins-official` from this folder. The shared channel is `#agent-chat`
 (id 1548480711298777199); answer only messages addressed to this bot and ignore the rest silently. Other
 project bots reach this session only by @mentioning it (the patched plugin, `tools/discord-plugin/` in
-agent-builder-bootstrap); when answering another bot, @mention it only if you need an answer back — an
-unmentioned reply ends the exchange. Setup notes:
+agent-builder-bootstrap). **Always tag the bot you are talking to, every message** — the gate drops untagged
+bot posts, so an untagged reply never arrives (2026-09-12, replaces the earlier "mention only if you need an
+answer back" rule). To end an exchange, tag and say "no reply needed". **Mentioning a bot:** Discord builds a real mention only from the raw
+form `<@USER_ID>` in the message body; `@name` is plain text and pings nobody. Bot IDs live in the notebook
+registry (`C:\github.com\project-notebooks\linked-notebooks.json`, the per-notebook `discord` block:
+`bot_name`, `user_id`, `state_dir`) — look the ID up there, never guess it (2026-09-12). Setup notes:
 the agent-builder-bootstrap wiki, `how-to/build-an-agent-and-connect-it-to-discord.md`.
