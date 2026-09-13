@@ -170,18 +170,20 @@ install manifests in `_install_tooling.py` are the live lists; `README.md` and
 
 ## Discord channel (this project's bot)
 
-This project has its own Discord bot (the `llm-wiki` application). Its plugin state lives in
-`~/.claude/channels/discord-llm-wiki/` — set by `DISCORD_STATE_DIR` in `.claude/settings.local.json`, not
-the plugin's default `~/.claude/channels/discord/` (that folder is the agent-builder bot's). The `/discord:access`
-skill hardcodes the default path: when running it here (`pair`, `policy`, `group add`, …), read and write
-`~/.claude/channels/discord-llm-wiki/access.json` and `.../approved/` instead. Launch with
-`claude --channels plugin:discord@claude-plugins-official` from this folder. The shared channel is `#agent-chat`
-(id 1548480711298777199); answer only messages addressed to this bot and ignore the rest silently. Other
-project bots reach this session only by @mentioning it (the patched plugin, `tools/discord-plugin/` in
-agent-builder-bootstrap). **Always tag the bot you are talking to, every message** — the gate drops untagged
-bot posts, so an untagged reply never arrives (2026-09-12, replaces the earlier "mention only if you need an
-answer back" rule). To end an exchange, tag and say "no reply needed". **Mentioning a bot:** Discord builds a real mention only from the raw
-form `<@USER_ID>` in the message body; `@name` is plain text and pings nobody. Bot IDs live in the notebook
-registry (`C:\github.com\project-notebooks\linked-notebooks.json`, the per-notebook `discord` block:
-`bot_name`, `user_id`, `state_dir`) — look the ID up there, never guess it (2026-09-12). Setup notes:
-the agent-builder-bootstrap wiki, `how-to/build-an-agent-and-connect-it-to-discord.md`.
+Bot `llm-wiki`; plugin state `~/.claude/channels/discord-llm-wiki/` (set by `DISCORD_STATE_DIR` in
+`.claude/settings.local.json` — not the plugin default `~/.claude/channels/discord/`, which is agent-builder's, so
+when running `/discord:access` here read and write `access.json` and `approved/` under this folder); launch
+`claude --channels plugin:discord@claude-plugins-official` from this folder; the shared channel is `#agent-chat`
+(id 1548480711298777199). Setup, bot ids and traps: the `add-project-to-discord` skill (installed globally) and
+its seed page. Rules, identical for every project bot:
+- Answer only messages that @mention this bot; ignore the rest silently, in the channel and the terminal.
+- **Always @mention the bot you address**, as the raw `<@user_id>` (the `discord` block per notebook in
+  `C:\github.com\project-notebooks\linked-notebooks.json`), never `@name`: an untagged post reaches nobody. End an
+  exchange by tagging it and saying "no reply needed"; the plugin's rate cap (10 bot deliveries per channel per
+  10 min) guards against loops.
+- Reply with the verdict and where the detail lives (terminal, wiki path); post an interim line on anything over
+  a few minutes; say in the channel when a permission prompt is waiting at the keyboard. The full write-up goes
+  to the terminal and the wiki as usual.
+- After the Resuming read, fetch the recent `#agent-chat` messages and act on any unanswered mention of this bot
+  (the plugin does not replay history). When an intake handoff is resolved (Resolution section appended, note
+  moved to `_inbox/done/`), post one tagged line back to the sending bot.
