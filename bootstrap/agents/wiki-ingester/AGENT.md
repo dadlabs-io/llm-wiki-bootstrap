@@ -4,8 +4,8 @@ description: "Spawnable worker for DELEGATED wiki ingestion — turns each assig
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, TodoWrite, Skill, ToolSearch
 model: sonnet
 role: ingester
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
+last_reviewed: 2026-09-13
+review_after: 2026-12-13
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -50,7 +50,11 @@ with TodoWrite. For each item:
 
 1. **Dispatch the right fetcher** per `wiki-update/SKILL.md`'s URL-host dispatch table
    (urllib default; yt-dlp for YouTube; pdf pipeline for PDFs; syndication script for X — Playwright
-   only as its documented fallback; never two fetchers in flight at once).
+   only as its documented fallback; never two fetchers in flight at once). **You have no browser.**
+   A login-gated page (a Medium member-only story, anything behind the user's own sign-in) is
+   captured by the interactive session through Claude in Chrome BEFORE you are spawned and handed
+   to you as `--source <raw> --source-url <url> --raw-path raw/<file>`; if you meet such a URL with
+   no raw, mark it **failed: needs browser capture by the session** and move on (2026-09-13).
 2. **Read the source in FULL — depth mandates per type.** No tier / cluster / skip / synthesis
    decision until the source is fully read:
    - **Article/blog** — the full text, not the lede.

@@ -1,8 +1,8 @@
 ---
 name: wiki-update
 description: Ingest an EXTERNAL source into the wiki's research/ layer. Auto-detects from what the user gives. URL → fetch + file. YouTube URL → fetch transcript + synthesize summary + file. Local file → file. Pasted text → file. Requires a source — with nothing, it redirects to /wrap-up (for capturing our own session work). Use when the user says "update the wiki", "add this to the wiki", "save this article", "wiki this", "wiki update", "ingest this video", "add this YouTube video to the wiki". For "save what we did" / session work, use /wrap-up instead. Replaces the old /wiki-add command.
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
+last_reviewed: 2026-09-13
+review_after: 2026-12-13
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -277,7 +277,7 @@ rm <topic>/_inbox/temp/<slug>.md
 | `youtube.com`, `youtu.be` | `wiki-fetch-youtube.py` (yt-dlp in container) | YouTube needs transcript extraction, not page scraping |
 | **PDF URL** (`*.pdf`, `arxiv.org/pdf/*`) or local `.pdf` file | `wiki-fetch-pdf.py` (pdftotext + pypdf in container) | Hybrid extraction with quality-based fallback |
 | `x.com`, `twitter.com` | `wiki-fetch-tweet.js` (syndication API, **runs on host, no Docker/browser**) | No login, no Chromium — see "X/Twitter flow" below. **Do NOT default to the Playwright recipe for X/Twitter** — it's the fallback only (protected/deleted tweets), not the default. Running it 4-way parallel across a batch is what spiked 15-20+ Chromium processes and hung the operator's machine on 2026-07-10 — the syndication API has no such cost. |
-| `medium.com`, `*.medium.com` | `wiki-fetch-page.js` | Heavy JS, paywall walls |
+| `medium.com`, `*.medium.com`, Medium publications on their own domains (`levelup.gitconnected.com`, `pub.towardsai.net`, …) | **Browser-session capture** (Claude in Chrome, see the flow below) when the session is interactive and the user is signed in; `wiki-fetch-page.js` otherwise | Direct HTTP is refused (403 on every post, 2026-09-12); member-only stories render in full only in the user's own signed-in tab |
 | `threads.net`, `instagram.com`, `bsky.app` | `wiki-fetch-page.js` | All SPA-rendered |
 | `linkedin.com` | `wiki-fetch-page.js` | Auth gates, JS-rendered |
 | `notion.so` (public pages) | `wiki-fetch-page.js` | JS-rendered |
@@ -307,6 +307,38 @@ node {{WIKI_SCRIPTS_DIR}}/wiki-fetch-tweet.js --topic <topic> --url <url> --vaul
 ### Step 2 — Read, synthesize, file
 
 Same as any other source: read the raw file, synthesize a curated summary, file via `wiki-update.py` per the standard flow below.
+
+## Browser-session capture flow (Claude in Chrome — Medium and other login-gated pages, added 2026-09-13)
+
+For a page the user can read in their own browser but no fetcher can: Medium member-only stories, anything behind a login the user holds. The interactive session reads the page through the Claude in Chrome extension, in the user's signed-in session, and saves the text as the raw. This is capture through the user's own access, never a bypass: if the page shows a "Member-only story" label and the body stops after a few paragraphs, the user is not a member of that site and the item is **preview only**: record that in the raw header or skip it, do not ingest a truncated body as the article.
+
+**Only the interactive session can do this.** A spawned `wiki-ingester` worker has no browser. For a batch, the session captures every gated raw first, then hands the workers `--source <raw> --source-url <url> --raw-path raw/<file>` (the flow below from step 2).
+
+### Step 1 — Open and read
+
+1. `tabs_context_mcp` (create the group if empty), then `navigate` to the article URL and `wait` two to three seconds. Medium's short form `https://medium.com/p/<12-hex-id>` resolves to the canonical URL; a digest email's plain text carries only author links, but each link's tracking parameter ends `reader-<publication>-<postid>----N-…` or `reader--<postid>----N-…`, and that post id is enough.
+2. `get_page_text` is the tool that works on these pages; `javascript_tool` and screenshots are refused on many hosts. Read the tab's final URL and title from the result: Medium redirects author posts to `<author>.medium.com` and publication posts to the publication's domain, and **each host needs its own site permission in the extension** ("Permission denied for reading page content on this domain" is that, not a fetch error; the fix is the extension's site-access setting, not a retry).
+3. A page that returns only the site chrome (Sidebar menu, Write, Notifications, …) was still loading: wait and read again. A feed page renders only the cards near the viewport: read it with `read_page` (interactive filter) at each scroll stop and collect the article hrefs, not with one page-text read.
+
+### Step 2 — Save the raw
+
+Write `<topic>/raw/<YYYY-MM-DD>-<slug>.md` with the **Write tool** (a shell heredoc breaks on article-length text), header first, then the text with images and charts dropped and their captions kept:
+
+```
+# <article title>
+source_url: <canonical url>
+author: <name> (<publication>, if any)
+published: <date as the page shows it>
+fetched: <YYYY-MM-DD> via browser capture (<Medium member view | not member-only>; images omitted; charts captions only)
+---
+<full text>
+```
+
+Keep the author's promo blocks out or mark them `[Promo: …]`; keep everything else verbatim. Charts are not captured: a figure that reaches the raw only as the author's caption of a chart is a **secondary-summary figure** (authoring best practices, principle 5) and the entry treats it as `sourced` via the author with confidence low.
+
+### Step 3 — Continue at the standard flow's step 2
+
+Read the raw, search the wiki, synthesize, and file with `wiki-update.py --source <synth> --source-url <url> --raw-path raw/<file> …` as in the URL flow. In the entry's Sources section say how the raw was captured ("Raw captured <date> through the user's Medium membership"); the provenance is part of the claim.
 
 ## Playwright flow (JS-rendered pages — Medium, Threads, Notion, LinkedIn, and X/Twitter fallback)
 

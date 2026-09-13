@@ -7,7 +7,7 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 4
+framework-version: 5
 last_reviewed: 2026-09-13
 review_after: 2026-12-13
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
@@ -88,6 +88,8 @@ Claims are indexed in `_inbox/claims-index-*.json` for cross-entry comparison. T
 **Auto-captioned sources: check before you blockquote (added 2026-08-13).** The `direct-quote` class asserts *verbatim from source*. When the source text came from automatic speech recognition — YouTube auto-captions, a `yt-dlp`-fetched `.vtt`, any podcast transcript — verbatim-from-the-transcript and verbatim-from-the-speaker are not the same claim, and ASR fails **systematically** on exactly the vocabulary these wikis are made of: "Claude Code" arrives as "Cloud Code" or "Quad Code", `CLAUDE.md` as "quadmd", "CloudMD", "clawed MD". Preserving those inside `>` marks puts a fabricated quotation behind the wiki's strongest truth signal — principle 3's anti-poisoning guarantee defeated from the inside.
 
 **The rule**: before any ASR-derived passage is placed inside a blockquote, scan the transcript for systematic mishearings of the entry's own key terms and correct each to the intended word, disambiguated by context. Disclose the correction **once**, in a dated transcription note near the top of the entry, rather than annotating every instance. If a passage cannot be disambiguated with confidence, it is `sourced`, not `direct-quote`: paraphrase it and drop the blockquote. (Worked example: the Boris Cherny / Y Combinator entry in agentic-design `research/tooling/`. Added after cycle 2026-08-04-01 found roughly twenty uncorrected ASR corruptions inside verbatim blocks across two entries.) Enforcement: prose; the `wiki-update` YouTube flow states it as a required step.
+
+**Secondary-summary figures are `sourced`, not `direct-quote` (added 2026-09-13).** A number that reaches the entry through an intermediary — an author's caption of someone else's chart, a newsletter's restatement of a study, a roundup's one-liner — is verbatim from the intermediary, not from the work it describes. The `>` line keeps it out of the fidelity gate's "number in prose" check, but the claim class is `sourced` via the intermediary: attribute it to the intermediary by name in the same blockquote, tag the entry `needs-source-check`, set `confidence: low`, and follow the intermediary's link before the figure is ever cited as the underlying source's. Where such a figure and an entry with its own primary sourcing disagree, the sourced entry wins until the link is followed. (Worked example: the eleven Romero chart captions, `research/interesting-docs/`, agentic-design, 2026-09-13; the charts and their links were not captured with the raw, so the whole entry is a follow-up list at confidence low.) Enforcement: prose; the mechanical gate cannot tell a caption from a quotation.
 
 ### 6. Two human checkpoints in any autonomous loop
 
