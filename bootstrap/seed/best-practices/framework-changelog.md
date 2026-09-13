@@ -9,6 +9,17 @@
 
 ---
 
+## 2026-09-13
+
+### Review cadence follows importance (frontmatter spec v5; defect 3 of the 2026-09-12 ingest batch)
+- **What was wrong**: three cadence tables disagreed. The frontmatter spec said tier 1 +12 months down to tier 4 +3; `wiki-update.py` had the numbers inverted against its own comment (tier 1 90 days, tier 4 365 — a blog post got a year, a paper three months); the lint's backfill hint quoted a third set (t1=6mo, t4=2mo). `wiki-init.py` stamped seeded hub pages at +365.
+- **User decision**: cadence follows importance, not source stability — the more an entry matters, the more often it is re-checked. **Tier 1 +1 month, tiers 2 and 3 +2 months, tier 4 and self-authored +3 months (the floor).** Refresh is one monthly pass (`/wiki-refresh`, first of the month or whenever), so the offsets size that batch rather than a daily load. `review_after` stays an explicit field (per-entry override, plain-date scan, a later table change does not move existing entries).
+- **Changed**: the spec's cadence table and example blocks (`framework-version` 4 → 5, refreshed into every registered notebook by the SOP); `wiki-update.py` `_cadence_days = {1: 30, 2: 60, 3: 60, 4: 90}`, `self`/unset → 90; the lint hint quotes the same numbers; `wiki-init.py` seeds at +90.
+- **Not changed**: existing entries keep their current `review_after`; the next re-read bumps them onto the new cadence.
+- **Migration**: `install-wiki.ps1 -RefreshOnly` (done). Defects 1, 2, 4, 5 and 6 of the same batch remain open (`project/troubleshooting/framework-defects-surfaced-by-parallel-ingest-batch-2026-09-12.md` in the llm-wiki-bootstrap notebook).
+
+---
+
 ## 2026-09-12
 
 ### `qmd query` hang root-caused: Vulkan fallback without a CUDA runtime; CUDA preflight added; truth-status filter fixed

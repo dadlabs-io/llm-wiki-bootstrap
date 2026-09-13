@@ -746,7 +746,7 @@ def lint(vault_root, topic, strict=False):
         if missing_lifecycle:
             out.append(f"### Missing lifecycle fields ({len(missing_lifecycle)})")
             out.append("")
-            out.append("Entries missing `last_reviewed` and/or `review_after` are structurally invisible to `/wiki-refresh` — they can never be flagged as stale. Backfill with `last_reviewed: <today>` + tier-cadence `review_after` (t1=6mo, t2/t3=3mo, t4=2mo).")
+            out.append("Entries missing `last_reviewed` and/or `review_after` are structurally invisible to `/wiki-refresh` — they can never be flagged as stale. Backfill with `last_reviewed: <today>` + tier-cadence `review_after` (t1=1mo, t2/t3=2mo, t4 and self=3mo — frontmatter spec, review cadence).")
             out.append("")
             for f, gap in missing_lifecycle[:30]:
                 rel = f.relative_to(wiki_root)

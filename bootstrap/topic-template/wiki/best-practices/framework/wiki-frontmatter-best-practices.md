@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 4
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
+framework-version: 5
+last_reviewed: 2026-09-13
+review_after: 2026-12-13
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
 
@@ -119,14 +119,15 @@ When unsure between two adjacent tiers, prefer the LOWER tier (more conservative
 
 | Content type | Default offset |
 |---|---|
-| Peer-reviewed / primary (tier 1) | +12 months |
-| Established documentation (tier 2) | +6 months |
-| Reputable expert / first-hand (tier 3) | +6 months |
+| Peer-reviewed / primary (tier 1) | +1 month |
+| Established documentation (tier 2) | +2 months |
+| Reputable expert / first-hand (tier 3) | +2 months |
 | Community / blog / forum (tier 4) | +3 months |
-| Self-authored best-practices / spec | +3 months |
-| Self-authored session note / plan | +1 month |
+| Self-authored (spec, best practice, decision, session note, plan) | +3 months |
 
-Author can override — these are defaults, not hard rules. Shorter cadence is fine for fast-moving topics.
+The cadence follows importance, not source stability (revised 2026-09-13; the earlier table ran the other way, +12 months for tier 1 down to +3 for tier 4). A tier-1 entry carries the most weight, so it is re-checked most often — has it been superseded, does the wiki still agree with it. Three months is the floor. Refresh is one monthly pass (`/wiki-refresh`), so the offsets set the size of that batch rather than a daily load. `wiki-update.py` writes these offsets from `--tier`; the lint's backfill hint quotes the same numbers.
+
+Author can override — these are defaults, not hard rules. Shorter cadence is fine for fast-moving topics. `review_after` stays an explicit field rather than being derived from `last_reviewed` + tier: it can be overridden per entry, the refresh scan and lint stay a plain date comparison, and a later change to this table does not silently move existing entries. Whoever bumps `last_reviewed` bumps `review_after` with it.
 
 ---
 
@@ -144,7 +145,7 @@ ingested_by: claude-code
 tier: 1
 confidence: high
 last_reviewed: 2026-04-11
-review_after: 2027-04-11
+review_after: 2026-05-11
 tags: [a-mem, memory, arxiv, agentic, peer-reviewed, zettelkasten, neurips]
 ---
 ```
@@ -161,7 +162,7 @@ ingested_by: claude-code
 tier: 2
 confidence: high
 last_reviewed: 2026-04-18
-review_after: 2026-10-18
+review_after: 2026-06-18
 tags: [agent-memory, mongodb, richmond-alake, memorizz, ai-engineer, video]
 ---
 ```
@@ -195,7 +196,7 @@ ingested_by: claude-code
 tier: self
 confidence: medium
 last_reviewed: 2026-04-10
-review_after: 2026-05-10
+review_after: 2026-07-10
 tags: [implementation, agentmemory, session-memory, mcp, self-authored]
 ---
 ```

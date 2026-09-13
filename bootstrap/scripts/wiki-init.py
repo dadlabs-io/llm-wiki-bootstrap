@@ -181,7 +181,7 @@ def copy_template_tree(template_dir: Path, topic_root: Path, topic_slug: str, de
     """Walk topic-template and copy every file into the new topic, with placeholder
     substitution for the small set of templated files."""
     today = datetime.now().strftime("%Y-%m-%d")
-    review_after = _future_label(365)
+    review_after = _future_label(90)  # self-authored cadence (frontmatter spec, revised 2026-09-13)
 
     copied = 0
     for src in template_dir.rglob("*"):

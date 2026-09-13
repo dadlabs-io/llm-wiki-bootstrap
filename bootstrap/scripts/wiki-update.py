@@ -633,14 +633,16 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
         fm_lines.append(f"confidence: {confidence}")
     # Lifecycle fields — required on every entry (SKILL.md) and keyed by
     # wiki-refresh. Written in BOTH staged and direct paths. review_after
-    # cadence scales with tier: higher-trust sources need re-checking less often.
+    # cadence follows importance (frontmatter spec, "review cadence", revised
+    # 2026-09-13): the higher the tier the more often it is re-checked —
+    # t1 = 1 month, t2/t3 = 2 months, t4 and self = 3 months (the floor).
     _now = datetime.now()
     fm_lines.append(f"last_reviewed: {_now.strftime('%Y-%m-%d')}")
-    _cadence_days = {1: 90, 2: 120, 3: 180, 4: 365}
+    _cadence_days = {1: 30, 2: 60, 3: 60, 4: 90}
     try:
-        _days = _cadence_days.get(int(tier), 365)
+        _days = _cadence_days.get(int(tier), 90)
     except (TypeError, ValueError):
-        _days = 365  # tier 'self' or unset
+        _days = 90  # tier 'self' or unset
     fm_lines.append(f"review_after: {_future_label(_days)}")
     if staged:
         fm_lines.append("status: proposed")
