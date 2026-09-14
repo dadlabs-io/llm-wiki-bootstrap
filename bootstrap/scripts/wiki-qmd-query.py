@@ -68,6 +68,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import load_config, now_stamp, wiki_dir  # noqa: E402
+from _entry_checks import split_frontmatter, is_superseded  # noqa: E402
 
 DEFAULT_K = int(os.environ.get("WIKI_QMD_K", "20"))
 FIXED_C = int(os.environ["WIKI_QMD_C"]) if os.environ.get("WIKI_QMD_C") else None
@@ -249,14 +250,29 @@ def result_file(first_line: str) -> str:
     return names[-1].lower() if names else ""
 
 
+def retired(qmd_file: str) -> bool:
+    """A result whose entry is retired (`superseded_by`, frontmatter spec): its
+    successor is the answer. qmd names a file qmd://<collection path>/<path>.md."""
+    m = re.match(r"qmd://(.+?\.md)", qmd_file.replace("\\", "/"))
+    if not m:
+        return False
+    try:
+        head = Path(m.group(1)).read_text(encoding="utf-8", errors="replace")[:3000]
+    except OSError:
+        return False
+    return is_superseded(split_frontmatter(head)[0])
+
+
 def drop_machine_files(out: str, fmt: str, k: int) -> tuple[str, int]:
-    """Remove _MAP/_INDEX results and trim to k; returns (output, dropped count)."""
+    """Remove _MAP/_INDEX results and retired entries (2026-09-14), then trim to
+    k; returns (output, dropped count)."""
     if fmt == "json":
         try:
             rows = json.loads(out)
         except ValueError:
             return out, 0
-        keep = [r for r in rows if Path(str(r.get("file", ""))).name.lower() not in MACHINE_FILES]
+        keep = [r for r in rows if Path(str(r.get("file", ""))).name.lower() not in MACHINE_FILES
+                and not retired(str(r.get("file", "")))]
         return json.dumps(keep[:k], indent=2) + "\n", len(rows) - len(keep)
     if fmt == "text":
         lines = out.splitlines(keepends=True)
@@ -269,7 +285,7 @@ def drop_machine_files(out: str, fmt: str, k: int) -> tuple[str, int]:
                 head.append(line)
             else:
                 cur.append(line)
-        keep = [b for b in blocks if result_file(b[0]) not in MACHINE_FILES]
+        keep = [b for b in blocks if result_file(b[0]) not in MACHINE_FILES and not retired(b[0])]
         return "".join(head) + "".join("".join(b) for b in keep[:k]), len(blocks) - len(keep)
     return out, 0
 

@@ -37,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions  # noqa: E402
 # Body-level rubric checks — shared with wiki-update.py's pre-write gate so the
 # lint backlog view and the gate enforce ONE rule set (_entry_checks.py, 2026-09-02).
-from _entry_checks import check_entry_body, is_exempt, check_frontmatter_loadable  # noqa: E402
+from _entry_checks import check_entry_body, is_exempt, check_frontmatter_loadable, split_frontmatter, is_superseded  # noqa: E402
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -429,8 +429,10 @@ def lint(vault_root, topic, strict=False):
             if PENDING_RE.search(line):
                 stale_pending.append((f, line_no, line.strip()[:120]))
 
-    # Pass 3: orphans — files with zero inbound links
-    orphans = [f for f in files if incoming_count[f.resolve()] == 0]
+    # Pass 3: orphans — files with zero inbound links. A retired entry
+    # (`superseded_by`) is expected to lose its links to its successor.
+    orphans = [f for f in files if incoming_count[f.resolve()] == 0
+               and not is_superseded(split_frontmatter(f.read_text(encoding="utf-8", errors="replace"))[0])]
 
     # Render report
     out = []

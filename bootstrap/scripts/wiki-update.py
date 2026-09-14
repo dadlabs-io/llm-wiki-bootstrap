@@ -528,26 +528,50 @@ def _curate_backlink_candidates(inbound, wiki_dir, max_n=8, entry_path=None):
     return [(p, t, sn) for p, t, sn, _l, _m in kept[:max_n]]
 
 
-def find_existing_by_url(wiki_root, url):
-    """Walk wiki/ and return the first file whose frontmatter source_url matches.
+def normalize_source_url(url):
+    """The form two source URLs are compared in: scheme and host lowercased,
+    `www.` and the trailing slash dropped, http -> https, fragment and tracking
+    parameters (utm_*, ref, source) removed, youtu.be/<id> -> youtube.com/watch?v=<id>,
+    and the path lowercased — GitHub's owner/repo is case-insensitive, and two
+    agentic-design duplicates differed only as NousResearch/nousresearch and
+    VoltAgent/voltagent (2026-09-14). The query keeps its case: YouTube ids are
+    case-sensitive. Non-web schemes (internal://) keep their scheme."""
+    u = str(url).strip().strip("\"'<>")
+    parts = urllib.parse.urlsplit(u)
+    if not parts.scheme or not parts.netloc:
+        return u.rstrip("/")
+    scheme = parts.scheme.lower()
+    scheme = "https" if scheme in ("http", "https") else scheme
+    host = parts.netloc.lower()
+    host = host[4:] if host.startswith("www.") else host
+    path, query = parts.path, parts.query
+    if host == "youtu.be" and path.strip("/"):
+        host, path, query = "youtube.com", "/watch", urllib.parse.urlencode({"v": path.strip("/")})
+    keep = [(k, v) for k, v in urllib.parse.parse_qsl(query, keep_blank_values=True)
+            if not k.lower().startswith("utm_") and k.lower() not in {"ref", "source"}]
+    return urllib.parse.urlunsplit((scheme, host, path.lower().rstrip("/"), urllib.parse.urlencode(keep), ""))
 
-    Returns Path or None. Comparison is exact-match on the URL string after
-    stripping trailing slashes.
+
+def find_existing_by_url(wiki_root, url, also=()):
+    """Return the first entry under wiki_root — or under any folder in `also`
+    (the topic's _inbox/proposed/, so two staged copies of one source cannot
+    both pass; until 2026-09-14 only wiki/ was searched) — whose frontmatter
+    source_url matches, compared by normalize_source_url(). Path or None.
     """
     if not url:
         return None
-    target = url.rstrip("/")
-    wiki_root = Path(wiki_root)
-    if not wiki_root.exists():
-        return None
-    for path in wiki_root.rglob("*.md"):
-        try:
-            head = path.read_text(encoding="utf-8")[:2000]  # only need frontmatter
-        except (UnicodeDecodeError, OSError):
+    target = normalize_source_url(url)
+    for root in (Path(wiki_root), *(Path(a) for a in also)):
+        if not root.exists():
             continue
-        m = re.search(r"^source_url:\s*(.+)$", head, re.MULTILINE)
-        if m and m.group(1).strip().rstrip("/") == target:
-            return path
+        for path in root.rglob("*.md"):
+            try:
+                head = path.read_text(encoding="utf-8")[:2000]  # only need frontmatter
+            except (UnicodeDecodeError, OSError):
+                continue
+            m = re.search(r"^source_url:\s*(.+)$", head, re.MULTILINE)
+            if m and normalize_source_url(m.group(1)) == target:
+                return path
     return None
 
 
@@ -794,7 +818,7 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
     if not fetch_only:
         dedup_url = source_url_override or (source if source.startswith(("http://", "https://")) else None)
         if dedup_url and not force:
-            existing = find_existing_by_url(wiki_dir, dedup_url)
+            existing = find_existing_by_url(wiki_dir, dedup_url, also=[topic_root / "_inbox" / "proposed"])
             if existing:
                 print(f"Skip (dedup): URL already in wiki at {existing}")
                 print(f"Use --force to re-ingest anyway.")

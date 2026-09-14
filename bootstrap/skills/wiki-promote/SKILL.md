@@ -85,8 +85,8 @@ For each entry to promote:
 
 4. **Add backlinks** to existing entries — use the `suggested_backlinks` from metadata. For each:
    - Read the target file
-   - Find the Related section
-   - Add the backlink
+   - Find the Related section — it sits above the Source/Raw footer (entry layout: body → footer → auto backlinks block)
+   - Add the backlink there, never as a `## See also` at the end of the file (`wiki-promote.py` does this through `add_related_link()` in `_entry_checks.py`; until 2026-09-14 it appended See also after the backlinks block)
    - This is the deferred Step 5-6 from `/wiki-update --staged`
 
 5. **Delete the metadata file**:

@@ -54,6 +54,7 @@ from pathlib import Path
 # Atomic-write helper (icarus §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
+from _entry_checks import is_superseded  # noqa: E402  (retired entries leave the folder index, 2026-09-14)
 
 FM_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 TLDR_HEADING_RE = re.compile(r"^##+\s*TL;DR\s*$", re.MULTILINE | re.IGNORECASE)
@@ -124,6 +125,8 @@ def collect_entries(folder: Path, wiki_root: Path) -> list[dict]:
         except OSError:
             continue
         fm, body = parse_frontmatter(text)
+        if is_superseded(fm):
+            continue
         title = fm.get("title") or path.stem.replace("-", " ").title()
         tier = fm.get("tier") or "?"
         confidence = fm.get("confidence") or ""

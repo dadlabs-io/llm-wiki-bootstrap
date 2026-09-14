@@ -6,8 +6,8 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 5
-last_reviewed: 2026-09-13
+framework-version: 6
+last_reviewed: 2026-09-14
 review_after: 2026-12-13
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
@@ -54,7 +54,7 @@ Path is relative to the topic root (the folder containing `_INDEX.md`), **not** 
 |---|---|---|
 | `aliases` | list | Alternate titles for search — include when the entry covers something known by multiple names. |
 | `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |
-| `superseded_by` | relative path | When an entry is retired in favor of another, point to the successor. Keep both entries per both-sides-stay (principle 4). |
+| `superseded_by` | relative path | When an entry is retired in favor of another, point to the successor, with `status: superseded` alongside. Keep both entries per both-sides-stay (principle 4). A retired entry stays on disk but leaves the INDEX, the MAP and search results, and the lint exempts it from the body checks and the orphan list (`is_superseded()` in `_entry_checks.py`, 2026-09-14). |
 | `recall_count` | int | Reserved for future memory-signal tracking (principle 10 federation, memory architecture). Do not write manually yet. See [memory-signals-sidecar-vs-frontmatter-pattern.md](./memory-signals-sidecar-vs-frontmatter-pattern.md) — the sidecar pattern is the production-bound implementation route; this field is the frontmatter mirror for entries where the signal is editorially-set, not telemetry-derived. |
 | `access_count` | int | Same as above — reserved. |
 
@@ -209,7 +209,7 @@ tags: [implementation, agentmemory, session-memory, mcp, self-authored]
 - **On re-read / verification**: bump `last_reviewed` to today's date; push `review_after` forward by the default offset for that content type.
 - **On content edit**: bump `last_reviewed` if the edit reflects new verification; leave untouched if it's a typo fix or cross-ref update.
 - **On raw source re-fetch**: update `raw_path` to point at the new file; preserve the old raw under `.poisoned-<date>` suffix per principle 3 (immutability).
-- **On retirement**: add `superseded_by: <path>`; do not delete the entry (principle 4 both-sides-stay + memory principle "no deletion, only forgetting").
+- **On retirement**: add `superseded_by: <path>` and `status: superseded`; do not delete the entry (principle 4 both-sides-stay + memory principle "no deletion, only forgetting"). Fold anything only the retired copy says into the successor first, and point curated links elsewhere in the wiki at the successor. A duplicate (the same source filed twice) is retired this way; a later snapshot of an evolving source is not a duplicate — link the two with `revises:` and keep both.
 
 ## Lint enforcement
 

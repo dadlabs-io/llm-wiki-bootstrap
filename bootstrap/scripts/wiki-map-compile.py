@@ -59,6 +59,7 @@ from pathlib import Path
 # Atomic-write helper (icarus §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
+from _entry_checks import is_superseded  # noqa: E402  (retired entries leave the MAP, 2026-09-14)
 
 FM_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 MAP_FILE = "_MAP.md"
@@ -221,7 +222,7 @@ def collect_folder_entries(folder: Path) -> list[dict]:
         except OSError:
             continue
         fm = parse_frontmatter(text)
-        if not fm.get("title"):
+        if not fm.get("title") or is_superseded(fm):
             continue
         entries.append({
             "filename": path.name,
@@ -252,6 +253,8 @@ def collect_root_entries(wiki_root: Path) -> list[dict]:
         except OSError:
             continue
         fm = parse_frontmatter(text)
+        if is_superseded(fm):
+            continue
         entries.append({
             "filename": path.name,
             "title": fm.get("title", path.stem),

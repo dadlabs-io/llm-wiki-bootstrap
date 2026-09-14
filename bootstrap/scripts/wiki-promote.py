@@ -45,6 +45,7 @@ from pathlib import Path
 # Atomic-write helper (icarus §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
+from _entry_checks import add_related_link  # noqa: E402
 
 
 # Path-resolution helpers live in the shared _wiki_config module (single
@@ -233,28 +234,20 @@ def _recompute_relative_links(text: str, from_dir: Path, to_dir: Path,
 
 
 def _add_backlink(target_file: Path, link_text: str, link_target: str) -> bool:
-    """Add a one-line `See also` link to the target file. Idempotent — skips
-    if the link target already appears anywhere in the file. Returns True if
-    a backlink was added, False if skipped."""
+    """Add a one-line link to the target file's `## Related` section, above the
+    Source/Raw footer (`add_related_link`, the entry layout in _entry_checks.py;
+    step 4 of the skill). Until 2026-09-14 this appended a `## See also`
+    section at the very end, after the auto backlinks block — 464
+    agentic-design entries carried one. Idempotent — skips if the link target
+    already appears anywhere in the file. Returns True if a backlink was
+    added, False if skipped."""
     if not target_file.exists():
         return False
     text = target_file.read_text(encoding="utf-8")
     # Skip if link target already mentioned
     if link_target in text:
         return False
-    # Append to a "See also" section, creating one if missing
-    see_also_re = re.compile(r"\n#+\s*See also\s*\n", re.IGNORECASE)
-    m = see_also_re.search(text)
-    new_link = f"- [{link_text}](./{link_target})"
-    if m:
-        # Insert immediately after the heading
-        insert_at = m.end()
-        text = text[:insert_at] + new_link + "\n" + text[insert_at:]
-    else:
-        # Append a new See also section at the end
-        suffix = "" if text.endswith("\n") else "\n"
-        text = f"{text}{suffix}\n## See also\n\n{new_link}\n"
-    target_file.write_text(text, encoding="utf-8")
+    target_file.write_text(add_related_link(text, f"- [{link_text}](./{link_target})"), encoding="utf-8")
     return True
 
 

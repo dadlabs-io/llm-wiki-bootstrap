@@ -148,6 +148,7 @@ With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks 
    | 3+ tags — metadata | warning |
    | Under 30 non-blank lines AND under 300 words, not tagged `stub` — structure | warning |
    | Numeric claims in prose outside a `>` blockquote — fidelity | warning |
+   | Layout: body (TL;DR … Related) → the Source/Raw footer → the auto backlinks block; nothing after the footer but that block, nothing after the block — structure (bites in `/wiki-lint`: the script writes the footer itself) | error |
 
    Fix the entry and re-run. `--no-gate '<reason>'` overrides and prints the reason with the entry; it exists for the rare entry where a rule is genuinely wrong for that entry, not to save a step, and the reason is what a reviewer reads. The same checks run in `/wiki-lint` over every existing entry (warn-only) so the backlog stays visible.
 
@@ -222,7 +223,7 @@ Write to `<topic>/_inbox/temp/<slug>.md` with sections:
 - **Blockquote syntax only.** The mechanical gate (step 5) recognises a quoted number only on a line that starts with `>`. A figure inside inline quotation marks in a prose sentence ("the paper reports 26%") still counts as a numeric claim in prose and fails the check. Dense statistical sources (a benchmark write-up, a funding round-up) need their figures on `>` lines from the first draft, not reformatted after the gate refuses them (2026-09-13, defect 4 of the 2026-09-12 batch).
 - This distinction prevents silent poisoning (pre-mortem failure mode #7)
 
-**Do NOT include a Source/Raw footer** in your temp file. The script adds its own canonical footer — including one in your synthesis creates duplicates.
+**Do NOT include a Source/Raw footer** in your temp file. The script adds its own canonical footer — including one in your synthesis creates duplicates. The footer goes after your body, so "Related in this wiki" stays above it, and so does any section added later (by you, `/wiki-promote`, or a refresh); only the auto backlinks block comes after the footer (2026-09-14).
 
 **Minimum entry quality floor** (even for P5 items):
 - TL;DR (1-2 sentences minimum)
@@ -488,7 +489,7 @@ Tell the user:
 - Don't fabricate session work — only synthesize what actually happened
 - Don't include secrets (API keys, tokens, passwords) in summaries
 - Don't pad summaries to hit a word count
-- Don't ingest if dedup found a match unless the user explicitly says "force" or "anyway"
+- Don't ingest if dedup found a match unless the user explicitly says "force" or "anyway". The dedup compares normalised URLs (case, `www.`, trailing slash, tracking parameters) across `wiki/` and `_inbox/proposed/` (2026-09-14). A later snapshot of an evolving source (a repo that grew) is `--force` plus `revises:` on the new entry, not a second copy
 - Don't run `/wiki-update` blindly when the user just typed a URL — confirm topic + folder if not obvious
 - Don't delete a `raw/*.md` file by checking only for its source URL in wiki body text — grep for its FILENAME as a `raw_path:` value first (see "`raw/` file safety" above); a different entry may legitimately depend on it
 

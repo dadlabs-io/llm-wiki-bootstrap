@@ -30,6 +30,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
+from _entry_checks import split_frontmatter, is_superseded  # noqa: E402
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -134,14 +135,27 @@ def extract_tags(frontmatter, body, filename):
 # ── Walk and build ───────────────────────────────────────────────────────────
 
 
+def _is_retired(abs_path):
+    """True for an entry retired per the frontmatter spec (`superseded_by`)."""
+    try:
+        with open(abs_path, "r", encoding="utf-8") as fh:
+            head = fh.read(3000)
+    except (UnicodeDecodeError, OSError):
+        return False
+    return is_superseded(split_frontmatter(head)[0])
+
+
 def collect_files(wiki_root):
-    """Yield (relative_path, absolute_path) for every .md file under wiki_root."""
+    """Yield (relative_path, absolute_path) for every .md file under wiki_root,
+    except retired entries — they stay on disk but leave the index (2026-09-14)."""
     for root, dirs, files in os.walk(wiki_root):
         # Skip hidden dirs (.git etc)
         dirs[:] = sorted([d for d in dirs if not d.startswith(".")])
         for f in sorted(files):
             if f.endswith(".md") and not f.startswith("."):
                 abs_path = os.path.join(root, f)
+                if _is_retired(abs_path):
+                    continue
                 rel_path = os.path.relpath(abs_path, wiki_root)
                 # Normalize to forward slashes for markdown links
                 rel_path = rel_path.replace(os.sep, "/")

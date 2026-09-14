@@ -31,6 +31,13 @@ Checks (rubric dimension → rule → severity):
                (numbers must be quoted + attributed; paraphrased numbers drift.
                Only a line starting with `>` counts as quoted — a number inside
                inline quotation marks "like this" is still prose to this check)
+  structure  → layout: body (TL;DR … Related) → Source/Raw footer →  → ERROR
+               auto backlinks block; nothing after the footer except
+               that block, nothing after the block (2026-09-14)
+
+Retired entries (`superseded_by` / `status: superseded`, frontmatter spec) are
+exempt, and `is_superseded()` is how the INDEX, MAP, search and the orphan list
+skip them. `add_related_link()` is the one place a script adds a Related link.
 
 System pages (HOME.md, README.md, _MAP.md, _INDEX.md, index.md) and
 framework-contract docs are skipped by `is_exempt()`.
@@ -195,15 +202,87 @@ def is_exempt(path, fm: dict | None = None, wiki_root=None) -> bool:
         return True
     if fm and str(fm.get("type", "")).lower() in {"rollback", "review"}:
         return True
+    if is_superseded(fm):
+        return True
     return False
 
 
+def is_superseded(fm: dict | None) -> bool:
+    """Retired per the frontmatter spec: `superseded_by: <successor>` (and
+    `status: superseded`). The entry stays on disk (no deletion, only
+    forgetting); the INDEX, MAP, search results, body checks and orphan list
+    skip it."""
+    if not fm:
+        return False
+    return bool(fm.get("superseded_by")) or str(fm.get("status", "")).strip().lower() == "superseded"
+
+
+# The entry layout: body (TL;DR … `## Related`) → the Source/Raw footer that
+# wiki-update.py writes last → the block wiki-reciprocate-backlinks.py appends.
+_FOOTER_RE = re.compile(r"\n---[ \t]*\n\s*\*\*Source\*\*:[^\n]*(?:\n\s*\*\*Raw\*\*:[^\n]*)?")
+_BACKLINKS_START = "<!-- BACKLINKS-AUTO START -->"
+_BACKLINKS_END = "<!-- BACKLINKS-AUTO END -->"
+_BACKLINKS_RE = re.compile(re.escape(_BACKLINKS_START) + r".*?" + re.escape(_BACKLINKS_END), re.DOTALL)
+
+
 def _strip_footer(body: str) -> str:
-    """Drop the canonical `---\\n**Source**: … **Raw**: …` footer and any
-    auto-managed BACKLINKS block so their links/numbers don't count."""
-    body = re.sub(r"<!-- BACKLINKS-AUTO START -->.*?<!-- BACKLINKS-AUTO END -->", "", body, flags=re.DOTALL)
-    body = re.sub(r"\n---\s*\n\*\*Source\*\*:.*?(?:\n\*\*Raw\*\*:.*?)?\s*$", "", body, flags=re.DOTALL)
-    return body
+    """Drop the footer's own lines and any auto-managed BACKLINKS block so their
+    links/numbers don't count. Until 2026-09-14 this cut from the footer to the
+    end of the file, so a `## Related` section sitting after the footer vanished
+    and was reported as missing (60 agentic-design entries)."""
+    return _FOOTER_RE.sub("", _BACKLINKS_RE.sub("", body))
+
+
+def layout_errors(body: str) -> list[str]:
+    """Anything after the footer other than the backlinks block, or anything
+    after the backlinks block, is out of order."""
+    errors = []
+    end = body.find(_BACKLINKS_END)
+    if end >= 0 and body[end + len(_BACKLINKS_END):].strip():
+        heads = re.findall(r"^#{1,6}\s*(.+?)\s*$", body[end:], re.MULTILINE)
+        what = f"`## {heads[0]}`" if heads else "text"
+        errors.append(f"{what} after the auto backlinks block — that block is always last; move it "
+                      "above the Source/Raw footer (rubric: structure)")
+    feet = list(_FOOTER_RE.finditer(body))
+    if feet:
+        start = body.find(_BACKLINKS_START, feet[-1].end())
+        between = body[feet[-1].end():start if start >= 0 else len(body)]
+        if between.strip():
+            heads = re.findall(r"^#{1,6}\s*(.+?)\s*$", between, re.MULTILINE)
+            what = f"`## {heads[0]}`" if heads else "text"
+            errors.append(f"{what} after the Source/Raw footer — the footer follows the body; move it "
+                          "above the footer (rubric: structure)")
+    return errors
+
+
+def add_related_link(text: str, bullet: str) -> str:
+    """Add one `- [title](path) — why` bullet where the layout puts it: at the
+    end of the first `## Related…` section above the footer; with no such
+    section, a new `## Related in this wiki` just above the footer (else above
+    the backlinks block, else at the end)."""
+    stop = len(text)
+    foot = _FOOTER_RE.search(text)
+    if foot:
+        stop = foot.start()
+    block = text.find(_BACKLINKS_START)
+    if 0 <= block < stop:
+        stop = block
+    m = _RELATED_HEADING_RE.search(text, 0, stop)
+    if m:
+        line_end = text.find("\n", m.end(), stop)
+        line_end = stop if line_end < 0 else line_end
+        sec_end = stop
+        for h in _HEADING_RE.finditer(text, line_end, stop):
+            if len(h.group(1)) <= len(m.group(1)):
+                sec_end = h.start()
+                break
+        items = list(re.finditer(r"^[ \t]*[-*] .*$", text[line_end:sec_end], re.MULTILINE))
+        if items:
+            at = line_end + items[-1].end()
+            return text[:at] + "\n" + bullet + text[at:]
+        return text[:line_end] + "\n\n" + bullet + text[line_end:]
+    head, tail = text[:stop].rstrip("\n"), text[stop:].lstrip("\n")
+    return f"{head}\n\n## Related in this wiki\n\n{bullet}\n" + (f"\n{tail}" if tail else "")
 
 
 def _prose_only(body: str) -> str:
@@ -245,6 +324,8 @@ def check_entry_body(body: str, *, tags=None, tier=None) -> dict:
     """
     errors: list[str] = []
     warnings: list[str] = []
+    # structure → layout (checked before the footer and backlinks are stripped)
+    errors.extend(layout_errors(body or ""))
     body = _strip_footer(body or "")
     tags = [str(t).strip().lower() for t in (tags or [])] if tags is not None else None
     is_self = str(tier).strip().lower() == "self"
