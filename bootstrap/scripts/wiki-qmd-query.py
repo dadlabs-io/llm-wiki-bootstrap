@@ -27,7 +27,8 @@ What it does:
 
 Usage:
   python wiki-qmd-query.py "tiered context loading"            # like qmd query
-  python wiki-qmd-query.py --caller wiki-ingester "term" -n 5  # extra args go to qmd
+  python wiki-qmd-query.py --notebook agentic-design "term"    # one notebook only
+  python wiki-qmd-query.py "term" -k 20 -C 40                  # k results, C reranker candidates
   python wiki-qmd-query.py --preflight                         # CUDA check only
   python wiki-qmd-query.py --stats                             # the wait/run summary
 
@@ -55,15 +56,21 @@ from _wiki_config import now_stamp, wiki_dir  # noqa: E402
 
 import re  # noqa: E402
 
-DEFAULT_RESULTS = "10"  # qmd's own default is 5; the rerank scores 40 candidates either way (user, 2026-09-13)
-RESULT_FLAGS = ("-n", "--all", "--files", "--json", "--csv", "--md", "--xml")
+# Retrieval depth, named for what they are (user, 2026-09-13): k = results returned after reranking
+# (qmd's -n, default 5 there), C = candidates the reranker scores (qmd's -C). An entry outside the
+# top C never reaches the reranker, so C bounds what a search can find; k only bounds what is shown.
+DEFAULT_K = int(os.environ.get("WIKI_QMD_K", "10"))
+DEFAULT_C = int(os.environ.get("WIKI_QMD_C", "40"))
 
+# GPU trouble worth a back-off and retry (never a keyword fallback): the GPU is full, or a transient
+# CUDA fault — seen 2026-09-13 as "ggml-cuda.cu:98: CUDA error" on one search, the next 16 fine.
 GPU_FULL_MARKERS = (
     "Failed to create any rerank context",
     "Failed to create context",
     "ErrorOutOfDeviceMemory",
     "out of memory",
     "cudaMalloc",
+    "CUDA error",
 )
 EXIT_USAGE, EXIT_GPU_BUSY, EXIT_TIMEOUT = 2, 75, 124
 
@@ -262,6 +269,11 @@ def main() -> int:
     ap.add_argument("--retries", type=int, default=3, help="GPU-busy retries after the first attempt (default 3)")
     ap.add_argument("--caller", default=os.environ.get("WIKI_QMD_CALLER", "session"),
                     help="who is searching, for the log (e.g. wiki-ingester, session)")
+    ap.add_argument("-k", "-n", "--results", dest="k", type=int, default=DEFAULT_K,
+                    help="results returned, the top k after reranking (default 10, or $WIKI_QMD_K; qmd's own flag is -n)")
+    ap.add_argument("-C", "--candidate-limit", dest="C", type=int, default=DEFAULT_C,
+                    help="candidates the reranker scores (default 40, or $WIKI_QMD_C); an entry outside the top C "
+                         "never reaches the reranker")
     scope = ap.add_mutually_exclusive_group()
     scope.add_argument("--notebook", help="search only this registry notebook's wiki (ingest, update and "
                                           "discover always pass their target notebook)")
@@ -278,8 +290,10 @@ def main() -> int:
         ap.error("give a query (and any qmd query options)")
 
     query_text = " ".join(qmd_args)[:80]
-    if not any(a in RESULT_FLAGS or a.startswith("-n") for a in qmd_args):
-        qmd_args = [*qmd_args, "-n", DEFAULT_RESULTS]
+    if args.k > args.C:
+        print(f"[wiki-qmd-query] note: k={args.k} is larger than C={args.C}; the reranker only scores "
+              f"the top {args.C} candidates", file=sys.stderr)
+    qmd_args = [*qmd_args, "-n", str(args.k), "-C", str(args.C)]
     if args.notebook:
         col = collection_for(args.notebook)
         if col is None:
@@ -289,7 +303,7 @@ def main() -> int:
             return EXIT_USAGE
         qmd_args = [*qmd_args, "-c", col]
     record = {"ts": now_stamp(), "pid": os.getpid(), "caller": args.caller,
-              "query": query_text, "slots": args.slots,
+              "query": query_text, "slots": args.slots, "k": args.k, "C": args.C,
               "scope": args.notebook or ("all" if args.all_notebooks else "unscoped")}
     total_wait = 0.0
     backoff = 10.0

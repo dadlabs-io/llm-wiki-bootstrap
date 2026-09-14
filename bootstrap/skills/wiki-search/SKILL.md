@@ -34,7 +34,7 @@ If it prints anything else, **stop and report it** — do not fall back to `qmd 
 
 | Mode | Command | When to use |
 |---|---|---|
-| **Hybrid + rerank** (recommended) | `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<query>"` | Best quality. Combines keyword + semantic + reranking with qmd's bundled models on the GPU. Use by default — after the CUDA preflight above; the helper adds the timeout and the GPU slot. `--notebook <name>` searches one notebook, `--all-notebooks` every indexed one (neither = every one, as today); 10 results by default (`-n` to change); other `qmd query` options pass through (`--json`, `--min-score`). |
+| **Hybrid + rerank** (recommended) | `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<query>"` | Best quality. Combines keyword + semantic + reranking with qmd's bundled models on the GPU. Use by default — after the CUDA preflight above; the helper adds the timeout and the GPU slot. `--notebook <name>` searches one notebook, `--all-notebooks` every indexed one (neither = every one, as today); `-k` results (default 10) and `-C` candidates the reranker scores (default 40); other `qmd query` options pass through (`--json`, `--min-score`). |
 | **Keyword only** | `qmd search "<query>"` | Fast, no LLM. Good for exact terms, file names, specific phrases. |
 | **Semantic only** | `qmd vsearch "<query>"` | When you're searching by concept, not specific words ("how do agents handle stale knowledge"). |
 
