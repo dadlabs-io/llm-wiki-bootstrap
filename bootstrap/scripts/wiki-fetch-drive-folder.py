@@ -47,7 +47,7 @@ Usage:
   python3 wiki-fetch-drive-folder.py \\
     --client-secrets ~/Downloads/client_secret_*.json \\
     --folder-name "__FOR CLAUDE" \\
-    --out memory-bank/short-term/drive-folder-scan-YYYY-MM-DD.md
+    --out _inbox/reports/drive-folder-scan-YYYY-MM-DD.md
 
 Exit codes:
   0  success, report written

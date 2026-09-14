@@ -111,7 +111,6 @@ the wiki lives — and scaffolds:
 ├── llm-wiki/
 │   ├── README.md
 │   ├── how-to/              ← usage docs, one folder per installed package (llm-wiki/ is the framework's)
-│   ├── best-practices/      ← curated dev best practices
 │   ├── wiki/                ← your project's entries: research/, project/ (with the framework-contract docs), sessions/
 │   └── raw/sessions/        ← session snapshots
 ├── CLAUDE.md

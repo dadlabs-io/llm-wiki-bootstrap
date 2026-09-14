@@ -73,12 +73,10 @@ def project_paths(tool: str, target: Path, llm_wiki_root: Path = None) -> dict:
       <target>/.claude/wiki-scripts/   ← Python helpers
       <target>/.claude/wiki-templates/ ← project-bootstrap templates
       <target>/.claude/wiki-config.json
-      <target>/.mcp.json               ← MCP wiring (agentmemory) at project root
       <target>/llm-wiki/               ← human-readable wiki content
         ├── README.md                  ← how to use this framework
         ├── how-to/                    ← seed how-to docs
-        ├── best-practices/            ← seeded dev best practices
-        └── wiki/                      ← project's research/dev wiki entries
+        └── wiki/                     ← project's research/dev wiki entries
                                          (was previously vault/<topic>/)
 
     Layout for cursor (parallel, with .cursor/ instead of .claude/):
@@ -110,7 +108,6 @@ def project_paths(tool: str, target: Path, llm_wiki_root: Path = None) -> dict:
         "llm_wiki": llm_wiki,
         "llm_wiki_readme": llm_wiki / "README.md",
         "llm_wiki_how_to": llm_wiki / "how-to",
-        "llm_wiki_best_practices": llm_wiki / "best-practices",
         "llm_wiki_wiki": llm_wiki / "wiki",
     }
 
@@ -708,12 +705,10 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
 #   <target>/.claude/wiki-scripts/
 #   <target>/.claude/wiki-templates/
 #   <target>/.claude/wiki-config.json
-#   <target>/.mcp.json               (if dev project, agentmemory MCP wiring at project root)
 #   <target>/llm-wiki/
 #     ├── README.md                  (rendered from seed/llm-wiki-readme.md.tmpl)
 #     ├── how-to/                    (seeded from seed/how-to/)
-#     ├── best-practices/            (seeded from seed/best-practices/)
-#     └── wiki/                      (project's research/dev wiki — was vault)
+#     └── wiki/                     (project's research/dev wiki — was vault)
 #   <target>/CLAUDE.md, README.md, .gitignore (rendered from templates)
 
 # Pages that sat flat at the how-to root before 2026-09-08 and now live under how-to/llm-wiki/ (the four
@@ -1247,7 +1242,7 @@ def phase_b(args):
 
     # B5 — create <target>/llm-wiki/ with seed content
     if args.dry_run:
-        print(f"WOULD mkdir {paths['llm_wiki']} and seed how-to/, best-practices/, wiki/")
+        print(f"WOULD mkdir {paths['llm_wiki']} and seed how-to/, wiki/")
     else:
         paths["llm_wiki"].mkdir(parents=True, exist_ok=True)
 
@@ -1265,14 +1260,9 @@ def phase_b(args):
     # Same seeder as --phase docs, which refreshes an existing project's how-to/llm-wiki/.
     seed_pack_docs(bootstrap, paths["llm_wiki_how_to"], dry_run=args.dry_run, prune_retired=args.prune_retired)
 
-    # Seed: best-practices/
-    if seed_src.exists() and (seed_src / "best-practices").exists():
-        c, s = _copy_tree(seed_src / "best-practices", paths["llm_wiki_best_practices"], dry_run=args.dry_run)
-        _ok(f"seeded best-practices/: {c} files")
-    else:
-        if not args.dry_run:
-            paths["llm_wiki_best_practices"].mkdir(parents=True, exist_ok=True)
-        _info("no seed/best-practices/ found in bootstrap — created empty folder")
+    # No best-practices/ seed since 2026-09-13: the memory-bank-era pages were retired
+    # (archive/seed-best-practices/ in the bootstrap repo); project conventions live in
+    # wiki/project/best-practices/, the framework's own docs in its framework/ subfolder.
 
     # B6 — the wiki folders: each half (project/, research/) created with its default
     # stubs, as an empty root, or not at all — the two /new-wiki questions (2026-09-09).

@@ -8,8 +8,7 @@ This folder is your project's knowledge layer. The agent reads from here; you wr
 llm-wiki/
 ├── README.md            ← you are here
 ├── how-to/              ← usage notes (read first if you're new)
-├── best-practices/      ← seeded software-dev best practices (mostly read-only reference)
-├── wiki/                ← THIS PROJECT's entries
+├── wiki/               ← THIS PROJECT's entries
 │   ├── _MAP.md          ← always-loaded orientation map (auto-generated)
 │   ├── _INDEX.md        ← full entry list (auto-generated)
 │   └── <folders>/       ← the folders chosen at scaffold time (listed below)
@@ -76,21 +75,19 @@ Or read the docs directly:
 
 ## Framework-managed folders — don't hand-edit
 
-⚠️ **`llm-wiki/how-to/` and `llm-wiki/best-practices/` are seeded by the framework on install** and may be overwritten when you re-run `install-wiki.ps1 -RefreshOnly` or `/new-wiki --sync` to pick up newer versions. If you edit these files in place, your changes get lost on the next refresh.
+⚠️ **`llm-wiki/how-to/llm-wiki/` and `wiki/project/best-practices/framework/` are shipped by the framework** and are replaced when the framework refreshes a project's docs (`new-wiki.py --phase docs`). If you edit these files in place, your changes get lost on the next refresh.
 
 **Want to customize?** Put your additions in a separate location:
 
 | Where it lives | What goes there | Survives refreshes? |
 |---|---|---|
-| `llm-wiki/how-to/` | Framework-shipped usage docs | ❌ Overwritten on refresh |
-| `llm-wiki/best-practices/` | Framework-shipped best practices | ❌ Overwritten on refresh |
-| `llm-wiki/wiki/best-practices/` | **Your project's** best practices (project-specific overrides + additions) | ✅ Yours forever |
-| `llm-wiki/wiki/how-to/` (create if needed) | **Your project's** how-to docs (project-specific) | ✅ Yours forever |
+| `llm-wiki/how-to/llm-wiki/` | Framework-shipped usage docs | ❌ Replaced on refresh |
+| `llm-wiki/wiki/project/best-practices/framework/` | The framework's own contract docs (frontmatter, authoring, cycle format) | ❌ Replaced on refresh |
+| `llm-wiki/wiki/project/best-practices/` | **Your project's** conventions and best practices | ✅ Yours forever |
+| `llm-wiki/how-to/<your-folder>/` | **Your project's** how-to docs | ✅ Yours forever |
 | Anywhere else under `llm-wiki/wiki/` | Project-specific entries | ✅ Yours forever |
 
-**Pattern**: if a shipped best-practice doesn't fit your project, copy it to `llm-wiki/wiki/best-practices/<same-name>.md` and edit the copy. The original stays at `llm-wiki/best-practices/<name>.md` (reference); your override lives at `llm-wiki/wiki/best-practices/<name>.md` (project canon). Document the divergence in your override's body so future-you remembers why.
-
-(V2 will support proper user-override layering — for v1, the copy-elsewhere pattern is the workaround.)
+(V2 will support proper user-override layering — for v1, keep your own pages outside the framework-managed folders.)
 
 ## How-to folder
 

@@ -14,7 +14,7 @@ You just ran `/new-wiki` and have a fresh project. Here's the first hour.
 
 - `<project>/CLAUDE.md` — agent's first-read document; auto-imports the wiki README and the wiki MAP
 - `<project>/.claude/wiki-config.json` — points at the global skills and scripts in `~/.claude/` (a bundled install has its own copy under `<project>/.claude/` instead)
-- the wiki root (`<project>/llm-wiki/` or a notebook in your vault) — `wiki/` with the folders you chose (`project/`, `research/`, always `sessions/`), plus seeded `how-to/` and `best-practices/` reference docs
+- the wiki root (`<project>/llm-wiki/` or a notebook in your vault) — `wiki/` with the folders you chose (`project/`, `research/`, always `sessions/`), plus the seeded `how-to/` usage docs
 
 ## First actions
 
@@ -22,11 +22,7 @@ You just ran `/new-wiki` and have a fresh project. Here's the first hour.
 
 If `/new-wiki` had to install the global tooling during the scaffold (it says so, and the summary carries `needs_restart: true`), restart Claude Code so the other `/wiki-*` skills appear. A project pointed at an already-installed set needs no restart.
 
-### 2. Read `llm-wiki/best-practices/`
-
-The seeded best-practices cover communication, coding, documentation, logging, testing, etc. Skim them once so you know what's there. Reference them in CLAUDE.md or in `wiki/` entries as you go.
-
-### 3. Add your first wiki entry
+### 2. Add your first wiki entry
 
 If you have a **`project/` folder** (what you build):
 - Start coding
@@ -41,7 +37,7 @@ If you have a **`research/` folder** (what you ingest):
 
 Chose neither? You have a plain notes notebook: `/wrap-up` still keeps `sessions/`; create `project/` or `research/` whenever you want the other flows.
 
-### 4. Configure your CLAUDE.md
+### 3. Configure your CLAUDE.md
 
 Open `<project>/CLAUDE.md`. Fill in the **Conventions** section with whatever you currently know about the project — naming, testing, file layout, anti-patterns. This is the agent's constitution; bad CLAUDE.md = bad agent behavior.
 

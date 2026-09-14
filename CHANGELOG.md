@@ -1,6 +1,6 @@
 # Framework Changelog
 
-**Purpose**: History of changes to the shared workflow framework (personas, workflows, rules, best-practices). This is NOT a project changelog — it tracks changes that affect all projects using workflows-core.
+**Purpose**: History of changes to the LLM-wiki framework (skills, scripts, templates, pack docs, framework-contract docs). This is NOT a project changelog — it tracks changes that affect every project scaffolded from llm-wiki-bootstrap. Until 2026-09-13 it shipped into each project as `best-practices/framework-changelog.md`; it now lives only here, at the repo root.
 **Status**: Active
 **Tags**: #process, #framework
 
@@ -10,6 +10,12 @@
 ---
 
 ## 2026-09-13
+
+### The seeded `best-practices/` folder retired (user decision)
+- **What it was**: eighteen memory-bank-era pages (December 2025 – February 2026, written for the sudoku app) that `/new-wiki` copied into every new project's wiki root as `best-practices/`, never refreshed afterwards. Six still carried `memory-bank/` paths; the rest described processes the framework has since replaced or were sudoku-specific C#/Unity rules.
+- **Replaced by**: the change-request, document-flow and development-workflow pages by the **do-code-change** workflow and its role agents; the persona page by the role agents plus `sessions/<persona>/`; the documentation page by the framework-contract docs; OpenCode is not in use; the C#/Unity pages are sudoku-app project knowledge. Mapping in `archive/seed-best-practices/README.md`.
+- **Changes**: the folder moved to `archive/seed-best-practices/` (outside `bootstrap/`, never shipped); this changelog moved to `CHANGELOG.md` at the repo root; `new-wiki.py` Phase B no longer seeds `best-practices/` (and its layout docstrings lost the stale `.mcp.json` agentmemory line); the project README template, `/new-wiki` skill, pack pages (`getting-started` — its "read best-practices" step removed, `install`, `new-wiki`, `wiki-search`), README, INSTALL-INVENTORY and V2_ROADMAP no longer name the folder. The Drive script's usage example no longer writes to `memory-bank/`.
+- **Migration**: the existing copies (agent-builder-bootstrap and investment-agent notebooks, rpg-strategist, equal-experts) were checked against the seed's git history — no project-local edits — and removed. Project conventions belong in `wiki/project/best-practices/`. SOP refresh of the changed pack pages; `install-wiki.ps1 -RefreshOnly` for the `/new-wiki` skill and script.
 
 ### Resuming on startup: the CLAUDE.md template reads the wrap-up dashboards; `/wrap-up` creates `active-context.md` on first run (settled between investment-agent, agent-builder and llm-wiki in #agent-chat)
 - **What was wrong**: `/wrap-up` Step 0.5 writes `sessions/active-context.md`, `sessions/<persona>/handoff.md` and `task.md` as the resume pointer, but nothing read them on startup. The CLAUDE.md template @-included only the README, `commands.md` and `_MAP.md`, its "Start a session" step said the MAP was enough, and the seeded `commands.md` still claimed "agentmemory auto-loads recent context" (a path rejected 2026-05-14). A project started cold every session; agent-builder came up warm only through a hand-written section that pointed at the newest dated journal, not the dashboards.

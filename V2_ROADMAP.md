@@ -53,13 +53,12 @@ When the repo goes wide:
 
 ### 5. User-override layering for seed content
 
-V1 ships `llm-wiki/how-to/` and `llm-wiki/best-practices/` as framework-managed folders. On every refresh, they get re-copied from the bootstrap source — so any user edits in place are lost.
+V1 ships `llm-wiki/how-to/llm-wiki/` and `wiki/project/best-practices/framework/` as framework-managed folders. On every refresh, they get re-copied from the bootstrap source — so any user edits in place are lost. (The seeded `llm-wiki/best-practices/` folder was retired 2026-09-13; project conventions live in `wiki/project/best-practices/`, which is user content.)
 
-The v1 workaround: put project-specific overrides at `llm-wiki/wiki/how-to/<name>.md` or `llm-wiki/wiki/best-practices/<name>.md`. That folder is user content (not framework-managed) and survives refreshes. `_FRAMEWORK_MANAGED.md` marker files in each seed folder make this explicit.
+The v1 workaround: keep project-specific pages outside the framework-managed folders. The `_FRAMEWORK_MANAGED.md` marker in `how-to/` makes this explicit.
 
 V2 should make the override mechanism first-class:
-- Framework looks for `wiki/how-to/<name>.md` first, falls back to `how-to/<name>.md`
-- Same for best-practices
+- Framework looks for a project override first, falls back to the shipped page
 - On refresh, framework checks for an override before overwriting (and warns the user if the shipped version has changed in ways the override might want)
 - A `wiki-doctor` command that lists divergence (shipped vs override) and offers to merge specific changes
 

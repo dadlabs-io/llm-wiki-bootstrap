@@ -29,7 +29,6 @@ Wiki content, one of two places (Q6):
 Either way the wiki root holds:
 ├── README.md
 ├── how-to/llm-wiki/                   ← pack usage docs (framework-managed)
-├── best-practices/                    ← seeded reference docs (framework-managed)
 ├── wiki/
 │   ├── HOME.md, README.md, _MAP.md, _INDEX.md
 │   ├── project/                       ← Q4: stubs | empty | none   (what we build; /wrap-up files here)
@@ -69,7 +68,7 @@ Plan summary (tool, target folder, folder tree, skills line, Drive line) → wai
 Phase B — python new-wiki.py --phase B ...   (Phase A already done by install-wiki.ps1)
    B1.  mkdir <target> + git init (skipped inside an existing repo)
    B2–4. Copy skills / scripts / templates into the project           — bundled mode only
-   B5.  Seed how-to/ (pack usage docs) + best-practices/
+   B5.  Seed how-to/ (pack usage docs)
    B6.  Create the wiki folders from Q4 + Q5 (+ sessions/)
    B6.1 Land the framework-contract docs at wiki/project/best-practices/framework/ (when project/ exists)
    B7.  Render CLAUDE.md / README.md / .gitignore (never overwrites an existing one)

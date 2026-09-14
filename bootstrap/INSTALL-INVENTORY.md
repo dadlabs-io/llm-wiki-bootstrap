@@ -138,8 +138,7 @@ In-project (a wiki inside a code repo):        Notebook in a vault (linked-noteb
 └── llm-wiki/                                  ├── wiki/                   ← HOME, _MAP, _INDEX + the taxonomy (section C)
     ├── README.md                              ├── raw/sessions/
     ├── how-to/llm-wiki/                       ├── _inbox/{pending,proposed,done,rejected,reports}/   (first use)
-    ├── best-practices/                        └── _signals/               ← truth-status sidecars (first use)
-    ├── wiki/
+    ├── wiki/                                  └── _signals/               ← truth-status sidecars (first use)
     ├── raw/sessions/
     └── _inbox/, _signals/  (first use)
 ```

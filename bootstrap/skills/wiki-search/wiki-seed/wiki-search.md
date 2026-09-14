@@ -23,7 +23,7 @@ If results look stale after a batch of new entries, re-index with `qmd update` f
 
 ## Full walkthrough
 
-Search `wiki/` (and `llm-wiki/best-practices/` if enabled) using BM25 + vector similarity + LLM rerank.
+Search `wiki/` using BM25 + vector similarity + LLM rerank.
 
 ### Usage
 

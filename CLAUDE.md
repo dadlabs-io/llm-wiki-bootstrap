@@ -28,7 +28,7 @@ The LLM-wiki framework installer. Ships:
 - The Python helper scripts (vault management, lint, indexing, Drive ingest) — `TRAVEL_SCRIPTS` in the same file — including `_entry_checks.py`, the shared mechanical gate used by `wiki-update.py` (refuse-to-file), `wiki-lint-mechanical.py` (backlog view) and, since 2026-09-08, `_install_tooling.py` (refuse to install a skill or agent whose frontmatter does not parse)
 - The six framework-contract docs (`bootstrap/topic-template/wiki/best-practices/framework/`, `framework-contract: true`, `framework-version`) — the gold copies; `new-wiki.py` lands them at every project's `wiki/project/best-practices/framework/` at scaffold time and on `--phase docs`, replacing a drifted project copy and naming it (2026-09-08)
 - Templates for `CLAUDE.md`, `README.md`, `.gitignore` in research/development variants
-- Seed content for the per-project `llm-wiki/` folder (the how-to marker + 17 curated best-practices; the how-to pages themselves are the pack docs below, since 2026-09-08)
+- Seed content for the per-project `llm-wiki/` folder (the how-to marker; the how-to pages themselves are the pack docs below, since 2026-09-08). The memory-bank-era best-practices seed was retired 2026-09-13 — `archive/seed-best-practices/`, never shipped; the framework changelog is `CHANGELOG.md` at the repo root
 - Pack usage docs (wiki-seed): one page per skill (`skills/<name>/wiki-seed/`, each carrying its full
   walkthrough), one per agent, the pack overview plus getting-started / commands / install / drive-setup
   (`bootstrap/wiki-seed/`), assembled into each project's `llm-wiki/how-to/llm-wiki/` on install

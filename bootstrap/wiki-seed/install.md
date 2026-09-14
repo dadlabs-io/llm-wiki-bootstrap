@@ -57,7 +57,7 @@ If you want the global install first, then create projects separately:
 **Per project (when you scaffold one):**
 - `<project>/.claude/wiki-config.json` — per-project config: which tooling it uses, where the wiki is, the two folder answers
 - `<project>/CLAUDE.md`, `README.md`, `.gitignore`
-- the wiki root — `<project>/llm-wiki/` or a registered notebook in your notebooks vault — with `README`, `how-to/`, `best-practices/`, `wiki/` (the folders you chose; `sessions/` always) and `raw/sessions/`
+- the wiki root — `<project>/llm-wiki/` or a registered notebook in your notebooks vault — with `README`, `how-to/`, `wiki/` (the folders you chose; `sessions/` always) and `raw/sessions/`
 - only with `-SkillsInstall bundled`: `<project>/.claude/skills/`, `wiki-scripts/`, `wiki-templates/` (a private copy of the tooling)
 
 For Cursor users: `.cursor/` replaces `.claude/`, the skills are always bundled, and `.cursor/rules/*.mdc` are generated from the SKILL.md files so Cursor's agent picks them up natively.
