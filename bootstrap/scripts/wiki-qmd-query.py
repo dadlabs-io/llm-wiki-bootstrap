@@ -397,6 +397,12 @@ def depth_check(notebook: str, n: int, k: int) -> int:
 
 
 def main() -> int:
+    # Redirected to a file on Windows, stdout/stderr default to cp1252, which cannot encode what qmd
+    # returns (→, ≥, CJK in titles and snippets): the write raised UnicodeEncodeError and the search
+    # exited 1 (17 of 39 discovery searches, cycle 2026-09-14-01). qmd's output is UTF-8; say so.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0],
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-k", "-n", "--results", dest="k", type=int, default=DEFAULT_K,
