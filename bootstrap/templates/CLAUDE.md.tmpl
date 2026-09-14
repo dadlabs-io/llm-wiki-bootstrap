@@ -16,7 +16,7 @@ Both live in the four-layer memory model below.
 @{{LLM_WIKI_PATH}}/how-to/llm-wiki/commands.md
 @{{WIKI_PATH}}/_MAP.md
 
-If the user asks for help (any phrasing — "how do I...", "what commands...", "help"), point them at `llm-wiki/how-to/llm-wiki/` — `commands.md` first, then the skill page under `skills/` that fits their question. You already have these loaded.
+If the user asks for help (any phrasing — "how do I...", "what commands...", "help"), point them at `{{LLM_WIKI_PATH}}/how-to/llm-wiki/` — `commands.md` first, then the skill page under `skills/` that fits their question. You already have these loaded.
 
 ## Resuming — where we left off (do this on startup)
 
@@ -63,14 +63,14 @@ Synthesis docs that cite research to inform a decision live in `project/` becaus
 
 ### Where staging + raw live
 
-- `{{LLM_WIKI_PATH}}/research/_inbox/proposed/` — staging area for cycle-ingested entries pending promote-review
+- `{{LLM_WIKI_PATH}}/_inbox/proposed/` — staging area for every entry pending promote-review (ingested research, `/wrap-up` and inline filings alike); each carries a `<slug>.proposed_metadata.json` sidecar naming its target folder
 - `{{LLM_WIKI_PATH}}/raw/` — immutable raw source files (papers, transcripts) — referenced via `raw_path:` in frontmatter; never edited
 
 ## Working rhythm
 
 1. **Start a session**: do the Resuming read above; the MAP is already loaded.
 2. **Look it up before answering**: any "what do we know about X", "have we decided X", or "how does X work here" question gets a `/wiki-search "<query>"` FIRST — the wiki, not your memory, is the source of truth. Answering from memory when the wiki holds the answer is the failure mode this whole system exists to prevent.
-3. **Code + decide + investigate**: regular dev work. **When you observe something durable — a decision the user makes, a constraint they discover, a pattern you settle on, a bug you trace to root cause — file a proposed entry to `llm-wiki/_inbox/proposed/<folder>/<slug>.md` IMMEDIATELY.** Don't wait for `/wrap-up`. Flag it to the user in one sentence so they know it landed. This is the proactive-listener pattern: the agent is the listener, the wiki is the store.
+3. **Code + decide + investigate**: regular dev work. **When you observe something durable — a decision the user makes, a constraint they discover, a pattern you settle on, a bug you trace to root cause — file a proposed entry to `{{LLM_WIKI_PATH}}/_inbox/proposed/<slug>.md` (its sidecar names the target folder) IMMEDIATELY.** Don't wait for `/wrap-up`. Flag it to the user in one sentence so they know it landed. This is the proactive-listener pattern: the agent is the listener, the wiki is the store.
 4. **End of session**: the user runs `/wrap-up` to catch anything the inline filing missed (long sessions, late-emerging patterns).
 5. **Promote**: `/wiki-promote --review` to accept/reject the proposed entries — entries go to `wiki/`, backlinks reciprocate, indexes regenerate.
 
@@ -93,7 +93,7 @@ When in doubt, file it — `/wiki-promote --review` is the gate, so a thin entry
 
 ### Entry shape (when filing inline)
 
-Use the same frontmatter contract that `/wrap-up` uses, but stamp `origin: inline` so `/wiki-promote --review` can tell who proposed it. Filing happens to `{{WIKI_PATH}}/research/_inbox/proposed/<category>/<slug>.md` for new entries:
+Use the same frontmatter contract that `/wrap-up` uses, but stamp `origin: inline` so `/wiki-promote --review` can tell who proposed it. Filing happens to `{{LLM_WIKI_PATH}}/_inbox/proposed/<slug>.md` for new entries, with a sidecar naming the target folder:
 
 ```yaml
 ---
@@ -120,7 +120,7 @@ tags: [<project-slug>, <category>, <topic-tags>]
 
 Project-class entries (decisions, components, etc.) go to `{{WIKI_PATH}}/project/<category>/`. Use the four-layer rule:
 - Filing a NEW project entry directly? → `{{WIKI_PATH}}/project/<category>/<slug>.md` (skip staging)
-- Filing an INGESTED research entry? → `{{WIKI_PATH}}/research/_inbox/proposed/<slug>.md` (stage for review)
+- Filing an INGESTED research entry? → `{{LLM_WIKI_PATH}}/_inbox/proposed/<slug>.md` (stage for review)
 - Filing a SESSION wrap-up? → `{{WIKI_PATH}}/sessions/<persona>/<YYYY-MM>/<session-id>.md`
 
 Body sections (skip any that don't apply):
@@ -173,7 +173,7 @@ Rules for this project live in several places and will occasionally disagree. Do
 
 1. **Framework-contract docs** — entries under `{{WIKI_PATH}}/project/best-practices/framework/` carrying `framework-contract: true` (the frontmatter spec, the authoring principles, the cycle step contract). Canonical. Every other doc is supposed to link to them, never restate them.
 2. **Skill definitions** — `SKILL.md` files. A skill that restates a contract doc and drifts is a bug: follow the contract doc, flag the skill.
-3. **This CLAUDE.md** and the project's `llm-wiki/how-to/` docs.
+3. **This CLAUDE.md** and the project's `{{LLM_WIKI_PATH}}/how-to/` docs.
 4. **Memory and session notes** — `sessions/`, agent memory. Background, never authority.
 
 Mechanical enforcement outranks prose at every level: if a lint check or a script gate rejects something a doc permits, the gate is right until the rule inside the gate is changed. (Added 2026-09-02 after an ingest hit two docs defining `confidence` differently with nothing saying which won.)
@@ -182,5 +182,5 @@ Mechanical enforcement outranks prose at every level: if a lint check or a scrip
 
 - Don't answer questions about prior decisions, research, or project history from memory — `/wiki-search` first (Working rhythm step 2).
 - Don't paste session transcripts into wiki entries — `/wrap-up` distills them. Transcripts go to `{{LLM_WIKI_PATH}}/raw/sessions/`.
-- Don't promote directly to `{{WIKI_PATH}}/` — always stage in `{{WIKI_PATH}}/_inbox/proposed/` and let `/wiki-promote` move them.
+- Don't promote directly to `{{WIKI_PATH}}/` — always stage in `{{LLM_WIKI_PATH}}/_inbox/proposed/` and let `/wiki-promote` move them.
 - Don't edit `_MAP.md` or `_INDEX.md` by hand — they're auto-generated.

@@ -11,8 +11,9 @@ _MAP.md layout:
   - Starting points: HOME.md + hub pages
   - Folder directory: one line per folder — purpose + count + top entries
     (top N by tier, tie-broken by recency)
-  - Pointer to concept-gaps + best-practices
-  - Pointer to the full _INDEX.md
+  - Pointer to concept-gaps (only when the wiki has that page)
+  - Pointer to the full _INDEX.md (only when one exists: the topic root,
+    else wiki/_INDEX.md)
 
 The file is fully auto-generated from frontmatter + folder READMEs + the
 current state of the wiki. Regenerate on every cycle.
@@ -49,6 +50,7 @@ _sys.path.insert(0, str(_ShimPath(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, future_label as _future_label  # noqa: E402
 import argparse
 import json
+import posixpath
 import re
 import sys
 from datetime import datetime, timezone
@@ -79,10 +81,56 @@ FOLDER_PURPOSE_FALLBACK = {
 }
 
 
-def folder_purpose(folder_path: Path) -> str:
+CONCEPT_GAPS = "concept-gaps-things-mentioned-not-yet-covered.md"
+MD_LINK_RE = re.compile(r"(\[[^\]]*\])\(([^)\s]+)\)")
+SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+
+
+def rebase_links(text: str, from_rel: str) -> str:
+    """Rewrite relative markdown links written from <wiki>/<from_rel>/ so they
+    resolve from the wiki root, where _MAP.md sits. URLs, anchors and
+    root-absolute paths are left alone."""
+    def fix(m: re.Match) -> str:
+        label, target = m.group(1), m.group(2)
+        if target.startswith(("#", "/")) or SCHEME_RE.match(target):
+            return m.group(0)
+        path, sep, anchor = target.partition("#")
+        new = posixpath.normpath(posixpath.join(from_rel, path))
+        if not new.startswith("../"):
+            new = "./" + new
+        return f"{label}({new}{sep}{anchor})"
+    return MD_LINK_RE.sub(fix, text)
+
+
+def truncate_outside_links(text: str, limit: int) -> str:
+    """Cut text to `limit` chars without leaving half a markdown link behind:
+    a cut that falls inside a link backs up to where that link began."""
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    for m in MD_LINK_RE.finditer(text):
+        if m.start() < limit < m.end():
+            cut = text[:m.start()]
+            break
+    return cut.rstrip() + "…"
+
+
+def full_index_link(wiki_root: Path) -> str | None:
+    """Link from _MAP.md to the full index, or None when the wiki has none.
+    wiki-index.py writes it at the topic root (one level above wiki/); a
+    hand-kept wiki/_INDEX.md is the fallback."""
+    if (wiki_root.parent / "_INDEX.md").exists():
+        return "../_INDEX.md"
+    if (wiki_root / "_INDEX.md").exists():
+        return "./_INDEX.md"
+    return None
+
+
+def folder_purpose(folder_path: Path, wiki_root: Path | None = None) -> str:
     """Read a folder's purpose from its README.md (first paragraph after
     optional frontmatter). Falls back to FOLDER_PURPOSE_FALLBACK if no README;
-    returns '(no purpose set — add <folder>/README.md)' if neither exists."""
+    returns '(no purpose set — add <folder>/README.md)' if neither exists.
+    With wiki_root, relative links in the paragraph are rebased to the wiki root."""
     readme = folder_path / "README.md"
     if readme.exists():
         try:
@@ -98,11 +146,13 @@ def folder_purpose(folder_path: Path) -> str:
             chunk = chunk.strip()
             if not chunk or chunk.startswith("#"):
                 continue
-            # Take first sentence-ish (up to MAX_FOLDER_PURPOSE_CHARS)
+            # Take first sentence-ish (up to MAX_FOLDER_PURPOSE_CHARS). Links in it were
+            # written relative to the folder and the MAP sits at the wiki root, so rebase
+            # them first, then cut without leaving half a link behind.
             chunk = " ".join(chunk.split())
-            if len(chunk) > MAX_FOLDER_PURPOSE_CHARS:
-                chunk = chunk[:MAX_FOLDER_PURPOSE_CHARS].rstrip() + "…"
-            return chunk
+            if wiki_root is not None:
+                chunk = rebase_links(chunk, folder_path.relative_to(wiki_root).as_posix())
+            return truncate_outside_links(chunk, MAX_FOLDER_PURPOSE_CHARS)
     fallback = FOLDER_PURPOSE_FALLBACK.get(folder_path.name)
     if fallback:
         return fallback
@@ -219,8 +269,14 @@ def render_map(wiki_root: Path, topic: str, folder_data: dict[str, list[dict]], 
     # Hub pages: only link to ones that actually exist in this wiki.
     hub_candidates = [
         ("HOME.md", "landing page, what this wiki is and where to begin"),
-        ("concept-gaps-things-mentioned-not-yet-covered.md", "things mentioned but not yet covered, priority-sorted"),
+        (CONCEPT_GAPS, "things mentioned but not yet covered, priority-sorted"),
     ]
+    index_link = full_index_link(wiki_root)
+    intro = (f"**Compressed orientation map.** {total_entries} entries total, across {len(folder_data)} "
+             f"folders + root. Designed to be loaded into every conversation.")
+    if index_link:
+        intro += f" For comprehensive listings use the full [`_INDEX.md`]({index_link})."
+    intro += " For per-folder detail use `<folder>/_INDEX.md`. For search use `qmd query \"…\"`."
     hub_lines = []
     for fname, descr in hub_candidates:
         if (wiki_root / fname).exists():
@@ -244,7 +300,7 @@ def render_map(wiki_root: Path, topic: str, folder_data: dict[str, list[dict]], 
         "",
         f"# MAP — {topic} wiki",
         "",
-        f"**Compressed orientation map.** {total_entries} entries total, across {len(folder_data)} folders + root. Designed to be loaded into every conversation. For comprehensive listings use the full [`_INDEX.md`](../_INDEX.md) at the topic root. For per-folder detail use `<folder>/_INDEX.md`. For search use `qmd query \"…\"`.",
+        intro,
         "",
         "## What this wiki is",
         "",
@@ -265,7 +321,7 @@ def render_map(wiki_root: Path, topic: str, folder_data: dict[str, list[dict]], 
 
     for folder_name in sorted(folder_data.keys()):
         entries = folder_data[folder_name]
-        purpose = folder_purpose(wiki_root / folder_name)
+        purpose = folder_purpose(wiki_root / folder_name, wiki_root)
         tops = top_entries(entries, TOP_N_PER_FOLDER)
         lines.append(f"### [`{folder_name}/`](./{folder_name}/_INDEX.md) — {len(entries)} entries")
         lines.append("")
@@ -281,9 +337,7 @@ def render_map(wiki_root: Path, topic: str, folder_data: dict[str, list[dict]], 
     # The hub set includes the framework-level pages we always exclude from the
     # "other entries" listing; topic-specific hubs are listed via the "Start here"
     # block at the top, sourced from hub_lines/hub_candidates.
-    hub_names = {"HOME.md",
-                 "concept-gaps-things-mentioned-not-yet-covered.md",
-                 "_INDEX.md", "_MAP.md"}
+    hub_names = {"HOME.md", CONCEPT_GAPS, "_INDEX.md", "_MAP.md"}
     other_root = [e for e in root_entries if e["filename"] not in hub_names]
     if other_root:
         lines.append("### Root-level entries")
@@ -301,7 +355,11 @@ def render_map(wiki_root: Path, topic: str, folder_data: dict[str, list[dict]], 
         "- **Orienting**: start with the Start-here block above",
         "- **Going deep on an area**: click through to that folder's `_INDEX.md` for the full scannable list",
         "- **Finding something specific**: `/wiki-search \"<terms>\"` (hybrid BM25 + vector + LLM rerank)",
-        "- **Missing something**: check [concept gaps](./concept-gaps-things-mentioned-not-yet-covered.md) — if it's on that list, we've noticed; if not, it's a new gap to file",
+    ])
+    if (wiki_root / CONCEPT_GAPS).exists():
+        lines.append(f"- **Missing something**: check [concept gaps](./{CONCEPT_GAPS}) — if it's on that list, "
+                     "we've noticed; if not, it's a new gap to file")
+    lines.extend([
         "",
         "## The 4 commands",
         "",

@@ -5,7 +5,7 @@ This folder is your project's knowledge layer. The agent reads from here; you wr
 ## What lives where
 
 ```
-llm-wiki/
+<wiki root>/             ← llm-wiki/ inside a project, or the notebook folder in a vault
 ├── README.md            ← you are here
 ├── how-to/              ← usage notes (read first if you're new)
 ├── wiki/               ← THIS PROJECT's entries
@@ -52,7 +52,7 @@ Discover → ingest → lint → promote → commit. Default behavior is conserv
 
 ## Need help?
 
-**Ask the agent in plain English anytime.** It has every file under `llm-wiki/how-to/` loaded as context — including the full command reference, getting-started guide, per-command deep-dives, and install instructions. Try:
+**Ask the agent in plain English anytime.** It has every file under `how-to/` loaded as context — including the full command reference, getting-started guide, per-command deep-dives, and install instructions. Try:
 
 - "What commands do I have?"
 - "How do I add a URL to the wiki?"
@@ -75,17 +75,19 @@ Or read the docs directly:
 
 ## Framework-managed folders — don't hand-edit
 
-⚠️ **`llm-wiki/how-to/llm-wiki/` and `wiki/project/best-practices/framework/` are shipped by the framework** and are replaced when the framework refreshes a project's docs (`new-wiki.py --phase docs`). If you edit these files in place, your changes get lost on the next refresh.
+⚠️ **`how-to/llm-wiki/` and `wiki/project/best-practices/framework/` are shipped by the framework** and are replaced when the framework refreshes a project's docs (`new-wiki.py --phase docs`). If you edit these files in place, your changes get lost on the next refresh.
 
 **Want to customize?** Put your additions in a separate location:
 
 | Where it lives | What goes there | Survives refreshes? |
 |---|---|---|
-| `llm-wiki/how-to/llm-wiki/` | Framework-shipped usage docs | ❌ Replaced on refresh |
-| `llm-wiki/wiki/project/best-practices/framework/` | The framework's own contract docs (frontmatter, authoring, cycle format) | ❌ Replaced on refresh |
-| `llm-wiki/wiki/project/best-practices/` | **Your project's** conventions and best practices | ✅ Yours forever |
-| `llm-wiki/how-to/<your-folder>/` | **Your project's** how-to docs | ✅ Yours forever |
-| Anywhere else under `llm-wiki/wiki/` | Project-specific entries | ✅ Yours forever |
+| `how-to/llm-wiki/` | Framework-shipped usage docs | ❌ Replaced on refresh |
+| `wiki/project/best-practices/framework/` | The framework's own contract docs (frontmatter, authoring, cycle format) | ❌ Replaced on refresh |
+| `wiki/project/best-practices/` | **Your project's** conventions and best practices | ✅ Yours forever |
+| `how-to/<your-folder>/` | **Your project's** how-to docs | ✅ Yours forever |
+| Anywhere else under `wiki/` | Project-specific entries | ✅ Yours forever |
+
+Paths are relative to this README (the wiki root).
 
 (V2 will support proper user-override layering — for v1, keep your own pages outside the framework-managed folders.)
 
