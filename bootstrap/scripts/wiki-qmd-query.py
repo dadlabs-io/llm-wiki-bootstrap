@@ -51,7 +51,12 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import now_stamp  # noqa: E402
+from _wiki_config import now_stamp, wiki_dir  # noqa: E402
+
+import re  # noqa: E402
+
+DEFAULT_RESULTS = "10"  # qmd's own default is 5; the rerank scores 40 candidates either way (user, 2026-09-13)
+RESULT_FLAGS = ("-n", "--all", "--files", "--json", "--csv", "--md", "--xml")
 
 GPU_FULL_MARKERS = (
     "Failed to create any rerank context",
@@ -179,6 +184,20 @@ def run_qmd(argv: list[str], timeout: float) -> tuple[int | None, str, str]:
         return None, "", ""
 
 
+def collection_for(notebook: str) -> str | None:
+    """qmd's collection name for a registry notebook (qmd names a collection by
+    the folder it indexes, e.g. C:\\...\\notebooks\\agentic-design\\wiki), or None."""
+    target = str(Path(wiki_dir(notebook)).resolve())
+    out = subprocess.run([*qmd_cmd(), "collection", "list"], capture_output=True,
+                         text=True, encoding="utf-8", errors="replace").stdout
+    norm = lambda s: s.replace("\\", "/").rstrip("/").lower()  # noqa: E731
+    for line in out.splitlines():
+        m = re.match(r"^(\S.*?) \(qmd://", line)
+        if m and norm(m.group(1)) == norm(target):
+            return m.group(1)
+    return None
+
+
 def gpu_full(text: str) -> bool:
     return any(m.lower() in text.lower() for m in GPU_FULL_MARKERS)
 
@@ -243,6 +262,10 @@ def main() -> int:
     ap.add_argument("--retries", type=int, default=3, help="GPU-busy retries after the first attempt (default 3)")
     ap.add_argument("--caller", default=os.environ.get("WIKI_QMD_CALLER", "session"),
                     help="who is searching, for the log (e.g. wiki-ingester, session)")
+    scope = ap.add_mutually_exclusive_group()
+    scope.add_argument("--notebook", help="search only this registry notebook's wiki (ingest, update and "
+                                          "discover always pass their target notebook)")
+    scope.add_argument("--all-notebooks", action="store_true", help="search every indexed notebook")
     ap.add_argument("--preflight", action="store_true", help="run the CUDA check only")
     ap.add_argument("--stats", action="store_true", help="summarise the search log")
     args, qmd_args = ap.parse_known_args()
@@ -254,8 +277,20 @@ def main() -> int:
     if not qmd_args:
         ap.error("give a query (and any qmd query options)")
 
+    query_text = " ".join(qmd_args)[:80]
+    if not any(a in RESULT_FLAGS or a.startswith("-n") for a in qmd_args):
+        qmd_args = [*qmd_args, "-n", DEFAULT_RESULTS]
+    if args.notebook:
+        col = collection_for(args.notebook)
+        if col is None:
+            print(f"[wiki-qmd-query] notebook '{args.notebook}' has no qmd collection "
+                  f"(expected {Path(wiki_dir(args.notebook)).resolve()}) — add it: "
+                  f"qmd collection add \"<that path>\", then qmd update && qmd embed", file=sys.stderr)
+            return EXIT_USAGE
+        qmd_args = [*qmd_args, "-c", col]
     record = {"ts": now_stamp(), "pid": os.getpid(), "caller": args.caller,
-              "query": " ".join(qmd_args)[:80], "slots": args.slots}
+              "query": query_text, "slots": args.slots,
+              "scope": args.notebook or ("all" if args.all_notebooks else "unscoped")}
     total_wait = 0.0
     backoff = 10.0
     for attempt in range(1, args.retries + 2):

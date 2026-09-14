@@ -69,8 +69,10 @@ with TodoWrite. For each item:
    sees your receipt.
 3. **Search the wiki** for related entries — integrate, don't isolate. 3–5 key terms, each with
    the FULL search through the shared helper:
-   `python ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester "<term>"`
-   (keyword + meaning + rerank on the GPU). Several workers run at once and the GPU fits two
+   `python ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester --notebook <target notebook> "<term>"`
+   (keyword + meaning + rerank on the GPU; 10 results by default, `-n` to change). Always pass the
+   target notebook: without it qmd searches every notebook, and a cross-link must stay inside the
+   notebook you are filing into. Several workers run at once and the GPU fits two
    searches, so the helper holds one of two GPU slots per search and the others wait their turn —
    waiting is expected, not an error. It never falls back to keyword search, and neither do you:
    quality over speed (user decision 2026-09-13, replacing the 2026-09-12 keyword-only rule — that

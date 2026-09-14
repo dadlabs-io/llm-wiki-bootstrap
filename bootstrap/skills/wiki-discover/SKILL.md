@@ -108,7 +108,7 @@ For each candidate URL/title found in search results:
 
 2. **Title/concept dedup**: search the wiki for the key concept:
    ```bash
-   python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<key terms from the candidate>"   # full search, GPU slot + timeout; needs the CUDA preflight from /wiki-search; exit 75/124 is a stop-and-report, not a fallback
+   python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --notebook <topic> "<key terms from the candidate>"   # full search of THIS notebook only (a match elsewhere is not a duplicate here), GPU slot + timeout; needs the CUDA preflight from /wiki-search; exit 75/124 is a stop-and-report, not a fallback
    ```
    If qmd returns a 80%+ match, the concept is already covered — skip unless the new source adds substantial new information.
 
