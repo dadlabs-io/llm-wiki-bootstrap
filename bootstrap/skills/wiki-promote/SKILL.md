@@ -21,6 +21,7 @@ Promote staged entries from `_inbox/proposed/` into the live wiki. This is the s
 /wiki-promote all                # promote everything in proposed/
 /wiki-promote <filename>         # promote a specific entry
 /wiki-promote --review           # show details of each entry before prompting
+wiki-promote.py --topic <topic> --check [--slug <slug>]   # validate staging, move nothing (exit 1 on a problem)
 
 # §9 of icarus-integration-plan: promote-and-verify in one pass for tier-1 entries
 # with strong empirical backing. MOST entries should NOT be auto-verified at
@@ -131,12 +132,13 @@ rm <topic>/_inbox/proposed/<slug>.proposed_metadata.json
 
 Create `_inbox/rejected/` if it doesn't exist. Rejected entries are kept (not deleted) for audit trail.
 
-## If metadata file is missing
+## If the metadata file is missing, broken, or names no folder
 
-If an entry in `proposed/` has no `<slug>.proposed_metadata.json`, it was probably placed there manually or by an older flow. In this case:
-- Ask the user which folder to promote to
-- Run a quick qmd search to identify backlink candidates
-- Proceed with promotion as normal
+`wiki-promote.py` holds such an entry back instead of promoting it: it stays in `_inbox/proposed/`, the reason is printed (`HELD … no sidecar` / `sidecar is not valid JSON (…)` / `sidecar names no target_folder`), and the run exits 4. Promoting it would drop it at the wiki root with no backlinks — which, until 2026-09-14, is what happened after a one-line warning. `--check` finds these without moving anything; `/wiki-cycle` runs it after ingest so a bad hand-edited sidecar is caught before review.
+
+To release a held entry:
+- Broken JSON: fix the file (a trailing comma after the last list item is the usual cause) and re-run.
+- Missing sidecar or no folder: ask the user which folder it belongs in, run a quick qmd search for backlink candidates, write or complete `<slug>.proposed_metadata.json` per the sidecar contract in `wiki-update/SKILL.md`, then re-run.
 
 ## Key paths
 

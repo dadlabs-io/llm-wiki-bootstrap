@@ -15,15 +15,22 @@ Modes:
   --auto / --auto-promote / --all
                 Promote everything without prompting.
   --reject-all  Move everything to _inbox/rejected/.
+  --check       Validate the staging area without moving anything: every entry
+                needs a sidecar that parses and names a target_folder.
 
 Optional filters:
   --slug <slug>      Only consider this one entry.
   --max <n>          Stop after N promotions.
 
+An entry whose sidecar is missing, is not valid JSON, or names no
+target_folder is never promoted: it stays in _inbox/proposed/ with the reason
+printed, because promoting it would drop it at the wiki root with no backlinks.
+
 Exit codes:
   0  success
-  1  unrecoverable error
+  1  unrecoverable error; with --check, at least one entry would be held back
   3  user cancelled
+  4  some entries held back (bad or missing sidecar) — fix the sidecar, re-run
 
 Usage:
   python wiki-promote.py --vault llm-wiki/wiki --review
@@ -293,14 +300,23 @@ def list_proposed(vault: Path):
     return items
 
 
-def _load_sidecar(sidecar: Path) -> dict:
+def _load_sidecar(sidecar: Path | None) -> tuple[dict, str | None]:
+    """Return (metadata, problem). A problem means the entry must not be promoted:
+    without a readable sidecar naming a target_folder, promote_entry writes the
+    entry to the wiki root with no backlinks. Until 2026-09-14 an unreadable
+    sidecar only warned and promoted anyway; a hand-edited sidecar with a trailing
+    comma in cycle 2026-09-14-01 would have gone to the root that way."""
     if not sidecar or not sidecar.exists():
-        return {}
+        return {}, "no sidecar (<slug>.proposed_metadata.json)"
     try:
-        return json.loads(sidecar.read_text(encoding="utf-8"))
+        meta = json.loads(sidecar.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as e:
-        _warn(f"sidecar unreadable ({e}); promoting without metadata")
-        return {}
+        return {}, f"sidecar is not valid JSON ({e})"
+    if not isinstance(meta, dict):
+        return {}, "sidecar is not a JSON object"
+    if not str(meta.get("target_folder") or "").strip():
+        return meta, "sidecar names no target_folder"
+    return meta, None
 
 
 def _summarize_entry(md_path: Path, meta: dict) -> str:
@@ -487,6 +503,9 @@ def main():
                       help="Promote everything without prompting")
     mode.add_argument("--reject-all", action="store_true",
                       help="Move everything in _inbox/proposed/ to _inbox/rejected/")
+    mode.add_argument("--check", action="store_true",
+                      help="Validate staged entries (sidecar present, valid JSON, target_folder) "
+                           "without moving anything; exit 1 if any would be held back")
     parser.add_argument("--slug", default=None, help="Only operate on this slug")
     parser.add_argument("--max", type=int, default=None, help="Stop after N promotions")
     parser.add_argument("--dry-run", action="store_true", help="Print actions without writing")
@@ -522,7 +541,7 @@ def main():
         return 1
 
     # Default mode = review (if nothing else specified)
-    if not (args.auto or args.review or args.reject_all):
+    if not (args.auto or args.review or args.reject_all or args.check):
         args.review = True
 
     items = list_proposed(vault)
@@ -530,11 +549,26 @@ def main():
         items = [(m, s) for m, s in items if m.stem == args.slug]
     if not items:
         _info("nothing in _inbox/proposed/ to promote")
-        cleanup_empty_inbox_dirs(vault, args.dry_run)
+        if not args.check:
+            cleanup_empty_inbox_dirs(vault, args.dry_run)
         return 0
 
     _proposed_root = (vault.parent if vault.name == "wiki" else vault) / "_inbox" / "proposed"
     _info(f"found {len(items)} proposed entries in {_proposed_root}/")
+
+    if args.check:
+        problems = 0
+        for md_path, sidecar in items:
+            meta, problem = _load_sidecar(sidecar)
+            if problem:
+                problems += 1
+                _err(f"{md_path.name}: {problem}")
+                continue
+            _, folder_warning = _normalize_target_folder(meta.get("target_folder") or "")
+            if folder_warning:
+                _warn(f"{md_path.name}: {folder_warning}")
+        _info(f"check: {len(items)} staged, {problems} would be held back")
+        return 1 if problems else 0
     scripts_dir = Path(__file__).resolve().parent
 
     # Topic name fallback for index/map regen
@@ -543,16 +577,22 @@ def main():
     promoted = []
     rejected = []
     skipped = []
+    held = []
     promote_count = 0
 
     for md_path, sidecar in items:
-        meta = _load_sidecar(sidecar)
+        meta, problem = _load_sidecar(sidecar)
         summary = _summarize_entry(md_path, meta)
 
         if args.reject_all:
             r = reject_entry(md_path, vault, dry_run=args.dry_run)
             rejected.append(r)
             _info(f"REJECTED  {summary}")
+            continue
+
+        if problem:
+            held.append({"slug": md_path.stem, "problem": problem})
+            _err(f"HELD      {md_path.name}: {problem} — not promoted; fix the sidecar and re-run")
             continue
 
         decision = "p"  # default: promote
@@ -632,20 +672,22 @@ def main():
 
     # JSON summary for orchestrator
     print(json.dumps({
-        "status": "ok",
+        "status": "held" if held else "ok",
         "vault": str(vault),
         "topic": topic,
         "counts": {
             "promoted": len(promoted),
             "rejected": len(rejected),
             "skipped": len(skipped),
+            "held": len(held),
         },
         "promoted": promoted,
         "rejected": rejected,
         "skipped": skipped,
+        "held": held,
         "completed_at": datetime.now().astimezone().isoformat(timespec="seconds"),
     }, indent=2))
-    return 0
+    return 4 if held else 0
 
 
 if __name__ == "__main__":

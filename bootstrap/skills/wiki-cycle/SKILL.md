@@ -281,6 +281,14 @@ Moves every `_inbox/pending/` item whose `source:` URL now matches an ingested e
 
 **Why this exists**: the `--staged` batch path does NOT run `wiki-update.py`'s from-queue Step-9 dequeue, so ingested items otherwise pile up in `pending/` and every later cycle has to hand-reconcile them (this bit cycles 2026-07-01 and 2026-07-02, 61 stale items each). `wiki-dequeue.py` is the permanent, idempotent, source_url-based reconciler — run it here so the queue always reflects reality. Safe to run standalone any time.
 
+Then check what the workers staged — their receipts are self-reports, and a receipt once claimed every sidecar conformed while one had invalid JSON (cycle 2026-09-14-01):
+
+```bash
+python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <topic> --check
+```
+
+Exit 1 names each entry `wiki-promote.py` would hold back (sidecar missing, not valid JSON, or no `target_folder`). Fix those sidecars before the commit; promotion would otherwise hold them (exit 4) — until 2026-09-14 it filed them at the wiki root with no backlinks.
+
 ### Step 3 — Mechanical lint
 
 Run `wiki-lint-mechanical.py`. Update scratchpad Phase 4.

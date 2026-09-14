@@ -162,7 +162,10 @@ Every assigned item is accounted for: either **staged** (entry + conforming dot-
 `_inbox/proposed/`, raw artifact in `raw/`, queue file moved, temp cleaned) or **failed with a
 stated reason** — and the reconciliation counts balance (assigned = staged + failed + skipped).
 Before finishing, run the pre-exit checklist **against the assignment you were given, not against
-what you produced**: (1) does the receipt cover every item the caller listed? (2) does each staged
-row's sidecar exist under the dot-form name with a full-path `target_folder`? (3) did every staged
+what you produced**: (1) does the receipt cover every item the caller listed? (2) does
+`python ~/.claude/wiki-scripts/wiki-promote.py --topic <target notebook> --check --slug <slug>` exit 0
+for each staged slug? It proves the sidecar exists, parses, and names a full-path `target_folder` —
+run it, especially after hand-editing a sidecar; do not assert it (2026-09-14: a hand edit left a
+trailing comma and the receipt still said every sidecar conformed). (3) did every staged
 entry pass the eval gate with recorded scores? (4) were all sources read in full per the depth
 mandates? Default to NOT-done until the counts reconcile.

@@ -17,4 +17,6 @@ Moves staged entries out of the holding area and into the live wiki. Staged inge
 
 **Works with:** [`wiki-update`](./wiki-update.md) stages the entries this skill later approves, and [`wiki-cycle`](./wiki-cycle.md) invokes it as a step in a full run. [`wiki-lint`](./wiki-lint.md) is re-run afterwards to confirm the promotion left zero broken links, and [`wiki-report`](./wiki-report.md) counts what is still sitting in `_inbox/proposed/`. The optional `--verify` flag hands each promoted entry to [`wiki-verify`](./wiki-verify.md).
 
+**When it skips itself:** an entry whose sidecar is missing, is not valid JSON, or names no target folder is held back — it stays in `_inbox/proposed/` with the reason printed and the run exits 4 — rather than being filed at the wiki root without its backlinks. `wiki-promote.py --check` reports such entries without moving anything; a full cycle runs it right after ingest.
+
 **Note:** Most entries should *not* be auto-verified at promote time — verification is a deliberate later step. Only pass `--verify` when whoever is reviewing the promotion can personally vouch for the entry's claims.
