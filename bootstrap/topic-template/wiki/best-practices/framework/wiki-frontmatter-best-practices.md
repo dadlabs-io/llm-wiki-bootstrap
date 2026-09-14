@@ -6,7 +6,7 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 6
+framework-version: 7
 last_reviewed: 2026-09-14
 review_after: 2026-12-13
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
@@ -38,13 +38,14 @@ Single source of truth for what every entry's YAML frontmatter must contain. Enf
 
 **Required** for entries that compile from an ingested raw source (external URL, paper, video, repo). Points to the immutable raw file under `raw/`.
 
-**Omit** for self-authored synthesis entries (tier `self`). Those have `source_url: internal://...` and no raw artifact.
+**Omit** for self-authored synthesis entries (tier `self`). Those have `source_url: internal://...` and no raw artifact. **One exception** (2026-09-14): a self-authored entry that summarises artifacts preserved unchanged under `raw/` — a code-change summary over its run's working files — names that folder in `raw_path`, so the full record stays one link away and the no-deletion rule covers it.
 
 | Case | `raw_path` | Example |
 |---|---|---|
 | External ingest (URL, paper, video) | Required | `raw_path: raw/2026-04-08-llm-wiki.md` |
 | Self-authored synthesis | Omit (do not write `null`) | — |
 | Re-fetched / poisoned raw | Point at newer file; preserve older under a `.poisoned-*` suffix per principle 3 | `raw_path: raw/2026-04-21-foo-clean.txt` |
+| Code-change summary (`project/code-changes/`, tier `self`) | The folder holding the run's working files, copied unchanged | `raw_path: raw/code-changes/2026-09-14-house-fetcher/` |
 
 Path is relative to the topic root (the folder containing `_INDEX.md`), **not** the wiki root. Always starts with `raw/`.
 
@@ -228,7 +229,7 @@ The same check runs over the installed `~/.claude/skills/*/SKILL.md` and `~/.cla
 - `tier` is `1`, `2`, `3`, `4`, or `self`
 - `confidence` is one of the three enum values
 - `raw_path` exists on disk (if present)
-- `raw_path` is required iff `tier != self`
+- `raw_path` is required iff `tier != self` (a `self` entry carries one only for artifacts preserved under `raw/`, e.g. a code-change summary's folder)
 - `source_url` is either `http(s)://...` or `internal://...`
 - `ingested_by` is one of the known values
 - `tags` has length ≥ 3
