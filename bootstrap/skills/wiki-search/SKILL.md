@@ -28,13 +28,13 @@ If a holistic question arrives here anyway, say which tool it wants and offer to
 (cd "$(npm root -g)/@tobilu/qmd" && npx --no-install node-llama-cpp inspect gpu) | grep -E "^CUDA:"   # must print `CUDA: available`
 ```
 
-If it prints anything else, **stop and report it** — do not fall back to `qmd search`, a cloud model, or CPU mode and carry on. The known fix is the CUDA 13.2 runtime (`winget install --id Nvidia.CUDA --version 13.2 --exact --override "-s cudart_13.2 cublas_13.2"`; node-llama-cpp's prebuilt binary needs 13.1+), and a shell opened before that install lacks the CUDA PATH until restarted. Always run the query under a timeout (`timeout 120 qmd query "..."`) so a regression surfaces as an error, never a hang. Parallel workers (ingest batches) use `qmd search` (keyword, no model): four processes loading ~2 GB of models each do not fit one 8 GB GPU.
+If it prints anything else, **stop and report it** — do not fall back to `qmd search`, a cloud model, or CPU mode and carry on. The known fix is the CUDA 13.2 runtime (`winget install --id Nvidia.CUDA --version 13.2 --exact --override "-s cudart_13.2 cublas_13.2"`; node-llama-cpp's prebuilt binary needs 13.1+), and a shell opened before that install lacks the CUDA PATH until restarted. Run the full search through `wiki-qmd-query.py` (below): it applies the 120-second timeout (killing the whole process tree, so no orphaned search holds the GPU), and it holds one of two GPU slots, because each `qmd query` loads ~2 GB of models and the 8 GB GPU fits two at once — a third caller waits for a slot instead of failing with "Failed to create any rerank context" (tested 2026-09-13). `wiki-qmd-query.py --preflight` runs this same CUDA check. Everyone — the session and parallel ingest workers alike — uses the full search; there is no keyword fallback (user decision 2026-09-13). If batches get slow, `wiki-qmd-query.py --stats` shows how long searches waited for a slot; the remedy is fewer parallel workers.
 
 ## Three search modes
 
 | Mode | Command | When to use |
 |---|---|---|
-| **Hybrid + rerank** (recommended) | `timeout 120 qmd query "<query>"` | Best quality. Combines keyword + semantic + reranking with qmd's bundled models on the GPU. Use by default — after the CUDA preflight below, and always under a timeout. |
+| **Hybrid + rerank** (recommended) | `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<query>"` | Best quality. Combines keyword + semantic + reranking with qmd's bundled models on the GPU. Use by default — after the CUDA preflight above; the helper adds the timeout and the GPU slot. Extra `qmd query` options pass through (`-n 10`, `--json`). |
 | **Keyword only** | `qmd search "<query>"` | Fast, no LLM. Good for exact terms, file names, specific phrases. |
 | **Semantic only** | `qmd vsearch "<query>"` | When you're searching by concept, not specific words ("how do agents handle stale knowledge"). |
 
@@ -46,8 +46,11 @@ If it prints anything else, **stop and report it** — do not fall back to `qmd 
 ## Run
 
 ```bash
-# Recommended — hybrid search (run the CUDA preflight first; timeout turns a regression into an error, not a hang)
-timeout 120 qmd query "context engineering for agents"
+# Recommended — hybrid search (run the CUDA preflight first; the helper adds the timeout and a GPU slot)
+python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "context engineering for agents"
+
+# How long searches have been waiting for a GPU slot (is a batch slower?)
+python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --stats
 
 # Keyword search (fast, no LLM)
 qmd search "silent poisoning mem0"
@@ -66,7 +69,7 @@ qmd ls
 
 1. Show the results to the user (file paths + scores + snippets)
 2. If results look promising, **offer to read one of the matched files** with the Read tool for full context
-3. If zero results on `qmd search`, try `qmd query` (adds semantic matching) or rephrase the query
+3. If zero results on `qmd search`, try the full search (`wiki-qmd-query.py`, adds semantic matching) or rephrase the query
 4. For browsing what exists, use `/wiki` slash command to show the INDEX
 5. **File the answer, or let it go (added 2026-09-08).** Once the question is answered, decide whether the answer is worth keeping. File-worthy: a comparison the user is likely to revisit; a connection between entries the wiki did not already state; a synthesis across three or more entries; an answer to a gap the wiki could not fill (that one is a `concept-gaps` candidate). Not file-worthy: a plain lookup, a question about wiki structure, a one-off. If file-worthy, ask **once**: "This looks worth keeping — file it as a `project/` entry?" On yes, write the answer to `<topic>/_inbox/temp/<slug>.md` in the entry shape (TL;DR, body, a `## Related` section linking the entries you read) and file it with `wiki-update.py --tier self --no-raw --folder project/<category> --ingested-by claude-code`; if the session will end with `/wrap-up` anyway, hand the answer to that instead. Why: a good answer that stays in the chat is knowledge the wiki paid to derive and then lost (Karpathy's gist names this; the nanzhipro bootstrap skill makes it a step — agentic-design `research/long-term/`).
 

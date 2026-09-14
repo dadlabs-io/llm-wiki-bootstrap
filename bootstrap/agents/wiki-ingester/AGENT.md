@@ -67,10 +67,19 @@ with TodoWrite. For each item:
    - **Docs sites** — follow the content-bearing pages, not just the landing page.
    Slower is accepted; depth is the point. The deep read burns *your* context, and the caller only
    sees your receipt.
-3. **Search the wiki** (3–5 key terms via `qmd search` — keyword search, no model. You run in
-   parallel with other workers and qmd's `query` mode loads ~2 GB of models onto the one GPU per
-   process, which hung the machine on 2026-09-12; `qmd query` is for the interactive session only)
-   for related entries — integrate, don't isolate.
+3. **Search the wiki** for related entries — integrate, don't isolate. 3–5 key terms, each with
+   the FULL search through the shared helper:
+   `python ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester "<term>"`
+   (keyword + meaning + rerank on the GPU). Several workers run at once and the GPU fits two
+   searches, so the helper holds one of two GPU slots per search and the others wait their turn —
+   waiting is expected, not an error. It never falls back to keyword search, and neither do you:
+   quality over speed (user decision 2026-09-13, replacing the 2026-09-12 keyword-only rule — that
+   lock-up was the missing CUDA runtime, not parallelism). Run
+   `python ~/.claude/wiki-scripts/wiki-qmd-query.py --preflight` once before your first item; if
+   it does not report CUDA available, stop the batch and report. If a search exits 75 (GPU still
+   busy after retries) or 124 (timed out), wait a minute and try once more; if it fails again, mark
+   the item **failed: full search unavailable** (it is re-run later, never filed without its
+   cross-links) and say in the receipt that the batch needs fewer parallel workers.
 4. **Synthesize** per the wiki-update flow: TL;DR, blockquoted numbers/quotes with attribution,
    "Related in this wiki" cross-links via `--slug-for` lookups (never guess slugs).
 5. **Eval gate** — two halves since 2026-09-02: `wiki-update.py` runs the mechanical checks itself (TL;DR, Related with 2+ links, tags, stub marking, numbers in blockquotes — `_entry_checks.py`) and REFUSES to file on an error; fix the draft rather than passing `--no-gate` (if you must, give the reason). You score only the two judgment dimensions — **extraction fidelity** and **synthesis value**, 1–5 each — and that score is advisory, never the gate. Both ≥ 3 → continue. Either below 3 → one

@@ -47,6 +47,7 @@ TRAVEL_SCRIPTS = [
     "wiki-list-render.py",
     "wiki-map-compile.py",
     "wiki-promote.py",
+    "wiki-qmd-query.py",  # full qmd search behind two GPU slots, no keyword fallback, per-call wait/run log (2026-09-13)
     "wiki-reciprocate-backlinks.py",
     "wiki-rollback.py",
     "wiki-search-rerank.py",  # truth-status bucket sort over qmd JSON (search spec surface 1); shipped 2026-09-08

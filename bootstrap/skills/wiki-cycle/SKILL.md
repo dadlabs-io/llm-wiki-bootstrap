@@ -261,7 +261,7 @@ Update scratchpad Phase 2 with the user's decision.
 
 ### Step 2 — Ingest (unless --skip-ingest)
 
-Queue approved items via `wiki-list-add.py`, then ingest via parallel agents (4 at a time, same pattern as today's session).
+Queue approved items via `wiki-list-add.py`, then ingest via parallel agents (4 at a time, same pattern as today's session). Every worker searches with the full `qmd query` through `wiki-qmd-query.py`, which lets two searches onto the 8 GB GPU at once and queues the rest (user decision 2026-09-13: quality over speed, no keyword fallback). After the batch, `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --stats` shows how long searches waited for a slot — put it in the cycle report; if waiting makes the batch noticeably slower, or any worker reports "full search unavailable", run 3 or 2 workers next time.
 
 **Spawn ingest workers as `subagent_type="wiki-ingester"`** (the dedicated ingest agent, installed to `~/.claude/agents/` by this framework) — fall back to `general-purpose` only if it isn't installed. Spawner contract: read `~/.claude/agents/wiki-ingester-config.json` first; if `confirm_model_each_run` is true and the session can ask, ask the user which model to use for this batch (default = `model_default`); a session that cannot ask (autonomous / unattended) uses `model_default` and names the model in its spawn receipt (2026-09-13); pass it as the Agent tool's spawn-time `model` override.
 
@@ -443,6 +443,6 @@ Use `subagent_type="wiki-ingester"` for ingestion workers (fallback: `general-pu
 - Don't skip the scratchpad — it's the resume mechanism
 - Don't run semantic lint if one ran in the last 24 hours (check scratchpad history) — too expensive
 - Don't auto-approve tier 4 sources — always ask
-- Don't run more than 4 parallel agents at once — diminishing returns + rate limits
+- Don't run more than 4 parallel agents at once — diminishing returns + rate limits; ingest workers' searches also share two GPU slots (see Step 2)
 - Don't commit mid-cycle — one commit at the end covers everything
 - Don't skip the morning report — it's the user's review checkpoint

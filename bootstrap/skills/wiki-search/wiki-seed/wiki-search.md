@@ -52,7 +52,7 @@ Each entry's final score combines all three. Tier 1-2 entries get a small boost;
 - Don't substitute search for reading — search gets you to the right entries, but the full entry text is where the actual content is
 - Don't rely on search to find unindexed work — `wiki/_inbox/proposed/` isn't searched by default (it's staging, not yet promoted)
 - Don't expect grep-like exact matches — use `qmd search "<terms>"` from a terminal if you need that
-- Don't run `qmd query` from parallel workers — one GPU, one model-loading process at a time; workers use `qmd search`
+- Don't call `qmd query` directly from parallel workers — go through `wiki-qmd-query.py`, which lets two searches onto the GPU at once and queues the rest; everyone uses the full search, and `--stats` shows how long searches waited (the fix for a slow batch is fewer workers, never keyword search)
 
 ### Direct CLI alternative
 

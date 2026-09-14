@@ -41,7 +41,7 @@
     {
       "name": "wiki-search",
       "status": "active",
-      "description": "qmd search used in the integration step (3-5 key terms per source) so entries cross-link instead of landing isolated. Workers use `qmd search` (keyword, no model); `qmd query` loads models onto the GPU per process and is reserved for the interactive session. Installed globally at ~/.claude/skills/wiki-search."
+      "description": "The full search used in the integration step (3-5 key terms per source) so entries cross-link instead of landing isolated. Workers run it through ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester, which holds one of two GPU slots per search (the 8 GB GPU fits two) and never falls back to keyword search (user decision 2026-09-13). Installed globally at ~/.claude/skills/wiki-search."
     },
     {
       "name": "wiki-list",
