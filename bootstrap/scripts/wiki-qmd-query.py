@@ -51,7 +51,8 @@ failed or usage error; 75 = GPU busy after every retry; 124 = timed out.
 
 Environment: WIKI_QMD_K, WIKI_QMD_C (fixed values instead of the defaults),
 WIKI_QMD_SLOTS (default 3; 2 on a qmd older than 2.8.3), WIKI_QMD_SLOT_DIR (default ~/.cache/wiki-qmd),
-WIKI_QMD_BIN (the qmd executable; default: node + qmd's dist/cli/qmd.js).
+WIKI_QMD_BIN (the qmd executable; default: node + qmd's dist/cli/qmd.js),
+WIKI_QMD_INDEX (a named qmd index; default: qmd's own default index).
 """
 
 from __future__ import annotations
@@ -180,10 +181,14 @@ def qmd_cmd() -> list[str]:
     /bin/sh, which exists only inside Git Bash, so launched from Python it fails
     with "The system cannot find the path specified". qmd's own bin/qmd script
     just runs `node <pkg>/dist/cli/qmd.js`; do that directly when the package is
-    found next to the shim, which also keeps the process tree one level deep."""
+    found next to the shim, which also keeps the process tree one level deep.
+    $WIKI_QMD_INDEX selects a named qmd index (qmd's --index); the skill test
+    baseline (tests/skills/) keeps its sandbox notebook in its own index."""
+    index = os.environ.get("WIKI_QMD_INDEX")
+    extra = ["--index", index] if index else []
     override = os.environ.get("WIKI_QMD_BIN")
     if override:
-        return [override]
+        return [override, *extra]
     shim = shutil.which("qmd")
     if not shim:
         print("[wiki-qmd-query] qmd not found on PATH (npm i -g @tobilu/qmd)", file=sys.stderr)
@@ -191,8 +196,8 @@ def qmd_cmd() -> list[str]:
     entry = Path(shim).resolve().parent / "node_modules" / "@tobilu" / "qmd" / "dist" / "cli" / "qmd.js"
     node = shutil.which("node")
     if entry.exists() and node:
-        return [node, str(entry)]
-    return [shim]
+        return [node, str(entry), *extra]
+    return [shim, *extra]
 
 
 def run_qmd(argv: list[str], timeout: float) -> tuple[int | None, str, str]:

@@ -1,507 +1,105 @@
 ---
 name: wiki-update
-description: Ingest an EXTERNAL source into the wiki's research/ layer. Auto-detects from what the user gives. URL → fetch + file. YouTube URL → fetch transcript + synthesize summary + file. Local file → file. Pasted text → file. Requires a source — with nothing, it redirects to /wrap-up (for capturing our own session work). Use when the user says "update the wiki", "add this to the wiki", "save this article", "wiki this", "wiki update", "ingest this video", "add this YouTube video to the wiki". For "save what we did" / session work, use /wrap-up instead. Replaces the old /wiki-add command.
-last_reviewed: 2026-09-13
-review_after: 2026-12-13
-reviewed_for_model: claude-fable-5-1
+description: "Ingest one EXTERNAL source (a URL, YouTube video, PDF, X post, local file or pasted text) into a wiki as a curated, cross-linked entry, keeping the verbatim original under raw/. Two or more URLs are queued for /wiki-cycle instead. Use when the user says 'add this to the wiki', 'save this article', 'wiki this', 'ingest this video', or hands over a source to file. Not for this session's own work (/wrap-up), and not for draining the queue or 'update the wiki' (/wiki-cycle)."
+last_reviewed: 2026-09-14
+review_after: 2026-12-14
+reviewed_for_model: claude-opus-5
 ---
 
-> **Wiki resolution (2026-09-08; any-cwd since 2026-09-13).** The scripts resolve the wiki through the registry: `--topic <notebook>` is looked up in `linked-notebooks.json` first, found via the nearest `<cwd>/.claude/wiki-config.json` or, when there is none above the cwd, the machine config `~/.claude/wiki-config.json` (which records `registry` from the first registry-mode `/new-wiki`). So a worker or a session in a foreign folder can target any registered notebook with `--topic` alone. Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault that is not in the registry. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
+# wiki-update
 
-Update (add) content to a topic wiki. The user shouldn't have to think about what type of source they have — figure it out from what they give you.
+Files one external source as a wiki entry: the verbatim original under `raw/`, and a synthesis in `wiki/<folder>/` that links into what the wiki already holds. Integration is the point; an entry that sits alone is half the value.
 
-## Frontmatter — authoritative reference
+This skill does not restate the rules it follows:
+- Frontmatter fields, tier and confidence: the frontmatter spec, `<wiki>/project/best-practices/framework/wiki-frontmatter-best-practices.md`.
+- Authoring doctrine (claim classes, blockquotes, secondary figures, auto-captions): `wiki-authoring-best-practices.md` in the same folder.
+- Structure: `wiki-update.py` refuses to file an entry that fails the gate (step 5).
 
-Every entry's YAML frontmatter MUST conform to the canonical spec at `<vault>/<topic>/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`. That doc is the single source of truth for required fields, tier rubric, review cadence, and `raw_path` handling. When in doubt, read it — do not invent new fields or drop required ones.
+## What did the user give you?
 
-Required on every entry: `title`, `date`, `source_url`, `ingested_by`, `tier`, `confidence`, `last_reviewed`, `review_after`, `tags`. Plus `raw_path` for external ingests (omit for self-authored with `tier: self`).
-
-## `raw/` file safety — check by FILENAME before deleting, not by URL
-
-**Bug found 2026-07-18 (agentic-design wiki-cycle cleanup)**: when clearing out dead-end pending-queue items (a URL that never produced a filed entry — 403, no captions, etc.), it's tempting to also delete any `raw/*.md` fetch artifact left behind by the failed attempt. Before doing that, grep for the raw file's **filename** as a `raw_path:` value across `wiki/` — do NOT only grep for the dead URL in entry bodies.
-
-Why this matters: a `raw/` filename can collide with, or simply *not* signal, what it's actually backing. In the incident that surfaced this, a raw file named after one dead-end ingest attempt (`raw/2026-07-10-multi-agent-openai-api.md`, from a URL that later 403'd/thin-fetched on retry) turned out to be the **legitimate `raw_path` for a different, already-filed wiki entry** — one that had synthesized the same underlying source under a different title and framing in an earlier cycle. A URL-only grep found nothing (correctly — no entry's *body* mentioned the dead URL), but the entry's frontmatter `raw_path:` field pointed straight at the file. Deleting it produced a broken link + phantom `raw_path` on the very next mechanical lint pass.
-
-**The correct check before deleting any `raw/<file>.md`**:
-```bash
-grep -rl "raw_path:.*<exact-filename>" <topic>/wiki/
-```
-Only delete if this returns nothing. If you've already deleted and lint flags a phantom `raw_path`, the file is very likely recoverable from git history (`git show <last-good-commit>:<path/to/raw/file>.md > <path>`) rather than lost — this repo's `_inbox/reports/` and `wiki/` are committed on every cycle.
-
-## HARD RULE: read before you reject
-
-No title-pattern rejections, no URL-pattern guesses, no domain-quality heuristic as a standalone
-basis for skipping a queued item. The user has already curated at queue-add time; the ingest
-agent's job is to render the item, not re-litigate whether it belongs. **Every queued item is
-fully fetched and read before any tier / cluster / skip decision, and every rejection is
-content-grounded: a quoted passage from the fetched source plus the slug of the existing entry
-it overlaps.**
-
-Why this rule exists: on 2026-04-29 a cycle agent rejected 22 of 26 user-curated URLs on title
-patterns alone. An agent confidently rejecting 85% of a curated list at title-screening is not
-high-precision curation — it is shallow heuristics overriding the human in the loop.
-
-## Dispatch table — figure out what to do
-
-| User gave you... | Do this |
+| Input | Do |
 |---|---|
-| **Exactly one URL** (any kind) | Immediate ingest — fetch, synthesize, file as a wiki entry |
-| **Multiple URLs** (>1, separated by spaces, newlines, list syntax) | Batch-queue mode — call `wiki-list-add.py` for each; print "queued N items; run `/wiki-cycle --ingest-only` to drain" |
-| YouTube URL (single) | YouTube flow — fetch transcript + synthesize + file |
-| Local file path (single) | File flow — call wiki-update.py with --source PATH |
-| Pasted text | Text flow — write to a temp file, then call wiki-update.py with --source TEMP |
-| Nothing (just `/wiki-update`) | **Stop — wiki-update is for EXTERNAL sources only.** Tell the user: "`/wiki-update` needs a source (URL / file / pasted text). To capture what we did this session, use `/wrap-up`." Do NOT synthesize from the session. |
+| One URL | The flow below; step 1's fetcher by host is in [fetchers.md](fetchers.md) |
+| Two or more URLs (spaces, lines, bullets or a list) | Queue each with `wiki-list-add.py`, then say "queued N items; run `/wiki-cycle --ingest-only` to drain" |
+| A local file, or pasted text | The flow from step 2; pasted text goes to a temp file first, passed as `--source` |
+| A raw already saved for a URL (a batch hand-over, a browser capture) | The flow from step 2, with no fetcher; file with `--source-url <url> --raw-path raw/<file>` |
+| Nothing | Stop: "`/wiki-update` needs a source (a URL, file path or pasted text). To capture what we did this session, run `/wrap-up`." Never synthesize from the session. |
 
-### Multi-URL detection
+`--now <url>` ingests one item from a list immediately; `--queue <url>` queues even a single URL.
 
-The user might paste URLs as:
-- Space-separated: `https://a.com https://b.com https://c.com`
-- Newline-separated (inside a code block or not)
-- Bulleted list: `- https://a.com\n- https://b.com`
-- Tuple/array syntax: `[(url1), (url2), ...]` — strip punctuation, extract URLs
+Before starting, settle the notebook and the folder, and confirm them with the user when the source does not make them obvious:
+- **Notebook** (`--topic`): this project's by default. Any registered notebook resolves from any folder, so omit `--vault` unless the wiki is a legacy vault outside the registry.
+- **Folder** (`--folder`): always the full taxonomy path, `research/<sub>` or `project/<sub>`; list `wiki/` if unsure. A bare leaf is auto-prefixed when it matches one taxonomy folder and refused otherwise; `--allow-new-top-folder` is for a new top-level branch that is really intended.
 
-Any pattern with 2+ URLs → batch-queue mode. Use a simple regex like `https?://\S+` to extract them.
+## Hard rules
 
-### Flags to override auto-detect
+- **Read before you reject.** Every queued item is fetched and read in full before any tier, cluster or skip decision. A rejection quotes a passage from the source and names the existing entry it overlaps. No title, URL or domain heuristics: the user curated the list.
+- **Numbers and quotes go on `>` lines, attributed to the source.** Inline quotation marks are prose to the gate. Your own synthesis stays plain prose.
+- **The search is the full search; there is no fallback.** If the preflight fails, or the search helper exits 75 (GPU busy after retries) or 124 (timed out), stop and report it.
+- **Dedup.** `wiki-update.py` skips a source already in `wiki/` or `_inbox/proposed/` (URLs compared normalised). Go past it only when the user says so; a later snapshot of an evolving source is `--force` plus `revises:` on the new entry.
+- **Before deleting a `raw/` file**, grep for its file name as a `raw_path:` value (`grep -rl "raw_path:.*<file name>" <topic>/wiki/`): another entry may cite it. A raw deleted by mistake comes back with `git show <commit>:<path>`.
+- No secrets in an entry, no padding, nothing outside the notebook's scope (its README says what that is).
 
-- `--now <url>` — force immediate-ingest mode even on a list (ingest first item, warn about others)
-- `--queue <url(s)>` — force batch-queue mode even on a single URL (skip immediate ingest; just append to pending)
+## The flow
 
-## Universal pre-checks
+Direct mode, the default: use it unless you were asked for `--staged`. Other skills cite these step numbers (step 5 is the gate).
 
-1. **Topic** — default = the topic configured in your harness if not specified. Confirm with user if ambiguous.
-2. **Folder** — concept folder under `wiki/`. List existing first:
+1. **Fetch the raw.** Ordinary pages: `python {{WIKI_SCRIPTS_DIR}}/wiki-update.py --topic <topic> --source <url> --fetch-only`. YouTube, PDFs, X, Medium and pages rendered by JavaScript: [fetchers.md](fetchers.md). Keep the printed `raw_path=`.
+2. **Read the raw in full.** A thin raw, or one that is mostly site navigation, came from the wrong fetcher.
+3. **Search the wiki** for 3 to 5 key terms from the source, each with the full search:
+   `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --notebook <topic> "<term>"`
+   Always pass `--notebook`: a cross-link must stay inside the notebook being filed into. It returns 20 results, sizes the reranker's depth to the notebook and holds one of three GPU slots; parallel workers add `--caller wiki-ingester`. It needs the CUDA runtime (`--preflight` checks).
+4. **Write the synthesis** to `<topic>/_inbox/temp/<slug>.md`:
+   - `## TL;DR` that says something the title does not
+   - body sections on what matters in the source, and why it is in the wiki
+   - Sources, external (the material) apart from internal (our synthesis)
+   - `## Related in this wiki`: at least two links, each saying where the source agrees with, extends or contradicts that entry. Link by bare file name (`[Title](<slug>.md)`) and look slugs up with `wiki-update.py --topic <topic> --slug-for --title "<title>" --folder <folder>`; never guess them.
+
+   Leave out the Source/Raw footer: the script writes it after your body. Tag a thin entry `stub`.
+5. **Eval gate.** The script is the gate. It refuses to file (exit 1, `Refusing to file`) without a `## TL;DR`, without a `## Related` holding two or more wiki links (only a warning for `tier: self`), or with anything after the footer but the backlinks block. It warns on fewer than three tags, an unmarked thin entry, and numbers outside `>` lines. Fix and re-run. `--no-gate '<reason>'` is for an entry a rule is genuinely wrong for, and the reason is what a reviewer reads. Then score the two things a script cannot, 1 to 5 each: **extraction fidelity** (every claim attributed, every number quoted, checked against the raw) and **synthesis value** (it positions the source against what the wiki holds). Print them as one line before filing, `Scores: extraction fidelity N/5, synthesis value N/5`. Below 3, fix it or ask. The score is advisory: you do not certify your own draft.
+6. **Pick the existing entries that should link back**: the `inbound_candidates` the script lists, the area's hub page, entries the source speaks to. (Skipped with `--staged`.)
+7. **Add the new entry to their Related sections**, acting on every candidate that fits. After five or more ingests into one area, update its hub page too. (Skipped with `--staged`.)
+8. **File it.** Tags: three or more, including the source's type when it has one (`youtube` for a video).
    ```bash
-   ls llm-wiki/wiki/
+   python {{WIKI_SCRIPTS_DIR}}/wiki-update.py --topic <topic> --folder <folder> \
+     --source <topic>/_inbox/temp/<slug>.md --source-url <original url> --raw-path <raw_path> \
+     --ingested-by claude-code --tier <1|2|3|4|self> --confidence <high|medium|low> \
+     --title "<title>" --tags "<tags>"            # add --staged for staged mode
    ```
-   If none fit, propose a new folder name based on content. **Always pass the FULL taxonomy path** (`research/<sub>` or `project/<sub>`, e.g. `research/orchestration`), **never a bare leaf** (`orchestration`) — see "`--folder` guard" below for what happens if you do and why it's now safe either way.
+   It prints `wiki_path=`, `wiki_slug=`, `outbound_fixed=` (links it rewrote), `outbound_warnings=` (links it could not resolve: fix them by hand) and `inbound_candidates=` (step 6's list). Delete the temp files once filing succeeds: the synthesis, and the pasted-text source if you wrote one. For a queued item, move its `.queue` file from `_inbox/pending/` to `_inbox/done/` and re-render the list (`wiki-list-render.py --topic <topic>`).
 
-### `--folder` guard (bug found + fixed 2026-08-03)
+Tier and confidence are defined only in the frontmatter spec ("tier rubric", "confidence scale"). In short: tier is the source's quality, confidence is our entry's reliability; between two adjacent tiers take the lower; tier 4 never auto-ingests. Our own synthesis is tier `self`, filed with `--no-raw` (no raw copy, no `raw_path`).
 
-**Bug**: `wiki-update.py --folder orchestration` (bare leaf, meaning to target the existing `wiki/research/orchestration/`) used to silently create a **phantom new top-level `wiki/orchestration/`** folder instead — `write_curated()`'s `wiki_dir / folder` path join had zero validation. This is the CLI-flag counterpart of the staged-sidecar `target_folder` bare-leaf bug documented below; that one was already guarded (via `wiki-promote.py`'s `_normalize_target_folder`), this one wasn't.
+## Staged mode (`--staged`)
 
-**Fix**: `wiki-update.py` now validates `--folder` before writing (`validate_folder()`, direct mode only — staged mode already gets the sidecar-time guard at promote):
-- An existing subfolder (canonical **or** a topic's own bespoke top-level folder, e.g. cottage-build's `regulations/`) — passes through unchanged.
-- A bare leaf that unambiguously matches exactly one canonical taxonomy path (`MERGED_TAXONOMY` in `_wiki_config.py`) — **auto-prefixed** with a printed note (`orchestration` → `research/orchestration`), so the original bug's exact trigger now self-corrects instead of silently creating a phantom folder.
-- Anything else that doesn't already exist under this topic's `wiki/` — **hard error**, refuses to write, lists the topic's actual existing top-level folders, and tells you to either use the full path or pass `--allow-new-top-folder` if a new top-level branch is genuinely intended.
+Only when the user, or the workflow that called this skill (a `/wiki-cycle` ingest worker), asks for `--staged`; never your own choice. It is meant for batches and runs nobody is watching. The entry goes to `_inbox/proposed/` with `status: proposed`, nothing else is edited, and `/wiki-promote` finishes the integration later. Steps 6 and 7 are skipped. `wiki-update.py --staged` writes the sidecar itself.
 
-You should still always pass the full path — the auto-prefix is a safety net, not a reason to rely on bare leaves.
-3. **Title** — let the script auto-detect, override only if obviously wrong.
-4. **Always pass `--ingested-by claude-code`** (when called from this slash command).
-5. **Always pass `--tier <1|2|3|4|self>`** and **`--confidence <high|medium|low>`**.
+### Staged-ingest sidecar contract
 
-   **Tier** and **confidence** are defined in ONE place: the frontmatter spec (`<vault>/<topic>/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`, sections "tier rubric" and "confidence scale"). Read them there. This skill deliberately does not restate them — the restatement rule (spec, 2026-08-01) exists because a paraphrase here drifted from the spec and, on 2026-09-02, an ingest hit two conflicting definitions of `confidence` with nothing saying which won. Orientation only: tier = source quality (`1` primary … `4` community, `self` = our own synthesis, paired with `--no-raw`); confidence = how reliable OUR entry is, not the source. When unsure between adjacent tiers, prefer the lower. Tier 4 never auto-ingests. Thin entries get the `stub` tag.
+When you write or edit a sidecar by hand (parallel workers do), follow this exactly; every field has broken a promotion when improvised.
 
-## Staging mode (`--staged`)
-
-By default, `/wiki-update` files entries **directly to `wiki/`** and updates backlinks immediately. This is the fast path for manual sessions where you're reviewing output in real-time.
-
-With `--staged`, the entry goes to **`_inbox/proposed/`** instead. No backlinks are added, no existing entries are modified. The entry sits there until promoted via `/wiki-promote`. This is the safe path for automated/batch runs where no human is watching.
-
-| Mode | Entry goes to | Backlinks | When to use |
-|---|---|---|---|
-| Default (direct) | `wiki/<folder>/` | Added immediately | Manual sessions, you're reviewing |
-| `--staged` | `_inbox/proposed/` | Deferred until promotion | Automated runs, batch ingestion, uncertain quality |
-
-**When the user says `--staged`**: follow steps 1-4 as normal, then skip steps 5-6 (backlinks), and in step 7 file to `_inbox/proposed/` instead of `wiki/`. Add `status: proposed` to frontmatter, and write a sidecar per the **Staged-ingest sidecar contract** below so `/wiki-promote` can finish the integration later.
-
-**When the user doesn't say `--staged`**: follow the full 8-step flow below (current behavior, unchanged).
-
-### Staged-ingest sidecar contract (canonical — read this before hand-authoring a sidecar)
-
-`wiki-update.py --staged` writes a conforming sidecar automatically. **Follow this schema exactly when hand-authoring one** (e.g. parallel ingest agents in a cycle) — every field below caused a real promote failure when an agent improvised.
-
-- **Sidecar filename = `<slug>.proposed_metadata.json`** (DOT form). Both `wiki-update.py` and `wiki-promote.py` resolve it via `Path("<slug>.md").with_suffix(".proposed_metadata.json")`; `wiki-promote.py` still accepts the legacy underscore form `<slug>_proposed_metadata.json`, but write the dot form.
-- **After writing or hand-editing a sidecar, run `wiki-promote.py --topic <topic> --check --slug <slug>`** — exit 0 means it exists, parses, and names a `target_folder`. Since 2026-09-14 promotion holds back (exit 4) an entry whose sidecar fails any of those, instead of filing it at the wiki root with no backlinks; a trailing comma after the last `suggested_backlinks` item is the usual cause.
-- **`target_folder` = the FULL taxonomy path under `wiki/`** — `research/<sub>` or `project/<sub>` (e.g. `research/long-term`, `research/orchestration`, `project/best-practices`). **Never a bare leaf** like `long-term` — a bare leaf creates a phantom top-level folder.
-- **`suggested_backlinks[]` items are OBJECTS, never bare strings**: `{ "file": "<path under wiki/>", "link_text": "<anchor text>", "link_target": "<this entry's BARE filename>" }`. `wiki-promote` recomputes the correct relative path from `link_target` at promote time.
-- **Body cross-links: author by BARE slug/filename** (`[Title](<other-slug>.md)`) — do NOT hand-compute `../folder/` depth. `wiki-update.py` (`resolve_outbound_links`) + `wiki-reciprocate-backlinks.py` normalize paths mechanically. Hand-computed relative paths are the #1 source of broken links. (Until 2026-09-02 the resolver only looked at links starting with `./` or `../`, so a bare-slug link to an entry in another folder was silently left broken with `outbound_warnings=0`. Every relative `.md` link is now checked and rewritten; one it cannot resolve is listed under `outbound_warnings` — fix those by hand before moving on.)
-- **`suggested_backlinks` is a CURATED list, capped at ~8** — each target must be genuinely related to the entry's content (an entry you'd cite in its "Related in this wiki" section), never a directory listing. **Never include machine-generated files** (`_MAP.md`, `_INDEX.md`, `HOME.md`) or hub/system pages the entry doesn't specifically extend. (Added 2026-08-13: a cycle-2026-08-04-01 ingest agent shipped a sidecar with 50 `suggested_backlinks` that was just an alphabetical directory sweep including `_MAP.md` — 50 near-random entries would each have been edited at promote time. Caught only because the promote was dry-run first.)
+- File name `<slug>.proposed_metadata.json` (the dot form).
+- `target_folder`: the full path under `wiki/` (`research/long-term`), never a bare leaf.
+- `suggested_backlinks`: objects, never strings, `{"file": "<path under wiki/>", "link_text": "<anchor>", "link_target": "<this entry's bare file name>"}`. At most about eight, each an entry you would cite under Related; never `_MAP.md`, `_INDEX.md`, `HOME.md` or a hub page the entry does not extend.
+- Body links by bare file name; the scripts compute the paths.
+- Check it: `python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <topic> --check --slug <slug>`. Exit 0 means it parses and names a folder; promotion holds back an entry that fails. A trailing comma is the usual cause.
 
 ```json
 {
   "target_folder": "research/long-term",
-  "inbound_candidates": ["research/long-term/foo.md", "..."],
+  "inbound_candidates": ["research/long-term/foo.md"],
   "suggested_backlinks": [
     { "file": "research/long-term/foo.md", "link_text": "Foo (Author)", "link_target": "<slug>.md" }
   ]
 }
 ```
 
-## CRITICAL: integrate, don't isolate
-
-**Every ingestion is more than fetch + summarize + file.** A summary that sits alone in the wiki is half the value. The Karpathy pattern is **integration**: every new entry should weave into the existing wiki, updating related entries, adding cross-links, noting where the new source contradicts or extends prior claims.
-
-**The full ingestion flow has 8 steps** (direct mode — default):
-
-1. **Fetch raw** via `wiki-update.py --fetch-only` (or `wiki-fetch-youtube.py` for YouTube). Get the verbatim raw saved to `<topic>/raw/`.
-2. **Read the raw file** to understand what's actually in the source.
-3. **Search the wiki** for related concepts with the full search, through the shared helper: `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --notebook <topic> "<term>"` (parallel ingest workers add `--caller wiki-ingester`). Always pass `--notebook`: without it qmd searches every indexed notebook, and a cross-link must point inside the notebook being filed into. Its depth is `-k` (results returned, default 20; qmd's own `-n` defaults to 5) and `-C` (candidates the reranker scores — an entry outside the top C is never seen — sized to the notebook: 8% of its files, 40–200, so 100 for a 1,211-file notebook, about 2 s more per search than 40). The `_MAP`/`_INDEX` machine files are dropped from results. (Depth test 2026-09-13: at C=40, agentic-design searches missed on-topic entries, including its own canonical memory-architecture page, that C=100 ranked in the top 10.) Extract 3-5 key terms from the source and search each. It runs `qmd query` — hybrid BM25 + vector + rerank, so it finds entries by meaning, not just exact keywords — holding one of three GPU slots (two before qmd 2.8.3), so parallel workers wait their turn instead of overrunning the one 8 GB GPU. Everyone uses the full search; there is no keyword fallback (user decision 2026-09-13, replacing the 2026-09-12 workers-use-`qmd search` rule: the 2026-09-12 lock-up was the missing CUDA runtime, and a test with CUDA showed two concurrent searches fit and a third failed fast on qmd 2.1.0; on 2.8.3 three fit, 2026-09-14). `qmd query` needs the CUDA runtime (`wiki-qmd-query.py --preflight`, the check in `/wiki-search`); if the preflight fails, or the helper exits 75 (GPU busy after retries) or 124 (timed out), stop and report it — do not fall back and carry on; if batches get slow, run fewer workers.
-4. **Synthesize the curated summary** with explicit cross-links to those existing entries in a "Related in this wiki" section. Don't just summarize in isolation — mention where this new source agrees/disagrees/extends what's already in the wiki. **Use `wiki-update.py --slug-for --title "<other entry title>" --topic <topic> --folder <folder>` to look up the canonical slug of any entry you want to link to** — don't guess slugs from titles. (Guessing is the bug that caused 39 broken links in the 2026-04-08 batch ingest.)
-5. **Eval gate — two halves (split 2026-09-02).** The rubric is `wiki/research/implementation/eval-rubric.md`. Its five dimensions are now enforced by two different mechanisms, and only one of them is you.
-
-   **Mechanical half — the script is the gate.** `wiki-update.py` runs `_entry_checks.py` on the synthesis before writing and **refuses to file** on a hard failure (exit 1, `Refusing to file` on stderr):
-
-   | Rule (rubric dimension) | Severity |
-   |---|---|
-   | `## TL;DR` section present (a bold `**TL;DR**` lead also counts) — structure | error |
-   | `## Related …` section with 2+ links to wiki entries — cross-links | error (warning for `tier: self`) |
-   | 3+ tags — metadata | warning |
-   | Under 30 non-blank lines AND under 300 words, not tagged `stub` — structure | warning |
-   | Numeric claims in prose outside a `>` blockquote — fidelity | warning |
-   | Layout: body (TL;DR … Related) → the Source/Raw footer → the auto backlinks block; nothing after the footer but that block, nothing after the block — structure (bites in `/wiki-lint`: the script writes the footer itself) | error |
-
-   Fix the entry and re-run. `--no-gate '<reason>'` overrides and prints the reason with the entry; it exists for the rare entry where a rule is genuinely wrong for that entry, not to save a step, and the reason is what a reviewer reads. The same checks run in `/wiki-lint` over every existing entry (warn-only) so the backlog stays visible.
-
-   **Judgment half — you score, but you do not certify.** Score the two dimensions a script cannot decide, 1-5 each, and print the scores:
-   - **Extraction fidelity** — every claim attributed, every number blockquoted from the source, no hallucinated context. Compare your blockquotes against the raw file.
-   - **Synthesis value** — the TL;DR says something the title doesn't; the entry positions the source against what the wiki already holds (agrees / extends / contradicts).
-
-   If either is below 3: fix before filing, or ask the user. Why the split: the agent that wrote the draft scoring its own draft is the circular-review failure mode (Huk, "Context as Code", ingested into agentic-design 2026-09-02 — see `research/best-practices/`). A self-score is advisory input; the deterministic checks are the gate. This step still takes 10 seconds and still prevents silent poisoning (pre-mortem failure mode #7).
-
-6. **Identify which existing entries should be updated** to add a backlink to the new entry. (Usually the "Related" section of the layer concept page that this source belongs to, plus any entries that the new source explicitly addresses.) **Skip this step if `--staged`.**
-7. **Update those existing entries** via Edit — add the new entry to their Related sections. **Skip this step if `--staged`.**
-8. **File the new curated entry** via `wiki-update.py`:
-   - **Direct mode (default)**: file to `wiki/<folder>/` as before.
-   - **Staged mode (`--staged`)**: file to `_inbox/proposed/` instead. Add `status: proposed` to frontmatter. Write the sidecar `<slug>.proposed_metadata.json` per the **Staged-ingest sidecar contract** above (dot-form filename, full-path `target_folder`, typed `suggested_backlinks`) so `/wiki-promote` can finish the integration later.
-   The script will print:
-   - `wiki_path=<path>` — the canonical path of the new entry
-   - `wiki_slug=<slug>` — the canonical slug
-   - `outbound_fixed=N` — broken slug links auto-rewritten in your synthesis (review the output to see which)
-   - `outbound_warnings=N` — broken slug links the script couldn't unambiguously resolve (you must fix manually)
-   - `inbound_candidates=N` — files that mention this entry's topic but don't link to it yet. **In direct mode**: read the listed candidates and add backlinks where appropriate. **In staged mode**: save to metadata file for later.
-9. **If processing from queue**: move the `.queue` file from `_inbox/pending/` to `_inbox/done/` and regen the pending-list view.
-
-## Looking up slugs ahead of time (`--slug-for` mode)
-
-Before writing cross-references in your synthesis, look up the canonical slug for each entry you want to link to:
-
-```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
-  --topic <topic> \
-  --slug-for --title "Karpathy's LLM Wiki Pattern" --folder long-term
-```
-
-Output:
-```
-slug=karpathy-s-llm-wiki-pattern
-path=<vault>/<topic>/wiki/long-term/karpathy-s-llm-wiki-pattern.md
-```
-
-Use that exact slug in your cross-reference markdown links. **Never guess slugs from titles** — slugify rules are deterministic but not visually obvious (apostrophes become `-s-`, em-dashes get stripped, collisions get `-2`/`-3` suffixes).
-
-## URL flow (non-YouTube) — full integration
-
-### Step 1: Fetch raw
-```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
-  --topic <topic> \
-  --source <url> --fetch-only
-```
-Capture the `raw_path=...` line from the output. When you pass it back in Step 6, `--raw-path` accepts either the absolute path printed or the topic-relative form the frontmatter uses (`raw/<file>.md`); a relative path resolves against the **topic root**, never the shell cwd (fixed 2026-09-02 — it used to write a footer link that climbed out of the notebook into whatever repo the agent was sitting in).
-
-### Step 2: Read the raw file using the Read tool
-
-### Step 3: Search the wiki for related concepts
-For each of 3-5 key terms from the source:
-```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --notebook <topic> "<term>"     # full search, this notebook only, 20 results, C sized to it, three GPU slots; workers add --caller wiki-ingester
-```
-qmd returns ranked results with file paths and snippets. List the existing entries that come back.
-
-### Step 4: Write the curated summary
-Write to `<topic>/_inbox/temp/<slug>.md` with sections:
-- TL;DR
-- Body sections covering the actual content
-- "Why this is in the wiki" (1-2 sentences on what slot it fills)
-- "Sources" section separating External (the source material) from Internal (our session/synthesis)
-- "Related in this wiki" with markdown links to the existing entries you found in Step 3 (use relative paths from the target folder)
-
-**Synthesis vs direct claims convention** (MANDATORY):
-- Use `> blockquotes` for direct quotes from the source material — verbatim text with attribution
-- Use plain prose for YOUR synthesis, connections, and inferences
-- When citing a specific number (benchmark score, percentage, token count), always blockquote it from the source and name the source. NEVER paraphrase numbers — they drift across entries when paraphrased.
-- **Blockquote syntax only.** The mechanical gate (step 5) recognises a quoted number only on a line that starts with `>`. A figure inside inline quotation marks in a prose sentence ("the paper reports 26%") still counts as a numeric claim in prose and fails the check. Dense statistical sources (a benchmark write-up, a funding round-up) need their figures on `>` lines from the first draft, not reformatted after the gate refuses them (2026-09-13, defect 4 of the 2026-09-12 batch).
-- This distinction prevents silent poisoning (pre-mortem failure mode #7)
-
-**Do NOT include a Source/Raw footer** in your temp file. The script adds its own canonical footer — including one in your synthesis creates duplicates. The footer goes after your body, so "Related in this wiki" stays above it, and so does any section added later (by you, `/wiki-promote`, or a refresh); only the auto backlinks block comes after the footer (2026-09-14).
-
-**Minimum entry quality floor** (even for P5 items):
-- TL;DR (1-2 sentences minimum)
-- At least one substantive body section explaining why this matters
-- "Related in this wiki" with at least 2 cross-links
-- Entries under 30 lines should be explicitly marked as stubs: add `stub: true` to tags
-
-### Step 5: Update related existing entries (MANDATORY, not optional)
-For each existing entry that should mention the new one, use Edit to add it to their "Related in this wiki" section. The script's `inbound_candidates` output tells you which files to update — **act on ALL candidates**, not just the obvious ones. Bidirectional linking is what makes the wiki compound.
-
-After a batch of 5+ ingests, also update the relevant **hub page** (e.g., `active/the-active-memory-layer.md` if you added active-layer entries) to list the new entries. Hub pages going stale is the #1 cause of the wiki feeling outdated.
-
-### Step 6: File the curated entry
-```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
-  --topic <topic> --folder <folder> \
-  --source <synth file from step 4> \
-  --source-url <original url> \
-  --raw-path <raw path from step 1> \
-  --ingested-by claude-code \
-  --tier <1|2|3|4|self> \
-  --confidence <high|medium|low> \
-  --title "<title>" --tags "<tags>"
-```
-
-The script handles:
-- The mechanical eval gate (step 5) — prints `Entry checks:` with any errors/warnings; on an error it prints `Refusing to file` and exits 1 without writing. Fix and re-run, or `--no-gate '<reason>'`.
-- Filing curated copy at `<topic>/wiki/<folder>/<slug>.md`
-- Frontmatter (title, date, source_url, raw_path, ingested_by, tags)
-- Footer with visible source + raw links
-- INDEX regeneration
-
-### Step 7: If from queue, move .queue file
-```bash
-mv <topic>/_inbox/pending/<file>.md <topic>/_inbox/done/
-python {{WIKI_SCRIPTS_DIR}}/wiki-list-render.py --topic <topic> --vault ...
-```
-
-### Step 8: Clean up the temp file
-After `wiki-update.py` succeeds, `rm` the synthesis temp file in `<topic>/_inbox/temp/`. **Always do this on success** — temp files accumulate otherwise. Skip on failure (the temp file may need manual recovery).
-
-```bash
-rm <topic>/_inbox/temp/<slug>.md
-```
-
-## URL host dispatch — when to use which fetcher
-
-**Before fetching, look at the URL host and pick the right fetcher:**
-
-| Host pattern | Fetcher | Why |
-|---|---|---|
-| `youtube.com`, `youtu.be` | `wiki-fetch-youtube.py` (yt-dlp in container) | YouTube needs transcript extraction, not page scraping |
-| **PDF URL** (`*.pdf`, `arxiv.org/pdf/*`) or local `.pdf` file | `wiki-fetch-pdf.py` (pdftotext + pypdf in container) | Hybrid extraction with quality-based fallback |
-| `x.com`, `twitter.com` | `wiki-fetch-tweet.js` (syndication API, **runs on host, no Docker/browser**) | No login, no Chromium — see "X/Twitter flow" below. **Do NOT default to the Playwright recipe for X/Twitter** — it's the fallback only (protected/deleted tweets), not the default. Running it 4-way parallel across a batch is what spiked 15-20+ Chromium processes and hung the operator's machine on 2026-07-10 — the syndication API has no such cost. |
-| `medium.com`, `*.medium.com`, Medium publications on their own domains (`levelup.gitconnected.com`, `pub.towardsai.net`, …) | **Browser-session capture** (Claude in Chrome, see the flow below) when the session is interactive and the user is signed in; `wiki-fetch-page.js` otherwise | Direct HTTP is refused (403 on every post, 2026-09-12); member-only stories render in full only in the user's own signed-in tab |
-| `threads.net`, `instagram.com`, `bsky.app` | `wiki-fetch-page.js` | All SPA-rendered |
-| `linkedin.com` | `wiki-fetch-page.js` | Auth gates, JS-rendered |
-| `notion.so` (public pages) | `wiki-fetch-page.js` | JS-rendered |
-| `gist.github.com/<user>/<id>` | `wiki-update.py --fetch-only` (URL rewrite to raw) | Auto-rewritten by wiki-update.py |
-| `github.com/<user>/<repo>` (bare repo) | `wiki-update.py --fetch-only` (URL rewrite to README raw) | Auto-rewritten by wiki-update.py |
-| `github.com/<user>/<repo>/blob/<branch>/<file>` | `wiki-update.py --fetch-only` (URL rewrite to raw) | Auto-rewritten by wiki-update.py |
-| Anything else (blogs, docs, plain HTML) | `wiki-update.py --fetch-only` (urllib) | Default — works for non-JS pages |
-
-**When in doubt, try urllib first (`wiki-update.py --fetch-only`), check the raw — if it's < 1KB or contains "JavaScript is not available" / "enable JavaScript" / mostly chrome navigation, switch to playwright.**
-
-## X/Twitter flow (syndication API — default, added 2026-07-11)
-
-For `x.com`/`twitter.com` status URLs. Runs on the **host directly** (Node is available natively — no `docker exec`, no Playwright, no Chromium). Single plain HTTPS GET to the public syndication endpoint, returns JSON.
-
-### Step 1 — Fetch via the syndication script
-
-```bash
-node {{WIKI_SCRIPTS_DIR}}/wiki-fetch-tweet.js --topic <topic> --url <url> --vault <vault_root> --ingested-by claude-code
-```
-
-`--vault` here is the **vault_root** (same convention as `wiki-update.py`/`wiki-fetch-youtube.py` — `<vault_root>/<topic>`), NOT the topic's `wiki/` dir. Prints `raw_path=<path>` on success.
-
-**When this fails** (deleted tweet, protected/private account, or a transient block — the script prints a clear reason and exits non-zero): fall back to the Playwright recipe below for that one URL. Don't retry the syndication script blindly, and don't reach for Playwright as the default — it's the exception path.
-
-**Long-form "Article"/note-tweet caveat**: if the raw file's body ends with the note about an untruncated `note_tweet` payload, the `text` field may be shorter than the actual post. If the content reads as cut off, re-fetch that one URL via the Playwright recipe to get the full body.
-
-### Step 2 — Read, synthesize, file
-
-Same as any other source: read the raw file, synthesize a curated summary, file via `wiki-update.py` per the standard flow below.
-
-## Browser-session capture flow (Claude in Chrome — Medium and other login-gated pages, added 2026-09-13)
-
-For a page the user can read in their own browser but no fetcher can: Medium member-only stories, anything behind a login the user holds. The interactive session reads the page through the Claude in Chrome extension, in the user's signed-in session, and saves the text as the raw. This is capture through the user's own access, never a bypass: if the page shows a "Member-only story" label and the body stops after a few paragraphs, the user is not a member of that site and the item is **preview only**: record that in the raw header or skip it, do not ingest a truncated body as the article.
-
-**Only the interactive session can do this.** A spawned `wiki-ingester` worker has no browser. For a batch, the session captures every gated raw first, then hands the workers `--source <raw> --source-url <url> --raw-path raw/<file>` (the flow below from step 2).
-
-### Step 1 — Open and read
-
-1. `tabs_context_mcp` (create the group if empty), then `navigate` to the article URL and `wait` two to three seconds. Medium's short form `https://medium.com/p/<12-hex-id>` resolves to the canonical URL; a digest email's plain text carries only author links, but each link's tracking parameter ends `reader-<publication>-<postid>----N-…` or `reader--<postid>----N-…`, and that post id is enough.
-2. `get_page_text` is the tool that works on these pages; `javascript_tool` and screenshots are refused on many hosts. Read the tab's final URL and title from the result: Medium redirects author posts to `<author>.medium.com` and publication posts to the publication's domain, and **each host needs its own site permission in the extension** ("Permission denied for reading page content on this domain" is that, not a fetch error; the fix is the extension's site-access setting, not a retry).
-3. A page that returns only the site chrome (Sidebar menu, Write, Notifications, …) was still loading: wait and read again. A feed page renders only the cards near the viewport: read it with `read_page` (interactive filter) at each scroll stop and collect the article hrefs, not with one page-text read.
-
-### Step 2 — Save the raw
-
-Write `<topic>/raw/<YYYY-MM-DD>-<slug>.md` with the **Write tool** (a shell heredoc breaks on article-length text), header first, then the text with images and charts dropped and their captions kept:
-
-```
-# <article title>
-source_url: <canonical url>
-author: <name> (<publication>, if any)
-published: <date as the page shows it>
-fetched: <YYYY-MM-DD> via browser capture (<Medium member view | not member-only>; images omitted; charts captions only)
----
-<full text>
-```
-
-Keep the author's promo blocks out or mark them `[Promo: …]`; keep everything else verbatim. Charts are not captured: a figure that reaches the raw only as the author's caption of a chart is a **secondary-summary figure** (authoring best practices, principle 5) and the entry treats it as `sourced` via the author with confidence low.
-
-### Step 3 — Continue at the standard flow's step 2
-
-Read the raw, search the wiki, synthesize, and file with `wiki-update.py --source <synth> --source-url <url> --raw-path raw/<file> …` as in the URL flow. In the entry's Sources section say how the raw was captured ("Raw captured <date> through the user's Medium membership"); the provenance is part of the claim.
-
-## Playwright flow (JS-rendered pages — Medium, Threads, Notion, LinkedIn, and X/Twitter fallback)
-
-For Medium, Threads, Notion, LinkedIn, Instagram, Bluesky, and as the **fallback** for X/Twitter posts the syndication script can't reach. The fetch happens inside the `openclaw` Docker container where Playwright + Chromium are installed. Three steps (same shape as YouTube):
-
-### Step 1 — Fetch via Playwright in container
-
-```bash
-MSYS_NO_PATHCONV=1 docker exec openclaw bash -c 'mkdir -p /tmp/scratch-vault/<topic> && node /home/node/.openclaw/agents-training/main/skills/research-wiki/wiki-fetch-page.js --topic <topic> --url <url> --vault /tmp/scratch-vault --ingested-by claude-code'
-docker cp openclaw:/tmp/scratch-vault/<topic>/raw/<file>.md "<vault_root>/<topic>/raw/<file>.md"
-```
-
-**Path note (bug found + fixed 2026-07-10)**: the script does NOT live at `{{WIKI_SCRIPTS_DIR}}/wiki-fetch-page.js` inside the container — that Windows host path doesn't exist there. Its real location inside the container is `/home/node/.openclaw/agents-training/main/skills/research-wiki/wiki-fetch-page.js`. Also, the script's own `--vault` default (`/shared/openclaw/vault/wikis`) is a disconnected legacy vault with no topic folders for this project — `project-notebooks` is not mounted into the `openclaw` container at all. Use a scratch vault inside the container (`/tmp/scratch-vault`) and `docker cp` the resulting raw file out to the real host vault path, per the two-line recipe above. The script prints `raw_path=<path>` (the in-container scratch path) — that's just for your own tracking; the file you actually want is the one you `docker cp`'d out.
-
-Note the `MSYS_NO_PATHCONV=1` is needed on Git Bash for Windows (prevents path mangling). On Linux/Mac it's a harmless no-op.
-
-### Step 2 — Read the raw page and synthesize a curated summary
-
-Read the raw file via Read tool. Note: Playwright captures EVERYTHING including site chrome (login banners, "Don't miss what's happening", trending sidebars, etc.). Skip the chrome and focus on the actual post/article content.
-
-Length philosophy: same as YouTube — quality over word count.
-
-### Step 3 — File the curated entry
-
-Same as the URL flow Step 6:
-```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
-  --topic <topic> --folder <folder> \
-  --source <synth file> \
-  --source-url <original url> \
-  --raw-path <raw path from step 1> \
-  --ingested-by claude-code \
-  --title "<title>" --tags "<tags>"
-```
-
-## PDF flow (URL or local file)
-
-PDFs need text extraction first, then agent synthesis on top. Three steps, same shape as YouTube + Playwright.
-
-### Step 1 — Extract via Docker exec
-
-```bash
-MSYS_NO_PATHCONV=1 docker exec openclaw python3 \
-  {{WIKI_SCRIPTS_DIR}}/wiki-fetch-pdf.py \
-  --topic <topic> \
-  --source <url-or-local-pdf-path> \
-  --ingested-by claude-code
-```
-
-The script:
-- Downloads the PDF if `--source` is a URL (or uses the local file directly)
-- Extracts text per page via hybrid pipeline: `pdftotext` (primary) → `pypdf` (fallback) → optional tesseract OCR (only if installed)
-- Saves to `<topic>/raw/<date>-<slug>.md` with frontmatter (source_url, pdf_pages, extraction stats)
-- Copies the source PDF alongside as `<date>-<slug>.pdf`
-- Prints `raw_path=<path>` for capture
-
-### Step 2 — Read raw, synthesize curated summary
-Same as YouTube/Playwright flows.
-
-### Step 3 — File curated entry
-Same `wiki-update.py --source <synth> --source-url <orig> --raw-path <raw>` invocation.
-
-## YouTube flow
-
-YouTube videos need a verbatim transcript saved first, then the agent synthesizes a curated summary on top. Three steps:
-
-### Step 1 — Fetch transcript via Docker exec
-
-yt-dlp lives in the openclaw container. Run from there:
-
-```bash
-docker exec openclaw python3 \
-  {{WIKI_SCRIPTS_DIR}}/wiki-fetch-youtube.py \
-  --topic <topic> \
-  --url <youtube-url> \
-  --ingested-by claude-code
-```
-
-The script will print `raw_path=<path>` on success — capture it. The transcript is now saved at that path under `raw/`.
-
-### Step 2 — Read the transcript and synthesize a curated summary
-
-**ASR quote-integrity check FIRST (added 2026-08-13).** Auto-captions mis-hear domain vocabulary
-**systematically**: "Claude Code" arrives as "Cloud Code"/"Quad Code", `CLAUDE.md` as
-"quadmd"/"CloudMD"/"clawed MD". Before placing ANY transcript passage inside a `>` blockquote, scan
-the transcript for mishearings of the entry's own key terms and correct each to the intended word
-(disambiguated by context). Disclose the correction ONCE in a dated transcription note near the top
-of the entry — never annotate every instance, and never silently clean. If a passage can't be
-disambiguated with confidence, it's `sourced`, not `direct-quote`: paraphrase, drop the blockquote.
-(Canon: `wiki-authoring-best-practices.md` principle 5, added after cycle 2026-08-04-01 found ~19
-ASR corruptions presented as verbatim quotes across two entries. Template note:
-`boris-cherny-on-claude-code-y-combinator-lightcone.md`.)
-
-Read the raw transcript file (from host: `llm-wiki/raw/<file>`). Then write a curated markdown summary that captures what's actually important:
-
-- **TL;DR** (1-2 sentences — what is this video about, why does it matter)
-- **Key insights** (the actually substantive claims, numbers, frameworks, ideas)
-- **Notable quotes** (verbatim snippets worth keeping)
-- **When to watch this** (what question does watching this answer)
-- **Related** (link to other wiki entries on the same topic)
-
-**Length philosophy**: quality over word count. A 1-hour video might condense to 100 words if it has one good idea. A 3-minute video might need a full breakdown if it's dense. Don't artificially cap at 500 words. Don't pad to 500 either. The raw transcript stays in `raw/` for anything you didn't capture — we can always go back.
-
-Write the summary to a temp file (e.g. `/tmp/wiki-yt-{slug}.md`).
-
-### Step 3 — File the summary as a curated wiki entry
-
-```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-update.py \
-  --topic <topic> \
-  --folder <folder> \
-  --source /tmp/wiki-yt-<slug>.md \
-  --source-url <youtube-url> \
-  --raw-path <raw_path-from-step-1> \
-  --ingested-by claude-code \
-  --title "<video title>" \
-  --tags "youtube,<other tags>"
-```
-
-`--source-url` ensures the YouTube URL stays in frontmatter (otherwise the temp file path would be the source). `--raw-path` adds the link to the verbatim transcript so you can always drill back.
-
-After this, the curated summary is in `wiki/<folder>/`, the verbatim transcript is in `raw/`, both are linked in frontmatter and the rendered footer.
-
-## File / pasted text flow
-
-Same as URL flow, just pass a local path as `--source`. For pasted text, write it to `_inbox/pending/<slug>.md` first then use that as the source (or `/tmp/<slug>.md` if you don't want it in the queue).
-
-## No source? → redirect to `/wrap-up`
-
-`/wiki-update` ingests **external** content only (URL / file / pasted text → `research/`). It does **not** synthesize from the current session — that's `/wrap-up`'s job (it writes the session journal + extracts `project/` knowledge). If the user runs `/wiki-update` with nothing, respond:
-
-> `/wiki-update` needs a source (a URL, file path, or pasted text) — it's for ingesting external material into `research/`. To capture what we did this session, run `/wrap-up`.
-
-…and stop. Don't fall back to git-log/handoff synthesis.
-
 ## After running
 
-Tell the user:
-- Where it was filed
-- Any dedup hit
-- Updated INDEX path
-- Stop. Don't ingest more sources unless asked.
-
-## Don't
-
-- Don't ingest off-topic content — check the topic README
-- Don't fabricate session work — only synthesize what actually happened
-- Don't include secrets (API keys, tokens, passwords) in summaries
-- Don't pad summaries to hit a word count
-- Don't ingest if dedup found a match unless the user explicitly says "force" or "anyway". The dedup compares normalised URLs (case, `www.`, trailing slash, tracking parameters) across `wiki/` and `_inbox/proposed/` (2026-09-14). A later snapshot of an evolving source (a repo that grew) is `--force` plus `revises:` on the new entry, not a second copy
-- Don't run `/wiki-update` blindly when the user just typed a URL — confirm topic + folder if not obvious
-- Don't delete a `raw/*.md` file by checking only for its source URL in wiki body text — grep for its FILENAME as a `raw_path:` value first (see "`raw/` file safety" above); a different entry may legitimately depend on it
-
-## Key paths
-
-- Wikis vault: `llm-wiki/wiki/`
-- wiki-update.py: `{{WIKI_SCRIPTS_DIR}}/wiki-update.py`
-- wiki-fetch-youtube.py: `{{WIKI_SCRIPTS_DIR}}/wiki-fetch-youtube.py`
-- Topic README (scope rules): `llm-wiki/wiki/README.md`
-
+Tell the user where the entry was filed, the Scores line, any dedup hit and any gate warnings, then stop. Ingest nothing more unless asked.
 
 ## Cycle contract
 
-When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract](./best-practices/framework/cycle-step-return-format.md) — that doc defines the shape, counters, and queued/skipped/deferred semantics for this step.
+When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract](./best-practices/framework/cycle-step-return-format.md).
+
+The incidents behind these rules are recorded in llm-wiki-bootstrap's `CHANGELOG.md` (2026-09-14, "`/wiki-update` trimmed").

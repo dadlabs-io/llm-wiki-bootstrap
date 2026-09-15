@@ -1,0 +1,31 @@
+{
+  "skill": "wiki-update",
+  "sources": {
+    "article": {"url": "https://lilianweng.github.io/posts/2023-06-23-agent/", "fetcher": "page"},
+    "youtube": {"url": "https://www.youtube.com/watch?v=aircAruvnKk", "fetcher": "youtube"},
+    "pdf": {"url": "https://arxiv.org/pdf/1706.03762", "fetcher": "pdf"},
+    "xpost": {"url": "https://x.com/karpathy/status/1937902205765607626", "fetcher": "tweet"}
+  },
+  "cases": [
+    {"id": "article-cached-direct", "kind": "ingest", "input": "cached", "source": "article", "mode": "direct",
+     "tier": ["2", "3"]},
+    {"id": "youtube-cached-direct", "kind": "ingest", "input": "cached", "source": "youtube", "mode": "direct",
+     "tier": ["2", "3", "4"], "expect_tags": ["youtube"]},
+    {"id": "pdf-cached-staged", "kind": "ingest", "input": "cached", "source": "pdf", "mode": "staged",
+     "tier": ["1", "2"]},
+    {"id": "xpost-cached-staged", "kind": "ingest", "input": "cached", "source": "xpost", "mode": "staged",
+     "tier": ["3", "4"]},
+    {"id": "local-file-direct", "kind": "ingest", "input": "local-file", "file": "retrieval-vs-long-context-notes.md",
+     "mode": "direct", "tier": ["self", "3", "4"]},
+    {"id": "pasted-text-staged", "kind": "ingest", "input": "pasted", "mode": "staged", "tier": ["self", "3", "4"],
+     "text": "Handoff notes between agent sessions (from a colleague's team notes, September 2026)\n\nWe stopped asking agents to summarise the whole session at the end. Instead each session keeps a short handoff file with three parts: the goal, what is done, and what is next with the exact file to open first. The next session reads it before its first reply. Over six weeks the team counted how often a new session repeated work the last one had finished: it fell from about one session in four to one in fifteen. The handoff file stays under a page; longer notes go into dated journals that nobody reads by default. The failure we still see is a handoff that says what was done but not what was decided, so the next session re-opens a settled question."},
+    {"id": "live-article-staged", "kind": "ingest", "input": "live", "mode": "staged", "tags": ["live"],
+     "url": "https://simonwillison.net/2025/Jun/27/context-engineering/", "tier": ["2", "3", "4"]},
+    {"id": "live-youtube-staged", "kind": "ingest", "input": "live", "mode": "staged", "tags": ["live"],
+     "url": "https://www.youtube.com/watch?v=wjZofJX0v4M", "tier": ["2", "3", "4"], "expect_tags": ["youtube"]},
+    {"id": "two-urls-queue", "kind": "queue",
+     "urls": ["https://example.com/skilltest-queue-one", "https://example.com/skilltest-queue-two"]},
+    {"id": "no-source-redirect", "kind": "redirect"},
+    {"id": "dedup-article", "kind": "dedup", "source": "article"}
+  ]
+}

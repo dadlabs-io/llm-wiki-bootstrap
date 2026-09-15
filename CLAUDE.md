@@ -145,6 +145,10 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
   its row in the pack page. `new-wiki.py` (`seed_pack_docs`) warns by name for every shipped skill or
   agent without a page — an artifact without one is installed undocumented.
 - `bootstrap/templates/` — `CLAUDE.md`, `README.md`, `.gitignore` templates
+- `tests/skills/` — the standing test baseline per skill (never shipped): `run_skill_test.py <skill>` runs one of
+  each input through headless Sonnet and Opus sessions in a sandbox and checks the result against
+  `baseline-<model>.json`. A changed skill is not installed until its run is at least as good as the baseline
+  (user, 2026-09-15). `tests/skills/README.md` says how to run it and how to add a skill.
 
 ## Conventions (when editing the scripts)
 

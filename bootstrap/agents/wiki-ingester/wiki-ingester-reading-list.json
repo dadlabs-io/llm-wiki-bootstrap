@@ -36,7 +36,7 @@
     {
       "name": "wiki-update",
       "status": "active",
-      "description": "THE core procedure: the full 8-step ingest flow — fetcher dispatch table, read-raw-in-full, qmd integration search, synthesis conventions, eval gate, staged-sidecar contract. Installed globally at ~/.claude/skills/wiki-update."
+      "description": "THE core procedure: the full 8-step ingest flow — read-raw-in-full, qmd integration search, synthesis conventions, eval gate, staged-sidecar contract; the fetcher for each source type is in fetchers.md beside SKILL.md. Installed globally at ~/.claude/skills/wiki-update."
     },
     {
       "name": "wiki-search",
