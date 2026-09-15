@@ -11,6 +11,12 @@
 
 ## 2026-09-15
 
+### SessionStart hook shows the next step in the terminal (user: "I don't think the hook worked")
+- **Why**: the hook ran, but a hook cannot start a model turn, and its plain stdout reaches Claude only. So the user saw a blank prompt until they typed, and read that as the hook failing.
+- **Change**: `wiki-session-start.py` now prints JSON. `additionalContext` carries the same resume instruction as before, for Claude. `systemMessage` is one line the user sees at startup: the project, the handoff's `GOAL` line, and "Send any message for the full recap". Outside a wiki project it still prints nothing.
+- **For the recap with no typing**: start Claude with a first message, e.g. `claude "resume"` (extra flags such as `--channels` pass through).
+- **Migration**: none beyond the tooling refresh. The settings.json hook entry is unchanged.
+
 ### Every pack page audited against the code and corrected (user: "fix all the pages … make sure everything is set")
 - **Why**: the `/wiki-update` pack page turned out to have six inaccuracies, so every other page was checked the same way. Four agents read 21 pages (16 skills, the `wiki-ingester` agent, and the pack-level llm-wiki, getting-started, commands, install and drive-setup pages) against their `SKILL.md`, the scripts and the framework-contract docs. Each reported every inaccuracy with file:line evidence, then applied its fixes; the main session checked the result.
 - **Kinds of error found, on most pages**:

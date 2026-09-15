@@ -13,9 +13,17 @@ Claude Code adds what it prints to the session's context. For each session:
     would look like a wiki project)
   - resolves the project's wiki the way every wiki script does (_wiki_config:
     a registry notebook, or an in-project llm-wiki/)
-  - prints the paths of sessions/active-context.md, sessions/<persona>/handoff.md
-    and sessions/<persona>/task.md (each if present) with the instruction to
-    read them before the first reply
+  - prints, as the hook's JSON output, the paths of sessions/active-context.md,
+    sessions/<persona>/handoff.md and sessions/<persona>/task.md (each if present)
+    with the instruction to read them before the first reply (additionalContext,
+    for Claude), and one line for the user — the handoff's GOAL — shown in the
+    terminal at startup (systemMessage)
+
+The user line (2026-09-15): a hook cannot start a model turn, so the recap
+only comes with the user's first message, and plain stdout reaches Claude
+alone — the user saw a blank prompt and thought the hook had not run. The
+systemMessage shows where things stand before anything is typed; the full
+recap needs a first message (or a launch with one, e.g. `claude "resume"`).
 
 Paths, not contents: Claude Code keeps only a ~2 KB preview of a hook's output
 in context and saves the rest to a file. In the first real session (2026-09-14)
@@ -70,38 +78,54 @@ def project_config(start: Path) -> Path | None:
     return None
 
 
-def resume_text(start: Path) -> str:
+def handoff_goal(handoff: Path) -> str:
+    """The GOAL line of a /wrap-up handoff.md ("GOAL: <one sentence>"), or ""."""
+    try:
+        for line in handoff.read_text(encoding="utf-8").splitlines():
+            if line.startswith("GOAL:"):
+                return line[len("GOAL:"):].strip()
+    except (OSError, UnicodeDecodeError):
+        pass
+    return ""
+
+
+def hook_output(start: Path) -> dict | None:
+    """The hook's JSON: the resume instruction for Claude, one line for the user."""
     cfg_path = project_config(start)
     if not cfg_path:
-        return ""
+        return None
     cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
     if not isinstance(cfg, dict):
-        return ""
+        return None
     root = cfg_path.parent.parent
     from _wiki_config import wiki_dir  # the resolution every wiki script uses
     wiki = Path(wiki_dir(cwd=root))
     if not wiki.is_dir():
-        return ""
+        return None
     persona = str(cfg.get("persona") or "main").strip().lower()
     sessions = wiki / "sessions"
     files = [f for f in (sessions / "active-context.md", sessions / persona / "handoff.md",
                          sessions / persona / "task.md") if f.is_file()]
     if not files:
-        return ""
+        return None
     name = cfg.get("project_name") or root.name
     lines = [f"llm-wiki SessionStart hook: resume files for {name} (persona: {persona}). Before your first "
              "reply, read them in this order, then open the reply, whatever the user said, with one paragraph "
              "on where we left off and what is next:"]
     lines += [f"{i}. {f} ({f.stat().st_size / 1024:.1f} KB)" for i, f in enumerate(files, 1)]
-    return "\n".join(lines) + "\n"
+    goal = handoff_goal(sessions / persona / "handoff.md")
+    user_line = f"llm-wiki: {name} resume files are loaded. " + (f"Next: {goal} " if goal else "")
+    user_line += "Send any message for the full recap."
+    return {"systemMessage": user_line,
+            "hookSpecificOutput": {"hookEventName": "SessionStart",
+                                   "additionalContext": "\n".join(lines) + "\n"}}
 
 
 def main() -> int:
     try:
-        out = resume_text(session_cwd(sys.argv[1:]).resolve())
+        out = hook_output(session_cwd(sys.argv[1:]).resolve())
         if out:
-            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-            sys.stdout.write(out)
+            sys.stdout.write(json.dumps(out) + "\n")  # ASCII-escaped, so no console encoding trap
     except Exception:  # noqa: BLE001 — a resume hook must never break a session start
         pass
     return 0
