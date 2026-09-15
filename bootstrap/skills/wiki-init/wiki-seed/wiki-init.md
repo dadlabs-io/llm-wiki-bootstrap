@@ -9,12 +9,16 @@ date: 2026-07-31
 
 # wiki-init — skill
 
-Creates the wiki itself: the folder structure under `llm-wiki/wiki/<topic>/` and a templated README describing what the wiki is for. It normally runs automatically when a project is first scaffolded, so you rarely invoke it by hand — the reasons to do so are adding a wiki to a project that never got one, or rebuilding a scaffold that was damaged. It takes a topic slug and a one-or-two-sentence description, and refuses to overwrite a topic that already exists.
+Scaffolds a notebook folder by hand: `<vault>/<topic>/`, with the wiki inside it and the working folders beside it. [`new-wiki`](./new-wiki.md) does not use it (new projects get their wiki from `/new-wiki`'s own scaffold), so reach for this only to create a notebook folder outside that flow. It takes a topic slug and a one-or-two-sentence description, shows you the plan to confirm, and refuses to overwrite a topic that already exists.
 
-**Trigger:** */wiki-init*, or natural phrasings like "wiki init", "create a new wiki", "init wiki".
+**Trigger:** */wiki-init*, or "wiki init", "init wiki". "Create a new wiki" usually means `/new-wiki`; name this skill if you want it.
 
-**Input / Output:** Consumes a topic slug (lowercase, hyphenated — defaults to the project slug), a description of the wiki's scope (read from `.claude/wiki-config.json` if you don't supply one), and an optional vault path that defaults to `llm-wiki/wiki`. Produces the topic folder at `llm-wiki/wiki/<topic>/` with its scaffold files, including a README whose description field is filled in and whose "In scope / Out of scope" sections are left as placeholders for you.
+**Input / Output:** Consumes a topic slug (lowercase, hyphenated; the skill suggests the project slug), a description of the wiki's scope (the skill offers the project description from `.claude/wiki-config.json` if you give none), and an optional vault, the folder that holds notebook folders, which defaults to the project's registered notebooks vault, else the current folder. Produces `<vault>/<topic>/` containing:
+- `wiki/` with the default `project/` and `research/` subfolders, `sessions/`, a HOME page and a user guide
+- `raw/`, `answers/`, and `_inbox/` (pending, done, failed, reports, archive)
+- `_config/feeds.md` for discovery sources, and a first `_INDEX.md`
+- a README whose Scope section is filled from your description
 
-**Works with:** [`wiki`](./wiki.md) browses the structure this creates. Once the scaffold exists, the two ways to start filling it are [`wiki-update`](./wiki-update.md) for ingesting external sources and [`wrap-up`](./wrap-up.md) at the end of a working session.
+**Works with:** [`wiki`](./wiki.md) browses what it creates. To start filling it, use [`wiki-update`](./wiki-update.md) for external sources and [`wrap-up`](./wrap-up.md) at the end of a working session.
 
-**Note:** Editing the README's "In scope / Out of scope" sections is deliberately left to you — deciding what belongs in a wiki is a human call, and a good description is specific enough that you can later tell what is off-topic.
+**Note:** Sharpen the README's Scope section by hand. Deciding what belongs in a wiki is a human call, and a good description is specific enough that you can later tell what is off-topic. This scaffold puts the framework-contract docs at `wiki/best-practices/framework/`; projects made by `/new-wiki` keep them at `wiki/project/best-practices/framework/`.

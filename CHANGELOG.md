@@ -11,6 +11,49 @@
 
 ## 2026-09-15
 
+### Every pack page audited against the code and corrected (user: "fix all the pages … make sure everything is set")
+- **Why**: the `/wiki-update` pack page turned out to have six inaccuracies, so every other page was checked the same way. Four agents read 21 pages (16 skills, the `wiki-ingester` agent, and the pack-level llm-wiki, getting-started, commands, install and drive-setup pages) against their `SKILL.md`, the scripts and the framework-contract docs. Each reported every inaccuracy with file:line evidence, then applied its fixes; the main session checked the result.
+- **Kinds of error found, on most pages**:
+  - `_inbox/` placed inside `wiki/` (it sits beside it at the notebook root); `llm-wiki/wiki/` assumed for vault notebooks.
+  - Invented behaviour:
+    - a tier boost in search
+    - a `_signals` sidecar written by `/wrap-up`
+    - "strict lint rejects hand-written `verified`"
+    - `/wiki-update` calling `/wiki-claims`
+    - `--auto-promote` / `--no-promote` on `/wiki-cycle`
+    - rolled-back entries hidden from the plain search
+  - Stale numbers: the retired review cadence, two GPU slots.
+  - Inter-skill calls that don't exist.
+  - Missing "when it skips itself" sections.
+- **Skill files corrected on the way**:
+  - `wiki-init` is standalone (`/new-wiki` never called it).
+  - `/wiki` shows the notebook-root `_INDEX.md` through the registry, and its index commands now pass `--topic`.
+  - `/wiki-search`: `-k`, not `--top`.
+  - `/wrap-up`: a sidecar-less entry is held back.
+  - `wiki-verify` and `wiki-rollback` lost their false claims.
+  - `wiki-list`: the queue ticket name.
+  - `wiki-discover`: where its decisions log goes.
+  - `wiki-claims`, `wiki-refresh` and `wiki-report`: paths.
+  - `/wiki-cycle`:
+    - three GPU slots
+    - the Drive step reads `drive.parent_folder` / `drive.subfolder` from the config instead of hardcoding `__FOR CLAUDE/<topic>`, and skips when Drive is off
+    - unattended runs keep staged mode, not `--direct`
+  - The ingester's reading list describes today's split gate.
+  - The README template's staging path.
+  - Two `new-wiki.py` messages.
+- **Checks after the edits**: every `SKILL.md` / `AGENT.md` frontmatter still loads; the reading list is valid JSON; a package-wide search finds no `wiki/_inbox`, "two GPU slots" or `--top` left. SOP refresh into every registered notebook (22–23 files each: the pages plus frontmatter spec v8; the nine REPLACE lines were all stale v7 copies), and into the equal-experts in-project wiki.
+
+### Six queued tool defects fixed; self-authored entries leave `raw_path` out everywhere; Drive OAuth works on a fresh machine (user: "we do want to fix all of the bugs")
+- **`wiki-update.py --revises <slug|path>`** (QUEUE 1): writes `revises:` with the older entry's path relative to the entry's own folder (how the lint resolves it), refuses when no such entry exists, and implies `--force`, since sharing the older entry's URL is the point. Ingest workers had been hand-adding `revises:`.
+- **`--slug-for`** (QUEUE 3): finds the existing entry by file name or frontmatter title (`exists=yes`, exit 0). Otherwise it prints the slug a new entry would get, `exists=no` and near matches, and exits 2. Until now it always printed a slug and exited 0, so a paraphrased title returned a file that did not exist. **Staged entries' links are now checked** (read-only; they count in `outbound_warnings`; links that already resolve, such as the Raw footer, are skipped). Before, a staged batch shipped three links to entries that did not exist with `outbound_warnings=0`. Every automatic link rewrite is now printed.
+- **Titles** (3a): a title containing YAML syntax is double-quoted with `\` and `"` escaped. The built frontmatter is test-parsed (`check_frontmatter_loadable`), and an unparseable one is refused with nothing written, so the Datadog title case cannot recur.
+- **`wiki-promote.py`** (3b): a suggested backlink into a `framework-contract: true` doc is skipped with a warning, because the docs refresh would overwrite it.
+- **Duplicates** (3c): `internal://` URLs name a session, not a source, and skip the duplicate check. A duplicate now prints `duplicate_of=<path>` and names `--revises`.
+- **`raw_path` on self-authored entries** (3d; user: "whatever makes most sense"): leave it out. The frontmatter spec (`framework-version` 7 → 8) says so and still accepts the older `(none — self-authored)` marker. It also names the one case that keeps a path: a `/wrap-up` entry cites its session snapshot when one was saved, alongside the code-change folder. The lint counts a tier-`self` entry without `raw_path` as self-authored, not missing. `/wrap-up`, `wiki-rollback.py` and the CLAUDE.md template no longer write the marker.
+- **Drive** (found by the pack-page audit): `wiki-fetch-drive-folder.py` falls back to `~/.config/wiki-cycle/client_secrets.json`, the path `/new-wiki` tells the user to use. The scaffold's OAuth step passes it explicitly, and its "re-run `/new-wiki --sync`" advice (a step that never ran OAuth) now gives the real command. Before, the OAuth step and `/wiki-cycle`'s scope re-auth failed on any machine without a cached token.
+- **Tests**: a 15-check red/green harness over a throwaway vault covering all six defects: 3/15 before, 15/15 after.
+- **Migration**: `install-wiki.ps1 -RefreshOnly`; the SOP docs refresh carries spec v8 into every notebook. Existing marked entries stay valid; nothing is rewritten.
+
 ### `/wiki-update` pack page corrected; the trimmed skill installed (user: "do not install until the pack page is correct")
 - **What was wrong** (all older than the trim), in the pack page every notebook carries at `how-to/llm-wiki/skills/wiki-update.md`:
   - It said entries are staged by default, at a wrong inbox path. Direct filing is the default.

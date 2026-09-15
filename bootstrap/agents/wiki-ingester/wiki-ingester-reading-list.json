@@ -19,10 +19,10 @@
     },
     {
       "notebook": "(runtime-resolved target notebook)",
-      "title": "Eval rubric (the 5-dimension ingest gate)",
+      "title": "Eval rubric (background to the ingest gate)",
       "link": "wiki/research/implementation/eval-rubric.md",
       "required": false,
-      "why": "Every synthesis is scored against this before staging — pass = avg >= 3.0 and no dimension at 1. If the target topic lacks this file, use the rubric table inlined in wiki-update/SKILL.md step 5 (same 5 dimensions)."
+      "why": "Background only; the gate is split. wiki-update.py's mechanical checks refuse to file an entry without a ## TL;DR, without a ## Related holding 2+ wiki links (a warning for tier self), with its layout out of order, or with frontmatter that would not parse. The agent scores the two judgment dimensions, extraction fidelity and synthesis value, 1-5 each, and prints them as one line, `Scores: extraction fidelity N/5, synthesis value N/5` (wiki-update/SKILL.md step 5); below 3 means fix it or do not stage. If the target topic lacks this file, step 5 is all you need."
     },
     {
       "notebook": "(runtime-resolved target notebook)",

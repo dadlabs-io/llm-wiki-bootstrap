@@ -30,7 +30,7 @@ First-class rollback primitive per [icarus-integration-plan.md §4](agentic-desi
 
 1. **No verified ancestor → rollback refused.** If the chain has no `verified: verified` ancestor, the script exits 1 with an explicit error. We do NOT guess where to stop.
 2. **No frontmatter mutation on intermediates.** The rolled-back entries' frontmatter is untouched; only their sidecar `verified` flips to `rolled_back`. This keeps git history clean — sidecars are designed for telemetry-class writes.
-3. **No content deletion, ever.** Rolled-back entries stay on disk. Default retrieval excludes them. `wiki-search-rerank.py --include-rolled-back` surfaces them on demand.
+3. **No content deletion, ever.** Rolled-back entries stay on disk. Only the optional truth-status rerank (`qmd search "<query>" --json | wiki-search-rerank.py`) drops them, and `--include-rolled-back` keeps them there; the default full search (`wiki-qmd-query.py`), the INDEX and the MAP still list them.
 4. **`--reason` is required.** The new rollback entry's body cites your reason. Don't ship rollbacks without an explanation.
 
 ## What You Must Do When Invoked
@@ -104,8 +104,8 @@ wiki: rollback <target-slug> to <verified-ancestor-slug>
 Reason: <user's --reason text>
 
 Marked N intermediate entries as verified=rolled_back via sidecar updates
-(no frontmatter mutation, no content deletion). Default retrieval now
-excludes the rolled-back chain; --include-rolled-back surfaces them.
+(no frontmatter mutation, no content deletion). The optional truth-status
+rerank now drops the rolled-back chain; --include-rolled-back keeps it.
 
 New entry: <path-to-rollback-entry>
 ```

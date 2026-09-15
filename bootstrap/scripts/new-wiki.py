@@ -658,7 +658,8 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
         _err("  2. Create Project → Enable Drive API → Create OAuth Client ID")
         _err("     (Desktop application)")
         _err(f"  3. Download JSON → save as {DRIVE_CLIENT_SECRETS_PATH}")
-        _err("  4. Re-run /new-wiki --sync to complete Drive setup.")
+        _err("  4. Then authorise once: python ~/.claude/wiki-scripts/wiki-fetch-drive-folder.py --auth-only")
+        _err("     (it reads the secrets from the path above; /new-wiki --sync does not run this step).")
         _err("============================================================")
         return False
 
@@ -678,7 +679,8 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
     # No folder listing, no queueing, no file moves.
     try:
         result = subprocess.run(
-            [sys.executable, str(fetch_script), "--auth-only"],
+            [sys.executable, str(fetch_script), "--auth-only",
+             "--client-secrets", str(DRIVE_CLIENT_SECRETS_PATH)],
             capture_output=True, text=True, timeout=300,
         )
         if result.returncode == 0:
@@ -1521,7 +1523,7 @@ def phase_b(args):
         ]
     if args.project_folder != "none":
         next_steps += [
-            "CAPTURE project knowledge: as you code/decide/debug, the agent files durable items (decisions, components, patterns, gotchas) to `llm-wiki/wiki/_inbox/proposed/` inline; run `/wrap-up` at session-end to catch the rest",
+            "CAPTURE project knowledge: as you code/decide/debug, the agent files durable items (decisions, components, patterns, gotchas) to `_inbox/proposed/` (beside `wiki/`) inline; run `/wrap-up` at session-end to catch the rest",
         ]
     next_steps += [
         "Promote: `/wiki-promote --review` accepts/rejects proposed entries (research → research/, project knowledge → project/)",
@@ -1547,7 +1549,7 @@ def phase_b(args):
         "drive_subfolder": drive_subfolder if drive_enabled_global else None,
         "needs_restart": needs_restart,
         "next_steps": next_steps,
-        "help_anytime": "Ask in plain English. The agent has llm-wiki/how-to/llm-wiki/*.md and llm-wiki/README.md loaded as context.",
+        "help_anytime": "Ask in plain English. CLAUDE.md loads the command reference (how-to/llm-wiki/commands.md) and the wiki README; the agent reads the other how-to pages when a question needs them.",
     }, indent=2))
 
     if needs_restart:

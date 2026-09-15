@@ -41,7 +41,7 @@ Ingests one external source into the wiki. You hand it whatever you have (a link
 
 ### The gate (what "refused" means)
 
-The filing script refuses to write an entry that has no `## TL;DR` section, a `## Related` section with fewer than two links to other wiki entries (for your own synthesis, tier `self`, this is only a warning), or anything after its Source footer other than the automatic backlinks block. It warns, without refusing, on fewer than three tags, a thin entry not tagged `stub`, and numbers written in plain prose instead of a `>` blockquote. A refusal prints `Refusing to file` and writes nothing; the agent fixes the draft and files again, so the source is never lost. `--no-gate '<reason>'` is the audited override for the rare entry a rule is genuinely wrong for. [`wiki-lint`](./wiki-lint.md) runs the same checks over existing entries as a warn-only backlog.
+The filing script refuses to write an entry that has no `## TL;DR` section, a `## Related` section with fewer than two links to other wiki entries (for your own synthesis, tier `self`, this is only a warning), anything after its Source footer other than the automatic backlinks block, or frontmatter that would not parse. It warns, without refusing, on fewer than three tags, a thin entry not tagged `stub`, and numbers written in plain prose instead of a `>` blockquote. A refusal prints `Refusing to file` and writes nothing; the agent fixes the draft and files again, so the source is never lost. `--no-gate '<reason>'` is the audited override for the rare entry a rule is genuinely wrong for. [`wiki-lint`](./wiki-lint.md) runs the same checks over existing entries as a warn-only backlog.
 
 ### Direct or staged
 
@@ -59,7 +59,7 @@ Tier is the source's quality, from `1` (primary or peer-reviewed) to `4` (commun
 
 ### Duplicates
 
-The filing script compares the source's URL, normalised (case, `www.`, trailing slash, tracking parameters), with every entry in `wiki/` and `_inbox/proposed/`, and skips a match. A later snapshot of a source that changed (a repository that grew) is filed with `--force` and marked as revising the earlier entry. The queue (batch mode, Drive links) has its own duplicate check: it skips a URL already queued in `_inbox/pending/`, already processed in `_inbox/done/`, staged in `_inbox/proposed/`, or in `wiki/`.
+The filing script compares the source's URL, normalised (case, `www.`, trailing slash, tracking parameters), with every entry in `wiki/` and `_inbox/proposed/`, and skips a match. A later snapshot of a source that changed (a repository that grew, a new release) is filed with `--revises <slug>`: it records the earlier entry, checks that it exists, and lets the shared URL through. Entries written from a session (`internal://` URLs) are never treated as duplicates of each other. The queue (batch mode, Drive links) has its own duplicate check: it skips a URL already queued in `_inbox/pending/`, already processed in `_inbox/done/`, staged in `_inbox/proposed/`, or in `wiki/`.
 
 ### Don't
 

@@ -215,9 +215,10 @@ This is more precise than the agent reading entries and guessing at contradictio
 
 ## Key paths
 
-- Claims index: `llm-wiki/wiki/_inbox/claims-index.json`
-- Claims report: `llm-wiki/wiki/_inbox/reports/claims-report-<date>.md`
-- Wiki entries: `llm-wiki/wiki/`
+- Claims index: `_inbox/claims-index.json`
+- Claims report: `_inbox/reports/claims-report-<date>.md`
+- Wiki entries: `wiki/`
+- All relative to the notebook root: `_inbox/` sits beside `wiki/`, not inside it
 
 ## Don't
 

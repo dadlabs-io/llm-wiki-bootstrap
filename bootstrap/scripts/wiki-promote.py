@@ -240,6 +240,18 @@ def _recompute_relative_links(text: str, from_dir: Path, to_dir: Path,
     return _REL_LINK_RE.sub(_fix, text)
 
 
+def _is_framework_contract(path: Path) -> bool:
+    """A framework-contract doc (`framework-contract: true`) is managed by the
+    framework: the docs refresh replaces any project copy that differs, so a
+    backlink added here would be flagged as a local edit and then overwritten
+    (agent-builder's 2026-09-14 promotion added one to the authoring doc)."""
+    try:
+        head = path.read_text(encoding="utf-8", errors="replace")[:2000]
+    except OSError:
+        return False
+    return bool(re.search(r"^framework-contract:\s*true\s*$", head, re.M))
+
+
 def _add_backlink(target_file: Path, link_text: str, link_target: str) -> bool:
     """Add a one-line link to the target file's `## Related` section, above the
     Source/Raw footer (`add_related_link`, the entry layout in _entry_checks.py;
@@ -429,6 +441,11 @@ def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False)
             target_file = vault / bl["file"]
             if not target_file.exists():
                 result["backlinks_skipped"] += 1
+                continue
+            if _is_framework_contract(target_file):
+                result["backlinks_skipped"] += 1
+                _warn(f"{md_path.name}: no backlink added to {bl['file']}: it is a framework-contract doc, "
+                      "which the docs refresh would overwrite")
                 continue
             rel_target = os.path.relpath(target_path, target_file.parent).replace(os.sep, "/")
             if _add_backlink(target_file, bl["link_text"], rel_target):

@@ -78,18 +78,18 @@ Manifest: `TRAVEL_SCRIPTS` (the commands) + `TOOLING_HELPER_SCRIPTS` / `SHARED_H
 | `new-wiki.py` | The bootstrap helper behind `/new-wiki`: Phase A / tooling install, Phase B scaffold, `--phase docs [--check] [--all-notebooks]` |
 | `wiki-upgrade.py` | Refresh the global tooling from the recorded bootstrap source (what `install-wiki.ps1 -RefreshOnly` and `/new-wiki --sync` run) |
 | `wiki-init.py` | Scaffold a topic folder structure + templated README |
-| `wiki-update.py` | File an external source as an entry (the write-time gate lives here: TL;DR, two Related links, loadable frontmatter) |
+| `wiki-update.py` | File an external source as an entry. The write-time gate lives here: it refuses an entry without a TL;DR, without two Related wiki links (a warning for tier `self`), with its layout out of order, or with frontmatter that would not parse. `--revises <slug>` files a later snapshot of a source (checks the older entry exists, implies `--force`). `--slug-for` exits 2 with near matches when no entry matches. Staged entries' links are checked. `internal://` URLs never count as duplicates, and a duplicate prints `duplicate_of=` (2026-09-15) |
 | `wiki-fetch-youtube.py` | YouTube transcript → verbatim raw archive under `raw/` (needs `yt-dlp` on the host) |
 | `wiki-fetch-pdf.py` | PDF (URL or local) → extracted text under `raw/` |
-| `wiki-fetch-drive-folder.py` | Google Drive `__FOR CLAUDE/<topic>/` → pending queue, with short-URL resolution and dedup against the wiki's `source_url`s |
+| `wiki-fetch-drive-folder.py` | Google Drive `__FOR CLAUDE/<topic>/` → pending queue, with short-URL resolution and dedup against the wiki's `source_url`s; OAuth reads `--client-secrets`, `$WIKI_DRIVE_CLIENT_SECRETS`, or `~/.config/wiki-cycle/client_secrets.json` (2026-09-15) |
 | `wiki-list-add.py` | Add a source to the `_inbox/pending/` queue (URL-dedup across pending + proposed + wiki + done) |
 | `wiki-list-process.py` | Batch-consume `_inbox/pending/` → staged entries |
 | `wiki-list-render.py` | Regenerate the human-readable pending-list view |
 | `wiki-dequeue.py` | Move already-ingested items out of the pending queue |
-| `wiki-promote.py` | Move `_inbox/proposed/<folder>/<slug>.md` → `wiki/<folder>/<slug>.md` + backlinks |
+| `wiki-promote.py` | Move `_inbox/proposed/<slug>.md` → `wiki/<target_folder>/<slug>.md` (the folder from its sidecar), add backlinks into the related entries' Related sections (never into a framework-contract doc, 2026-09-15), regenerate the folder indexes and MAP. An entry whose sidecar is missing, invalid or names no folder is held back (exit 4); `--check` validates staging without moving anything |
 | `wiki-verify.py` | Sidecar update flipping truth-status to verified (called by `/wiki-verify`) |
 | `wiki-rollback.py` | Walk the `revises:` chain to the verified ancestor + write a rollback entry (called by `/wiki-rollback`) |
-| `wiki-lint-mechanical.py` | Deterministic lint: broken links, orphans, frontmatter loadability, body checks (warn-only backlog), installed-skill drift, qmd index coverage |
+| `wiki-lint-mechanical.py` | Deterministic lint: broken links, orphans, frontmatter loadability, body checks (warn-only backlog), installed-skill drift, qmd index coverage; a tier-`self` entry without `raw_path` counts as self-authored, not missing (2026-09-15) |
 | `wiki-fix-links.py` | Resolve bare-slug / wrong-depth markdown links to the correct relative path |
 | `wiki-reciprocate-backlinks.py` | Ensure every outbound `.md` link has a reciprocal BACKLINKS-AUTO block |
 | `wiki-index.py` / `wiki-index-per-folder.py` | Regenerate `_INDEX.md` (root / per folder) |

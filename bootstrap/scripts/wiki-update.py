@@ -26,6 +26,7 @@ Usage:
 """
 
 import argparse
+import difflib
 import json
 import os
 import re
@@ -49,7 +50,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
 # Mechanical half of the eval rubric — shared with wiki-lint-mechanical.py so
 # the pre-write gate and the lint backlog view enforce ONE set of rules.
-from _entry_checks import check_entry_body, format_result  # noqa: E402
+from _entry_checks import check_entry_body, check_frontmatter_loadable, format_result  # noqa: E402
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -312,6 +313,7 @@ def resolve_outbound_links(curated_path, wiki_dir):
             new_rel = os.path.relpath(real_path, curated_path.parent).replace(os.sep, "/")
             new_link = f"[{link_text}]({new_rel})"
             new_content = new_content.replace(match.group(0), new_link)
+            print(f"  Link rewritten: [{link_text}]({link_target}) -> {new_rel}")
             fixed += 1
             continue
 
@@ -329,6 +331,7 @@ def resolve_outbound_links(curated_path, wiki_dir):
             new_rel = os.path.relpath(real_path, curated_path.parent).replace(os.sep, "/")
             new_link = f"[{link_text}]({new_rel})"
             new_content = new_content.replace(match.group(0), new_link)
+            print(f"  Link rewritten (nearest match, check it): [{link_text}]({link_target}) -> {new_rel}")
             fixed += 1
         else:
             warnings.append((
@@ -340,6 +343,34 @@ def resolve_outbound_links(curated_path, wiki_dir):
     if new_content != content:
         atomic_write_text(curated_path, new_content)
     return fixed, warnings
+
+
+def check_outbound_links(curated_path, wiki_dir):
+    """Read-only twin of resolve_outbound_links for a STAGED entry. A staged entry's
+    links are written by bare file name (/wiki-promote computes the paths), so each
+    must name an entry that exists in wiki/ or in the staging folder. Nothing is
+    rewritten. Until 2026-09-15 staged entries skipped the link check entirely: a
+    staged batch shipped three links to entries that did not exist, with
+    outbound_warnings=0 (agent-builder, 2026-09-14).
+
+    Returns warnings = [(text, target, [near matches])]."""
+    try:
+        content = Path(curated_path).read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        return []
+    known = set(_build_slug_index(wiki_dir))
+    proposed = Path(wiki_dir).parent / "_inbox" / "proposed"
+    if proposed.is_dir():
+        known |= {p.stem for p in proposed.glob("*.md")}
+    warnings = []
+    for match in LINK_RE.finditer(content):
+        link_text, link_target = match.group(1), match.group(2)
+        if (Path(curated_path).parent / link_target).resolve().exists():
+            continue  # already resolves from where it sits (e.g. the script's own Raw footer link)
+        stem = Path(link_target).stem
+        if stem not in known:
+            warnings.append((link_text, link_target, difflib.get_close_matches(stem, sorted(known), n=3, cutoff=0.6)))
+    return warnings
 
 
 # Common words / stems that show up in too many entries to be useful as
@@ -644,9 +675,34 @@ def validate_folder(wiki_dir, folder, allow_new_top_folder=False):
     return None, msg
 
 
+class FrontmatterError(ValueError):
+    """The frontmatter write_curated built would not parse as YAML."""
+
+
+def resolve_revises(wiki_dir, value):
+    """The existing entry --revises names, by slug (`foo`, `foo.md`) or by path
+    under wiki/ (`research/tooling/foo.md`). Returns (Path, None) or (None, error).
+    A revision must point at an entry that exists: the frontmatter spec's
+    reference-integrity rule, which the lint also checks."""
+    wiki_dir = Path(wiki_dir)
+    v = str(value).strip().strip("\"'").replace("\\", "/")
+    if v.endswith(".md") and (wiki_dir / v).is_file():
+        return wiki_dir / v, None
+    stem = Path(v).stem if v.endswith(".md") else Path(v).name
+    matches = sorted(wiki_dir.rglob(f"{stem}.md"))
+    if len(matches) == 1:
+        return matches[0], None
+    if not matches:
+        near = difflib.get_close_matches(stem, sorted({p.stem for p in wiki_dir.rglob("*.md")}), n=3, cutoff=0.6)
+        return None, (f"--revises {value}: no entry named {stem}.md in the wiki"
+                      + (f" (near: {', '.join(near)})" if near else ""))
+    return None, (f"--revises {value}: {len(matches)} entries are named {stem}.md; pass the path under wiki/ ("
+                  + ", ".join(m.relative_to(wiki_dir).as_posix() for m in matches) + ")")
+
+
 def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
                   ingested_by=None, raw_path=None, tier=None, confidence=None,
-                  staged=False):
+                  staged=False, revises=None):
     """Write the curated copy under wiki/{folder}/{slug}.md.
 
     Frontmatter includes: title, date, source_url, raw_path, ingested_by, tier,
@@ -682,10 +738,16 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
 
     # Build frontmatter
     fm_lines = ["---"]
-    # Auto-quote titles containing YAML special characters
-    YAML_SPECIAL = set(":'\"{}&*?|>!%@`")
-    if title and any(ch in title for ch in YAML_SPECIAL) and not (title.startswith('"') and title.endswith('"')):
-        fm_lines.append(f'title: "{title}"')
+    # Quote a title that holds YAML syntax, escaping backslashes and double quotes
+    # inside it. Until 2026-09-15 a title with a double quote inside ('How Datadog
+    # Built a "Universal Machine Tool"…') was wrapped in double quotes unescaped, and
+    # its frontmatter did not parse (agent-builder, 2026-09-14).
+    if title and len(title) > 1 and title.startswith('"') and title.endswith('"'):
+        title = title[1:-1]  # the caller's own quotes; re-quoted properly below
+    YAML_SPECIAL = set(":'\"{}&*?|>!%@`#[]\\")
+    if title and (any(ch in title for ch in YAML_SPECIAL) or title[0] == "-"):
+        escaped = title.replace("\\", "\\\\").replace('"', '\\"')
+        fm_lines.append(f'title: "{escaped}"')
     else:
         fm_lines.append(f"title: {title}")
     fm_lines.append(f"date: {datetime.now().strftime('%Y-%m-%d')}")
@@ -707,6 +769,8 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
         fm_lines.append(f"tier: {tier}")
     if confidence is not None:
         fm_lines.append(f"confidence: {confidence}")
+    if revises:
+        fm_lines.append(f"revises: {revises}")
     # Lifecycle fields — required on every entry (SKILL.md) and keyed by
     # wiki-refresh. Written in BOTH staged and direct paths. review_after
     # cadence follows importance (frontmatter spec, "review cadence", revised
@@ -726,6 +790,10 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
         fm_lines.append(f"tags: [{', '.join(tags)}]")
     fm_lines.append("---")
     fm = "\n".join(fm_lines)
+    # Never write frontmatter the loader cannot read: every field would be lost.
+    problems = [f"{code}: {detail}" for sev, code, detail in check_frontmatter_loadable(fm + "\n") if sev == "ERROR"]
+    if problems:
+        raise FrontmatterError("; ".join(problems))
 
     # If the body already starts with a frontmatter block, strip it (we'll write our own)
     body_stripped = re.sub(r"^---\s*\n.*?\n---\s*\n", "", body, count=1, flags=re.DOTALL)
@@ -766,32 +834,52 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
 
 
 def print_slug_for(vault_root, topic, folder, title):
-    """Print the canonical slug + path for a title without doing any ingestion.
-
-    Used by the agent during batch ingestion to look up slugs ahead of time so
-    cross-references in entry bodies use the actual filename the script would
-    generate, not a guess.
-    """
+    """Look up the entry a cross-reference should point at: the existing entry whose
+    file name is slugify(title), or whose frontmatter title matches. Exit 0 with
+    `exists=yes` when found. When nothing matches, print the slug a NEW entry with
+    this title would get, `exists=no` and near matches, and exit 2. Until
+    2026-09-15 it always printed a slug and exited 0, so a paraphrased title
+    returned a file that did not exist and the link was filed broken."""
     if not title:
         print("Error: --slug-for requires --title", file=sys.stderr)
         return 1
     slug = slugify(title)
-    topic_root = Path(vault_root) / topic
-    wiki_dir = topic_root / "wiki"
+    wiki_dir = Path(vault_root) / topic / "wiki"
+    found = sorted(wiki_dir.rglob(f"{slug}.md"))
+    if not found:
+        want = title.strip().strip("\"'").lower()
+        for p in wiki_dir.rglob("*.md"):
+            try:
+                head = p.read_text(encoding="utf-8", errors="replace")[:1500]
+            except OSError:
+                continue
+            m = re.search(r"^title:\s*(.+)$", head, re.M)
+            if m and m.group(1).strip().strip("\"'").lower() == want:
+                found.append(p)
+    if found:
+        for p in found:
+            print(f"slug={p.stem}")
+            print(f"path={p}")
+        print("exists=yes" if len(found) == 1 else f"exists=ambiguous ({len(found)} entries)")
+        return 0
     target_dir = wiki_dir / folder if folder else wiki_dir
     target = unique_path(target_dir / f"{slug}.md")
+    near = difflib.get_close_matches(slug, sorted({p.stem for p in wiki_dir.rglob("*.md")}), n=5, cutoff=0.55)
     print(f"slug={slug}")
     print(f"path={target}")
-    if target.name != f"{slug}.md":
-        print(f"# Note: collision-suffixed real name = {target.name}")
-    return 0
+    print("exists=no")
+    if near:
+        print(f"near_matches={', '.join(near)}")
+    print(f"Note: no entry is titled or named '{title}'. To link to an existing entry use a near match; "
+          f"the slug above is only what a NEW entry with this title would get.", file=sys.stderr)
+    return 2
 
 
 def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
                 ingested_by=None, source_url_override=None, raw_path_override=None,
                 force=False, fetch_only=False, no_raw=False, skip_integration=False,
                 tier=None, confidence=None, staged=False, allow_new_top_folder=False,
-                no_gate=None):
+                no_gate=None, revises=None):
     topic_root = Path(vault_root) / topic
     if not topic_root.exists():
         print(f"Error: topic '{topic}' not found at {topic_root}", file=sys.stderr)
@@ -812,16 +900,33 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
             return 1
         folder = validated_folder
 
+    # --revises: a later snapshot of an existing entry (a repo that grew, a new
+    # release). The older entry must exist; the frontmatter records the path the
+    # way the lint resolves it — relative to the entry's own (final) folder. It
+    # implies --force: sharing the older entry's source URL is the point.
+    revises_rel = None
+    if revises and not fetch_only:
+        rev_path, rev_err = resolve_revises(wiki_dir, revises)
+        if rev_err:
+            print(f"Refusing to file: {rev_err}", file=sys.stderr)
+            return 1
+        base = wiki_dir / folder if folder else wiki_dir
+        revises_rel = os.path.relpath(rev_path, base).replace(os.sep, "/")
+        force = True
+
     # Dedup: if --source-url override (or source itself if it's a URL) is already
     # in the wiki, skip unless --force. Skipped in fetch-only mode (raw fetches
-    # are idempotent at the file level — caller decides what to do).
+    # are idempotent at the file level — caller decides what to do). An internal://
+    # URL names the authoring session, not a source: several entries from one
+    # session share it (2026-09-15: a second decision entry was skipped as a dup).
     if not fetch_only:
         dedup_url = source_url_override or (source if source.startswith(("http://", "https://")) else None)
-        if dedup_url and not force:
+        if dedup_url and not force and not str(dedup_url).startswith("internal://"):
             existing = find_existing_by_url(wiki_dir, dedup_url, also=[topic_root / "_inbox" / "proposed"])
             if existing:
                 print(f"Skip (dedup): URL already in wiki at {existing}")
-                print(f"Use --force to re-ingest anyway.")
+                print(f"Use --force to re-ingest anyway, or --revises <slug> for a later snapshot of the same source.")
+                print(f"duplicate_of={existing}")
                 return 0
 
     # Acquire raw source. Skip the raw/ copy when:
@@ -892,11 +997,16 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
     if confidence is None:
         print("  Warning: --confidence not provided. Assess how reliable this entry is: high (primary source fetched, corroborated), medium (single good source), low (synthesized from secondary refs).", file=sys.stderr)
 
-    curated_path = write_curated(
-        wiki_dir, folder, final_slug, final_title, body, final_source_url, tags,
-        ingested_by=ingested_by, raw_path=final_raw_path, tier=tier, confidence=confidence,
-        staged=staged,
-    )
+    try:
+        curated_path = write_curated(
+            wiki_dir, folder, final_slug, final_title, body, final_source_url, tags,
+            ingested_by=ingested_by, raw_path=final_raw_path, tier=tier, confidence=confidence,
+            staged=staged, revises=revises_rel,
+        )
+    except FrontmatterError as e:
+        print(f"  Refusing to file: the frontmatter would not parse ({e}). Nothing was written.",
+              file=sys.stderr)
+        return 1
 
     # ── Integration step: bidirectional cross-link helpers ──────────────────
     # Mechanical only: detect broken outbound slug links and find inbound
@@ -913,6 +1023,8 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
     if not skip_integration:
         if not staged:
             fixed, out_warnings = resolve_outbound_links(curated_path, wiki_dir)
+        else:
+            out_warnings = check_outbound_links(curated_path, wiki_dir)
         inbound = find_inbound_candidates(curated_path, wiki_dir, final_title)
 
         if fixed:
@@ -1030,6 +1142,10 @@ def main():
     parser.add_argument("--tier", default=None, choices=["1", "2", "3", "4", "self"], help="Source quality tier: 1=peer-reviewed/primary (papers, official spec docs, source code), 2=established documentation (vendor docs, framework docs, official blog), 3=reputable expert/first-hand (founder posts, expert blogs, conf talks, journalism), 4=community (Medium, Reddit, anonymous gists), self=self-authored synthesis. STRONGLY recommended for every new entry — prerequisite for source-quality-aware answer weighting and the future nightly auto-ingest cycle's quarantine rules.")
     parser.add_argument("--confidence", default=None, choices=["high", "medium", "low"], help="Entry confidence level. Measures how reliable OUR entry is (not the source — that's tier). high=primary source fetched + corroborated, medium=single good source fetched, low=synthesized from secondary refs or source not fetched. STRONGLY recommended for every new entry.")
     parser.add_argument("--slug-for", dest="slug_for", action="store_true", help="Lookup mode: print the canonical slug + path for --title without ingesting. Use during batch ingestion to discover slugs ahead of time so cross-references in entry bodies match the actual filenames.")
+    parser.add_argument("--revises", default=None, metavar="SLUG_OR_PATH",
+                        help="This entry is a later snapshot of an existing entry (a repo that grew, a new release): "
+                             "writes `revises:` with the older entry's path, refuses if no such entry exists, and "
+                             "implies --force so the shared source URL does not stop it.")
     parser.add_argument("--skip-integration", action="store_true", help="Skip the post-write integration step (outbound link resolution + inbound mention scan). Default is to run it.")
     parser.add_argument("--staged", action="store_true",
                         help="Stage the entry to _inbox/proposed/ instead of filing directly to wiki/<folder>/. "
@@ -1067,6 +1183,7 @@ def main():
         staged=args.staged,
         allow_new_top_folder=args.allow_new_top_folder,
         no_gate=args.no_gate,
+        revises=args.revises,
     )
 
 

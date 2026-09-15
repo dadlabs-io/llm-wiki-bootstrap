@@ -34,7 +34,7 @@ Search trusted sources for new content relevant to a topic wiki. Dedupes against
 
 ### Step 1 — Load the feeds config
 
-Read `llm-wiki/wiki/_config/feeds.md`. This file defines:
+Read `_config/feeds.md` at the notebook root (beside `wiki/`). This file defines:
 - Trusted authors/blogs with URLs, tiers, and keywords
 - YouTube channels to check
 - GitHub repos to watch
@@ -103,7 +103,7 @@ For each candidate URL/title found in search results:
 
 1. **URL dedup**: check if the exact URL exists in any wiki entry's `source_url` frontmatter:
    ```bash
-   grep -r "<url>" llm-wiki/wiki/ --include="*.md" -l
+   grep -r "<url>" <notebook_root>/wiki/ --include="*.md" -l
    ```
 
 2. **Title/concept dedup**: search the wiki for the key concept:
@@ -114,7 +114,7 @@ For each candidate URL/title found in search results:
 
 3. **Queue dedup**: check if the URL is already in `_inbox/pending/` or `_inbox/done/`:
    ```bash
-   grep -r "<url>" llm-wiki/wiki/_inbox/ --include="*.md" -l
+   grep -r "<url>" <notebook_root>/_inbox/ --include="*.md" -l
    ```
 
 ### Step 5 — Score and classify candidates
@@ -141,9 +141,9 @@ If a pairing looks wrong, re-examine the source search result. Do NOT queue mism
 
 ### Step 6 — Generate the discovery checklist(s)
 
-**Intake routing (2026-09-01).** If the topic has `_inbox/intake-*/` folders (e.g. agentic-design's `intake-agent-builder/`, `intake-llm-wiki/`, `intake-other/`), classify each candidate by bucket (agent-building = agents/workflows/skills/harnesses; llm-wiki = memory systems/retrieval/wiki-framework; other = everything else) and write **one checklist per bucket that has candidates**: `_inbox/intake-<bucket>/<date>-discovery.md` containing only that bucket's candidates (same format below, plus the classification rationale in the **Why** line). Each intake folder's owning session reviews its own checklist. The run's stats + full decisions log go to `_inbox/reports/discovery-<date>.md` — NOT into the intake folders.
+**Intake routing (2026-09-01).** If the topic has `_inbox/intake-*/` folders (e.g. agentic-design's `intake-agent-builder/`, `intake-llm-wiki/`, `intake-other/`), classify each candidate by bucket (agent-building = agents/workflows/skills/harnesses; llm-wiki = memory systems/retrieval/wiki-framework; other = everything else) and write **one checklist per bucket that has candidates**: `_inbox/intake-<bucket>/<date>-discovery.md` containing only that bucket's candidates (same format below, plus the classification rationale in the **Why** line). Each intake folder's owning session reviews its own checklist. In this mode the run's stats + full decisions log go to `_inbox/reports/discovery-<date>.md` — NOT into the intake folders.
 
-**Legacy fallback**: if the topic has no `intake-*` folders, write the single combined checklist to `_inbox/discovered/<date>-discovery.md` as before:
+**Legacy fallback (combined mode)**: if the topic has no `intake-*` folders, write the single combined checklist to `_inbox/discovered/<date>-discovery.md` as before. In this mode the checklist itself carries the run's stats (top) and the Decisions log (last section), as in the template below; no separate `_inbox/reports/discovery-<date>.md` is written:
 
 ```markdown
 # Discovery Queue — <date>
@@ -215,7 +215,7 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-list-add.py \
 
 Update the Decisions log's **Queued** table as each item is added, and the **Skipped** / **Deferred** tables as decisions are made elsewhere in the run.
 
-Move the discovery checklist to `_inbox/done/` after processing — the Decisions log travels with the checklist so the morning report can reference it.
+Move the discovery checklist to `_inbox/done/` after processing. In combined mode the Decisions log travels with the checklist so the morning report can reference it; in intake mode it stays in `_inbox/reports/discovery-<date>.md`.
 
 ### Step 8 — Report
 
@@ -228,7 +228,8 @@ Discovery complete for <topic>
   High relevance: N
   Medium relevance: N
   Skipped (already covered): N
-  Checklist(s): _inbox/intake-<bucket>/<date>-discovery.md (or legacy _inbox/discovered/<date>-discovery.md); stats+decisions: _inbox/reports/discovery-<date>.md
+  Checklist(s): _inbox/intake-<bucket>/<date>-discovery.md; stats+decisions: _inbox/reports/discovery-<date>.md
+    (combined mode: _inbox/discovered/<date>-discovery.md, stats+decisions inside it)
   
   Next: review the checklist, then run /wiki-list process to ingest approved items.
 ```
@@ -242,11 +243,12 @@ Discovery complete for <topic>
 
 ## Key paths
 
-- Feeds config: `llm-wiki/wiki/_config/feeds.md`
-- Discovery output: `_inbox/intake-*/` per-bucket checklists (legacy: `_inbox/discovered/`); run stats: `_inbox/reports/`
-- Pending queue: `llm-wiki/wiki/_inbox/pending/`
-- Done queue: `llm-wiki/wiki/_inbox/done/`
-- Concept gaps: `llm-wiki/wiki/concept-gaps-things-mentioned-not-yet-covered.md`
+- Feeds config: `_config/feeds.md`
+- Discovery output: intake mode — `_inbox/intake-*/` per-bucket checklists, stats + decisions log in `_inbox/reports/discovery-<date>.md`; combined mode — one checklist in `_inbox/discovered/` carrying its own stats + decisions log
+- Pending queue: `_inbox/pending/`
+- Done queue: `_inbox/done/`
+- Concept gaps: `wiki/concept-gaps-things-mentioned-not-yet-covered.md`
+- All relative to the notebook root: `_config/` and `_inbox/` sit beside `wiki/`, not inside it
 - wiki-list-add script: `{{WIKI_SCRIPTS_DIR}}/wiki-list-add.py`
 
 ## Integration with the research cycle

@@ -8,7 +8,7 @@ reviewed_for_model: claude-fable-5-1
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback` and `/new-wiki`. This skill is documented + callable for programmatic use.
 
-> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
+> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault <notebook>/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
 
 # /wiki-report
 
@@ -34,9 +34,11 @@ Run these in parallel where possible:
 git log --oneline --since="7 days ago" -- llm-wiki/ | head -30
 ```
 
+`<notebook>` below is the notebook root, the folder that holds `wiki/` and `_inbox/` side by side: resolve it from `.claude/wiki-config.json` through the registry (a wiki inside the project is `llm-wiki/`).
+
 **B. Current entry count**:
 ```bash
-find llm-wiki/wiki -name "*.md" ! -name "_INDEX.md" | wc -l
+find <notebook>/wiki -name "*.md" ! -name "_INDEX.md" | wc -l
 ```
 
 **C. Mechanical lint** (fast, 2 seconds):
@@ -47,22 +49,22 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
 
 **D. Pending queue**:
 ```bash
-ls llm-wiki/wiki/_inbox/pending/*.md 2>/dev/null | wc -l
+ls <notebook>/_inbox/pending/*.md 2>/dev/null | wc -l
 ```
 
 **E. Proposed (staged) entries**:
 ```bash
-ls llm-wiki/wiki/_inbox/proposed/*.md 2>/dev/null | grep -v README | wc -l
+ls <notebook>/_inbox/proposed/*.md 2>/dev/null | grep -v README | wc -l
 ```
 
 **F. Discovery checklist** (if exists):
 ```bash
-ls llm-wiki/wiki/_inbox/intake-*/*discovery*.md llm-wiki/wiki/_inbox/discovered/*.md 2>/dev/null | head -5
+ls <notebook>/_inbox/intake-*/*discovery*.md <notebook>/_inbox/discovered/*.md 2>/dev/null | head -5
 ```
 
 **G. Stale entries** (review_after date has passed):
 ```bash
-grep -rl "review_after:" llm-wiki/wiki/ --include="*.md" | while read f; do
+grep -rl "review_after:" <notebook>/wiki/ --include="*.md" | while read f; do
   date=$(grep "review_after:" "$f" | head -1 | awk '{print $2}')
   if [[ "$date" < "$(date +%Y-%m-%d)" ]]; then
     echo "$f|$date"
@@ -72,7 +74,7 @@ done
 
 **H. Claims report** (if exists):
 ```bash
-ls llm-wiki/wiki/_inbox/reports/claims-report-*.md 2>/dev/null | tail -1
+ls <notebook>/_inbox/reports/claims-report-*.md 2>/dev/null | tail -1
 ```
 
 **I. Concept gaps count**:
@@ -282,11 +284,11 @@ This skill implements **Phase 8 (Human review #2)** of the research cycle. It's 
 
 ## Key paths
 
-- Reports: `llm-wiki/wiki/_inbox/reports/`
-- Lint report: `llm-wiki/wiki/_inbox/reports/lint-report.md`
-- Claims report: `llm-wiki/wiki/_inbox/reports/claims-report-*.md`
-- Claims index: `llm-wiki/wiki/_inbox/claims-index.json`
-- Concept gaps: `llm-wiki/wiki/concept-gaps-things-mentioned-not-yet-covered.md`
+- Reports: `<notebook>/_inbox/reports/`
+- Lint report: `<notebook>/_inbox/reports/lint-report.md`
+- Claims report: `<notebook>/_inbox/reports/claims-report-*.md`
+- Claims index: `<notebook>/_inbox/claims-index.json`
+- Concept gaps: `<notebook>/wiki/concept-gaps-things-mentioned-not-yet-covered.md`
 
 ## Don't
 

@@ -190,8 +190,9 @@ Promotion via `/wiki-promote` moves each entry to its target folder `wiki/projec
 (components, decisions, architecture, patterns, troubleshooting) — **but only if you write the
 sidecar in this step**. `wiki-promote.py` reads the target folder from a
 `<slug>.proposed_metadata.json` sidecar next to the `.md` file, NOT from the `.md`'s own
-frontmatter `category:` field — an entry staged without a sidecar silently promotes to the **wiki
-root** instead of `project/<category>/`. Write both files:
+frontmatter `category:` field — an entry staged without a readable sidecar naming a
+`target_folder` is **held back** in `_inbox/proposed/` (printed as `HELD`, exit 4), not promoted.
+Write both files:
 
 ```json
 // <slug>.proposed_metadata.json — same folder as the .md, same slug stem
@@ -217,7 +218,7 @@ Each `.md` entry has:
 title: "<descriptive title>"
 date: <YYYY-MM-DD>
 source_url: "internal://session/<session-id-or-date>"
-raw_path: "raw/sessions/<YYYY-MM-DD>-<session-slug>.md"   # OR "(none — self-authored)"
+raw_path: "raw/sessions/<YYYY-MM-DD>-<session-slug>.md"   # only when a snapshot was saved (Step 4); otherwise leave the line out
 ingested_by: claude-code
 origin: wrap-up      # who filed this entry: wrap-up | inline | wiki-update
 tier: self
@@ -249,7 +250,7 @@ If the session is substantively rich (multi-hour, multi-component, or contains r
 
 This is the **raw-is-sacred** anchor: each session-derived wiki entry references this snapshot in its `raw_path`, so deletion at the wiki layer is always reversible.
 
-If the session is light (single fix, one decision), set `raw_path: "(none — self-authored)"` and skip the snapshot.
+If the session is light (single fix, one decision), skip the snapshot and leave `raw_path` out of the entries: `tier: self` already says they are self-authored (frontmatter spec).
 
 ### Step 5 — Summary report
 

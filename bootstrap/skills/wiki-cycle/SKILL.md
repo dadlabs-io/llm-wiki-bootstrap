@@ -211,16 +211,18 @@ Every step-skill MUST follow the [Cycle Step Return Format contract](./best-prac
 3. Orchestrator reads `<step>.json` after the step completes — this is what drives the aggregated report.
 4. If the step JSON has `status != completed` or non-empty `errors[]`, flag in scratchpad and decide whether to continue (most step failures are non-blocking).
 
-### Step 1.0 — Drive-fetch (queue from `__FOR CLAUDE/<topic>/`)
+### Step 1.0 — Drive-fetch (queue from `<parent>/<subfolder>/`)
 
-Pull URLs the user dropped into Drive throughout the week, queue them into `_inbox/pending/`, and **move handled files into `_completed/<cycle_id>/`** so the active scan folder stays clean across cycles.
+Pull URLs the user dropped into Drive throughout the week, queue them into `_inbox/pending/`, and **move handled files into `_completed/<cycle_id>/`** so the active scan folder stays clean across cycles. Skip this step when `.claude/wiki-config.json` does not have `drive.enabled: true`.
+
+The folder names come from the same config: `<parent>` is `drive.parent_folder` (default `__FOR CLAUDE`) and `<subfolder>` is `drive.subfolder` (default the notebook name). Until 2026-09-15 this step hardcoded `__FOR CLAUDE/<topic>`, so a parent or subfolder chosen at install time was recorded and then ignored. OAuth reads the client secrets from `~/.config/wiki-cycle/client_secrets.json` unless `--client-secrets` or `WIKI_DRIVE_CLIENT_SECRETS` says otherwise.
 
 Invocation:
 
 ```bash
 python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-drive-folder.py \
-  --folder-name "__FOR CLAUDE" \
-  --subfolder <topic> \
+  --folder-name "<parent>" \
+  --subfolder <subfolder> \
   --queue-into <topic> \
   --queue-priority 3 \
   --queue-added-by drive-fetch \
@@ -233,8 +235,8 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-drive-folder.py \
 
 Behavior:
 
-- Files whose URLs successfully queue → **moved** to `__FOR CLAUDE/<topic>/_completed/<cycle_id>/`. Folders auto-created if missing.
-- Files whose queueing failed → **left in place** in `__FOR CLAUDE/<topic>/` so the user can investigate / retry next cycle.
+- Files whose URLs successfully queue → **moved** to `<parent>/<subfolder>/_completed/<cycle_id>/`. The `_completed/` folders are auto-created if missing; the scan folder itself must already exist (the script never creates it).
+- Files whose queueing failed → **left in place** in `<parent>/<subfolder>/` so the user can investigate / retry next cycle.
 - `_completed/` is a one-time bucket the user can periodically delete from. Each cycle's files are grouped under their `cycle_id` subfolder for traceability — "which cycle did this file get pulled into?".
 - First run with `--move-handled` triggers a one-time OAuth re-prompt because the script needs to upgrade from `drive.readonly` to full `drive` scope to re-parent files. Browser will open; user approves.
 
@@ -255,13 +257,13 @@ Run `/wiki-discover <topic> --cycle-id <id>`. It writes `discover.json` + `disco
 
 This step is a **temporary training wheel** while we validate the discovery → report contract. Once we've seen a few cycles where the JSON faithfully represents discovery's decisions, we can relax this to `--no-confirm-discovery` or auto-approve tier 1-3 / ask-on-tier-4.
 
-**Flag**: `--no-confirm-discovery` skips this pause (for cron-driven runs where no human is around — but those should use `--direct` staging to land entries in `_inbox/proposed/` for later review anyway).
+**Flag**: `--no-confirm-discovery` skips this pause (for cron-driven runs where no human is around; keep the default staged mode, which lands entries in `_inbox/proposed/` for later review — `--direct` would file them straight into `wiki/`).
 
 Update scratchpad Phase 2 with the user's decision.
 
 ### Step 2 — Ingest (unless --skip-ingest)
 
-Queue approved items via `wiki-list-add.py`, then ingest via parallel agents (4 at a time, same pattern as today's session). Every worker searches with the full `qmd query` through `wiki-qmd-query.py`, which lets two searches onto the 8 GB GPU at once and queues the rest (user decision 2026-09-13: quality over speed, no keyword fallback). After the batch, `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --stats` shows how long searches waited for a slot — put it in the cycle report; if waiting makes the batch noticeably slower, or any worker reports "full search unavailable", run 3 or 2 workers next time. In `--full` mode also run `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --depth-check --notebook <topic>` once (a few minutes: sampled titles searched at the sized C and at 2C) and put its summary line in the report; if it says "raise C", tell the user — the notebook has outgrown the 8% rule (user, 2026-09-13: search depth tied to wiki size, checked as it grows).
+Queue approved items via `wiki-list-add.py`, then ingest via parallel agents (4 at a time, same pattern as today's session). Every worker searches with the full `qmd query` through `wiki-qmd-query.py`, which lets three searches onto the 8 GB GPU at once (qmd 2.8.3+; two on an older qmd) and queues the rest (user decision 2026-09-13: quality over speed, no keyword fallback). After the batch, `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --stats` shows how long searches waited for a slot — put it in the cycle report; if waiting makes the batch noticeably slower, or any worker reports "full search unavailable", run 3 or 2 workers next time. In `--full` mode also run `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --depth-check --notebook <topic>` once (a few minutes: sampled titles searched at the sized C and at 2C) and put its summary line in the report; if it says "raise C", tell the user — the notebook has outgrown the 8% rule (user, 2026-09-13: search depth tied to wiki size, checked as it grows).
 
 **Spawn ingest workers as `subagent_type="wiki-ingester"`** (the dedicated ingest agent, installed to `~/.claude/agents/` by this framework) — fall back to `general-purpose` only if it isn't installed. Spawner contract: read `~/.claude/agents/wiki-ingester-config.json` first; if `confirm_model_each_run` is true and the session can ask, ask the user which model to use for this batch (default = `model_default`); a session that cannot ask (autonomous / unattended) uses `model_default` and names the model in its spawn receipt (2026-09-13); pass it as the Agent tool's spawn-time `model` override.
 

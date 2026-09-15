@@ -16,9 +16,9 @@ Manage the wiki ingestion list. ONE command, behavior depends on the user's inte
 
 | User intent | Subcommand | What happens |
 |---|---|---|
-| Add a URL/file/text to the list for later | `add` | Drops a `.queue` file in `<topic>/_inbox/pending/`. Fast, no fetching. |
+| Add a URL/file/text to the list for later | `add` | Drops a ticket, `<priority>-<timestamp>-<slug>.md`, in `_inbox/pending/`. Fast, no fetching; a URL already in pending/, proposed/, wiki/ or done/ is not queued again. |
 | Process everything in the list | `process` | Drains the pending queue, runs wiki-update.py per item, moves to done/ or failed/, regens INDEX once at end. |
-| Show what's in the list | `show` (default) | Lists the `.queue` files in pending/ with their source URL + target folder. |
+| Show what's in the list | `show` (default) | Lists the tickets in `_inbox/pending/` with their source URL + target folder. |
 
 Pick the mode from the user's words. If ambiguous, ask. Default to `show` if user just runs `/wiki-list` with no args.
 
@@ -75,10 +75,10 @@ After: report success/fail counts. List failed items if any, point at `_inbox/fa
 
 Just list what's in the pending queue:
 ```bash
-ls llm-wiki/wiki/_inbox/pending/
+ls <notebook_root>/_inbox/pending/
 ```
 
-Then for each `.queue` file, cat it briefly to show the user:
+Then for each ticket (`*.md`; a legacy `.queue` file reads the same way; skip `_pending-list.md`, the rendered view), cat it briefly to show the user:
 - Source URL
 - Target folder
 - Added by (claude-code, clawd, cli)
@@ -94,7 +94,8 @@ Format as a compact list. Tell the user the total count and remind them they can
 
 ## Key paths
 
-- Pending queue: `llm-wiki/wiki/_inbox/pending/`
-- Done: `llm-wiki/wiki/_inbox/done/`
-- Failed: `llm-wiki/wiki/_inbox/failed/` (with `.error` sidecars)
+- Pending queue: `_inbox/pending/` (tickets `<priority>-<timestamp>-<slug>.md`; legacy `.queue` still read)
+- Done: `_inbox/done/`
+- Failed: `_inbox/failed/` (with `.error` sidecars)
+- All relative to the notebook root: `_inbox/` sits beside `wiki/`, not inside it
 - wiki-list-add.py / wiki-list-process.py: `{{WIKI_SCRIPTS_DIR}}/`

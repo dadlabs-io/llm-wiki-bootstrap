@@ -1,53 +1,51 @@
 ---
 name: wiki
 description: Show this project's wiki INDEX (folder tree + curated file list with summaries). Use when the user says "show me the wiki", "what's in the wiki", "list wiki topics", or wants to browse what's been captured.
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
-reviewed_for_model: claude-fable-5-1
+last_reviewed: 2026-09-15
+review_after: 2026-12-15
+reviewed_for_model: claude-opus-5
 ---
 
-> **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback` and `/new-wiki`. This skill is documented + callable for programmatic use.
+> **Browsing skill.** You call it to see what the wiki holds. `/wiki-cycle` rebuilds the same indexes as part of its run but does not call this skill. For finding something specific, use `/wiki-search`.
 
-> **Wiki resolution (2026-09-08).** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`). Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault or when running from outside the project. The `--vault llm-wiki/wiki` examples that used to appear here pointed registry notebooks at a folder that does not exist.
+> **Wiki resolution.** The scripts resolve the wiki through the registry (`<cwd>/.claude/wiki-config.json` → `notebook` + `registry` → `linked-notebooks.json`), so most projects' wiki is a notebook in the notebooks vault; a project scaffolded with the wiki inside it has `llm-wiki/` instead. Omit `--vault`; pass `--vault <vault_root>` only for a legacy in-project vault outside the registry.
 
-Display this project's wiki `_INDEX.md`. In per-project installs there is one wiki per project, rooted at `llm-wiki/wiki/`.
+Show this project's wiki index: `<notebook>/_INDEX.md`, the full list of entries at the notebook root (beside `wiki/`), which the filing script regenerates every time an entry is filed.
 
 ## Behavior
 
 ### Default: show this project's wiki
-1. Read `llm-wiki/wiki/_INDEX.md` (relative to project root, i.e., the CWD when Claude Code was started)
+1. Resolve the notebook root from `.claude/wiki-config.json` (the registry notebook's root, or `llm-wiki/` inside the project) and read `<notebook>/_INDEX.md`
 2. Display it to the user as-is — it's already formatted for reading
 3. Offer to read any specific file in the index if they want to drill in
-4. If `_INDEX.md` is missing or stale (modified before any `wiki/` file), regenerate it first:
+4. If `_INDEX.md` is missing or older than the newest file in `wiki/`, regenerate it first:
    ```bash
-   python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py
+   python {{WIKI_SCRIPTS_DIR}}/wiki-index.py --topic <notebook>
    ```
 
-### If the user wants to regenerate the index
+### Other views
+Per-folder indexes (`wiki/<folder>/_INDEX.md`; `sessions/` gets none, retired entries are left out):
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py
+python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py --topic <notebook>
 ```
 
-For the top-level orientation map (`_MAP.md`, always-loaded in CLAUDE.md):
+The top-level orientation map (`wiki/_MAP.md`, always loaded through CLAUDE.md):
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-map-compile.py --topic <project-slug>
+python {{WIKI_SCRIPTS_DIR}}/wiki-map-compile.py --topic <notebook>
 ```
 
-### Multi-wiki note (v2 feature, not in v1)
+`--topic <name>` on any of these picks another registered notebook.
 
-The v1 install model is **one wiki per project**, located at `llm-wiki/wiki/`. Multi-wiki-per-project support is deferred to v2 — if/when that ships, this skill grows a `--topic <name>` arg to disambiguate.
+## Key paths
 
-## Key paths (per-project install)
-
-- Wiki content: `llm-wiki/wiki/`
-- Index script: `{{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py`
-- MAP script: `{{WIKI_SCRIPTS_DIR}}/wiki-map-compile.py`
-- Per-folder INDEX: `llm-wiki/wiki/<folder>/_INDEX.md`
-- Top-level MAP: `llm-wiki/wiki/_MAP.md`
+- Notebook root: from the registry, or `llm-wiki/` inside the project
+- Full index: `<notebook>/_INDEX.md` (`wiki-index.py`)
+- Per-folder INDEX: `<notebook>/wiki/<folder>/_INDEX.md` (`wiki-index-per-folder.py`)
+- Top-level MAP: `<notebook>/wiki/_MAP.md` (`wiki-map-compile.py`)
 
 ## Don't
 
 - Don't summarize the INDEX — show it. The whole point is that it's already a curated, scannable view
 - Don't auto-regenerate unless asked or unless the file is missing/stale
 - Don't conflate this with `/wiki-search` — `/wiki` is for browsing, `/wiki-search` is for finding
-- Don't assume a shared `vault` exists. Each project's wiki lives inside the project at `llm-wiki/wiki/`.
+- Don't assume `llm-wiki/wiki/`: most projects' wiki is a notebook in the vault, found through the registry

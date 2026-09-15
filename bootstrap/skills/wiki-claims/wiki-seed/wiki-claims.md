@@ -13,8 +13,14 @@ Pulls every factual assertion out of your wiki entries, labels each one by how w
 
 **Trigger:** */wiki-claims*, or natural phrasings like "extract claims", "find contradictions", "what contradicts what". Scope it with a folder name, `--entry <file>` for a single entry, `--compare <file>` to check one entry against what is already indexed, or `--contradictions-only` to rescan the existing index without re-extracting.
 
-**Input / Output:** Reads entries under `llm-wiki/wiki/`. Writes a structured claims index to `llm-wiki/wiki/_inbox/claims-index.json` (appended to, never rebuilt from scratch in single-entry modes) and a human-readable report to `llm-wiki/wiki/_inbox/reports/claims-report-<date>.md` grouping contradictions by severity and listing every inference claim for periodic review.
+**Input / Output:** Reads the entries under `wiki/`. Writes a structured claims index to `_inbox/claims-index.json` and a report to `_inbox/reports/claims-report-<date>.md` (the `_inbox/` beside `wiki/`); inside a cycle it also writes `claims.json` / `claims.md` to the run's report folder. The index grows: single-entry modes append to it rather than rebuilding it. The report groups contradictions by severity and lists every inference claim for periodic review. There is no script — the model reads, extracts and compares, so results depend on the model running it.
 
-**Works with:** [`wiki-update`](./wiki-update.md) can call it in `--compare` mode during ingestion, surfacing conflicts at the evaluation gate before a new entry is filed. [`wiki-lint`](./wiki-lint.md) in full semantic mode can delegate its contradiction check here, which is more precise than reading entries and guessing. [`wiki-cycle`](./wiki-cycle.md) runs it as a step and collects its queued findings.
+**What it looks for:**
+- **Cross-entry contradictions** — two claims about the same subject that disagree.
+- **Intra-entry drift** — an entry disagreeing with itself: a TL;DR that overstates the body, tags that don't match the body, a stale count, a missing "abstract-only" caveat. This category turns up the most.
 
-**Note:** Contradictions are flagged, never auto-resolved — the policy is to keep both sides and let a human decide. Not every flag is a real conflict; a `framing_difference` is the same fact with different emphasis and needs no action.
+Each finding is typed: `direct_conflict` (keep both sides, add a note), `stale_data` (update the stale one), `scope_difference` (add a scope qualifier to each), `framing_difference` (same fact, different emphasis — no action), or `intra_entry_drift`.
+
+**Works with:** [`wiki-cycle`](./wiki-cycle.md) runs it in `--full` and `--claims-only`: a full extraction the first time, then `--compare` for the new entries. [`wiki-update`](./wiki-update.md) does not run it; `--compare <entry>` checks a new entry against the index by hand. It complements [`wiki-lint`](./wiki-lint.md) `--full`, whose agents judge contradictions by reading entries; this skill works from a structured index.
+
+**When it skips itself:** comparing a new entry needs an existing claims index; with none there is nothing to compare against, so run a full extraction first. Contradictions are flagged, never auto-resolved — the policy is to keep both sides and let a human decide.

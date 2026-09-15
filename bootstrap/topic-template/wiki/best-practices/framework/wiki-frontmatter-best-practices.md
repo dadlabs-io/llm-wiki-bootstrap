@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 7
-last_reviewed: 2026-09-14
-review_after: 2026-12-13
+framework-version: 8
+last_reviewed: 2026-09-15
+review_after: 2026-12-14
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
 
@@ -38,12 +38,13 @@ Single source of truth for what every entry's YAML frontmatter must contain. Enf
 
 **Required** for entries that compile from an ingested raw source (external URL, paper, video, repo). Points to the immutable raw file under `raw/`.
 
-**Omit** for self-authored synthesis entries (tier `self`). Those have `source_url: internal://...` and no raw artifact. **One exception** (2026-09-14): a self-authored entry that summarises artifacts preserved unchanged under `raw/` — a code-change summary over its run's working files — names that folder in `raw_path`, so the full record stays one link away and the no-deletion rule covers it.
+**Omit** for self-authored synthesis entries (tier `self`). Those have `source_url: internal://...` and no raw artifact. The older explicit marker `raw_path: (none — self-authored)` means the same and stays valid, but new entries leave the field out (2026-09-15: the spec, `wiki-update.py --no-raw`, the lint and every writer now agree). **Exception**: a self-authored entry built over artifacts preserved unchanged under `raw/` names them in `raw_path`, so the full record stays one link away and the no-deletion rule covers it. A code-change summary names its run's folder (2026-09-14); a `/wrap-up` entry names the session snapshot it was written from, when one was saved.
 
 | Case | `raw_path` | Example |
 |---|---|---|
 | External ingest (URL, paper, video) | Required | `raw_path: raw/2026-04-08-llm-wiki.md` |
-| Self-authored synthesis | Omit (do not write `null`) | — |
+| Self-authored synthesis | Omit (do not write `null`; the older `(none — self-authored)` marker is still accepted) | — |
+| Session-derived entry (`/wrap-up`, tier `self`) with a saved snapshot | The snapshot | `raw_path: raw/sessions/2026-09-15-skill-tests.md` |
 | Re-fetched / poisoned raw | Point at newer file; preserve older under a `.poisoned-*` suffix per principle 3 | `raw_path: raw/2026-04-21-foo-clean.txt` |
 | Code-change summary (`project/code-changes/`, tier `self`) | The folder holding the run's working files, copied unchanged | `raw_path: raw/code-changes/2026-09-14-house-fetcher/` |
 

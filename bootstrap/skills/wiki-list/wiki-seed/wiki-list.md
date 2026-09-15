@@ -13,8 +13,13 @@ Low-friction capture for things you want in the wiki but don't want to stop and 
 
 **Trigger:** */wiki-list* — also "add to the wiki list", "queue this for the wiki", "process the wiki list", "drain the queue", "what's in the wiki list". With no arguments it defaults to `show`.
 
-**Input / Output:** `add` takes a source (URL, file path, or pasted text) plus optional folder, title, and tags, and writes a `.queue` file to `_inbox/pending/` — nothing is fetched at this point. `process` drains that queue, ingesting each item, then moves each queue file to `_inbox/done/` or to `_inbox/failed/` with an `.error` sidecar explaining the failure, and regenerates the INDEX once at the end. `show` lists what is pending, with each item's source URL, target folder, who added it, and when.
+**Input / Output:**
+- `add` takes a source (URL, file path, or pasted text) plus optional folder, title, tags and priority (1–5, default 3), and writes a small Markdown ticket, `<priority>-<timestamp>-<slug>.md`, to `_inbox/pending/`. Nothing is fetched. A URL already in `pending/`, `_inbox/proposed/`, `wiki/` or `done/` (exact match) is not queued again; it prints where it already is.
+- `process` runs the filing script (`wiki-update.py`) on each ticket in filename order, so lower priority numbers go first, with no model in the loop, passing through who captured it. Each ticket moves to `_inbox/done/`, or to `_inbox/failed/` with an `.error` file saying why; the INDEX is regenerated once at the end if anything succeeded. For a synthesized entry (searches, cross-links, the judgment scores) use [`wiki-update`](./wiki-update.md) or `/wiki-cycle --ingest-only` instead.
+- `show` lists what is pending, with each ticket's source URL, target folder, who added it, and when.
 
-**Works with:** [`wiki-discover`](./wiki-discover.md) is the main producer — approved discovery candidates are added straight to this queue. `process` hands each item to [`wiki-update`](./wiki-update.md) for the actual ingest, passing through who originally captured it. [`wiki-cycle`](./wiki-cycle.md) runs it as a cycle step, and [`wiki-report`](./wiki-report.md) reports the pending count.
+A readable view of the queue, `_inbox/pending/_pending-list.md`, is refreshed after every add and every processed ticket.
 
-**Note:** `process` supports `--dry-run` and `--limit N`; do a dry run first when the queue holds more than about five items.
+**Works with:** [`wiki-discover`](./wiki-discover.md) and the Drive fetch are the main producers: approved discovery candidates and Drive links are added to this queue. [`wiki-cycle`](./wiki-cycle.md) uses the same queue — it adds approved candidates and, after its own ingest workers finish, moves the ingested tickets to `done/`; it does not run `process`. [`wiki-report`](./wiki-report.md) reports the pending count.
+
+**Note:** `process` supports `--dry-run` and `--limit N`; do a dry run first when the queue holds more than about five items. It exits non-zero when any item failed.

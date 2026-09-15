@@ -194,7 +194,7 @@ Phase B in global mode checks the tooling itself: it refuses (exit 1, with the f
 Then a tailored "you're ready" message, only for the halves that exist:
 
 - **research/ present** — ingest: `/wiki-update <url>` ad-hoc, or drop links into Drive (`<parent>/<slug>/`) and `/wiki-cycle` to discover → ingest → lint → promote. Source tiers T1 primary / T2 vendor / T3 expert / T4 community, set with `--tier`. With `research/` empty: the first `/wiki-update` proposes a subfolder and creates it.
-- **project/ present** — capture: as you code/decide/debug, the agent files durable items (decisions, components, architecture, patterns, troubleshooting) to `wiki/_inbox/proposed/` inline; `/wrap-up` at session end catches the rest.
+- **project/ present** — capture: as you code/decide/debug, the agent files durable items (decisions, components, architecture, patterns, troubleshooting) to `_inbox/proposed/` (beside `wiki/`) inline; `/wrap-up` at session end catches the rest.
 - always — `/wiki-promote --review` to approve staged entries; `/wiki-search "<query>"` to look things up; ask in plain English ("what commands do I have", "show me the wiki").
 
 End with: "Read `how-to/llm-wiki/commands.md` for the full command reference, or `how-to/llm-wiki/getting-started.md` for the first-hour walkthrough. You can also ask me anything in plain English — I have these docs loaded as context."

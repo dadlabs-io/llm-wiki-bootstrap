@@ -29,7 +29,7 @@ cd ~/llm-wiki-bootstrap
 That single command:
 1. Records where this clone lives and installs `/new-wiki` globally at `~/.claude/skills/new-wiki/`
 2. Installs the rest of the global tooling (every wiki skill, script and agent) **only if it is missing or partial** — an installed set is left alone, never re-copied
-3. Asks for anything not passed (name, description) and scaffolds the project (`llm-wiki/`, `CLAUDE.md`, config); `-ProjectFolder` / `-ResearchFolder` (`stubs` | `empty` | `none`, default `stubs`) choose the wiki's two halves
+3. Asks for anything not passed (name, description) and scaffolds the project (`llm-wiki/`, `CLAUDE.md`, config); `-ProjectFolder` / `-ResearchFolder` (`stubs` | `empty` | `none`, default `stubs`) choose the wiki's two halves. The wiki goes inside the project as `llm-wiki/` unless you pass `-VaultRoot` (and `-Registry`) to make it a notebook in your notebooks vault, which is what `/new-wiki` recommends
 4. (Optional) Walks through Google Drive OAuth if `-DriveEnabled yes`
 
 ## Two-step alternative
@@ -49,9 +49,10 @@ If you want the global install first, then create projects separately:
 ## What gets installed where
 
 **Globally (per machine):**
-- `~/.claude/skills/` — every wiki skill (the manifest is `TRAVEL_SKILLS` in the bootstrap's `_install_tooling.py`)
+- `~/.claude/skills/` — every wiki skill
 - `~/.claude/wiki-scripts/` — the Python helpers behind them
-- `~/.claude/agents/` — the `wiki-ingester` agent
+- `~/.claude/agents/` — the `wiki-ingester` agent, with its model config and reading list
+- `~/.claude/settings.json` — a SessionStart hook that lists a wiki project's resume files at startup and after `/clear` (the file is backed up first; other settings are left alone)
 - `~/.claude/wiki-config.json` — records where the bootstrap clone lives
 
 **Per project (when you scaffold one):**
@@ -60,13 +61,14 @@ If you want the global install first, then create projects separately:
 - the wiki root — `<project>/llm-wiki/` or a registered notebook in your notebooks vault — with `README`, `how-to/`, `wiki/` (the folders you chose; `sessions/` always) and `raw/sessions/`
 - only with `-SkillsInstall bundled`: `<project>/.claude/skills/`, `wiki-scripts/`, `wiki-templates/` (a private copy of the tooling)
 
-For Cursor users: `.cursor/` replaces `.claude/`, the skills are always bundled, and `.cursor/rules/*.mdc` are generated from the SKILL.md files so Cursor's agent picks them up natively.
+For Cursor users (Windows installer only; the Mac/Linux installer does not support Cursor yet): `.cursor/` replaces `.claude/`, the skills are always bundled, and `.cursor/rules/*.mdc` are generated from the SKILL.md files so Cursor's agent picks them up natively.
 
 ## Prerequisites
 
 - Python 3.10+
 - Git
 - Node.js + `qmd` 2.8.3 or newer (`npm i -g @tobilu/qmd@latest`) for wiki search
+- Only for Google Drive ingest: `pip install google-api-python-client google-auth-oauthlib`
 
 ### Optional: a GPU runtime for `qmd query` (search)
 
@@ -91,12 +93,13 @@ Without it node-llama-cpp falls back to Vulkan, where token generation can hang 
 ```powershell
 cd ~/llm-wiki-bootstrap
 git pull
-.\install-wiki.ps1 -RefreshOnly      # refreshes the global /new-wiki skill
+.\install-wiki.ps1                   # refreshes every wiki skill, script and agent, and the hook
 ```
 
-From inside Claude Code, `/new-wiki --sync` refreshes only the global `/new-wiki` skill;
-`-RefreshOnly` (or `wiki-upgrade.py`) refreshes every skill, script and agent. Neither touches a
-project. To refresh a project's framework-managed docs (the `how-to/llm-wiki/` pages and the six
+The plain run is the refresh (press Enter at its two prompts, or run it non-interactively).
+`-RefreshOnly` is still accepted for old scripts but does nothing extra. `wiki-upgrade.py` does the
+same refresh; from inside Claude Code, `/new-wiki --sync` refreshes only the global `/new-wiki`
+skill. None of these touches a project. To refresh a project's framework-managed docs (the `how-to/llm-wiki/` pages and the six
 framework-contract docs), from the bootstrap clone:
 ```
 python bootstrap/scripts/new-wiki.py --phase docs --check --target-folder <project>   # preview, writes nothing

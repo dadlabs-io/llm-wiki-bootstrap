@@ -680,7 +680,12 @@ def main():
              "subfolder (e.g., --subfolder agentic-design).",
     )
     parser.add_argument(
-        "--client-secrets", default=os.environ.get("WIKI_DRIVE_CLIENT_SECRETS"),
+        # Falls back to the standard location /new-wiki tells the user to use: until
+        # 2026-09-15 nothing read it unless passed explicitly, so new-wiki's own
+        # OAuth step and /wiki-cycle's scope re-auth failed on a fresh machine.
+        "--client-secrets", default=(os.environ.get("WIKI_DRIVE_CLIENT_SECRETS")
+                                     or (str(_std) if (_std := Path.home() / ".config" / "wiki-cycle"
+                                                       / "client_secrets.json").is_file() else None)),
         help="Path to OAuth 2.0 Desktop Client JSON (only needed first run; "
              "or set WIKI_DRIVE_CLIENT_SECRETS env var)",
     )

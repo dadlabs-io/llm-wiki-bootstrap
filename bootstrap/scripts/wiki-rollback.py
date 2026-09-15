@@ -211,7 +211,6 @@ tier: self
 confidence: high
 last_reviewed: {today}
 review_after: {today}
-raw_path: (none — self-authored)
 type: rollback
 revises: {ancestor_rel}
 verified: unverified

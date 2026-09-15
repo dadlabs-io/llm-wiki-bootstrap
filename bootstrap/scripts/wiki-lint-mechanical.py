@@ -210,7 +210,7 @@ def lint(vault_root, topic, strict=False):
     unquoted_yaml = []  # (file, field, value) — frontmatter values with YAML-breaking chars that aren't quoted
     missing_raw_path = []  # (file,) — entries with no raw_path field
     phantom_raw_path = []  # (file, raw_path_value) — raw_path doesn't resolve to a real file
-    self_authored_count = 0  # informational — entries with explicit "(none ...)" marker
+    self_authored_count = 0  # informational — tier self with raw_path omitted, or the older "(none ...)" marker
 
     REQUIRED_FM_FIELDS = ["title", "date"]  # source_url + ingested_by may be intentionally absent
     VALID_TIERS = {"1", "2", "3", "4", "self"}
@@ -327,7 +327,10 @@ def lint(vault_root, topic, strict=False):
         # "(none — self-authored)" or other parenthetical markers are explicit no-raw flags and skip the check.
         raw_path_value = fm.get("raw_path", "").strip()
         if not raw_path_value:
-            missing_raw_path.append(f)
+            if tier_value.strip("\"'") == "self":
+                self_authored_count += 1  # the spec: a self-authored entry omits raw_path (v8, 2026-09-15)
+            else:
+                missing_raw_path.append(f)
         elif raw_path_value.startswith("("):
             # Explicit no-raw marker (e.g., "(none — self-authored)")
             self_authored_count += 1
@@ -451,7 +454,7 @@ def lint(vault_root, topic, strict=False):
     out.append(f"**Unquoted YAML values**: {len(unquoted_yaml)}")
     out.append(f"**Missing `raw_path`**: {len(missing_raw_path)}")
     out.append(f"**Phantom `raw_path` (file or folder does not exist)**: {len(phantom_raw_path)}")
-    out.append(f"**Explicit self-authored (no raw)**: {self_authored_count}")
+    out.append(f"**Self-authored (no raw)**: {self_authored_count}")
     icarus_total = (len(invalid_verified) + len(invalid_type) + len(missing_contradicted_by)
                     + len(missing_revises_on_rollback) + len(missing_review_of_on_review)
                     + len(broken_icarus_ref))
@@ -626,9 +629,9 @@ def lint(vault_root, topic, strict=False):
     # Section: raw_path integrity
     out.append("## 📁 `raw_path` Integrity (load-bearing for no-deletion rule)")
     out.append("")
-    out.append("Every wiki entry is a paged-in view of an immutable raw source. `raw_path` must point to a real file in `<topic>/raw/` — or a folder there, for an entry over several files such as a code-change summary (`raw/code-changes/<date>-<change>/`) — or be the explicit marker `(none — self-authored)`. If `raw_path` is missing or phantom, the entry's information cannot be re-derived if the wiki entry is ever deleted, compacted, or migrated. See `wiki/best-practices/memory-architecture-best-practices.md` Principle 2 carve-out.")
+    out.append("Every wiki entry is a paged-in view of an immutable raw source. `raw_path` must point to a real file in `<topic>/raw/` — or a folder there, for an entry over several files such as a code-change summary (`raw/code-changes/<date>-<change>/`) — or be left out on a self-authored entry (`tier: self`), where the older explicit marker `(none — self-authored)` means the same (frontmatter spec). If `raw_path` is missing or phantom, the entry's information cannot be re-derived if the wiki entry is ever deleted, compacted, or migrated. See `wiki/best-practices/memory-architecture-best-practices.md` Principle 2 carve-out.")
     out.append("")
-    out.append(f"_Stats_: {self_authored_count} self-authored (explicit no-raw), {len(missing_raw_path)} missing field, {len(phantom_raw_path)} phantom (file not found).")
+    out.append(f"_Stats_: {self_authored_count} self-authored (no raw), {len(missing_raw_path)} missing field, {len(phantom_raw_path)} phantom (file not found).")
     out.append("")
     if not missing_raw_path and not phantom_raw_path:
         out.append("_All non-self-authored entries have a valid `raw_path` resolving to an existing file or folder._")
@@ -636,7 +639,7 @@ def lint(vault_root, topic, strict=False):
         if missing_raw_path:
             out.append(f"### Missing `raw_path` field ({len(missing_raw_path)} entries)")
             out.append("")
-            out.append("Entries with no `raw_path` frontmatter at all. Either add a path to the preserved raw source, or add the explicit marker `raw_path: (none — self-authored)`.")
+            out.append("Entries that are not self-authored (`tier` other than `self`) and have no `raw_path`. Add the path to the preserved raw source; an entry that is really our own synthesis should carry `tier: self`.")
             out.append("")
             for f in missing_raw_path:
                 rel = f.relative_to(wiki_root)

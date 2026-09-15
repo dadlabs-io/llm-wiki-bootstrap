@@ -33,7 +33,7 @@ icarus's invariant: `verified: verified` cannot be set on initial write. The rea
 This means:
 - New entries from `/wiki-update` start as `verified: unverified` (or no field, treated as unverified).
 - A separate `/wiki-verify` invocation is the ONLY way to flip an entry to `verified: verified`.
-- The lint script (`wiki-lint-mechanical.py --strict`) rejects entries whose initial frontmatter claims `verified: verified` — caught at CI.
+- Nothing mechanical enforces this. `wiki-lint-mechanical.py` accepts `verified: verified` in frontmatter (it only checks that the value is in the enum, even with `--strict`), and `wiki-rollback.py` reads frontmatter before the sidecar, so a hand-written value counts as verified. Never write it by hand; certify through this skill.
 - The sidecar pattern (memory-signals doc §2) means the verify event doesn't dirty the entry file by default — keeps git history clean for telemetry-class writes.
 
 ## Hard rules

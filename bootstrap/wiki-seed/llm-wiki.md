@@ -9,12 +9,15 @@ date: 2026-08-20
 # llm-wiki — the skill pack
 
 The LLM-wiki framework's skills: everything for capturing, ingesting, verifying, and maintaining
-this project's durable knowledge in its wiki. The pack is **skills plus one worker agent** (no
-workflow): the skills are meant for **every** agent and session, which is why they're normally
-installed to the **global** skills area (`~/.claude/skills/`) rather than per-project — one
-install serves all your projects, and each project's `.claude/wiki-config.json` points the
-shared skills at that project's own wiki. The agent (below) is the pack's one dedicated
-subagent, installed to `~/.claude/agents/` (added 2026-08-20).
+this project's durable knowledge in its wiki. The pack is **skills, one worker agent and one
+startup hook** (no workflow): the skills are meant for **every** agent and session, which is why
+they're normally installed to the **global** skills area (`~/.claude/skills/`) rather than
+per-project — one install serves all your projects, and each project's `.claude/wiki-config.json`
+points the shared skills at that project's own wiki. The agent (below) is the pack's one dedicated
+subagent, installed to `~/.claude/agents/` (added 2026-08-20). The hook, added to
+`~/.claude/settings.json`, lists a wiki project's resume files (`sessions/active-context.md`, then
+`sessions/<persona>/handoff.md` and `task.md`) when a session starts and after `/clear`, so the
+session picks up where the last one left off; outside a wiki project it prints nothing.
 
 Every skill has its own page in the sibling `skills/` folder — linked below. For the guided
 version of this list, see [`commands.md`](./commands.md) (the full command reference) and
@@ -24,8 +27,8 @@ version of this list, see [`commands.md`](./commands.md) (the full command refer
 
 | Skill | One line |
 |---|---|
-| [`wrap-up`](./skills/wrap-up.md) | End-of-session distillation: conversation + git diff → staged wiki entries + journals |
-| [`wiki-update`](./skills/wiki-update.md) | Ingest one external source (URL, video, file, pasted text) into `research/` |
+| [`wrap-up`](./skills/wrap-up.md) | End of session: updates the session journal and the resume dashboards (handoff, task, active-context), stages durable entries, then offers to promote them |
+| [`wiki-update`](./skills/wiki-update.md) | Ingest one external source (URL, video, PDF, X post, file, pasted text) and file it directly into the wiki (`--staged` to stage it for review); two or more URLs are queued for `wiki-cycle` |
 | [`wiki-search`](./skills/wiki-search.md) | Hybrid BM25 + vector + reranked search across the wiki |
 | [`wiki-cycle`](./skills/wiki-cycle.md) | The full research cycle: discover → ingest → lint → fix → report |
 | [`wiki-promote`](./skills/wiki-promote.md) | Review staged entries in `_inbox/proposed/` and move approved ones into the wiki |
@@ -60,17 +63,18 @@ version of this list, see [`commands.md`](./commands.md) (the full command refer
 | Skill | One line |
 |---|---|
 | [`new-wiki`](./skills/new-wiki.md) | Scaffold a new project with the framework (wiki + skills + config) |
-| [`wiki-init`](./skills/wiki-init.md) | Scaffold just the wiki folder structure (run by new-wiki; rarely direct) |
-| [`upd-docs`](./skills/upd-docs.md) | RETIRED — folded into `wrap-up`; kept as a redirect |
+| [`wiki-init`](./skills/wiki-init.md) | Scaffold just the wiki folder structure (`new-wiki` does this itself; rarely needed) |
+| [`upd-docs`](./skills/upd-docs.md) | RETIRED — not installed; "upd-docs", "update docs" or "save progress" now runs `wrap-up` |
 
 ## How the pieces flow
 
 Capture happens at the edges — [`wiki-list`](./skills/wiki-list.md) /
 [`wiki-discover`](./skills/wiki-discover.md) queue sources, [`wiki-update`](./skills/wiki-update.md)
-and [`wiki-cycle`](./skills/wiki-cycle.md) ingest them into `research/`, and
+and [`wiki-cycle`](./skills/wiki-cycle.md) ingest them (usually into `research/`), and
 [`wrap-up`](./skills/wrap-up.md) distills your own sessions into `project/` + `sessions/` entries.
-Nothing self-certifies: new entries stage through `_inbox/proposed/` and
-[`wiki-promote`](./skills/wiki-promote.md), truth-status flips only via
+Nothing self-certifies: `wrap-up` entries and `wiki-cycle` batches stage through `_inbox/proposed/`
+for [`wiki-promote`](./skills/wiki-promote.md) (a single `wiki-update` files directly unless you
+ask for `--staged`), an entry becomes verified only through
 [`wiki-verify`](./skills/wiki-verify.md), and [`wiki-lint`](./skills/wiki-lint.md) /
 [`wiki-refresh`](./skills/wiki-refresh.md) / [`wiki-report`](./skills/wiki-report.md) keep the
 whole thing honest over time.

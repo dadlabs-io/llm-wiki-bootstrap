@@ -41,7 +41,7 @@ If it prints anything else, **stop and report it** — do not fall back to `qmd 
 ## What to ask the user (only if not provided)
 
 1. **Query** — what to search for (natural language works — qmd searches by meaning)
-2. Optional: `--top N` to limit results (default shows top matches)
+2. Optional: `-k N` results returned (default 20)
 
 ## Run
 
