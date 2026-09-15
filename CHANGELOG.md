@@ -11,6 +11,13 @@
 
 ## 2026-09-15
 
+### New skill: `/task-list`, the project's task list (the user's idea, via agent-builder)
+- **Why**: the queue in `task.md` was hard to see; long items scrolled away. The user wanted one standard list in every project, with an owner per task, that a task never silently drops off.
+- **Change**: `/task-list` keeps an **At a glance** block at the top of `sessions/<persona>/task.md`, above NOW and QUEUE. It has one table per owner (the user, each persona or bot, Unassigned) and one row per task: number, task, status (`to do` / `doing` / `waiting` / `parked` / `done`), and next step or what it is waiting on. Plain speech triggers it too ("add a task …", "delete task 4", "mark 2 done"). Every edit goes through the new `wiki-tasks.py`: it picks each number above every number already in the file and records the next free one, and it refuses to remove a task without `--confirmed`, which the skill passes only on the user's word. A finished task is marked done, and the session asks whether to remove it. `/wrap-up` keeps the block current where a project has one.
+- **Name**: `/tasks` is Claude Code's own background-jobs panel, and a built-in command wins over a skill, so the skill is `/task-list`.
+- **Test suite**: `tests/skills/task-list/` has 7 plain-speech cases. Its baseline has not been run yet; it was installed first on the user's call (2026-09-15).
+- **Migration**: tooling refresh. A project's list starts with the first task added; an existing `task.md` keeps its NOW and QUEUE.
+
 ### Retired `/upd-docs` stub removed (user: "We never want to leave dead code/skills/docs around")
 - **Why**: `/upd-docs` was folded into `/wrap-up` on 2026-07-06, but a redirect stub and its pack page still shipped into every project, and an old installed copy still showed in the skill list.
 - **Change**: `bootstrap/skills/upd-docs/` is deleted, along with its pack-page row and the wrap-up page's link to it. `/wrap-up` still answers to "upd-docs", "update docs" and "save progress". `seed_pack_docs` now also reports a page under `how-to/llm-wiki/skills/` or `agents/` whose skill or agent no longer ships, and `--prune-retired` deletes it.

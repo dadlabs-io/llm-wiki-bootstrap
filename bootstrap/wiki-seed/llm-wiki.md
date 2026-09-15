@@ -28,6 +28,7 @@ version of this list, see [`commands.md`](./commands.md) (the full command refer
 | Skill | One line |
 |---|---|
 | [`wrap-up`](./skills/wrap-up.md) | End of session: updates the session journal and the resume dashboards (handoff, task, active-context), stages durable entries, then offers to promote them |
+| [`task-list`](./skills/task-list.md) | The project's task list at the top of `task.md`: one table per owner; add, mark done, remove only on your word. Plain speech works ("add a task …", "delete task 4") |
 | [`wiki-update`](./skills/wiki-update.md) | Ingest one external source (URL, video, PDF, X post, file, pasted text) and file it directly into the wiki (`--staged` to stage it for review); two or more URLs are queued for `wiki-cycle` |
 | [`wiki-search`](./skills/wiki-search.md) | Hybrid BM25 + vector + reranked search across the wiki |
 | [`wiki-cycle`](./skills/wiki-cycle.md) | The full research cycle: discover → ingest → lint → fix → report |

@@ -1,0 +1,15 @@
+{
+  "skill": "task-list",
+  "cases": [
+    {"id": "show-plain", "kind": "show", "say": "What's on my list?", "mentions": ["registrar", "build scripts"]},
+    {"id": "show-slash", "kind": "show", "say": "/task-list", "mentions": ["onboarding guide", "dark theme"]},
+    {"id": "add-plain", "kind": "add", "say": "Add a task: renew the docs domain before October.",
+     "words": ["renew", "domain"]},
+    {"id": "add-no-block", "kind": "add", "seed": "task-no-block.md",
+     "say": "Add a task to back up the database before the upgrade.", "words": ["database", "upgrade"]},
+    {"id": "done-asks", "kind": "done", "task": 2, "say": "I finished the onboarding guide draft, so task 2 is done."},
+    {"id": "delete-plain", "kind": "delete", "task": 3, "say": "Delete task 3, we're not doing it."},
+    {"id": "waiting-plain", "kind": "set", "task": 1, "say": "Task 1 is waiting on a quote from the registrar.",
+     "expect": {"status": "waiting", "next_has": "quote", "owner": "Mark"}}
+  ]
+}

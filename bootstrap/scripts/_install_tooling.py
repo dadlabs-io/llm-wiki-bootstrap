@@ -59,6 +59,7 @@ TRAVEL_SCRIPTS = [
     "wiki-rollback.py",
     "wiki-search-rerank.py",  # truth-status bucket sort over qmd JSON (search spec surface 1); shipped 2026-09-08
     "wiki-session-start.py",  # SessionStart hook: prints the project's resume files, silent elsewhere (2026-09-14)
+    "wiki-tasks.py",  # the At a glance task list in sessions/<persona>/task.md, behind /task-list (2026-09-15)
     "wiki-update.py",
     "wiki-upgrade.py",
     "wiki-verify.py",
@@ -66,7 +67,7 @@ TRAVEL_SCRIPTS = [
 
 # Skill directories that travel to every install.
 TRAVEL_SKILLS = [
-    "new-wiki", "wrap-up",
+    "new-wiki", "wrap-up", "task-list",
     "wiki", "wiki-init", "wiki-update", "wiki-search", "wiki-cycle",
     "wiki-discover", "wiki-list", "wiki-claims", "wiki-refresh",
     "wiki-report", "wiki-lint", "wiki-promote",

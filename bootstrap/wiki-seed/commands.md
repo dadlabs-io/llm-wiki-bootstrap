@@ -21,6 +21,7 @@ Canonical reference for the LLM-wiki framework. Each command works inside Claude
 | `/wiki-cycle` | Batch ingest — discover, ingest (staged for your review), lint, backlinks and indexes, morning report, commit. `--full` adds semantic lint, claims, synthesis and refresh, and promotes. The daily/weekly command for `research/`. |
 | `/wiki-search "<query>"` | Hybrid BM25 + vector + LLM-reranked search across your wiki |
 | `/wrap-up` | End of session: updates the session journal and resume dashboards, proposes durable entries (you confirm), stages them, and offers to promote them. |
+| `/task-list` | The project's task list (top of `task.md`): show it, add a task, mark one done, remove one only on your word. Plain speech works as well: "add a task …", "delete task 4", "what's on my list". |
 | `/wiki-promote` | Walk staged entries in `_inbox/proposed/` and accept/reject each one |
 | `/wiki-verify` | Mark an entry verified — entries never self-certify |
 | `/wiki-rollback` | Roll an entry back to its verified ancestor |
@@ -60,6 +61,7 @@ These are listed for completeness. `/wiki-cycle` invokes them in order; you can 
 - [`wiki-update`](./skills/wiki-update.md) — `/wiki-update` in depth (direct vs staged, the gate, dedup)
 - [`wiki-cycle`](./skills/wiki-cycle.md) — `/wiki-cycle` orchestrator + mode flags
 - [`wrap-up`](./skills/wrap-up.md) — `/wrap-up` categories + safety
+- [`task-list`](./skills/task-list.md) — `/task-list`: the owner tables, the two rules, what it runs for each phrase
 - [`wiki-search`](./skills/wiki-search.md) — `/wiki-search` ranking model
 - [`drive-setup`](./drive-setup.md) — Google Drive OAuth one-time setup
 - [`install`](./install.md) — installing the framework on a fresh machine

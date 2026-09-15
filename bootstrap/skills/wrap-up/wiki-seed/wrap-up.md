@@ -17,7 +17,7 @@ The single session-close command. It turns "we just spent two hours figuring out
 
 Two per-notebook settings control how much it asks: `confirm_before_create` gates the proposal table of candidate entries, and `confirm_before_promote` gates whether staged entries get promoted inline at the end of the run. Both default to asking.
 
-**Works with:** [`wiki-promote`](./wiki-promote.md) finishes the job — wrap-up stages entries and offers to promote them immediately, and anything you decline stays in `_inbox/proposed/` for a later `/wiki-promote --review`. [`wiki-update`](./wiki-update.md) is the counterpart for external sources into `research/`; if a session turns out to be pure ingest, wrap-up still writes the journal and dashboards, then points you there for the source.
+**Works with:** [`wiki-promote`](./wiki-promote.md) finishes the job — wrap-up stages entries and offers to promote them immediately, and anything you decline stays in `_inbox/proposed/` for a later `/wiki-promote --review`. [`wiki-update`](./wiki-update.md) is the counterpart for external sources into `research/`; if a session turns out to be pure ingest, wrap-up still writes the journal and dashboards, then points you there for the source. [`task-list`](./task-list.md) owns the At a glance task list at the top of `task.md`; when a project has one, wrap-up keeps it current (finished tasks marked done, new ones added) and asks before removing any.
 
 **Note:** if you only want the fast dashboard refresh without filing anything, run `/wrap-up` and answer `none` at the proposal table — the journal and dashboards still update.
 
