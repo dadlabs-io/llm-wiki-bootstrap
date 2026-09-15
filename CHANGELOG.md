@@ -13,7 +13,7 @@
 
 ### SessionStart hook shows the next step in the terminal (user: "I don't think the hook worked")
 - **Why**: the hook ran, but a hook cannot start a model turn, and its plain stdout reaches Claude only. So the user saw a blank prompt until they typed, and read that as the hook failing.
-- **Change**: `wiki-session-start.py` now prints JSON. `additionalContext` carries the same resume instruction as before, for Claude. `systemMessage` is one line the user sees at startup: the project, the handoff's `GOAL` line, and "Send any message for the full recap". Outside a wiki project it still prints nothing.
+- **Change**: `wiki-session-start.py` now prints JSON. `additionalContext` carries the same resume instruction as before, for Claude. `systemMessage` is a short block the user sees at startup, set off by blank lines: the project, the handoff's `GOAL` line, and "Send any message for the full recap". Outside a wiki project it still prints nothing.
 - **For the recap with no typing**: start Claude with a first message, e.g. `claude "resume"` (extra flags such as `--channels` pass through).
 - **Migration**: none beyond the tooling refresh. The settings.json hook entry is unchanged.
 

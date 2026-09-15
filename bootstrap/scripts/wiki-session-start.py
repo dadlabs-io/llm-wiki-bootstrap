@@ -114,8 +114,8 @@ def hook_output(start: Path) -> dict | None:
              "on where we left off and what is next:"]
     lines += [f"{i}. {f} ({f.stat().st_size / 1024:.1f} KB)" for i, f in enumerate(files, 1)]
     goal = handoff_goal(sessions / persona / "handoff.md")
-    user_line = f"llm-wiki: {name} resume files are loaded. " + (f"Next: {goal} " if goal else "")
-    user_line += "Send any message for the full recap."
+    user_line = f"\n\nllm-wiki: {name} resume files are loaded.\n\n" + (f"Next: {goal}\n\n" if goal else "")
+    user_line += "Send any message for the full recap.\n"
     return {"systemMessage": user_line,
             "hookSpecificOutput": {"hookEventName": "SessionStart",
                                    "additionalContext": "\n".join(lines) + "\n"}}
