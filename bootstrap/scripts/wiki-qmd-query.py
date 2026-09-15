@@ -5,9 +5,11 @@ processes at once, sized to the notebook, and log how long each search waited
 and ran.
 
 Why (tested 2026-09-13 on an 8 GB RTX 4070 Laptop GPU): each `qmd query`
-process loads ~2 GB of models onto the GPU. Two concurrent searches fit;
-a third fails fast with "Failed to create any rerank context". The user's
-decision the same night: every search is the FULL search, never a keyword
+process loads its models onto the GPU. On qmd 2.1.0 two concurrent searches
+fit and a third failed fast with "Failed to create any rerank context"; qmd
+2.8.3 sizes its embedding pool from the weight file, and three fit (peak
+7.7 of 8.2 GB, three runs, 2026-09-14) — so the default is three slots, and
+--preflight warns on a qmd older than 2.8.3. The user's decision on 2026-09-13: every search is the FULL search, never a keyword
 downgrade — when the GPU is full, searches wait their turn, and if that makes
 batches too slow, run fewer workers.
 
@@ -23,7 +25,7 @@ What it does:
   - searches the current project's notebook by default (from the nearest
     .claude/wiki-config.json); --notebook <name> picks another,
     --all-notebooks searches every indexed one
-  - holds one of N GPU slots (default 2) for the whole search — an OS file
+  - holds one of N GPU slots (default 3) for the whole search — an OS file
     lock released when the process ends; a caller with no free slot waits
   - runs `qmd query` under a timeout that kills the whole process tree
   - GPU full or a transient CUDA fault: back off and retry; after the last
@@ -40,7 +42,7 @@ Usage:
   python wiki-qmd-query.py --notebook agentic-design "term"  # one notebook
   python wiki-qmd-query.py --all-notebooks "term"            # every notebook
   python wiki-qmd-query.py "term" -k 40 -C 100               # explicit depth
-  python wiki-qmd-query.py --preflight                       # CUDA check only
+  python wiki-qmd-query.py --preflight                       # CUDA check + qmd version
   python wiki-qmd-query.py --stats                           # wait/run summary
   python wiki-qmd-query.py --depth-check --notebook agentic-design
 
@@ -48,7 +50,7 @@ Exit codes: qmd's own code on a completed search (0 = ok); 2 = preflight
 failed or usage error; 75 = GPU busy after every retry; 124 = timed out.
 
 Environment: WIKI_QMD_K, WIKI_QMD_C (fixed values instead of the defaults),
-WIKI_QMD_SLOTS (default 2), WIKI_QMD_SLOT_DIR (default ~/.cache/wiki-qmd),
+WIKI_QMD_SLOTS (default 3; 2 on a qmd older than 2.8.3), WIKI_QMD_SLOT_DIR (default ~/.cache/wiki-qmd),
 WIKI_QMD_BIN (the qmd executable; default: node + qmd's dist/cli/qmd.js).
 """
 
@@ -89,6 +91,7 @@ GPU_FULL_MARKERS = (
     "CUDA error",
 )
 EXIT_USAGE, EXIT_GPU_BUSY, EXIT_TIMEOUT = 2, 75, 124
+QMD_MIN_VERSION = (2, 8, 3)  # the three-slot default assumes 2.8.3's embed-pool sizing (qmd #799)
 
 
 def slot_dir() -> Path:
@@ -298,8 +301,36 @@ def log_call(record: dict) -> None:
         pass  # logging never blocks a search
 
 
+def parse_qmd_version(text: str) -> tuple[int, ...] | None:
+    """'qmd 2.8.3 (facd35e)' -> (2, 8, 3); None when the text holds no version."""
+    m = re.search(r"(\d+)\.(\d+)\.(\d+)", text or "")
+    return tuple(int(g) for g in m.groups()) if m else None
+
+
+def qmd_version_text() -> str:
+    try:
+        return subprocess.run([*qmd_cmd(), "--version"], capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", timeout=30).stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
 def preflight() -> int:
-    """The /wiki-search CUDA check: node-llama-cpp must report CUDA available."""
+    """The /wiki-search CUDA check: node-llama-cpp must report CUDA available. Also
+    reports qmd's version; older than QMD_MIN_VERSION is a warning, not a failure —
+    it still searches, but the three-slot default assumes 2.8.3, so on an older qmd
+    a third concurrent search fails and retries."""
+    want = ".".join(map(str, QMD_MIN_VERSION))
+    text = qmd_version_text()
+    ver = parse_qmd_version(text)
+    if ver is None:
+        print(f"[wiki-qmd-query] preflight: qmd version unknown ({text or 'no output'})", file=sys.stderr)
+    elif ver < QMD_MIN_VERSION:
+        print(f"[wiki-qmd-query] preflight: WARNING qmd {'.'.join(map(str, ver))} is older than {want} — "
+              "upgrade (npm i -g @tobilu/qmd@latest, then qmd doctor) or set WIKI_QMD_SLOTS=2",
+              file=sys.stderr)
+    else:
+        print(f"[wiki-qmd-query] preflight: qmd {'.'.join(map(str, ver))}", file=sys.stderr)
     npm = shutil.which("npm")
     if not npm:
         print("[wiki-qmd-query] preflight: npm not found", file=sys.stderr)
@@ -413,14 +444,15 @@ def main() -> int:
     scope = ap.add_mutually_exclusive_group()
     scope.add_argument("--notebook", help="search this registry notebook (default: the current project's)")
     scope.add_argument("--all-notebooks", action="store_true", help="search every indexed notebook")
-    ap.add_argument("--slots", type=int, default=int(os.environ.get("WIKI_QMD_SLOTS", "2")),
-                    help="concurrent full searches allowed on the GPU (default 2, or $WIKI_QMD_SLOTS)")
+    ap.add_argument("--slots", type=int, default=int(os.environ.get("WIKI_QMD_SLOTS", "3")),
+                    help="concurrent full searches allowed on the GPU (default 3, or $WIKI_QMD_SLOTS; "
+                         "set 2 on a qmd older than 2.8.3)")
     ap.add_argument("--timeout", type=float, default=120, help="seconds per qmd query (default 120)")
     ap.add_argument("--max-wait", type=float, default=900, help="max seconds to wait for a free slot (default 900)")
     ap.add_argument("--retries", type=int, default=3, help="GPU retries after the first attempt (default 3)")
     ap.add_argument("--caller", default=os.environ.get("WIKI_QMD_CALLER", "session"),
                     help="who is searching, for the log (e.g. wiki-ingester, session)")
-    ap.add_argument("--preflight", action="store_true", help="run the CUDA check only")
+    ap.add_argument("--preflight", action="store_true", help="run the CUDA check (and report the qmd version) only")
     ap.add_argument("--stats", action="store_true", help="summarise the search log")
     ap.add_argument("--depth-check", action="store_true",
                     help="sample titles from --notebook (or the project's) and compare C with 2C")

@@ -72,8 +72,8 @@ with TodoWrite. For each item:
    `python ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester --notebook <target notebook> "<term>"`
    (keyword + meaning + rerank on the GPU; 20 results by default, `-k` to change; the reranker's candidate count `-C` is sized to the notebook; the `_MAP`/`_INDEX` machine files never come back as results). Always pass the
    target notebook: without it qmd searches every notebook, and a cross-link must stay inside the
-   notebook you are filing into. Several workers run at once and the GPU fits two
-   searches, so the helper holds one of two GPU slots per search and the others wait their turn —
+   notebook you are filing into. Several workers run at once and the GPU fits three
+   searches (qmd 2.8.3+), so the helper holds one of three GPU slots per search and the others wait their turn —
    waiting is expected, not an error. It never falls back to keyword search, and neither do you:
    quality over speed (user decision 2026-09-13, replacing the 2026-09-12 keyword-only rule — that
    lock-up was the missing CUDA runtime, not parallelism). Run

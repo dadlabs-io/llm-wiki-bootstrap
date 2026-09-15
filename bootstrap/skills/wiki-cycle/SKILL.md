@@ -451,6 +451,6 @@ Use `subagent_type="wiki-ingester"` for ingestion workers (fallback: `general-pu
 - Don't skip the scratchpad — it's the resume mechanism
 - Don't run semantic lint if one ran in the last 24 hours (check scratchpad history) — too expensive
 - Don't auto-approve tier 4 sources — always ask
-- Don't run more than 4 parallel agents at once — diminishing returns + rate limits; ingest workers' searches also share two GPU slots (see Step 2)
+- Don't run more than 4 parallel agents at once — diminishing returns + rate limits; ingest workers' searches also share three GPU slots (see Step 2)
 - Don't commit mid-cycle — one commit at the end covers everything
 - Don't skip the morning report — it's the user's review checkpoint

@@ -29,7 +29,7 @@ Python 3.10+, Git. No Node.js required for the global install.
 
 ### Optional: a GPU runtime for `qmd query` (search)
 
-Wiki search runs on [qmd](https://github.com/tobil/qmd) (`npm i -g @tobilu/qmd`), which bundles three small models and runs them on the machine through node-llama-cpp. Keyword search (`qmd search`) needs no model. The hybrid mode the skills use by default (`qmd query`) does, and it needs a GPU backend: on a Windows machine with an NVIDIA GPU install the CUDA runtime once, at machine level (not per project):
+Wiki search runs on [qmd](https://github.com/tobi/qmd) 2.8.3 or newer (`npm i -g @tobilu/qmd@latest`), which bundles three small models and runs them on the machine through node-llama-cpp. Keyword search (`qmd search`) needs no model. The hybrid mode the skills use by default (`qmd query`) does, and it needs a GPU backend: on a Windows machine with an NVIDIA GPU install the CUDA runtime once, at machine level (not per project):
 
 ```powershell
 winget install --id Nvidia.CUDA --version 13.2 --exact --accept-package-agreements --accept-source-agreements --override "-s cudart_13.2 cublas_13.2"
@@ -42,6 +42,8 @@ That installs only the runtime library and cuBLAS (no compiler, no driver; CUDA 
 ```
 
 Without it node-llama-cpp falls back to Vulkan, where token generation can hang indefinitely at 100% CPU (seen 2026-09-12 on an RTX 4070 + Intel iGPU laptop). The `/wiki-search` skill runs this check before the first query and stops if it fails; it does not fall back. On a machine with no NVIDIA GPU, use `qmd search`.
+
+**Upgrading from an older qmd (2.1 → 2.8).** After `npm i -g @tobilu/qmd@latest`, run `qmd doctor` once before anything else. Its first check migrates the old embeddings to 2.8's fingerprint; until then `qmd status` shows nearly every file as needing embedding, and re-embedding would redo them all for nothing. `qmd status` now also reports orphaned chunks, the vectors of old file versions that 2.1 never pruned: `qmd cleanup` removes them. Then `qmd embed` for any files genuinely pending. On 2.8.3 an 8 GB GPU runs three full searches at once, which is `wiki-qmd-query.py`'s default; on an older qmd set `WIKI_QMD_SLOTS=2`.
 
 ---
 
