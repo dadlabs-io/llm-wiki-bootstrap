@@ -11,6 +11,17 @@
 
 ## 2026-09-15
 
+### `/wiki-update` pack page corrected; the trimmed skill installed (user: "do not install until the pack page is correct")
+- **What was wrong** (all older than the trim), in the pack page every notebook carries at `how-to/llm-wiki/skills/wiki-update.md`:
+  - It said entries are staged by default, at a wrong inbox path. Direct filing is the default.
+  - It said the script "scores" tier and relevance. The agent picks the tier from the frontmatter spec's rubric, and nothing scores relevance.
+  - It restated the tier rubric and invented a "stricter relevance check" for tier 4. Tier 4 never auto-ingests; it needs the user's yes.
+  - Its Don't list said direct filing breaks the MAP and the backlinks pass. Direct is the normal mode and adds the backlinks itself.
+  - It put `pending/` and `done/` in the filing script's duplicate check. Those are the queue's; the filing script checks `wiki/` and `_inbox/proposed/`.
+  - It counted two hard gate rules. There are three, since the layout rule (2026-09-14).
+- **Now**: rewritten from the skill and scripts as they stand. It covers the steps, direct versus staged (the user's choice, never the model's), the `Scores:` line, when the skill skips itself (duplicates, tier 4), and both duplicate checks, the filing script's and the queue's (checked against `wiki-list-add.py`).
+- **Rollout**: SOP docs refresh into every registered notebook, then the tooling install of the trimmed skill (`9faadd9`), `fetchers.md` and the search helper, with installed copies compared with the repo.
+
 ### A standing test baseline per skill (`tests/skills/`), `wiki-update` first (user direction)
 - **Why**: the user accepted the case for smaller skills but asked how we make sure nothing is lost. A name-level diff cannot show that a model still runs every step, so every skill gets a repeatable run instead: one of each input it handles, built into a throwaway sandbox, checked by a script, and compared with a stored baseline. The user asked for every run to use both Sonnet and Opus, to learn when each is enough, and to go skill by skill, largest first, as each is revised. Testing must not complicate the workflow: nothing here ships, and no skill knows it is being tested.
 - **What**: `tests/skills/run_skill_test.py` is the runner. Per model it builds a sandbox with a seed notebook, its own registry and its own qmd index, so real notebooks and the real search index are never touched. It renders the skill under test from the working tree, or from a git ref (`--skill-ref HEAD`, to compare old with new), and runs each case as a headless `claude -p` session with a fixed tool list, keeping the event stream. It then runs the suite's checks and writes `report.md` against `baseline-<model>.json`. `tests/skills/wiki-update/` has 11 cases: cached article, YouTube transcript, PDF and X post; a local file and pasted text, each direct or staged; live article and YouTube URLs; two URLs (queued); no source (redirect to `/wrap-up`); and the same URL twice (dedup). The checks cover the files created, frontmatter, the real entry gate, Related links that resolve, sidecar plus `wiki-promote --check`, backlinks, temp cleanup, the steps seen in the tool calls (three or more scoped searches, a read of the raw, filing through `wiki-update.py`), and both judgment scores printed and at least 3. Third-party sources are fetched into `~/.cache/llm-wiki-skilltest/`, never committed; the seed notebook and input samples are written for the tests.

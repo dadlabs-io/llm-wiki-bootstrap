@@ -9,59 +9,68 @@ date: 2026-07-31
 
 # wiki-update — skill
 
-Ingests an external source into the wiki's `research/` layer. You hand it whatever you have — a link, a YouTube video, a PDF, a local file, or pasted text — and it works out the right fetcher, saves the verbatim original, and writes a curated summary that is cross-linked into what the wiki already knows. Integration is the point: a summary that sits alone is half the value, so every entry links to related entries and notes where the new source agrees with, extends, or contradicts them.
+Ingests one external source into the wiki. You hand it whatever you have (a link, a YouTube video, a PDF, an X post, a local file, or pasted text) and it picks the right fetcher, keeps the verbatim original under `raw/`, and writes a curated entry that is cross-linked into what the wiki already knows. Integration is the point: a summary that sits alone is half the value, so every entry links to related entries and says where the new source agrees with, extends or contradicts them.
 
-**Trigger:** */wiki-update <source>*, plus natural phrasings like "add this to the wiki", "save this article", "wiki this", or "ingest this video".
+**Trigger:** */wiki-update <source>*, plus phrasings like "add this to the wiki", "save this article", "wiki this" or "ingest this video". "Update the wiki" belongs to [`wiki-cycle`](./wiki-cycle.md).
 
-**Input / Output:** consumes exactly one URL, file path, or block of pasted text. Produces a verbatim raw capture under `raw/` and a curated entry at `wiki/<folder>/<slug>.md` with full frontmatter (title, date, source_url, raw_path, tier, confidence, review dates, tags), plus regenerated indexes and backlinks added to the related entries it found. With `--staged` the entry lands in `_inbox/proposed/` alongside a `<slug>.proposed_metadata.json` sidecar instead, leaving existing entries untouched until promotion. Hand it two or more URLs and it switches to batch-queue mode, queueing each for later draining rather than ingesting inline.
+**Input / Output:** one URL, file path, or block of pasted text. By default it files directly: the raw under `raw/`, the entry at `wiki/<folder>/<slug>.md` with full frontmatter (title, date, source URL, raw path, tier, confidence, review dates, tags), links added back from the related entries it found, and the index regenerated. With `--staged` the entry goes to `_inbox/proposed/` with a sidecar file instead, no other entry is touched, and [`wiki-promote`](./wiki-promote.md) finishes the integration later. Two or more URLs are not ingested: each is queued in `_inbox/pending/` for `/wiki-cycle --ingest-only`. With no source at all it stops and points you to [`wrap-up`](./wrap-up.md), which is for capturing the session's own work.
 
-Before filing, the script itself runs a deterministic gate over the draft — a TL;DR, a Related section with at least two wiki links, enough tags, stub marking on thin entries, numbers quoted rather than paraphrased — and refuses to file on a hard failure (an explicit `--no-gate` with a reason is the only way past it). The agent then scores only the two judgment dimensions a script cannot decide, extraction fidelity and synthesis value, and that self-score is advisory: the agent that wrote the draft is never the thing that certifies it. The same body checks run in `wiki-lint` over every existing entry so the backlog stays visible.
+**When it skips itself:** a source already in the wiki (or already staged) is reported as a duplicate and not filed again, unless you say to force it. A community source (tier 4) is never ingested automatically; it needs your yes.
 
-**Works with:** [`wrap-up`](./wrap-up.md) is the counterpart for internal session work — run `/wiki-update` with no source and it redirects there. [`wiki-list`](./wiki-list.md) holds the queue that batch mode writes into, and [`wiki-cycle`](./wiki-cycle.md) drains that queue by running this flow across many sources at once. [`wiki-promote`](./wiki-promote.md) moves staged entries into the wiki and wires their backlinks. [`wiki-search`](./wiki-search.md) is what the synthesis step uses to find the existing entries worth linking to.
+**Works with:** [`wiki-list`](./wiki-list.md) holds the queue that batch mode writes into, and [`wiki-cycle`](./wiki-cycle.md) drains that queue by running this flow across many sources, staged. [`wiki-search`](./wiki-search.md) is the search the flow uses to find the entries worth linking to. [`wiki-promote`](./wiki-promote.md) moves staged entries into the wiki.
 
 ## Full walkthrough
-
-For ad-hoc additions. One URL = fetch + render + stage right now. Multiple URLs = queue them to `_inbox/pending/` for the next `/wiki-cycle` to process.
 
 ### Usage
 
 ```
 /wiki-update https://example.com/article
+/wiki-update https://example.com/article --staged     # stage it for review instead of filing it
+/wiki-update https://a.com https://b.com              # two or more: queued for /wiki-cycle
 ```
 
-The skill fetches the page, extracts content (handles articles, PDFs via `wiki-fetch-pdf.py`, YouTube via `wiki-fetch-youtube.py`), renders a wiki entry, scores it on tier/relevance, and stages it at `llm-wiki/wiki/_inbox/proposed/<slug>.md`.
+### What happens, step by step
+
+1. **Fetch the raw.** Ordinary web pages are fetched directly. YouTube videos get their transcript, PDFs are converted to text page by page, X posts come from the public syndication API, and pages that need JavaScript are rendered in a browser. A Medium member-only story is read through your own signed-in browser when the session is interactive. A raw that was already saved (handed over by a batch) skips this step.
+2. **Read the raw in full.**
+3. **Search the wiki** for three to five of the source's key terms, with the full search, scoped to this notebook.
+4. **Write the entry**: a TL;DR, the body, the sources, and a Related section linking at least two existing entries. Numbers and quotations go in attributed `>` blockquotes, so they are never paraphrased.
+5. **The gate.** The filing script checks the draft before writing anything; see below. The agent then scores what a script cannot and prints one line: `Scores: extraction fidelity N/5, synthesis value N/5`. The scores are advisory: the agent that wrote the draft never certifies it.
+6. **Add links back** from the related entries to the new one (direct mode only).
+7. **File it**, regenerate the index, and delete the temporary files.
 
 ### The gate (what "refused" means)
 
-Since 2026-09-02 the filing script checks the drafted entry **before** it writes anything. Two rules are hard: the entry must have a `## TL;DR` section, and a `## Related` section linking to at least two other wiki entries. Three are soft: three or more tags, a `stub` tag on genuinely thin entries, and numbers that sit in an attributed `>` blockquote rather than loose prose. A hard failure means the script prints `Refusing to file`, writes nothing, and hands the draft back — the agent adds the missing section and files again. The source is never lost or skipped; it just cannot land half-finished. `--no-gate '<reason>'` is the audited override for the rare entry where a rule is genuinely wrong for it. The agent's own quality score covers only the two things a script cannot judge, faithfulness to the source and whether the summary adds insight, and that score is advisory. `/wiki-lint` runs the same checks over existing entries as a warn-only backlog view.
+The filing script refuses to write an entry that has no `## TL;DR` section, a `## Related` section with fewer than two links to other wiki entries (for your own synthesis, tier `self`, this is only a warning), or anything after its Source footer other than the automatic backlinks block. It warns, without refusing, on fewer than three tags, a thin entry not tagged `stub`, and numbers written in plain prose instead of a `>` blockquote. A refusal prints `Refusing to file` and writes nothing; the agent fixes the draft and files again, so the source is never lost. `--no-gate '<reason>'` is the audited override for the rare entry a rule is genuinely wrong for. [`wiki-lint`](./wiki-lint.md) runs the same checks over existing entries as a warn-only backlog.
 
-You review the proposed entry, then `/wiki-promote --review` to move it into `wiki/<folder>/`.
+### Direct or staged
 
-### Tier scoring
+| | Direct (the default) | `--staged` |
+|---|---|---|
+| Entry goes to | `wiki/<folder>/` | `_inbox/proposed/`, with a sidecar naming its folder |
+| Links back from related entries | added now | added by `/wiki-promote` |
+| Use it when | you are ingesting a source yourself | you ask for review first, or a batch runs unattended (`/wiki-cycle`'s workers) |
 
-The script evaluates each URL against the project's tier definitions:
+The agent never chooses staged mode on its own; you (or the calling workflow) ask for it.
 
-- **tier 1** — peer-reviewed / primary research (papers, official specs)
-- **tier 2** — vendor / official docs
-- **tier 3** — expert / first-hand practitioner (well-known author, deep dive)
-- **tier 4** — community / blog / X post / Reddit
-- **tier self** — our own synthesis (rarely set automatically)
+### Tier and confidence
 
-Tier 4 items get a stricter relevance check — if they don't clear the bar, they're rejected with a content-grounded reason (not a title-pattern guess).
+Tier is the source's quality, from `1` (primary or peer-reviewed) to `4` (community), or `self` for the wiki's own synthesis. Confidence is how reliable the entry is. The agent chooses both from the rubric in your notebook's frontmatter spec (`wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`), the one place they are defined; between two adjacent tiers it takes the lower. Tier 4 never auto-ingests.
+
+### Duplicates
+
+The filing script compares the source's URL, normalised (case, `www.`, trailing slash, tracking parameters), with every entry in `wiki/` and `_inbox/proposed/`, and skips a match. A later snapshot of a source that changed (a repository that grew) is filed with `--force` and marked as revising the earlier entry. The queue (batch mode, Drive links) has its own duplicate check: it skips a URL already queued in `_inbox/pending/`, already processed in `_inbox/done/`, staged in `_inbox/proposed/`, or in `wiki/`.
 
 ### Don't
 
-- Don't run `/wiki-update` and then immediately promote without reviewing — the score isn't a substitute for human review
-- Don't bypass the staging area to write directly into `wiki/<folder>/` — that breaks `_MAP.md` regen and the backlinks pass
-- Don't add the same URL twice expecting different results — the script dedupes against `_inbox/pending/`, `_inbox/proposed/`, `wiki/`, and `_inbox/done/`; Drive-fetched links are compared by canonical URL (tracking params stripped, YouTube collapsed to `watch?v=<id>`) so a newsletter link no longer re-queues an ingested article
+- Don't promote a staged entry without reading it: the agent's scores are not a review.
+- Don't force past a duplicate unless the source really changed.
+- Don't use it for session work ("save what we did"): that is `/wrap-up`.
 
 ### Batching
 
-For multiple URLs:
+For several URLs:
 ```
 /wiki-update https://a.com https://b.com https://c.com
 ```
-Two-URL+ is treated as a queue: each URL goes to `_inbox/pending/` for `/wiki-cycle --ingest-only` (or full `/wiki-cycle`) to drain.
-
-Or drop links into the Drive folder (`__FOR CLAUDE/<project-slug>/`) and let `/wiki-cycle` pick them up.
-
+Each URL goes to `_inbox/pending/` for `/wiki-cycle --ingest-only` (or a full `/wiki-cycle`) to drain. You can also drop links into the Drive folder (`__FOR CLAUDE/<project-slug>/`) and let `/wiki-cycle` pick them up.
