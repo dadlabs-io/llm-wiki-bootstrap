@@ -17,6 +17,7 @@
 - **Name**: `/tasks` is Claude Code's own background-jobs panel, and a built-in command wins over a skill, so the skill is `/task-list`.
 - **Test suite**: `tests/skills/task-list/` has 7 plain-speech cases. Its baseline has not been run yet; it was installed first on the user's call (2026-09-15).
 - **Migration**: tooling refresh. A project's list starts with the first task added; an existing `task.md` keeps its NOW and QUEUE.
+- **Fix, same day (investment-agent's report)**: a new list no longer gets a placeholder `### User` section. A first `add --owner main` had left an empty "User" section beside the "Mark" one made next. The user's section is now created under their name by the first task given to them, and an empty "User" section left by the first version is dropped on the next edit.
 
 ### Retired `/upd-docs` stub removed (user: "We never want to leave dead code/skills/docs around")
 - **Why**: `/upd-docs` was folded into `/wrap-up` on 2026-07-06, but a redirect stub and its pack page still shipped into every project, and an old installed copy still showed in the skill list.

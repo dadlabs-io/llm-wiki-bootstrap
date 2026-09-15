@@ -42,6 +42,7 @@ HEADING = "## At a glance"
 MARKER_RE = re.compile(r"<!--\s*wiki-tasks\s+next-id:\s*(\d+)\s*-->")
 STATUSES = ("to do", "doing", "waiting", "parked", "done")
 DONE_NEXT = "remove? (your call)"
+PLACEHOLDER_OWNER = "User"
 TABLE_HEAD = ["| # | Task | Status | Next / waiting on |", "|---|---|---|---|"]
 INTRO = ("Every task, one line each, by owner. A number is never reused. \"waiting\" is a status: the task "
          "stays with its owner. A task leaves this list only when the user says so; a finished one is marked "
@@ -132,6 +133,8 @@ class Board:
         raise UserError(f"no task #{n} in the list")
 
     def block(self) -> list[str]:
+        # an empty "User" section is the placeholder the first version created; drop it
+        self.sections = [s for s in self.sections if s["rows"] or s["extras"] or s["name"] != PLACEHOLDER_OWNER]
         out = [HEADING, "", f"<!-- wiki-tasks next-id: {self.next_id} -->"]
         intro = "\n".join(self.intro).strip()
         out += [intro or INTRO, ""]
@@ -214,7 +217,10 @@ def main(argv: list[str]) -> int:
     try:
         path, persona = resolve(args)
         board = Board(path.read_text(encoding="utf-8") if path.is_file() else "")
-        default_owners = ["User", persona, "Unassigned"]
+        # No placeholder section for the user: theirs is created, under their name, by the first task
+        # given to them (investment-agent, 2026-09-15: a first `add --owner main` left an empty "User"
+        # section beside the "Mark" one made next).
+        default_owners = [persona, "Unassigned"]
 
         if args.cmd == "show":
             if not board.exists:
