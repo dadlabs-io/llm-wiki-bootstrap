@@ -11,6 +11,11 @@
 
 ## 2026-09-15
 
+### Retired `/upd-docs` stub removed (user: "We never want to leave dead code/skills/docs around")
+- **Why**: `/upd-docs` was folded into `/wrap-up` on 2026-07-06, but a redirect stub and its pack page still shipped into every project, and an old installed copy still showed in the skill list.
+- **Change**: `bootstrap/skills/upd-docs/` is deleted, along with its pack-page row and the wrap-up page's link to it. `/wrap-up` still answers to "upd-docs", "update docs" and "save progress". `seed_pack_docs` now also reports a page under `how-to/llm-wiki/skills/` or `agents/` whose skill or agent no longer ships, and `--prune-retired` deletes it.
+- **Migration**: `new-wiki.py --phase docs --all-notebooks --prune-retired`, then delete `~/.claude/skills/upd-docs/` if it is there.
+
 ### SessionStart hook shows the next step in the terminal (user: "I don't think the hook worked")
 - **Why**: the hook ran, but a hook cannot start a model turn, and its plain stdout reaches Claude only. So the user saw a blank prompt until they typed, and read that as the hook failing.
 - **Change**: `wiki-session-start.py` now prints JSON. `additionalContext` carries the same resume instruction as before, for Claude. `systemMessage` is a short block the user sees at startup, set off by blank lines: the project, the handoff's `GOAL` line, and "Send any message for the full recap". Outside a wiki project it still prints nothing.

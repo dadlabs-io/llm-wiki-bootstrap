@@ -715,7 +715,8 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
 
 # Pages that sat flat at the how-to root before 2026-09-08 and now live under how-to/llm-wiki/ (the four
 # skill guides folded into their skill pages). A refresh never deletes, so they linger in an older project
-# until --prune-retired removes them; without the flag they are only reported.
+# until --prune-retired removes them; without the flag they are only reported. The same goes for a page under
+# llm-wiki/skills/ or llm-wiki/agents/ whose skill or agent no longer ships (found by seed_pack_docs itself).
 RETIRED_HOW_TO_PAGES = ["commands.md", "getting-started.md", "install.md", "drive-setup.md", "wiki-cycle.md",
                         "wiki-search.md", "wiki-update.md", "wrap-up.md", "upd-docs.md"]
 
@@ -728,7 +729,7 @@ def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False, pr
     skill (a folder with SKILL.md) and agent (a folder with AGENT.md) is expected to carry a
     page; each one that does not is named in a warning, because an artifact without a usage
     page is installed undocumented (requirement added 2026-09-08). Returns the number of
-    pages copied. Used by Phase B (new project) and --phase docs (refresh an existing one)."""
+    pages copied or pruned. Used by Phase B (new project) and --phase docs (refresh an existing one)."""
     wiki_src = bootstrap / "bootstrap"
     skills_src = wiki_src / "skills"
     agents_src = wiki_src / "agents"
@@ -742,16 +743,19 @@ def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False, pr
     else:
         _warn(f"no pack page at {pack_seed_src} — the how-to folder has no entry point")
     missing = []
+    unshipped = []
     for kind, src, main_file, sub in (("skill", skills_src, "SKILL.md", "skills"),
                                       ("agent", agents_src, "AGENT.md", "agents")):
         if not src.exists():
             continue
         n_pages = n_skipped = 0
+        shipped = set()
         for art_dir in sorted(src.iterdir()):
             if not art_dir.is_dir() or not (art_dir / main_file).exists():
                 continue
             page_src = art_dir / "wiki-seed"
             if page_src.exists() and any(page_src.glob("*.md")):
+                shipped.update(p.name for p in page_src.glob("*.md"))
                 c, s = _copy_tree(page_src, pack_docs_dst / sub, dry_run=dry_run)
                 n_pages += c
                 n_skipped += s
@@ -759,19 +763,23 @@ def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False, pr
                 missing.append(f"{kind} {art_dir.name}")
         total += n_pages
         _ok(f"seeded per-{kind} usage pages: {n_pages} copied, {n_skipped} unchanged")
+        if (pack_docs_dst / sub).exists():
+            unshipped += [f"llm-wiki/{sub}/{p.name}" for p in sorted((pack_docs_dst / sub).glob("*.md"))
+                          if p.name not in shipped]
     if missing:
         _warn("shipped without a usage page (add <artifact>/wiki-seed/<name>.md — every skill and "
               "agent must carry one): " + ", ".join(missing))
-    retired = [n for n in RETIRED_HOW_TO_PAGES if (how_to_root / n).exists()]
+    retired = [n for n in RETIRED_HOW_TO_PAGES if (how_to_root / n).exists()] + unshipped
     if retired:
         if prune_retired:
             for n in retired:
                 if not dry_run:
                     (how_to_root / n).unlink()
-            _ok(f"removed {len(retired)} retired root page(s) now under llm-wiki/: {', '.join(retired)}")
+            total += len(retired)
+            _ok(f"{'WOULD remove' if dry_run else 'removed'} {len(retired)} retired page(s): {', '.join(retired)}")
         else:
-            _warn(f"{len(retired)} pre-2026-09-08 page(s) still at the how-to root, superseded by llm-wiki/: "
-                  f"{', '.join(retired)} — re-run with --prune-retired to remove them")
+            _warn(f"{len(retired)} retired page(s) (pre-2026-09-08 root pages, or a skill or agent that no longer "
+                  f"ships): {', '.join(retired)} — re-run with --prune-retired to remove them")
     return total
 
 
@@ -1670,8 +1678,9 @@ def main():
     parser.add_argument("--no-agentmemory", action="store_true",
                         help="(deprecated, no-op as of 2026-05-14 — agentmemory removed)")
     parser.add_argument("--prune-retired", action="store_true",
-                        help="With --phase docs (or B --force): delete the pre-2026-09-08 pages at the how-to root "
-                             "that now live under how-to/llm-wiki/ (otherwise they are only reported)")
+                        help="With --phase docs (or B --force): delete retired pack pages — the pre-2026-09-08 pages "
+                             "at the how-to root, and pages of skills or agents that no longer ship "
+                             "(otherwise they are only reported)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print actions without writing")
     parser.add_argument("--all-notebooks", action="store_true",

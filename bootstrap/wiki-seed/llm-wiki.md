@@ -64,7 +64,6 @@ version of this list, see [`commands.md`](./commands.md) (the full command refer
 |---|---|
 | [`new-wiki`](./skills/new-wiki.md) | Scaffold a new project with the framework (wiki + skills + config) |
 | [`wiki-init`](./skills/wiki-init.md) | Scaffold just the wiki folder structure (`new-wiki` does this itself; rarely needed) |
-| [`upd-docs`](./skills/upd-docs.md) | RETIRED — not installed; "upd-docs", "update docs" or "save progress" now runs `wrap-up` |
 
 ## How the pieces flow
 
