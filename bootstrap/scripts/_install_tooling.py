@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -28,6 +29,12 @@ CC_GLOBAL_SKILLS_DIR = CC_GLOBAL_DIR / "skills"
 CC_GLOBAL_WIKI_SCRIPTS_DIR = CC_GLOBAL_DIR / "wiki-scripts"
 CC_GLOBAL_AGENTS_DIR = CC_GLOBAL_DIR / "agents"
 CC_GLOBAL_CONFIG_PATH = CC_GLOBAL_DIR / "wiki-config.json"
+CC_GLOBAL_SETTINGS_PATH = CC_GLOBAL_DIR / "settings.json"
+
+# The SessionStart hook that loads a wiki project's resume files (2026-09-14).
+SESSION_HOOK_SCRIPT = "wiki-session-start.py"
+SESSION_HOOK_MATCHER = "startup|clear"
+SESSION_HOOK_TIMEOUT = 30  # seconds
 
 # ---------- Manifests (single source of truth) ----------
 # User-invokable scripts that travel to every install.
@@ -51,6 +58,7 @@ TRAVEL_SCRIPTS = [
     "wiki-reciprocate-backlinks.py",
     "wiki-rollback.py",
     "wiki-search-rerank.py",  # truth-status bucket sort over qmd JSON (search spec surface 1); shipped 2026-09-08
+    "wiki-session-start.py",  # SessionStart hook: prints the project's resume files, silent elsewhere (2026-09-14)
     "wiki-update.py",
     "wiki-upgrade.py",
     "wiki-verify.py",
@@ -161,6 +169,69 @@ def load_install_skill_fn(scripts_src: Path):
     return _subprocess_install
 
 
+# Exec form (command + args), never a shell line: on Windows a shell-form hook can
+# pass through cmd.exe, which turns a `>` into a redirect (claude-code #76774, the
+# stray zero-byte files). The -c guard keeps "script gone -> exit 0, print nothing",
+# so a removed install never breaks a session start.
+_SESSION_HOOK_GUARD = ("import os, runpy, sys; p = sys.argv[1]; "
+                       "os.path.isfile(p) and runpy.run_path(p, run_name='__main__')")
+
+
+def session_hook_entry(scripts_dir, python: str = None) -> dict:
+    """The hooks.SessionStart entry: the interpreter that ran the install, named
+    explicitly (`python3` can be the Microsoft Store stub on Windows, `python`
+    can be absent on a Mac), running the script through the -c guard."""
+    py = Path(python or sys.executable).as_posix()
+    script = f"{str(scripts_dir).rstrip('/')}/{SESSION_HOOK_SCRIPT}"
+    return {"type": "command", "command": py, "args": ["-c", _SESSION_HOOK_GUARD, script],
+            "timeout": SESSION_HOOK_TIMEOUT}
+
+
+def _is_session_hook(h) -> bool:
+    return isinstance(h, dict) and any(SESSION_HOOK_SCRIPT in str(x)
+                                       for x in [h.get("command", ""), *(h.get("args") or [])])
+
+
+def install_session_hook(entry: dict, settings_path: Path = None, dry_run: bool = False) -> str:
+    """Add the wiki resume hook under hooks.SessionStart in settings.json, or bring
+    an existing one up to date, leaving every other hook and setting as it is.
+    Backs the file up (<name>.bak-wiki) before changing it; writes nothing when
+    already current. Returns added | updated | unchanged | would be … | skipped: …"""
+    path = Path(settings_path) if settings_path else CC_GLOBAL_SETTINGS_PATH
+    try:
+        data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
+        return f"skipped: {path} is not readable JSON ({e}); add the SessionStart hook by hand"
+    hooks = data.setdefault("hooks", {}) if isinstance(data, dict) else None
+    groups = hooks.setdefault("SessionStart", []) if isinstance(hooks, dict) else None
+    if not isinstance(groups, list):
+        return f"skipped: unexpected hooks layout in {path}; add the SessionStart hook by hand"
+    status = None
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        for h in group.get("hooks") or []:
+            if _is_session_hook(h):
+                if h == entry and group.get("matcher") == SESSION_HOOK_MATCHER:
+                    return "unchanged"
+                h.clear()
+                h.update(entry)
+                group["matcher"] = SESSION_HOOK_MATCHER
+                status = "updated"
+    if status is None:
+        groups.append({"matcher": SESSION_HOOK_MATCHER, "hooks": [entry]})
+        status = "added"
+    if dry_run:
+        return f"would be {status}"
+    if path.is_file():
+        shutil.copy2(path, path.with_name(path.name + ".bak-wiki"))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp-wiki")
+    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    tmp.replace(path)
+    return status
+
+
 def install_tooling(bootstrap_source: Path, dry_run: bool = False,
                     skills_dest: Path = None, scripts_dest: Path = None) -> dict:
     """Global claude-code tooling install: copy TRAVEL_SCRIPTS (+ helpers) to
@@ -263,7 +334,16 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
                 shutil.copy2(sc, agents_dest / sc.name)
         agents_installed += 1
 
+    # 4) The SessionStart resume hook → ~/.claude/settings.json. Global installs
+    #    only: the hook runs for every session on the machine, so it must point
+    #    at the global scripts, never at one project's bundled copy.
+    session_hook = "skipped: not the global scripts folder"
+    if os.path.normcase(str(scripts_dest.expanduser().resolve())) == \
+            os.path.normcase(str(CC_GLOBAL_WIKI_SCRIPTS_DIR.expanduser().resolve())):
+        session_hook = install_session_hook(session_hook_entry(scripts_dest_value), dry_run=dry_run)
+
     return {
+        "session_hook": session_hook,
         "bootstrap": str(bootstrap),
         "scripts_copied": travel_copied,
         "helpers_copied": helpers_copied,
@@ -408,6 +488,7 @@ def print_summary(summary: dict):
     verb_s = "would be installed" if dry else "installed"
     print(f"  skills {verb_s}: {summary['skills_installed']}  → {summary['skills_dest']}")
     print(f"  agents {verb_s}: {summary.get('agents_installed', 0)}  → {summary.get('agents_dest', '')}")
+    print(f"  session hook:     {summary.get('session_hook', '')}  → {CC_GLOBAL_SETTINGS_PATH} (SessionStart)")
     print(f"  placeholder {{{{WIKI_SCRIPTS_DIR}}}} → {summary['scripts_dest_value']}")
     print()
     print("  Restart Claude Code if these dirs are new so it picks up the")

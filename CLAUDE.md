@@ -5,17 +5,14 @@ You're reading this from inside the llm-wiki-bootstrap repo (probably because th
 ## Resuming — where we left off (do this on startup)
 
 Active persona: **main** (`sessions/<persona>/` is per persona; an installed role agent such as developer or
-architect reads its own folder).
+architect reads its own folder; a session that works as another persona sets `"persona"` in `.claude/wiki-config.json`).
 
-After this file and auto-memory load, before the first reply, read in order, each **if present** (`<notebook>` is
-`C:\github.com\project-notebooks
-otebooks\llm-wiki-bootstrap`, this repo's own notebook per `.claude/wiki-config.json`):
-1. `<notebook>/wiki/sessions/active-context.md` — cross-persona resume pointer
-2. `<notebook>/wiki/sessions/<persona>/handoff.md`, then `task.md` — goal, state, pending; NOW and QUEUE
-3. Project status doc, if this project keeps one: (none yet — e.g. `project/roadmap.md`)
-
-If `handoff.md` is missing (no wrap-up yet): read the newest journal under `sessions/<persona>/<YYYY-MM>/` if any,
-else treat the project as new. Journals otherwise stay on demand.
+At startup and after `/clear`, the llm-wiki SessionStart hook (`wiki-session-start.py`, installed globally) lists the
+paths of `<notebook>/wiki/sessions/active-context.md` and `sessions/<persona>/handoff.md` + `task.md`; read the files it
+lists before the first reply (`<notebook>` is `C:/github.com/project-notebooks/notebooks/llm-wiki-bootstrap`, this repo's
+own notebook per `.claude/wiki-config.json`). **Fallback** — if no hook message is in your context, read them yourself,
+each if present; with no `handoff.md` yet, read the
+newest journal under `sessions/<persona>/<YYYY-MM>/`, else treat the project as new.
 Open the first reply, whatever the user said, with one paragraph on where we left off and what is next. A project
 with a Discord bot does its channel catch-up after this read.
 

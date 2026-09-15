@@ -41,7 +41,7 @@ These are listed for completeness. `/wiki-cycle` invokes them in order; you can 
 ## Daily rhythm
 
 **For development projects:**
-1. Start a session — do the Resuming read in CLAUDE.md (`sessions/active-context.md`, then `sessions/<persona>/handoff.md` and `task.md`, each if present); the `_MAP.md` is always-loaded via CLAUDE.md
+1. Start a session — at startup and after `/clear` the SessionStart hook lists the resume files (`sessions/active-context.md`, then `sessions/<persona>/handoff.md` and `task.md`, each if present) and the session reads them before its first reply; the Resuming section in CLAUDE.md is the fallback where no hook is installed; the `_MAP.md` is always-loaded via CLAUDE.md
 2. Code + decide + investigate
 3. `/wrap-up` at end — distills the session
 4. `/wiki-promote --review` to accept the proposed entries
