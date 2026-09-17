@@ -1,0 +1,185 @@
+{
+  "skill": "wrap-up",
+  "cases": [
+    {
+      "id": "first-run",
+      "kind": "full",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- I added `beacon/retry.py`, a `RetryBudget` dataclass. It measures a retry allowance in elapsed wall-clock time from the first attempt, exposes `start()`, `remaining()` and `exhausted()`, and never extends itself.\n- We chose to cap retries by total elapsed time rather than by attempt count. The alternative we rejected was exponential backoff with a maximum number of attempts: with a slow endpoint, 5 attempts at growing delays could keep one file alive for eleven minutes and stall the whole sync, and the number of attempts told us nothing about how long a user had been waiting. Elapsed time is the thing users actually notice.\n- We root-caused the duplicate-upload reports. The manifest entry was written before the remote confirmed the object, so a sync interrupted between the write and the confirmation resumed believing the object was already there; the next full pass uploaded it again. `beacon/manifest.py` now has `record_upload()`, called only after the remote returns an etag. Write-after-confirm.\n- We settled a rule while doing it: every remote call in beacon goes through the single `send()` seam in `beacon/transport.py`, with the sender injected. That is what let us exercise the retry paths with no network and no sleeps, and we want new code to follow it rather than reaching for an HTTP library directly.\n\nNothing else was touched.",
+      "seeds": {},
+      "git": "no-commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "answer": "go",
+      "promote_answer": "no",
+      "expect": {
+        "min_staged": 3,
+        "creates_dashboards": true,
+        "journal": "new"
+      }
+    },
+    {
+      "id": "incremental",
+      "kind": "full",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- I added `beacon/retry.py`, a `RetryBudget` dataclass. It measures a retry allowance in elapsed wall-clock time from the first attempt, exposes `start()`, `remaining()` and `exhausted()`, and never extends itself.\n- We chose to cap retries by total elapsed time rather than by attempt count. The alternative we rejected was exponential backoff with a maximum number of attempts: with a slow endpoint, 5 attempts at growing delays could keep one file alive for eleven minutes and stall the whole sync, and the number of attempts told us nothing about how long a user had been waiting. Elapsed time is the thing users actually notice.\n- We root-caused the duplicate-upload reports. The manifest entry was written before the remote confirmed the object, so a sync interrupted between the write and the confirmation resumed believing the object was already there; the next full pass uploaded it again. `beacon/manifest.py` now has `record_upload()`, called only after the remote returns an etag. Write-after-confirm.\n- We settled a rule while doing it: every remote call in beacon goes through the single `send()` seam in `beacon/transport.py`, with the sender injected. That is what let us exercise the retry paths with no network and no sleeps, and we want new code to follow it rather than reaching for an HTTP library directly.\n\nNothing else was touched.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-plain.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "answer": "go",
+      "promote_answer": "no",
+      "expect": {
+        "min_staged": 3,
+        "journal": "append",
+        "keeps_other_persona": true
+      }
+    },
+    {
+      "id": "none-answer",
+      "kind": "none",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- I added `beacon/retry.py`, a `RetryBudget` dataclass. It measures a retry allowance in elapsed wall-clock time from the first attempt, exposes `start()`, `remaining()` and `exhausted()`, and never extends itself.\n- We chose to cap retries by total elapsed time rather than by attempt count. The alternative we rejected was exponential backoff with a maximum number of attempts: with a slow endpoint, 5 attempts at growing delays could keep one file alive for eleven minutes and stall the whole sync, and the number of attempts told us nothing about how long a user had been waiting. Elapsed time is the thing users actually notice.\n- We root-caused the duplicate-upload reports. The manifest entry was written before the remote confirmed the object, so a sync interrupted between the write and the confirmation resumed believing the object was already there; the next full pass uploaded it again. `beacon/manifest.py` now has `record_upload()`, called only after the remote returns an etag. Write-after-confirm.\n- We settled a rule while doing it: every remote call in beacon goes through the single `send()` seam in `beacon/transport.py`, with the sender injected. That is what let us exercise the retry paths with no network and no sleeps, and we want new code to follow it rather than reaching for an HTTP library directly.\n\nNothing else was touched.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-plain.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "answer": "none",
+      "expect": {
+        "staged": 0,
+        "journal": "append"
+      }
+    },
+    {
+      "id": "at-a-glance",
+      "kind": "full",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- I added `beacon/retry.py`, a `RetryBudget` dataclass. It measures a retry allowance in elapsed wall-clock time from the first attempt, exposes `start()`, `remaining()` and `exhausted()`, and never extends itself.\n- We chose to cap retries by total elapsed time rather than by attempt count. The alternative we rejected was exponential backoff with a maximum number of attempts: with a slow endpoint, 5 attempts at growing delays could keep one file alive for eleven minutes and stall the whole sync, and the number of attempts told us nothing about how long a user had been waiting. Elapsed time is the thing users actually notice.\n- We root-caused the duplicate-upload reports. The manifest entry was written before the remote confirmed the object, so a sync interrupted between the write and the confirmation resumed believing the object was already there; the next full pass uploaded it again. `beacon/manifest.py` now has `record_upload()`, called only after the remote returns an etag. Write-after-confirm.\n- We settled a rule while doing it: every remote call in beacon goes through the single `send()` seam in `beacon/transport.py`, with the sender injected. That is what let us exercise the retry paths with no network and no sleeps, and we want new code to follow it rather than reaching for an HTTP library directly.\n\nNothing else was touched.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-at-a-glance.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "answer": "go",
+      "promote_answer": "no",
+      "finished_task": 1,
+      "expect": {
+        "min_staged": 3,
+        "journal": "append",
+        "task_block": true
+      }
+    },
+    {
+      "id": "auto-create",
+      "kind": "full",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- I added `beacon/retry.py`, a `RetryBudget` dataclass. It measures a retry allowance in elapsed wall-clock time from the first attempt, exposes `start()`, `remaining()` and `exhausted()`, and never extends itself.\n- We chose to cap retries by total elapsed time rather than by attempt count. The alternative we rejected was exponential backoff with a maximum number of attempts: with a slow endpoint, 5 attempts at growing delays could keep one file alive for eleven minutes and stall the whole sync, and the number of attempts told us nothing about how long a user had been waiting. Elapsed time is the thing users actually notice.\n- We root-caused the duplicate-upload reports. The manifest entry was written before the remote confirmed the object, so a sync interrupted between the write and the confirmation resumed believing the object was already there; the next full pass uploaded it again. `beacon/manifest.py` now has `record_upload()`, called only after the remote returns an etag. Write-after-confirm.\n- We settled a rule while doing it: every remote call in beacon goes through the single `send()` seam in `beacon/transport.py`, with the sender injected. That is what let us exercise the retry paths with no network and no sleeps, and we want new code to follow it rather than reaching for an HTTP library directly.\n\nNothing else was touched.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-plain.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": false,
+        "confirm_before_promote": true
+      },
+      "promote_answer": "no",
+      "expect": {
+        "min_staged": 3,
+        "journal": "append",
+        "prints_table": true
+      }
+    },
+    {
+      "id": "auto-promote",
+      "kind": "promote",
+      "tags": [
+        "complex"
+      ],
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- I added `beacon/retry.py`, a `RetryBudget` dataclass. It measures a retry allowance in elapsed wall-clock time from the first attempt, exposes `start()`, `remaining()` and `exhausted()`, and never extends itself.\n- We chose to cap retries by total elapsed time rather than by attempt count. The alternative we rejected was exponential backoff with a maximum number of attempts: with a slow endpoint, 5 attempts at growing delays could keep one file alive for eleven minutes and stall the whole sync, and the number of attempts told us nothing about how long a user had been waiting. Elapsed time is the thing users actually notice.\n- We root-caused the duplicate-upload reports. The manifest entry was written before the remote confirmed the object, so a sync interrupted between the write and the confirmation resumed believing the object was already there; the next full pass uploaded it again. `beacon/manifest.py` now has `record_upload()`, called only after the remote returns an etag. Write-after-confirm.\n- We settled a rule while doing it: every remote call in beacon goes through the single `send()` seam in `beacon/transport.py`, with the sender injected. That is what let us exercise the retry paths with no network and no sleeps, and we want new code to follow it rather than reaching for an HTTP library directly.\n\nNothing else was touched.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-plain.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": false,
+        "confirm_before_promote": false
+      },
+      "expect": {
+        "min_staged": 3,
+        "journal": "append",
+        "promoted": true
+      }
+    },
+    {
+      "id": "research-only",
+      "kind": "none",
+      "tags": [
+        "complex"
+      ],
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user handed me one external article, \"Retry budgets in practice\" from another team's engineering blog, and asked me to read it.\n- I read it in full and summarised it for the user in the chat: it argues for elapsed-time budgets over attempt counts, and includes a table of timeout defaults from four object stores.\n- We did not change any code, settle any decision, or debug anything. No file in the repo was touched. The article is not in the wiki yet.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-plain.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "expect": {
+        "staged": 0,
+        "journal": "append",
+        "points_at": "wiki-update"
+      }
+    },
+    {
+      "id": "trivial",
+      "kind": "none",
+      "tags": [
+        "complex"
+      ],
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user spotted a typo in `beacon/README.md`: \"resumably\" should read \"resumably\" with one m — a single-character fix, which I made.\n- Nothing else was touched. No decision, no new component, no bug.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-plain.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "expect": {
+        "staged": 0,
+        "journal": "append",
+        "declines": true
+      }
+    }
+  ]
+}
