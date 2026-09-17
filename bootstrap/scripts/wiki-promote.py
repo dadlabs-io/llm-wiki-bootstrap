@@ -6,8 +6,9 @@ Reads each *.md in <vault>/_inbox/proposed/, loads its
 .proposed_metadata.json sidecar (written by `wiki-update.py --staged`),
 optionally asks the user, then moves the entry to its target folder,
 strips status: proposed from the frontmatter, applies the suggested
-backlinks (Edit-ing each listed file to add a See-also line), and
-regenerates _INDEX.md + _MAP.md.
+backlinks (Edit-ing each listed file to add a See-also line), normalizes
+the promoted entries' links (wiki-fix-links.py) and regenerates
+_INDEX.md + _MAP.md.
 
 Modes:
   --review      Interactive: print each entry's summary, prompt
@@ -270,7 +271,8 @@ def _add_backlink(target_file: Path, link_text: str, link_target: str) -> bool:
     return True
 
 
-def _regenerate_indexes(scripts_dir: Path, topic: str, vault: Path, dry_run: bool):
+def _regenerate_indexes(scripts_dir: Path, topic: str, vault: Path, dry_run: bool,
+                        promoted_paths: list[str] | None = None):
     """Run wiki-index-per-folder.py + wiki-map-compile.py to refresh the
     index and map after a promotion. Best-effort — warns on failure.
 
@@ -281,12 +283,25 @@ def _regenerate_indexes(scripts_dir: Path, topic: str, vault: Path, dry_run: boo
     <topic>/wiki/<topic>/wiki and fails ('wiki root not found')."""
     topic_root = vault.parent if vault.name == "wiki" else vault
     roots_vault = topic_root.parent
-    for script_name in ("wiki-index-per-folder.py", "wiki-map-compile.py"):
+    # wiki-fix-links.py FIRST: it resolves the bare-slug and same-batch links this
+    # script deliberately leaves alone (_recompute_relative_links only re-depths a
+    # link that already carries ./ or ../, and the basename index skips _inbox), so
+    # the index and map are compiled from entries whose links already resolve.
+    # Before 2026-09-17 every caller had to remember this step and /wrap-up's Step 6
+    # did not, which is where the recurring broken-links-after-promote bug came from.
+    for script_name in ("wiki-fix-links.py", "wiki-index-per-folder.py", "wiki-map-compile.py"):
         script = scripts_dir / script_name
         if not script.exists():
             _warn(f"{script_name} not found at {script}; skipping regen")
             continue
         cmd = [sys.executable, str(script), "--topic", topic, "--vault", str(roots_vault)]
+        if script_name == "wiki-fix-links.py":
+            # Scope it to the entries THIS run moved. Left to its default the
+            # normalizer walks the whole wiki, so an unrelated pre-existing broken
+            # link would be rewritten by a promote that had nothing to do with it.
+            if not promoted_paths:
+                continue
+            cmd += ["--files", *promoted_paths]
         if dry_run:
             print(f"  WOULD run: {' '.join(cmd)}")
             continue
@@ -682,8 +697,9 @@ def main():
 
     # Regen indexes if anything was promoted
     if promoted and not args.dry_run:
-        _info("regenerating _INDEX.md + _MAP.md...")
-        _regenerate_indexes(scripts_dir, topic, vault, args.dry_run)
+        _info("normalizing links, then regenerating _INDEX.md + _MAP.md...")
+        _regenerate_indexes(scripts_dir, topic, vault, args.dry_run,
+                            promoted_paths=[r["to"] for r in promoted if r.get("to")])
 
     cleanup_empty_inbox_dirs(vault, args.dry_run)
 
