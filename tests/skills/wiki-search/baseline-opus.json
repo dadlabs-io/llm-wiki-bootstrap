@@ -1,0 +1,52 @@
+{
+  "lookup-batch-size": {
+    "session completed": true,
+    "no permission denials": true,
+    "nothing written to the notebook": true,
+    "searched with the full search helper": true,
+    "no search outside this notebook": true,
+    "states facts only from opened entries (others marked as not read)": true,
+    "opened lantern-ingest-batch-size": true,
+    "answer states 250": true
+  },
+  "snippet-trap-retention": {
+    "session completed": true,
+    "no permission denials": true,
+    "nothing written to the notebook": true,
+    "searched with the full search helper": true,
+    "no search outside this notebook": true,
+    "states facts only from opened entries (others marked as not read)": true,
+    "opened lantern-embedding-retention": true,
+    "answer states 90": true,
+    "does not give 30 days as the answer": true
+  },
+  "compare-reranker-budget": {
+    "session completed": true,
+    "no permission denials": true,
+    "nothing written to the notebook": true,
+    "searched with the full search helper": true,
+    "no search outside this notebook": true,
+    "states facts only from opened entries (others marked as not read)": true,
+    "opened lantern-reranker-choice": true,
+    "opened lantern-query-latency-budget": true,
+    "answer states 180": true,
+    "answer states 250": true,
+    "offers to file the answer": true
+  },
+  "gap-disaster-recovery": {
+    "session completed": true,
+    "no permission denials": true,
+    "nothing written to the notebook": true,
+    "searched with the full search helper": true,
+    "no search outside this notebook": true,
+    "states facts only from opened entries (others marked as not read)": true,
+    "says the wiki does not answer it": true,
+    "invents no RPO figure": true
+  },
+  "holistic-routes-away": {
+    "session completed": true,
+    "no permission denials": true,
+    "nothing written to the notebook": true,
+    "routes to /wiki-claims or /wiki-lint --full": true
+  }
+}

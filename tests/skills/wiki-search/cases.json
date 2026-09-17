@@ -1,0 +1,19 @@
+{
+  "skill": "wiki-search",
+  "sources": {},
+  "cases": [
+    {"id": "lookup-batch-size", "kind": "lookup",
+     "question": "What does the wiki say about Lantern's ingest batch size?",
+     "must_open": ["lantern-ingest-batch-size"], "answer_has": ["250"]},
+    {"id": "snippet-trap-retention", "kind": "lookup",
+     "question": "How long does Lantern keep embeddings in the vector store?",
+     "must_open": ["lantern-embedding-retention"], "answer_has": ["90"]},
+    {"id": "compare-reranker-budget", "kind": "compare",
+     "question": "Does Lantern's reranker fit inside the query latency budget? Compare what the wiki says about the two.",
+     "must_open": ["lantern-reranker-choice", "lantern-query-latency-budget"], "answer_has": ["180", "250"]},
+    {"id": "gap-disaster-recovery", "kind": "gap",
+     "question": "What is Lantern's disaster-recovery RPO?"},
+    {"id": "holistic-routes-away", "kind": "holistic",
+     "question": "Is our position on Lantern's retention and latency consistent across all the entries? What contradicts what?"}
+  ]
+}
