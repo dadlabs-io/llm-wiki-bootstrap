@@ -77,10 +77,6 @@ def _load(scripts: Path, name: str, mod_name: str):
     return mod
 
 
-def _suite() -> dict:
-    return json.loads((HERE / "cases.json").read_text(encoding="utf-8"))
-
-
 def prepare_fixtures(repo: Path, refresh: bool = False) -> list[dict]:
     return []  # no third-party sources: every fixture is written for the test
 
