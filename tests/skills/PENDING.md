@@ -32,5 +32,9 @@ then we can run it").
 | wiki-update | 2026-09-15 | 22/22, Sonnet and Opus |
 | wiki-search | 2026-09-17 | 10/10, Sonnet and Opus (old skill 9/10) |
 | task-list | 2026-09-17 | 14/14 twice, 108 checks; re-run after the CLI-reference edit, 0 regressions |
+| wrap-up | 2026-09-17 | 10/10 on the 5 core cases after the trim; 0 regressions against the pre-trim baseline, 1 newly passing |
+
+The three `complex` wrap-up cases (auto-promote, research-only, trivial) have **no baseline**: they pass the
+offline harness but have never been run against a model. Run them with `--tags complex` before relying on them.
 
 Skills with no suite yet: every other shipped skill. The next ones are the user's pick (task #16).

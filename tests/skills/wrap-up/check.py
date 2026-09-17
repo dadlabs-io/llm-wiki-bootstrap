@@ -265,8 +265,19 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             and str(fm.get("tier")) == "self",
             {k: fm.get(k) for k in ("session_id", "type", "tier")})
         add("journal has Goal and Next", "**Goal:**" in body and "**Next:**" in body)
-        nxt = next((ln for ln in body.splitlines() if ln.startswith("**Next:**")), "")
-        add("Next names a file for a cold start", bool(re.search(r"[\w./\\-]+\.(py|md|json)", nxt)), nxt[:160])
+        # the Next block, not its first physical line: models wrap it, and the file names
+        # routinely land on line two (opus, 2026-09-17)
+        blines, nxt = body.splitlines(), []
+        for i, ln in enumerate(blines):
+            if ln.startswith("**Next:**"):
+                nxt.append(ln)
+                for cont in blines[i + 1:]:
+                    if not cont.strip() or cont.startswith(("#", "**", "- ")):
+                        break
+                    nxt.append(cont)
+                break
+        nxt = " ".join(nxt)
+        add("Next names a file for a cold start", bool(re.search(r"[\w./\\-]+\.(py|md|json)", nxt)), nxt[:200])
         updates = re.findall(r"^### Update\s*(\d+)", body, re.M)
         if exp.get("journal") == "append":
             add("appended a second update block", len(updates) >= 2, updates)
@@ -328,36 +339,50 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("nothing promoted without the user's yes", not promoted, [p.name for p in promoted])
         entries = staged
 
-    for p in entries:
-        etext = p.read_text(encoding="utf-8")
-        fm, _ = gate.split_frontmatter(etext)
-        result = gate.check_entry_text(etext)
-        add(f"{p.stem[:34]}: passes the entry gate", not result["errors"], result["errors"])
-        add(f"{p.stem[:34]}: tier self, origin wrap-up, category",
-            str(fm.get("tier")) == "self" and str(fm.get("origin")) == "wrap-up"
-            and str(fm.get("category")) in
-            ("component", "decision", "architecture", "pattern", "troubleshooting"),
-            {k: fm.get(k) for k in ("tier", "origin", "category")})
-        add(f"{p.stem[:34]}: source_url is internal://",
-            str(fm.get("source_url", "")).startswith("internal://"), fm.get("source_url"))
-        add(f"{p.stem[:34]}: no raw_path without a snapshot",
-            "raw_path" not in fm or bool(list((ctx["notebook"] / "raw" / "sessions").glob("*.md"))),
-            fm.get("raw_path"))
+    # Aggregate, one check per RULE across every entry: a per-entry name would carry the
+    # model's own slug, which changes run to run, so the baseline could never match it and
+    # a regression in these checks would be invisible in the "regressions" column.
+    if entries:
+        bad_gate, bad_fm, bad_src, bad_raw = [], [], [], []
+        snapshots = bool(list((ctx["notebook"] / "raw" / "sessions").glob("*.md")))
+        for p in entries:
+            etext = p.read_text(encoding="utf-8")
+            fm, _ = gate.split_frontmatter(etext)
+            errs = gate.check_entry_text(etext)["errors"]
+            if errs:
+                bad_gate.append(f"{p.stem}: {errs[:2]}")
+            if not (str(fm.get("tier")) == "self" and str(fm.get("origin")) == "wrap-up"
+                    and str(fm.get("category")) in
+                    ("component", "decision", "architecture", "pattern", "troubleshooting")):
+                bad_fm.append(f"{p.stem}: tier={fm.get('tier')} origin={fm.get('origin')} "
+                              f"category={fm.get('category')}")
+            if not str(fm.get("source_url", "")).startswith("internal://"):
+                bad_src.append(f"{p.stem}: {fm.get('source_url')}")
+            if "raw_path" in fm and not snapshots:
+                bad_raw.append(f"{p.stem}: {fm.get('raw_path')}")
+        add(f"all {len(entries)} entries pass the entry gate", not bad_gate, bad_gate)
+        add("every entry: tier self, origin wrap-up, a real category", not bad_fm, bad_fm)
+        add("every entry: source_url is internal://", not bad_src, bad_src)
+        add("no entry claims a raw_path without a snapshot", not bad_raw, bad_raw)
 
     if entries and not exp.get("promoted"):
+        missing, unreadable, bad_target = [], [], []
         for p in entries:
             side = p.with_name(f"{p.stem}.proposed_metadata.json")
-            add(f"{p.stem[:34]}: sidecar written", side.is_file())
-            if side.is_file():
-                try:
-                    meta = json.loads(side.read_text(encoding="utf-8"))
-                except json.JSONDecodeError as e:
-                    add(f"{p.stem[:34]}: sidecar is valid JSON", False, str(e))
-                    continue
-                add(f"{p.stem[:34]}: sidecar is valid JSON", True)
-                tf = str(meta.get("target_folder", ""))
-                add(f"{p.stem[:34]}: target_folder is a real plural folder",
-                    tf.startswith("project/") and tf.split("/")[-1] in CATEGORIES, tf)
+            if not side.is_file():
+                missing.append(p.stem)
+                continue
+            try:
+                meta = json.loads(side.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as e:
+                unreadable.append(f"{p.stem}: {e}")
+                continue
+            tf = str(meta.get("target_folder", ""))
+            if not (tf.startswith("project/") and tf.split("/")[-1] in CATEGORIES):
+                bad_target.append(f"{p.stem}: {tf!r}")
+        add("every entry has a sidecar", not missing, missing)
+        add("every sidecar is valid JSON", not unreadable, unreadable)
+        add("every sidecar names project/<plural folder>", not bad_target, bad_target)
         # cwd is the sandbox project, so --topic resolves through its wiki-config's registry pointer
         proc = subprocess.run(
             [sys.executable, str(ctx["scripts"] / "wiki-promote.py"), "--topic", NOTEBOOK, "--check"],
