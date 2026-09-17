@@ -293,7 +293,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             add("At a glance block kept", ttext.lstrip().startswith("## At a glance"), ttext[:60])
             board = _load(ctx["scripts"], "wiki-tasks.py", "wiki_tasks").Board(ttext)
             rows = {r["id"]: r for s in board.sections for r in s["rows"]}
-            add("no task removed", set(rows) == {1, 2, 3, 4}, sorted(rows))
+            # nothing REMOVED; adding a task is required of a wrap-up, so the set may grow
+            add("no task removed", {1, 2, 3, 4} <= set(rows), sorted(rows))
             fin = case.get("finished_task")
             add(f"task {fin} marked done", rows.get(fin, {}).get("status") == "done", rows.get(fin))
             add("asks before removing a done task", bool(ASKS_REMOVE.search(text)))
