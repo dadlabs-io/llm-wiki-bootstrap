@@ -888,7 +888,7 @@ def lint(vault_root, topic, strict=False):
     # Section: code drift (2026-09-17)
     out.append("## 🔄 Code Drift (`describes`)")
     out.append("")
-    out.append("A `project/` entry about code names it in `describes: <path>[@<commit>]` (frontmatter spec v9), resolved against the project's repo: the registry entry's `project_root`, or the folder above an in-project `llm-wiki/`. \"Changed\" means the code moved on since the entry was read: re-read the entry, correct it if needed, then bump `last_reviewed` and pin the current commit. It does not mean the entry is wrong; a rename or a move fires it too. Warn-only, even with `--strict`.")
+    out.append("A `project/` entry about code names it in `describes: <path>[@<commit>]` (the frontmatter spec), resolved against the project's repo: the registry entry's `project_root`, or the folder above an in-project `llm-wiki/`. \"Changed\" means the code moved on since the entry was read: re-read the entry, correct it if needed, then bump `last_reviewed` and pin the current commit. It does not mean the entry is wrong; a rename or a move fires it too. Warn-only, even with `--strict`.")
     out.append("")
     if not (describes_changed or describes_invalid or describes_unchecked):
         out.append("_No drift: every `describes` target is unchanged (or no entry carries the field)._")
