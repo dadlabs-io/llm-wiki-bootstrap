@@ -33,8 +33,16 @@ then we can run it").
 | wiki-search | 2026-09-17 | 10/10, Sonnet and Opus (old skill 9/10) |
 | task-list | 2026-09-17 | 14/14 twice, 108 checks; re-run after the CLI-reference edit, 0 regressions |
 | wrap-up | 2026-09-17 | 10/10 on the 5 core cases after the trim; 0 regressions against the pre-trim baseline, 1 newly passing |
+| wiki-lint | 2026-09-17 | 8/8 on the 4 core cases, 35 checks each model; no skill change — the suite is new |
 
-The three `complex` wrap-up cases (auto-promote, research-only, trivial) have **no baseline**: they pass the
-offline harness but have never been run against a model. Run them with `--tags complex` before relying on them.
+The three `complex` wrap-up cases (auto-promote, research-only, trivial) and wiki-lint's `prior-report-trap`
+have **no baseline**: they pass the offline harness but have never been run against a model. Run them with
+`--tags complex` before relying on them. `prior-report-trap` is the interesting one — it is the only check of
+"don't read the existing semantic lint reports before writing your own".
+
+One derivation to know about: `wiki-lint`'s opus `full-finds-planted` baseline entry has its
+"read every wiki entry before judging" check re-scored offline against the saved event stream, after the
+checker was fixed to recognise a bulk `find … | cat` read. The run itself was real; only that one check,
+a pure function of the recorded tool calls, was recomputed. Re-run the case if you want it first-hand.
 
 Skills with no suite yet: every other shipped skill. The next ones are the user's pick (task #16).

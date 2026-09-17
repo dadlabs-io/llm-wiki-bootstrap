@@ -133,15 +133,30 @@ def _semantic_reports(ctx: dict) -> list[Path]:
                   if p.name != "claude-semantic-lint-2026-08-01.md")
 
 
+# A command that walks the wiki and prints every entry — `for f in $(find wiki -name
+# '*.md'); do cat "$f"; done` — reads all six without naming one of them, so matching
+# basenames alone calls every entry unread (opus did exactly this, 2026-09-17).
+BULK_READ = re.compile(r"find\s+[^|;]*wiki[^|;]*-name[^|;]*\.md", re.I)
+READERS = re.compile(r"\b(cat|sed|head|tail|less|more)\b")
+
+
 def _read(run: dict) -> str:
-    """Everything the session read, as one blob of path text."""
+    """What the session read, as one blob of path text.
+
+    A bulk read is expanded to the entries it covers: the question is whether every
+    entry was read before judging, not which tool did the reading. Listing the files
+    without a reader does not count.
+    """
     out = []
     for c in run["tool_calls"]:
         inp = c.get("input") or {}
+        cmd = str(inp.get("command") or "")
         out.append(str(inp.get("file_path") or ""))
-        out.append(str(inp.get("command") or ""))
+        out.append(cmd)
         out.append(str(inp.get("pattern") or ""))
         out.append(str(inp.get("path") or ""))
+        if BULK_READ.search(cmd) and READERS.search(cmd):
+            out.extend(ENTRIES)
     return "\n".join(out).replace("\\", "/")
 
 

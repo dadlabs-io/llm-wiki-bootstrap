@@ -1,0 +1,45 @@
+{
+  "mechanical-default": {
+    "session completed": true,
+    "no permission denials": true,
+    "no wiki entry modified": true,
+    "no semantic report written": true,
+    "ran the mechanical script": true,
+    "reported counts to the user": true
+  },
+  "full-finds-planted": {
+    "session completed": true,
+    "no permission denials": true,
+    "no wiki entry modified": true,
+    "semantic report written": true,
+    "report is under _inbox/reports/": true,
+    "report name carries a date": true,
+    "report says how many files were reviewed": true,
+    "read every wiki entry before judging": true,
+    "found the planted contradiction": true,
+    "found the planted cross ref": true,
+    "found the planted concept gap": true,
+    "found the planted tier": true
+  },
+  "drift-watch": {
+    "session completed": true,
+    "no permission denials": true,
+    "no wiki entry modified": true,
+    "semantic report written": true,
+    "report is under _inbox/reports/": true,
+    "report name carries a date": true,
+    "report says how many files were reviewed": true,
+    "report has a DRIFT-WATCH section": true,
+    "drift finding names the mode-count mismatch": true,
+    "drift finding carries a severity": true,
+    "read the canon source named by drift-watch": true,
+    "read the drift-watch list": true
+  },
+  "ambiguous-asks": {
+    "session completed": true,
+    "no permission denials": true,
+    "no wiki entry modified": true,
+    "no semantic report written": true,
+    "asked which mode instead of guessing": true
+  }
+}
