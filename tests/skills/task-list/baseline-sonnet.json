@@ -1,0 +1,70 @@
+{
+  "show-plain": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "task.md unchanged": true,
+    "reply shows 'registrar'": true,
+    "reply shows 'build scripts'": true
+  },
+  "show-slash": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "task.md unchanged": true,
+    "reply shows 'onboarding guide'": true,
+    "reply shows 'dark theme'": true
+  },
+  "add-plain": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "exactly one new task": true,
+    "numbered 6, the next free number": true,
+    "task text has 'renew'": true,
+    "task text has 'domain'": true,
+    "status is 'to do'": true,
+    "the script wrote it (next-id marker advanced)": true,
+    "other tasks untouched": true
+  },
+  "add-no-block": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "exactly one new task": true,
+    "numbered 3, the next free number": true,
+    "task text has 'database'": true,
+    "task text has 'upgrade'": true,
+    "status is 'to do'": true,
+    "the script wrote it (next-id marker advanced)": true,
+    "other tasks untouched": true,
+    "block created above NOW": true,
+    "NOW and QUEUE kept word for word": true
+  },
+  "done-asks": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "task 2 still on the list": true,
+    "task 2 marked done": true,
+    "asks whether to remove it": true,
+    "other tasks untouched": true
+  },
+  "delete-plain": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "task 3 removed": true,
+    "no other task removed or changed": true,
+    "numbering kept (next-id marker unchanged)": true
+  },
+  "waiting-plain": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "status is 'waiting'": true,
+    "next step mentions 'quote'": true,
+    "owner is 'Mark'": true,
+    "other tasks untouched": true
+  }
+}

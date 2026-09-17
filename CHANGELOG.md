@@ -11,6 +11,11 @@
 
 ## 2026-09-17
 
+### `/task-list` model baseline (task #15)
+- **Why**: `/task-list` was built and installed on 2026-09-15 with its suite written but never run against the models — the standing rule is that a skill's baseline exists before the next change to it can be judged. The run was held for the credit reset.
+- **Change**: no change to the skill. `tests/skills/task-list/` (7 cases: `show` by plain speech and by `/task-list`, `add` to an existing block and to a file with none, `done` that must ask before removing, `delete` on the user's word, and a `set` to `waiting`) was run on Sonnet and Opus.
+- **Result**: 14 of 14 sessions passed, 108 checks, 0 failures, twice in a row. Saved as `baseline-sonnet.json` / `baseline-opus.json`. About $4.20 per full run on both models (Sonnet ~$0.17 a case, Opus ~$0.42). Observation, not a defect: in one Sonnet run `waiting-plain` spent 5 extra turns reading `wiki-tasks.py` to discover the `--cwd` flag, which the SKILL.md does not mention. Real sessions run from the project folder and do not need it; only the sandbox does. A one-line mention in the skill would remove the detour — deferred so this baseline records the skill as installed.
+
 ### `/wiki-search` test suite; the citation-lock change passes it and ships (task #31)
 - **Why**: the 2026-09-16 "cite only what you opened" edit to `/wiki-search` waited on a test baseline (a changed skill is not installed until its run is at least as good as the baseline). No suite existed for the skill.
 - **Change**: `tests/skills/wiki-search/` — a seed notebook about Lantern, a made-up service (so no answer comes from what a model already knows), and five cases: a lookup, a snippet trap (the retention entry opens on a rejected 30-day proposal; the 90-day decision comes last), a comparison across two entries (which should offer to file the answer), a question the wiki cannot answer, and a holistic question that belongs to `/wiki-claims`. The checks read the session's tool calls: every fact the answer states must come from an entry the session opened, unless the answer marks it as unread.
