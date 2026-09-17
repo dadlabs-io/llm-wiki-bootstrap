@@ -9,6 +9,18 @@
 
 ---
 
+## 2026-09-16
+
+### Search-first loading and citation-lock (candidate 4 of the 2026-09-14 assessment; the user's pick)
+- **Why**: two findings from the September intake — Paterson's "Agent memory as a file format" (an agent that walks links pays a round trip per hop) and Agent Zero Memory (an answer may cite only what it actually opened). Checked against what the contract already said: qmd-before-grep and "say where you stopped" were there; a rule against citing an entry nobody opened was not.
+- **Change**: `tiered-context-loading.md` → framework-version 3. Tier 3's reach paths put qmd search first and say links drill into a known neighbour rather than find one; the decision tree says one search then read the hits in parallel; a new section, **Cite only what you opened** — a hit, a snippet, an INDEX row and a MAP title prove an entry exists, not what it claims, so they are pointers, never sources. It names the cost of search (a GPU slot, a median 10 s wait here) so the rule reads as "one good search, then read what you cite", not "search more". `/wiki-search` gains the same rule as step 2a and a "Don't answer from snippets" line.
+- **Deliberately not done**: the candidate's wholesale rewrite of the tiered model. We already search first; MAP and INDEX stay cheap orientation.
+
+### `describes`: content-triggered staleness beside the calendar (candidate 5, the user's design call)
+- **Why**: `review_after` cannot see a component entry whose code changed the day after it was written, and a code trigger cannot see an entry the world moved past. The user's call: keep both, not one.
+- **Change**: frontmatter spec → framework-version 9. New optional field `describes` (a repo path, optionally `<path>@<commit>`), only for `project/` entries about code, plus a "Content-triggered staleness, alongside the calendar" section with the two-signal table: `review_after` stays mandatory and is the floor, `describes` adds an earlier trigger, an entry with both is re-read when either fires. The flag means "the code this describes has changed, re-read it", not "this entry is wrong" — a rename fires it too.
+- **Not yet enforced**: `wiki-lint-mechanical.py` does not read `describes` yet, so the field is defined and documented but nothing flags drift. That is the next step.
+
 ## 2026-09-15
 
 ### New skill: `/task-list`, the project's task list (the user's idea, via agent-builder)

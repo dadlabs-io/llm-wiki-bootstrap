@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 8
-last_reviewed: 2026-09-15
-review_after: 2026-12-14
+framework-version: 9
+last_reviewed: 2026-09-16
+review_after: 2026-12-15
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
 
@@ -57,6 +57,7 @@ Path is relative to the topic root (the folder containing `_INDEX.md`), **not** 
 | `aliases` | list | Alternate titles for search — include when the entry covers something known by multiple names. |
 | `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |
 | `superseded_by` | relative path | When an entry is retired in favor of another, point to the successor, with `status: superseded` alongside. Keep both entries per both-sides-stay (principle 4). A retired entry stays on disk but leaves the INDEX, the MAP and search results, and the lint exempts it from the body checks and the orphan list (`is_superseded()` in `_entry_checks.py`, 2026-09-14). |
+| `describes` | relative path, optionally `<path>@<commit>` | The code this entry describes — a file or folder in the project's repo, optionally pinned to the commit it was read at (`bootstrap/scripts/wiki-promote.py@1f90bf4`). Only for a `project/` entry about code: a component, a script's behaviour, an architecture rule enforced in code. It gives staleness a **content trigger**: when that file moves on, the entry is flagged for re-reading without waiting for `review_after`. Calendar review still applies — the two signals catch different failures, see [review cadence](#review-cadence-default-review_after-offset). Omit it on every entry that does not describe code; a missing `describes` is never a lint error. (added 2026-09-16) |
 | `recall_count` | int | Reserved for future memory-signal tracking (principle 10 federation, memory architecture). Do not write manually yet. See [memory-signals-sidecar-vs-frontmatter-pattern.md](./memory-signals-sidecar-vs-frontmatter-pattern.md) — the sidecar pattern is the production-bound implementation route; this field is the frontmatter mirror for entries where the signal is editorially-set, not telemetry-derived. |
 | `access_count` | int | Same as above — reserved. |
 
@@ -130,6 +131,19 @@ When unsure between two adjacent tiers, prefer the LOWER tier (more conservative
 The cadence follows importance, not source stability (revised 2026-09-13; the earlier table ran the other way, +12 months for tier 1 down to +3 for tier 4). A tier-1 entry carries the most weight, so it is re-checked most often — has it been superseded, does the wiki still agree with it. Three months is the floor. Refresh is one monthly pass (`/wiki-refresh`), so the offsets set the size of that batch rather than a daily load. `wiki-update.py` writes these offsets from `--tier`; the lint's backfill hint quotes the same numbers.
 
 Author can override — these are defaults, not hard rules. Shorter cadence is fine for fast-moving topics. `review_after` stays an explicit field rather than being derived from `last_reviewed` + tier: it can be overridden per entry, the refresh scan and lint stay a plain date comparison, and a later change to this table does not silently move existing entries. Whoever bumps `last_reviewed` bumps `review_after` with it.
+
+#### Content-triggered staleness, alongside the calendar (added 2026-09-16)
+
+A date is the wrong instrument for one common failure and the only instrument for another, so the framework keeps **both** signals and neither replaces the other:
+
+| Signal | Catches | Misses |
+|---|---|---|
+| `review_after` (calendar) | The entry the world moved past: a vendor changed, a better approach appeared, our own thinking shifted. Nothing in our repo has to change for the entry to go wrong. | Code that changed the day after the entry was written: the entry looks fresh for the rest of its cadence. |
+| `describes` (content) | The `project/` entry whose subject changed in the repo — the component was rewritten, the flag renamed, the guard removed. | Everything that is not our code, which is most of the wiki. |
+
+So: `review_after` stays mandatory on every entry and is the floor. `describes` is optional, is only for `project/` entries about code, and adds an earlier trigger on those. An entry carrying both is re-read when *either* fires.
+
+What the flag means is "the code this describes has changed — re-read the entry", **not** "this entry is wrong". A rename or a move fires it just as a rewrite does, so the lint reports it as a prompt to check, the reader confirms or corrects the entry, and bumping `last_reviewed` (with a fresh commit in `describes`) clears it.
 
 ---
 

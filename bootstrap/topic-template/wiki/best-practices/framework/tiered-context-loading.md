@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 2
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
+framework-version: 3
+last_reviewed: 2026-09-16
+review_after: 2026-12-15
 tags: [framework-contract, best-practice, context-engineering, L3, tiered-loading, agent-guidance]
 ---
 
@@ -31,7 +31,7 @@ The tiered convention gives a deterministic "what to load, in what order, based 
 |---|---|---|---|
 | **Tier 1 — Always-loaded map** | `wiki/_MAP.md` | ~2K | Every session. Loaded via CLAUDE.md `@` import; agents never need to explicitly fetch it. Provides folder purposes + top entries per folder + pointers to hubs (HOME.md plus any hub pages your wiki defines). |
 | **Tier 2 — Per-folder INDEX** | `wiki/<folder>/_INDEX.md` | ~1-3K each | When the agent is working in a specific area (e.g., responding to a query about memory → load `active/_INDEX.md` + `long-term/_INDEX.md`). Scannable per-folder map with every entry's title + tier + TL;DR. |
-| **Tier 3 — Full entry content** | `wiki/<folder>/<slug>.md` | Variable | When the agent needs specific claims, quotes, or detail. Reach via (a) qmd search for concept/keyword, (b) direct read of a known slug, (c) following a link from an INDEX or another entry. |
+| **Tier 3 — Full entry content** | `wiki/<folder>/<slug>.md` | Variable | When the agent needs specific claims, quotes, or detail. Reach via (a) **qmd search — the default for a concept question**: it ranks across the whole notebook, while an INDEX is a lossy projection of one folder; (b) direct read of a known slug; (c) following a link from an INDEX or another entry, one hop at a time — each hop is a round trip, so links drill into a neighbour you already know about, they are not how you find one. |
 
 ## Decision tree for agents
 
@@ -49,14 +49,25 @@ Agent receives a prompt/question touching the wiki
 │
 ├── Does the prompt need specific facts, quotes, benchmarks, or cross-claims?
 │   ├── YES → load relevant full entries (tier-3)
-│   │         Prefer qmd search over grep for conceptual lookup
-│   │         Prefer direct read when slug is known
+│   │         Concept question → ONE qmd search first, then read its hits in parallel
+│   │         Known slug → read it directly, no search
+│   │         Never grep for a concept; never walk links to discover an entry
 │   │
 │   └── NO → answer from tier-1/tier-2 only — AND say so in the answer
 │            ("from the map/INDEX; I did not open the entries")
 │
 └── After reading: if new claims/concepts surface, check `concept-gaps-things-mentioned-not-yet-covered.md`
 ```
+
+## Cite only what you opened (added 2026-09-16)
+
+**An entry may be cited only when this session actually read the entry.** A search hit, a ranked snippet, an INDEX row and a title in `_MAP.md` are all evidence that an entry *exists*; none of them is evidence of what it says. So they can be offered as a pointer ("there is an entry on X, unread") but never as a source for a claim.
+
+The failure this prevents is specific: a reranked snippet reads like a finding, and an answer that quotes it is indistinguishable, at the point of use, from one built by reading the entry — except that the snippet is a fragment chosen for lexical and vector similarity to the *query*, not for being the entry's claim. The entry may qualify it two lines further down, may attribute it to a source it then rejects, or may have been superseded by the entry linked beneath it.
+
+This is the retrieval-side pair of "say where you stopped" below: that rule discloses **how deep** the answer went, this one bounds **what may be cited** at that depth. Together: open what you cite, disclose what you did not open.
+
+Search depth is not free — a search holds a GPU slot and, on this machine's logs, waits a median 10 s and up to 97 s under load. So the rule is not "search more"; it is "one good search, then read the hits you are going to cite."
 
 ## Structural conventions inside an entry
 
