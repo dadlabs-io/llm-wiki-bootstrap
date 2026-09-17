@@ -1,0 +1,63 @@
+{
+  "skill": "wiki-lint",
+  "cases": [
+    {
+      "id": "mechanical-default",
+      "mode": "mechanical",
+      "say": "lint the wiki",
+      "expect": {
+        "no_semantic_report": true,
+        "runs_mechanical": true
+      }
+    },
+    {
+      "id": "full-finds-planted",
+      "mode": "full",
+      "say": "do a full semantic lint of the wiki",
+      "expect": {
+        "semantic_report": true,
+        "finds": [
+          "contradiction",
+          "cross_ref",
+          "concept_gap",
+          "tier"
+        ],
+        "reads_all_entries": true
+      }
+    },
+    {
+      "id": "drift-watch",
+      "mode": "full",
+      "say": "wiki-lint --full",
+      "expect": {
+        "semantic_report": true,
+        "drift_section": true,
+        "reads_canon": true
+      }
+    },
+    {
+      "id": "ambiguous-asks",
+      "mode": "ask",
+      "say": "can you check the wiki for me?",
+      "expect": {
+        "asks_which_mode": true,
+        "no_semantic_report": true
+      }
+    },
+    {
+      "id": "prior-report-trap",
+      "mode": "full",
+      "tags": [
+        "complex"
+      ],
+      "say": "find contradictions and missing connections across the wiki",
+      "expect": {
+        "semantic_report": true,
+        "ignores_prior_report": true,
+        "finds": [
+          "contradiction"
+        ]
+      }
+    }
+  ]
+}
