@@ -24,6 +24,7 @@ Exit codes:
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -203,7 +204,9 @@ def _upsert_registry(registry_path: Path, name: str, root_value: str, options: d
                             "settings, used to resolve ANY cross-notebook link. Entry is either "
                             "a flat \"root\" string OR an object {\"root\": <path>, <settings...>} "
                             "(booleans confirm_before_create + confirm_before_promote, both "
-                            "default true). Relative roots resolve from this file's folder; "
+                            "default true; project_root = the project's repo, which the lint "
+                            "resolves `describes` paths against, absent for a notebook with no "
+                            "code). Relative roots resolve from this file's folder; "
                             "absolute point outside. Standard layout: wiki/, _inbox/, raw/.")
     nbs = data.setdefault("notebooks", {})
     if options:
@@ -1408,15 +1411,24 @@ def phase_b(args):
             "confirm_before_create": args.confirm_before_create == "true",
             "confirm_before_promote": args.confirm_before_promote == "true",
         }
+        # project_root (2026-09-17): the repo this notebook's `describes` paths
+        # resolve against, relative to the registry like root. A target that IS
+        # the notebook (a notebook-only project in the vault) has no repo.
+        if target.resolve() != nb_root.resolve():
+            try:
+                nb_options["project_root"] = Path(os.path.relpath(target.resolve(), registry_path.parent)).as_posix()
+            except ValueError:  # another drive on Windows
+                nb_options["project_root"] = target.resolve().as_posix()
+        project_note = f", project_root: {nb_options['project_root']}" if "project_root" in nb_options else ""
         if args.dry_run:
             print(f"WOULD register notebook '{name}' -> {{root: {entry}, "
                   f"confirm_before_create: {nb_options['confirm_before_create']}, "
-                  f"confirm_before_promote: {nb_options['confirm_before_promote']}}} in {registry_path}")
+                  f"confirm_before_promote: {nb_options['confirm_before_promote']}{project_note}}} in {registry_path}")
         else:
             _upsert_registry(registry_path, name, entry, options=nb_options)
             _ok(f"registered '{name}' -> {entry} (confirm_before_create="
                 f"{nb_options['confirm_before_create']}, confirm_before_promote="
-                f"{nb_options['confirm_before_promote']}) in {registry_path.name}")
+                f"{nb_options['confirm_before_promote']}{project_note}) in {registry_path.name}")
         # Record the registry machine-wide too (2026-09-13, defect 1 of the
         # 2026-09-12 batch): a script run from a cwd with no project config (a
         # foreign folder, a worker) falls back to ~/.claude/wiki-config.json for

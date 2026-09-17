@@ -9,6 +9,13 @@
 
 ---
 
+## 2026-09-17
+
+### The lint checks `describes`; the registry names each notebook's repo (task #30)
+- **Why**: frontmatter spec v9 defined `describes` on 2026-09-16, but nothing read it, so an entry about changed code still looked fresh. To compare, the lint needs the project's repo, and the notebook registry only knew where each notebook lives, not where its code is.
+- **Change**: `wiki-lint-mechanical.py` gains a **Code Drift** section and header line: every `describes` is reported as changed (the path differs from the pinned commit in the working tree, or has commits after the `last_reviewed` day), invalid (absolute, outside the repo, missing, unknown commit, or outside `project/`), or not checked (no repo). Warn-only, even with `--strict`. The repo comes from a new optional registry key, `project_root` (relative to the registry file, like `root`), read by `_wiki_config.project_root()`; a wiki inside its project uses the folder above `llm-wiki/`. The user's call: a config entry, no guessing from folder names, so a missing key says "not checked" instead of passing quietly. `new-wiki.py` writes `project_root` when it registers a vault notebook whose project folder is not the notebook itself. Frontmatter spec → framework-version 10 (where the path resolves, and the three lists).
+- **Migration**: the registry entries for notebooks with a repo were backfilled by hand (2026-09-17). A notebook added without `/new-wiki` needs `"project_root": "../<repo folder>"` in its entry before its `describes` fields are checked.
+
 ## 2026-09-16
 
 ### Search-first loading and citation-lock (candidate 4 of the 2026-09-14 assessment; the user's pick)
@@ -19,7 +26,7 @@
 ### `describes`: content-triggered staleness beside the calendar (candidate 5, the user's design call)
 - **Why**: `review_after` cannot see a component entry whose code changed the day after it was written, and a code trigger cannot see an entry the world moved past. The user's call: keep both, not one.
 - **Change**: frontmatter spec → framework-version 9. New optional field `describes` (a repo path, optionally `<path>@<commit>`), only for `project/` entries about code, plus a "Content-triggered staleness, alongside the calendar" section with the two-signal table: `review_after` stays mandatory and is the floor, `describes` adds an earlier trigger, an entry with both is re-read when either fires. The flag means "the code this describes has changed, re-read it", not "this entry is wrong" — a rename fires it too.
-- **Not yet enforced**: `wiki-lint-mechanical.py` does not read `describes` yet, so the field is defined and documented but nothing flags drift. That is the next step.
+- **Enforced since 2026-09-17**: see that day's entry.
 
 ## 2026-09-15
 

@@ -6,8 +6,8 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 9
-last_reviewed: 2026-09-16
+framework-version: 10
+last_reviewed: 2026-09-17
 review_after: 2026-12-15
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
@@ -57,7 +57,7 @@ Path is relative to the topic root (the folder containing `_INDEX.md`), **not** 
 | `aliases` | list | Alternate titles for search — include when the entry covers something known by multiple names. |
 | `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |
 | `superseded_by` | relative path | When an entry is retired in favor of another, point to the successor, with `status: superseded` alongside. Keep both entries per both-sides-stay (principle 4). A retired entry stays on disk but leaves the INDEX, the MAP and search results, and the lint exempts it from the body checks and the orphan list (`is_superseded()` in `_entry_checks.py`, 2026-09-14). |
-| `describes` | relative path, optionally `<path>@<commit>` | The code this entry describes — a file or folder in the project's repo, optionally pinned to the commit it was read at (`bootstrap/scripts/wiki-promote.py@1f90bf4`). Only for a `project/` entry about code: a component, a script's behaviour, an architecture rule enforced in code. It gives staleness a **content trigger**: when that file moves on, the entry is flagged for re-reading without waiting for `review_after`. Calendar review still applies — the two signals catch different failures, see [review cadence](#review-cadence-default-review_after-offset). Omit it on every entry that does not describe code; a missing `describes` is never a lint error. (added 2026-09-16) |
+| `describes` | relative path, optionally `<path>@<commit>` | The code this entry describes — a file or folder in the project's repo, optionally pinned to the commit it was read at (`bootstrap/scripts/wiki-promote.py@1f90bf4`). Only for a `project/` entry about code: a component, a script's behaviour, an architecture rule enforced in code. It gives staleness a **content trigger**: when that file moves on, the entry is flagged for re-reading without waiting for `review_after`. Calendar review still applies — the two signals catch different failures, see [review cadence](#review-cadence-default-review_after-offset). The path is relative to the project's repo: the notebook's `project_root` in the registry (`linked-notebooks.json`), or the folder above `llm-wiki/` for a wiki inside its project. Omit it on every entry that does not describe code; a missing `describes` is never a lint error. (added 2026-09-16; checked by the lint since 2026-09-17) |
 | `recall_count` | int | Reserved for future memory-signal tracking (principle 10 federation, memory architecture). Do not write manually yet. See [memory-signals-sidecar-vs-frontmatter-pattern.md](./memory-signals-sidecar-vs-frontmatter-pattern.md) — the sidecar pattern is the production-bound implementation route; this field is the frontmatter mirror for entries where the signal is editorially-set, not telemetry-derived. |
 | `access_count` | int | Same as above — reserved. |
 
@@ -144,6 +144,12 @@ A date is the wrong instrument for one common failure and the only instrument fo
 So: `review_after` stays mandatory on every entry and is the floor. `describes` is optional, is only for `project/` entries about code, and adds an earlier trigger on those. An entry carrying both is re-read when *either* fires.
 
 What the flag means is "the code this describes has changed — re-read the entry", **not** "this entry is wrong". A rename or a move fires it just as a rewrite does, so the lint reports it as a prompt to check, the reader confirms or corrects the entry, and bumping `last_reviewed` (with a fresh commit in `describes`) clears it.
+
+**Enforcement: `wiki-lint-mechanical.py`, section "Code Drift" (2026-09-17), warn-only even with `--strict`.** Where the path resolves: the registry entry's `project_root` (relative to the registry file, like `root`; `/new-wiki` writes it for a vault notebook with a project folder), or the folder above an in-project `llm-wiki/`. There is no guessing: a vault notebook without `project_root` has no repo. The lint sorts each `describes` into one of three lists:
+
+- **Changed** — with a pinned commit, the path differs between that commit and the working tree (so an uncommitted edit counts); with a bare path, a commit touched it after the end of the `last_reviewed` day (else `date`), or it has uncommitted edits. The day the entry was read is trusted, so pin a commit when precision matters.
+- **Invalid** — the field itself is wrong: an absolute path, a path outside the repo, a path that no longer exists (moved or deleted, which is drift too), an unknown commit, or `describes` on an entry outside `project/`.
+- **Not checked** — no repo to compare against (no `project_root`, or the folder is not a git repo). Listed by name, never counted as clean.
 
 ---
 

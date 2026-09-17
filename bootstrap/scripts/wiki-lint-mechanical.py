@@ -34,7 +34,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, project_root as _project_root  # noqa: E402
 # Body-level rubric checks — shared with wiki-update.py's pre-write gate so the
 # lint backlog view and the gate enforce ONE rule set (_entry_checks.py, 2026-09-02).
 from _entry_checks import check_entry_body, is_exempt, check_frontmatter_loadable, split_frontmatter, is_superseded  # noqa: E402
@@ -181,6 +181,72 @@ def resolve_link(file_path, target):
         return None
 
 
+DESCRIBES_COMMIT_RE = re.compile(r"^(.+)@([0-9a-fA-F]{7,40})$")
+
+
+def _git(repo, *args):
+    """Run git in ``repo`` → (returncode, stdout). Never raises."""
+    import subprocess
+    try:
+        p = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return 1, str(e)
+    return p.returncode, p.stdout.strip()
+
+
+def check_describes(value, rel, fm, repo):
+    """The content trigger of frontmatter spec v9 for one entry's ``describes``.
+
+    Returns (kind, detail) — kind is ``changed`` (the code moved on since the entry
+    was read: re-read it), ``invalid`` (the field itself is wrong), ``unchecked``
+    (no repo to compare against) or None (clean). ``repo`` is (path|None, reason)
+    from _wiki_config.project_root. A pinned commit is compared with the working
+    tree, so an uncommitted edit counts; a bare path counts commits after the end
+    of the ``last_reviewed`` day (else ``date``) — the day it was read is trusted."""
+    if rel.parts[0] != "project":
+        return "invalid", "`describes` is only for a `project/` entry about code"
+    m = DESCRIBES_COMMIT_RE.match(value)
+    path, commit = (m.group(1), m.group(2)) if m else (value, None)
+    path = path.strip()
+    if not path or Path(path).is_absolute() or re.match(r"^[A-Za-z]:", path):
+        return "invalid", f"`{value}` must be a path relative to the project's repo"
+    root, reason = repo
+    if root is None:
+        return "unchecked", reason
+    root = Path(root)
+    target = (root / path).resolve()
+    if target != root and root not in target.parents:
+        return "invalid", f"`{path}` points outside the project's repo ({root})"
+    if _git(root, "rev-parse", "--show-toplevel")[0] != 0:
+        return "unchecked", f"{root} is not a git repo ({reason})"
+    if not target.exists():
+        return "invalid", f"`{path}` does not exist in {root}: moved or deleted? Re-read the entry and fix the path"
+    pathspec = path.rstrip("/") or "."
+    uncommitted = _git(root, "diff", "--quiet", "HEAD", "--", pathspec)[0] != 0
+    if commit:
+        if _git(root, "cat-file", "-e", f"{commit}^{{commit}}")[0] != 0:
+            return "invalid", f"commit `{commit}` is not in {root}"
+        code, diff = _git(root, "diff", "--stat", commit, "--", pathspec)
+        if code != 0:
+            return "unchecked", f"git diff failed in {root}"
+        if not diff:
+            return None, ""
+        _c, log = _git(root, "log", "--oneline", f"{commit}..HEAD", "--", pathspec)
+        n = len(log.splitlines()) if log else 0
+        return "changed", (f"`{pathspec}` changed since `{commit}` ({n} commit{'s' if n != 1 else ''}"
+                           f"{', plus uncommitted edits' if uncommitted else ''})")
+    since = (fm.get("last_reviewed") or fm.get("date") or "").strip()
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", since):
+        return "invalid", "no commit pinned and no `last_reviewed` / `date` to compare against; pin one: `<path>@<commit>`"
+    _c, log = _git(root, "log", "--oneline", f"--since={since} 23:59:59", "--", pathspec)
+    if not (log or uncommitted):
+        return None, ""
+    n = len(log.splitlines()) if log else 0
+    return "changed", (f"`{pathspec}` has {n} commit{'s' if n != 1 else ''} after {since}"
+                       f"{' plus uncommitted edits' if uncommitted else ''}")
+
+
 def lint(vault_root, topic, strict=False):
     # Registry-aware: resolve the wiki via _wiki_config.wiki_dir (honors the
     # linked-notebooks registry, incl. notebooks rooted at .../<name>/llm-wiki).
@@ -252,6 +318,13 @@ def lint(vault_root, topic, strict=False):
     # block). New entries are hard-gated at write time instead.
     body_issues = []          # (file, [errors], [warnings])
 
+    # Code drift (2026-09-17): `describes`, frontmatter spec v9's content
+    # trigger. A prompt to re-read, never a failure (warn-only, even --strict).
+    describes_repo = _project_root(topic, topic_root)
+    describes_changed = []    # (file, value, detail)
+    describes_invalid = []    # (file, value, detail)
+    describes_unchecked = []  # (file, value, detail)
+
     for f in files:
         try:
             content = f.read_text(encoding="utf-8")
@@ -265,6 +338,14 @@ def lint(vault_root, topic, strict=False):
         missing = [k for k in REQUIRED_FM_FIELDS if k not in fm]
         if missing:
             missing_frontmatter.append((f, missing))
+
+        # Code drift: `describes` (a retired entry is out of scope, as for the body checks)
+        describes_value = fm.get("describes", "").strip()
+        if describes_value and not is_superseded(split_frontmatter(content)[0]):
+            kind, detail = check_describes(describes_value, f.relative_to(wiki_root), fm, describes_repo)
+            if kind:
+                {"changed": describes_changed, "invalid": describes_invalid,
+                 "unchecked": describes_unchecked}[kind].append((f, describes_value, detail))
 
         # Check tier (separate from required FM because we want to track it explicitly)
         tier_value = fm.get("tier", "").strip()
@@ -475,6 +556,8 @@ def lint(vault_root, topic, strict=False):
     body_warn_files = sum(1 for _f, e, w in body_issues if w and not e)
     out.append(f"**Body checks (added 2026-09-02)**: "
                f"entries failing a hard rule={body_err_files}, warnings-only={body_warn_files}")
+    out.append(f"**Code drift (`describes`)**: changed={len(describes_changed)}, "
+               f"invalid={len(describes_invalid)}, not checked={len(describes_unchecked)}")
     out.append("")
     out.append("---")
     out.append("")
@@ -800,6 +883,31 @@ def lint(vault_root, topic, strict=False):
             if len(soft) > 40:
                 out.append(f"- … and {len(soft) - 40} more")
             out.append("")
+    out.append("")
+
+    # Section: code drift (2026-09-17)
+    out.append("## 🔄 Code Drift (`describes`)")
+    out.append("")
+    out.append("A `project/` entry about code names it in `describes: <path>[@<commit>]` (frontmatter spec v9), resolved against the project's repo: the registry entry's `project_root`, or the folder above an in-project `llm-wiki/`. \"Changed\" means the code moved on since the entry was read: re-read the entry, correct it if needed, then bump `last_reviewed` and pin the current commit. It does not mean the entry is wrong; a rename or a move fires it too. Warn-only, even with `--strict`.")
+    out.append("")
+    if not (describes_changed or describes_invalid or describes_unchecked):
+        out.append("_No drift: every `describes` target is unchanged (or no entry carries the field)._")
+        out.append("")
+    for title, rows, note in (
+            ("Code changed — re-read the entry", describes_changed, None),
+            ("Invalid `describes`", describes_invalid, "The field itself is wrong: fix the path or the commit, or remove the field."),
+            ("Not checked", describes_unchecked, "No repo to compare against: add `project_root` to this notebook's registry entry, or remove the field.")):
+        if not rows:
+            continue
+        out.append(f"### {title} ({len(rows)})")
+        out.append("")
+        if note:
+            out.append(note)
+            out.append("")
+        for f, value, detail in rows:
+            rel = f.relative_to(wiki_root)
+            out.append(f"- `{rel.as_posix()}` — `{value}`: {detail}")
+        out.append("")
     out.append("")
 
     # Save report

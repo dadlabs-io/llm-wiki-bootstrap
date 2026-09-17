@@ -72,7 +72,7 @@ Phase B — python new-wiki.py --phase B ...   (Phase A already done by install-
    B6.  Create the wiki folders from Q4 + Q5 (+ sessions/)
    B6.1 Land the framework-contract docs at wiki/project/best-practices/framework/ (when project/ exists)
    B7.  Render CLAUDE.md / README.md / .gitignore (never overwrites an existing one)
-   B8.  Write .claude/wiki-config.json (+ the registry entry for a vault notebook)
+   B8.  Write .claude/wiki-config.json (+ the registry entry for a vault notebook, with project_root = the project folder unless the target is the notebook itself)
    B9.  Drive OAuth walkthrough (only if Drive is on)
    B11. JSON summary + next steps
 ```

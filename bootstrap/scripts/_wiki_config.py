@@ -270,6 +270,27 @@ def notebook_option(name, key, default=None, cwd=None, cfg=None):
     return default
 
 
+def project_root(name, notebook_root_path, cwd=None):
+    """The repo a notebook's ``describes`` paths resolve against → (abs_path|None, reason).
+
+    A vault notebook names its code in the registry: ``"project_root"`` in its entry,
+    relative to the registry file's folder like ``root`` (2026-09-17). No guessing —
+    a notebook without the key has no repo, and the reason says so. A wiki that lives
+    inside its project (``<repo>/llm-wiki``, not a registry notebook) needs no key:
+    its repo is the folder above ``llm-wiki/``."""
+    reg, reg_path = load_registry(cwd)
+    if reg and name in reg:
+        entry = reg[name]
+        value = entry.get("project_root") if isinstance(entry, dict) else None
+        if not value:
+            return None, f"no project_root in the registry entry for '{name}'"
+        return str(_abs_against(reg_path, value).resolve()), "registry project_root"
+    nb = Path(notebook_root_path)
+    if nb.name == DEFAULT_TOPIC_FALLBACK:
+        return str(nb.parent.resolve()), "in-project wiki (the folder above llm-wiki/)"
+    return None, f"'{name}' is not in the registry and is not an in-project llm-wiki/"
+
+
 # ---------- resolution helpers (registry → vault_root → cwd) ----------
 
 def default_vault(cwd=None):
