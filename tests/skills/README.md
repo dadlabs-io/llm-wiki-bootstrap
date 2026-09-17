@@ -1,6 +1,8 @@
 # Skill test baselines
 
-A standing test for each shipped skill: one of each kind of input the skill handles, run by a real Claude session into a throwaway sandbox, then checked by a script. Re-run it whenever the skill (or a script it calls) changes; a changed skill is not installed until its run is at least as good as the baseline.
+A standing test for each shipped skill: one of each kind of input the skill handles, run by a real Claude session into a throwaway sandbox, then checked by a script. A **behavioural** change to a skill (or to a script it calls) is not installed until its run is at least as good as the baseline.
+
+A **small** change — wording, a clarified flag, a typo — does not earn a run of its own: install it and log it in [PENDING.md](PENDING.md), and the next run for that skill checks it (the user, 2026-09-17; a full run costs real money, and the suite exists to catch behavioural regressions). Run the suite when a skill's pending list is worth a run, when a behavioural change lands on top of it, or when something looks wrong in real use. A skill with no baseline at all is never installed on a pending row — there the first run is the baseline.
 
 ## Run it
 

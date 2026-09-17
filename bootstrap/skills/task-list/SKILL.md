@@ -1,8 +1,8 @@
 ---
 name: task-list
 description: "Keeps the project's task list, the At a glance block at the top of sessions/<persona>/task.md in the wiki: one table per owner (the user, each persona or bot, Unassigned), one row per task with a number that is never reused, a status (to do / doing / waiting / parked / done) and what it waits on. Shows the list, adds a task, changes a task's status, owner or next step, marks one done, and removes one only when the user says so. Use when the user types /task-list, or says 'add a task', 'new task', 'put X on the list', 'delete task 4', 'remove task 4', 'mark 2 done', 'task 3 is done', 'task 3 is waiting on Y', 'move task 5 to <owner>', 'what's on my list', 'show my tasks', 'what's left'. Not Claude Code's /tasks (background jobs), and not a session's own scratch to-do list."
-last_reviewed: 2026-09-15
-review_after: 2026-12-15
+last_reviewed: 2026-09-17
+review_after: 2026-12-17
 reviewed_for_model: claude-opus-5
 ---
 
@@ -26,14 +26,25 @@ One `###` section per owner: the user (by name), each persona or bot working in 
 python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show
 python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py add "<task in one plain line>" --owner <section> [--status <s>] [--next "<text>"]
 python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py set <N> [--status <s>] [--next "<text>"] [--owner <section>] [--task "<text>"]
-python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N>
+python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> [--next "<text>"]
 python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py remove <N> --confirmed
 ```
 
-Run it from the project folder: it finds the wiki and the persona from `.claude/wiki-config.json`.
-`--persona <name>` works on another persona's list, but only when the user names it. Statuses are
-`to do`, `doing`, `waiting`, `parked` and `done`. `add`, `set` and `done` create the block when the file has
-none. Exit 2 means bad input or an unknown number: read the message and fix the call, don't retry blindly.
+Run it from the project folder: it finds the wiki and the persona from `.claude/wiki-config.json`,
+walking up from the working directory, so a subfolder of the project works too. You do not need to pass a
+path. Statuses are `to do`, `doing`, `waiting`, `parked` and `done`. `add`, `set` and `done` create the block
+when the file has none. Record the outcome on the same call — `done <N> --next "<what happened>"` — rather
+than a `set` after it.
+
+Every command also takes, and rarely needs, `--persona <name>` (another persona's list, only when the user
+names it), `--cwd <dir>` (resolve from there instead of the working directory — for a session started outside
+the project) and `--file <task.md>` (an explicit file, which skips config resolution). There is an `init
+[--owners "A,B,C"]` too, for an empty list with named sections; `add` creates the block on its own, so `init`
+is only for setting the sections up front.
+
+Exit 2 means bad input, an unknown number, no wiki found, or `remove` without `--confirmed`; exit 3 means
+`show` found no block yet. Read the message and fix the call, don't retry blindly and don't fall back to
+editing the file.
 
 ## The two rules
 
@@ -41,8 +52,9 @@ none. Exit 2 means bad input or an unknown number: read the message and fix the 
    its old number.
 2. **A task leaves the list only on the user's word.**
    - When the user says to delete or remove task N, that is their word: run `remove <N> --confirmed`.
-   - When a task is finished (the user says it is done, or you finished it this session), run `done <N>`, then
-     ask: "Task N is done. Remove it from the list?" Remove it only on a yes.
+   - When a task is finished (the user says it is done, or you finished it this session), run
+     `done <N> --next "<what happened>"`, then ask: "Task N is done. Remove it from the list?" Remove it
+     only on a yes.
    - Never pass `--confirmed` on your own judgement.
 
 "Waiting" is a status: the task stays with its owner, and `--next` says what it waits on.
@@ -53,7 +65,7 @@ none. Exit 2 means bad input or an unknown number: read the message and fix the 
 |---|---|
 | "/task-list", "what's on my list", "show my tasks", "what's left" | `show`, then give them the tables as printed |
 | "add a task …", "put X on the list", "remind me to …" | `add "<X>"`, owner as below |
-| "task 3 is done", "mark 3 done", "I finished …" | `done 3`, then ask whether to remove it |
+| "task 3 is done", "mark 3 done", "I finished …" | `done 3 --next "<what happened>"`, then ask whether to remove it |
 | "delete task 4", "remove task 4", "drop 4" | `remove 4 --confirmed` |
 | "task 3 is waiting on Y", "park 5", "I'm on 2 now" | `set 3 --status waiting --next "Y"`, `set 5 --status parked`, `set 2 --status doing` |
 | "move 5 to agent-builder", "give 5 to me" | `set 5 --owner <section>` |
