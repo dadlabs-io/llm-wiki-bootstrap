@@ -15,7 +15,7 @@ Claude Code adds what it prints to the session's context. For each session:
     a registry notebook, or an in-project llm-wiki/)
   - prints, as the hook's JSON output, the paths of sessions/active-context.md,
     sessions/<persona>/handoff.md and sessions/<persona>/task.md (each if present)
-    with the instruction to read them before the first reply (additionalContext,
+    with the startup checklist to run before the first reply (additionalContext,
     for Claude), and one line for the user — the handoff's GOAL — shown in the
     terminal at startup (systemMessage)
 
@@ -109,10 +109,20 @@ def hook_output(start: Path) -> dict | None:
     if not files:
         return None
     name = cfg.get("project_name") or root.name
-    lines = [f"llm-wiki SessionStart hook: resume files for {name} (persona: {persona}). Before your first "
-             "reply, read them in this order, then open the reply, whatever the user said, with one paragraph "
-             "on where we left off and what is next:"]
-    lines += [f"{i}. {f} ({f.stat().st_size / 1024:.1f} KB)" for i, f in enumerate(files, 1)]
+    # A checklist, not a sentence (2026-09-18): "read them" let a session cap a file at 9 KB, skip the
+    # project's own Resuming steps and answer the launch line; another started a long run before its recap
+    lines = [f"llm-wiki SessionStart hook: startup for {name} (persona: {persona}). The user's first message, "
+             "whatever it says (often a launch line such as \"Ready to start Claude!\"), is the signal to run "
+             "this startup, not a request to answer. Do every step, in order, before your first reply:",
+             "1. Read each of these files in full: the whole file, no head/tail or byte or line limit, and "
+             "every part if it comes back in parts:"]
+    lines += [f"   {i}. {f} ({f.stat().st_size / 1024:.1f} KB)" for i, f in enumerate(files, 1)]
+    lines += ["2. Read in full each memory file the MEMORY.md index in your context points to.",
+              "3. Do every other step in the project CLAUDE.md's Resuming section (e.g. the intake inbox, the "
+              "Discord channel catch-up).",
+              "4. Start no other work (no runs, no edits) until the recap is given.",
+              "5. Open the first reply with one paragraph on where we left off and what is next, then say what "
+              "steps 1-3 found."]
     goal = handoff_goal(sessions / persona / "handoff.md")
     # Layout the user drew (2026-09-15): "Next:" on its own line, the goal's lead ("Start QUEUE 6:") above the rest
     head, sep, rest = goal.partition(": ")

@@ -9,6 +9,13 @@
 
 ---
 
+## 2026-09-18
+
+### The SessionStart hook's instruction becomes a startup checklist
+- **Why**: two sessions (llm-wiki-bootstrap, investment-agent) started badly this morning under an unchanged hook, profile and CLAUDE.md. One answered the launch line "Ready to start Claude!" instead of resuming, then read `task.md` capped at 9 KB and skipped the project's other Resuming steps (intake inbox, Discord catch-up). The other started a long run before its recap and read only the MEMORY.md index. The old sentence ("read them in this order, then open the reply…") said neither *in full* nor anything about the steps beyond the three files. The Claude Code update overnight (2.1.274 → 2.1.276) was ruled out: both versions place the hook text after the first message, and replays on both behave the same.
+- **Change**: `wiki-session-start.py`'s `additionalContext` is five numbered steps. The first message is the signal to run startup, not a request. Each file is read in full, with no head/byte/line limit. The memory files behind MEMORY.md are read. The project CLAUDE.md's other Resuming steps are done. No other work starts before the recap. The recap opens the first reply. About 1.2 KB, inside the ~2 KB hook preview.
+- **Result**: the launch line replayed headless (Opus 5), twice in each of the two projects: 4/4 did every step, with whole-file reads and no work started, before the recap.
+
 ## 2026-09-17
 
 ### `wiki-lint` gets a test suite; both models pass 8/8 (task #16)
