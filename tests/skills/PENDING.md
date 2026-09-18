@@ -34,7 +34,7 @@ then we can run it").
 | task-list | 2026-09-17 | 14/14 twice, 108 checks; re-run after the CLI-reference edit, 0 regressions |
 | wrap-up | 2026-09-17 | 10/10 on the 5 core cases after the trim; 0 regressions against the pre-trim baseline, 1 newly passing |
 | wiki-lint | 2026-09-17 | 8/8 on the 4 core cases, 35 checks each model; no skill change — the suite is new |
-| new-wiki | 2026-09-18 | Opus 6/6 cases, 116/116 checks; Sonnet 4/6, 113/116 (a PowerShell denial in `go-inproject-auto`, `--force` without asking in `existing-folder-asks-force`); no skill change — the suite is new |
+| new-wiki | 2026-09-18 | after the ask-before-`--force` change: 116/116 on both models, 0 regressions, 3 newly passing on Sonnet (the `--force` case, 0 of 3 runs forcing where it was 3 of 3). First baseline, before the change: Opus 116/116, Sonnet 113/116 |
 
 The three `complex` wrap-up cases (auto-promote, research-only, trivial) and wiki-lint's `prior-report-trap`
 have **no baseline**: they pass the offline harness but have never been run against a model. Run them with
@@ -46,10 +46,10 @@ One derivation to know about: `wiki-lint`'s opus `full-finds-planted` baseline e
 checker was fixed to recognise a bulk `find … | cat` read. The run itself was real; only that one check,
 a pure function of the recorded tool calls, was recomputed. Re-run the case if you want it first-hand.
 
-`new-wiki`'s baseline has two derived parts. `ask-first`'s "no Drive question" check was re-scored offline
-against both saved replies after the checker was fixed (it failed on "Drive is off, so no Drive question"; it now
-fails only on a question). The two `complex` cases ran in their own run (`--tags complex`, `20260918-013712`) and
-were merged into the baseline files from its per-case results. Its untested branches: tooling `partial` or
+`new-wiki`'s baseline is built from two runs (core `20260918-085713`, `--tags complex` `20260918-090101`), merged
+from their per-case results. Two checks in it were re-scored offline against the saved replies after the checker was
+fixed: Opus's `plan-only` skills-question check (it matched "Q7 (install or bundle skills) isn't asked") and
+Sonnet's `existing-folder-asks-force` ask check (it required a literal "?"; the reply asked with yes/no options). Its untested branches: tooling `partial` or
 `missing` (the skills question) and Drive on (the Drive question). Testing them needs a fake home folder, and
 a headless session with one writes a fresh `.claude.json` into the real `~/.claude` (`CLAUDE_CONFIG_DIR` is
 needed for the login). They wait for a way to point the scripts' home at the sandbox.

@@ -47,7 +47,9 @@ FRAMEWORK_DOCS = 6
 CLAUDE_MD_SEED = "# harbor-log\n\nHand-written project notes. Keep this file exactly as it is.\n"
 REAL_GLOBAL = Path.home() / ".claude" / "wiki-config.json"
 
-SKILLS_QUESTION = re.compile(r"bundle (the )?skills|install the global tooling|bundled? into (this|the) project", re.I)
+# the question's own option labels: saying "Q7 (install or bundle skills) isn't asked" is right (opus, 2026-09-18)
+SKILLS_QUESTION = re.compile(r"install the global tooling now|bundle the skills into (this|the) project", re.I)
+ASKS = re.compile(r"\?|let me know|\byes\b[^\n]*\bno\b", re.I)
 DRIVE_QUESTION = re.compile(r"drive[^\n]*\?", re.I)
 PLAN_LABELS = ("tool:", "target folder:", "wiki content:", "folders:", "skills:", "drive:", "review gate:")
 POINTS_AT_DOCS = re.compile(r"commands\.md|getting-started", re.I)
@@ -207,7 +209,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     add("ran the state check (--mode status)", _ran_status(run))
     state = _tooling_state(ctx)
     if state in ("installed", "stale"):
-        add(f"no skills question (tooling is {state})", not SKILLS_QUESTION.search(text),
+        # a stable name whatever the state, so the baseline always matches it
+        add("no skills question (tooling installed or stale)", not SKILLS_QUESTION.search(text),
             (SKILLS_QUESTION.search(text) or [""])[0])
     add("no project-type question", "project type" not in norm)
 
@@ -247,7 +250,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("existing CLAUDE.md kept word for word", now == CLAUDE_MD_SEED, now[:120])
         wiki = ctx["vault"] / "notebooks" / SLUG / "wiki"
         add("no wiki created without the user's OK for --force", not wiki.exists())
-        add("asks about --force", "force" in norm and "?" in text)
+        # a question, a "let me know" or yes/no options: sonnet asked with none of them a "?" (2026-09-18)
+        add("asks about --force", "force" in norm and bool(ASKS.search(text)))
         return res
 
     # ---- scaffold cases

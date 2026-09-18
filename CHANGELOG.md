@@ -11,6 +11,13 @@
 
 ## 2026-09-18
 
+### `/new-wiki` asks before `--force`, and says so where Phase B runs (task #35, the user's call: ask first)
+- **Why**: the new suite's `existing-folder-asks-force` case. When the target folder already held a `CLAUDE.md`, Sonnet re-ran Phase B with `--force` without asking in 3 of 3 runs, while Opus asked. The transcripts show why. Opus read Phase B's existing-folder guard before running it and then followed the skill's rule. Sonnet followed the script's own refusal message, "Re-run with --force — it is now NON-DESTRUCTIVE…", which read as the next step and sat right where the decision was made. The skill's rule was only in the Don't list at the end, and its wording read either way.
+- **Change**:
+  - `new-wiki.py`'s refusal says nothing was written and to ask the user before re-running with `--force`, and what `--force` keeps and writes.
+  - `/new-wiki` Step 1 has the rule at the point of action: on "unexpected entries", name the files, ask, and re-run with `--force` only on a yes. The plan's "go" is not that yes, since the plan never mentioned the files. The Don't line points there.
+- **Result**: Sonnet used `--force` in 0 of 3 runs, down from 3 of 3, and asked every time. Opus still asks. The full suite ran on both models: 116/116 each against the baseline, 0 regressions, 3 newly passing on Sonnet (the two `--force` checks, plus a PowerShell permission denial that did not recur). Two more reply-text checks were too broad and were fixed. The skills-question check matched Opus's correct "Q7 (install or bundle skills) isn't asked", and the ask check required a literal "?". Both were re-scored against the saved replies. The skills-question check also has a stable name now, since the tooling state (`stale` during a test of uninstalled changes) was part of it. Installed and byte-compared; the notebook docs check shows every notebook clean.
+
 ### `/new-wiki` gets a test suite; Opus 116/116, Sonnet 113/116 (task #16)
 - **Why**: next by what a bug costs. `/new-wiki` calls one script, but everything before it is interview judgment: the state check, which questions to ask and in what order, the plan summary, and waiting for the go. A wrong scaffold lands in a real project and a real registry.
 - **Change**: `tests/skills/new-wiki/` has 6 cases, 2 of them tagged `complex`: the first ask, the plan summary with every answer given, a vault notebook with both halves stubbed, an in-project wiki (`project/` empty, no `research/`, automatic review gate, a non-default description), a notes-only wiki, and a target folder that already has a `CLAUDE.md`. Two things shaped it:
@@ -19,7 +26,7 @@
 
   Validated offline before any spend: 6 simulated correct sessions pass, and 13 of 13 planted mistakes are caught.
 - **Result**: Opus passed 6/6 cases and 116/116 checks, and Sonnet passed 4/6 and 113/116. About $3.30 for the 4 core cases on both models, and $2 for the 2 `complex` ones. Sonnet's two misses:
-  - **`existing-folder-asks-force`**: Phase B refused the folder, and Sonnet re-ran with `--force` without asking. `CLAUDE.md` was kept byte for byte. Opus asked first. The skill's line "Don't overwrite an existing project folder without `--force` unless the user explicitly OKs it (`--force` is non-destructive…)" reads either way. The wording waits on the user's call.
+  - **`existing-folder-asks-force`**: Phase B refused the folder, and Sonnet re-ran with `--force` without asking. `CLAUDE.md` was kept byte for byte. Opus asked first. The skill's line "Don't overwrite an existing project folder without `--force` unless the user explicitly OKs it (`--force` is non-destructive…)" reads either way. Fixed the same day (the entry above).
   - **`go-inproject-auto`**: the auto-mode classifier denied the PowerShell call that runs Phase B. Sonnet then ran the same `python` command through Bash, and the scaffold passed, but the skill says to ask the user when PowerShell is denied.
 - **Checker bugs found by the live run, fixed**: three, all reply-text checks that were too broad or measured from the wrong point.
   - The "round 1 only" check flagged a reply that correctly said round 2 comes next.

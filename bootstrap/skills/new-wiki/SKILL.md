@@ -185,6 +185,8 @@ python "<bootstrap_source>/bootstrap/scripts/new-wiki.py" \
   [--drive-subfolder <slug>]
 ```
 
+**If Phase B stops with "unexpected entries"** (the target folder already has files), stop and ask the user: name the files, say that `--force` keeps an existing `CLAUDE.md` / `README.md` / `.gitignore` and writes everything else into that folder, and re-run with `--force` only on their yes. The "go" on the plan summary is not that yes — the plan did not mention the existing files. Never add `--force` on your own.
+
 Phase B in global mode checks the tooling itself: it refuses (exit 1, with the fix named) when the global set is partial or missing and `--install-global-if-missing` was not passed; it warns and continues when the set is merely stale; it never re-copies an installed set. The script returns a JSON summary on stdout (`wiki_folders`, `global_tooling`, `global_tooling_installed_now`, `needs_restart`, `next_steps`).
 
 ### Step 2 — Read back the summary + post-install reminders
@@ -203,7 +205,7 @@ End with: "Read `how-to/llm-wiki/commands.md` for the full command reference, or
 
 - Don't skip the state check, and don't ask the skills question when the state is `installed` or `stale` — that is the "reinstall at the top every time" this skill was rewritten (2026-09-09) to stop.
 - Don't proceed without the plan summary being confirmed.
-- Don't overwrite an existing project folder without `--force` unless the user explicitly OKs it (`--force` is non-destructive to `CLAUDE.md` / `README.md` / `.gitignore`).
+- Don't pass `--force` without the user's explicit yes to it (Step 1), even though it keeps `CLAUDE.md` / `README.md` / `.gitignore`.
 - Don't ask for a project type — removed 2026-06-15; the two folder questions replaced the last trace of it.
 - Don't edit `<target>/.claude/skills/` by hand in a bundled install — edit `<bootstrap_source>/bootstrap/skills/` and re-sync.
 

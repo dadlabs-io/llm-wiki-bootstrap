@@ -1181,9 +1181,11 @@ def phase_b(args):
         unexpected = [p for p in target.iterdir() if p.name not in (".git", ".claude", ".cursor", "llm-wiki")]
         if unexpected:
             _err(f"target folder {target} has unexpected entries: {[p.name for p in unexpected][:5]}")
-            _info("This looks like an existing project (migration / re-run). Re-run with --force — "
-                  "it is now NON-DESTRUCTIVE: existing CLAUDE.md / README.md / .gitignore are preserved, "
-                  "not overwritten (P2 fix).")
+            # Worded as a question for the user, not a next step: an agent reading "Re-run with
+            # --force" did exactly that without asking (sonnet, 3 of 3 runs, 2026-09-18).
+            _info("This looks like an existing project (migration / re-run). Nothing was written. "
+                  "Ask the user before re-running with --force: it keeps an existing CLAUDE.md / "
+                  "README.md / .gitignore and writes everything else into this folder.")
             return 1
 
     description = args.project_description or ""
