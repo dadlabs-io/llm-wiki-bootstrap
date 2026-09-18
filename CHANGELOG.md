@@ -11,6 +11,27 @@
 
 ## 2026-09-18
 
+### `/new-wiki` gets a test suite; Opus 116/116, Sonnet 113/116 (task #16)
+- **Why**: next by what a bug costs. `/new-wiki` calls one script, but everything before it is interview judgment: the state check, which questions to ask and in what order, the plan summary, and waiting for the go. A wrong scaffold lands in a real project and a real registry.
+- **Change**: `tests/skills/new-wiki/` has 6 cases, 2 of them tagged `complex`: the first ask, the plan summary with every answer given, a vault notebook with both halves stubbed, an in-project wiki (`project/` empty, no `research/`, automatic review gate, a non-default description), a notes-only wiki, and a target folder that already has a `CLAUDE.md`. Two things shaped it:
+  - **A headless session has no `AskUserQuestion` tool at all**, so the prompt has the session write the questions into its reply, and the checks read them there.
+  - **The sandbox is outside any git repo**, in the system temp folder (inside a repo, Phase B skips `git init` by design). It has its own vault and registry. Every case also fails if the real registry, the real `~/.claude/wiki-config.json` or the real default paths change.
+
+  Validated offline before any spend: 6 simulated correct sessions pass, and 13 of 13 planted mistakes are caught.
+- **Result**: Opus passed 6/6 cases and 116/116 checks, and Sonnet passed 4/6 and 113/116. About $3.30 for the 4 core cases on both models, and $2 for the 2 `complex` ones. Sonnet's two misses:
+  - **`existing-folder-asks-force`**: Phase B refused the folder, and Sonnet re-ran with `--force` without asking. `CLAUDE.md` was kept byte for byte. Opus asked first. The skill's line "Don't overwrite an existing project folder without `--force` unless the user explicitly OKs it (`--force` is non-destructive…)" reads either way. The wording waits on the user's call.
+  - **`go-inproject-auto`**: the auto-mode classifier denied the PowerShell call that runs Phase B. Sonnet then ran the same `python` command through Bash, and the scaffold passed, but the skill says to ask the user when PowerShell is denied.
+- **Checker bugs found by the live run, fixed**: three, all reply-text checks that were too broad or measured from the wrong point.
+  - The "round 1 only" check flagged a reply that correctly said round 2 comes next.
+  - The Drive check flagged "Drive is off, so no Drive question".
+  - "Nothing created" counted the files the test's own reset writes, because the runner snapshots before it builds the prompt.
+- **Found, not fixed**: for a notebook in the vault, Phase B's `next_steps` says to read `llm-wiki/README.md`, a folder that only exists for a wiki inside the project.
+
+### `read-guard.py`: a command's own output capture is not a document (the first false block, task #32)
+- **Why**: the first watch of real sessions under the guard (four sessions, its first hour) found two blocks, both genuine, and then one false block in this session: `python new-wiki.py … 2> "$T/err.txt"; …; tail -5 "$T/err.txt"` was refused as a partial read of a document, because `.txt` is a document extension. The file was the same command's stderr capture, not something anyone was asked to read.
+- **Change**: `check_shell` collects the files a command writes by redirection (`>`, `>>`, `2>`, `&>`, separate or attached, never `2>&1`) and does not count them as documents for that command. It is the shell-side twin of the end-of-turn rule that already skips a document the session wrote itself.
+- **Result**: four new checks in `tests/hooks/test_read_guard.py`, two that must now pass and two that must still be refused (`tail` on a different `.txt` in the same command; `2>&1 | tail` followed by `tail` on a document). 41/41, and 39/41 with the change removed, failing exactly the two new allow cases. Installed and byte-compared. Not replayed over the 5,863-command corpus.
+
 ### `read-guard.py`: documents are read whole, enforced by hooks
 - **Why**: a transcript audit of 79 sessions found 45 instruction and resume files (handoff.md, task.md, active-context.md, SKILL.md, WORKFLOW.md, CLAUDE.md) read only partly since 2026-08-20, each reported as read, although the user's global CLAUDE.md says to read in full. Public reports show a CLAUDE.md rule alone does not hold (claude-code #2595, #28743), and that the Read tool's own truncation can pass for a whole file (#28783, #92979). The model's tool descriptions and Anthropic's context-engineering guidance both push toward partial reads, so enforcement has to sit outside the model.
 - **Change**: a new hook script, registered by the tooling install for PreToolUse (`Read|Bash|PowerShell`), Stop and SubagentStop. Before a tool runs it refuses:

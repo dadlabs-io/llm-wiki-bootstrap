@@ -56,6 +56,9 @@ SHELL_OUTPUT_MAX_BYTES = 25_000
 _PARTIAL_PS = re.compile(r"-(TotalCount|Head|Tail|First|Last)\b", re.I)
 _HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1[^\n]*\n.*?\n\s*\2\s*(?=\n|$)", re.S)
 _REDIRECT = re.compile(r"^\d*>>?&?\d*$")
+# a redirect that names a file: `>`, `2>>`, `&>` (a separate word, the file follows) or `2>err.txt` (attached);
+# `2>&1` names no file
+_REDIRECT_TO_FILE = re.compile(r"^(?:\d*|&)>>?(?!&)(.*)$")
 
 
 def segments(command: str) -> list[tuple[str, bool]]:
@@ -158,9 +161,27 @@ def check_read(tool_input: dict, cwd: str) -> str | None:
             "document to be read, every word is read, first line to last.")
 
 
+def _outputs(command: str) -> set[str]:
+    """Files this command writes by redirection. Printing part of one is looking at the
+    command's own output (a stderr capture, a log), not reading a document — the same
+    reason the end-of-turn check skips a document the session wrote itself."""
+    out: set[str] = set()
+    for seg, _ in segments(command):
+        words = _words(seg)
+        for i, w in enumerate(words):
+            m = _REDIRECT_TO_FILE.match(w)
+            if not m:
+                continue
+            target = m.group(1) or (words[i + 1] if i + 1 < len(words) else "")
+            if target:
+                out.add(target.strip("'\""))
+    return out
+
+
 def check_shell(command: str, cwd: str) -> str | None:
     docs_so_far: list[str] = []  # documents flowing into this command through a pipe
     cat_docs: list[str] = []
+    own_output = _outputs(command)
     for seg, piped in segments(command):
         if not piped:
             docs_so_far = []
@@ -168,7 +189,7 @@ def check_shell(command: str, cwd: str) -> str | None:
         if not words:
             continue
         cmd = Path(words[0]).name.lower()
-        docs = [w for w in _operands(words) if is_doc(w)]
+        docs = [w for w in _operands(words) if is_doc(w) and w not in own_output]
         partial_unix = cmd in ("head", "tail") or (cmd == "sed" and "-n" in words and "-i" not in words)
         if partial_unix and (docs or docs_so_far):
             names = ", ".join(Path(d).name for d in (docs or docs_so_far))

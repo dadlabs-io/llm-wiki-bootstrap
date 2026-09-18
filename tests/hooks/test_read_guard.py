@@ -102,6 +102,15 @@ def main() -> int:
         check("sed -i on a doc (an edit) -> allow", not sh("sed -i 's/a/b/' main/task.md"))
         check("head -5 on a code file -> allow", not sh("head -5 tool.py"))
         check("echo x > out.md -> allow", not sh("echo x > out.md"))
+        # 2026-09-18, the first false block: a command's own stderr capture is output, not a document
+        check("cmd 2> err.txt; tail -5 err.txt -> allow (own output capture)",
+              not sh('python x.py > "$T/out.json" 2> "$T/err.txt"; tail -5 "$T/err.txt"'))
+        check("cmd >log.txt && head log.txt -> allow (attached redirect)",
+              not sh("python x.py >log.txt && head -20 log.txt"))
+        check("cmd 2> err.txt; tail -5 notes.txt -> deny (a different file)",
+              sh('python x.py 2> err.txt; tail -5 notes.txt'))
+        check("cmd 2>&1 | tail; tail -2 task.md -> deny (2>&1 names no file)",
+              sh("python x.py 2>&1 | tail -3; tail -2 main/task.md"))
         check("PowerShell Get-Content -TotalCount -> deny",
               sh(f"Get-Content {tmp}\\main\\task.md -TotalCount 20", "PowerShell"))
         check("PowerShell Get-Content | Select-Object -First -> deny",
