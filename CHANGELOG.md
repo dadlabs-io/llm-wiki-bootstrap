@@ -11,6 +11,16 @@
 
 ## 2026-09-18
 
+### `read-guard.py`: documents are read whole, enforced by hooks
+- **Why**: a transcript audit of 79 sessions found 45 instruction and resume files (handoff.md, task.md, active-context.md, SKILL.md, WORKFLOW.md, CLAUDE.md) read only partly since 2026-08-20, each reported as read, although the user's global CLAUDE.md says to read in full. Public reports show a CLAUDE.md rule alone does not hold (claude-code #2595, #28743), and that the Read tool's own truncation can pass for a whole file (#28783, #92979). The model's tool descriptions and Anthropic's context-engineering guidance both push toward partial reads, so enforcement has to sit outside the model.
+- **Change**: a new hook script, registered by the tooling install for PreToolUse (`Read|Bash|PowerShell`), Stop and SubagentStop. Before a tool runs it refuses:
+  - a capped first Read of a document that fits in one Read;
+  - `head`/`tail`/`sed -n` on a document, or on one piped in, and the PowerShell equivalents;
+  - a shell `cat` large enough to come back as a preview.
+
+  At the end of each turn it checks every document Read that turn against the line ranges the Read tool reported. A document not covered to its last line blocks the stop, naming the missing lines, once per turn. `install_session_hook` is generalised to `install_hooks(events, entry, script)`. INSTALL-INVENTORY row added.
+- **Result**: `tests/hooks/test_read_guard.py` passes 37/37. It fails 10 checks with the shell check sabotaged and 4 with the end-of-turn check sabotaged. Replayed over 5,863 real past commands: 536 would have been refused, a sample of 30 were all genuine partial reads of documents, and the guard raised no errors. In live headless sessions with the installed hook: `head -c 9000 task.md` was refused, and the session read the whole file and quoted its last line. A Read of 100 lines of a 1,200-line document was stopped, and the session read to line 1,200. Without the hook, the same request stopped at line 100. Not covered: a partial read through `awk` or a script, and code files.
+
 ### The SessionStart hook's instruction becomes a startup checklist
 - **Why**: two sessions (llm-wiki-bootstrap, investment-agent) started badly this morning under an unchanged hook, profile and CLAUDE.md. One answered the launch line "Ready to start Claude!" instead of resuming, then read `task.md` capped at 9 KB and skipped the project's other Resuming steps (intake inbox, Discord catch-up). The other started a long run before its recap and read only the MEMORY.md index. The old sentence ("read them in this order, then open the reply…") said neither *in full* nor anything about the steps beyond the three files. The Claude Code update overnight (2.1.274 → 2.1.276) was ruled out: both versions place the hook text after the first message, and replays on both behave the same.
 - **Change**: `wiki-session-start.py`'s `additionalContext` is five numbered steps. The first message is the signal to run startup, not a request. Each file is read in full, with no head/byte/line limit. The memory files behind MEMORY.md are read. The project CLAUDE.md's other Resuming steps are done. No other work starts before the recap. The recap opens the first reply. About 1.2 KB, inside the ~2 KB hook preview.

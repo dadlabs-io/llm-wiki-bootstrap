@@ -36,10 +36,18 @@ SESSION_HOOK_SCRIPT = "wiki-session-start.py"
 SESSION_HOOK_MATCHER = "startup|clear"
 SESSION_HOOK_TIMEOUT = 30  # seconds
 
+# The read guard (2026-09-18): refuses a partial read of a document before it runs
+# and, at the end of each turn, blocks a stop while a document read in this turn
+# has lines not read. One script, three events.
+READ_GUARD_SCRIPT = "read-guard.py"
+READ_GUARD_EVENTS = {"PreToolUse": "Read|Bash|PowerShell", "Stop": None, "SubagentStop": None}
+READ_GUARD_TIMEOUT = 30  # seconds
+
 # ---------- Manifests (single source of truth) ----------
 # User-invokable scripts that travel to every install.
 TRAVEL_SCRIPTS = [
     "new-wiki.py",
+    "read-guard.py",  # PreToolUse/Stop/SubagentStop hook: documents are read whole (2026-09-18)
     "wiki-init.py",
     "wiki-fetch-drive-folder.py",
     "wiki-fetch-pdf.py",
@@ -178,50 +186,72 @@ _SESSION_HOOK_GUARD = ("import os, runpy, sys; p = sys.argv[1]; "
                        "os.path.isfile(p) and runpy.run_path(p, run_name='__main__')")
 
 
-def session_hook_entry(scripts_dir, python: str = None) -> dict:
-    """The hooks.SessionStart entry: the interpreter that ran the install, named
-    explicitly (`python3` can be the Microsoft Store stub on Windows, `python`
-    can be absent on a Mac), running the script through the -c guard."""
+def hook_entry(scripts_dir, script_name: str, timeout: int, python: str = None) -> dict:
+    """A hooks entry: the interpreter that ran the install, named explicitly
+    (`python3` can be the Microsoft Store stub on Windows, `python` can be absent
+    on a Mac), running the script through the -c guard."""
     py = Path(python or sys.executable).as_posix()
-    script = f"{str(scripts_dir).rstrip('/')}/{SESSION_HOOK_SCRIPT}"
-    return {"type": "command", "command": py, "args": ["-c", _SESSION_HOOK_GUARD, script],
-            "timeout": SESSION_HOOK_TIMEOUT}
+    script = f"{str(scripts_dir).rstrip('/')}/{script_name}"
+    return {"type": "command", "command": py, "args": ["-c", _SESSION_HOOK_GUARD, script], "timeout": timeout}
 
 
-def _is_session_hook(h) -> bool:
-    return isinstance(h, dict) and any(SESSION_HOOK_SCRIPT in str(x)
+def session_hook_entry(scripts_dir, python: str = None) -> dict:
+    """The hooks.SessionStart entry for the wiki resume hook."""
+    return hook_entry(scripts_dir, SESSION_HOOK_SCRIPT, SESSION_HOOK_TIMEOUT, python)
+
+
+def _runs_script(h, script_name: str) -> bool:
+    return isinstance(h, dict) and any(script_name in str(x)
                                        for x in [h.get("command", ""), *(h.get("args") or [])])
 
 
 def install_session_hook(entry: dict, settings_path: Path = None, dry_run: bool = False) -> str:
-    """Add the wiki resume hook under hooks.SessionStart in settings.json, or bring
-    an existing one up to date, leaving every other hook and setting as it is.
-    Backs the file up (<name>.bak-wiki) before changing it; writes nothing when
-    already current. Returns added | updated | unchanged | would be … | skipped: …"""
+    """Add the wiki resume hook under hooks.SessionStart in settings.json (see install_hooks)."""
+    return install_hooks({"SessionStart": SESSION_HOOK_MATCHER}, entry, SESSION_HOOK_SCRIPT,
+                         settings_path, dry_run)
+
+
+def install_hooks(events: dict, entry: dict, script_name: str, settings_path: Path = None,
+                  dry_run: bool = False) -> str:
+    """Register one script's hook entry under each event in `events` ({event: matcher
+    or None}) in settings.json, or bring existing ones up to date, leaving every
+    other hook and setting as it is. Backs the file up (<name>.bak-wiki) before
+    changing it; writes nothing when already current.
+    Returns added | updated | unchanged | would be … | skipped: …"""
     path = Path(settings_path) if settings_path else CC_GLOBAL_SETTINGS_PATH
     try:
         data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
     except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
-        return f"skipped: {path} is not readable JSON ({e}); add the SessionStart hook by hand"
+        return f"skipped: {path} is not readable JSON ({e}); add the {script_name} hook by hand"
     hooks = data.setdefault("hooks", {}) if isinstance(data, dict) else None
-    groups = hooks.setdefault("SessionStart", []) if isinstance(hooks, dict) else None
-    if not isinstance(groups, list):
-        return f"skipped: unexpected hooks layout in {path}; add the SessionStart hook by hand"
-    status = None
-    for group in groups:
-        if not isinstance(group, dict):
-            continue
-        for h in group.get("hooks") or []:
-            if _is_session_hook(h):
-                if h == entry and group.get("matcher") == SESSION_HOOK_MATCHER:
-                    return "unchanged"
-                h.clear()
-                h.update(entry)
-                group["matcher"] = SESSION_HOOK_MATCHER
-                status = "updated"
-    if status is None:
-        groups.append({"matcher": SESSION_HOOK_MATCHER, "hooks": [entry]})
-        status = "added"
+    if not isinstance(hooks, dict):
+        return f"skipped: unexpected hooks layout in {path}; add the {script_name} hook by hand"
+    changes = []
+    for event, matcher in events.items():
+        groups = hooks.setdefault(event, [])
+        if not isinstance(groups, list):
+            return f"skipped: unexpected hooks layout in {path}; add the {script_name} hook by hand"
+        found = False
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            for h in group.get("hooks") or []:
+                if _runs_script(h, script_name):
+                    found = True
+                    if h != entry or group.get("matcher") != matcher:
+                        h.clear()
+                        h.update(entry)
+                        if matcher is None:
+                            group.pop("matcher", None)
+                        else:
+                            group["matcher"] = matcher
+                        changes.append("updated")
+        if not found:
+            groups.append({"hooks": [entry]} if matcher is None else {"matcher": matcher, "hooks": [entry]})
+            changes.append("added")
+    if not changes:
+        return "unchanged"
+    status = "added" if all(c == "added" for c in changes) else "updated"
     if dry_run:
         return f"would be {status}"
     if path.is_file():
@@ -338,13 +368,18 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
     # 4) The SessionStart resume hook → ~/.claude/settings.json. Global installs
     #    only: the hook runs for every session on the machine, so it must point
     #    at the global scripts, never at one project's bundled copy.
-    session_hook = "skipped: not the global scripts folder"
+    session_hook = read_guard = "skipped: not the global scripts folder"
     if os.path.normcase(str(scripts_dest.expanduser().resolve())) == \
             os.path.normcase(str(CC_GLOBAL_WIKI_SCRIPTS_DIR.expanduser().resolve())):
         session_hook = install_session_hook(session_hook_entry(scripts_dest_value), dry_run=dry_run)
+        # 5) The read guard, same rules: global scripts only
+        read_guard = install_hooks(READ_GUARD_EVENTS,
+                                   hook_entry(scripts_dest_value, READ_GUARD_SCRIPT, READ_GUARD_TIMEOUT),
+                                   READ_GUARD_SCRIPT, dry_run=dry_run)
 
     return {
         "session_hook": session_hook,
+        "read_guard": read_guard,
         "bootstrap": str(bootstrap),
         "scripts_copied": travel_copied,
         "helpers_copied": helpers_copied,
@@ -490,6 +525,7 @@ def print_summary(summary: dict):
     print(f"  skills {verb_s}: {summary['skills_installed']}  → {summary['skills_dest']}")
     print(f"  agents {verb_s}: {summary.get('agents_installed', 0)}  → {summary.get('agents_dest', '')}")
     print(f"  session hook:     {summary.get('session_hook', '')}  → {CC_GLOBAL_SETTINGS_PATH} (SessionStart)")
+    print(f"  read guard:       {summary.get('read_guard', '')}  → {CC_GLOBAL_SETTINGS_PATH} (PreToolUse, Stop, SubagentStop)")
     print(f"  placeholder {{{{WIKI_SCRIPTS_DIR}}}} → {summary['scripts_dest_value']}")
     print()
     print("  Restart Claude Code if these dirs are new so it picks up the")
