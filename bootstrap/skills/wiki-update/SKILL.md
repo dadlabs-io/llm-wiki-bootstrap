@@ -48,7 +48,7 @@ Direct mode, the default: use it unless you were asked for `--staged`. Other ski
 2. **Read the raw in full.** A thin raw, or one that is mostly site navigation, came from the wrong fetcher.
 3. **Search the wiki** for 3 to 5 key terms from the source, each with the full search:
    `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --notebook <topic> "<term>"`
-   Always pass `--notebook`: a cross-link must stay inside the notebook being filed into. It returns 20 results, sizes the reranker's depth to the notebook and holds one of three GPU slots; parallel workers add `--caller wiki-ingester`. It needs the CUDA runtime (`--preflight` checks).
+   Always pass `--notebook`: a cross-link must stay inside the notebook being filed into. It returns 30 results, sizes the reranker's depth to the notebook and holds one of three GPU slots; parallel workers add `--caller wiki-ingester`. It needs the CUDA runtime (`--preflight` checks).
 4. **Write the synthesis** to `<topic>/_inbox/temp/<slug>.md`:
    - `## TL;DR` that says something the title does not
    - body sections on what matters in the source, and why it is in the wiki

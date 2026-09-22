@@ -34,14 +34,14 @@ If it prints anything else, **stop and report it** — do not fall back to `qmd 
 
 | Mode | Command | When to use |
 |---|---|---|
-| **Hybrid + rerank** (recommended) | `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<query>"` | Best quality. Combines keyword + semantic + reranking with qmd's bundled models on the GPU. Use by default — after the CUDA preflight above; the helper adds the timeout and the GPU slot. It searches the current project's notebook by default; `--notebook <name>` picks another, `--all-notebooks` searches every one — use that when the user asks for everything or the question is plainly about another notebook, and say which was searched. `-k` results (default 20); `-C` candidates the reranker scores (default sized to what is searched: 8% of its files, 40–200). `_MAP`/`_INDEX` are dropped from results. Other `qmd query` options pass through (`--json`, `--min-score`). |
+| **Hybrid + rerank** (recommended) | `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<query>"` | Best quality. Combines keyword + semantic + reranking with qmd's bundled models on the GPU. Use by default — after the CUDA preflight above; the helper adds the timeout and the GPU slot. It searches the current project's notebook by default; `--notebook <name>` picks another, `--all-notebooks` searches every one — use that when the user asks for everything or the question is plainly about another notebook, and say which was searched. `-k` results (default 30); `-C` candidates the reranker scores (default sized to what is searched: 8% of its files, 40–200). `_MAP`/`_INDEX` are dropped from results. Other `qmd query` options pass through (`--json`, `--min-score`). |
 | **Keyword only** | `qmd search "<query>"` | Fast, no LLM. Good for exact terms, file names, specific phrases. |
 | **Semantic only** | `qmd vsearch "<query>"` | When you're searching by concept, not specific words ("how do agents handle stale knowledge"). |
 
 ## What to ask the user (only if not provided)
 
 1. **Query** — what to search for (natural language works — qmd searches by meaning)
-2. Optional: `-k N` results returned (default 20)
+2. Optional: `-k N` results returned (default 30)
 
 ## Run
 

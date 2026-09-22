@@ -9,6 +9,25 @@
 
 ---
 
+## 2026-09-22
+
+### The search returns 30 results, not 20 — measured, not argued
+- **Why**: `-k 20` was set on 2026-09-13 from the shape of the scores (they plateau after about rank 3), and nothing had ever judged whether the entries below the cut were worth showing. The question came up while explaining the pipeline: is the tail noise, or are we throwing away good entries?
+- **The test**: new `tests/search/rank-usefulness.py` (not shipped). It samples real queries from the search log — the framework's own traffic — skipping synthetic skill-test queries and title-lookup probes from the link-gap and dedup passes, which search for one specific entry and so have a meaningless tail. Each query is re-run at `-k 40` through the normal wrapper, every result is **shuffled and relabelled before judging** so the judge cannot simply agree with the ranking, and each entry is marked useful / redundant / noise, with the single best entry named.
+- **Result** (18 judged queries, agentic-design, Sonnet judge, $4.50):
+
+  | Ranks | Judged useful |
+  |---|---|
+  | 1-10 | 47% |
+  | 11-20 | 31% |
+  | 21-30 | 33% |
+  | 31-40 | 25% |
+
+  In **3 of 18 queries the single best entry sat at rank 27, 28 or 29** — never beyond 30. Ranks 11-20 are no denser than 21-30, which measures the old "scores plateau" claim: below about rank 10 the ordering carries little signal, so the reranker's real job is membership of the pool, not order within it. That is also why raising `-C` (2026-09-13) mattered more than anything `-k` does.
+- **Change**: `DEFAULT_K` 20 → 30 in `wiki-qmd-query.py`, with the measurement recorded in its docstring, and the default corrected in `/wiki-search` (skill + pack page), `/wiki-update` and the `wiki-ingester` agent.
+- **Cost**: none in GPU time — the reranker had already scored every candidate (`-C`, about 110 for agentic-design), and `k` only slices the sorted list. Measured output size: about 180 tokens a result, so 20 → 30 costs ~1,800 tokens of the reading session's context, and 40 would have cost ~3,700 for the thinnest band.
+- **Caveat**: 18 queries, one notebook, one judge model, and the "nothing best below 30" finding rests on three data points clustering at 27-29. Directional, not proven. The judge also scored only 39% of the top 20 as useful, which suggests it judged relevance-to-query rather than would-I-open-this.
+
 ## 2026-09-18
 
 ### `/new-wiki` asks before `--force`, and says so where Phase B runs (task #35, the user's call: ask first)

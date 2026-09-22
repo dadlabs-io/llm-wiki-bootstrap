@@ -14,7 +14,13 @@ downgrade — when the GPU is full, searches wait their turn, and if that makes
 batches too slow, run fewer workers.
 
 Depth, named for what it is:
-  -k  results returned after reranking (default 20; qmd's own flag is -n)
+  -k  results returned after reranking (default 30; qmd's own flag is -n).
+      Measured 2026-09-22 (tests/search/rank-usefulness.py, 18 real queries judged
+      blind): ranks 21-30 are as dense in useful entries as 11-20 (33% vs 31%), and
+      in 3 of 18 queries the single BEST entry sat at rank 27-29. Ranks 31-40 are
+      thinner (25%) and never held the best entry, so 30, not 40. Costs no GPU time
+      (the reranker has already scored every candidate) - about 180 tokens a result
+      in the reading session, so 20 -> 30 is ~1,800 tokens.
   -C  candidates the reranker scores; an entry outside the top C is never
       seen. Default: sized to the collection searched — 8% of its files,
       rounded up to 10, never below 40 or above 200 (1,211 files -> 100).
@@ -73,7 +79,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import load_config, now_stamp, wiki_dir  # noqa: E402
 from _entry_checks import split_frontmatter, is_superseded  # noqa: E402
 
-DEFAULT_K = int(os.environ.get("WIKI_QMD_K", "20"))
+DEFAULT_K = int(os.environ.get("WIKI_QMD_K", "30"))
 FIXED_C = int(os.environ["WIKI_QMD_C"]) if os.environ.get("WIKI_QMD_C") else None
 C_RATIO, C_MIN, C_MAX = 0.08, 40, 200
 MACHINE_FILES = {"_map.md", "map.md", "_index.md", "index.md"}  # qmd shows _MAP.md as map.md
@@ -442,7 +448,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0],
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-k", "-n", "--results", dest="k", type=int, default=DEFAULT_K,
-                    help="results returned, the top k after reranking (default 20, or $WIKI_QMD_K; qmd's flag is -n)")
+                    help="results returned, the top k after reranking (default 30, or $WIKI_QMD_K; qmd's flag is -n)")
     ap.add_argument("-C", "--candidate-limit", dest="C", type=int, default=FIXED_C,
                     help="candidates the reranker scores (default: 8%% of the searched files, 40-200, "
                          "or $WIKI_QMD_C); an entry outside the top C never reaches the reranker")
