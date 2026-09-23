@@ -3,8 +3,9 @@
 rank-usefulness.py — is `-k 20` the right cut, or should it be 40?
 
 The depth check (`wiki-qmd-query.py --depth-check`) answers a different question:
-it compares candidate limits (C vs 2C) and counts entries the deeper run surfaced
-at all. That measures recall INTO the reranker. Nothing has ever measured whether
+whether the candidate limit C ever cut the pool going INTO the reranker (since
+2026-09-23 it reads qmd's own count of candidates reranked against C; before that
+it compared C with 2C, which could not fail). Nothing has ever measured whether
 the results the reranker ranks 21-40 are worth showing — `-k 20` was chosen on
 2026-09-13 from the shape of the scores (they plateau after about rank 3), not
 from anyone judging the entries.

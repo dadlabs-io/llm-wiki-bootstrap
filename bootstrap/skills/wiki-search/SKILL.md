@@ -34,7 +34,7 @@ If it prints anything else, **stop and report it** — do not fall back to `qmd 
 
 | Mode | Command | When to use |
 |---|---|---|
-| **Hybrid + rerank** (recommended) | `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<query>"` | Best quality. Combines keyword + semantic + reranking with qmd's bundled models on the GPU. Use by default — after the CUDA preflight above; the helper adds the timeout and the GPU slot. It searches the current project's notebook by default; `--notebook <name>` picks another, `--all-notebooks` searches every one — use that when the user asks for everything or the question is plainly about another notebook, and say which was searched. `-k` results (default 30); `-C` candidates the reranker scores (default sized to what is searched: 8% of its files, 40–200). `_MAP`/`_INDEX` are dropped from results. Other `qmd query` options pass through (`--json`, `--min-score`). |
+| **Hybrid + rerank** (recommended) | `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<query>"` | Best quality. Combines keyword + semantic + reranking with qmd's bundled models on the GPU. Use by default — after the CUDA preflight above; the helper adds the timeout and the GPU slot. It searches the current project's notebook by default; `--notebook <name>` picks another, `--all-notebooks` searches every one — use that when the user asks for everything or the question is plainly about another notebook, and say which was searched. `-k` results (default 30); `-C` the most candidates the reranker may score (default 120 — qmd's pool tops out near 100, so it never cuts; the helper's status line shows how many were reranked). `_MAP`/`_INDEX` are dropped from results. Other `qmd query` options pass through (`--json`, `--min-score`). |
 | **Keyword only** | `qmd search "<query>"` | Fast, no LLM. Good for exact terms, file names, specific phrases. |
 | **Semantic only** | `qmd vsearch "<query>"` | When you're searching by concept, not specific words ("how do agents handle stale knowledge"). |
 
@@ -52,7 +52,7 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "context engineering for agents"
 # How long searches have been waiting for a GPU slot (is a batch slower?)
 python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --stats
 
-# Is C still deep enough as a notebook grows? (C vs 2C on sampled titles; /wiki-cycle --full runs it)
+# Did C ever cut the reranker's pool? (sampled titles; exit 1 = C reached, raise it; /wiki-cycle --full runs it)
 python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --depth-check --notebook <name>
 
 # Keyword search (fast, no LLM)

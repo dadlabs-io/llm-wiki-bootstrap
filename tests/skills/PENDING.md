@@ -30,7 +30,7 @@ then we can run it").
 | Skill | Date | Result |
 |---|---|---|
 | wiki-update | 2026-09-15 | 22/22, Sonnet and Opus |
-| wiki-search | 2026-09-22 | 10/10 on both models, 0 regressions, after the `-k` 20 -> 30 default change ($2.93). Previous run 2026-09-17: 10/10 (old skill 9/10) |
+| wiki-search | 2026-09-23 | 10/10 on both models, 0 regressions, after `-C` became a fixed 120 and the depth check was rebuilt ($2.62; every search in the run logged C=120 with a reranked count). Previous: 2026-09-22 10/10 after `-k` 20 -> 30; 2026-09-17 10/10 (old skill 9/10) |
 | task-list | 2026-09-17 | 14/14 twice, 108 checks; re-run after the CLI-reference edit, 0 regressions |
 | wrap-up | 2026-09-17 | 10/10 on the 5 core cases after the trim; 0 regressions against the pre-trim baseline, 1 newly passing |
 | wiki-lint | 2026-09-17 | 8/8 on the 4 core cases, 35 checks each model; no skill change — the suite is new |

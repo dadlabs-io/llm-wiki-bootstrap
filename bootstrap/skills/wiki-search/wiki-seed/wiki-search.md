@@ -37,7 +37,7 @@ Returns a ranked list of relevant entries with snippets. Use natural language �
 
 1. **BM25** over title + body — fast lexical match
 2. **Vector similarity** over chunked entries — semantic match
-3. **LLM rerank** of the top candidates (`-C`, sized to about 8% of the notebook's files, between 40 and 200) — fine-grained relevance
+3. **LLM rerank** of the fused candidates — fine-grained relevance. qmd fetches 20 results per keyword and vector list, so the pool is at most about 100 entries; `-C` (default 120) is a ceiling above that, and the helper reports how many were reranked
 
 Each entry's final score combines all three. Optionally, results can be re-sorted by verification status (`verified` first, `contradicted` lower, `rolled_back` hidden unless asked for) with the `wiki-search-rerank.py` helper; entries with no `verified` field keep qmd's order.
 

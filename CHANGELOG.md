@@ -9,6 +9,20 @@
 
 ---
 
+## 2026-09-23
+
+### `-C` is a fixed ceiling of 120; `--depth-check` measures whether C ever cut, and can now fail (tasks #38, #39)
+- **Why**: tracing the search against qmd 2.8.3's source (`store.js` `hybridQuery`) found that every keyword and vector list is fetched with a hard-coded 20, the lists are fused, the fused set is sliced to `candidateLimit`, and one chunk per remaining document is reranked. So the reranker's pool is at most 20 × the number of lists (five when the query expands: about 100), whatever C is. Measured with `-C 500`, so nothing truncated: 77 candidates in agentic-design (1,211 files), 36 in agent-builder-bootstrap, 39 in llm-wiki-bootstrap. The 8%-of-files rule (40–200) therefore never bound: agentic-design's sized C of 100–110 sat above its pool of 77. Its floor of 40 was the only part that could cut, and did: on 2026-09-13 C=40 missed entries C=100 found because 40 < 77, not because the notebook had outgrown 8%. The two small notebooks sit just under 40 and would have crossed it as they grew.
+- **And the depth check could not fail**: it compared C with 2C, but when neither binds both runs rerank the identical pool, so it reported "0 missed — C is enough" every time. A green that cannot turn red.
+- **Change** (`wiki-qmd-query.py`):
+  - `-C` defaults to a constant 120 (`$WIKI_QMD_C` still overrides), above every measured pool. The sizing function and its constants are gone. Same behaviour as before on every notebook today, and no floor left to cross later.
+  - Every search logs qmd's own count of candidates reranked (its "Reranking N chunks" progress line, which the wrapper used to discard) and prints it in the status line. `--stats` reports the median and max against C, leaving out `--depth-check`'s own calls.
+  - `--depth-check` searches sampled titles and reads that count against C: exit 0 with the headroom when C was never reached, **exit 1** when any search reached C ("raise C"), **exit 2 "not checked"** when no search produced a count. It never reports green over nothing measured.
+  - The slot, retry and timeout loop moved into one `run_search()` used by both the search and the depth check.
+- **Proven**: a real search reranked 77 of 120 on agentic-design, the number measured by hand before the change. `--depth-check` on 4 sampled titles: 35–76 of 120, exit 0, headroom 44. The same with `-C 30`: every query "30 of 30 REACHED C", exit 1. With the search stubbed to produce no count, and to time out: "not checked", exit 2. `/wiki-search` suite: see below.
+- **Docs**: `/wiki-search` (skill and pack page), `/wiki-cycle` Step 2 (what exit 1 and 2 mean), INSTALL-INVENTORY, the rank test's docstring.
+- **Not done (#40, parked)**: raising qmd's per-list 20 is the only real recall lever. That would mean patching a dependency, so it waits on a measurement and an upstream proposal.
+
 ## 2026-09-22
 
 ### The search returns 30 results, not 20 — measured, not argued
