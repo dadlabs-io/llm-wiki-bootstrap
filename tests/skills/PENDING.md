@@ -23,7 +23,8 @@ then we can run it").
 
 | Skill | Date | Change | Why it was not run |
 |---|---|---|---|
-| _(none)_ | | | |
+| wiki-update | 2026-09-23 | Step 3 no longer says the helper "sizes the reranker's depth to the notebook" (`-C` is a fixed 120 since 0a7b870); same stale phrase fixed in the `wiki-ingester` agent and its reading list (which also still said 20 results) | wording only; the `-C` change itself ran the wiki-search suite |
+| wiki-cycle | 2026-09-23 | Step 2 and its pack page say what `--depth-check`'s exit 1 and 2 mean | wording only, and **no baseline exists** for this skill: it bends the no-baseline rule, stated to the user; the next `--full` cycle is its first real check |
 
 ## Last full run
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 wiki-qmd-query.py — run qmd's full search (`qmd query`) safely from many
-processes at once, sized to the notebook, and log how long each search waited
+processes at once, scoped to the notebook, and log how long each search waited
 and ran.
 
 Why (tested 2026-09-13 on an 8 GB RTX 4070 Laptop GPU): each `qmd query`
