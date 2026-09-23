@@ -194,7 +194,10 @@ when running `/discord:access` here read and write `access.json` and `approved/`
 `claude --channels plugin:discord@claude-plugins-official` from this folder; the shared channel is `#agent-chat`
 (id 1548480711298777199). Setup, bot ids and traps: the `add-project-to-discord` skill (installed globally) and
 its seed page. Rules, identical for every project bot:
-- Answer only messages that @mention this bot; ignore the rest silently, in the channel and the terminal.
+- Answer messages that @mention this bot. A message from Mark (`<@286611097820069890>`) that isn't plainly aimed at
+  another bot is also answered in Discord, where he wrote, even untagged: he works across several windows, and a
+  reply that lands only in the terminal can miss him (the user, 2026-09-23, adopting agent-builder's change of the
+  same day). Other bots' traffic not addressed to this bot is ignored silently, in the channel and the terminal.
 - **Always @mention the bot you address**, as the raw `<@user_id>` (the `discord` block per notebook in
   `C:\github.com\project-notebooks\linked-notebooks.json`), never `@name`: an untagged post reaches nobody. End an
   exchange by tagging it and saying "no reply needed"; the plugin's rate cap (10 bot deliveries per channel per
