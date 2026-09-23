@@ -39,7 +39,7 @@ launch you may be asked which model to use for the batch — the default and the
 in `~/.claude/agents/wiki-ingester-config.json` (`model_default`, `confirm_model_each_run`); a session
 that cannot ask uses the default and names it.
 
-- Every worker searches the wiki with the full qmd search. At most three searches share the GPU at once; the rest wait for a slot, and none falls back to keyword search. The cycle report says how long searches waited — if waiting slowed the batch, run three or two workers next time. `--full` also checks whether the notebook has outgrown its search depth.
+- Every worker searches the wiki with the full qmd search. At most three searches share the GPU at once; the rest wait for a slot, and none falls back to keyword search. The cycle report says how long searches waited — if waiting slowed the batch, run three or two workers next time. `--full` also checks that the search's candidate limit never cut what the reranker sees; the report says so, or says to raise the limit, or says the check could not measure anything (never a pass).
 - Each entry passes the filing script's gate before it is written (see [`wiki-update`](./wiki-update.md)). The gate refuses frontmatter that would not parse, and broken links are reported for staged entries as well as filed ones.
 - Workers report on their own work, so the cycle checks what they staged: an entry whose sidecar is missing, is not valid JSON, or names no target folder is listed and fixed before the commit.
 
