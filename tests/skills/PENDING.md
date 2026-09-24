@@ -24,6 +24,7 @@ then we can run it").
 | Skill | Date | Change | Why it was not run |
 |---|---|---|---|
 | wiki-update | 2026-09-23 | Step 3 no longer says the helper "sizes the reranker's depth to the notebook" (`-C` is a fixed 120 since 0a7b870); same stale phrase fixed in the `wiki-ingester` agent and its reading list (which also still said 20 results) | wording only; the `-C` change itself ran the wiki-search suite |
+| wiki-update | 2026-09-23 | **Behavioural, NOT installed** (task #47): the gate warns on `>` quotes that don't match the raw (`_entry_checks.check_quotes`), step 5 tells the agent to fix each one or move it out of `>`, and the `wiki-ingester` agent must fix them before staging and name any left in its receipt. The script half is proven by `tests/scripts/test_quote_check.py` (27/27) | the user, 2026-09-23: hold the rollout until #42's `/wiki-cycle` changes are in, then one suite run covers both before anything is installed. The run should check that entries whose drafts misquote get fixed before filing, and that clean quotes don't cause extra turns |
 | wiki-cycle | 2026-09-23 | Step 2 and its pack page say what `--depth-check`'s exit 1 and 2 mean | wording only, and **no baseline exists** for this skill: it bends the no-baseline rule, stated to the user; the next `--full` cycle is its first real check |
 
 ## Last full run

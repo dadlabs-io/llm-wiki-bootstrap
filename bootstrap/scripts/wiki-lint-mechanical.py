@@ -37,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, project_root as _project_root  # noqa: E402
 # Body-level rubric checks — shared with wiki-update.py's pre-write gate so the
 # lint backlog view and the gate enforce ONE rule set (_entry_checks.py, 2026-09-02).
-from _entry_checks import check_entry_body, is_exempt, check_frontmatter_loadable, split_frontmatter, is_superseded  # noqa: E402
+from _entry_checks import check_entry_body, is_exempt, check_frontmatter_loadable, split_frontmatter, is_superseded, read_raw_text  # noqa: E402
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -377,7 +377,13 @@ def lint(vault_root, topic, strict=False):
             _tags = None
             if _tags_raw is not None:
                 _tags = [t.strip().strip("\"'") for t in _tags_raw.strip().strip("[]").split(",") if t.strip()]
-            _chk = check_entry_body(body, tags=_tags, tier=tier_value or None)
+            # Quotes are checked against the raw when it resolves to text (2026-09-23).
+            _rp = fm.get("raw_path", "").strip()
+            _raw_file = None
+            if _rp and not _rp.startswith("("):
+                _raw_file = next((c for c in (topic_root / _rp, wiki_root / _rp) if c.exists()), None)
+            _chk = check_entry_body(body, tags=_tags, tier=tier_value or None,
+                                    raw_text=read_raw_text(_raw_file) if _raw_file else None)
             if _chk["errors"] or _chk["warnings"]:
                 body_issues.append((f, _chk["errors"], _chk["warnings"]))
 

@@ -42,8 +42,12 @@ afterwards what ran. Turn the flag off to stop being asked in interactive sessio
 - One entry per source, with its sidecar. Each passed `wiki-update`'s mechanical gate: the filing
   script refuses an entry without a TL;DR, without a Related section holding at least two wiki
   links, with its layout out of order, or with frontmatter that would not parse, and it reports any
-  link it could not resolve. Each also scored 3 or more (of 5) on the worker's own two judgment
-  scores, extraction fidelity and synthesis value.
+  link it could not resolve. The script also compares every blockquoted quote with the saved raw
+  and warns about one that is worded differently, missing from it, or out of order. The worker
+  fixes each one before staging, and the receipt names any that remain and why. Each entry also
+  scored 3 or more (of 5) on the worker's own two judgment scores, extraction fidelity and synthesis
+  value. Those scores are the worker grading itself, not a check: in a 2026-09-23 spot-check, six
+  entries scored 3.5 to 5 and every one of them had errors.
 - A source that still falls short of those scores after one fix is not staged: its draft and a
   review note quoting why stay in `_inbox/temp/`, so you can finish it, file it anyway or drop it.
 - Before reporting done, it runs the promote script's check on every staged entry, so a broken

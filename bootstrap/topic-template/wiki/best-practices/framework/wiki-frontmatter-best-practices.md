@@ -6,7 +6,7 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 11
+framework-version: 12
 last_reviewed: 2026-09-23
 review_after: 2026-12-22
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
@@ -272,6 +272,7 @@ The same check runs over the installed `~/.claude/skills/*/SKILL.md` and `~/.cla
 - `tags` ≥ 3 — warning
 - fewer than 30 non-blank body lines AND fewer than 300 words, with no `stub` tag — warning
 - numeric claims in prose outside a `>` blockquote — warning (numbers are quoted and attributed, never paraphrased)
+- each quote on a `>` line is compared with the text of `raw_path` (2026-09-23), with any piece under four words skipped. A double-quoted span is checked on its own, and a `>` line with none is checked whole, minus a trailing ` — attribution`. The comparison ignores case, punctuation, line breaks, HTML entities, transcript timestamps and speech fillers. `...`, `…` and a `[bracketed insertion]` split a quote into pieces that must appear in the raw in that order. A piece gets a warning when it is **worded differently** (one end matches, the rest does not), **not found** (a wrong quote, or a raw that lacks the passage), or **out of order**. Callouts (`> [!note]`), fenced code and raws with no text (PDF, image) are not checked. The fix is the source's exact words, or the line moved out of `>` as paraphrase.
 Exempt: wiki-root hub pages, `_`-prefixed system files, `framework-contract: true` docs, `type: rollback|review` entries.
 
 **Icarus schema checks** (default WARN; `--strict` flips to error / non-zero exit):

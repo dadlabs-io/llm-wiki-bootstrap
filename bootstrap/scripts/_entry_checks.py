@@ -34,6 +34,9 @@ Checks (rubric dimension → rule → severity):
   structure  → layout: body (TL;DR … Related) → Source/Raw footer →  → ERROR
                auto backlinks block; nothing after the footer except
                that block, nothing after the block (2026-09-14)
+  fidelity   → every quoted span on a `>` line is in the raw source,   → WARNING
+               its `...` pieces in the source's order (2026-09-23; only
+               when the caller passes the raw text — see check_quotes)
 
 Retired entries (`superseded_by` / `status: superseded`, frontmatter spec) are
 exempt, and `is_superseded()` is how the INDEX, MAP, search and the orphan list
@@ -51,6 +54,7 @@ whether it was quoted.
 """
 from __future__ import annotations
 
+import html
 import re
 from pathlib import Path
 
@@ -312,15 +316,164 @@ def _related_section(body: str) -> str | None:
     return body[start:]
 
 
+# ── Quotes against the raw (2026-09-23) ──────────────────────────────────────
+# agent-builder checked six sonnet-ingested entries against their raws
+# (2026-09-23 ingest-fidelity handoff): quotes spliced in reverse order, lightly
+# reworded, model names swapped inside `>` lines, one phrase that is nowhere in
+# the source. Every worker self-scored fidelity 3.5-5.0. A `>` line is this
+# wiki's claim "the source says exactly this", so a script checks it.
+#
+# Comparison is on word tokens with case, punctuation, whitespace and speech
+# fillers removed and the tokens then run together: auto-caption raws break
+# words across lines ("have\n\nn't") and carry "uh"/"um", which a quote rightly
+# drops. A changed word, a changed number or a reordered splice still differs.
+
+RAW_TEXT_SUFFIXES = {".md", ".txt", ".vtt", ".srt", ".html", ".htm", ".ipynb", ".json", ".py", ".yaml", ".yml"}
+QUOTE_MIN_TOKENS = 4  # shorter spans ("Departments", "version") are labels, not claims
+_FILLERS = {"uh", "um", "uhm", "hmm", "ahem", "er", "erm", "mm"}
+_WORD_RE = re.compile(r"[^\W_]+")
+_QUOTED_SPAN_RE = re.compile(r'"([^"\n]+)"')
+# `...`, `…` and a `[bracketed insertion]` all mark where the quote leaves the source
+_ELLIPSIS_RE = re.compile(r"\s*(?:\[[^\]\n]*\]|\.\.\.|…)\s*")
+_MD_LINK_TEXT_RE = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
+_TAG_RE = re.compile(r"<[^>\n]{1,200}>")
+# Transcript timestamps ("11:39", "[00:23:00]", "1:02:03.500") sit between the
+# words of a spoken sentence in many raws.
+_TIMESTAMP_RE = re.compile(r"[\[(]?\b\d{1,2}(?::\d{2}){1,2}(?:[.,]\d+)?\b[\])]?")
+
+
+def _norm_quotes(s: str) -> str:
+    """HTML entities decoded (raws keep `&#x27;`), curly double quotes made straight."""
+    return html.unescape(s).translate({0x201C: '"', 0x201D: '"', 0x201E: '"', 0x00AB: '"', 0x00BB: '"'})
+
+
+def _squash(text: str) -> str:
+    """Word tokens, lower-cased, fillers and timestamps dropped, run together."""
+    text = _TIMESTAMP_RE.sub(" ", _MD_LINK_TEXT_RE.sub(r"\1", text))
+    return "".join(t for t in (w.lower() for w in _WORD_RE.findall(text)) if t not in _FILLERS)
+
+
+def _longest_prefix_in(key: str, raw: str) -> int:
+    lo, hi = 0, len(key)
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        if key[:mid] in raw:
+            lo = mid
+        else:
+            hi = mid - 1
+    return lo
+
+
+def _raw_file_text(path: Path) -> str | None:
+    suffix = path.suffix.lower()
+    if suffix not in RAW_TEXT_SUFFIXES:
+        return None  # a PDF or an image: no text to check against
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    if suffix == ".ipynb":
+        import json
+        def joined(v):
+            return "".join(v) if isinstance(v, list) else str(v or "")
+        try:
+            parts = []
+            for c in json.loads(text).get("cells", []):
+                parts.append(joined(c.get("source")))
+                for o in c.get("outputs", []):  # printed results are quoted too
+                    parts.append(joined(o.get("text")))
+                    parts.append(joined((o.get("data") or {}).get("text/plain")))
+            return "\n".join(parts)
+        except (ValueError, AttributeError):
+            return text
+    if suffix in {".vtt", ".srt"}:
+        text = "\n".join(l for l in text.splitlines() if "-->" not in l and not l.strip().isdigit())
+    if suffix in {".vtt", ".srt", ".html", ".htm"}:
+        text = _TAG_RE.sub(" ", text)
+    return text
+
+
+def read_raw_text(path) -> str | None:
+    """The raw source's text for check_quotes: a file, or every text file under
+    a folder raw_path. None when there is nothing textual to compare with."""
+    path = Path(path)
+    if path.is_dir():
+        parts = [t for f in sorted(path.rglob("*")) if f.is_file() and (t := _raw_file_text(f))]
+        return "\n".join(parts) or None
+    if path.is_file():
+        return _raw_file_text(path)
+    return None
+
+
+def _blockquotes(body: str) -> list[str]:
+    """Each run of consecutive `>` lines as one string, fenced code removed.
+    Obsidian callouts (`> [!note]`) are our own notes, not source text."""
+    body = re.sub(r"```.*?```", "", body, flags=re.DOTALL)
+    blocks, cur = [], []
+    for line in body.splitlines() + [""]:
+        s = line.lstrip()
+        if s.startswith(">"):
+            cur.append(s.lstrip(">").strip())
+            continue
+        if cur and not re.match(r"\[!\w", cur[0]):
+            blocks.append(" ".join(cur))
+        cur = []
+    return blocks
+
+
+def check_quotes(body: str, raw_text: str | None) -> list[str]:
+    """Every double-quoted span on a `>` line must be in the raw: each piece
+    between ellipses a substring of it, the pieces in the raw's order. A `>`
+    line with no quoted span is checked whole, minus a trailing ` — attribution`.
+    Returns warnings (none when there is no raw text)."""
+    if not raw_text:
+        return []
+    raw = _squash(_norm_quotes(raw_text))
+    raw_rev = raw[::-1]
+    missing, reworded, reordered = [], [], []
+    for block in _blockquotes(_strip_footer(body)):
+        block = _norm_quotes(block)
+        spans = _QUOTED_SPAN_RE.findall(block)
+        if not spans:
+            spans = [re.split(r"\s+[—–]\s+|\s+--\s+", block)[0]]
+        for span in spans:
+            pos = 0
+            for piece in _ELLIPSIS_RE.split(_MD_LINK_TEXT_RE.sub(r"\1", span)):
+                if len([w for w in _WORD_RE.findall(piece) if w.lower() not in _FILLERS]) < QUOTE_MIN_TOKENS:
+                    continue
+                key = _squash(piece)
+                at = raw.find(key, pos)
+                if at >= 0:
+                    pos = at + len(key)
+                elif key in raw:
+                    reordered.append(piece.strip())
+                elif max(_longest_prefix_in(key, raw), _longest_prefix_in(key[::-1], raw_rev)) * 10 >= len(key) * 3:
+                    reworded.append(piece.strip())  # a third of it matches at one end: the wording drifted
+                else:
+                    missing.append(piece.strip())
+    warnings = []
+    for label, found in (("worded differently from the raw source", reworded),
+                         ("not found in the raw source (a wrong quote, or a raw that lacks the passage)", missing),
+                         ("in the raw source but out of order across the `...`", reordered)):
+        if found:
+            sample = "; ".join(f'"{p[:80]}{"…" if len(p) > 80 else ""}"' for p in found[:3])
+            warnings.append(
+                f"{len(found)} quoted fragment(s) on `>` lines {label} (e.g. {sample}) — quote the "
+                "source word for word, or take the line out of `>` and write it as paraphrase "
+                "(rubric: extraction fidelity)")
+    return warnings
+
+
 # ── The checks ───────────────────────────────────────────────────────────────
 
 
-def check_entry_body(body: str, *, tags=None, tier=None) -> dict:
+def check_entry_body(body: str, *, tags=None, tier=None, raw_text=None) -> dict:
     """Run the mechanical rubric checks on an entry BODY (frontmatter already split off).
 
     Returns {"errors": [...], "warnings": [...], "stats": {...}}.
     `tags` may be a list or None (None = unknown → tag checks skipped).
     `tier` is the frontmatter tier as a string ("1".."4", "self") or None.
+    `raw_text` is the raw source's text (read_raw_text); None skips the quote check.
     """
     errors: list[str] = []
     warnings: list[str] = []
@@ -368,6 +521,9 @@ def check_entry_body(body: str, *, tags=None, tier=None) -> dict:
             f"(e.g. {sample}) — put the figure on a `>` line with attribution, or drop it; "
             f"inline quotation marks do not count (rubric: extraction fidelity)"
         )
+
+    # fidelity → quotes against the raw
+    warnings.extend(check_quotes(body, raw_text))
 
     return {
         "errors": errors,

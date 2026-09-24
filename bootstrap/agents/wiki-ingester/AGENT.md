@@ -4,8 +4,8 @@ description: "Spawnable worker for DELEGATED wiki ingestion — turns each assig
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, TodoWrite, Skill, ToolSearch
 model: sonnet
 role: ingester
-last_reviewed: 2026-09-13
-review_after: 2026-12-13
+last_reviewed: 2026-09-23
+review_after: 2026-12-23
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -84,7 +84,7 @@ with TodoWrite. For each item:
    cross-links) and say in the receipt that the batch needs fewer parallel workers.
 4. **Synthesize** per the wiki-update flow: TL;DR, blockquoted numbers/quotes with attribution,
    "Related in this wiki" cross-links via `--slug-for` lookups (never guess slugs).
-5. **Eval gate** — two halves since 2026-09-02: `wiki-update.py` runs the mechanical checks itself (TL;DR, Related with 2+ links, tags, stub marking, numbers in blockquotes — `_entry_checks.py`) and REFUSES to file on an error; fix the draft rather than passing `--no-gate` (if you must, give the reason). You score only the two judgment dimensions — **extraction fidelity** and **synthesis value**, 1–5 each — and that score is advisory, never the gate. Both ≥ 3 → continue. Either below 3 → one
+5. **Eval gate** — two halves since 2026-09-02: `wiki-update.py` runs the mechanical checks itself (TL;DR, Related with 2+ links, tags, stub marking, numbers in blockquotes — `_entry_checks.py`) and REFUSES to file on an error; fix the draft rather than passing `--no-gate` (if you must, give the reason). Since 2026-09-23 it also checks every quote on a `>` line against the raw and warns when a quote is worded differently, not found, or out of order. Fix each one before staging: copy the raw's exact words, or take the line out of `>` as paraphrase. If one stays (the raw lacks a passage you read elsewhere), name it in the receipt's Notes. Your own fidelity score never outranks that warning: all six entries a 2026-09-23 spot-check found wrong had self-scored 3.5-5. You score only the two judgment dimensions — **extraction fidelity** and **synthesis value**, 1–5 each — and that score is advisory, never the gate. Both ≥ 3 → continue. Either below 3 → one
    fix-and-rescore round; if still failing, do NOT stage. (Until 2026-09-08 this step also carried the
    pre-split wording "score the 5-dimension rubric, avg ≥ 3.0, no 1s"; the three structural
    dimensions are the script's now, and the receipt's "Eval avg" column is the mean of the two

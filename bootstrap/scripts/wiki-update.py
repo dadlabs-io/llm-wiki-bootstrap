@@ -50,7 +50,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
 # Mechanical half of the eval rubric — shared with wiki-lint-mechanical.py so
 # the pre-write gate and the lint backlog view enforce ONE set of rules.
-from _entry_checks import check_entry_body, check_frontmatter_loadable, format_result  # noqa: E402
+from _entry_checks import check_entry_body, check_frontmatter_loadable, format_result, read_raw_text  # noqa: E402
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -979,7 +979,9 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
     # here, by the script, not by the agent that wrote the draft. Hard failures
     # refuse to file. --no-gate '<reason>' overrides and prints the reason so
     # the override is visible in the cycle log.
-    gate = check_entry_body(body, tags=tags, tier=tier)
+    # The raw is read back so every `>` quote is checked against it (warnings).
+    raw_text = read_raw_text(final_raw_path) if final_raw_path else None
+    gate = check_entry_body(body, tags=tags, tier=tier, raw_text=raw_text)
     print(format_result(gate, final_title))
     if gate["errors"]:
         if no_gate:
