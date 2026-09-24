@@ -6,7 +6,7 @@
 
 Each feed has:
 - **URL/query** — what to search or fetch
-- **Tier** — source quality (1 = peer-reviewed primary, 2 = vendor/official, 3 = expert first-party, 4 = community/blog, self = our synthesis)
+- **Tier** — the feed's default source quality, per the tier rubric in `wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md` (the only place tiers are defined). Each candidate is still tiered on its own: a post or repository by its author and evidence, not its platform.
 - **From** — earliest date covered (hard floor: 2026-01-01)
 - **To** — last date successfully queried (`—` = never queried)
 - **Topics/Keywords** — search terms
@@ -56,7 +56,7 @@ Default `/wiki-discover` run: **staleness-first** — feeds with the oldest `To`
 ## Feed management rules
 
 1. **Tier 1-3** can auto-queue to the discovery checklist (`_inbox/intake-<bucket>/`, or legacy `_inbox/discovered/`) after dedup.
-2. **Tier 4** (community, Reddit, Hacker News, Medium, DEV) MUST go to human review before queuing.
+2. **Tier 4** MUST go to human review before queuing. Aggregator feeds (Reddit, Hacker News, DEV) default to tier 4; a Medium or Substack post is tiered by its author and evidence (the rubric's posts row), not by the platform.
 3. **YouTube** fetches via `wiki-fetch-youtube.py` (transcripts).
 4. **arXiv PDFs** fetch via `wiki-fetch-pdf.py`.
 5. **JS-rendered pages** (X, Medium, Threads) fetch via Playwright.

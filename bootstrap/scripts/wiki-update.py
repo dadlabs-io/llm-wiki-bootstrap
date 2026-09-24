@@ -708,12 +708,10 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
     Frontmatter includes: title, date, source_url, raw_path, ingested_by, tier,
     confidence, tags. Body footer adds visible links to source_url and raw_path.
 
-    `tier` is the source quality tier:
-      1 = peer-reviewed / primary (papers, official spec docs, source code)
-      2 = established documentation (vendor docs, framework docs, official blog)
-      3 = reputable expert / first-hand (founder posts, expert blogs, conf talks, journalism)
-      4 = community / blog / forum (Medium, Reddit, anonymous gists)
-      self = self-authored (our own design docs, syntheses, decisions)
+    `tier` is the source quality tier: 1-4 or `self`. Defined only in the frontmatter spec
+    (`project/best-practices/framework/wiki-frontmatter-best-practices.md`, "tier rubric"),
+    which tiers posts and individual repositories by author and evidence, not by platform
+    (2026-09-23). Not restated here: a paraphrase drifts (the spec's restatement rule).
 
     `confidence` is how reliable OUR entry is (not the source — that's tier):
       high = primary source directly fetched, multiple corroborating entries, or describes

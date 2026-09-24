@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 10
-last_reviewed: 2026-09-17
-review_after: 2026-12-15
+framework-version: 11
+last_reviewed: 2026-09-23
+review_after: 2026-12-22
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
 
@@ -104,11 +104,22 @@ From [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practi
 |---|---|---|
 | 1 | `1` | Peer-reviewed / primary — papers, official spec docs, source code |
 | 2 | `2` | Established documentation — vendor/framework docs, official blog posts |
-| 3 | `3` | Reputable expert / first-hand — founder posts, expert blogs, conf talks, journalism (KDnuggets, VentureBeat, Karpathy gists, Simon Willison, Hamel Husain, Lance Martin) |
-| 4 | `4` | Community / blog / forum — Medium, Reddit, anonymous gists, an individual's repository — **never auto-ingest**, human review only |
+| 3 | `3` | Reputable expert / first-hand — founder posts, expert blogs, conf talks, journalism (KDnuggets, VentureBeat, Karpathy gists, Simon Willison, Hamel Husain, Lance Martin); a named practitioner's first-hand post on any platform; a single-maintainer repository that works and is documented (see below) |
+| 4 | `4` | Community / unverified — Reddit and forum threads, anonymous gists, unsourced or SEO posts, vendor marketing, retellings of someone else's work, early or unverifiable repositories — **never auto-ingest**, human review only |
 | self | `self` | Self-authored synthesis, plans, specs, session notes |
 
 When unsure between two adjacent tiers, prefer the LOWER tier (more conservative). Tiers 1–3 are auto-ingestible; tier 4 always queues for human approval.
+
+#### Posts and individual repositories: tier the author and the evidence, not the platform (2026-09-23)
+
+Where a source is hosted says little about it: Medium carries both an engineer's measured account of their own system and an SEO listicle, and GitHub carries both a code-verified survey and a weekend experiment. Until 2026-09-23 this table put "Medium" and "an individual's repository" in tier 4 wholesale, and one cycle's triage and the session that filed the same items tiered similar repositories 2, 3 and 4. The rule:
+
+| Source | Tier 2 | Tier 3 | Tier 4 |
+|---|---|---|---|
+| **A post** — Medium, Substack, X long-form, a personal or company dev blog | — (an official vendor or framework post is tier 2 by the row above) | A named practitioner writing first-hand: their own system, their own measured results, or an author with a track record in this wiki | Anonymous or unsourced; SEO or listicle; vendor marketing for its own product; a retelling of someone else's work (tier it by the original — ingest the original where you can) |
+| **An individual's GitHub repository** | Adopted: several maintainers or an organisation, tagged releases, evidence of outside use | One maintainer, a working and documented project, its code read beyond the README | Early, unreleased, or unverifiable (a README with nothing behind it) |
+
+How deeply **we** read a source raises our `confidence`, never its tier: tier describes the source, confidence our entry. A retelling keeps its author's figures `sourced` via the author (authoring best practices, principle 5).
 
 **Restatement rule (2026-08-01; template synced to v3 on 2026-09-02).** This table is the only place the tier rubric is defined, and the confidence scale below is the only place confidence is defined. Folder READMEs, `_INDEX` files, eval rubrics, skill definitions and entry bodies **link here; they do not restate it.** A paraphrase cannot be lint-checked, ages independently of the thing it paraphrases, and — where it also claims to be "the same as elsewhere" — actively deters verification. The same rule applies to any rule in this document. If a folder needs a rubric this table does not support, that is a gap to close here, not a local variant to publish there. (Why it matters: on 2026-09-02 the `wiki-update` skill's own paraphrase of the confidence scale had drifted from this table and an ingest had to guess which won. Precedence is now stated in the project CLAUDE.md: framework-contract docs first.)
 
