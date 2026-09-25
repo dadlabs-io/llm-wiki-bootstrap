@@ -15,7 +15,7 @@ A health check on the wiki, available at two depths. The default pass is a fast 
 
 **Input / Output:** Reads the entries under `wiki/` (not `sessions/` or the generated `_INDEX.md` / `_MAP.md`). The mechanical mode prints its report and saves it to `_inbox/reports/lint-report.md` (`_inbox/` sits beside `wiki/` at the notebook root). It covers:
 
-- broken links, live `[[wikilink]]` syntax the link checker cannot follow, and orphan pages (a retired entry is not an orphan)
+- broken links, live `[[wikilink]]` syntax the link checker cannot follow, and orphan pages (a retired entry is not an orphan; a page meant to stand alone, such as the wiki's HOME, says so with `standalone: "<reason>"` in its frontmatter and is listed apart with that reason)
 - stale pending/TODO phrases
 - frontmatter: required fields; valid `tier`, `confidence` and `ingested_by` values; tags and lifecycle dates present (your notebook's frontmatter spec, `wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`, defines them all); and frontmatter that would not parse, checked on the entries and on the installed skill and agent files, since a skill whose frontmatter does not parse never triggers
 - `raw_path` resolving to a real file or folder; a tier `self` entry has none and counts as self-authored

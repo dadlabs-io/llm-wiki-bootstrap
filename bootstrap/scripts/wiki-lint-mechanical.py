@@ -4,7 +4,8 @@ Lint a topic wiki — Karpathy-style health check.
 
 Walks the wiki and reports:
   1. Broken internal links (markdown links to .md files that don't exist)
-  2. Orphan pages (wiki entries with no inbound links from other wiki entries)
+  2. Orphan pages (wiki entries with no inbound links from other wiki entries);
+     a page declaring `standalone: "<reason>"` is listed apart instead
   3. Stale "pending" mentions — references to items as pending/not-built
      when the underlying state has changed (queue items now in done/, etc.)
   4. Missing frontmatter fields (no source_url, no ingested_by, etc.)
@@ -248,7 +249,7 @@ def check_describes(value, rel, fm, repo):
                        f"{' plus uncommitted edits' if uncommitted else ''}")
 
 
-def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, wiki_root, report_path):
+def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, standalone, wiki_root, report_path):
     """/wiki-cycle Step 3's pair, lint-mechanical.json + .md (cycle-step-return-format):
     the contract's counters in `summary`, the findings in sibling arrays. Until
     2026-09-24 the script had no --cycle-id / --run-folder and the orchestrator wrote
@@ -271,6 +272,7 @@ def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, w
         "broken_links": [{"file": rel(f), "target": target, "link_text": text}
                          for f, text, target, _reason in broken_links],
         "orphans": [rel(f) for f in orphans],
+        "standalone": [{"file": rel(f), "reason": reason} for f, reason in standalone],
     }
     atomic_write_text(run_folder / "lint-mechanical.json", json.dumps(payload, indent=2, ensure_ascii=False))
     counts = ", ".join(f"{k.replace('_', ' ')} {v}" for k, v in summary.items())
@@ -283,7 +285,7 @@ def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, w
           "## Deferred", "", "_(none)_", "",
           "## Notes", "",
           f"Every finding is in the full report, `{report_path.name}` (`{report_path}`); "
-          "the JSON carries the broken links and orphans as arrays.", "",
+          "the JSON carries the broken links, orphans and standalone pages as arrays.", "",
           "## Errors", "", "_(none)_", ""]
     atomic_write_text(run_folder / "lint-mechanical.md", "\n".join(md))
 
@@ -366,6 +368,10 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     describes_invalid = []    # (file, value, detail)
     describes_unchecked = []  # (file, value, detail)
 
+    # Standalone pages (2026-09-24, #54): `standalone: "<reason>"` in a page's own
+    # frontmatter keeps it off the orphan list (HOME, a hub). No built-in list.
+    standalone_decl = {}      # resolved path -> declared value
+
     for f in files:
         try:
             content = f.read_text(encoding="utf-8")
@@ -374,6 +380,8 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             continue
 
         fm, body = parse_frontmatter(content)
+        if "standalone" in fm:
+            standalone_decl[f.resolve()] = fm["standalone"].strip()
 
         # Check required frontmatter
         missing = [k for k in REQUIRED_FM_FIELDS if k not in fm]
@@ -561,9 +569,24 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                 stale_pending.append((f, line_no, line.strip()[:120]))
 
     # Pass 3: orphans — files with zero inbound links. A retired entry
-    # (`superseded_by`) is expected to lose its links to its successor.
-    orphans = [f for f in files if incoming_count[f.resolve()] == 0
-               and not is_superseded(split_frontmatter(f.read_text(encoding="utf-8", errors="replace"))[0])]
+    # (`superseded_by`) is expected to lose its links to its successor. A page
+    # that declares `standalone: "<reason>"` is listed apart with its reason; a
+    # declaration with no reason (blank, true, yes) is not honoured.
+    orphans = []              # [file]
+    standalone = []           # (file, reason)
+    standalone_no_reason = {}  # file -> the declared value
+    for f in files:
+        if incoming_count[f.resolve()] or is_superseded(
+                split_frontmatter(f.read_text(encoding="utf-8", errors="replace"))[0]):
+            continue
+        declared = standalone_decl.get(f.resolve())
+        if declared is None or declared.lower() in {"false", "no"}:
+            orphans.append(f)
+        elif declared.lower() in {"", "true", "yes"}:
+            orphans.append(f)
+            standalone_no_reason[f] = declared
+        else:
+            standalone.append((f, declared))
 
     # Render report
     out = []
@@ -573,6 +596,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     out.append(f"**Files scanned**: {len(files)}")
     out.append(f"**Broken links**: {len(broken_links)}")
     out.append(f"**Orphan pages**: {len(orphans)}")
+    out.append(f"**Standalone pages**: {len(standalone)}")
     out.append(f"**Stale 'pending' mentions**: {len(stale_pending)}")
     out.append(f"**Missing frontmatter fields**: {len(missing_frontmatter)}")
     out.append(f"**Missing tier**: {len(missing_tier)}")
@@ -626,15 +650,33 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     out.append("## 🏝️ Orphan Pages (no inbound links)")
     out.append("")
     if not orphans:
-        out.append("_None — every page has at least one inbound link._")
+        out.append("_None — every page has an inbound link or declares itself standalone._")
     else:
         out.append("These pages are not linked from any other wiki entry. Either:")
         out.append("- Add a backlink from a related entry, OR")
-        out.append("- Verify it's intentionally standalone (e.g., the root hub)")
+        out.append("- If the page stands alone by design (a landing page, a hub), declare it in its own frontmatter: "
+                   "`standalone: \"<reason>\"` (frontmatter spec). A declaration needs the reason.")
         out.append("")
         for f in orphans:
             rel = f.relative_to(wiki_root)
-            out.append(f"- `{rel.as_posix()}`")
+            if f in standalone_no_reason:
+                out.append(f"- `{rel.as_posix()}` — its `standalone:` carries no reason "
+                           f"(`{standalone_no_reason[f] or '(blank)'}`), so it is not honoured: give the reason")
+            else:
+                out.append(f"- `{rel.as_posix()}`")
+    out.append("")
+
+    # Section: standalone pages (2026-09-24, #54)
+    out.append("## 🧭 Standalone Pages (declared, no inbound link needed)")
+    out.append("")
+    if not standalone:
+        out.append("_None — no page without inbound links declares `standalone:`._")
+    else:
+        out.append("Each page's frontmatter carries `standalone: \"<reason>\"`, so it is not an orphan. "
+                   "Check the reason still holds.")
+        out.append("")
+        for f, reason in standalone:
+            out.append(f"- `{f.relative_to(wiki_root).as_posix()}` — {reason}")
     out.append("")
 
     # Section: stale pending
@@ -972,6 +1014,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             "files_scanned": len(files),
             "broken_links": len(broken_links),
             "orphans": len(orphans),
+            "standalone": len(standalone),
             "stale_pending": len(stale_pending),
             "missing_frontmatter": len(missing_frontmatter),
             "missing_tier": len(missing_tier),
@@ -979,7 +1022,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             "missing_confidence": len(missing_confidence),
             "invalid_confidence": len(invalid_confidence),
             "unquoted_yaml": len(unquoted_yaml),
-        }, broken_links, orphans, wiki_root, report_path)
+        }, broken_links, orphans, standalone, wiki_root, report_path)
         print(f"Cycle step files: {Path(run_folder) / 'lint-mechanical.json'} (+ .md)")
 
     # Exit code: strict mode fails on broken links, any icarus invariant

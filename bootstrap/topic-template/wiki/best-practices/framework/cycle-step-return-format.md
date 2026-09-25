@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 2
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
+framework-version: 3
+last_reviewed: 2026-09-24
+review_after: 2026-12-24
 tags: [best-practice, architecture, orchestrator, wiki-cycle, schema, contract]
 ---
 
@@ -135,9 +135,9 @@ The iteration number (`01`, `02`, ...) increments for same-day re-runs. The orch
 - `queued[]` is empty (mechanical lint doesn't produce items)
 - `skipped[]` is empty
 - `deferred[]` is empty
-- `summary` keys: `files_scanned`, `broken_links`, `orphans`, `stale_pending`, `missing_frontmatter`, `missing_tier`, `invalid_tier`, `missing_confidence`, `invalid_confidence`, `unquoted_yaml` (since 2026-09-08 this counter is the frontmatter-loadability findings — unquoted `: ` / ` #` in a top-level value — over entries; the installed-skill scan and the qmd index-coverage check are report sections, not counters)
-- The detailed findings live in sibling arrays: `broken_links: [{file, target, link_text}]`, `orphans: [file]`, etc.
-- `status: "completed"` with `summary.broken_links == 0 && summary.orphans <= 1` is a clean run
+- `summary` keys: `files_scanned`, `broken_links`, `orphans`, `standalone` (2026-09-24), `stale_pending`, `missing_frontmatter`, `missing_tier`, `invalid_tier`, `missing_confidence`, `invalid_confidence`, `unquoted_yaml` (since 2026-09-08 this counter is the frontmatter-loadability findings — unquoted `: ` / ` #` in a top-level value — over entries; the installed-skill scan and the qmd index-coverage check are report sections, not counters)
+- The detailed findings live in sibling arrays: `broken_links: [{file, target, link_text}]`, `orphans: [file]`, `standalone: [{file, reason}]`, etc.
+- `status: "completed"` with `summary.broken_links == 0 && summary.orphans == 0` is a clean run. A page that stands alone by design (the wiki's HOME, a hub) declares `standalone: "<reason>"` in its own frontmatter (frontmatter spec) and is listed in `standalone[]`, not counted as an orphan. There is no allowance and no built-in list: until 2026-09-24 this line allowed one orphan, meant for HOME.
 
 ### Integration scripts (Step 3.5) — `reciprocate-backlinks`, `index-per-folder`, `map-compile`
 

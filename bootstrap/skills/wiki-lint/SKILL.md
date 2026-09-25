@@ -25,7 +25,7 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
 
 Checks:
 - Broken markdown links (to `.md` files that don't exist) and live `[[wikilink]]` syntax the link checker can't see
-- Orphan pages (no inbound links from other entries)
+- Orphan pages (no inbound links from other entries). A page that stands alone by design declares `standalone: "<reason>"` in its frontmatter and is listed apart with its reason; there is no other exemption (2026-09-24)
 - Stale "pending" / "TODO" phrases
 - Missing frontmatter fields (`title`, `date`); missing/invalid `tier`, `confidence`, `ingested_by`; missing `tags`; missing lifecycle fields (`last_reviewed` / `review_after`)
 - Frontmatter **loadability** — an unquoted top-level value containing `: ` (ERROR: a YAML loader drops every field) or ` #` (WARNING: silently truncated as a comment). Checked on entries AND on the installed `~/.claude/skills/*/SKILL.md` + `~/.claude/agents/*.md`, since a skill in that state never triggers by description (2026-09-08)

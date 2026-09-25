@@ -11,6 +11,17 @@
 
 ## 2026-09-24
 
+### Pages declare themselves standalone; the one-orphan allowance goes (task #54, the user's rule; frontmatter spec v13, cycle contract v3)
+- **Why**: the cycle contract called a run clean at `orphans <= 1`, an allowance meant for the wiki's HOME page, which no other page links to. The allowance had no name: it hid any single real orphan in a wiki whose HOME happened to be linked, and it did not fit a wiki with a second hub. The user: one mechanism for everything, no built-in list.
+- **Change**:
+  - Frontmatter spec v13: an optional `standalone: "<reason>"` field. The page says why it stands alone; a blank value, `true` or `yes` is not a reason and is not honoured.
+  - `wiki-lint-mechanical.py`: a page with no inbound link that declares a reason is left off the orphan list and listed in a new "Standalone Pages" section with its reason (header counter `Standalone pages`). A declaration without a reason leaves the page an orphan, and the orphan list says so. With `--cycle-id`, the JSON gains `standalone: [{file, reason}]` and the summary counter `standalone`.
+  - Cycle contract v3 (`cycle-step-return-format.md`): a clean mechanical lint is `broken_links == 0 && orphans == 0`, with no allowance; `standalone` joins the summary keys and sibling arrays.
+  - Both HOME templates carry the field: `seed/wiki/HOME.md.tmpl` (`/new-wiki`; it had no frontmatter until now) and `topic-template/wiki/HOME.md` (`wiki-init`). The `/wiki-lint` skill line and its pack page say how to declare a page.
+- **Proven**: `tests/scripts/test_standalone.py`, 5/22 before the change, 22/22 after; five mutants of the lint (a reason-less declaration honoured, the field ignored, the JSON array dropped, the report section gone, the no-reason note gone) each fail it. The other script harnesses are unchanged: 24/24, 28/28, 27/27, 31/31.
+- **Existing wikis**: every notebook's HOME.md gets the field by hand (other projects' notebooks by the cross-notebook protocol, in #50). Until then their HOME shows as an orphan.
+- **Not installed**: ships in #50's release.
+
 ### `/wrap-up --auto-commit` / `--auto-push`, and a closing line on every wrap-up (task #51, the user's ask)
 - **Why**: the user closes a session's window when the wrap-up is done, and had no way to know it was safe: the wrap-up committed only the notebook's promote, never pushed, and ended on a summary that looked the same whether work was saved or not. The user: "so the window can be closed", with a green ✅ at both ends of the closing line.
 - **Change** (`/wrap-up` Step 7, new): with `--auto-commit` or `--auto-push`, after Step 6: sweep zero-byte strays; in the project's repository add **only the paths the session changed**, by explicit path (never `add -A`; anything else uncommitted is left and named); in the notebook's repository add only the notebook's folder; one commit each (one in all when the wiki lives inside the project); with `--auto-push`, push only a branch that already tracks a remote, never force, never pull or rebase to make it go. Step 6's own promote commit is folded into Step 7 when a flag is given. **Every** wrap-up ends on one closing line: `✅ WRAP-UP COMPLETE: committed and pushed ✅`, `✅ WRAP-UP COMPLETE: committed, not pushed ✅`, `✅ WRAP-UP COMPLETE: nothing committed ✅`, or `⚠️ WRAP-UP INCOMPLETE: <what is left> ⚠️`.

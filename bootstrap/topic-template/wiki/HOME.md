@@ -8,6 +8,7 @@ confidence: high
 last_reviewed: 2026-01-01
 review_after: 2027-01-01
 tags: [wiki-root, entry-point, navigation]
+standalone: "the landing page: reading starts here, so no other page links to it"
 ---
 
 # HOME — <topic>
