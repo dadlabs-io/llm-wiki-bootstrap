@@ -1,8 +1,8 @@
 ---
 name: wiki-promote
-description: Promote staged wiki entries from _inbox/proposed/ to wiki/. Reviews what's pending, lets the user approve/reject, then moves approved entries to their target folder, adds backlinks, and regenerates INDEX. Use when the user says "promote", "approve wiki entries", "what's in proposed", "wiki-promote", "move proposed to wiki".
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
+description: Promote staged wiki entries from _inbox/proposed/ to wiki/. Reviews what's pending, lets the user approve/reject, then moves approved entries to their target folder, adds backlinks, rebuilds the backlink blocks so no new entry is an orphan, and regenerates the indexes and map. Use when the user says "promote", "approve wiki entries", "what's in proposed", "wiki-promote", "move proposed to wiki".
+last_reviewed: 2026-09-25
+review_after: 2026-12-24
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -110,6 +110,8 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <topic>
 ```
 
 Ingest agents author cross-links by BARE slug (`[Title](other-slug.md)`) per the staged-ingest contract. `wiki-promote.py` recomputes the entry's own relative links (raw_path footer + `./`/`../` links) robustly on move, but BARE-slug body links to entries in OTHER folders only become valid once resolved to `../folder/slug.md`. `wiki-fix-links.py` does that resolution deterministically (idempotent; 0-ambiguous/0-missing on a clean run). Skipping it is the recurring "~50 broken links after promote" bug. Then re-run `wiki-lint-mechanical.py` to confirm 0 broken links before reciprocate/index/map.
+
+`wiki-promote.py` runs all of this itself after a promotion, in order: `wiki-fix-links.py` (scoped to the entries it moved), then `wiki-reciprocate-backlinks.py`, then the folder indexes and the map. The backlink rebuild is what keeps a promoted entry from being an orphan: the entry links out to older ones, and until their `BACKLINKS-AUTO` blocks name it, nothing links to it (until 2026-09-25 only `/wiki-cycle` ran it, so every `/wrap-up` left its new entries orphaned). It rebuilds every block in the notebook and is idempotent, so a notebook whose blocks were behind catches up on its next promotion.
 
 ### Step 4 — Report
 

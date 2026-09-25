@@ -35,7 +35,7 @@ Install target: `~/.claude/skills/<skill>/SKILL.md`
 | `wiki-refresh` | both | Stale-entry scan — internal to cycle |
 | `wiki-report` | research | Morning report — internal to cycle |
 | `wiki-lint` | both | Mechanical + semantic lint |
-| `wiki-promote` | both | Stage → promote with backlink + INDEX regen (runs `/wiki-verify` as a sub-step) |
+| `wiki-promote` | both | Stage → promote with backlinks, the backlink rebuild, INDEX and MAP regen (runs `/wiki-verify` as a sub-step with `--verify`) |
 | `wiki-verify` | both | Flip an entry unverified → verified via sidecar (truth-status lifecycle; added 2026-05-25, registered to travel 2026-07-07) |
 | `wiki-rollback` | both | Roll an entry back to its verified ancestor (pairs with `wiki-verify`; added 2026-05-25, registered to travel 2026-07-07) |
 | `wrap-up` | development | Session-end distillation into wiki entries (written 2026-05-12) |
@@ -89,7 +89,7 @@ Manifest: `TRAVEL_SCRIPTS` (the commands) + `TOOLING_HELPER_SCRIPTS` / `SHARED_H
 | `wiki-list-process.py` | Batch-consume `_inbox/pending/` → staged entries |
 | `wiki-list-render.py` | Regenerate the human-readable pending-list view |
 | `wiki-dequeue.py` | Move already-ingested items out of the pending queue |
-| `wiki-promote.py` | Move `_inbox/proposed/<slug>.md` → `wiki/<target_folder>/<slug>.md` (the folder from its sidecar), add backlinks into the related entries' Related sections (never into a framework-contract doc, 2026-09-15), regenerate the folder indexes and MAP. An entry whose sidecar is missing, invalid or names no folder is held back (exit 4); `--check` validates staging without moving anything; a folder outside the taxonomy is known when it carries a `README.md` (else a warning, 2026-09-24) |
+| `wiki-promote.py` | Move `_inbox/proposed/<slug>.md` → `wiki/<target_folder>/<slug>.md` (the folder from its sidecar), add backlinks into the related entries' Related sections (never into a framework-contract doc, 2026-09-15), then run the link fixer (scoped to the moved entries), `wiki-reciprocate-backlinks.py` (so no promoted entry is left an orphan, 2026-09-25) and the folder-index and MAP regeneration. An entry whose sidecar is missing, invalid or names no folder is held back (exit 4); `--check` validates staging without moving anything; a folder outside the taxonomy is known when it carries a `README.md` (else a warning, 2026-09-24) |
 | `wiki-verify.py` | Sidecar update flipping truth-status to verified (called by `/wiki-verify`) |
 | `wiki-rollback.py` | Walk the `revises:` chain to the verified ancestor + write a rollback entry (called by `/wiki-rollback`) |
 | `wiki-lint-mechanical.py` | Deterministic lint: broken links, orphans, frontmatter loadability, body checks (warn-only backlog), installed-skill drift, qmd index coverage; a tier-`self` entry without `raw_path` counts as self-authored, not missing (2026-09-15); `--cycle-id` + `--run-folder` write the cycle's `lint-mechanical.json` / `.md` (2026-09-24); a page declaring `standalone: "<reason>"` is listed apart, not as an orphan (2026-09-24); stale-pending flags only our own notes (workflow phrases anywhere, `not yet built` / `TODO:` in tier `self`; frontmatter, quotes, code, link targets skipped; 2026-09-24) |

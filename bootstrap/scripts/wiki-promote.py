@@ -7,8 +7,8 @@ Reads each *.md in <vault>/_inbox/proposed/, loads its
 optionally asks the user, then moves the entry to its target folder,
 strips status: proposed from the frontmatter, applies the suggested
 backlinks (Edit-ing each listed file to add a See-also line), normalizes
-the promoted entries' links (wiki-fix-links.py) and regenerates
-_INDEX.md + _MAP.md.
+the promoted entries' links (wiki-fix-links.py), rebuilds the BACKLINKS-AUTO
+blocks (wiki-reciprocate-backlinks.py) and regenerates _INDEX.md + _MAP.md.
 
 Modes:
   --review      Interactive: print each entry's summary, prompt
@@ -279,8 +279,9 @@ def _add_backlink(target_file: Path, link_text: str, link_target: str) -> bool:
 
 def _regenerate_indexes(scripts_dir: Path, topic: str, vault: Path, dry_run: bool,
                         promoted_paths: list[str] | None = None):
-    """Run wiki-index-per-folder.py + wiki-map-compile.py to refresh the
-    index and map after a promotion. Best-effort — warns on failure.
+    """Run wiki-fix-links.py (scoped to the promoted entries), then
+    wiki-reciprocate-backlinks.py, wiki-index-per-folder.py and wiki-map-compile.py
+    to wire and refresh the wiki after a promotion. Best-effort — warns on failure.
 
     `vault` here is the topic's wiki dir (<topic_root>/wiki). The index/map
     scripts resolve their wiki root as <vault>/<topic>, so they need the
@@ -295,7 +296,13 @@ def _regenerate_indexes(scripts_dir: Path, topic: str, vault: Path, dry_run: boo
     # the index and map are compiled from entries whose links already resolve.
     # Before 2026-09-17 every caller had to remember this step and /wrap-up's Step 6
     # did not, which is where the recurring broken-links-after-promote bug came from.
-    for script_name in ("wiki-fix-links.py", "wiki-index-per-folder.py", "wiki-map-compile.py"):
+    # wiki-reciprocate-backlinks.py SECOND, once the links resolve: a promoted entry links
+    # out to older ones, and until their BACKLINKS-AUTO blocks name it, nothing links to
+    # it and the lint counts it an orphan. Before 2026-09-25 only /wiki-cycle's Step 3.5
+    # ran it, so every /wrap-up left its new entries orphaned. It rebuilds every block in
+    # the notebook (idempotent), so a notebook whose blocks were behind catches up here.
+    for script_name in ("wiki-fix-links.py", "wiki-reciprocate-backlinks.py",
+                        "wiki-index-per-folder.py", "wiki-map-compile.py"):
         script = scripts_dir / script_name
         if not script.exists():
             _warn(f"{script_name} not found at {script}; skipping regen")
@@ -703,7 +710,7 @@ def main():
 
     # Regen indexes if anything was promoted
     if promoted and not args.dry_run:
-        _info("normalizing links, then regenerating _INDEX.md + _MAP.md...")
+        _info("normalizing links, rebuilding backlinks, then regenerating _INDEX.md + _MAP.md...")
         _regenerate_indexes(scripts_dir, topic, vault, args.dry_run,
                             promoted_paths=[r["to"] for r in promoted if r.get("to")])
 

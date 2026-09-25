@@ -18,6 +18,7 @@ Moves staged entries out of the holding area and into the live wiki. Staged inge
 - the entry moved into `wiki/<target_folder>/`, with `status: proposed` stripped from its frontmatter and its links rewritten for the new folder; a link normalizer then resolves links written by bare file name
 - a backlink added to the Related section of each suggested entry. A suggestion that points into a framework-contract doc is skipped with a warning, because the docs refresh would overwrite it.
 - the sidecar deleted, and a truth-status record started for the entry as unverified (the record [`wiki-verify`](./wiki-verify.md) later changes)
+- every page a promoted entry links to naming it back in its auto-maintained backlinks block, so a new entry is never left an orphan (the whole notebook's blocks are rebuilt, so a notebook whose blocks were behind catches up)
 - the folder indexes and the wiki MAP regenerated
 
 A bare or singular folder name is mapped to its full taxonomy folder. A notebook's own folder (one the framework doesn't list, such as `research/agents` or `research/vendors`) counts as known when it has a `README.md` saying what it is for. Any other folder is used as given, with a warning to check the spelling or add the README: a mistyped folder the script creates never gets one, so it keeps warning. Rejected entries move to `_inbox/rejected/` — kept for the audit trail, never deleted.
