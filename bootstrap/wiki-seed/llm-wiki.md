@@ -21,7 +21,8 @@ reads its work against the source (2026-09-24). The hook, added to
 session picks up where the last one left off; outside a wiki project it prints nothing.
 
 Every skill has its own page in the sibling `skills/` folder — linked below. For the guided
-version of this list, see [`commands.md`](./commands.md) (the full command reference) and
+version of this list, see [`user-guide.md`](./user-guide.md) (the whole system on one page),
+[`commands.md`](./commands.md) (the full command reference) and
 [`getting-started.md`](./getting-started.md) (the first-hour walkthrough).
 
 ## Daily drivers

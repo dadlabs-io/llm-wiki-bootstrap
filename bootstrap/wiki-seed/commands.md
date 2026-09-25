@@ -57,6 +57,7 @@ These are listed for completeness. `/wiki-cycle` invokes them in order; you can 
 
 ## See also (deeper docs per command)
 
+- [`user-guide`](./user-guide.md) — the whole system on one page: how an entry gets in, the cycle, where everything lives
 - [`getting-started`](./getting-started.md) — your first hour with a freshly-scaffolded project
 - [`wiki-update`](./skills/wiki-update.md) — `/wiki-update` in depth (direct vs staged, the gate, dedup)
 - [`wiki-cycle`](./skills/wiki-cycle.md) — `/wiki-cycle` orchestrator + mode flags

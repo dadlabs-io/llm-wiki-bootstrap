@@ -19,7 +19,7 @@ After install:
 3. When you have ~10 entries, run `/wiki-cycle` for the first full pass.
 4. Read the cycle report at `_inbox/reports/<date>/`; your wiki now auto-maintains structure.
 
-Full user guide: [`wiki/llm-wiki-user-guide.md`](./wiki/llm-wiki-user-guide.md).
+Full user guide: [`how-to/llm-wiki/user-guide.md`](./how-to/llm-wiki/user-guide.md) (framework-managed; it arrives with the framework's docs refresh).
 
 ## Layout
 
@@ -28,10 +28,10 @@ Full user guide: [`wiki/llm-wiki-user-guide.md`](./wiki/llm-wiki-user-guide.md).
 ├── README.md                  This file
 ├── _config/feeds.md           Trusted sources for discovery
 ├── _inbox/                    Live state (pending/proposed/done/discovered/reports)
+├── how-to/llm-wiki/           Framework-managed usage docs, the user guide among them
 ├── raw/                       Verbatim source dumps (append-only)
 └── wiki/
     ├── HOME.md               Landing page
-    ├── llm-wiki-user-guide.md Canonical how-to-use reference
     ├── best-practices/
     │   └── framework/         Shipped contracts (don't edit)
     └── <your folders>/        Your content; folder taxonomy is your call

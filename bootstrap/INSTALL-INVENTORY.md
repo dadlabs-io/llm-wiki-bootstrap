@@ -56,8 +56,10 @@ Manifest: `TRAVEL_AGENTS` in `bootstrap/scripts/_install_tooling.py` (added 2026
 
 ## A3. Pack usage docs (wiki-seed)
 
-Source-of-truth: `bootstrap/wiki-seed/llm-wiki.md` (the pack page) + `bootstrap/skills/<name>/wiki-seed/<name>.md` + `bootstrap/agents/<name>/wiki-seed/<name>.md`
-Install target: `<project how-to root>/llm-wiki/llm-wiki.md` + `llm-wiki/skills/<name>.md` + `llm-wiki/agents/<name>.md` (Phase B for a new project; `--phase docs --target-folder <project>` refreshes an existing one)
+Source-of-truth: `bootstrap/wiki-seed/` (the pack page `llm-wiki.md`, plus `user-guide.md`, `commands.md`, `getting-started.md`, `install.md`, `drive-setup.md`) + `bootstrap/skills/<name>/wiki-seed/<name>.md` + `bootstrap/agents/<name>/wiki-seed/<name>.md`
+Install target: `<project how-to root>/llm-wiki/<page>.md` + `llm-wiki/skills/<name>.md` + `llm-wiki/agents/<name>.md` (Phase B for a new project; `--phase docs --target-folder <project>` refreshes an existing one)
+
+`user-guide.md` is the one-page guide to the whole system (2026-09-25, task #41). Until then it was `topic-template/wiki/llm-wiki-user-guide.md`, shipped only by `/wiki-init` and the legacy `install.py`, so three copies drifted apart; it moved here so every notebook gets the same copy and a fix is made once.
 Mechanism: `seed_pack_docs()` in `bootstrap/scripts/new-wiki.py` (added 2026-09-08; the per-skill copy dates from 2026-07-31)
 
 **Every skill in A and every agent in A2 ships a page; the seeder warns by name for any that does not.** One folder per installed package in the receiving how-to tree (`how-to/llm-wiki/` here; the agent-factory's packs land as `how-to/<pack>/` beside it); a framework refresh never removes another pack's folder.

@@ -508,9 +508,9 @@ def find_inbound_candidates(new_path, wiki_dir, title, max_results=15):
 
 
 # Files a backlink must never be suggested for: machine-generated indexes and
-# hub/system pages. Wiki-ROOT pages (glossary, concept-gaps, user guide, cycle
-# overview) are excluded by position — they match every generic term.
-_NO_BACKLINK_FILES = {"_map.md", "_index.md", "home.md", "readme.md", "llm-wiki-user-guide.md"}
+# hub/system pages. Wiki-ROOT pages (glossary, concept-gaps, cycle overview) are
+# excluded by position — they match every generic term.
+_NO_BACKLINK_FILES = {"_map.md", "_index.md", "home.md", "readme.md"}
 # A matched term that hits more files than this is generic for the wiki.
 GENERIC_TERM_LIMIT = 25
 # A single-word match needs this many tags in common to count as a backlink (2026-09-24).

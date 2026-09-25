@@ -24,7 +24,6 @@ Framework (always overwritten on update):
 - `skills/`  → <target>/.claude/skills/  (flat — Claude Code expects one level)
 - `topic-template/wiki/best-practices/framework/` → ...
                                                   /<vault>/<topic>/wiki/best-practices/framework/
-- `topic-template/wiki/llm-wiki-user-guide.md` → user-guide (contract)
 
 User content (NEVER touched by --update):
 - `<vault>/<topic>/wiki/<topic-folders>/`  — your entries
@@ -60,7 +59,6 @@ FRAMEWORK_PATHS_RELATIVE_TO_TOPIC = [
     "wiki/best-practices/framework/wiki-authoring-best-practices.md",
     "wiki/best-practices/framework/wiki-frontmatter-best-practices.md",
     "wiki/best-practices/framework/wiki-search-bucket-rerank-spec.md",
-    "wiki/llm-wiki-user-guide.md",
 ]
 
 
