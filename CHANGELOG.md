@@ -9,6 +9,14 @@
 
 ---
 
+## 2026-09-25
+
+### `/wrap-up` gets a per-notebook default for committing and pushing: `wrap_up_commit` (the user's ask)
+- **Why**: `--auto-commit` / `--auto-push` (2026-09-24) had to be typed every time; the #51 decision noted a per-project default as possible. The user: one setting, set for llm-wiki-bootstrap now, the other projects with their own sessions.
+- **Change**: `wrap_up_commit: none | commit | push`, resolved like `confirm_before_create` / `confirm_before_promote` (the notebook's registry entry → the project's `wiki-config.json` → `none`). One setting rather than two booleans, since push includes commit. A typed flag always wins for that wrap-up, and the report says which decided. Skill (Required context, Flags, Steps 6 and 7, closing line, Don't), pack page, INSTALL-INVENTORY registry row. The scaffold does not write it.
+- **Proven**: two new suite cases (`config-push`, `flag-overrides-config`) and a "not pushed" check, validated offline against six simulated runs before any spend; run `20260925-011911` 8/8 on both models with `incremental` and `auto-push`, 0 regressions ($5.98).
+- **Set**: llm-wiki-bootstrap's registry entry is `wrap_up_commit: push`; no other notebook changed.
+
 ## 2026-09-24
 
 ### A notebook's own folder is known by its README; the stale-"pending" lint reads only our own notes (tasks #44, #46, from agent-builder's 2026-09-23 Resolution)

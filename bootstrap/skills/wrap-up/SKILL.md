@@ -1,6 +1,6 @@
 ---
 name: wrap-up
-description: "Crystallize the current session's work into the project wiki AND refresh the working-memory dashboards. ALWAYS (1) upserts a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ so the \"what we did\" record builds as you go, (2) refreshes the mutable working-memory dashboards — sessions/<persona>/handoff.md + task.md + sessions/active-context.md (the resume pointer; the memory-bank replacement), and (3) extracts durable knowledge — components/decisions/patterns/bugs — staged to _inbox/proposed/ then promoted to wiki/project/<category>/ (gated by two per-notebook booleans: `confirm_before_create` for Step 2's filing decision, `confirm_before_promote` for Step 6's promotion decision). With --auto-commit it commits the session's work at the end, with --auto-push it also pushes, and every wrap-up ends on one closing line (\"WRAP-UP COMPLETE: committed and pushed\" or what is left). This is the ONE session-close command — it absorbs the retired /upd-docs. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says \"wrap up\", \"wrap-up\", \"/wrap-up\", \"wrap this session\", \"document what we did\", \"crystallize this session\", \"save this work\", \"save progress\", \"save state\", \"update docs\", \"upd-docs\", \"wrap up and commit\", \"wrap up and push\"."
+description: "Crystallize the current session's work into the project wiki AND refresh the working-memory dashboards. ALWAYS (1) upserts a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ so the \"what we did\" record builds as you go, (2) refreshes the mutable working-memory dashboards — sessions/<persona>/handoff.md + task.md + sessions/active-context.md (the resume pointer; the memory-bank replacement), and (3) extracts durable knowledge — components/decisions/patterns/bugs — staged to _inbox/proposed/ then promoted to wiki/project/<category>/ (gated by two per-notebook booleans: `confirm_before_create` for Step 2's filing decision, `confirm_before_promote` for Step 6's promotion decision). With --auto-commit it commits the session's work at the end, with --auto-push it also pushes (or the notebook's wrap_up_commit setting says which by default), and every wrap-up ends on one closing line (\"WRAP-UP COMPLETE: committed and pushed\" or what is left). This is the ONE session-close command — it absorbs the retired /upd-docs. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says \"wrap up\", \"wrap-up\", \"/wrap-up\", \"wrap this session\", \"document what we did\", \"crystallize this session\", \"save this work\", \"save progress\", \"save state\", \"update docs\", \"upd-docs\", \"wrap up and commit\", \"wrap up and push\"."
 last_reviewed: 2026-09-24
 review_after: 2026-12-24
 reviewed_for_model: claude-opus-5-5
@@ -14,7 +14,7 @@ End-of-session distillation. Read the conversation and the recent file changes, 
 
 **Don't wiki a typo fix, a one-line edit or a dependency bump**, and don't file half-baked thinking — either wait until it is settled, or file it with `confidence: low` and a near `review_after`.
 
-**Flags:** `/wrap-up --auto-commit` commits the session's work when the wrap-up is done; `/wrap-up --auto-push` commits and pushes (Step 7). Without either, nothing new is committed beyond Step 6's promote commit, and nothing is pushed. Every wrap-up, with a flag or without, ends on one closing line (Step 7) saying whether it is safe to close the window.
+**Flags:** `/wrap-up --auto-commit` commits the session's work when the wrap-up is done; `/wrap-up --auto-push` commits and pushes (Step 7). Without a flag, the notebook's `wrap_up_commit` setting decides (below); with neither, nothing new is committed beyond Step 6's promote commit, and nothing is pushed. A typed flag always wins over the setting, for that wrap-up only. Every wrap-up, with a flag or without, ends on one closing line (Step 7) saying whether it is safe to close the window.
 
 ## Required context
 
@@ -29,11 +29,15 @@ End-of-session distillation. Read the conversation and the recent file changes, 
 - `confirm_before_create` — Step 2, before anything is filed.
 - `confirm_before_promote` — Step 6, before anything is promoted.
 
-To change either: edit the notebook's registry entry (or the project's `wiki-config.json`), or ask the user. A notebook still carrying the pre-2026-07-20 name `wrap_up_auto_promote` needs that key renamed to `confirm_before_promote` (`ask` → `true`, `true` → `false`).
+**One per-notebook setting chooses Step 7's default**, resolved the same way, default `none`:
+
+- `wrap_up_commit` — `none` (commit nothing), `commit` (as `--auto-commit`), or `push` (as `--auto-push`). One setting, not two booleans: push includes commit. A typed flag overrides it. Any other value counts as `none`; say so in the report.
+
+To change any of them: edit the notebook's registry entry (or the project's `wiki-config.json`), or ask the user. A notebook still carrying the pre-2026-07-20 name `wrap_up_auto_promote` needs that key renamed to `confirm_before_promote` (`ask` → `true`, `true` → `false`).
 
 ## The flow
 
-Steps 0 and 0.5 run on **every** wrap-up, and Step 7's closing line ends every one. Steps 1–6 depend on what the session produced; Step 7's commit and push depend on the flags.
+Steps 0 and 0.5 run on **every** wrap-up, and Step 7's closing line ends every one. Steps 1–6 depend on what the session produced; Step 7's commit and push depend on the flag, else the `wrap_up_commit` setting.
 
 ### Step 0 — Update the session journal (ALWAYS)
 
@@ -265,22 +269,22 @@ git -C <notebook-repo> add <notebook-root>/        # NOT add -A
 git -C <notebook-repo> commit -m "wiki(<notebook>): wrap-up <YYYY-MM-DD> — promote N session entries"
 ```
 
-If the notebook repo has unrelated uncommitted changes, add only the paths you wrapped. Don't push — that's the user's call. **With `--auto-commit` or `--auto-push`, skip this commit**: Step 7 makes one commit per repository that covers it.
+If the notebook repo has unrelated uncommitted changes, add only the paths you wrapped. Don't push — that's the user's call. **When Step 7 will commit (`--auto-commit`, `--auto-push`, or `wrap_up_commit: commit|push` with no flag), skip this commit**: Step 7 makes one commit per repository that covers it.
 
 **Offer to remember (`true` mode only):** after a clean all-`yes` or all-`no`, offer ONCE to set `confirm_before_promote` for this notebook so future wrap-ups skip the prompt. Only write the key if they say yes; never set it silently.
 
 ### Step 7 — Commit, push, and the closing line (ALWAYS ends the wrap-up)
 
-Items 1–4 run **only with `--auto-commit` or `--auto-push`**; item 5, the closing line, ends **every** wrap-up (2026-09-24, the user's ask: "so the window can be closed"). Run it after Step 6, whether or not anything was staged.
+Items 1–4 run **only when asked**: a typed `--auto-commit` / `--auto-push`, or, with no flag, the notebook's `wrap_up_commit` setting (`commit` or `push`; 2026-09-25). Say which one decided in the report ("pushing: the notebook's wrap_up_commit is push"). Item 5, the closing line, ends **every** wrap-up (2026-09-24, the user's ask: "so the window can be closed"). Run it after Step 6, whether or not anything was staged.
 
 1. **Sweep strays first**: `git status --short` in each repository below; delete any zero-byte or junk file a shell redirect left (named `output`, `#`, `${...}`, a stray word). Never delete a real file.
 2. **The project's repository** (the git root of the project folder): add **only the paths this session changed**, the ones the conversation and Step 1 named, by explicit path. Never `git add -A` or `git add .`. A changed or untracked file the session did not touch is left alone and named in the report. Commit: `wrap-up <YYYY-MM-DD>: <one-line summary of the session>`. Skip this repository if the session changed nothing in it.
 3. **The notebook's repository** (the git root of the notebook folder): `git add <notebook-root>/` only, since other sessions may have work in the same repository, then commit: `wiki(<notebook>): wrap-up <YYYY-MM-DD> — <what was filed>`. When the wiki lives inside the project (`<project>/llm-wiki/`), this is the same repository: make one commit covering both.
-4. **Push, only with `--auto-push`**, each repository that got a commit: `git -C <repo> push`, on its current branch, only when that branch already tracks a remote (`git rev-parse --abbrev-ref --symbolic-full-name @{u}` succeeds). Run each push as its own plain command, never inside a loop or a chain: a permission check approves a plain `git` command and can refuse one it cannot read. **Never force, never set up a remote, never pull or rebase to make a push go through.** A push that fails (rejected, no upstream, auth) is reported with git's message and left to the user.
+4. **Push, only with `--auto-push` (or `wrap_up_commit: push` and no flag)**, each repository that got a commit: `git -C <repo> push`, on its current branch, only when that branch already tracks a remote (`git rev-parse --abbrev-ref --symbolic-full-name @{u}` succeeds). Run each push as its own plain command, never inside a loop or a chain: a permission check approves a plain `git` command and can refuse one it cannot read. **Never force, never set up a remote, never pull or rebase to make a push go through.** A push that fails (rejected, no upstream, auth) is reported with git's message and left to the user.
 5. **The closing line: the LAST line of the reply, on every wrap-up**, exactly one of:
-   - `✅ WRAP-UP COMPLETE: committed and pushed ✅` (`--auto-push`, every commit pushed)
-   - `✅ WRAP-UP COMPLETE: committed, not pushed ✅` (`--auto-commit`)
-   - `✅ WRAP-UP COMPLETE: nothing committed ✅` (no flag; Step 6's promote commit, if any, is named above it)
+   - `✅ WRAP-UP COMPLETE: committed and pushed ✅` (push asked for, every commit pushed)
+   - `✅ WRAP-UP COMPLETE: committed, not pushed ✅` (commit asked for)
+   - `✅ WRAP-UP COMPLETE: nothing committed ✅` (neither asked for; Step 6's promote commit, if any, is named above it)
    - `⚠️ WRAP-UP INCOMPLETE: <what is left, e.g. "push rejected in <repo>"> ⚠️` (a commit or push failed, or the user still has to answer something)
 
    Nothing follows it. A wrap-up that stops to wait for an answer (Step 2's table, Step 6's prompt) has not reached Step 7 and prints no closing line.
@@ -308,4 +312,4 @@ For just the fast working-memory refresh: run `/wrap-up` and answer `none` at St
 - Don't skip staging. Entries land in `_inbox/proposed/` first; promotion happens only in Step 6, on the user's answer or an explicit `confirm_before_promote: false`. Never silently promote when the mode is `true`.
 - Don't run `/wrap-up` on a research notebook such as agentic-design — use `/wiki-update`.
 - Don't write to `~/.claude/projects/*/memory/MEMORY.md` — that is auto-memory, a different layer. `/wrap-up` writes to the project wiki.
-- Don't commit without `--auto-commit` / `--auto-push` beyond Step 6's promote commit, don't push without `--auto-push`, and never force-push or `git add -A`.
+- Don't commit beyond Step 6's promote commit unless a flag or `wrap_up_commit` asks, don't push unless `--auto-push` or `wrap_up_commit: push` (with no flag) asks, and never force-push or `git add -A`.

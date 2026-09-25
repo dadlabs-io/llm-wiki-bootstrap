@@ -204,6 +204,56 @@
         "journal": "append",
         "commit": "push"
       }
+    },
+    {
+      "id": "config-push",
+      "kind": "full",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- I added `beacon/retry.py`, a `RetryBudget` dataclass. It measures a retry allowance in elapsed wall-clock time from the first attempt, exposes `start()`, `remaining()` and `exhausted()`, and never extends itself.\n- We chose to cap retries by total elapsed time rather than by attempt count. The alternative we rejected was exponential backoff with a maximum number of attempts: with a slow endpoint, 5 attempts at growing delays could keep one file alive for eleven minutes and stall the whole sync, and the number of attempts told us nothing about how long a user had been waiting. Elapsed time is the thing users actually notice.\n- We root-caused the duplicate-upload reports. The manifest entry was written before the remote confirmed the object, so a sync interrupted between the write and the confirmation resumed believing the object was already there; the next full pass uploaded it again. `beacon/manifest.py` now has `record_upload()`, called only after the remote returns an etag. Write-after-confirm.\n- We settled a rule while doing it: every remote call in beacon goes through the single `send()` seam in `beacon/transport.py`, with the sender injected. That is what let us exercise the retry paths with no network and no sleeps, and we want new code to follow it rather than reaching for an HTTP library directly.\n\n- In this session I also added `budget_left_seconds()` to the end of `beacon/retry.py`; that edit is not committed yet.\n\nNothing else was touched.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-plain.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "session-changes",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true,
+        "wrap_up_commit": "push"
+      },
+      "answer": "go",
+      "promote_answer": "no",
+      "say": "wrap up this session.",
+      "expect": {
+        "min_staged": 3,
+        "journal": "append",
+        "commit": "push"
+      }
+    },
+    {
+      "id": "flag-overrides-config",
+      "kind": "full",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- I added `beacon/retry.py`, a `RetryBudget` dataclass. It measures a retry allowance in elapsed wall-clock time from the first attempt, exposes `start()`, `remaining()` and `exhausted()`, and never extends itself.\n- We chose to cap retries by total elapsed time rather than by attempt count. The alternative we rejected was exponential backoff with a maximum number of attempts: with a slow endpoint, 5 attempts at growing delays could keep one file alive for eleven minutes and stall the whole sync, and the number of attempts told us nothing about how long a user had been waiting. Elapsed time is the thing users actually notice.\n- We root-caused the duplicate-upload reports. The manifest entry was written before the remote confirmed the object, so a sync interrupted between the write and the confirmation resumed believing the object was already there; the next full pass uploaded it again. `beacon/manifest.py` now has `record_upload()`, called only after the remote returns an etag. Write-after-confirm.\n- We settled a rule while doing it: every remote call in beacon goes through the single `send()` seam in `beacon/transport.py`, with the sender injected. That is what let us exercise the retry paths with no network and no sleeps, and we want new code to follow it rather than reaching for an HTTP library directly.\n\n- In this session I also added `budget_left_seconds()` to the end of `beacon/retry.py`; that edit is not committed yet.\n\nNothing else was touched.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-plain.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "session-changes",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true,
+        "wrap_up_commit": "push"
+      },
+      "answer": "go",
+      "promote_answer": "no",
+      "say": "wrap up this session --auto-commit",
+      "expect": {
+        "min_staged": 3,
+        "journal": "append",
+        "commit": "commit"
+      }
     }
   ]
 }

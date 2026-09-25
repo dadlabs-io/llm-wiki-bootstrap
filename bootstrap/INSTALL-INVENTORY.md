@@ -131,7 +131,7 @@ Three files, three scopes:
 |---|---|---|---|
 | `~/.claude/wiki-config.json` | machine | Phase A / tooling install; Phase B adds `registry` | `bootstrap_source` (where this clone lives — what `-RefreshOnly`, `/new-wiki --sync` and `--phase docs` read), `install_version`, `last_phase_a`, `drive`, `registry` (the machine-wide fallback pointer to `linked-notebooks.json`, written by the first registry-mode Phase B; lets `--topic <notebook>` resolve from a cwd with no project config, 2026-09-13) |
 | `<project>/.claude/wiki-config.json` | project | Phase B | a thin pointer: `tool`, `project_name`, `notebook` + `registry` (registry model) or the in-project wiki location, `skills_install`, `wiki_folders` (the two `stubs\|empty\|none` answers), `drive` |
-| `<vault>/linked-notebooks.json` | vault | Phase B (`_upsert_registry`) | every notebook's root + its two booleans `confirm_before_create` / `confirm_before_promote`; the single source of truth for WHERE a wiki is — every `/wiki-*` script resolves through it (`_wiki_config.py`) |
+| `<vault>/linked-notebooks.json` | vault | Phase B (`_upsert_registry`) | every notebook's root + its two booleans `confirm_before_create` / `confirm_before_promote`; the single source of truth for WHERE a wiki is — every `/wiki-*` script resolves through it (`_wiki_config.py`); optional `wrap_up_commit` (`none`/`commit`/`push`, `/wrap-up`'s Step 7 default), set by hand, not by the scaffold (2026-09-25) |
 
 The agentmemory MCP wiring from the May draft was removed 2026-05-14 (`-NoAgentmemory` is a no-op kept for back-compat).
 

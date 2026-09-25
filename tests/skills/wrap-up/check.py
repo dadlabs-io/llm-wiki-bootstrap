@@ -464,16 +464,19 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("notebook: the wrap-up committed", bool(nb_commits), f"{len(nb_commits)} new commits")
         dirty = _git(nbrepo, "status", "--porcelain", "--", NOTEBOOK).strip()
         add("notebook: nothing of the notebook left uncommitted", not dirty, dirty[:200])
-        if exp["commit"] == "push":
-            for label, repo_dir in (("project", project), ("notebook", nbrepo)):
-                local = _git(repo_dir, "rev-parse", "HEAD").strip()
-                remote = _git(repo_dir, "ls-remote", "origin", "HEAD").split()
-                remote_head = remote[0] if remote else ""
-                if not remote_head:
-                    branch = _git(repo_dir, "rev-parse", "--abbrev-ref", "HEAD").strip()
-                    rb = _git(repo_dir, "ls-remote", "origin", f"refs/heads/{branch}").split()
-                    remote_head = rb[0] if rb else ""
+        for label, repo_dir in (("project", project), ("notebook", nbrepo)):
+            local = _git(repo_dir, "rev-parse", "HEAD").strip()
+            remote = _git(repo_dir, "ls-remote", "origin", "HEAD").split()
+            remote_head = remote[0] if remote else ""
+            if not remote_head:
+                branch = _git(repo_dir, "rev-parse", "--abbrev-ref", "HEAD").strip()
+                rb = _git(repo_dir, "ls-remote", "origin", f"refs/heads/{branch}").split()
+                remote_head = rb[0] if rb else ""
+            if exp["commit"] == "push":
                 add(f"{label}: pushed (the remote has the local HEAD)", local and remote_head == local,
+                    f"local {local[:8]} remote {remote_head[:8]}")
+            elif remote_head:   # commit only: a remote exists (the git fixture), and it must not have moved
+                add(f"{label}: not pushed (the remote is behind the local HEAD)", local and remote_head != local,
                     f"local {local[:8]} remote {remote_head[:8]}")
 
     # ---- staging discipline: nothing hand-written into project/ or the wiki root
