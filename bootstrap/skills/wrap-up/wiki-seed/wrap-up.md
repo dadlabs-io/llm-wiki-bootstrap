@@ -21,6 +21,8 @@ Two per-notebook settings control how much it asks: `confirm_before_create` gate
 
 **Note:** if you only want the fast dashboard refresh without filing anything, run `/wrap-up` and answer `none` at the proposal table — the journal and dashboards still update.
 
+**Commit and push when it's done:** `/wrap-up --auto-commit` commits the session's work at the end, and `/wrap-up --auto-push` commits and pushes it, so you can close the window. It commits only the files the session changed in the project's repository (never everything that happens to be uncommitted: anything else is left alone and named), and only the notebook's own folder in the notebook's repository; one commit each, or one in all when the wiki lives inside the project. It pushes only a branch that already tracks a remote, and never forces: a push that fails is reported and left to you. Every wrap-up ends on one line saying where things stand: `✅ WRAP-UP COMPLETE: committed and pushed ✅`, `committed, not pushed`, `nothing committed` (no flag), or `⚠️ WRAP-UP INCOMPLETE: <what's left> ⚠️`. A wrap-up still waiting for your answer at the proposal table has not reached that line.
+
 ## Full walkthrough
 
 The single session-close command. It writes all three memory tiers under `sessions/` plus the durable layer, and (since 2026-07-06) absorbs the retired `/upd-docs`:
@@ -67,7 +69,7 @@ Anything that fits none of the five is raised with you rather than forced into o
 
 ### Promoting
 
-Right after staging, wrap-up offers to promote: `yes` (all), `no`, or numbers (`1 3`). With `confirm_before_promote: false` it promotes everything without asking. Promoted entries move to `wiki/project/<category>/`, links to them are added to the related entries, `_INDEX.md` and `_MAP.md` are rebuilt, and the notebook's changes are committed (only its own paths; never pushed). After a clean all-yes or all-no it offers once to save that answer as the notebook's setting. Entries you decline stay in `_inbox/proposed/` for later:
+Right after staging, wrap-up offers to promote: `yes` (all), `no`, or numbers (`1 3`). With `confirm_before_promote: false` it promotes everything without asking. Promoted entries move to `wiki/project/<category>/`, links to them are added to the related entries, `_INDEX.md` and `_MAP.md` are rebuilt, and the notebook's changes are committed (only its own paths; pushed only with `--auto-push`). After a clean all-yes or all-no it offers once to save that answer as the notebook's setting. Entries you decline stay in `_inbox/proposed/` for later:
 
 ```
 /wiki-promote --review

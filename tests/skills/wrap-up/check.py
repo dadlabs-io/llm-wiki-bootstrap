@@ -10,7 +10,10 @@ dashboards and a repo with no commits (the git-128 path), an incremental one tha
 APPEND to this session's existing journal, a `none` answer at the proposal table, a
 `task.md` carrying the /task-list block, `confirm_before_create: false`,
 `confirm_before_promote: false`, a research-only session and a trivial one (the last
-three tagged `complex`).
+three tagged `complex`), and `--auto-push` (task #51, 2026-09-24): the project repo and
+the notebooks repo each get a local bare remote, the session changed `beacon/retry.py`,
+and an unrelated `scratch-notes.txt` of the user's sits untracked and must stay so.
+Every case checks the closing line that now ends each wrap-up.
 
 Every case is reset by prompt(): the seeds, the registry flags and the project repo are
 rebuilt before the session starts, so no case depends on another's leftovers or order.
@@ -51,6 +54,10 @@ DECLINES = re.compile(
     r"not worth (a|an) (wiki )?entry|too (trivial|small|thin)|doesn'?t merit|"
     r"no candidates|nothing to file|nothing durable", re.I)
 ASKS_REMOVE = re.compile(r"remove", re.I)
+CLOSING = {None: "✅ WRAP-UP COMPLETE: nothing committed ✅",
+           "commit": "✅ WRAP-UP COMPLETE: committed, not pushed ✅",
+           "push": "✅ WRAP-UP COMPLETE: committed and pushed ✅"}
+SESSION_EDIT = "\n\ndef budget_left_seconds(budget):\n    return max(0.0, budget.remaining())\n"
 
 
 def _rmtree(path) -> None:
@@ -111,8 +118,18 @@ def snapshot(ctx: dict) -> dict:
             for p in nb.rglob("*") if p.is_file()}
 
 
-def _git(project: Path, *args: str) -> None:
-    subprocess.run(["git", *args], cwd=project, capture_output=True, text=True, timeout=60)
+def _git(project: Path, *args: str) -> str:
+    return subprocess.run(["git", *args], cwd=project, capture_output=True, text=True, timeout=60).stdout
+
+
+def _bare(ctx: dict, name: str) -> Path:
+    """A local bare repository standing in for a remote (no network)."""
+    remote = ctx["sandbox"] / "remotes" / f"{name}.git"
+    if remote.exists():
+        _rmtree(remote)
+    remote.mkdir(parents=True)
+    _git(remote, "init", "-q", "--bare")
+    return remote
 
 
 def _reset_project(case: dict, ctx: dict) -> None:
@@ -129,9 +146,18 @@ def _reset_project(case: dict, ctx: dict) -> None:
     _git(project, "init", "-q")
     _git(project, "config", "user.email", "test@example.invalid")
     _git(project, "config", "user.name", "Skill Test")
-    if case.get("git") == "commits":
+    if case.get("git") in ("commits", "session-changes"):
         _git(project, "add", "-A")
         _git(project, "commit", "-q", "-m", "beacon: retry budget draft and the network seam")
+    if case.get("git") == "session-changes":
+        # the session's own change, uncommitted, and one file of the user's it never touched
+        with open(project / "beacon" / "retry.py", "a", encoding="utf-8") as f:
+            f.write(SESSION_EDIT)
+        (project / "scratch-notes.txt").write_text("the user's own notes; not part of the session\n", encoding="utf-8")
+        remote = _bare(ctx, "project")
+        _git(project, "remote", "add", "origin", remote.as_posix())
+        _git(project, "push", "-q", "-u", "origin", "HEAD")
+    ctx["project_head"] = _git(project, "rev-parse", "HEAD").strip()
 
 
 def _reset_notebook(case: dict, ctx: dict) -> None:
@@ -183,6 +209,23 @@ def _reset_notebook(case: dict, ctx: dict) -> None:
     (ctx["sandbox"] / ".claude").mkdir(exist_ok=True)
     (ctx["sandbox"] / ".claude" / "wiki-config.json").write_text(cfg, encoding="utf-8")
 
+    # the notebooks repository (project-notebooks' stand-in): only for a commit case
+    nbrepo = ctx["sandbox"] / "notebooks"
+    if (nbrepo / ".git").exists():
+        _rmtree(nbrepo / ".git")
+    ctx["notebook_head"] = ""
+    if case.get("git") == "session-changes":
+        _git(nbrepo, "init", "-q")
+        _git(nbrepo, "config", "user.email", "test@example.invalid")
+        _git(nbrepo, "config", "user.name", "Skill Test")
+        _git(nbrepo, "config", "core.longpaths", "true")
+        _git(nbrepo, "add", "-A")
+        _git(nbrepo, "commit", "-q", "-m", "notebook before the wrap-up")
+        remote = _bare(ctx, "notebooks")
+        _git(nbrepo, "remote", "add", "origin", remote.as_posix())
+        _git(nbrepo, "push", "-q", "-u", "origin", "HEAD")
+        ctx["notebook_head"] = _git(nbrepo, "rev-parse", "HEAD").strip()
+
 
 HEADER = """You are running an automated test of the wrap-up skill. The skill under test is at {skill}/SKILL.md. Read it and follow it exactly, as if this were the end of a real session in this project. Do not use any installed copy of the skill.
 
@@ -209,7 +252,7 @@ def prompt(case: dict, ctx: dict) -> str:
     return HEADER.format(skill=ctx["skill_dir"].as_posix(), project=ctx["project"].as_posix(),
                          notebook=NOTEBOOK, nb=ctx["notebook"].as_posix(), persona=PERSONA, sid=SID,
                          sandbox=ctx["sandbox"].as_posix(), work=case["work"], answers=block,
-                         say="wrap up this session.")
+                         say=case.get("say", "wrap up this session."))
 
 
 def _journals(ctx: dict) -> list[Path]:
@@ -243,7 +286,11 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     r = run["result"]
     add("session completed", r.get("subtype") == "success" and not r.get("is_error"),
         r.get("subtype") or run.get("stderr_tail") or "no result event")
-    denials = r.get("permission_denials") or []
+    # the machine's global read-guard hook refusing a partial read is not harness friction:
+    # the session reads the file whole and goes on (2026-09-24, as in the wiki-cycle suite)
+    errs = run.get("error_texts") or {}
+    denials = [d for d in (r.get("permission_denials") or [])
+               if not (isinstance(d, dict) and "read-guard:" in str(errs.get(d.get("tool_use_id"), "")))]
     add("no permission denials", not denials,
         [d.get("tool_name") if isinstance(d, dict) else d for d in denials])
 
@@ -398,6 +445,36 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     if exp.get("creates_dashboards"):
         add("first run created all three dashboards",
             handoff.is_file() and task_md.is_file() and active.is_file())
+
+    # ---- Step 7: the closing line ends every wrap-up; the commit and push only with a flag
+    final = str(run["result"].get("result") or "").strip().splitlines()
+    last = final[-1].strip() if final else ""
+    want = CLOSING[exp.get("commit")]
+    add("ends on the closing line", last == want, f"last line: {last[:120]!r}; want {want!r}")
+    if exp.get("commit"):
+        project, nbrepo = ctx["project"], ctx["sandbox"] / "notebooks"
+        new_commits = _git(project, "rev-list", f"{ctx['project_head']}..HEAD").split()
+        add("project: the session's work committed", bool(new_commits), f"{len(new_commits)} new commits")
+        changed = _git(project, "diff", "--name-only", ctx["project_head"], "HEAD").split()
+        add("project: the commit holds the session's file", "beacon/retry.py" in changed, changed)
+        add("project: the user's untouched file left out and uncommitted",
+            "scratch-notes.txt" not in changed and "?? scratch-notes.txt" in _git(project, "status", "--porcelain"),
+            _git(project, "status", "--porcelain")[:200])
+        nb_commits = _git(nbrepo, "rev-list", f"{ctx['notebook_head']}..HEAD").split()
+        add("notebook: the wrap-up committed", bool(nb_commits), f"{len(nb_commits)} new commits")
+        dirty = _git(nbrepo, "status", "--porcelain", "--", NOTEBOOK).strip()
+        add("notebook: nothing of the notebook left uncommitted", not dirty, dirty[:200])
+        if exp["commit"] == "push":
+            for label, repo_dir in (("project", project), ("notebook", nbrepo)):
+                local = _git(repo_dir, "rev-parse", "HEAD").strip()
+                remote = _git(repo_dir, "ls-remote", "origin", "HEAD").split()
+                remote_head = remote[0] if remote else ""
+                if not remote_head:
+                    branch = _git(repo_dir, "rev-parse", "--abbrev-ref", "HEAD").strip()
+                    rb = _git(repo_dir, "ls-remote", "origin", f"refs/heads/{branch}").split()
+                    remote_head = rb[0] if rb else ""
+                add(f"{label}: pushed (the remote has the local HEAD)", local and remote_head == local,
+                    f"local {local[:8]} remote {remote_head[:8]}")
 
     # ---- staging discipline: nothing hand-written into project/ or the wiki root
     wiki_rel = {k for k in set(before) | set(after)
