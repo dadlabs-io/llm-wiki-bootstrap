@@ -86,7 +86,7 @@ Restart Claude Code after install so it picks up the new skills.
 
 Those are the five you will use daily. The rest of the pack installs with them — `/wiki`,
 `/wiki-lint`, `/wiki-promote`, `/wiki-refresh`, `/wiki-report`, `/wiki-claims`, `/wiki-verify`,
-`/wiki-rollback`, `/wiki-discover`, `/wiki-list`, `/wiki-init` — and every one has a usage page in
+`/wiki-rollback`, `/wiki-discover`, `/wiki-list`, `/wiki-triage`, `/task-list` — and every one has a usage page in
 `bootstrap/wiki-seed/` (also copied into each project's `how-to/llm-wiki/`). The install manifests
 are `TRAVEL_SKILLS`, `TRAVEL_SCRIPTS` and `TRAVEL_AGENTS` in `bootstrap/scripts/_install_tooling.py`.
 

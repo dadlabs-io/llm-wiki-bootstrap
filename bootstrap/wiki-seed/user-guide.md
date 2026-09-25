@@ -25,7 +25,7 @@ It is plain Markdown under git. Every entry carries the same frontmatter (tier, 
 
 | Command | What it does |
 |---|---|
-| `/new-wiki` | Start a project: checks the tooling, asks a few questions, scaffolds the wiki. |
+| `/new-wiki` | Start a project, or add a wiki to an existing one: checks the tooling, asks a few questions, scaffolds the wiki. |
 | `/wiki-update <url>` | Ingest one source now: fetch it in full, write the entry, file it (`--staged` to review it first). Two or more URLs are queued for the cycle instead. |
 | `/wiki-cycle` | The research cycle: gather, triage, ingest, check, lint, report. `--full` adds the deeper passes. |
 | `/wiki-search "<query>"` | Hybrid search (keyword + meaning + reranking) across the wiki. |
@@ -35,7 +35,7 @@ It is plain Markdown under git. Every entry carries the same frontmatter (tier, 
 | `/wiki-verify` | Mark an entry verified. Entries never certify themselves. |
 | `/wiki-rollback` | Walk an entry back to its last verified version. |
 
-The rest (`/wiki-discover`, `/wiki-triage`, `/wiki-lint`, `/wiki-claims`, `/wiki-refresh`, `/wiki-report`, `/wiki-list`, `/wiki`, `/wiki-init`) are steps the cycle runs for you; you can call any of them directly. [`commands.md`](./commands.md) lists them all.
+The rest (`/wiki-discover`, `/wiki-triage`, `/wiki-lint`, `/wiki-claims`, `/wiki-refresh`, `/wiki-report`, `/wiki-list`, `/wiki`) are steps the cycle runs for you; you can call any of them directly. [`commands.md`](./commands.md) lists them all.
 
 ## How an entry gets into the wiki
 

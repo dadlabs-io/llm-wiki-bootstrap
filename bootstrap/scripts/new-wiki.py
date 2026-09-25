@@ -6,7 +6,7 @@ Runs in two phases:
 
   --phase A  : global install of the /new-wiki skill + record the bootstrap source
   --mode status : report the global tooling state as JSON (what /new-wiki reads before its skills question)
-  --phase B  : per-project scaffold (folder + git + wiki-init + CLAUDE.md/README/.gitignore)
+  --phase B  : per-project scaffold (folder + git + the wiki folders + CLAUDE.md/README/.gitignore)
 
 Both phases are idempotent. Phase A checks state before doing work; running
 it twice is a no-op if everything is already installed. Phase B refuses to
@@ -144,8 +144,8 @@ DEFAULT_DRIVE_PARENT = "__FOR CLAUDE"
 # 2026-06-15 — every project now gets BOTH capabilities). Four-layer memory
 # model: research/ = ingested external content, project/ = our own decisions +
 # components, sessions/ = episodic logs. Matches the live agentic-design layout.
-# Canonical taxonomy now lives in _wiki_config (single source shared with wiki-init
-# so the two scaffolders can't drift). Imported below near the other helpers.
+# Canonical taxonomy now lives in _wiki_config (the single source every script reads
+# folder names from). Imported below near the other helpers.
 
 
 # ---------- Helpers ----------

@@ -48,7 +48,6 @@ READ_GUARD_TIMEOUT = 30  # seconds
 TRAVEL_SCRIPTS = [
     "new-wiki.py",
     "read-guard.py",  # PreToolUse/Stop/SubagentStop hook: documents are read whole (2026-09-18)
-    "wiki-init.py",
     "wiki-fetch-drive-folder.py",
     "wiki-fetch-pdf.py",
     "wiki-fetch-youtube.py",
@@ -78,7 +77,7 @@ TRAVEL_SCRIPTS = [
 # Skill directories that travel to every install.
 TRAVEL_SKILLS = [
     "new-wiki", "wrap-up", "task-list",
-    "wiki", "wiki-init", "wiki-update", "wiki-search", "wiki-cycle",
+    "wiki", "wiki-update", "wiki-search", "wiki-cycle",
     "wiki-discover", "wiki-list", "wiki-triage", "wiki-claims", "wiki-refresh",
     "wiki-report", "wiki-lint", "wiki-promote",
     "wiki-rollback", "wiki-verify",

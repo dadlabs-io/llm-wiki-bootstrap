@@ -26,7 +26,6 @@ Install target: `~/.claude/skills/<skill>/SKILL.md`
 |---|---|---|
 | `new-wiki` | both | The bootstrap orchestrator: global tooling install (Phase A / tooling mode), `--mode status` (is the global tooling installed / stale / partial / missing — read before the skills question, 2026-09-09), per-project scaffold (Phase B, with `--project-folder` / `--research-folder stubs\|empty\|none`), `--phase docs` refresh of a project's framework-managed docs |
 | `wiki` | both | Show the wiki's INDEX (browse rather than search) |
-| `wiki-init` | both | Scaffolds a topic folder structure from the same `SCAFFOLD_TAXONOMY` a default `/new-wiki` applies (standalone; `/new-wiki` does not call it) |
 | `wiki-update` | research (primary), both | Ingests external URLs / files into wiki staging |
 | `wiki-search` | both | Hybrid BM25 + vector + LLM-rerank search via qmd |
 | `wiki-cycle` | research | Full research-cycle orchestrator (discover → ingest → lint → promote) |
@@ -59,7 +58,7 @@ Manifest: `TRAVEL_AGENTS` in `bootstrap/scripts/_install_tooling.py` (added 2026
 Source-of-truth: `bootstrap/wiki-seed/` (the pack page `llm-wiki.md`, plus `user-guide.md`, `commands.md`, `getting-started.md`, `install.md`, `drive-setup.md`) + `bootstrap/skills/<name>/wiki-seed/<name>.md` + `bootstrap/agents/<name>/wiki-seed/<name>.md`
 Install target: `<project how-to root>/llm-wiki/<page>.md` + `llm-wiki/skills/<name>.md` + `llm-wiki/agents/<name>.md` (Phase B for a new project; `--phase docs --target-folder <project>` refreshes an existing one)
 
-`user-guide.md` is the one-page guide to the whole system (2026-09-25, task #41). Until then it was `topic-template/wiki/llm-wiki-user-guide.md`, shipped only by `/wiki-init` and the legacy `install.py`, so three copies drifted apart; it moved here so every notebook gets the same copy and a fix is made once.
+`user-guide.md` is the one-page guide to the whole system (2026-09-25, task #41). Until then it was a file in the old notebook template that no refresh reached, so three copies drifted apart; it moved here so every notebook gets the same copy and a fix is made once.
 Mechanism: `seed_pack_docs()` in `bootstrap/scripts/new-wiki.py` (added 2026-09-08; the per-skill copy dates from 2026-07-31)
 
 **Every skill in A and every agent in A2 ships a page; the seeder warns by name for any that does not.** One folder per installed package in the receiving how-to tree (`how-to/llm-wiki/` here; the agent-factory's packs land as `how-to/<pack>/` beside it); a framework refresh never removes another pack's folder.
@@ -82,7 +81,6 @@ Manifest: `TRAVEL_SCRIPTS` (the commands) + `TOOLING_HELPER_SCRIPTS` / `SHARED_H
 |---|---|
 | `new-wiki.py` | The bootstrap helper behind `/new-wiki`: Phase A / tooling install, Phase B scaffold, `--phase docs [--check] [--all-notebooks]` |
 | `wiki-upgrade.py` | Refresh the global tooling from the recorded bootstrap source (what `install-wiki.ps1 -RefreshOnly` and `/new-wiki --sync` run) |
-| `wiki-init.py` | Scaffold a topic folder structure + templated README |
 | `wiki-update.py` | File an external source as an entry. The write-time gate lives here: it refuses an entry without a TL;DR, without two Related wiki links (a warning for tier `self`), with its layout out of order, or with frontmatter that would not parse. `--revises <slug>` files a later snapshot of a source (checks the older entry exists, implies `--force`). `--slug-for` exits 2 with near matches when no entry matches. Staged entries' links are checked. `internal://` URLs never count as duplicates, and a duplicate prints `duplicate_of=` (2026-09-15) |
 | `wiki-fetch-youtube.py` | YouTube transcript → verbatim raw archive under `raw/` (needs `yt-dlp` on the host) |
 | `wiki-fetch-pdf.py` | PDF (URL or local) → extracted text under `raw/` |
@@ -123,7 +121,7 @@ Research/development split removed 2026-06-15 — one merged template set; every
 | `.gitignore.tmpl` | Project root .gitignore | every project init |
 | `seed/wiki/{HOME,README,_MAP,_INDEX}.md.tmpl` | Wiki scaffold files rendered inside `wiki/` | every project init |
 
-The folder taxonomy under `wiki/` lives in `_wiki_config.py` (the single copy; `wiki-init.py` and `new-wiki.py` both read it), in two halves since 2026-09-09: `PROJECT_TAXONOMY` = `project/{components,decisions,architecture,patterns,troubleshooting,best-practices}` and `RESEARCH_TAXONOMY` = `research/{active,long-term,tooling,best-practices,interesting-docs}`, plus `sessions/` always. `/new-wiki` asks for each half separately — `stubs` (the half with those subfolders), `empty` (the root only; subfolders appear as `/wiki-update` or `/wrap-up` file into them) or `none` — via `--project-folder` / `--research-folder`; `taxonomy_for()` turns the two answers into the folder list, and the answers are recorded in the project config as `wiki_folders`. `SCAFFOLD_TAXONOMY` is the default (both halves with stubs). `MERGED_TAXONOMY` is the superset the folder guards in `wiki-update.py` / `wiki-promote.py` recognise: it also carries `LEGACY_RESEARCH_TAXONOMY` = `research/{implementation,skills,orchestration}` — the agentic-design notebook's topics that every new wiki used to receive; recognised for existing wikis, no longer created. The six framework-contract docs land in `project/best-practices/framework/` whenever `project/` exists (section A4).
+The folder taxonomy under `wiki/` lives in `_wiki_config.py` (the single copy; `new-wiki.py` scaffolds from it and the folder guards read it), in two halves since 2026-09-09: `PROJECT_TAXONOMY` = `project/{components,decisions,architecture,patterns,troubleshooting,best-practices}` and `RESEARCH_TAXONOMY` = `research/{active,long-term,tooling,best-practices,interesting-docs}`, plus `sessions/` always. `/new-wiki` asks for each half separately — `stubs` (the half with those subfolders), `empty` (the root only; subfolders appear as `/wiki-update` or `/wrap-up` file into them) or `none` — via `--project-folder` / `--research-folder`; `taxonomy_for()` turns the two answers into the folder list, and the answers are recorded in the project config as `wiki_folders`. `SCAFFOLD_TAXONOMY` is the default (both halves with stubs). `MERGED_TAXONOMY` is the superset the folder guards in `wiki-update.py` / `wiki-promote.py` recognise: it also carries `LEGACY_RESEARCH_TAXONOMY` = `research/{implementation,skills,orchestration}` — the agentic-design notebook's topics that every new wiki used to receive; recognised for existing wikis, no longer created. The six framework-contract docs land in `project/best-practices/framework/` whenever `project/` exists (section A4).
 
 ## D. Configuration
 

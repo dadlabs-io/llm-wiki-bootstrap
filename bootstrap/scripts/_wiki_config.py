@@ -73,8 +73,8 @@ def future_label(days: int = 90) -> str:
     return (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
 
 # Canonical wiki folder taxonomy — the SINGLE source of truth for the structure a
-# new wiki gets. Both scaffolders (new-wiki.py phase B, wiki-init.py) import this
-# so they can't drift apart. (Fix P5/P7 — there were two divergent taxonomies.)
+# new wiki gets. The scaffolder (new-wiki.py phase B) and the folder guards in
+# wiki-update.py / wiki-promote.py import it, so nothing keeps a second list.
 #   research/  — semantic memory (external): what we ingested
 #   project/   — semantic memory (internal): what we built
 #   sessions/  — episodic memory (per-persona logs, created on demand)
