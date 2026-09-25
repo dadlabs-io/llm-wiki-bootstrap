@@ -5,7 +5,7 @@
 ## What this wiki holds
 
 This is a **unified wiki** — it does both at once (there is no project-type distinction):
-- **Research** — external content (articles, papers, videos) ingested + curated via `/wiki-update` (ad-hoc URL) or `/wiki-cycle` (batched discover → ingest → lint → promote). Lands in `research/`.
+- **Research** — external content (articles, papers, videos) ingested + curated via `/wiki-update` (one source now) or `/wiki-cycle` (the research cycle: gather → triage → ingest → check → lint → report). Lands in `research/`.
 - **Project knowledge** — your own durable decisions, components, architecture, patterns, and gotchas, captured inline as you work (and via `/wrap-up`). Lands in `project/`.
 
 Both live in the four-layer memory model below.
@@ -16,7 +16,7 @@ Both live in the four-layer memory model below.
 @{{LLM_WIKI_PATH}}/how-to/llm-wiki/commands.md
 @{{WIKI_PATH}}/_MAP.md
 
-If the user asks for help (any phrasing — "how do I...", "what commands...", "help"), point them at `{{LLM_WIKI_PATH}}/how-to/llm-wiki/` — `commands.md` first, then the skill page under `skills/` that fits their question. You already have these loaded.
+If the user asks for help (any phrasing — "how do I...", "what commands...", "help"), point them at `{{LLM_WIKI_PATH}}/how-to/llm-wiki/`: `user-guide.md` for how the whole system works, `commands.md` (already loaded) for every command, then the skill page under `skills/` that fits their question.
 
 ## Resuming — where we left off (do this on startup)
 
@@ -25,7 +25,9 @@ Active persona: **main** (`sessions/<persona>/` is per persona; an installed rol
 At startup and after `/clear`, the llm-wiki SessionStart hook lists the paths of `{{WIKI_PATH}}/sessions/active-context.md` and `sessions/<persona>/handoff.md` + `task.md`; read the files it lists before the first reply. **Fallback** — if no hook message is in your context (no hook on this machine), read them yourself, each if present; with no `handoff.md` yet, read the newest journal under `sessions/<persona>/<YYYY-MM>/`, else treat the project as new. Also read the project status doc if this project keeps one: (none yet — e.g. `project/roadmap.md`).
 Open the first reply, whatever the user said, with one paragraph on where we left off and what is next. A project with a Discord bot does its channel catch-up after this read.
 
-Wiki content lives at `{{WIKI_PATH}}/`, organized into the **four-layer memory model** (icarus integration plan §6). The four layers map 1:1 to classical cognitive memory types:
+## Where memory lives (four-layer model)
+
+Wiki content lives at `{{WIKI_PATH}}/`, organized into four layers that map to classical cognitive memory types:
 
 | Layer | Cognitive analogue | What goes here | Loaded by default? |
 |---|---|---|---|
@@ -33,20 +35,21 @@ Wiki content lives at `{{WIKI_PATH}}/`, organized into the **four-layer memory m
 | **`sessions/`** | Episodic + working memory | "What happened when I tried X last Thursday" — per-persona session journals, plus the mutable resume dashboards (`active-context.md`, `<persona>/handoff.md`, `<persona>/task.md`) that `/wrap-up` keeps current | ✅ your own persona's folder |
 | **`project/`** | Semantic memory (internal) | "What I know about THIS thing we're building" — components, decisions, architecture, patterns, troubleshooting, best-practices | ✅ all of it |
 | **`research/`** | Semantic memory (external) | "What I learned from things we ingested" — papers, vendor blogs, library writeups | ❌ only if task explicitly cites it |
+| **`raw/`** (beside `wiki/`) | Immutable substrate | The sources, verbatim — referenced via `raw_path:` in frontmatter | (never loaded) |
 
-Folder structure under `{{WIKI_PATH}}/`:
+The split makes "what to load on session start" structurally clear: sessions + project by default, research on demand.
+
+Folders under `{{WIKI_PATH}}/` (the ones this project uses; each half — `project/`, `research/` — exists only if it was chosen at scaffold time or added since):
 - **`sessions/<persona>/YYYY-MM/`** — per-agent episodic log; immutable once written
-- **`sessions/active-context.md`**, **`sessions/<persona>/{handoff,task}.md`** — the resume dashboards; overwritten in place by `/wrap-up` Step 0.5, listed at startup by the SessionStart hook (Resuming, above)
+- **`sessions/active-context.md`**, **`sessions/<persona>/{handoff,task}.md`** — the resume dashboards; overwritten in place by `/wrap-up`, listed at startup by the SessionStart hook (Resuming, above). The task list at the top of `task.md` is kept by `/task-list`.
 - **`project/components/`** — modules / classes / systems we've built
 - **`project/decisions/`** — ADR-style decisions with the *why* preserved
 - **`project/architecture/`** — system-level structural rules
 - **`project/patterns/`** — reusable approaches we adopt elsewhere
 - **`project/troubleshooting/`** — bugs + root causes (so we don't re-debug)
 - **`project/best-practices/`** — project-specific conventions
-- **`project/best-practices/framework/`** — meta-framework specs (icarus plan, frontmatter spec, etc.)
-- **`research/active/`** — current / evolving external content
-- **`research/long-term/`** — peer-reviewed / settled external content
-- **`research/tooling/`** — specific tools / libraries / platforms
+- **`project/best-practices/framework/`** — the framework-contract docs (frontmatter spec, authoring principles, cycle step contract, …), refreshed by the framework — don't edit
+- **`research/active/`**, **`research/long-term/`**, **`research/tooling/`**, **`research/best-practices/`**, **`research/interesting-docs/`** — external content by kind: current, settled, tools, ingested best-practice articles, and personal-relevance finds
 
 ### Provenance line (project vs research)
 
@@ -88,7 +91,7 @@ When in doubt, file it — `/wiki-promote --review` is the gate, so a thin entry
 
 ### Entry shape (when filing inline)
 
-Use the same frontmatter contract that `/wrap-up` uses, but stamp `origin: inline` so `/wiki-promote --review` can tell who proposed it. Filing happens to `{{LLM_WIKI_PATH}}/_inbox/proposed/<slug>.md` for new entries, with a sidecar naming the target folder:
+Use the same frontmatter contract that `/wrap-up` uses (the frontmatter spec in `project/best-practices/framework/` is the authority), and stamp `origin: inline` so `/wiki-promote --review` can tell who proposed it:
 
 ```yaml
 ---
@@ -97,26 +100,24 @@ date: <YYYY-MM-DD>
 source_url: "internal://session/<session-id>"
 # raw_path: leave it out; a self-authored entry has no raw source (frontmatter spec)
 ingested_by: claude-code
-origin: inline       # who filed this: inline | wrap-up | wiki-update
+origin: inline       # who filed this: inline | wrap-up | wiki-update | wiki-cycle
 tier: self
 confidence: <high|medium|low>
 last_reviewed: <YYYY-MM-DD>
 review_after: <YYYY-MM-DD+90>
-project_type: merged
-category: <component|decision|architecture|pattern|troubleshooting>
 tags: [<project-slug>, <category>, <topic-tags>]
 
-# Optional icarus truth-status fields (set ONLY if applicable):
+# Optional truth-status fields (set ONLY if applicable):
 # verified: unverified   # default; never set verified='verified' on initial write — use /wiki-verify
 # revises: <slug>        # if this revises an older entry
 # type: <decision|observation|attempt|rollback|review>
 ---
 ```
 
-Project-class entries (decisions, components, etc.) go to `{{WIKI_PATH}}/project/<category>/`. Use the four-layer rule:
-- Filing a NEW project entry directly? → `{{WIKI_PATH}}/project/<category>/<slug>.md` (skip staging)
-- Filing an INGESTED research entry? → `{{LLM_WIKI_PATH}}/_inbox/proposed/<slug>.md` (stage for review)
-- Filing a SESSION wrap-up? → `{{WIKI_PATH}}/sessions/<persona>/<YYYY-MM>/<session-id>.md`
+Where each kind of entry goes:
+- A project entry (decision, component, pattern, …) → staged at `{{LLM_WIKI_PATH}}/_inbox/proposed/<slug>.md`, its sidecar naming `project/<category>/`; `/wiki-promote` files it
+- An ingested research entry → staged the same way by `/wiki-update --staged` or `/wiki-cycle`, or filed directly by a single `/wiki-update`
+- A session journal → written directly by `/wrap-up` to `{{WIKI_PATH}}/sessions/<persona>/<YYYY-MM>/`
 
 Body sections (skip any that don't apply):
 1. **TL;DR** — 1-2 sentences
@@ -124,11 +125,7 @@ Body sections (skip any that don't apply):
 3. **Why** — rationale, alternatives, deciding factor
 4. **How** — code refs, file paths
 5. **Caveats / open questions**
-6. **Related** — links to other wiki entries
-
-## Why no agentmemory / no Docker / no API-key burn
-
-We evaluated the rohitg00/agentmemory + iii-engine path 2026-05-14 and concluded: the infrastructure cost (Docker, three "OFF by default" env vars, upstream issues #138/#143/#308/#338, API-key compression burn at ~$5-20/mo) doesn't justify the marginal value over the proactive-listener pattern. The agent (you) is already in the conversation, already capable of judgment, and already has file-write tools. We just told you to use them. See the agentic-design wiki retrospective for the full reasoning.
+6. **Related** — links to other wiki entries (at least two; by bare file name)
 
 ## Conventions
 
@@ -143,24 +140,18 @@ We evaluated the rohitg00/agentmemory + iii-engine path 2026-05-14 and concluded
 # Add an external reference (article, doc, video) to the wiki
 /wiki-update <url>
 
+# Run the research cycle
+/wiki-cycle
+
 # Wrap up the current session
 /wrap-up
 
 # Promote what's staged
 /wiki-promote --review
+
+# The project's task list
+/task-list
 ```
-
-## Where memory lives (four-layer model)
-
-| Layer | Cognitive analogue | Where | Loaded by default? |
-|---|---|---|---|
-| **Working memory** | Working memory | Claude Code context window | (always) |
-| **Sessions** | Episodic + working | {{WIKI_PATH}}/sessions/<persona>/YYYY-MM/ (journals) + sessions/active-context.md, sessions/<persona>/{handoff,task}.md (dashboards) | ✅ own persona only |
-| **Project** | Semantic (internal — what we built) | {{WIKI_PATH}}/project/ | ✅ all |
-| **Research** | Semantic (external — what we ingested) | {{WIKI_PATH}}/research/ | ❌ on-demand only |
-| **Raw** | Immutable substrate | {{LLM_WIKI_PATH}}/raw/ | (never loaded — referenced via raw_path) |
-
-The four-layer split is load-bearing: it makes "what to load on session start" structurally clear (sessions + project = default, research = on-demand) instead of needing per-persona reading-list curation.
 
 ## When guidance conflicts — precedence
 
@@ -177,5 +168,5 @@ Mechanical enforcement outranks prose at every level: if a lint check or a scrip
 
 - Don't answer questions about prior decisions, research, or project history from memory — `/wiki-search` first (Working rhythm step 2).
 - Don't paste session transcripts into wiki entries — `/wrap-up` distills them. Transcripts go to `{{LLM_WIKI_PATH}}/raw/sessions/`.
-- Don't promote directly to `{{WIKI_PATH}}/` — always stage in `{{LLM_WIKI_PATH}}/_inbox/proposed/` and let `/wiki-promote` move them.
-- Don't edit `_MAP.md` or `_INDEX.md` by hand — they're auto-generated.
+- Don't move staged entries into `{{WIKI_PATH}}/` by hand — they wait in `{{LLM_WIKI_PATH}}/_inbox/proposed/` and `/wiki-promote` moves them.
+- Don't edit `_MAP.md` or the `_INDEX.md` files by hand — they're auto-generated.

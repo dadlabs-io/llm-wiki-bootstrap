@@ -4,32 +4,33 @@ standalone: "the landing page: reading starts here, so no other page links to it
 
 # {{PROJECT_NAME}} — wiki home
 
-This is the landing page for the **{{PROJECT_NAME}}** wiki. The content here lives at `llm-wiki/wiki/` inside the project root.
+This is the landing page for the **{{PROJECT_NAME}}** wiki.
 
 ## Start here
 
-- **What lives where**: see [_MAP.md](./_MAP.md) (always-loaded into context) or [_INDEX.md](./_INDEX.md) (full scannable list)
-- **Project scope**: see [README.md](./README.md)
-- **How to use it**: see `../how-to/llm-wiki/getting-started.md`
+- **What lives where**: [_MAP.md](./_MAP.md), the short map the agent always loads; the full entry list is `_INDEX.md`, one level up beside `wiki/`
+- **Project scope**: [README.md](./README.md)
+- **How the system works**: the user guide, [`../how-to/llm-wiki/user-guide.md`](../how-to/llm-wiki/user-guide.md)
 
 ## Quick reference
 
 | Command | When |
 |---|---|
 | `/wiki-search "<query>"` | Look something up |
-| `/wiki-update <url>` | Add an external reference |
-| `/wiki-cycle` | Full ingest pipeline (research) |
-| `/wrap-up` | End-of-session distillation (development) |
-| `/wiki-promote --review` | Approve staged entries from `_inbox/proposed/` |
+| `/wiki-update <url>` | Add one external source now |
+| `/wiki-cycle` | The research cycle: gather, triage, ingest, lint, report |
+| `/wrap-up` | End of a session: journal, resume files, durable entries |
+| `/wiki-promote --review` | Approve entries staged in `_inbox/proposed/` |
+| `/task-list` | The project's task list |
 
 ## Don't
 
-- Don't hand-edit `_MAP.md` or `_INDEX.md` — they're auto-generated
-- Don't promote directly to `wiki/<folder>/` — always stage via `_inbox/proposed/`
+- Don't hand-edit `_MAP.md` or the `_INDEX.md` files — they're auto-generated
+- Don't move staged entries into `wiki/` by hand — `/wiki-promote` does it
 - Don't suppress contradictions — both-sides-stay: keep contradictory entries cross-linked
 
 ## Concept gaps
 
-When you notice a project, person, framework, or paper that should be tracked but doesn't have an entry yet, add it to [`concept-gaps-things-mentioned-not-yet-covered.md`](./concept-gaps-things-mentioned-not-yet-covered.md) so the next `/wiki-cycle --discover` pass can pick it up.
+When you notice a project, person, framework, or paper that should be tracked but doesn't have an entry yet, add it to `concept-gaps-things-mentioned-not-yet-covered.md` in this folder, so discovery can look for it (`/wiki-discover --gaps`).
 
 (That file doesn't exist yet — create it the first time you have a gap to track. Format: one row per gap with the term, where it was mentioned, and a priority.)

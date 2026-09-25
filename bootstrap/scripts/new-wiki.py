@@ -1309,11 +1309,12 @@ def phase_b(args):
     else:
         seed_framework_docs(bootstrap, wiki_root, dry_run=args.dry_run)
 
-    # B6.5 — render wiki scaffold files (_MAP.md, _INDEX.md, README.md, HOME.md)
-    # inside <target>/llm-wiki/wiki/ from seed/wiki/*.tmpl. These give the agent
-    # orientation on day 1 and prevent the CLAUDE.md @-import from silently
-    # failing on a fresh project. wiki-map-compile.py / wiki-index-per-folder.py
-    # will regenerate _MAP.md and _INDEX.md once entries exist.
+    # B6.5 — render wiki scaffold files (_MAP.md, README.md, HOME.md) inside the
+    # wiki/ folder from seed/wiki/*.tmpl. These give the agent orientation on day 1
+    # and keep the CLAUDE.md @-import of _MAP.md from failing on a fresh project;
+    # wiki-map-compile.py regenerates _MAP.md once entries exist. No wiki/_INDEX.md:
+    # the full index is <wiki root>/_INDEX.md, beside wiki/, written by wiki-index.py
+    # on the first filing (a placeholder here was never regenerated; removed 2026-09-25).
     # A markdown list of the folders this scaffold actually created, for the READMEs
     # (they used to print a fixed research list that no longer matched the wiki).
     folder_notes = {
@@ -1341,7 +1342,6 @@ def phase_b(args):
             ("README.md.tmpl", "README.md"),
             ("HOME.md.tmpl", "HOME.md"),
             ("_MAP.md.tmpl", "_MAP.md"),
-            ("_INDEX.md.tmpl", "_INDEX.md"),
         ]:
             _render_template(wiki_seed / tmpl_name, wiki_root / out_name,
                              wiki_scaffold_vars, args.dry_run)
