@@ -75,7 +75,7 @@ For each entry to promote:
      "suggested_backlinks": [{"file": "research/tooling/other.md", "link_text": "Other (Author)", "link_target": "<slug>.md"}]
    }
    ```
-   `target_folder` is the FULL taxonomy path (`research/<sub>` or `project/<sub>`). `suggested_backlinks[]` items are objects (see the staged-ingest sidecar contract in `wiki-update/SKILL.md`). `wiki-promote.py` tolerates legacy/hand-authored variants (underscore filename, bare-string backlinks, bare-leaf `target_folder`) by normalizing them, but new sidecars should conform.
+   `target_folder` is the FULL taxonomy path (`research/<sub>` or `project/<sub>`). A notebook's own folder outside the framework's list (agentic-design's `research/agents`) is known when it carries a `README.md` saying what it is for; a folder without one is still promoted, with a warning to check the spelling or add the README (2026-09-24). `suggested_backlinks[]` items are objects (see the staged-ingest sidecar contract in `wiki-update/SKILL.md`). `wiki-promote.py` tolerates legacy/hand-authored variants (underscore filename, bare-string backlinks, bare-leaf `target_folder`) by normalizing them, but new sidecars should conform.
 
 2. **Move the entry** from `_inbox/proposed/` to `wiki/<target_folder>/`:
    ```bash

@@ -11,6 +11,13 @@
 
 ## 2026-09-24
 
+### A notebook's own folder is known by its README; the stale-"pending" lint reads only our own notes (tasks #44, #46, from agent-builder's 2026-09-23 Resolution)
+- **Why**: two noise sources in real runs. `wiki-promote.py` printed "not a known taxonomy path" for every folder outside the framework's list: agentic-design's `research/agents` (63 entries) and nine other notebooks' own folders. The stale-"pending" lint read every line of every file, frontmatter included, and matched `to-?do[- :]`. On agentic-design, all 34 hits were false alarms: link targets such as `…nothing-to-do-with…`, tags, articles about to-do lists, and the Noyan entry's "she has not yet built", the speaker's own plans.
+- **Change**:
+  - `wiki-promote.py`: a folder outside the global list counts as known when it carries a `README.md` saying what it is for (the user's rule). A folder without one is still promoted, and the warning now says to check the spelling or add the README. A mistyped folder the script creates never gets a README, so it keeps warning. Seven of the ten folders already had one; `research/congress-trades` and `project/requirements` (investment-agent) and `project/handoffs` (agent-builder-bootstrap) will keep warning until their owners add one.
+  - `wiki-lint-mechanical.py`: workflow phrases ("pending ingestion", "awaiting fetch", "awaiting playwright", "todo after ingest") count in every entry. "not yet built" and a `TODO:` marker count only in tier-`self` entries, since in a research entry they describe the source's plans. Frontmatter, `>` quotes, fenced and inline code, and link targets are never read.
+- **Proven**: `tests/scripts/test_folder_readme.py` (5 failing before, 11/11 after) and `tests/scripts/test_stale_pending.py` (8 failing before, 15/15 after). The other five harnesses are unchanged. On the real notebooks, stale-pending hits went from 34 to 0 in agentic-design, 14 to 0 in workflows-core and 2 to 0 in llm-wiki-bootstrap. agent-builder-bootstrap went from 17 to 11, and those 11 are genuine "not yet built" notes in its own decision entries.
+
 ### Pages declare themselves standalone; the one-orphan allowance goes (task #54, the user's rule; frontmatter spec v13, cycle contract v3)
 - **Why**: the cycle contract called a run clean at `orphans <= 1`, an allowance meant for the wiki's HOME page, which no other page links to. The allowance had no name: it hid any single real orphan in a wiki whose HOME happened to be linked, and it did not fit a wiki with a second hub. The user: one mechanism for everything, no built-in list.
 - **Change**:

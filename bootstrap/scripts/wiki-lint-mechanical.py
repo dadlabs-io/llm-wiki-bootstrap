@@ -51,16 +51,36 @@ LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
 # Frontmatter capture
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 
-# Phrases that suggest "pending / not yet done" — used for staleness detection
-PENDING_PHRASES = [
-    r"pending ingestion",
-    r"awaiting playwright",
-    r"awaiting fetch",
-    r"not yet built",
-    r"to-?do[- :]",
-    r"todo[- ]after[- ]ingest",
-]
-PENDING_RE = re.compile("|".join(PENDING_PHRASES), re.IGNORECASE)
+# Phrases that suggest "pending / not yet done" in OUR OWN notes — used for
+# staleness detection (#46, 2026-09-24). Workflow phrases are ours wherever they
+# appear. Build phrases count only in our own entries (tier self): in a research
+# entry "she has not yet built X" or "the TODO list" is the source talking.
+# Frontmatter, `>` quotes, code and link targets are never read (on 2026-09-24,
+# 33 of agentic-design's 34 hits were link targets, tags and sources' words).
+WORKFLOW_PENDING_RE = re.compile(
+    r"pending ingestion|awaiting playwright|awaiting fetch|todo[- ]after[- ]ingest", re.IGNORECASE)
+OWN_PENDING_RE = re.compile(r"(?i:not yet built)|\bTODO\s*:")   # the marker, not prose about TODO lists
+
+
+def stale_pending_lines(content, own):
+    """(line_no, text) for each body line carrying a stale-pending phrase.
+    ``own`` = the entry is ours (tier self), so build phrases count too."""
+    lines = content.splitlines()
+    m = FRONTMATTER_RE.match(content)
+    start = content[:m.end()].count("\n") if m else 0
+    out, in_fence = [], False
+    for i in range(start, len(lines)):
+        line = lines[i]
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence or line.lstrip().startswith(">"):
+            continue
+        text = re.sub(r"`[^`\n]*`", "", line)           # inline code
+        text = re.sub(r"\]\([^)]*\)", "]", text)          # link targets
+        if WORKFLOW_PENDING_RE.search(text) or (own and OWN_PENDING_RE.search(text)):
+            out.append((i + 1, line.strip()[:120]))
+    return out
 
 
 def parse_frontmatter(content):
@@ -563,10 +583,9 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             incoming_count[resolved] += 1
             outgoing_links[f.resolve()].append(resolved)
 
-        # Check stale pending mentions
-        for line_no, line in enumerate(content.splitlines(), 1):
-            if PENDING_RE.search(line):
-                stale_pending.append((f, line_no, line.strip()[:120]))
+        # Check stale pending mentions (our own notes only, see stale_pending_lines)
+        for line_no, line in stale_pending_lines(content, own=tier_value.strip("\"'") == "self"):
+            stale_pending.append((f, line_no, line))
 
     # Pass 3: orphans — files with zero inbound links. A retired entry
     # (`superseded_by`) is expected to lose its links to its successor. A page

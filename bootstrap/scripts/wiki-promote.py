@@ -89,15 +89,20 @@ def _find_sidecar(md: Path) -> Path | None:
     return None
 
 
-def _normalize_target_folder(folder: str) -> tuple[str, str | None]:
+def _normalize_target_folder(folder: str, wiki_root: Path | None = None) -> tuple[str, str | None]:
     """Validate target_folder against the taxonomy. Returns (folder, warning).
     A bare leaf like 'long-term' is auto-prefixed to its 'research/<leaf>' (or
     'project/<leaf>') home if exactly one match exists; otherwise left as-is
-    with a warning so it never silently dumps to the wiki root."""
+    with a warning so it never silently dumps to the wiki root.
+    A notebook's own folder (research/agents, research/vendors) is known when it
+    carries a README.md saying what it is for (#44, the user's rule 2026-09-24):
+    a typo'd folder the script creates never gets one, so it keeps warning."""
     if not folder:
         return "", None
     folder = folder.strip("/").replace("\\", "/")
     if folder in MERGED_TAXONOMY or folder == "sessions":
+        return folder, None
+    if wiki_root is not None and (Path(wiki_root) / folder / "README.md").is_file():
         return folder, None
     if "/" not in folder:
         matches = [t for t in MERGED_TAXONOMY if t.rsplit("/", 1)[-1] == folder]
@@ -115,7 +120,8 @@ def _normalize_target_folder(folder: str) -> tuple[str, str | None]:
                  if t.rsplit("/", 1)[-1] == pl and (not prefix or t.startswith(prefix + "/"))]
         if len(cands) == 1:
             return cands[0], f"target_folder '{folder}' is the singular of '{cands[0]}' — mapped"
-    return folder, f"target_folder '{folder}' is not a known taxonomy path — promoting as-is (verify placement)"
+    return folder, (f"target_folder '{folder}' is not a known taxonomy path and has no README.md — promoting "
+                    f"as-is. Check the spelling; a folder meant to exist gets a README.md saying what it is for")
 
 
 def _normalize_backlinks(meta: dict, entry_title: str, slug: str) -> list[dict]:
@@ -411,7 +417,7 @@ def _init_truth_status_sidecar(vault: Path, slug: str, dry_run: bool) -> Path | 
 
 def promote_entry(md_path: Path, meta: dict, vault: Path, dry_run: bool = False) -> dict:
     """Promote one entry. Returns a result dict with counts."""
-    folder, folder_warning = _normalize_target_folder(meta.get("target_folder") or "")
+    folder, folder_warning = _normalize_target_folder(meta.get("target_folder") or "", vault)
     if folder_warning:
         _warn(f"{md_path.name}: {folder_warning}")
     target_dir = vault / folder if folder else vault
@@ -596,7 +602,7 @@ def main():
                 problems += 1
                 _err(f"{md_path.name}: {problem}")
                 continue
-            _, folder_warning = _normalize_target_folder(meta.get("target_folder") or "")
+            _, folder_warning = _normalize_target_folder(meta.get("target_folder") or "", vault)
             if folder_warning:
                 _warn(f"{md_path.name}: {folder_warning}")
         _info(f"check: {len(items)} staged, {problems} would be held back")

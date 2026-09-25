@@ -23,6 +23,8 @@ then we can run it").
 
 | Skill | Date | Change | Why it was not run |
 |---|---|---|---|
+| wiki-lint | 2026-09-24 | Task #46: the stale-"pending" check line in the skill and pack page describes the new rule (workflow phrases anywhere; `not yet built` / `TODO:` only in tier-`self` entries; frontmatter, quotes, code, links skipped). Script proven by `tests/scripts/test_stale_pending.py` (15/15) and on four real notebooks | wording only in the skill; the behaviour is the script's. The next wiki-lint run's fixtures may count fewer stale mentions: check the report reads right, not that the count matches the old baseline |
+| wiki-promote | 2026-09-24 | Task #44: one sentence on folders known by their README (skill + pack page). Script proven by `tests/scripts/test_folder_readme.py` (11/11) | wording only; wiki-promote has no model suite (script-heavy, its harnesses are free) |
 | wiki-lint | 2026-09-24 | Task #54: the orphan check line says a page may declare `standalone: "<reason>"` and is then listed apart (skill + pack page). The script change (a Standalone Pages section, the `standalone` JSON array and counter) is proven by `tests/scripts/test_standalone.py` (22/22, five mutants killed) | wording only in the skill; the behaviour is the script's, tested by its free harness. The next wiki-lint run should show the report's new section read without confusion, and a fixture HOME without the field still listed as an orphan |
 | wiki-cycle | 2026-09-23 | Step 2 and its pack page say what `--depth-check`'s exit 1 and 2 mean | wording only; still unchecked: the 2026-09-24 baseline runs quick mode only, and the depth check runs in `--full` |
 

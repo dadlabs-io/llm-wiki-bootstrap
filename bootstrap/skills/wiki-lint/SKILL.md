@@ -26,7 +26,7 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
 Checks:
 - Broken markdown links (to `.md` files that don't exist) and live `[[wikilink]]` syntax the link checker can't see
 - Orphan pages (no inbound links from other entries). A page that stands alone by design declares `standalone: "<reason>"` in its frontmatter and is listed apart with its reason; there is no other exemption (2026-09-24)
-- Stale "pending" / "TODO" phrases
+- Stale "pending" notes of our own: workflow phrases ("pending ingestion", "awaiting fetch") in any entry, "not yet built" and a `TODO:` marker only in tier-`self` entries; frontmatter, `>` quotes, code and link targets are not read (2026-09-24)
 - Missing frontmatter fields (`title`, `date`); missing/invalid `tier`, `confidence`, `ingested_by`; missing `tags`; missing lifecycle fields (`last_reviewed` / `review_after`)
 - Frontmatter **loadability** — an unquoted top-level value containing `: ` (ERROR: a YAML loader drops every field) or ` #` (WARNING: silently truncated as a comment). Checked on entries AND on the installed `~/.claude/skills/*/SKILL.md` + `~/.claude/agents/*.md`, since a skill in that state never triggers by description (2026-09-08)
 - Search-index coverage — qmd's indexed file count for this wiki vs `.md` files on disk (empty index, mismatch, or "not a collection" are all reported; a check that inspects zero items fails loudly)

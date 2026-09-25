@@ -20,7 +20,7 @@ Moves staged entries out of the holding area and into the live wiki. Staged inge
 - the sidecar deleted, and a truth-status record started for the entry as unverified (the record [`wiki-verify`](./wiki-verify.md) later changes)
 - the folder indexes and the wiki MAP regenerated
 
-A bare or singular folder name is mapped to its full taxonomy folder; an unknown folder is used as given, with a warning. Rejected entries move to `_inbox/rejected/` — kept for the audit trail, never deleted.
+A bare or singular folder name is mapped to its full taxonomy folder. A notebook's own folder (one the framework doesn't list, such as `research/agents` or `research/vendors`) counts as known when it has a `README.md` saying what it is for. Any other folder is used as given, with a warning to check the spelling or add the README: a mistyped folder the script creates never gets one, so it keeps warning. Rejected entries move to `_inbox/rejected/` — kept for the audit trail, never deleted.
 
 **Works with:** [`wiki-update`](./wiki-update.md) stages the entries this skill later approves, and [`wiki-cycle`](./wiki-cycle.md) invokes it as a step in a full run. [`wiki-lint`](./wiki-lint.md) is re-run afterwards to confirm the promotion left zero broken links, and [`wiki-report`](./wiki-report.md) counts what is still sitting in `_inbox/proposed/`. The optional `--verify` flag hands each promoted entry to [`wiki-verify`](./wiki-verify.md); a failed verification leaves the entry promoted and unverified.
 
