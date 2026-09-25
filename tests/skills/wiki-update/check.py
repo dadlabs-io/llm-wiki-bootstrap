@@ -248,7 +248,11 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     add("session completed", r.get("subtype") == "success" and not r.get("is_error"),
         r.get("subtype") or run.get("stderr_tail")
         or "no result event: the session never started as a stream-json run (check the claude command line)")
-    denials = r.get("permission_denials") or []
+    # the machine's global read-guard hook refusing a partial read is not harness friction:
+    # the session recovers by reading the document whole (counted apart, as in wrap-up and wiki-cycle)
+    errs = run.get("error_texts") or {}
+    denials = [d for d in (r.get("permission_denials") or [])
+               if not (isinstance(d, dict) and "read-guard:" in str(errs.get(d.get("tool_use_id"), "")))]
     add("no permission denials", not denials, [d.get("tool_name") if isinstance(d, dict) else d for d in denials])
 
     new = sorted(set(after) - set(before))

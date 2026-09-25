@@ -162,7 +162,7 @@ I see the following durable work from this session:
 Show bulk-accept first, so a one-word `go` is the obvious path; per-item is the escape hatch, not the default.
 
 - **`confirm_before_create: true`** — wait for an explicit answer. The user MUST get to veto before anything is filed; a one-word `go` is a veto not exercised.
-- **`confirm_before_create: false`** — still print the table (you always see what was filed, even unattended), but don't wait: treat every candidate as kept and go to Step 3.
+- **`confirm_before_create: false`** — don't wait: treat every candidate as kept and go to Step 3. The table itself, with its columns (not a list), still opens the final reply, above Step 5's report, so the user always sees what was filed, even unattended.
 
 ### Step 3 — File each kept candidate to `_inbox/proposed/`
 
@@ -226,7 +226,7 @@ Wrapped up:
 Raw snapshot: raw/sessions/2026-05-12-drive-cleanup-session.md
 ```
 
-Include the task-list line whenever the list has an At a glance block: it is where the "remove the done ones?" question gets asked. Then go straight to Step 6 — never end on "run /wiki-promote later".
+With `confirm_before_create: false`, Step 2's table goes above this report. Include the task-list line whenever the list has an At a glance block: it is where the "remove the done ones?" question gets asked. Then go straight to Step 6 — never end on "run /wiki-promote later".
 
 ### Step 6 — Offer to promote (inline)
 
@@ -276,7 +276,7 @@ Items 1–4 run **only with `--auto-commit` or `--auto-push`**; item 5, the clos
 1. **Sweep strays first**: `git status --short` in each repository below; delete any zero-byte or junk file a shell redirect left (named `output`, `#`, `${...}`, a stray word). Never delete a real file.
 2. **The project's repository** (the git root of the project folder): add **only the paths this session changed**, the ones the conversation and Step 1 named, by explicit path. Never `git add -A` or `git add .`. A changed or untracked file the session did not touch is left alone and named in the report. Commit: `wrap-up <YYYY-MM-DD>: <one-line summary of the session>`. Skip this repository if the session changed nothing in it.
 3. **The notebook's repository** (the git root of the notebook folder): `git add <notebook-root>/` only, since other sessions may have work in the same repository, then commit: `wiki(<notebook>): wrap-up <YYYY-MM-DD> — <what was filed>`. When the wiki lives inside the project (`<project>/llm-wiki/`), this is the same repository: make one commit covering both.
-4. **Push, only with `--auto-push`**, each repository that got a commit: `git push`, on its current branch, only when that branch already tracks a remote (`git rev-parse --abbrev-ref --symbolic-full-name @{u}` succeeds). **Never force, never set up a remote, never pull or rebase to make a push go through.** A push that fails (rejected, no upstream, auth) is reported with git's message and left to the user.
+4. **Push, only with `--auto-push`**, each repository that got a commit: `git -C <repo> push`, on its current branch, only when that branch already tracks a remote (`git rev-parse --abbrev-ref --symbolic-full-name @{u}` succeeds). Run each push as its own plain command, never inside a loop or a chain: a permission check approves a plain `git` command and can refuse one it cannot read. **Never force, never set up a remote, never pull or rebase to make a push go through.** A push that fails (rejected, no upstream, auth) is reported with git's message and left to the user.
 5. **The closing line: the LAST line of the reply, on every wrap-up**, exactly one of:
    - `✅ WRAP-UP COMPLETE: committed and pushed ✅` (`--auto-push`, every commit pushed)
    - `✅ WRAP-UP COMPLETE: committed, not pushed ✅` (`--auto-commit`)

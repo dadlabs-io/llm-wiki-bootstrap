@@ -27,6 +27,7 @@
     "every sidecar names project/<plural folder>": true,
     "every staged entry would promote (wiki-promote --check)": true,
     "first run created all three dashboards": true,
+    "ends on the closing line": true,
     "wrote nothing into wiki/ but sessions/ (and promotes)": true
   },
   "incremental": {
@@ -59,6 +60,7 @@
     "every sidecar is valid JSON": true,
     "every sidecar names project/<plural folder>": true,
     "every staged entry would promote (wiki-promote --check)": true,
+    "ends on the closing line": true,
     "wrote nothing into wiki/ but sessions/ (and promotes)": true
   },
   "none-answer": {
@@ -83,6 +85,7 @@
     "other persona's section untouched": true,
     "nothing staged (0 expected)": true,
     "nothing filed into project/": true,
+    "ends on the closing line": true,
     "wrote nothing into wiki/ but sessions/ (and promotes)": true
   },
   "at-a-glance": {
@@ -120,6 +123,47 @@
     "every sidecar is valid JSON": true,
     "every sidecar names project/<plural folder>": true,
     "every staged entry would promote (wiki-promote --check)": true,
+    "ends on the closing line": true,
+    "wrote nothing into wiki/ but sessions/ (and promotes)": true
+  },
+  "auto-push": {
+    "session completed": true,
+    "no permission denials": true,
+    "exactly one journal for this session": true,
+    "journal is in sessions/<persona>/<YYYY-MM>/": true,
+    "journal filename carries the session id": true,
+    "journal frontmatter: session_id, type, tier": true,
+    "journal has Goal and Next": true,
+    "Next names a file for a cold start": true,
+    "appended a second update block": true,
+    "Update 1 kept word for word": true,
+    "original Goal line preserved or refreshed, not dropped": true,
+    "handoff.md written": true,
+    "handoff.md has every section": true,
+    "handoff.md reflects this session, not the seed": true,
+    "task.md written": true,
+    "task.md has NOW and QUEUE": true,
+    "active-context.md written": true,
+    "active-context has this persona's section": true,
+    "other persona's section untouched": true,
+    "at least 3 entries staged": true,
+    "nothing promoted without the user's yes": true,
+    "all 4 entries pass the entry gate": true,
+    "every entry: tier self, origin wrap-up, a real category": true,
+    "every entry: source_url is internal://": true,
+    "no entry claims a raw_path without a snapshot": true,
+    "every entry has a sidecar": true,
+    "every sidecar is valid JSON": true,
+    "every sidecar names project/<plural folder>": true,
+    "every staged entry would promote (wiki-promote --check)": true,
+    "ends on the closing line": true,
+    "project: the session's work committed": true,
+    "project: the commit holds the session's file": true,
+    "project: the user's untouched file left out and uncommitted": true,
+    "notebook: the wrap-up committed": true,
+    "notebook: nothing of the notebook left uncommitted": true,
+    "project: pushed (the remote has the local HEAD)": true,
+    "notebook: pushed (the remote has the local HEAD)": true,
     "wrote nothing into wiki/ but sessions/ (and promotes)": true
   },
   "auto-create": {
@@ -153,6 +197,7 @@
     "every sidecar names project/<plural folder>": true,
     "every staged entry would promote (wiki-promote --check)": true,
     "printed the proposal table even unattended": true,
+    "ends on the closing line": true,
     "wrote nothing into wiki/ but sessions/ (and promotes)": true
   }
 }
