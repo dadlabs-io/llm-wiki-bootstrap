@@ -19,6 +19,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -34,7 +35,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, project_root as _project_root  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, project_root as _project_root, now_stamp  # noqa: E402
 # Body-level rubric checks — shared with wiki-update.py's pre-write gate so the
 # lint backlog view and the gate enforce ONE rule set (_entry_checks.py, 2026-09-02).
 from _entry_checks import check_entry_body, is_exempt, check_frontmatter_loadable, split_frontmatter, is_superseded, read_raw_text  # noqa: E402
@@ -247,7 +248,47 @@ def check_describes(value, rel, fm, repo):
                        f"{' plus uncommitted edits' if uncommitted else ''}")
 
 
-def lint(vault_root, topic, strict=False):
+def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, wiki_root, report_path):
+    """/wiki-cycle Step 3's pair, lint-mechanical.json + .md (cycle-step-return-format):
+    the contract's counters in `summary`, the findings in sibling arrays. Until
+    2026-09-24 the script had no --cycle-id / --run-folder and the orchestrator wrote
+    this file by hand (finding 9 of the 2026-09-23 live cycle)."""
+    run_folder = Path(run_folder)
+    run_folder.mkdir(parents=True, exist_ok=True)
+    rel = lambda f: f.relative_to(wiki_root).as_posix()  # noqa: E731
+    payload = {
+        "skill": "wiki-lint",
+        "cycle_id": cycle_id,
+        "step": "lint-mechanical",
+        "timestamp": now_stamp(),
+        "status": "completed",
+        "summary": summary,
+        "queued": [],
+        "skipped": [],
+        "deferred": [],
+        "notes": f"Full report: {report_path}",
+        "errors": [],
+        "broken_links": [{"file": rel(f), "target": target, "link_text": text}
+                         for f, text, target, _reason in broken_links],
+        "orphans": [rel(f) for f in orphans],
+    }
+    atomic_write_text(run_folder / "lint-mechanical.json", json.dumps(payload, indent=2, ensure_ascii=False))
+    counts = ", ".join(f"{k.replace('_', ' ')} {v}" for k, v in summary.items())
+    md = [f"# lint-mechanical — {cycle_id}", "",
+          "**Status**: completed  ",
+          f"**Timestamp**: {payload['timestamp']}  ",
+          f"**Summary**: {counts}", "",
+          "## Queued", "", "_(none — the mechanical lint reports, it produces no items)_", "",
+          "## Skipped", "", "_(none)_", "",
+          "## Deferred", "", "_(none)_", "",
+          "## Notes", "",
+          f"Every finding is in the full report, `{report_path.name}` (`{report_path}`); "
+          "the JSON carries the broken links and orphans as arrays.", "",
+          "## Errors", "", "_(none)_", ""]
+    atomic_write_text(run_folder / "lint-mechanical.md", "\n".join(md))
+
+
+def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     # Registry-aware: resolve the wiki via _wiki_config.wiki_dir (honors the
     # linked-notebooks registry, incl. notebooks rooted at .../<name>/llm-wiki).
     # An explicit vault_root forces the legacy <vault>/<topic>/wiki join.
@@ -926,6 +967,21 @@ def lint(vault_root, topic, strict=False):
     print()
     print(f"Report saved to: {report_path}")
 
+    if cycle_id and run_folder:
+        emit_cycle_artifacts(run_folder, cycle_id, {
+            "files_scanned": len(files),
+            "broken_links": len(broken_links),
+            "orphans": len(orphans),
+            "stale_pending": len(stale_pending),
+            "missing_frontmatter": len(missing_frontmatter),
+            "missing_tier": len(missing_tier),
+            "invalid_tier": len(invalid_tier),
+            "missing_confidence": len(missing_confidence),
+            "invalid_confidence": len(invalid_confidence),
+            "unquoted_yaml": len(unquoted_yaml),
+        }, broken_links, orphans, wiki_root, report_path)
+        print(f"Cycle step files: {Path(run_folder) / 'lint-mechanical.json'} (+ .md)")
+
     # Exit code: strict mode fails on broken links, any icarus invariant
     # violation, or an out-of-enum ingested_by (2026-08-13). The presence checks
     # (tags/lifecycle/wikilinks) stay warn-only in strict mode until their
@@ -948,8 +1004,11 @@ def main():
         help="Fail (exit 1) if there are broken links or icarus-schema violations. "
              "Use in CI. Default: always exit 0 (report-only mode).",
     )
+    parser.add_argument("--cycle-id", default=None,
+                        help="/wiki-cycle's cycle id; with --run-folder, also write lint-mechanical.json + .md there")
+    parser.add_argument("--run-folder", default=None, help="the cycle's run folder (see --cycle-id)")
     args = parser.parse_args()
-    return lint(args.vault, args.topic, strict=args.strict)
+    return lint(args.vault, args.topic, strict=args.strict, cycle_id=args.cycle_id, run_folder=args.run_folder)
 
 
 if __name__ == "__main__":

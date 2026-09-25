@@ -14,13 +14,12 @@ Finds new material worth adding to your wiki without you having to go looking fo
 **Trigger:** runs as the first step of [`wiki-cycle`](./wiki-cycle.md) (or `/wiki-cycle --discover-only`); you can also type */wiki-discover*. It has no natural-language trigger phrases. Flags narrow the search: `--voices` for blogs and YouTube, `--academic`, `--repos`, `--feed "<name>"` for a single source, `--query "..."` for an ad-hoc search, `--gaps` to hunt for known concept gaps, `--all-feeds` to search every feed, and `--backfill <YYYY-MM-DD>` (with `--feed`) to extend a feed's coverage backwards.
 
 **Input / Output:** Reads `_config/feeds.md` (beside `wiki/` in the notebook root), which lists your trusted authors, YouTube channels, GitHub repos, academic queries and vendor blogs, each with the date range already covered. Produces a dated checklist grouping candidates by HIGH and MEDIUM relevance with a one-line reason each.
-- With `_inbox/intake-*/` folders, each candidate is classified by bucket and each bucket gets its own checklist at `_inbox/intake-<bucket>/<date>-discovery.md` for that bucket's owner. The run's stats and its decisions log (Queued, Skipped, Deferred, with the reason for every URL) go to `_inbox/reports/discovery-<date>.md`.
-- Without intake folders there is one combined checklist at `_inbox/discovered/<date>-discovery.md`, with the stats at the top and the decisions log as its last section; once processed it moves to `_inbox/done/`.
+There is one checklist, at `_inbox/discovered/<date>-discovery.md`, with the stats at the top and the decisions log (Queued, Skipped, Deferred, with the reason for every URL) as its last section; once processed it moves to `_inbox/done/`.
 
-After each feed is searched (even with no hits) its last-queried date is set to today, so the next run starts from there; `--query` runs don't touch it, and `--backfill` moves the feed's start date back instead. Approved candidates are queued to `_inbox/pending/`.
+After each feed is searched (even with no hits) its last-queried date is set to today, so the next run starts from there; `--query` runs don't touch it, and `--backfill` moves the feed's start date back instead. Approved candidates are queued to `_inbox/pending/`, and [`wiki-triage`](./wiki-triage.md) gives each one an owner: discovery itself never decides who reads what.
 
 **How it searches and filters:**
-- Each feed is searched only for material newer than its last-queried date, and never before 2026-01-01, even with `--backfill`. The search tool is Exa, with web search as the fallback.
+- Each feed is searched only for material newer than its last-queried date, and never before 2026-01-01, even with `--backfill`. The search tool is web search; results published before the window are dropped, and one whose date cannot be established is deferred.
 - A candidate is a duplicate if its URL is already an entry's source, if a full search of this notebook finds the concept already covered, or if the URL is already in the pending or done queue.
 - LOW-relevance candidates are dropped unless they come from a tier-1 source, and tier-4 candidates are labelled NEEDS HUMAN REVIEW. Tiers are defined in your notebook's frontmatter spec (`wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`).
 

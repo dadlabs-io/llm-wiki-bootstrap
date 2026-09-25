@@ -130,7 +130,7 @@ Discover → ingest → mechanical lint → 4-agent semantic lint → claims ext
 ```
 /wiki-cycle --discover-only
 ```
-Searches feeds, produces per-bucket checklists in `_inbox/intake-<bucket>/` (or one combined checklist in `_inbox/discovered/` when the topic has no intake folders). You review, then later run `--ingest-only` to drain.
+Searches feeds and produces one checklist in `_inbox/discovered/`. You review it; approved items are queued, `/wiki-triage` gives each an owner, and `--ingest-only` drains them later.
 
 ### "What does the wiki say about X"
 ```
@@ -164,8 +164,8 @@ llm-wiki is built around Chappy Asel's [self-improving AI stack](https://x.com/c
 │   ├── failed/                      — items that failed ingest, with .error sidecars
 │   ├── proposed/                    — staged entries pending human approval (Phase 7) — CREATE-ON-DEMAND: exists only while items wait
 │   ├── rejected/                    — entries declined at promote (audit trail) — create-on-demand
-│   ├── intake-<bucket>/             — per-bucket discovery checklists (Phase 1 output), one owner per bucket; set up by hand per topic
-│   ├── discovered/                  — legacy single combined checklist, used only when no intake-*/ folders exist — create-on-demand
+│   ├── intake/                      — one folder per reader (`README.md` lists them; `main` is the catch-all), filled by /wiki-triage
+│   ├── discovered/                  — the discovery checklist (Phase 1 output) — create-on-demand
 │   ├── reports/                     — EVERY generated report: lint-report.md, <agent>-semantic-lint-<date>.md,
 │   │   │                              claims-report-<date>.md, discovery-<date>.md, refresh-report-<date>.md
 │   │   └── <date>/<cycle_id>/       — per-cycle artifacts (JSON + MD sidecars + final report)

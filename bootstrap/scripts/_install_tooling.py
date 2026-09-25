@@ -68,6 +68,8 @@ TRAVEL_SCRIPTS = [
     "wiki-search-rerank.py",  # truth-status bucket sort over qmd JSON (search spec surface 1); shipped 2026-09-08
     "wiki-session-start.py",  # SessionStart hook: prints the project's resume files, silent elsewhere (2026-09-14)
     "wiki-tasks.py",  # the At a glance task list in sessions/<persona>/task.md, behind /task-list (2026-09-15)
+    "wiki-cycle-scope.py",  # what /wiki-cycle's semantic lint, claims and checker read (2026-09-24)
+    "wiki-triage.py",  # intake buckets + routing pending tickets, behind /wiki-triage (2026-09-24)
     "wiki-update.py",
     "wiki-upgrade.py",
     "wiki-verify.py",
@@ -77,7 +79,7 @@ TRAVEL_SCRIPTS = [
 TRAVEL_SKILLS = [
     "new-wiki", "wrap-up", "task-list",
     "wiki", "wiki-init", "wiki-update", "wiki-search", "wiki-cycle",
-    "wiki-discover", "wiki-list", "wiki-claims", "wiki-refresh",
+    "wiki-discover", "wiki-list", "wiki-triage", "wiki-claims", "wiki-refresh",
     "wiki-report", "wiki-lint", "wiki-promote",
     "wiki-rollback", "wiki-verify",
 ]
@@ -88,6 +90,7 @@ TRAVEL_SKILLS = [
 # <name>-config.json — copied as-is if present). evals/ stays gold-only.
 TRAVEL_AGENTS = [
     "wiki-ingester",
+    "wiki-checker",  # read-only second reader of a staged entry against its raw (2026-09-24, task #42 C3)
 ]
 
 # Helper scripts copied alongside TRAVEL_SCRIPTS in a tooling install (not

@@ -71,8 +71,9 @@ def load_check(skill: str):
     return mod
 
 
-def render_skill(skill: str, ref: str | None, dest: Path) -> Path:
-    """Copy the skill folder into dest, {{WIKI_SCRIPTS_DIR}} -> this repo's scripts."""
+def render_skill(skill: str, ref: str | None, dest: Path, replacements: dict | None = None) -> Path:
+    """Copy the skill folder into dest, {{WIKI_SCRIPTS_DIR}} -> this repo's scripts, then
+    each of the suite's replacements (e.g. an install path -> its sandbox copy)."""
     scripts = (REPO / "bootstrap" / "scripts").as_posix()
     src_rel = f"bootstrap/skills/{skill}"
     if ref:
@@ -91,14 +92,19 @@ def render_skill(skill: str, ref: str | None, dest: Path) -> Path:
         out = dest / rel
         out.parent.mkdir(parents=True, exist_ok=True)
         try:
-            out.write_text(data.decode("utf-8").replace(PLACEHOLDER, scripts), encoding="utf-8")
+            text = data.decode("utf-8").replace(PLACEHOLDER, scripts)
+            for old, new in (replacements or {}).items():
+                text = text.replace(old, new)
+            out.write_text(text, encoding="utf-8")
         except UnicodeDecodeError:
             out.write_bytes(data)
     return dest
 
 
 def parse_events(lines: list[str]) -> dict:
-    run = {"tool_calls": [], "texts": [], "tool_errors": 0, "result": {}}
+    # error_texts: tool_use_id -> the refused call's error text, so a suite can tell who
+    # refused it (the global read-guard hook, a blocked tool, the auto-mode classifier)
+    run = {"tool_calls": [], "texts": [], "tool_errors": 0, "error_texts": {}, "result": {}}
     for line in lines:
         try:
             e = json.loads(line)
@@ -116,8 +122,13 @@ def parse_events(lines: list[str]) -> dict:
                 elif c.get("type") == "text":
                     run["texts"].append(c.get("text") or "")
         elif kind == "user" and isinstance(content, list):
-            run["tool_errors"] += sum(1 for c in content if isinstance(c, dict)
-                                      and c.get("type") == "tool_result" and c.get("is_error"))
+            for c in content:
+                if isinstance(c, dict) and c.get("type") == "tool_result" and c.get("is_error"):
+                    run["tool_errors"] += 1
+                    body = c.get("content")
+                    if isinstance(body, list):
+                        body = " ".join(str(b.get("text", "")) for b in body if isinstance(b, dict))
+                    run["error_texts"][c.get("tool_use_id")] = str(body or "")[:500]
         elif kind == "result":
             run["result"] = {k: e.get(k) for k in ("subtype", "is_error", "num_turns", "duration_ms",
                                                    "total_cost_usd", "permission_denials", "result")}
@@ -153,6 +164,12 @@ def run_case(case: dict, model: str, ctx: dict, check, out_dir: Path, tools: lis
     cmd = [claude_exe(), "-p", "--model", model, "--output-format", "stream-json", "--verbose",
            "--permission-mode", "auto", "--add-dir", str(ctx["sandbox"]), *map(str, EXTRA_DIRS),
            "--allowedTools", *tools]
+    # A suite whose skill calls other skills renders them into the sandbox and blocks
+    # the Skill tool, so a /wiki-report or a worker's /wiki-update cannot fall through
+    # to the installed copy (which a run must never test).
+    denied = getattr(check, "DISALLOWED_TOOLS", [])
+    if denied:
+        cmd += ["--disallowedTools", *denied]
     events_path = out_dir / f"{case['id']}.events.jsonl"
     t0 = time.monotonic()
     stderr = ""
@@ -175,7 +192,10 @@ def run_model(model: str, cases: list[dict], args, check, stamp_dir: Path, tools
     out_dir = stamp_dir / model
     out_dir.mkdir(parents=True, exist_ok=True)
     ctx = check.setup(model, stamp_dir / f"sandbox-{model}", REPO)
-    render_skill(args.skill, args.skill_ref, ctx["skill_dir"])
+    repl = check.render_replacements(ctx) if hasattr(check, "render_replacements") else None
+    render_skill(args.skill, args.skill_ref, ctx["skill_dir"], repl)
+    for extra in getattr(check, "EXTRA_SKILLS", []):  # the skills this one calls, beside it
+        render_skill(extra, args.skill_ref, ctx["skill_dir"].parent / extra, repl)
     results = {}
     for case in cases:
         before = check.snapshot(ctx)

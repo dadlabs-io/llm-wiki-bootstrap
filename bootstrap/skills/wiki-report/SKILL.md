@@ -59,7 +59,7 @@ ls <notebook>/_inbox/proposed/*.md 2>/dev/null | grep -v README | wc -l
 
 **F. Discovery checklist** (if exists):
 ```bash
-ls <notebook>/_inbox/intake-*/*discovery*.md <notebook>/_inbox/discovered/*.md 2>/dev/null | head -5
+ls <notebook>/_inbox/discovered/*.md 2>/dev/null; ls <notebook>/_inbox/intake/*/ 2>/dev/null   # checklists, then what each bucket holds
 ```
 
 **G. Stale entries** (review_after date has passed):
@@ -151,7 +151,8 @@ Pulled from `<cycle_id>/<step>.json` files. Click through to see the Queued / Sk
 |---|---|---|
 | `_inbox/pending/` | N | Ingest via `/wiki-update` or `/wiki-list process` |
 | `_inbox/proposed/` | N | Review via `/wiki-promote` |
-| `_inbox/intake-*/` (legacy `discovered/`) | N checklists | Review candidates, approve/reject (per bucket owner) |
+| `_inbox/discovered/` | N checklists | Review candidates, approve/reject |
+| `_inbox/intake/<folder>/` | N per bucket | Each bucket's reader ingests it (the user reviews a `mark` bucket) |
 | Concept gaps | N open | Ingest or mark as not-needed |
 
 ---

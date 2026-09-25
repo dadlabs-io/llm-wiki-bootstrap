@@ -1,8 +1,8 @@
 ---
 name: wiki-discover
 description: Discover new content for a topic wiki by searching trusted feeds, deduping against existing entries, and queuing candidates for human review.
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
+last_reviewed: 2026-09-24
+review_after: 2026-12-24
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -12,7 +12,7 @@ reviewed_for_model: claude-fable-5-1
 
 # /wiki-discover
 
-Search trusted sources for new content relevant to a topic wiki. Dedupes against existing entries, and queues candidates for human review — routed into the topic's `_inbox/intake-*/` folders when they exist (per-bucket checklists), else a combined checklist in `_inbox/discovered/`.
+Search trusted sources for new content relevant to a topic wiki. Dedupes against existing entries and writes one checklist of candidates for human review in `_inbox/discovered/`. Approved items are queued into `_inbox/pending/`, where `/wiki-triage` gives each one an owner; discovery itself never routes (2026-09-24).
 
 ## Usage
 
@@ -64,24 +64,11 @@ Based on the flags:
 
 ### Step 3 — Search each feed with date-filtered queries
 
-**Primary tool**: `mcp__Exa-ai__web_search_exa` — returns structured result objects (distinct `title`, `url`, `published`, `author` fields). Use this by default.
+**Tool**: `WebSearch`. (Until 2026-09-24 this named the Exa MCP server as primary; no run since July had it, and every cycle recorded "no Exa". If an Exa search tool is available in the session, it may be used the same way, with its `publishedAfter` / `publishedBefore` set to the window below.)
 
-**Fallback**: `WebSearch` if Exa is unavailable.
+**Date window (mandatory)**: from the feed's `To` date if set in feeds.md, else its `From` date, else the global anchor `2026-03-14`, up to today. WebSearch has no date parameter, so put the window in the query where it helps (the month and year) and **drop every result published before the window**; a result whose date you cannot establish is deferred with that reason, not queued. Each feed tracks its own covered range via `From` (earliest covered) and `To` (last queried). Empty results mean "nothing new since last check", a legitimate outcome, not a failure.
 
-**Date filtering (mandatory)** — every Exa call must include:
-- `publishedAfter`: the feed's `To` date if set in feeds.md, else the feed's `From` date, else the global anchor `2026-03-14`
-- `publishedBefore`: today
-
-Rationale: each feed tracks its own covered range via `From` (earliest covered) and `To` (last queried). Normal discovery queries only content newer than `To`. Empty results mean "nothing new since last check" — a legitimate outcome, not a failure.
-
-**Per feed**:
-
-```
-mcp__Exa-ai__web_search_exa:
-  query: "<author name> <keywords>"
-  publishedAfter: <feed.To || feed.From || "2026-03-14">
-  publishedBefore: <today>
-```
+**Per feed**: one query, `"<author name> <keywords>"` (plus the window's month and year), then keep only results inside the window.
 
 Batch related queries for efficiency (not for an arbitrary cap). Example: don't run "Simon Willison agents" and "Simon Willison Claude" separately — combine into one query.
 
@@ -119,13 +106,13 @@ For each candidate URL/title found in search results:
 
 ### Step 5 — Score and classify candidates
 
-**CRITICAL — pairing rule**: each candidate is ONE SEARCH-RESULT OBJECT. The title and URL MUST come from the SAME result object. Never pair a title from result N with a URL from result M — this is the single most common bug (2026-04-16 cycle produced 3 of 4 queue URLs mislabeled because of this). If using Exa, walk the returned `results` array one object at a time. If using WebSearch, each result block is a single unit — don't cross fields.
+**CRITICAL — pairing rule**: each candidate is ONE SEARCH RESULT. The title and URL MUST come from the SAME result. Never pair a title from result N with a URL from result M — this is the single most common bug (2026-04-16 cycle produced 3 of 4 queue URLs mislabeled because of this). Each WebSearch result block is a single unit: don't cross fields.
 
 For each candidate that passes dedup, extract fields from a single search-result object:
 
 | Field | How to determine |
 |---|---|
-| **Title** | From the result's `title` field (Exa) or title line (WebSearch). NOT a reconstructed title. |
+| **Title** | From the result's title line. NOT a reconstructed title. |
 | **URL** | From the SAME result object's `url` field. NEVER from a different result. |
 | **Tier** | From the feed config's default tier for this source |
 | **Relevance** | HIGH (directly addresses a wiki concept or gap), MEDIUM (related to wiki topics), LOW (tangentially connected) |
@@ -139,11 +126,9 @@ If a pairing looks wrong, re-examine the source search result. Do NOT queue mism
 
 **Drop** any candidate with relevance LOW unless it's from a tier 1 source.
 
-### Step 6 — Generate the discovery checklist(s)
+### Step 6 — Generate the discovery checklist
 
-**Intake routing (2026-09-01).** If the topic has `_inbox/intake-*/` folders (e.g. agentic-design's `intake-agent-builder/`, `intake-llm-wiki/`, `intake-other/`), classify each candidate by bucket (agent-building = agents/workflows/skills/harnesses; llm-wiki = memory systems/retrieval/wiki-framework; other = everything else) and write **one checklist per bucket that has candidates**: `_inbox/intake-<bucket>/<date>-discovery.md` containing only that bucket's candidates (same format below, plus the classification rationale in the **Why** line). Each intake folder's owning session reviews its own checklist. In this mode the run's stats + full decisions log go to `_inbox/reports/discovery-<date>.md` — NOT into the intake folders.
-
-**Legacy fallback (combined mode)**: if the topic has no `intake-*` folders, write the single combined checklist to `_inbox/discovered/<date>-discovery.md` as before. In this mode the checklist itself carries the run's stats (top) and the Decisions log (last section), as in the template below; no separate `_inbox/reports/discovery-<date>.md` is written:
+Write one checklist, `_inbox/discovered/<date>-discovery.md`, carrying the run's stats (top) and the Decisions log (last section), as in the template below. **Discovery does not route candidates to owners** (2026-09-24): an approved candidate is queued into `_inbox/pending/`, and `/wiki-triage` gives it an owner by the buckets in `_inbox/intake/README.md`, the same way it does for Drive and queued URLs. (From 2026-09-01 to 2026-09-24 this step classified candidates into `_inbox/intake-<bucket>/` checklists itself, by a rule written here and nowhere else.)
 
 ```markdown
 # Discovery Queue — <date>
@@ -215,7 +200,7 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-list-add.py \
 
 Update the Decisions log's **Queued** table as each item is added, and the **Skipped** / **Deferred** tables as decisions are made elsewhere in the run.
 
-Move the discovery checklist to `_inbox/done/` after processing. In combined mode the Decisions log travels with the checklist so the morning report can reference it; in intake mode it stays in `_inbox/reports/discovery-<date>.md`.
+Move the discovery checklist to `_inbox/done/` after processing; the Decisions log travels with it so the morning report can reference it. The queued items wait in `_inbox/pending/` for `/wiki-triage`.
 
 ### Step 8 — Report
 
@@ -228,10 +213,9 @@ Discovery complete for <topic>
   High relevance: N
   Medium relevance: N
   Skipped (already covered): N
-  Checklist(s): _inbox/intake-<bucket>/<date>-discovery.md; stats+decisions: _inbox/reports/discovery-<date>.md
-    (combined mode: _inbox/discovered/<date>-discovery.md, stats+decisions inside it)
-  
-  Next: review the checklist, then run /wiki-list process to ingest approved items.
+  Checklist: _inbox/discovered/<date>-discovery.md (stats and decisions inside it)
+
+  Next: review the checklist; approved items are queued, then /wiki-triage gives each an owner.
 ```
 
 ## After running
@@ -244,7 +228,7 @@ Discovery complete for <topic>
 ## Key paths
 
 - Feeds config: `_config/feeds.md`
-- Discovery output: intake mode — `_inbox/intake-*/` per-bucket checklists, stats + decisions log in `_inbox/reports/discovery-<date>.md`; combined mode — one checklist in `_inbox/discovered/` carrying its own stats + decisions log
+- Discovery output: one checklist in `_inbox/discovered/` carrying its own stats + decisions log
 - Pending queue: `_inbox/pending/`
 - Done queue: `_inbox/done/`
 - Concept gaps: `wiki/concept-gaps-things-mentioned-not-yet-covered.md`
@@ -256,8 +240,8 @@ Discovery complete for <topic>
 This skill implements **Phase 1 (Discover) + Phase 2 (Filter)** of the research cycle documented in `wiki/research/implementation/research-cycle-setup.md`. The output (discovery checklist) is the input to **Phase 3 (Human review #1)**.
 
 ```
-/wiki-discover  →  _inbox/intake-<bucket>/<date>-discovery.md  →  bucket owner reviews  →  /wiki-list add  →  /wiki-update
-     Phase 1+2          Phase 2 output               Phase 3            Phase 4 prep      Phase 4
+/wiki-discover  →  _inbox/discovered/<date>-discovery.md  →  human review  →  /wiki-list add  →  /wiki-triage  →  ingest
+     Phase 1+2          Phase 2 output                     Phase 3          into pending/       owner per item    Phase 4
 ```
 
 ## Don't

@@ -1,458 +1,137 @@
 ---
 name: wiki-cycle
-description: Run the full research cycle — discover, ingest, lint, fix, report. Maintains a scratchpad so the run can be resumed if interrupted. This is the "update the wiki" command. Use when the user says "update the database", "run the cycle", "wiki-cycle", "update the wiki", "full wiki update".
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
-reviewed_for_model: claude-fable-5-1
+description: Run the full research cycle — discover, triage, ingest, check, lint, fix, report. Maintains a scratchpad so the run can be resumed if interrupted. This is the "update the wiki" command. Use when the user says "update the database", "run the cycle", "wiki-cycle", "update the wiki", "full wiki update".
+last_reviewed: 2026-09-24
+review_after: 2026-12-24
+reviewed_for_model: claude-opus-5-5
 ---
 
 # /wiki-cycle
 
-Run the full research cycle end-to-end. Discovers new sources, ingests approved items, lints the wiki, fixes issues, and generates a morning report. Maintains a persistent scratchpad so the run survives session interruptions.
+Runs a notebook's research cycle end to end: gather new sources, give each an owner, ingest this session's share, check the long transcripts, lint, fix, report, commit. Every step writes its result to the run folder, and a scratchpad there lets an interrupted run resume. [reference.md](./reference.md), beside this file, holds the scratchpad template and the detail some steps point to; read it when a step says so.
 
-## Usage
+This is the universal interface: the other `wiki-*` skills (discover, triage, lint, claims, refresh, report, list, promote) are its steps. Public commands: `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback`, `/new-wiki`.
 
-```
-# Mode flags (pick one; --quick is default)
-/wiki-cycle                       # default: quick cycle (discover → confirm → ingest → lint → backlinks → indexes → map → report)
-/wiki-cycle --full                # COMPLETE cycle: + semantic lint + claims + best-practices synthesis + refresh. "full" means FULL. (also accepts `/wiki-cycle full`)
-/wiki-cycle --lint-only           # mechanical lint only; print report; done
-/wiki-cycle --lint-only --semantic # + 4-agent semantic pass
-/wiki-cycle --discover-only       # discovery only — produces checklist, stops before ingest
-/wiki-cycle --ingest-only         # skip discovery; drain the pending queue; cleanup
-/wiki-cycle --prompt-for-urls     # pause, user pastes URLs, ingest them (no discovery)
-/wiki-cycle --report-only         # regen morning report from last run's JSONs; no work
-/wiki-cycle --refresh-only        # stale-entry scan only
-/wiki-cycle --claims-only         # contradiction extraction only
-
-# Modifiers (combine with any mode)
-/wiki-cycle <topic>               # specific topic (default: (your configured topic))
-/wiki-cycle --direct              # file to wiki/ not _inbox/proposed/
-/wiki-cycle --resume <cycle_id>   # resume an interrupted cycle from its scratchpad
-/wiki-cycle --no-confirm-discovery # skip Step 1.5 human checkpoint (cron/headless)
-/wiki-cycle --since <hours>       # discovery window (default: 24h)
-```
-
-**This is the universal interface.** The other `wiki-*` skills (discover, lint, claims, refresh, report, list, promote) are INTERNAL — they exist as scripts + SKILL.md for programmatic invocation, but users normally go through `/wiki-cycle` with the right flag. Public-facing user commands: `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback`, `/new-wiki`.
-
-**Default behavior (`--quick`)**: Discover → Confirm → Ingest → Mechanical lint → Reciprocate backlinks → Per-folder INDEX regen → _MAP.md regen → Morning report. ~5-10 min for ≤20 items. Entries go to `_inbox/proposed/` (staged) by default. User reviews in the morning via `/wiki-promote`. Pass `--direct` to bypass staging.
-
-**`--full` mode** (also written `/wiki-cycle full`): the COMPLETE pipeline. Adds Semantic lint (parallel agents by folder) + Claims scan + **Best-Practices Synthesis** (review the new research against the canonical `project/best-practices/*` pages and propose watch-notes / doctrine updates — see Step 6.5) + Refresh pass. ~40-50 min. **"full" means full — it MUST include the synthesis step; do not skip it.** Run weekly or when an ingest batch is ≥25 items, cross-cuts many existing entries, or semantic lint hasn't run in >7 days.
-
-## Multi-wiki (which wiki does a cycle run against?)
-
-Resolution is **per-project** — the cycle operates on whatever `<cwd>/.claude/wiki-config.json` declares. There is no global fallback; run the tooling from inside the project that owns the wiki. The shared resolver is `scripts/_wiki_config.py` (single source of truth — do not re-add per-script copies).
-
-Config shape (registry model, current since 2026-08; rewritten here 2026-09-08 — the `vault_root` / `topics` schema this section used to show is the legacy in-project form):
-
-```json
-// <project>/.claude/wiki-config.json — a thin pointer
-{ "notebook": "agentic-design", "registry": "C:/github.com/project-notebooks/linked-notebooks.json" }
-
-// linked-notebooks.json — the registry; one entry per notebook
-{ "notebooks": { "agentic-design": { "root": "notebooks/agentic-design", "confirm_before_create": true, "confirm_before_promote": true } } }
-```
-
-- A notebook's root is `notebooks[<name>].root`, resolved relative to the registry file; the wiki is `<root>/wiki/`, and `_inbox/`, `raw/`, `how-to/` are its siblings. Moving a wiki is editing `root`.
-- Legacy in-project wikis (no registry) still use `vault_root` + `default_topic` in the same file; `_wiki_config.py` handles both. A topic's root is then `<vault_root>/<topic>`.
-- **Target a non-default wiki**: pass the topic as the positional modifier, e.g. `/wiki-cycle --full cottage-build`. The orchestrator passes `--topic cottage-build` to every step, and every script resolves it through the registry — do **not** pass `--vault` (see the wiki-resolution note in the step skills).
-- **Run every registered wiki** (`--all-topics`): iterate `_wiki_config.list_topics()` and run the chosen mode once per notebook, each writing to its own `<root>/_inbox/reports/` tree. Use only when you explicitly want to sweep all wikis.
-
-## Cycle ID and report folder
-
-Every cycle run is assigned a `cycle_id` in the form `<YYYY-MM-DD>-<NN>` where `NN` is `01` for the first run that day, `02` for the second, and so on. On start, the orchestrator scans `_inbox/reports/<YYYY-MM-DD>/` and picks the next unused `NN`.
-
-All artifacts for one cycle run live in:
+## Modes and what each runs
 
 ```
-_inbox/reports/<YYYY-MM-DD>/<YYYY-MM-DD>-<NN>/
+/wiki-cycle                     # quick (default; also --quick)
+/wiki-cycle --full              # also written /wiki-cycle full
+/wiki-cycle --ingest-only       # drain what is queued; no gathering
+/wiki-cycle --discover-only     # gather and write the checklist, then stop
+/wiki-cycle --prompt-for-urls   # the user pastes URLs; ingest them
+/wiki-cycle --lint-only [--semantic]
+/wiki-cycle --report-only | --refresh-only | --claims-only
+# modifiers: <notebook> · --direct · --resume <cycle_id> · --no-confirm-discovery · --since <hours> · --lint-all
 ```
 
-This folder holds:
-- Per-step JSON + MD sidecars (`discover.json`, `discover.md`, `update.json`, etc. — see [cycle-step-return-format](./best-practices/framework/cycle-step-return-format.md))
-- The aggregated `<cycle_id>-run-cycle-report.md` + `<cycle_id>-run-cycle-report.json`
+| Step | quick | --full | --ingest-only | --discover-only | --prompt-for-urls |
+|---|---|---|---|---|---|
+| 0 Run folder + scratchpad | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 1.0 Drive-fetch (only when `drive.enabled`) | ✓ | ✓ | — | ✓ | — |
+| 1 Discover + 1.5 human review | ✓ | ✓ | — | ✓ (then stop) | — |
+| 1.7 Triage | ✓ | ✓ | ✓ | — | — (the user chose them) |
+| 1.8 Browser capture (only when a gated item is this session's) | ✓ | ✓ | ✓ | — | ✓ |
+| 2 Ingest, 2.5 dequeue + staging check | ✓ | ✓ | ✓ | — | ✓ |
+| 2.6 Checker (only when a staged raw is a long transcript) | ✓ | ✓ | ✓ | — | ✓ |
+| 3 Mechanical lint, 3.5 integration scripts | ✓ | ✓ | ✓ | — | ✓ |
+| 4 Semantic lint, 5 fixes, 5.5 promote | — | ✓ | — | — | — |
+| 6 Claims, 6.5 synthesis, 7 refresh | — | ✓ | — | — | — |
+| 8 Report, 9 commit | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-## The scratchpad
+`--lint-only` runs 0, 3 and 8 (`--semantic` adds 4); `--report-only` runs 8 from the last run's JSON; `--refresh-only` runs 7; `--claims-only` runs 6. A step outside the mode is recorded once as `skipped (mode)`; a step inside it that has nothing to do (no Drive, nothing gated, no long transcript) is `skipped (<why>)`. **"full" means full**: it includes synthesis (Step 6.5), always. Run it weekly, or when a batch is 25+ items or cuts across many entries. `--lint-all` makes Steps 4 and 6 read every entry instead of what is new.
 
-Every cycle run creates a scratchpad at:
-```
-_inbox/reports/<YYYY-MM-DD>/<YYYY-MM-DD>-<NN>/scratchpad.md
-```
+Entries are staged in `_inbox/proposed/` unless `--direct`; the user reviews them with `/wiki-promote`. An unattended run never files into `wiki/` directly.
 
-The scratchpad is updated after EVERY phase. If the session dies mid-cycle, the next session can `--resume <cycle_id>` from where it left off. The scratchpad lives inside the cycle's report folder so it's archived with the rest of the cycle's artifacts.
+## Steps
 
-### Scratchpad format
+**Step 0 — run folder.** `cycle_id` = `<local date>-<NN>`, NN the next free number in `_inbox/reports/<date>/`. Create `_inbox/reports/<date>/<cycle_id>/` (the run folder) and its `scratchpad.md` from the template in [reference.md](./reference.md), status `in_progress`. `--resume <cycle_id>`: read that run's scratchpad and continue from the phase after the last `done`; never repeat a done phase (its outputs are on disk).
 
-```markdown
-# Cycle Run — <date>
+**Every step writes `<step>.json` + `<step>.md` in the run folder** ([cycle step return format](./best-practices/framework/cycle-step-return-format.md); the JSON is authoritative): the scripts do it when given `--cycle-id <cycle_id> --run-folder <run-folder>` (or `--out` for Drive); for a model step, the orchestrator writes the pair. A step whose JSON says `status != completed` or has `errors` is flagged in the scratchpad; most failures do not block the steps after it. Update the scratchpad after every step.
 
-**Status**: in_progress | completed | interrupted
-**Started**: <timestamp>
-**Topic**: <topic>
-
-## Run config
-- Skip discover: yes/no
-- Skip ingest: yes/no
-- Triggered by: user / cron / resume
-
-## Phase log
-
-### Phase 1.0: Drive-fetch
-- **Status**: pending | running | done | skipped
-- **Folder scanned**: `__FOR CLAUDE/<topic>/`
-- **Files found**: N
-- **Unique URLs**: N (after dedup)
-- **Queued**: N (failed: N)
-- **Moved to `_completed/<cycle_id>/`**: N (failed: N — left in scan folder)
-- **Notes**: <re-auth prompt fired? new files left for retry?>
-
-### Phase 1: Discover
-- **Status**: pending | running | done | skipped
-- **Queries run**: N
-- **Candidates found**: N (after dedup: N)
-- **Checklist(s)**: _inbox/intake-<bucket>/<date>-discovery.md (legacy: _inbox/discovered/<date>-discovery.md); stats+decisions: _inbox/reports/discovery-<date>.md
-- **Notes**: <anything notable>
-
-### Phase 2: Human review #1 (URL approval)
-- **Status**: pending | done | skipped (auto-approve for tier 1-3)
-- **Approved**: N
-- **Rejected**: N
-- **Deferred**: N
-
-### Phase 3: Ingest
-- **Status**: pending | running | done | skipped
-- **Items to ingest**: N
-- **Agents dispatched**: N
-- **Completed**: 
-  - <slug> → wiki/<folder>/ (eval score: N.N)
-  - <slug> → wiki/<folder>/ (eval score: N.N)
-- **Failed**:
-  - <slug> — reason: <error>
-- **Notes**: <any issues>
-
-### Phase 4: Mechanical lint
-- **Status**: pending | done
-- **Broken links**: N
-- **Orphans**: N
-- **Missing metadata**: N
-
-### Phase 5: Semantic lint
-- **Status**: pending | running | done | skipped
-- **Agents dispatched**: N (by folder)
-- **Issues found**: contradictions N, missing cross-refs N, thin N, gaps N, tier N, other N
-- **Reports**: _inbox/reports/<agent>-semantic-lint-<date>.md
-
-### Phase 6: Fix lint issues
-- **Status**: pending | running | done
-- **Fix agents dispatched**: N
-- **Files modified**: N
-- **Fixes applied**: <summary>
-
-### Phase 7: Claims extraction
-- **Status**: pending | running | done | skipped
-- **Claims extracted**: N
-- **Contradictions found**: N (high N, medium N, low N)
-- **Report**: _inbox/reports/claims-report-<date>.md
-
-### Phase 7.5: Best-Practices Synthesis (`--full` only)
-- **Status**: pending | running | done | skipped
-- **Pages reviewed**: N
-- **Proposed changes**: N (watch-notes N, doctrine N, confirm-only N)
-- **Approved + applied**: N
-- **Deferred to candidate-concepts**: N
-- **Report**: _inbox/reports/<cycle-id>/synthesis-*.md
-
-### Phase 8: Refresh scan
-- **Status**: pending | done | skipped
-- **Overdue entries**: N
-- **Low confidence**: N
-- **Report**: _inbox/reports/refresh-report-<date>.md
-
-### Phase 9: Morning report
-- **Status**: pending | done
-- **Report**: _inbox/reports/morning-report-<date>.md
-
-### Phase 10: Commit
-- **Status**: pending | done
-- **Commits**: N
-- **Hashes**: <list>
-
-## Decisions log
-- <timestamp> — <decision made during the run>
-- <timestamp> — <e.g., "rejected entry X — tier 4, no corroboration">
-- <timestamp> — <e.g., "skipped semantic lint — ran 2 hours ago">
-
-## Unresolved for next run
-- <anything that needs follow-up>
-```
-
-## What You Must Do When Invoked
-
-### Step 0 — Assign cycle_id + create run folder
-
-1. Compute today's date in `YYYY-MM-DD` format.
-2. Scan `_inbox/reports/<date>/` for existing `<date>-NN` subfolders. Pick the next unused `NN` (starts at `01`).
-3. Create the run folder:
+**Step 1.0 — Drive-fetch** (only when the project config has `drive.enabled: true`):
 
 ```bash
-mkdir -p _inbox/reports/<date>/<date>-<NN>/
+python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-drive-folder.py --folder-name "<drive.parent_folder>" --subfolder <drive.subfolder> \
+  --queue-into <notebook> --queue-priority 3 --queue-added-by drive-fetch \
+  --move-handled --archive-subfolder <cycle_id> --out <run-folder>/drive-fetch.md
 ```
 
-4. Create the scratchpad at `<run-folder>/scratchpad.md`. Set status to `in_progress`, record the `cycle_id`.
+It queues each new URL into `_inbox/pending/`, archives the handled Drive files, and writes `drive-fetch.md` + `drive-fetch.json`. Folder names, OAuth and the archive rules: [reference.md](./reference.md).
 
-If `--resume <cycle_id>`: read the existing scratchpad in that cycle's folder, find the last completed phase, continue from the next one.
+**Step 1 — Discover.** Follow `/wiki-discover <notebook>` with the cycle id; it writes `discover.json` + `.md` and one checklist in `_inbox/discovered/`.
 
-### Step contract for every step
+**Step 1.5 — Human review #1** (on unless `--no-confirm-discovery`). Show the Queued / Skipped / Deferred tables from `discover.md` and wait: "yes go" → queue the approved items; "no" / "abort" → mark the run interrupted and stop; "tweak X" → re-read the edited checklist; "show the raw JSON" → print `discover.json`. Queue **only discovery's approved items** with `wiki-list-add.py` (Drive's are already queued by Step 1.0). Never auto-approve a tier-4 source. `--no-confirm-discovery` (unattended runs) queues tiers 1–3 and defers tier 4.
 
-Every step-skill MUST follow the [Cycle Step Return Format contract](./best-practices/framework/cycle-step-return-format.md):
+**Step 1.7 — Triage.** Follow `/wiki-triage` for this notebook: every ticket in `_inbox/pending/` moves into one `_inbox/intake/<folder>/` by the buckets in `_inbox/intake/README.md` (`main` is the catch-all; a notebook without the file has `main` alone), with the raw captured for items another reader gets, and each other reader told once. Then list what this session ingests: the tickets in every bucket whose reader is this session (`wiki-triage.py buckets` says which), including ones the user dropped there directly. Other readers' buckets, and a bucket the user reads (`mark`), are never ingested here.
 
-1. Invoke the step-skill with `--cycle-id <cycle_id>` so it knows where to write its sidecars.
-2. The step writes `<run-folder>/<step>.json` and `<run-folder>/<step>.md`.
-3. Orchestrator reads `<step>.json` after the step completes — this is what drives the aggregated report.
-4. If the step JSON has `status != completed` or non-empty `errors[]`, flag in scratchpad and decide whether to continue (most step failures are non-blocking).
+**Step 1.8 — Browser capture** (only when one of this session's tickets is a login-gated page, or its host refused a direct fetch with 403). The session captures the raw through the user's signed-in browser before any worker starts (the Browser-session capture flow in `wiki-update`'s `fetchers.md`); workers have no browser. A session without a browser leaves that ticket in its bucket, lists it in the report as "needs browser capture", and ingests the rest.
 
-### Step 1.0 — Drive-fetch (queue from `<parent>/<subfolder>/`)
+**Step 2 — Ingest.** Spawn `wiki-ingester` workers (fall back to `general-purpose` only if it is not installed), **unnamed**, up to 4 at a time, each with a slice of this session's tickets and `--staged` unless `--direct`. Before spawning, read `~/.claude/agents/wiki-ingester-config.json`: with `confirm_model_each_run` true, a session that can ask asks the user which model (default `model_default`); one that cannot uses `model_default` and says so. Pass it as the spawn-time `model`.
+- **YouTube**: when the batch has more than one YouTube item, all of them go to **one** worker, fetched one after another (they share one rate limit the GPU slots do not cover). A 429 is retried once, after that worker's other items; a second 429 fails the item with the reason.
+- A ticket carrying `raw_path` (captured at triage or Step 1.8) is filed from that raw, never fetched again.
+- Each worker runs the full `/wiki-update` flow per source, gate included. **Workers never write `update.json`**: the orchestrator writes `update.json` + `.md` once, from every worker's receipt (staged slugs, skipped and deferred items with reasons).
+- After the batch, `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --stats` into the report (searches that waited for a GPU slot; slow waits or "full search unavailable" → fewer workers next time). In `--full`, also `wiki-qmd-query.py --depth-check --notebook <notebook>` once: exit 1 (C was reached) is reported to the user; exit 2 (nothing measured) is never a pass.
 
-Pull URLs the user dropped into Drive throughout the week, queue them into `_inbox/pending/`, and **move handled files into `_completed/<cycle_id>/`** so the active scan folder stays clean across cycles. Skip this step when `.claude/wiki-config.json` does not have `drive.enabled: true`.
-
-The folder names come from the same config: `<parent>` is `drive.parent_folder` (default `__FOR CLAUDE`) and `<subfolder>` is `drive.subfolder` (default the notebook name). Until 2026-09-15 this step hardcoded `__FOR CLAUDE/<topic>`, so a parent or subfolder chosen at install time was recorded and then ignored. OAuth reads the client secrets from `~/.config/wiki-cycle/client_secrets.json` unless `--client-secrets` or `WIKI_DRIVE_CLIENT_SECRETS` says otherwise.
-
-Invocation:
+**Step 2.5 — Dequeue and check staging** (always, after ingest):
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-drive-folder.py \
-  --folder-name "<parent>" \
-  --subfolder <subfolder> \
-  --queue-into <topic> \
-  --queue-priority 3 \
-  --queue-added-by drive-fetch \
-  --move-handled \
-  --archive-subfolder <cycle_id> \
-  --out <run-folder>/drive-fetch.md
+python {{WIKI_SCRIPTS_DIR}}/wiki-dequeue.py --topic <notebook>              # pending tickets whose source is now an entry -> done/
+python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --check      # exit 1 names each entry promote would hold
 ```
 
-(**`--queue-vault` removed from this example 2026-08-13** — the script's registry-aware default resolves the topic's real root; the hardcoded `llm-wiki/wiki` value this example used to show pointed cross-notebook topics at the WRONG vault. Omit it unless deliberately overriding.)
+Fix every sidecar `--check` names before the commit; a worker's receipt is a claim, the check is the evidence.
 
-Behavior:
-
-- Files whose URLs successfully queue → **moved** to `<parent>/<subfolder>/_completed/<cycle_id>/`. The `_completed/` folders are auto-created if missing; the scan folder itself must already exist (the script never creates it).
-- Files whose queueing failed → **left in place** in `<parent>/<subfolder>/` so the user can investigate / retry next cycle.
-- `_completed/` is a one-time bucket the user can periodically delete from. Each cycle's files are grouped under their `cycle_id` subfolder for traceability — "which cycle did this file get pulled into?".
-- First run with `--move-handled` triggers a one-time OAuth re-prompt because the script needs to upgrade from `drive.readonly` to full `drive` scope to re-parent files. Browser will open; user approves.
-
-Update scratchpad Phase 1 with `unique_urls`, `queued`, `queue_failed`, `moved`, `move_failed` from `drive-fetch.json`.
-
-### Step 1 — Discover (unless --skip-discover)
-
-Run `/wiki-discover <topic> --cycle-id <id>`. It writes `discover.json` + `discover.md` into the run folder. Update scratchpad with results.
-
-### Step 1.5 — Discovery confirmation checkpoint (human review #1)
-
-**On by default until turned off.** After Discover completes, the orchestrator pauses and shows the user the Queued / Skipped / Deferred tables from `discover.md` (the JSON is authoritative; markdown is the human view). The user confirms:
-
-- **"yes go"** → proceed to Ingest with the Queued items
-- **"no"** / **"abort"** → mark cycle as interrupted, do not ingest anything
-- **"tweak X"** / **"move X to Queued"** → user edits `discover.md` (move a row from Skipped to Queued, or vice versa); re-read to pick up the change; then proceed
-- **"show me the raw JSON"** → print `discover.json` verbatim so user can verify the return-format contract is being honored
-
-This step is a **temporary training wheel** while we validate the discovery → report contract. Once we've seen a few cycles where the JSON faithfully represents discovery's decisions, we can relax this to `--no-confirm-discovery` or auto-approve tier 1-3 / ask-on-tier-4.
-
-**Flag**: `--no-confirm-discovery` skips this pause (for cron-driven runs where no human is around; keep the default staged mode, which lands entries in `_inbox/proposed/` for later review — `--direct` would file them straight into `wiki/`).
-
-Update scratchpad Phase 2 with the user's decision.
-
-### Step 2 — Ingest (unless --skip-ingest)
-
-Queue approved items via `wiki-list-add.py`, then ingest via parallel agents (4 at a time, same pattern as today's session). Every worker searches with the full `qmd query` through `wiki-qmd-query.py`, which lets three searches onto the 8 GB GPU at once (qmd 2.8.3+; two on an older qmd) and queues the rest (user decision 2026-09-13: quality over speed, no keyword fallback). After the batch, `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --stats` shows how long searches waited for a slot — put it in the cycle report; if waiting makes the batch noticeably slower, or any worker reports "full search unavailable", run 3 or 2 workers next time. In `--full` mode also run `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --depth-check --notebook <topic>` once (a few minutes: sampled titles searched, and qmd's count of candidates reranked read against C) and put its summary line in the report. Exit 1 ("C was reached … raise C") means C may have cut the reranker's pool — tell the user; exit 2 ("not checked") means nothing was measured, which is never a pass (user, 2026-09-13: search depth checked as the wiki grows).
-
-**Spawn ingest workers as `subagent_type="wiki-ingester"`** (the dedicated ingest agent, installed to `~/.claude/agents/` by this framework) — fall back to `general-purpose` only if it isn't installed. Spawner contract: read `~/.claude/agents/wiki-ingester-config.json` first; if `confirm_model_each_run` is true and the session can ask, ask the user which model to use for this batch (default = `model_default`); a session that cannot ask (autonomous / unattended) uses `model_default` and names the model in its spawn receipt (2026-09-13); pass it as the Agent tool's spawn-time `model` override.
-
-Each agent follows the full `/wiki-update` flow including the eval gate (step 5 — since 2026-09-02 the script's mechanical checks refuse to file on a hard failure; the agent's self-score covers only fidelity and synthesis value).
-
-**Staging**: unless `--direct` was passed, all agents use `--staged` so entries land in `_inbox/proposed/`. This is the default — overnight runs should never file directly to wiki/ without morning review.
-
-Update scratchpad Phase 3 with each completion.
-
-### Step 2.5 — Dequeue ingested items (ALWAYS run after ingest)
+**Step 2.6 — Checker** (only when a staged entry's raw is a long transcript):
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-dequeue.py --topic <topic>
+python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-scope.py --topic <notebook> checker --run-folder <run-folder>
 ```
 
-Moves every `_inbox/pending/` item whose `source:` URL now matches an ingested entry (in `wiki/` OR staged in `_inbox/proposed/`) into `_inbox/done/`. Genuinely-unprocessed and deferred items (e.g. unreadable X links) stay put.
+For each line it prints (entry, raw, minutes), spawn a `wiki-checker` agent, unnamed, up to 4 at a time, on the model in `~/.claude/agents/wiki-checker-config.json` (`model_default`), briefed with three paths only: the entry, the raw, and `<run-folder>/checker/<slug>.json`. Log each report: `wiki-cycle-scope.py --topic <notebook> checker-log --run-folder <run-folder> --entry <slug> --report <run-folder>/checker/<slug>.json`. A `fix` verdict: correct the staged entry from the report (take out or correct what the raw does not support, add what it skipped, restore the raw's words in quotes), then re-run `wiki-promote.py --check --slug <slug>`. A session that cannot make the fix leaves the entry staged and lists it under "held: checker findings" with its report. **An entry with an uncorrected `fix` report is never promoted.** The checker never edits anything itself.
 
-**Why this exists**: the `--staged` batch path does NOT run `wiki-update.py`'s from-queue Step-9 dequeue, so ingested items otherwise pile up in `pending/` and every later cycle has to hand-reconcile them (this bit cycles 2026-07-01 and 2026-07-02, 61 stale items each). `wiki-dequeue.py` is the permanent, idempotent, source_url-based reconciler — run it here so the queue always reflects reality. Safe to run standalone any time.
-
-Then check what the workers staged — their receipts are self-reports, and a receipt once claimed every sidecar conformed while one had invalid JSON (cycle 2026-09-14-01):
+**Step 3 — Mechanical lint.** If this run promoted anything into `wiki/` already (`--direct`), run `wiki-fix-links.py --topic <notebook>` first. Then:
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <topic> --check
+python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook> --cycle-id <cycle_id> --run-folder <run-folder>
 ```
 
-Exit 1 names each entry `wiki-promote.py` would hold back (sidecar missing, not valid JSON, or no `target_folder`). Fix those sidecars before the commit; promotion would otherwise hold them (exit 4) — until 2026-09-14 it filed them at the wiki root with no backlinks.
+**Step 3.5 — Integration scripts** (always, in the modes that run Step 3, staged run or not; cheap and idempotent), each with `--topic <notebook> --cycle-id <cycle_id> --run-folder <run-folder>`: `wiki-reciprocate-backlinks.py`, `wiki-index-per-folder.py`, `wiki-map-compile.py`. Treat a large unexplained `backlinks_added` as a signal to look, not a success.
 
-### Step 3 — Mechanical lint
-
-Run `wiki-lint-mechanical.py`. Update scratchpad Phase 4.
-
-**If any entries were promoted into `wiki/` this cycle** (`--direct`, or an in-cycle `/wiki-promote`), run the link normalizer FIRST so mechanical lint sees clean links:
+**Step 4 — Semantic lint** (`--full`; `--lint-only --semantic`). Not if one ran in the last 24 hours. Scope first:
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <topic>
+python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-scope.py --topic <notebook> semantic --run-folder <run-folder> [--all when --lint-all]
 ```
 
-`wiki-fix-links.py` resolves every bare-slug / wrong-depth markdown link to its correct relative path (bare `](slug.md)` → `](../folder/slug.md)`, and depth over/under-shoots). Ingest agents author cross-links by BARE slug per contract; that normalization was historically NOT happening end-to-end (≈50 broken links per cycle, hand-fixed each time). This tool is the permanent fix. Idempotent, 0-ambiguous/0-missing on a clean run. (In default `--quick` staging mode entries aren't promoted in-cycle, so this runs at `/wiki-promote` time instead — see wiki-promote SKILL.)
+It writes `semantic-scope.txt`: the entries added or revised since the last semantic lint, plus this run's staged entries (read from `_inbox/proposed/`, since Step 5.5 has not promoted them yet). Spawn one agent per ~100 entries in scope, up to 4, unnamed, each given a slice of the scope balanced by file count and the `/wiki-lint --full` criteria; include the drift-watch deep-compares. Merge their findings into `lint-semantic.json` + `.md` (its `timestamp` is the next run's cut-off).
 
-### Step 3.5 — Integration scripts (Phase 5 — always run, cheap)
+**Step 5 — Fix lint issues.** Show the findings; apply what the user approves (fix agents by category, up to 3). A finding that would edit a `framework-contract: true` doc goes to the user instead: the docs refresh overwrites such edits.
 
-Three Python scripts that are cheap, deterministic, and run every cycle in order:
-
-1. `wiki-reciprocate-backlinks.py` — ensures every outbound `.md` link has a reciprocal BACKLINKS-AUTO section in the target
-2. `wiki-index-per-folder.py` — regenerates `<folder>/_INDEX.md` for each subfolder (tier-2 map)
-3. `wiki-map-compile.py` — regenerates `wiki/_MAP.md` (tier-1 compressed always-loaded orientation, ~2K tokens)
-
-All three emit cycle-contract JSON when given `--cycle-id` + `--run-folder`. All three are idempotent. Total wall-clock: ~15 seconds for a 250-entry wiki.
-
-Update scratchpad Phase 5 with results.
-
-### Step 4 — Semantic lint (`--full` mode only)
-
-**In default `--quick` mode, skip this step.** Semantic lint is expensive (4 parallel AI agents reading ~60 files each, 20-30 min wall-clock). Run weekly or when the wiki has grown substantially, not every cycle.
-
-In `--full` mode: Spawn N parallel agents (4 is the proven pattern) partitioned over `research/*` + `project/*` + wiki-root files, **balanced by file count per agent for the wiki's current shape** — the partition is chosen per run, not a frozen folder list. (Reworded 2026-08-13: this line previously froze a four-way folder split that no longer matched the taxonomy — a three-way disagreement between this file, `cycle-step-return-format.md`, and actual dispatch, caught by the 2026-08-04-01 drift-watch pass. Distribute any drift-watch deep-compare entries across the agents too.)
-
-Update scratchpad Phase 5 with results (or note "skipped — quick mode").
-
-### Step 5 — Fix lint issues
-
-Spawn fix agents for the issues found (same pattern as today — backlinks agent, stale data agent, concept gaps agent).
-
-Update scratchpad Phase 6.
-
-### Step 5.5 — Promote staged entries (required before Steps 6/6.5 in `--full` mode)
-
-**Bug discovered + fixed 2026-07-11 (cycle 2026-07-10-01): Steps 6 (claims) and 6.5 (synthesis) both
-operate on "the wiki" / "new `research/` entries" — but the default ingest path (Step 2, `--staged`)
-files new entries to `_inbox/proposed/`, NOT `wiki/research/`. Nothing between Step 2 and Step 6
-promoted them. Result: synthesis agents wrote proposed-diff text that cross-linked staged entries by
-their eventual `wiki/research/<folder>/` path, which didn't exist yet — 7 broken links surfaced only
-at the post-synthesis mechanical re-lint, several steps after the mistake was made.**
-
-**Rule**: if this cycle run will execute Step 6 and/or Step 6.5 (i.e. any `--full` run, or `--quick`
-run with `--include-claims`/`--include-synthesis`), **promote all of this cycle's staged entries
-before running them**:
+**Step 5.5 — Promote** (`--full`, before Steps 6 and 6.5, which read `wiki/`). Promote every staged entry not held by the checker, one slug at a time, then normalise links and confirm:
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --vault <topic_root>/wiki --auto
-python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <topic> --vault <vault_root>
-python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <topic> --vault <vault_root>  # confirm 0 broken links before proceeding
+python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --auto --slug <slug>     # per entry not held
+python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <notebook>
+python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook>                   # 0 broken links before going on
 ```
 
-Note `wiki-promote.py --vault` wants the **wiki dir itself** (`<topic_root>/wiki`), not the
-vault_root — different convention from `wiki-update.py`/`wiki-lint-mechanical.py`, which want
-vault_root + `--topic`. Get this wrong and the script silently reports "nothing to promote."
+Then re-run Step 3.5 (promotion adds entries and backlinks at once). If the user wants staged entries held even in a `--full` run, skip this and tell Steps 6 and 6.5 to treat `_inbox/proposed/` as out of scope.
 
-This is a deliberate exception to the normal staged-entries-wait-for-morning-review discipline
-(Step 2's rationale still holds for `--quick` runs where no human is watching) — but a `--full` run
-already has the human present in the same session (Step 1.5's discovery gate, and the Step 6.5
-synthesis human-gate that follows), and Steps 6/6.5 need live `wiki/research/` content to cite
-correctly. If the human explicitly wants staged entries held back from promotion even in a `--full`
-run, tell Steps 6/6.5's agents to treat everything still in `_inbox/proposed/` as out-of-scope
-(confirm-only "will review once promoted," no cross-links into it) rather than promoting — but
-promoting first is simpler and is what actually happened when this bug was fixed.
+**Step 6 — Claims** (`--full`; `--claims-only`). Scope: `wiki-cycle-scope.py --topic <notebook> claims --run-folder <run-folder>` (`--all` with `--lint-all`): entries with no claims in the index, or revised since it was written. Follow `/wiki-claims` over that scope: append to the index, never rebuild it, and write `claims.json` + `.md`.
 
-After promoting: re-run Step 3.5's integration scripts (backlinks/index/map) since promotion adds a
-large batch of new entries + backlinks at once.
+**Step 6.5 — Best-practices synthesis** (`--full` — never skipped). Report-only agents review this cycle's new `research/` entries against the `project/best-practices/*` pages: confirm, a dated watch-note, or a doctrine change (be conservative; prefer watch-notes; contradictions keep both sides). Net-new areas go to `best-practices-candidate-concepts.md`. Each agent writes `synthesis-<area>.md` (section, proposed text in the page's voice, dated, source entry, rationale, confidence). **Human gate:** present the consolidated proposal (take all / pick / none), apply only what the user approves, and bump each touched page's `last_reviewed`. A run nobody can answer writes the proposal and changes no canon.
 
-Update scratchpad Phase 6 (or a new sub-phase) with promotion counts.
+**Step 7 — Refresh scan** (`--full`; `--refresh-only`): follow `/wiki-refresh --overdue-only`.
 
-### Step 6 — Claims extraction (if claims index exists or first run)
+**Step 8 — Report.** Follow `/wiki-report`, from the run folder's step JSONs: `<cycle_id>-run-cycle-report.md` + `.json`. It lists what was triaged to whom, what was ingested, what the checker found and held, anything left for a browser session, and the search stats.
 
-Run `/wiki-claims`. If this is the first run (no claims-index.json), do a full extraction. If index exists, run `--compare` for just the new entries.
-
-Update scratchpad Phase 7.
-
-### Step 6.5 — Best-Practices Synthesis (`--full` mode only — DO NOT SKIP)
-
-This is the step that turns ingested **research** into updated **canon**. A cycle WITHOUT this only grows `research/`; "full" requires it. (User-flagged 2026-06-23: "full wiki cycle" means complete, including this synthesis.)
-
-Spawn synthesis agents (REPORT-ONLY — they do NOT edit the canon) that review the cycle's new `research/` entries against the canonical `project/best-practices/*` pages:
-1. For each best-practices page whose domain the new entries touch, ask: does the new research (a) CONFIRM existing doctrine, (b) warrant a new dated **watch-note** (emerging / single-source / contested), or (c) warrant an actual DOCTRINE CHANGE (well-corroborated, shifts a stated position)? Be conservative — prefer watch-notes; flag contradictions both-sides-stay.
-2. Net-new doctrine areas with no home page, and design-gaps, go to `project/best-practices/best-practices-candidate-concepts.md` (the integration backlog), NOT a shoehorned edit.
-3. Agents write a proposed-diff report to the run folder (e.g. `synthesis-<area>.md`): exact section, proposed text in the page's voice + dated, source entry, rationale + confidence.
-
-**HUMAN GATE:** present the consolidated proposed diff to the user (take-all / pick / none). Apply ONLY what they approve to the `project/best-practices/*` pages; bump each touched page's `last_reviewed`. Log deferred items to candidate-concepts. (In `--no-confirm` / headless runs, write the proposal to the run folder and leave canon unchanged for later review — never auto-write canon.)
-
-Update scratchpad Phase 7.5.
-
-### Step 7 — Refresh scan
-
-Run `/wiki-refresh --overdue-only`. Flag stale entries in the scratchpad.
-
-Update scratchpad Phase 8.
-
-### Step 8 — Morning report
-
-Run `/wiki-report`. This generates the full report including best practices gap analysis.
-
-Update scratchpad Phase 9.
-
-### Step 9 — Commit
-
-**Stray-file sweep FIRST.** Before staging, run `git status --short` and delete any 0-byte / junk droppings from shell-redirect or quoting artifacts (own or sub-agent: e.g. files named `output`, `#`, `${...}`, a stray word, etc.). These are tooling junk, not content — clean them yourself, don't leave them for the user or commit them.
-
-Then **scope the add to the notebook path** (NOT `git add -A` — other notebooks/sessions may have uncommitted work) and commit:
-
-```
-Wiki cycle <date> — N ingested, N fixes, N contradictions, N synthesis changes, wiki at N entries
-```
-
-Update scratchpad Phase 10. Set overall status to `completed`.
-
-### Step 10 — Show the user the morning report
-
-Print the morning report inline. Offer to act on recommendations.
-
-## Morning review workflow (after overnight cycle)
-
-When the user comes back after an overnight `/wiki-cycle` run:
-
-1. **User asks**: "what did we load?" or "morning report" or "what's in proposed?"
-2. **Run `/wiki-report`** — shows everything that happened overnight including new entries in proposed/
-3. **Run `/wiki-promote --review`** — shows each proposed entry with TL;DR, lets user approve/reject
-4. **For approved entries**: promote to wiki/, add backlinks, regen INDEX
-5. **For rejected entries**: move to `_inbox/rejected/`
-
-This is human review checkpoint #2. The cycle did all the work overnight; the morning is a 5-minute approval pass.
-
-## Resuming an interrupted cycle
-
-If `--resume`:
-1. Read the scratchpad in the cycle's run folder (`_inbox/reports/<date>/<cycle_id>/scratchpad.md`)
-2. Find the last phase with status `done`
-3. Start from the next phase
-4. The scratchpad has all the state needed — which items were approved, which agents completed, etc.
-
-## Parallel agent patterns (proven this session)
-
-| Task | Agent count | Split by |
-|---|---|---|
-| Ingestion | 4 at a time | Individual entries |
-| Semantic lint | 4 (proven) | Partition of `research/*` + `project/*` + wiki-root files, balanced by file count per run — never a frozen folder list (Step 4) |
-| Lint fixes | 3 | Fix category (backlinks, stale data, concept gaps) |
-
-Use `subagent_type="wiki-ingester"` for ingestion workers (fallback: `general-purpose` if not installed — see Step 2); `subagent_type="general-purpose"` for all other worker types. Always `run_in_background=true`.
-
-## Key paths
-
-- Scratchpad: `_inbox/reports/<YYYY-MM-DD>/<cycle_id>/scratchpad.md` (corrected 2026-08-13 — two references in this file previously said `_inbox/runs/`, an obsolete location contradicting Step 0; caught by the 2026-08-04-01 semantic lint's drift-watch pass)
-- All other paths inherited from the sub-skills (discover, update, lint, claims, refresh, report)
+**Step 9 — Commit.** First delete zero-byte or junk files left by shell redirects (own or a sub-agent's: `output`, `#`, `${...}`, a stray word). Then add **only the notebook's path** (other sessions may have work in the same repository) and commit once, at the end: `Wiki cycle <date> — N ingested, N fixes, N contradictions, N synthesis changes, wiki at N entries`. Set the scratchpad to `completed`, then show the report and offer to act on its recommendations.
 
 ## Don't
 
-- Don't skip the scratchpad — it's the resume mechanism
-- Don't run semantic lint if one ran in the last 24 hours (check scratchpad history) — too expensive
-- Don't auto-approve tier 4 sources — always ask
-- Don't run more than 4 parallel agents at once — diminishing returns + rate limits; ingest workers' searches also share three GPU slots (see Step 2)
-- Don't commit mid-cycle — one commit at the end covers everything
-- Don't skip the morning report — it's the user's review checkpoint
+- Don't skip the scratchpad: it is how a run resumes.
+- Don't run more than 4 agents of a kind at once; spawn every one unnamed and in the background.
+- Don't let workers or the checker write step files, commit, or edit outside their brief.
+- Don't commit mid-cycle; one commit at the end covers the run.
+- Don't skip the report: it is the user's review point.

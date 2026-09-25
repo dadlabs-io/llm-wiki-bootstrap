@@ -513,6 +513,8 @@ def find_inbound_candidates(new_path, wiki_dir, title, max_results=15):
 _NO_BACKLINK_FILES = {"_map.md", "_index.md", "home.md", "readme.md", "llm-wiki-user-guide.md"}
 # A matched term that hits more files than this is generic for the wiki.
 GENERIC_TERM_LIMIT = 25
+# A single-word match needs this many tags in common to count as a backlink (2026-09-24).
+MIN_SHARED_TAGS = 2
 
 
 def _curate_backlink_candidates(inbound, wiki_dir, max_n=8, entry_path=None):
@@ -526,6 +528,12 @@ def _curate_backlink_candidates(inbound, wiki_dir, max_n=8, entry_path=None):
     is not a backlink signal — its matches are dropped unless the file is one
     the entry itself links to, or the match is a multi-word title/subtitle.
 
+    A single-word match (a tag or slug word found in the other file) is evidence
+    only together with at least ``MIN_SHARED_TAGS`` tags the two entries share:
+    one shared generic tag such as "vaults" or "personal-assistant" suggested
+    unrelated entries, and a 2026-09-23 cycle worker cut 5 of 12 by hand
+    (finding 8). Files the entry links to and multi-word matches need no tags.
+
     Rank: (1) files the new entry links to in its own body — the reciprocal
     half of bidirectional linking; (2) multi-word title/subtitle matches;
     (3) rarer matched term first (fewer files matched = more specific);
@@ -533,12 +541,14 @@ def _curate_backlink_candidates(inbound, wiki_dir, max_n=8, entry_path=None):
     """
     wiki_dir = Path(wiki_dir)
     outbound = set()
+    own_tags = set()
     if entry_path:
         try:
             body = Path(entry_path).read_text(encoding="utf-8")
             outbound = {Path(t).stem.lower() for t in re.findall(r"\]\(([^)#]+\.md)", body)}
         except OSError:
             pass
+        own_tags = {t.lower() for t in _read_frontmatter_tags(entry_path)}
     freq = {}
     for _path, term, _snip in inbound:
         freq[term] = freq.get(term, 0) + 1
@@ -554,6 +564,10 @@ def _curate_backlink_candidates(inbound, wiki_dir, max_n=8, entry_path=None):
         multiword = " " in term
         if freq[term] > GENERIC_TERM_LIMIT and not (linked or multiword):
             continue
+        if not (linked or multiword):
+            shared = own_tags & {t.lower() for t in _read_frontmatter_tags(path)}
+            if len(shared) < MIN_SHARED_TAGS:
+                continue
         kept.append((path, term, snippet, linked, multiword))
     kept.sort(key=lambda c: (not c[3], not c[4], freq[c[1]], -len(c[1])))
     return [(p, t, sn) for p, t, sn, _l, _m in kept[:max_n]]

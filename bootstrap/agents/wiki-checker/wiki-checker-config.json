@@ -1,0 +1,5 @@
+{
+  "_comment": "Runtime configuration for the wiki-checker agent, read by the SPAWNER (/wiki-cycle) and by wiki-cycle-scope.py, not by the checker itself. model_default: the model passed as the Agent tool's spawn-time override (opus: holding an hour-long transcript and the entry in view is where it earns its cost; the user, 2026-09-24). min_transcript_minutes: a staged entry is checked when its raw is a YouTube transcript at least this long (15 to start, set low on purpose; checker-log.jsonl records each check's length and verdict, so the pass rate by length shows whether to raise it). Change either here, not in the agent or the skill.",
+  "model_default": "opus",
+  "min_transcript_minutes": 15
+}

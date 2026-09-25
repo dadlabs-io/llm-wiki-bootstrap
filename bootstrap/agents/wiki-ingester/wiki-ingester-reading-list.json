@@ -29,7 +29,7 @@
       "title": "Cycle Step Return Format",
       "link": "wiki/project/best-practices/framework/cycle-step-return-format.md (older layouts: wiki/best-practices/framework/)",
       "required": false,
-      "why": "Only when invoked inside /wiki-cycle — the run-folder step-return contract (<step>.json/<step>.md shape, counters, queued/skipped/deferred semantics)."
+      "why": "Background, only inside /wiki-cycle: the run-folder step-return contract. The worker never writes update.json itself (the orchestrator builds it from every worker's receipt, 2026-09-24); the contract says what the receipt must let it fill in: a slug, URL and one-line reason per staged item, and a reason per skipped or deferred one."
     }
   ],
   "skills": [

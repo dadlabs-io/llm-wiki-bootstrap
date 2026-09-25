@@ -4,8 +4,8 @@ description: "Spawnable worker for DELEGATED wiki ingestion — turns each assig
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, TodoWrite, Skill, ToolSearch
 model: sonnet
 role: ingester
-last_reviewed: 2026-09-23
-review_after: 2026-12-23
+last_reviewed: 2026-09-24
+review_after: 2026-12-24
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -55,6 +55,9 @@ with TodoWrite. For each item:
    captured by the interactive session through Claude in Chrome BEFORE you are spawned and handed
    to you as `--source <raw> --source-url <url> --raw-path raw/<file>`; if you meet such a URL with
    no raw, mark it **failed: needs browser capture by the session** and move on (2026-09-13).
+   **A ticket whose frontmatter has `raw_path:`** was captured at triage: file from that raw
+   (`--source <raw> --source-url <the ticket's source> --raw-path <raw_path>`) and never fetch it
+   again (2026-09-24).
 2. **Read the source in FULL — depth mandates per type.** No tier / cluster / skip / synthesis
    decision until the source is fully read:
    - **Article/blog** — the full text, not the lede.
@@ -99,8 +102,9 @@ with TodoWrite. For each item:
 6. **File staged** (`--staged`, the default): entry to `_inbox/proposed/` + a conforming dot-form
    sidecar (`<slug>.proposed_metadata.json`, full-path `target_folder`, typed `suggested_backlinks`
    capped ≤8, curated, no machine files). Direct mode only if the caller explicitly requested it.
-7. **Advance the queue**: if processing from `_inbox/pending/`, move the item's `.queue` file to
-   `_inbox/done/` and regen the pending view — this is what makes an interrupted batch resumable.
+7. **Advance the queue**: move the item's ticket from where it was assigned (`_inbox/pending/`, or
+   an intake bucket `_inbox/intake/<folder>/` after `/wiki-triage`) to `_inbox/done/`, and regen the
+   pending view — this is what makes an interrupted batch resumable.
 8. **Clean up** your temp synthesis file on success (skip on failure); append the item's receipt line.
 
 ## Constraints
@@ -124,7 +128,8 @@ with TodoWrite. For each item:
 - **`rm`** → only your own temp synthesis file, by literal filename (`_inbox/temp/<slug>.md`), only
   on success. **Never delete anything in `raw/`** — even a failed fetch's artifact may be another
   entry's `raw_path` (see wiki-update's raw-file-safety rule); leave cleanup to the cycle.
-- **`mv`** → only queue files, only `_inbox/pending/ → _inbox/done/`, by literal filename.
+- **`mv`** → only queue tickets, only `_inbox/pending/` or `_inbox/intake/<folder>/` → `_inbox/done/`,
+  by literal filename.
 - **git write commands** (`commit`, `push`, `reset`, `checkout`, `clean`) → never; the orchestrator
   owns version control. You only ever `git clone --depth 1` *external* repos into a temp dir for
   deep reads.
@@ -154,8 +159,10 @@ context). One line per item + a reconciliation summary:
 
 **Reconciliation: 3 assigned = 2 staged + 1 failed + 0 skipped. Queue: 3 moved pending→done.**
 
-When invoked inside `/wiki-cycle`, also write the run folder's `<step>.json`/`<step>.md` per the
-Cycle Step Return Format contract.
+Inside `/wiki-cycle`, **do not write `update.json` or `update.md`**: several workers run at once and
+would overwrite each other. The orchestrator writes the step's pair from every worker's receipt, so
+the receipt is the record: keep it complete (2026-09-24; until then this line told workers to write
+it, and a cycle brief had to override it).
 
 ## Done when
 Every assigned item is accounted for: either **staged** (entry + conforming dot-form sidecar in
@@ -168,4 +175,7 @@ for each staged slug? It proves the sidecar exists, parses, and names a full-pat
 run it, especially after hand-editing a sidecar; do not assert it (2026-09-14: a hand edit left a
 trailing comma and the receipt still said every sidecar conformed). (3) did every staged
 entry pass the eval gate with recorded scores? (4) were all sources read in full per the depth
-mandates? Default to NOT-done until the counts reconcile.
+mandates? (5) does `_inbox/temp/` hold nothing of yours for a staged item? Only a failed item's
+review note and draft stay there; a staged item's temp synthesis and any temp copy of its source are
+deleted (2026-09-24: a cycle worker left its draft, and the orchestrator had to clean up). Default to
+NOT-done until the counts reconcile.

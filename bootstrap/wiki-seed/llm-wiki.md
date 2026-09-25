@@ -9,12 +9,13 @@ date: 2026-08-20
 # llm-wiki — the skill pack
 
 The LLM-wiki framework's skills: everything for capturing, ingesting, verifying, and maintaining
-this project's durable knowledge in its wiki. The pack is **skills, one worker agent and one
+this project's durable knowledge in its wiki. The pack is **skills, two agents and one
 startup hook** (no workflow): the skills are meant for **every** agent and session, which is why
 they're normally installed to the **global** skills area (`~/.claude/skills/`) rather than
 per-project — one install serves all your projects, and each project's `.claude/wiki-config.json`
-points the shared skills at that project's own wiki. The agent (below) is the pack's one dedicated
-subagent, installed to `~/.claude/agents/` (added 2026-08-20). The hook, added to
+points the shared skills at that project's own wiki. The agents (below) are the pack's two dedicated
+subagents, installed to `~/.claude/agents/`: an ingest worker (2026-08-20) and a checker that
+reads its work against the source (2026-09-24). The hook, added to
 `~/.claude/settings.json`, lists a wiki project's resume files (`sessions/active-context.md`, then
 `sessions/<persona>/handoff.md` and `task.md`) when a session starts and after `/clear`, so the
 session picks up where the last one left off; outside a wiki project it prints nothing.
@@ -41,6 +42,7 @@ version of this list, see [`commands.md`](./commands.md) (the full command refer
 |---|---|
 | [`wiki-list`](./skills/wiki-list.md) | Pending-ingestion queue: drop URLs all day, batch-process later |
 | [`wiki-discover`](./skills/wiki-discover.md) | Search trusted feeds for new content, dedupe, queue candidates |
+| [`wiki-triage`](./skills/wiki-triage.md) | Give each queued source one owner: move it into the intake bucket whose purpose fits (`main` is the catch-all), capture the raw for other readers, log the call |
 
 ## Health & truth maintenance
 
@@ -58,6 +60,7 @@ version of this list, see [`commands.md`](./commands.md) (the full command refer
 | Agent | One line |
 |---|---|
 | [`wiki-ingester`](./agents/wiki-ingester.md) | Spawnable worker for **delegated batch ingestion**: `/wiki-cycle` (or any session) hands it a queue slice or URL list; it runs the full `wiki-update` flow per source — one at a time, each read in FULL (whole repos, full transcripts, all PDF pages) — stages results to `_inbox/proposed/`, and returns a compressed receipt. Its model is set in `~/.claude/agents/wiki-ingester-config.json` (`model_default` + `confirm_model_each_run`). For a single source you're watching live, just run `/wiki-update` inline instead. |
+| [`wiki-checker`](./agents/wiki-checker.md) | A second reader for a staged entry: checks it against its raw source and reports unsupported claims, skipped sections and misquotes; it never edits anything. `/wiki-cycle` runs it on long transcripts (15 minutes or more by default) before promotion and holds back an entry it flags. Settings in `~/.claude/agents/wiki-checker-config.json`. |
 
 ## Setup & lifecycle
 

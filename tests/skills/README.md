@@ -30,7 +30,7 @@ The report is `tests/skills/.results/<skill>/<stamp>/report.md` (not committed):
 
 Create `tests/skills/<skill>/` with:
 - `cases.json`: the cases (one of each input the skill handles; tag the expensive or unusual ones `complex`).
-- `check.py`: `prepare_fixtures(repo, refresh)`, `setup(model, sandbox, repo)`, `snapshot(ctx)`, `prompt(case, ctx)`, `check(case, before, after, run, ctx)`, `teardown(ctx)`; optionally `ALLOWED_TOOLS`.
+- `check.py`: `prepare_fixtures(repo, refresh)`, `setup(model, sandbox, repo)`, `snapshot(ctx)`, `prompt(case, ctx)`, `check(case, before, after, run, ctx)`, `teardown(ctx)`; optionally `ALLOWED_TOOLS`. A skill that calls other skills (wiki-cycle) also sets `EXTRA_SKILLS` (rendered beside it), `DISALLOWED_TOOLS = ["Skill"]` (so nothing falls through to an installed copy) and `render_replacements(ctx)` (install paths → sandbox copies). `run["error_texts"]` maps each refused call to its error text, so a check can tell the global read-guard hook's blocks from harness friction.
 - `fixtures/`: written-for-the-test inputs only. Third-party text (articles, transcripts, papers) is fetched into `~/.cache/llm-wiki-skilltest/<skill>/` on first use and never committed.
 
 Start with the largest skills; see the CHANGELOG entry that introduced this folder.

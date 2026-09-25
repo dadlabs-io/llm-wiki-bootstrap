@@ -1,0 +1,46 @@
+{
+  "bad-config": {
+    "session completed": true,
+    "no permission denials (read-guard and the blocked Skill tool counted apart)": true,
+    "vector-index-tuning -> pending": true,
+    "side-hustles -> pending": true,
+    "nothing ingested or staged": true,
+    "intake README untouched": true,
+    "one triage-log row per routed item": true,
+    "stops on the config problem and names it": true
+  },
+  "shared-five": {
+    "session completed": true,
+    "no permission denials (read-guard and the blocked Skill tool counted apart)": true,
+    "vector-index-tuning -> memory": true,
+    "subagent-harness -> agents": true,
+    "side-hustles -> money": true,
+    "gpu-cluster-costs -> main": true,
+    "memory-for-subagents -> main": true,
+    "nothing ingested or staged": true,
+    "intake README untouched": true,
+    "one triage-log row per routed item": true,
+    "subagent-harness: raw captured for its other reader": true,
+    "side-hustles: raw captured for its other reader": true,
+    "report names other-bot's items for telling": true,
+    "report points the user at the money bucket": true
+  },
+  "single-no-config": {
+    "session completed": true,
+    "no permission denials (read-guard and the blocked Skill tool counted apart)": true,
+    "vector-index-tuning -> main": true,
+    "gpu-cluster-costs -> main": true,
+    "nothing ingested or staged": true,
+    "intake README untouched": true,
+    "one triage-log row per routed item": true
+  },
+  "user-drop": {
+    "session completed": true,
+    "no permission denials (read-guard and the blocked Skill tool counted apart)": true,
+    "subagent-harness -> memory": true,
+    "nothing ingested or staged": true,
+    "intake README untouched": true,
+    "one triage-log row per routed item": true,
+    "says there was nothing to triage": true
+  }
+}

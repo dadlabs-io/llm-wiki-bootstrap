@@ -1,0 +1,27 @@
+{
+  "skill": "wiki-cycle",
+  "sources": {
+    "context-engineering": {"url": "https://simonwillison.net/2025/Jun/27/context-engineering/"},
+    "lethal-trifecta": {"url": "https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/"}
+  },
+  "cases": [
+    {"id": "quick-staged", "kind": "ingest-only", "timeout": 3000,
+     "queue": ["context-engineering", "lethal-trifecta"],
+     "say": "/wiki-cycle --ingest-only"},
+    {"id": "resume", "kind": "resume", "timeout": 2400,
+     "say": "/wiki-cycle --resume {cycle_id}"},
+    {"id": "triage-shared", "kind": "triage", "timeout": 3000,
+     "queue": ["context-engineering", "lethal-trifecta"], "mine": "context-engineering", "theirs": "lethal-trifecta",
+     "staged": 1, "done": 1,
+     "say": "/wiki-cycle --ingest-only"},
+    {"id": "checker-resume", "kind": "checker", "timeout": 2400, "staged": 1, "done": 0,
+     "say": "/wiki-cycle --resume {cycle_id}"}
+  ],
+  "_planned": {
+    "_comment": "Cases from the #42 plan (notebook sessions/main/42-wiki-cycle-plan.md, section D) not built yet. The scope rules behind lint-scope-new and claims-scope-new are proven for free by tests/scripts/test_cycle_scope.py; the model-level cases need a --full run (semantic lint, claims, synthesis) and are tagged complex when built.",
+    "youtube-batch": "#45, needs live YouTube fetches, complex", "gated-no-browser": "B5, needs a known login-gated URL, complex",
+    "lint-scope-new": "C1 in a --full run, complex", "claims-scope-new": "C1 in a --full run, complex",
+    "lint-all-flag": "C1, complex", "canon-gate-headless": "a --full run, complex",
+    "discover-live": "finding 2, complex", "quote-check-in-cycle": "#47 inside a cycle, complex"
+  }
+}

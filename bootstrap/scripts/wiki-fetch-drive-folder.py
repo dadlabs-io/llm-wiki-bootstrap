@@ -25,7 +25,11 @@ Behaviour:
   6. Strip Google Discover tracking suffix (?shem=...).
   7. Dedupe by final URL. Note duplicates in the report.
   8. Write a Markdown report (--out path) and emit a JSON-line summary
-     to stdout for orchestrator consumption.
+     to stdout for orchestrator consumption. With --out, the cycle's step
+     JSON (cycle-step-return-format) is written beside the report, same
+     name with .json — `--out <run-folder>/drive-fetch.md` gives
+     /wiki-cycle both drive-fetch.md and drive-fetch.json (2026-09-24;
+     before that the orchestrator wrote the JSON by hand).
   9. (Default ON, opt out with --no-move-handled) After successful queueing,
      move the source Drive files into <scan-folder>/_completed/<archive-subfolder>/
      so the active scan folder stays clean across cycles. Files that failed
@@ -75,7 +79,7 @@ from urllib.parse import urlparse, urlunparse, parse_qs
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, now_stamp  # noqa: E402
 # Force UTF-8 stdout on Windows so Unicode in titles doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -617,6 +621,38 @@ def render_markdown(folder_name, folder_id, entries, duplicates, scanned_at,
     return "\n".join(lines) + "\n"
 
 
+def cycle_step_payload(cycle_id, entries, known_entries, duplicates, queue_results, summary):
+    """The drive-fetch step JSON (cycle-step-return-format): queued = URLs written
+    to _inbox/pending/, skipped = already in the wiki or a duplicate Drive file,
+    deferred = a queue failure with its reason. `summary` carries the contract's
+    counters and the ones /wiki-cycle's scratchpad reads (unique_urls, queued,
+    queue_failed, moved, move_failed). `entries` includes the known ones."""
+    stamp = now_stamp()
+    url_of = {e["file_id"]: e["url"] for e in entries}
+    row = lambda url, reason: {"priority": None, "url": url, "reason": reason, "timestamp": stamp}  # noqa: E731
+    queued, deferred = [], []
+    for file_id, status, message in queue_results or []:
+        if status == "queued":
+            queued.append(row(url_of.get(file_id, file_id), "queued into _inbox/pending/"))
+        elif status == "error":
+            deferred.append(row(url_of.get(file_id, file_id), message or "queue failed"))
+    skipped = ([row(e["url"], "already in wiki") for e in known_entries]
+               + [row(d["url"], f"duplicate of {d['kept_file']}") for d in duplicates])
+    return {
+        "skill": "wiki-fetch-drive-folder",
+        "cycle_id": cycle_id,
+        "step": "drive-fetch",
+        "timestamp": stamp,
+        "status": "completed" if not deferred else "partial",
+        "summary": summary,
+        "queued": queued,
+        "skipped": skipped,
+        "deferred": deferred,
+        "notes": "",
+        "errors": [],
+    }
+
+
 def scan_folder(service, folder_name, folder_id):
     """Read every file in the folder, resolve and dedupe URLs.
 
@@ -695,7 +731,13 @@ def main():
     )
     parser.add_argument(
         "--out", default=None,
-        help="Write the Markdown report to this path. If omitted, prints to stdout.",
+        help="Write the Markdown report to this path, and the cycle's step JSON beside it "
+             "(same name, .json). If omitted, the report prints to stdout.",
+    )
+    parser.add_argument(
+        "--cycle-id", default=None,
+        help="cycle_id for the step JSON (default: --archive-subfolder, which /wiki-cycle "
+             "sets to the cycle id)",
     )
     parser.add_argument(
         "--ask-on-missing", action="store_true",
@@ -891,6 +933,21 @@ def main():
         atomic_write_text(out_path, md)
         _info(f"Wrote report: {out_path}")
         report_target = str(out_path)
+        step = cycle_step_payload(
+            args.cycle_id or args.archive_subfolder or "", entries, known_entries, duplicates, queue_results, {
+                "files_seen": len(entries) + len(duplicates),  # files that yielded a URL
+                "urls_resolved": len(entries),
+                "urls_queued": queued_count or 0,
+                "urls_deduped": len(known_entries) + len(duplicates),
+                "unique_urls": len(entries),
+                "queued": queued_count or 0,
+                "queue_failed": queue_failed or 0,
+                "moved": moved_count or 0,
+                "move_failed": move_failed or 0,
+            })
+        json_path = out_path.with_suffix(".json")
+        atomic_write_text(json_path, json.dumps(step, indent=2, ensure_ascii=False))
+        _info(f"Wrote step JSON: {json_path}")
     else:
         sys.stdout.write(md)
         report_target = "stdout"

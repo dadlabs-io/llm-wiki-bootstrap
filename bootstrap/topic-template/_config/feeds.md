@@ -55,7 +55,7 @@ Default `/wiki-discover` run: **staleness-first** — feeds with the oldest `To`
 
 ## Feed management rules
 
-1. **Tier 1-3** can auto-queue to the discovery checklist (`_inbox/intake-<bucket>/`, or legacy `_inbox/discovered/`) after dedup.
+1. **Tier 1-3** can auto-queue to the discovery checklist (`_inbox/discovered/`) after dedup; approved items go to `_inbox/pending/`, and `/wiki-triage` gives each an owner.
 2. **Tier 4** MUST go to human review before queuing. Aggregator feeds (Reddit, Hacker News, DEV) default to tier 4; a Medium or Substack post is tiered by its author and evidence (the rubric's posts row), not by the platform.
 3. **YouTube** fetches via `wiki-fetch-youtube.py` (transcripts).
 4. **arXiv PDFs** fetch via `wiki-fetch-pdf.py`.

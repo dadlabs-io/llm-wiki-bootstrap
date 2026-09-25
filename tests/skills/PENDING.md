@@ -25,7 +25,10 @@ then we can run it").
 |---|---|---|---|
 | wiki-update | 2026-09-23 | Step 3 no longer says the helper "sizes the reranker's depth to the notebook" (`-C` is a fixed 120 since 0a7b870); same stale phrase fixed in the `wiki-ingester` agent and its reading list (which also still said 20 results) | wording only; the `-C` change itself ran the wiki-search suite |
 | wiki-update | 2026-09-23 | **Behavioural, NOT installed** (task #47): the gate warns on `>` quotes that don't match the raw (`_entry_checks.check_quotes`), step 5 tells the agent to fix each one or move it out of `>`, and the `wiki-ingester` agent must fix them before staging and name any left in its receipt. The script half is proven by `tests/scripts/test_quote_check.py` (27/27) | the user, 2026-09-23: hold the rollout until #42's `/wiki-cycle` changes are in, then one suite run covers both before anything is installed. The run should check that entries whose drafts misquote get fixed before filing, and that clean quotes don't cause extra turns |
-| wiki-cycle | 2026-09-23 | Step 2 and its pack page say what `--depth-check`'s exit 1 and 2 mean | wording only, and **no baseline exists** for this skill: it bends the no-baseline rule, stated to the user; the next `--full` cycle is its first real check |
+| wiki-update | 2026-09-24 | **Behavioural, NOT installed** (task #42, finding 8): a staged sidecar's `suggested_backlinks` keep a single-word match only when the two entries share 2+ tags (`MIN_SHARED_TAGS`). Script half proven by `tests/scripts/test_cycle_script_fixes.py`; on 12 real agentic-design entries 89 suggestions → 38 | held with #47 for #50's one run. The run should check that staged cases still carry sensible `suggested_backlinks` (not empty where a real relation exists) |
+| wiki-cycle | 2026-09-24 | **Behavioural, NOT installed** (task #42 step 5): the rewritten skill (mode table, triage, browser capture, the YouTube rule, the checker, scoped lint and claims, 137 lines + reference.md). Run `20260924-194212` ($15.07): every check the new skill is responsible for passed on both models, including `triage-shared` (the other reader's item routed with its raw; only ours ingested) and `checker-resume` (the checker named the skipped ninth technique and the inflated 70%, and the entry was corrected or held); Opus's quick run newly wrote Step 3.5's step pairs (A9). All 8 runs still FAILED, on two harness faults, both fixed since: `wiki-cycle-scope.py` wrote an empty `checker-scope.txt` (now a header line; test 24/24), and the denial classifier missed the read-guard's Read-tool wording | not a baseline: the next run (with #50's) must be clean before install and is saved as the new baseline |
+| wiki-cycle | 2026-09-24 | **Behavioural, NOT installed** (task #42, findings 1 and 9): `wiki-fetch-drive-folder.py --out` also writes the step JSON; `wiki-lint-mechanical.py --cycle-id/--run-folder` writes `lint-mechanical.json`/`.md`. Proven by `tests/scripts/test_cycle_script_fixes.py` (28/28). The skill does not pass the new lint flags yet | lands with #42's skill changes; the suite's `step-contract` checks then test the flags in a real run |
+| wiki-cycle | 2026-09-23 | Step 2 and its pack page say what `--depth-check`'s exit 1 and 2 mean | wording only; still unchecked: the 2026-09-24 baseline runs quick mode only, and the depth check runs in `--full` |
 
 ## Last full run
 
@@ -36,6 +39,9 @@ then we can run it").
 | task-list | 2026-09-17 | 14/14 twice, 108 checks; re-run after the CLI-reference edit, 0 regressions |
 | wrap-up | 2026-09-17 | 10/10 on the 5 core cases after the trim; 0 regressions against the pre-trim baseline, 1 newly passing |
 | wiki-lint | 2026-09-17 | 8/8 on the 4 core cases, 35 checks each model; no skill change — the suite is new |
+| wiki-triage | 2026-09-24 | After its baseline, step 2 says: with one bucket, route every ticket to `main` without reading it (single-project notebooks triage on every cycle; judging one bucket is wasted reading) | small, cost-only; the `single-no-config` case checks the routing, and the next run should show it reading no source there |
+| wiki-triage | 2026-09-24 | **First baseline** of the new skill (4 cases: a shared notebook with five sources incl. one that fits nothing and one that straddles two buckets, no config, a user-dropped ticket, a config with no `main`): 8/8 sessions, every check passed on both models, $2.05. Both routed all five correctly with content-grounded reasons and captured the raws for the other readers. Not installed: ships with #50 |
+| wiki-cycle | 2026-09-24 | **First baseline**, on the skill as it stood before #42 (2 core cases, quick `--ingest-only` and `--resume`; $9.33 on both models). Sonnet 27/27 + 24/24; Opus 26/27 + 24/24 — Opus skipped Step 3.5's integration scripts, reading `--ingest-only` ("skip discovery; drain the pending queue; cleanup") as excluding them. The denial check was re-scored offline from the saved event streams: each run had one block by the global read-guard hook (recovered), which the harness now counts apart. The other plan cases are added with the changes that build them (`cases.json` `_planned`) |
 | new-wiki | 2026-09-18 | after the ask-before-`--force` change: 116/116 on both models, 0 regressions, 3 newly passing on Sonnet (the `--force` case, 0 of 3 runs forcing where it was 3 of 3). First baseline, before the change: Opus 116/116, Sonnet 113/116 |
 
 The three `complex` wrap-up cases (auto-promote, research-only, trivial) and wiki-lint's `prior-report-trap`
@@ -55,5 +61,9 @@ Sonnet's `existing-folder-asks-force` ask check (it required a literal "?"; the 
 `missing` (the skills question) and Drive on (the Drive question). Testing them needs a fake home folder, and
 a headless session with one writes a fresh `.claude.json` into the real `~/.claude` (`CLAUDE_CONFIG_DIR` is
 needed for the login). They wait for a way to point the scripts' home at the sandbox.
+
+`wiki-cycle`'s baseline (run `20260924-153802`) has its "no permission denials" check re-scored offline from the saved
+event streams, after the harness learned to tell a read-guard block (the refused call's text carries `hook error:
+read-guard:`) from harness friction. Every other check is first-hand.
 
 Skills with no suite yet: every other shipped skill. The next ones are the user's pick (task #16).
