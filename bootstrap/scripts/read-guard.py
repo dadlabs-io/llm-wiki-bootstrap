@@ -121,8 +121,18 @@ def _operands(words: list[str]) -> list[str]:
     return ops
 
 
+# The two append-only logs a do-code-change run keeps (2026-09-26, the user's pick): a session
+# wants their newest entries, not 48 KB of history each time, so inside `.do-code-change/` they
+# are logs, not documents. The run's other files (plan.md, requirements.md, ...) stay documents.
+_APPEND_ONLY_LOGS = {"doubt-log.md", "checkpoints.md"}
+
+
 def is_doc(path: str) -> bool:
-    return Path(path.strip().strip("'\"")).suffix.lower() in DOC_EXTS
+    p = path.strip().strip("'\"")
+    if Path(p).suffix.lower() not in DOC_EXTS:
+        return False
+    parts = p.replace("\\", "/").lower().split("/")
+    return not (parts[-1] in _APPEND_ONLY_LOGS and ".do-code-change" in parts)
 
 
 def _resolve(path: str, cwd: str) -> Path:

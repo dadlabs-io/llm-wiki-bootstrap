@@ -127,6 +127,17 @@ def main() -> int:
               sh("sed -i 's/a/b/' skills/x/SKILL.md && head -8 skills/y/SKILL.md"))
         check("head a file named scratchpad.md in a real folder -> deny",
               sh("sed -n '1,20p' _inbox/reports/2026-09-24-01/scratchpad.md"))
+        # 2026-09-26, the user's pick: do-code-change's two append-only logs may be read in part
+        check("tail -60 .do-code-change/<run>/doubt-log.md -> allow (append-only log)",
+              not sh("tail -60 .do-code-change/schema-names/doubt-log.md"))
+        check("tail an archived run's checkpoints.md -> allow",
+              not sh('tail -n 150 "C:/github.com/p/.do-code-change/archive/2026-09-24-x/checkpoints.md"'))
+        check("Read the first page of .do-code-change/<run>/checkpoints.md -> allow",
+              not denied(pre("Read", {"file_path": str(tmp / ".do-code-change" / "r" / "checkpoints.md"),
+                                      "limit": 50}, tmp)))
+        check("tail a doubt-log.md outside .do-code-change -> deny", sh("tail -5 notes/doubt-log.md"))
+        check("tail a run's plan.md -> deny (only the two logs)",
+              sh("tail -20 .do-code-change/schema-names/plan.md"))
         check("cmd 2>&1 | tail; tail -2 task.md -> deny (2>&1 names no file)",
               sh("python x.py 2>&1 | tail -3; tail -2 main/task.md"))
         check("PowerShell Get-Content -TotalCount -> deny",
@@ -158,6 +169,9 @@ def main() -> int:
               not blocked(stop(tmp, [prompt(), write_entry(small), read_entry(small, 1, 10, 300)])))
         check("Stop: code file partly read -> allow",
               not blocked(stop(tmp, [prompt(), read_entry(code, 1, 5, 50)])))
+        check("Stop: the end of a run's doubt-log.md read -> allow (append-only log)",
+              not blocked(stop(tmp, [prompt(), read_entry(tmp / ".do-code-change" / "r" / "doubt-log.md",
+                                                            400, 60, 460)])))
         t = tmp / "agent.jsonl"
         t.write_text("\n".join(json.dumps(e) for e in [prompt(), read_entry(small, 1, 100, 300)]) + "\n",
                      encoding="utf-8")
