@@ -9,6 +9,13 @@
 
 ---
 
+## 2026-09-26
+
+### `/new-wiki`'s next steps name the wiki's real README (task #36, found 2026-09-18)
+- **Why**: Phase B's closing `next_steps` said "Read `llm-wiki/README.md` … + `llm-wiki/how-to/llm-wiki/commands.md`" for every wiki. `llm-wiki/` exists only for a wiki inside the project; a vault notebook (the default) has its README at the notebook root, so the advice pointed at nothing.
+- **Change**: the line gives the full path of the wiki root's README and of `how-to/llm-wiki/commands.md`, taken from `project_paths()`, so it is right for both layouts.
+- **Proven**: two scratch scaffolds, a vault notebook and an in-project wiki: both paths the line names exist in each. Logged in `tests/skills/PENDING.md` for the next new-wiki run.
+
 ## 2026-09-25
 
 ### A promotion rebuilds the backlinks: no promoted entry is left an orphan (the user's ask)

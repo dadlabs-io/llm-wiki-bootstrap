@@ -1536,7 +1536,10 @@ def phase_b(args):
     next_steps = [
         f"cd {target}",
         f"Start Claude Code: `{start_cmd}`",
-        "Read `llm-wiki/README.md` (project overview) + `llm-wiki/how-to/llm-wiki/commands.md` (command reference)",
+        # The wiki root is <target>/llm-wiki for an in-project wiki and the notebook folder for a
+        # vault notebook, so name it by its real path (it said `llm-wiki/` for both until 2026-09-26).
+        f"Read `{paths['llm_wiki_readme']}` (wiki overview) + "
+        f"`{paths['llm_wiki_how_to'] / 'llm-wiki' / 'commands.md'}` (command reference)",
     ]
     if args.research_folder != "none":
         next_steps += [
