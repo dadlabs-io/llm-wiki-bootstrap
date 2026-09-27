@@ -16,7 +16,7 @@ Canonical reference for the LLM-wiki framework. Each command works inside Claude
 
 | Command | When to use it |
 |---|---|
-| `/new-wiki` | Scaffold a new project. Checks the global tooling, then asks name, review gate, description, `project/` folder, `research/` folder, where the wiki lives. Only needed to **start** a project. |
+| `/new-wiki` | Scaffold a new project. Checks the global tooling, then asks name, review gate, description, `project/` folder, `research/` folder, where the wiki lives, and with a `research/` folder whether to name trusted sources now (the page is created either way). Only needed to **start** a project. |
 | `/wiki-update <url>` | Add one external reference (article, paper, video) to the wiki right now |
 | `/wiki-cycle` | Batch ingest — discover, ingest (staged for your review), lint, backlinks and indexes, morning report, commit. `--full` adds semantic lint, claims, synthesis and refresh, and promotes. The daily/weekly command for `research/`. |
 | `/wiki-search "<query>"` | Hybrid BM25 + vector + LLM-reranked search across your wiki |
@@ -32,7 +32,7 @@ These are listed for completeness. `/wiki-cycle` invokes them in order; you can 
 
 | Command | What it does |
 |---|---|
-| `/wiki-discover` | Search the notebook's trusted feeds (`_config/feeds.md`) for new content, dedupe, queue candidates for your review |
+| `/wiki-discover` | Search the notebook's trusted sources (`_config/feeds.md`, created empty by `/new-wiki` with a `research/` folder) for new content, dedupe, queue candidates for your review |
 | `/wiki-list` | Manage the `_inbox/pending/` queue |
 | `/wiki-lint` | Mechanical lint (broken links, orphans, frontmatter, and the body checks that mirror the ingest gate — TL;DR, Related links, tags, stubs, unquoted numbers) and optionally semantic lint |
 | `/wiki-claims` | Extract claims from entries, find contradictions |

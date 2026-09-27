@@ -44,7 +44,7 @@ If you want the global install first, then create projects separately:
 > /new-wiki
 ```
 
-`/new-wiki` is a conversational skill. It checks the global tooling first (use it as is; install it once if missing; never re-copy), then asks two rounds of questions — name and review gate; description, a `project/` folder (with stubs, empty, or none), a `research/` folder (the same three), and where the wiki lives — shows the plan, and scaffolds on your go.
+`/new-wiki` is a conversational skill. It checks the global tooling first (use it as is; install it once if missing; never re-copy), then asks two rounds of questions — name and review gate; description, a `project/` folder (with stubs, empty, or none), a `research/` folder (the same three), and where the wiki lives; with a `research/` folder it offers to note trusted sources for discovery now (or you add them later) — shows the plan, and scaffolds on your go.
 
 ## What gets installed where
 

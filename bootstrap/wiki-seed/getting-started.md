@@ -15,7 +15,7 @@ You just ran `/new-wiki` and have a fresh project. Here's the first hour.
 - `<project>/CLAUDE.md` — agent's first-read document; imports the wiki README, the command reference (`how-to/llm-wiki/commands.md`) and the wiki MAP
 - a startup hook (installed with the global tooling): at startup and after `/clear` it lists this project's resume files (`sessions/active-context.md`, `sessions/<persona>/handoff.md`, `task.md`) for the session to read. A fresh project has none yet — the first `/wrap-up` writes them
 - `<project>/.claude/wiki-config.json` — points at the global skills and scripts in `~/.claude/` (a bundled install has its own copy under `<project>/.claude/` instead)
-- the wiki root (`<project>/llm-wiki/` or a notebook in your vault) — `wiki/` with the folders you chose (`project/`, `research/`, always `sessions/`), plus the seeded `how-to/` usage docs
+- the wiki root (`<project>/llm-wiki/` or a notebook in your vault) — `wiki/` with the folders you chose (`project/`, `research/`, always `sessions/`), plus the seeded `how-to/` usage docs, and with `research/` the trusted-sources page `_config/feeds.md`
 
 ## First actions
 
@@ -35,6 +35,7 @@ If you have a **`research/` folder** (what you ingest):
 - Find a useful article
 - Run `/wiki-update https://example.com/article` — with an empty `research/` it proposes the first subfolder and creates it
 - If you enabled Drive ingest, drop URLs into Google Drive (`__FOR CLAUDE/<project-slug>/`) and batch-process with `/wiki-cycle`
+- List the blogs, YouTube channels and repos you trust in `_config/feeds.md` (beside `wiki/`; `/new-wiki` created it empty unless you named some), or ask the agent to add them; `/wiki-discover` (or `/wiki-cycle`) searches them for new material
 
 Chose neither? You have a plain notes notebook: `/wrap-up` still keeps `sessions/`; create `project/` or `research/` whenever you want the other flows.
 

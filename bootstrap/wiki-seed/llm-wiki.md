@@ -67,7 +67,7 @@ version of this list, see [`user-guide.md`](./user-guide.md) (the whole system o
 
 | Skill | One line |
 |---|---|
-| [`new-wiki`](./skills/new-wiki.md) | Scaffold a new project with the framework (wiki + skills + config), or add a wiki to an existing project or another notebook to the vault |
+| [`new-wiki`](./skills/new-wiki.md) | Scaffold a new project with the framework (wiki + skills + config, and with a `research/` folder the trusted-sources page), or add a wiki to an existing project or another notebook to the vault |
 
 ## How the pieces flow
 

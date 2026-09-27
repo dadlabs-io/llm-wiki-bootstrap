@@ -24,7 +24,7 @@ Install target: `~/.claude/skills/<skill>/SKILL.md`
 
 | Skill | Project type | Purpose |
 |---|---|---|
-| `new-wiki` | both | The bootstrap orchestrator: global tooling install (Phase A / tooling mode), `--mode status` (is the global tooling installed / stale / partial / missing — read before the skills question, 2026-09-09), per-project scaffold (Phase B, with `--project-folder` / `--research-folder stubs\|empty\|none`), `--phase docs` refresh of a project's framework-managed docs |
+| `new-wiki` | both | The bootstrap orchestrator: global tooling install (Phase A / tooling mode), `--mode status` (is the global tooling installed / stale / partial / missing — read before the skills question, 2026-09-09), per-project scaffold (Phase B, with `--project-folder` / `--research-folder stubs\|empty\|none`; with `research/` it also writes the empty trusted-sources page `_config/feeds.md`, and the skill's optional question can fill it, 2026-09-26), `--phase docs` refresh of a project's framework-managed docs |
 | `wiki` | both | Show the wiki's INDEX (browse rather than search) |
 | `wiki-update` | research (primary), both | Ingests external URLs / files into wiki staging |
 | `wiki-search` | both | Hybrid BM25 + vector + LLM-rerank search via qmd |
@@ -65,7 +65,7 @@ Mechanism: `seed_pack_docs()` in `bootstrap/scripts/new-wiki.py` (added 2026-09-
 
 ## A4. Framework-contract docs
 
-Source-of-truth: `bootstrap/topic-template/wiki/best-practices/framework/*.md` (six docs, each `framework-contract: true` with a `framework-version`)
+Source-of-truth: `bootstrap/framework-docs/*.md` (six docs, each `framework-contract: true` with a `framework-version`; `bootstrap/topic-template/wiki/best-practices/framework/` until 2026-09-26, when the retired `/wiki-init`'s template folder went)
 Install target: `<wiki>/project/best-practices/framework/<name>.md` (Phase B for a new project; `--phase docs --target-folder <project>` refreshes an existing one)
 Mechanism: `seed_framework_docs()` in `bootstrap/scripts/new-wiki.py` (2026-09-08): content-compared, a differing project copy is overwritten and named; the reciprocation script's backlink block is ignored in the comparison and preserved. `--check` (same day) reports instead of writing — unchanged / ADD / REPLACE per doc with the version on both sides and a diff, exit 1 when a refresh would change anything. A wiki without `project/` is out of scope and skipped by name. `--all-notebooks` runs check or refresh over every registered notebook with a summary — the standing procedure after a framework change is `--check --all-notebooks`, review, then refresh.
 
@@ -121,6 +121,7 @@ Research/development split removed 2026-06-15 — one merged template set; every
 | `.gitignore.tmpl` | Project root .gitignore | every project init |
 | `seed/wiki/{HOME,README,_MAP}.md.tmpl` | Wiki scaffold files rendered inside `wiki/` (the full `_INDEX.md` is written beside `wiki/` by `wiki-index.py` on the first filing) | every project init |
 | `seed/llm-wiki-readme.md.tmpl` | The wiki root's `README.md` (in-project `llm-wiki/` or the notebook folder) | every project init |
+| `feeds.md.tmpl` | The trusted-sources page `_config/feeds.md` beside `wiki/`, the list `/wiki-discover` searches: its six tables with headers only, for the user to fill (or the sources named at `/new-wiki`'s optional question); never overwrites an existing page. `/wiki-discover` offers the same template when a notebook has none (2026-09-26) | project init with `research/` |
 
 The folder taxonomy under `wiki/` lives in `_wiki_config.py` (the single copy; `new-wiki.py` scaffolds from it and the folder guards read it), in two halves since 2026-09-09: `PROJECT_TAXONOMY` = `project/{components,decisions,architecture,patterns,troubleshooting,best-practices}` and `RESEARCH_TAXONOMY` = `research/{active,long-term,tooling,best-practices,interesting-docs}`, plus `sessions/` always. `/new-wiki` asks for each half separately — `stubs` (the half with those subfolders), `empty` (the root only; subfolders appear as `/wiki-update` or `/wrap-up` file into them) or `none` — via `--project-folder` / `--research-folder`; `taxonomy_for()` turns the two answers into the folder list, and the answers are recorded in the project config as `wiki_folders`. `SCAFFOLD_TAXONOMY` is the default (both halves with stubs). `MERGED_TAXONOMY` is the superset the folder guards in `wiki-update.py` / `wiki-promote.py` recognise: it also carries `LEGACY_RESEARCH_TAXONOMY` = `research/{implementation,skills,orchestration}` — the agentic-design notebook's topics that every new wiki used to receive; recognised for existing wikis, no longer created. The six framework-contract docs land in `project/best-practices/framework/` whenever `project/` exists (section A4).
 
@@ -145,8 +146,9 @@ In-project (a wiki inside a code repo):        Notebook in a vault (linked-noteb
 <project>/                                     <vault>/notebooks/<name>/
 ├── .claude/wiki-config.json                   ├── README.md
 ├── CLAUDE.md, README.md, .gitignore           ├── how-to/llm-wiki/        ← pack usage docs (+ _FRAMEWORK_MANAGED.md marker)
-└── llm-wiki/                                  ├── wiki/                   ← HOME, _MAP, _INDEX + the taxonomy (section C)
-    ├── README.md                              ├── raw/sessions/
+└── llm-wiki/                                  ├── _config/feeds.md        ← with research/ only: the trusted sources, empty
+    ├── README.md                              ├── wiki/                   ← HOME, README, _MAP + the taxonomy (section C)
+    ├── _config/feeds.md  (with research/)     ├── raw/sessions/
     ├── how-to/llm-wiki/                       ├── _inbox/{pending,proposed,done,rejected,reports}/   (first use)
     ├── wiki/                                  └── _signals/               ← truth-status sidecars (first use)
     ├── raw/sessions/

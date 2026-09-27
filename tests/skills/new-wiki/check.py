@@ -55,6 +55,8 @@ PLAN_LABELS = ("tool:", "target folder:", "wiki content:", "folders:", "skills:"
 POINTS_AT_DOCS = re.compile(r"commands\.md|getting-started", re.I)
 ROUND2_OPTIONS = re.compile(r"with the default stubs|yes, empty|notebook in the vault|inside the project", re.I)
 ROUND2_TOPICS = re.compile(r"research folder|project folder|where (does |should )?the wiki live|description", re.I)
+# Q9 (2026-09-26): asked in round 3 when a research folder is chosen; its options or a question naming it
+SOURCES_QUESTION = re.compile(r"trusted[- ]sources?[^\n]*\?|add them later|i'll list some", re.I)
 
 
 def _rmtree(path) -> None:
@@ -160,6 +162,8 @@ def prompt(case: dict, ctx: dict) -> str:
         lines.append(f"Round 1 answers: {a['round1']}.")
     if a.get("round2"):
         lines.append(f"Round 2 answers: {a['round2']}.")
+    if a.get("round3"):
+        lines.append(f"Round 3 answers: {a['round3']}.")
     if a.get("plan"):
         lines.append(f"At the plan summary the user says: `{a['plan']}`.")
     block = ("\n".join(lines) + "\n\n") if lines else ""
@@ -239,7 +243,15 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("target folder is the current folder", f"work/{SLUG}" in norm)
         add("skills line: installed, nothing to install", "installed" in norm and "will be installed" not in norm)
         add("no Drive question (Drive is off)", not DRIVE_QUESTION.search(text))
+        add("plan names the trusted-sources page", "feeds" in norm or "trusted sources" in norm)
         add("waits for the go: nothing scaffolded", not created, created[:8])
+        return res
+
+    if kind == "sources-ask":
+        # a research folder chosen and no round-3 answer: Q9 is asked, and nothing runs before it
+        add("asks the trusted-sources question (Q9)", bool(SOURCES_QUESTION.search(text)),
+            (SOURCES_QUESTION.search(text) or [""])[0])
+        add("nothing scaffolded before the answer", not created, created[:8])
         return res
 
     if kind == "force":
@@ -285,6 +297,16 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("research/ stub folders", len(r_present) == len(RESEARCH_STUBS), r_present)
     else:
         add("research/ empty: no stub folders", rdir.is_dir() and not r_present, r_present)
+
+    feeds = wiki_root / "_config" / "feeds.md"
+    if exp["research"] == "none":
+        add("no trusted-sources page (no research/)", not feeds.exists(), feeds)
+    else:
+        body = feeds.read_text(encoding="utf-8") if feeds.is_file() else ""
+        add("trusted-sources page _config/feeds.md created", bool(body), feeds)
+        add("trusted-sources page has no template placeholder left", body and "{{" not in body)
+        for src in exp.get("feeds", []):
+            add(f"named source in the page: {src}", src in body)
 
     cfg_path = project / ".claude" / "wiki-config.json"
     cfg = {}

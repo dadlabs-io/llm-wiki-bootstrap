@@ -105,7 +105,7 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
         (nb / d).mkdir(parents=True, exist_ok=True)
     fw = nb / "wiki" / "project" / "best-practices" / "framework"
     fw.mkdir(parents=True, exist_ok=True)
-    for doc in (repo / "bootstrap" / "topic-template" / "wiki" / "best-practices" / "framework").glob("*.md"):
+    for doc in (repo / "bootstrap" / "framework-docs").glob("*.md"):
         shutil.copy2(doc, fw / doc.name)
     raw_names = {}
     for sid in _suite()["sources"]:

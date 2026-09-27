@@ -23,7 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "bootstrap" / "scripts"
-FRAMEWORK = ROOT / "bootstrap" / "topic-template" / "wiki" / "best-practices" / "framework"
+FRAMEWORK = ROOT / "bootstrap" / "framework-docs"
 
 results: list[tuple[bool, str]] = []
 

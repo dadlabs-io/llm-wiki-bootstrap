@@ -25,7 +25,7 @@ It is plain Markdown under git. Every entry carries the same frontmatter (tier, 
 
 | Command | What it does |
 |---|---|
-| `/new-wiki` | Start a project, or add a wiki to an existing one: checks the tooling, asks a few questions, scaffolds the wiki. |
+| `/new-wiki` | Start a project, or add a wiki to an existing one: checks the tooling, asks a few questions, scaffolds the wiki (with a `research/` folder, also the empty trusted-sources page discovery reads). |
 | `/wiki-update <url>` | Ingest one source now: fetch it in full, write the entry, file it (`--staged` to review it first). Two or more URLs are queued for the cycle instead. |
 | `/wiki-cycle` | The research cycle: gather, triage, ingest, check, lint, report. `--full` adds the deeper passes. |
 | `/wiki-search "<query>"` | Hybrid search (keyword + meaning + reranking) across the wiki. |
@@ -85,6 +85,11 @@ Modifiers: `<notebook>` (another registered notebook), `--direct` (file into `wi
 /wiki-cycle --ingest-only
 ```
 
+**"Find new material from sources I trust."** List them in `_config/feeds.md` (or ask the agent to add them), then:
+```
+/wiki-cycle --discover-only
+```
+
 **"Weekly deep pass."**
 ```
 /wiki-cycle --full
@@ -109,7 +114,7 @@ A notebook (in a notebooks vault, or `<project>/llm-wiki/` for a wiki kept insid
 <notebook>/
 ├── README.md                     what this notebook covers
 ├── _INDEX.md                     generated: every entry, by folder
-├── _config/feeds.md              the trusted sources discovery searches
+├── _config/feeds.md              the trusted sources discovery searches (with research/; you fill it)
 ├── _signals/<slug>.json          truth-status sidecars (/wiki-verify, /wiki-rollback)
 ├── how-to/                       framework-managed usage docs (this page)
 ├── raw/                          the sources, verbatim; append-only

@@ -1,8 +1,8 @@
 ---
 name: wiki-discover
 description: Discover new content for a topic wiki by searching trusted feeds, deduping against existing entries, and queuing candidates for human review.
-last_reviewed: 2026-09-24
-review_after: 2026-12-24
+last_reviewed: 2026-09-26
+review_after: 2026-12-26
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -42,7 +42,7 @@ Read `_config/feeds.md` at the notebook root (beside `wiki/`). This file defines
 - Vendor/platform blogs
 - Community sources (lower trust, human-approve only)
 
-If the feeds config doesn't exist for the topic, tell the user and offer to create one from the topic-template (shipped with llm-wiki).
+If `_config/feeds.md` doesn't exist, tell the user and offer to create it from the template: `<bootstrap_source>/bootstrap/templates/feeds.md.tmpl` (`bootstrap_source` is in `~/.claude/wiki-config.json`), written to `_config/feeds.md` with `{{PROJECT_NAME}}` replaced by the notebook's name. `/new-wiki` creates it, empty, for every wiki with a `research/` folder (since 2026-09-26). If the page exists but has no rows yet, say so, ask which sources to add (a name and a URL each), add them as rows (`From` 2026-01-01, `To` `—`), and search nothing until there is at least one; `--query` needs no feeds.
 
 ### Step 2 — Determine which feeds to search
 

@@ -712,6 +712,7 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
 #   <target>/.claude/wiki-config.json
 #   <target>/llm-wiki/
 #     ├── README.md                  (rendered from seed/llm-wiki-readme.md.tmpl)
+#     ├── _config/feeds.md           (only with research/: templates/feeds.md.tmpl, the empty trusted-sources page)
 #     ├── how-to/                    (seeded from seed/how-to/)
 #     └── wiki/                     (project's research/dev wiki — was vault)
 #   <target>/CLAUDE.md, README.md, .gitignore (rendered from templates)
@@ -786,7 +787,8 @@ def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False, pr
     return total
 
 
-FRAMEWORK_DOCS_SRC = Path("bootstrap") / "topic-template" / "wiki" / "best-practices" / "framework"
+# bootstrap/topic-template/wiki/best-practices/framework/ until 2026-09-26, when topic-template retired
+FRAMEWORK_DOCS_SRC = Path("bootstrap") / "framework-docs"
 FRAMEWORK_DOCS_DST = Path("project") / "best-practices" / "framework"
 
 
@@ -803,7 +805,7 @@ def seed_framework_docs(bootstrap: Path, wiki_dir: Path, dry_run: bool = False,
     authoring principles, the cycle step contract, ...) at <wiki_dir>/project/best-practices/framework/,
     the path the CLAUDE.md template's precedence rule and every skill point at. Content-compared and
     OVERWRITTEN when different — these are the framework's canonical copies (the gold copy is
-    bootstrap/topic-template/wiki/best-practices/framework/); a project keeps project-specific notes in
+    bootstrap/framework-docs/); a project keeps project-specific notes in
     a sibling file, never by editing these. Reports every file it replaced so an edit that lived only in
     a project copy is visible rather than silently lost (2026-09-08 — five of nine registered notebooks
     had no framework docs at all, and the two that did had drifted in both directions).
@@ -1387,6 +1389,14 @@ def phase_b(args):
         _render_template(seed_readme, paths["llm_wiki_readme"],
                          template_vars, args.dry_run)
 
+    # B7.6 — the trusted-sources page /wiki-discover reads, beside wiki/, created empty whenever
+    # research/ exists (2026-09-26): the user fills it, or names sources at /new-wiki's optional
+    # question and the skill adds them. An existing page is never overwritten.
+    feeds_file = paths["llm_wiki"] / "_config" / "feeds.md" if args.research_folder != "none" else None
+    if feeds_file:
+        _render_template(templates_src / "feeds.md.tmpl", feeds_file, template_vars,
+                         args.dry_run, skip_if_exists=True)
+
     # B8 — write per-project wiki-config.json
     drive_subfolder = args.drive_subfolder if args.drive_subfolder is not None else name
     # Global config (~/.claude/wiki-config.json) holds the bootstrap_source + drive parent
@@ -1543,6 +1553,8 @@ def phase_b(args):
     ]
     if args.research_folder != "none":
         next_steps += [
+            f"TRUSTED SOURCES: list the blogs, channels and repos you trust in `{feeds_file}` (or ask the agent "
+            "to add them); `/wiki-discover` searches them for new material",
             "INGEST research: `/wiki-update <url>` ad-hoc, OR drop links into Drive (__FOR CLAUDE/<project-slug>/) and run `/wiki-cycle` to discover → ingest → lint → promote",
             "Source tiers (research): T1 peer-reviewed/primary, T2 vendor/official, T3 expert, T4 community. Both-sides-stay: never delete contradictory entries, cross-link them",
         ]
@@ -1567,6 +1579,7 @@ def phase_b(args):
         "wiki_folders": folders,
         "project_folder": args.project_folder,
         "research_folder": args.research_folder,
+        "feeds_file": str(feeds_file) if feeds_file else None,
         "skills_install": skills_install,
         "global_tooling": tooling_state,
         "global_tooling_installed_now": global_tooling_installed_now,

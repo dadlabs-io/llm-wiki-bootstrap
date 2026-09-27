@@ -12,6 +12,16 @@
       "say": "/new-wiki harbor log",
       "answers": {
         "round1": "name `harbor-log`; review gate: `Yes — show me candidates and confirm before publishing`",
+        "round2": "description `Wiki for harbor-log`; project folder: `Yes, with the default stubs`; research folder: `Yes, with the default stubs`; where the wiki lives: `Notebook in the vault`",
+        "round3": "trusted sources: `No, I'll add them later`"
+      }
+    },
+    {
+      "id": "asks-sources",
+      "kind": "sources-ask",
+      "say": "/new-wiki harbor log",
+      "answers": {
+        "round1": "name `harbor-log`; review gate: `Yes — show me candidates and confirm before publishing`",
         "round2": "description `Wiki for harbor-log`; project folder: `Yes, with the default stubs`; research folder: `Yes, with the default stubs`; where the wiki lives: `Notebook in the vault`"
       }
     },
@@ -22,10 +32,20 @@
       "answers": {
         "round1": "name `harbor-log`; review gate: `Yes — show me candidates and confirm before publishing`",
         "round2": "description `Wiki for harbor-log`; project folder: `Yes, with the default stubs`; research folder: `Yes, with the default stubs`; where the wiki lives: `Notebook in the vault`",
-        "plan": "go"
+        "plan": "go",
+        "round3": "trusted sources: `Yes, I'll list some` — Simon Willison's blog, simonwillison.net; the Anthropic engineering blog, anthropic.com/engineering"
       },
-      "expect": {"where": "vault", "project": "stubs", "research": "stubs", "gate": true,
-                 "description": "Wiki for harbor-log"}
+      "expect": {
+        "where": "vault",
+        "project": "stubs",
+        "research": "stubs",
+        "gate": true,
+        "description": "Wiki for harbor-log",
+        "feeds": [
+          "simonwillison.net",
+          "anthropic.com/engineering"
+        ]
+      }
     },
     {
       "id": "go-inproject-auto",
@@ -36,26 +56,40 @@
         "round2": "description `Ship-to-shore message log`; project folder: `Yes, empty`; research folder: `No`; where the wiki lives: `Inside the project`",
         "plan": "go"
       },
-      "expect": {"where": "project", "project": "empty", "research": "none", "gate": false,
-                 "description": "Ship-to-shore message log"}
+      "expect": {
+        "where": "project",
+        "project": "empty",
+        "research": "none",
+        "gate": false,
+        "description": "Ship-to-shore message log"
+      }
     },
     {
       "id": "go-notes-only",
       "kind": "scaffold",
-      "tags": ["complex"],
+      "tags": [
+        "complex"
+      ],
       "say": "/new-wiki harbor log",
       "answers": {
         "round1": "name `harbor-log`; review gate: `Yes — show me candidates and confirm before publishing`",
         "round2": "description `Wiki for harbor-log`; project folder: `No`; research folder: `No`; where the wiki lives: `Notebook in the vault`",
         "plan": "go"
       },
-      "expect": {"where": "vault", "project": "none", "research": "none", "gate": true,
-                 "description": "Wiki for harbor-log"}
+      "expect": {
+        "where": "vault",
+        "project": "none",
+        "research": "none",
+        "gate": true,
+        "description": "Wiki for harbor-log"
+      }
     },
     {
       "id": "existing-folder-asks-force",
       "kind": "force",
-      "tags": ["complex"],
+      "tags": [
+        "complex"
+      ],
       "say": "/new-wiki harbor log",
       "seed_claude_md": true,
       "answers": {

@@ -1,8 +1,8 @@
 ---
 name: new-wiki
-description: "Scaffold a new project with the LLM-wiki framework. Checks the global tooling first (use it, install it once, or bundle — never re-copies an installed set), then a two-round interview: name + review gate; description, project folder (stubs / empty / none), research folder (stubs / empty / none), where the wiki lives. Every project gets one merged wiki; each half is opt-in. Sets up llm-wiki/ (or a notebook in the vault), the wiki folders, CLAUDE.md and the project config. Use when the user says \"new project\", \"create a new wiki\", \"install a new wiki\", \"set up a new wiki\", \"bootstrap a project\", \"start a new project\", or types \"/new-wiki\"."
-last_reviewed: 2026-09-09
-review_after: 2026-12-09
+description: "Scaffold a new project with the LLM-wiki framework. Checks the global tooling first (use it, install it once, or bundle — never re-copies an installed set), then a two-round interview: name + review gate; description, project folder (stubs / empty / none), research folder (stubs / empty / none), where the wiki lives; with a research folder, an optional question for trusted sources. Every project gets one merged wiki; each half is opt-in. Sets up llm-wiki/ (or a notebook in the vault), the wiki folders, the empty trusted-sources page /wiki-discover reads (with research/), CLAUDE.md and the project config. Use when the user says \"new project\", \"create a new wiki\", \"install a new wiki\", \"set up a new wiki\", \"bootstrap a project\", \"start a new project\", or types \"/new-wiki\"."
+last_reviewed: 2026-09-26
+review_after: 2026-12-26
 reviewed_for_model: claude-fable-5-1
 ---
 
@@ -28,9 +28,10 @@ Wiki content, one of two places (Q6):
 
 Either way the wiki root holds:
 ├── README.md
+├── _config/feeds.md                   ← only with research/: the trusted sources /wiki-discover searches, created empty (Q9 can fill it)
 ├── how-to/llm-wiki/                   ← pack usage docs (framework-managed)
 ├── wiki/
-│   ├── HOME.md, README.md, _MAP.md, _INDEX.md
+│   ├── HOME.md, README.md, _MAP.md
 │   ├── project/                       ← Q4: stubs | empty | none   (what we build; /wrap-up files here)
 │   │   ├── components/ decisions/ architecture/ patterns/ troubleshooting/   ← "stubs"
 │   │   └── best-practices/framework/  ← the six framework-contract docs (stubs AND empty; skipped for none)
@@ -59,11 +60,12 @@ Round 2 (AskUserQuestion, 4 questions — built from the slug)
    Q4  project folder?   stubs (Recommended) | empty | none
    Q5  research folder?  stubs (Recommended) | empty | none
    Q6  where the wiki lives: notebook in the vault (Recommended) | inside the project
-Round 3 (only when needed, ≤2 questions)
+Round 3 (only when needed, ≤3 questions)
    Q7  skills — ONLY when the state check says partial or missing: install globally now + use it (Recommended) | bundle into the project
    Q8  Drive — ONLY when ~/.claude/wiki-config.json has drive.enabled true: use Drive for this project? + subfolder
+   Q9  trusted sources — ONLY when Q5 is not "No": name some now | add them later (Recommended)
    ↓
-Plan summary (tool, target folder, folder tree, skills line, Drive line) → wait for "yes" / "go" / "create"
+Plan summary (tool, target folder, folder tree, skills line, Drive line, feeds line) → wait for "yes" / "go" / "create"
    ↓
 Phase B — python new-wiki.py --phase B ...   (Phase A already done by install-wiki.ps1)
    B1.  mkdir <target> + git init (skipped inside an existing repo)
@@ -72,9 +74,12 @@ Phase B — python new-wiki.py --phase B ...   (Phase A already done by install-
    B6.  Create the wiki folders from Q4 + Q5 (+ sessions/)
    B6.1 Land the framework-contract docs at wiki/project/best-practices/framework/ (when project/ exists)
    B7.  Render CLAUDE.md / README.md / .gitignore (never overwrites an existing one)
+   B7.6 Create the empty trusted-sources page _config/feeds.md (when research/ exists; never overwrites)
    B8.  Write .claude/wiki-config.json (+ the registry entry for a vault notebook, with project_root = the project folder unless the target is the notebook itself)
    B9.  Drive OAuth walkthrough (only if Drive is on)
    B11. JSON summary + next steps
+   ↓
+Step 1.5  add the sources named at Q9 to _config/feeds.md (only when Q9 named some)
 ```
 
 ## Step-by-step contract
@@ -105,6 +110,8 @@ Also note whether the current folder has a `.cursor/` directory (→ tool `curso
 **Use the `AskUserQuestion` tool with selectable options.** Every option is a concrete, fully-resolved value — no placeholders like `<slug>`. The tool adds `Other` (free text) itself; don't add one. Put `(Recommended)` on the default so it is one click. Round 2 depends on the slug, so the name is asked first.
 
 **Round 1 (2 questions)**
+
+Ask Q1 and Q2, then stop. Don't list round 2's questions or options, not even as a preview of what comes next: they are built from the slug the user has not given yet, and a list of options reads as a question.
 
 **Q1 — Project name (slug).** Default: slugify what the user said (lowercase, dashes for non-alphanumerics, trimmed); `new-project` if they said nothing. Option: `fitness-app (Recommended)`.
 
@@ -140,6 +147,11 @@ This one answer sets two independent booleans (`confirm_before_create` for `/wra
 
 **Q8 — Drive** (only when `~/.claude/wiki-config.json` has `drive.enabled: true`): "Ingest from your Drive folder for this project?" `Yes — __FOR CLAUDE/fitness-app (Recommended)` / `No`. → `--drive-enabled yes --drive-subfolder fitness-app` or `--drive-enabled no`. When Drive is not enabled globally, don't ask; pass `--drive-enabled no`.
 
+**Q9 — Trusted sources** (only when Q5 is not `No`): "The wiki gets a trusted-sources page, the list `/wiki-discover` searches for new material. Do you want to name any sources now (blogs, YouTube channels, GitHub repos, vendor blogs)?"
+- `No, I'll add them later (Recommended)` → the page is created empty; Step 2 says where it is
+- `Yes, I'll list some` → ask for them in plain text (a name and a URL each) before the plan summary; a list typed into `Other` is the same answer
+The page is created either way; this question only decides whether it starts with rows. Nothing is searched at scaffold time.
+
 ### Step 0.5 — Plan summary, then wait
 
 Show one block and wait for "yes" / "go" / "create":
@@ -156,6 +168,7 @@ Skills:          global — installed and current (16 skills, 26 scripts, 1 agen
                  [or: installed; 4 files differ from the clone — `install-wiki.ps1 -RefreshOnly` refreshes them when you want]
                  [or: will be installed now (missing), then used]
 Drive:           off
+Feeds:           _config/feeds.md, empty — add your trusted sources later   [or: 2 sources you named; or: none — no research/ folder]
 Review gate:     manual (confirm before filing and before publishing)
 ```
 
@@ -189,13 +202,17 @@ python "<bootstrap_source>/bootstrap/scripts/new-wiki.py" \
 
 Phase B in global mode checks the tooling itself: it refuses (exit 1, with the fix named) when the global set is partial or missing and `--install-global-if-missing` was not passed; it warns and continues when the set is merely stale; it never re-copies an installed set. The script returns a JSON summary on stdout (`wiki_folders`, `global_tooling`, `global_tooling_installed_now`, `needs_restart`, `next_steps`).
 
+### Step 1.5 — Add the sources named at Q9 (only when Q9 named some)
+
+Phase B's JSON gives the page's path as `feeds_file`. Add one row per named source to the table that fits it (a blog or newsletter, a GitHub repo, an arXiv query, a YouTube channel, a vendor blog, or a community aggregator), in that table's columns: the name, the URL or search pattern, the tier by the rubric in the frontmatter spec (`wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`; without `project/`, the bootstrap copy at `<bootstrap_source>/bootstrap/framework-docs/`), `From` 2026-01-01, `To` `—`, topics from what the user said or the project description, and `named at /new-wiki` in Notes. Edit only the table rows. Don't search the sources now: that is `/wiki-discover`'s job.
+
 ### Step 2 — Read back the summary + post-install reminders
 
 `needs_restart: true` means the global tooling was installed during this run — tell the user to restart Claude Code before the other `/wiki-*` skills will appear.
 
 Then a tailored "you're ready" message, only for the halves that exist:
 
-- **research/ present** — ingest: `/wiki-update <url>` ad-hoc, or drop links into Drive (`<parent>/<slug>/`) and `/wiki-cycle` to discover → ingest → lint → promote. Source tiers T1 primary / T2 vendor / T3 expert / T4 community, set with `--tier`. With `research/` empty: the first `/wiki-update` proposes a subfolder and creates it.
+- **research/ present** — trusted sources: the page is `feeds_file` from the summary; list the sources you added at Step 1.5, or say it is empty and that the user can fill it or ask you to add sources ("add Simon Willison's blog to my trusted sources"), then `/wiki-discover` searches them. Ingest: `/wiki-update <url>` ad-hoc, or drop links into Drive (`<parent>/<slug>/`) and `/wiki-cycle` to discover → ingest → lint → promote. Source tiers T1 primary / T2 vendor / T3 expert / T4 community, set with `--tier`. With `research/` empty: the first `/wiki-update` proposes a subfolder and creates it.
 - **project/ present** — capture: as you code/decide/debug, the agent files durable items (decisions, components, architecture, patterns, troubleshooting) to `_inbox/proposed/` (beside `wiki/`) inline; `/wrap-up` at session end catches the rest.
 - always — `/wiki-promote --review` to approve staged entries; `/wiki-search "<query>"` to look things up; ask in plain English ("what commands do I have", "show me the wiki").
 
@@ -244,4 +261,4 @@ After that one-time setup, `/new-wiki` works in any project folder.
 
 ## Source
 
-Authored 2026-05-12, restructured 2026-05-13 for the per-project model, 2026-09-09 for the state check and the six-question interview (the folder halves opt-in; the nine-question interview and the fixed research taxonomy retired). Companion skills: `/wrap-up` (end-of-session distillation), `/wiki-cycle` (research orchestrator), `/wiki-search`, `/wiki-update`.
+Authored 2026-05-12, restructured 2026-05-13 for the per-project model, 2026-09-09 for the state check and the six-question interview (the folder halves opt-in; the nine-question interview and the fixed research taxonomy retired), 2026-09-26 for the trusted-sources page and its optional question. Companion skills: `/wrap-up` (end-of-session distillation), `/wiki-cycle` (research orchestrator), `/wiki-search`, `/wiki-update`.

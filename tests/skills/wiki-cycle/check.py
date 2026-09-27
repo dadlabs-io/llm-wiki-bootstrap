@@ -136,7 +136,7 @@ def _seed(ctx: dict) -> None:
         (nb / d / ".gitkeep").touch()
     fw = nb / "wiki" / "project" / "best-practices" / "framework"
     fw.mkdir(parents=True, exist_ok=True)
-    for doc in (repo / "bootstrap" / "topic-template" / "wiki" / "best-practices" / "framework").glob("*.md"):
+    for doc in (repo / "bootstrap" / "framework-docs").glob("*.md"):
         shutil.copy2(doc, fw / doc.name)
 
 
