@@ -1,8 +1,8 @@
 ---
 name: wrap-up
 description: "Crystallize the current session's work into the project wiki AND refresh the working-memory dashboards. ALWAYS (1) upserts a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ so the \"what we did\" record builds as you go, (2) refreshes the mutable working-memory dashboards — sessions/<persona>/handoff.md + task.md + sessions/active-context.md (the resume pointer; the memory-bank replacement), and (3) extracts durable knowledge — components/decisions/patterns/bugs — staged to _inbox/proposed/ then promoted to wiki/project/<category>/ (gated by two per-notebook booleans: `confirm_before_create` for Step 2's filing decision, `confirm_before_promote` for Step 6's promotion decision). With --auto-commit it commits the session's work at the end, with --auto-push it also pushes (or the notebook's wrap_up_commit setting says which by default), and every wrap-up ends on one closing line (\"WRAP-UP COMPLETE: committed and pushed\" or what is left). This is the ONE session-close command — it absorbs the retired /upd-docs. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says \"wrap up\", \"wrap-up\", \"/wrap-up\", \"wrap this session\", \"document what we did\", \"crystallize this session\", \"save this work\", \"save progress\", \"save state\", \"update docs\", \"upd-docs\", \"wrap up and commit\", \"wrap up and push\"."
-last_reviewed: 2026-09-24
-review_after: 2026-12-24
+last_reviewed: 2026-09-26
+review_after: 2026-12-26
 reviewed_for_model: claude-opus-5-5
 ---
 
@@ -230,7 +230,16 @@ Wrapped up:
 Raw snapshot: raw/sessions/2026-05-12-drive-cleanup-session.md
 ```
 
-With `confirm_before_create: false`, Step 2's table goes above this report. Include the task-list line whenever the list has an At a glance block: it is where the "remove the done ones?" question gets asked. Then go straight to Step 6 — never end on "run /wiki-promote later".
+With `confirm_before_create: false`, Step 2's table goes above this report. Include the task-list line whenever the list has an At a glance block: it is where the "remove the done ones?" question gets asked. Then Step 5.5, then straight to Step 6 — never end on "run /wiki-promote later".
+
+### Step 5.5 — The skill-suggestion box (only when it has files)
+
+A session that ran into trouble with a skill (a workaround it forced, a check that missed something, a rule that did not fit, the user correcting how the work was done) may leave a suggestion in `<topic_root>/_inbox/skill-suggestions/`: one file per suggestion, named `<skill>--<short-slug>.md`, four lines (`Skill:`, `Seen in:`, `Issue:`, `Fix:`). The wrap-up puts each one to the user (2026-09-26). Look **only at the top level**: `archive/` holds decided ones and is never read. No folder, or no files: say nothing.
+
+1. **In the report**, list each file: the skill, where it was seen, the issue, the fix. Ask per file: **send to agent-builder**, **send to llm-wiki**, **keep for later**, or **drop**. For a skill neither project owns (a plugin, a third-party skill), say whose it looks like; who hears about it is the user's call.
+2. **Don't wait for the answer.** Go on to Steps 6 and 7. A suggestion nobody has answered stays in the box and is shown again next time; it does not make the wrap-up incomplete.
+3. **On the user's answer** (now or later in the session), per file: append one line, `Decision (<YYYY-MM-DD>, <the user's name>): sent to agent-builder` (or `sent to llm-wiki`, or `dropped`), and move the file to `archive/` (create it if needed; a name already there gets `-2`, then `-3`). A file the user keeps stays where it is, unchanged. A sent one also gets one line in the team's Discord channel to the receiving project's bot, tagged with its raw `<@user_id>` from the `discord` block of that notebook in `linked-notebooks.json`, naming the archived file's path; with no Discord tool in the session, give the user that line to post.
+4. **Never send, drop or move a suggestion without the user's word.**
 
 ### Step 6 — Offer to promote (inline)
 
@@ -285,7 +294,7 @@ Items 1–4 run **only when asked**: a typed `--auto-commit` / `--auto-push`, or
    - `✅ WRAP-UP COMPLETE: committed and pushed ✅` (push asked for, every commit pushed)
    - `✅ WRAP-UP COMPLETE: committed, not pushed ✅` (commit asked for)
    - `✅ WRAP-UP COMPLETE: nothing committed ✅` (neither asked for; Step 6's promote commit, if any, is named above it)
-   - `⚠️ WRAP-UP INCOMPLETE: <what is left, e.g. "push rejected in <repo>"> ⚠️` (a commit or push failed, or the user still has to answer something)
+   - `⚠️ WRAP-UP INCOMPLETE: <what is left, e.g. "push rejected in <repo>"> ⚠️` (a commit or push failed, or the user still has to answer something; an open skill suggestion does not count, it waits in its box)
 
    Nothing follows it. A wrap-up that stops to wait for an answer (Step 2's table, Step 6's prompt) has not reached Step 7 and prints no closing line.
 

@@ -11,6 +11,12 @@
 
 ## 2026-09-26
 
+### `/wrap-up` empties the skill-suggestion box (agent-builder's handoff, the user's design)
+- **Why**: a lesson about a skill reached its owner only when someone happened to post it; anything nobody posted stayed in a run's notes. The user's design: a session that ran into trouble with a skill drops a suggestion in the project's box, the wrap-up puts each one to the user, and the user decides who hears about it.
+- **Change**: Step 5.5. `<topic_root>/_inbox/skill-suggestions/` holds one file per suggestion, `<skill>--<short-slug>.md`, four lines (Skill / Seen in / Issue / Fix); agent-builder's do-code-change runs write them. The wrap-up reads only the top level (never `archive/`), lists each file in the report and asks: send to agent-builder, send to llm-wiki, keep, or drop. It does not wait, and an open suggestion does not make the wrap-up incomplete. On the answer it appends `Decision (<date>, <name>): …`, moves the file to `archive/` (`-2` when the name is taken), and gives a sent one a single tagged line to that bot. Nothing moves without the user's word. The wrap-up usage page, the user guide (the command table and the layout tree) and INSTALL-INVENTORY say so.
+- **Other readers of `_inbox/`**: none trips on the folder. `wiki-promote.py` cleans only `proposed/` and `rejected/`; the lint, the link fixer, the indexes and the MAP skip `_inbox/`; search indexes `wiki/` only; triage and the queue read `pending/`, `intake/` and `done/`.
+- **Proven**: two new suite cases, `suggestions-ask` and `suggestions-decide`, with checks proven offline against five simulated sessions; run `20260926-232613`, 8/8 on both models with `auto-create` and `config-push`, 0 regressions ($4.84).
+
 ### `/new-wiki` gives a research wiki its trusted-sources page; the framework docs get their own folder (task #58, the user's design)
 - **Why**: `/wiki-discover` searches the sources listed in `_config/feeds.md`, but `/new-wiki` never created that page. The only copy of the template sat in `bootstrap/topic-template/`, the retired `/wiki-init`'s folder, so a new wiki's first discovery stopped with "no feeds" and an offer to copy a template nobody could find. Only agentic-design and cottage-build had the page, both made by hand.
 - **Change**:

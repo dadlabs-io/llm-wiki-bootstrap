@@ -199,6 +199,18 @@ def _reset_notebook(case: dict, ctx: dict) -> None:
     if "active" in seeds:
         seed(seeds["active"], wiki / "sessions" / "active-context.md")
 
+    # the skill-suggestion box (2026-09-26): top-level suggestions and an archive/ the skill must not read
+    box = nb / "_inbox" / "skill-suggestions"
+    if box.exists():
+        _rmtree(box)
+    sug = case.get("suggestions") or {}
+    for name, body in (sug.get("box") or {}).items():
+        box.mkdir(parents=True, exist_ok=True)
+        (box / name).write_text(body, encoding="utf-8")
+    for name, body in (sug.get("archive") or {}).items():
+        (box / "archive").mkdir(parents=True, exist_ok=True)
+        (box / "archive" / name).write_text(body, encoding="utf-8")
+
     flags = case.get("flags") or {}
     ctx["registry"].write_text(json.dumps(
         {"notebooks": {NOTEBOOK: {"root": f"notebooks/{NOTEBOOK}", **flags}}}, indent=2), encoding="utf-8")
@@ -248,6 +260,8 @@ def prompt(case: dict, ctx: dict) -> str:
         answers.append(f"At the promotion prompt (Step 6), the user answers: `{case['promote_answer']}`.")
     if case.get("finished_task"):
         answers.append(f"For the task list: task {case['finished_task']} was finished in this session.")
+    if case.get("suggestion_answer"):
+        answers.append(f"Shown the skill suggestions, the user (Mark) answers: {case['suggestion_answer']}.")
     block = ("\n".join(answers) + "\n\n") if answers else ""
     return HEADER.format(skill=ctx["skill_dir"].as_posix(), project=ctx["project"].as_posix(),
                          notebook=NOTEBOOK, nb=ctx["notebook"].as_posix(), persona=PERSONA, sid=SID,
@@ -445,6 +459,36 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     if exp.get("creates_dashboards"):
         add("first run created all three dashboards",
             handoff.is_file() and task_md.is_file() and active.is_file())
+
+    # ---- Step 5.5: the skill-suggestion box (2026-09-26)
+    sug = case.get("suggestions") or {}
+    if exp.get("suggestions"):
+        box = ctx["notebook"] / "_inbox" / "skill-suggestions"
+        top = sorted(p.name for p in box.glob("*.md")) if box.is_dir() else []
+        low = text.lower()
+        old_archive = {n: (box / "archive" / n).read_text(encoding="utf-8")
+                       if (box / "archive" / n).is_file() else None for n in sug.get("archive", {})}
+        add("archive/ entries untouched", all(old_archive[n] == b for n, b in sug["archive"].items()),
+            [n for n, b in sug["archive"].items() if old_archive[n] != b])
+        add("archive/ not read into the report (its wiki-refresh suggestion not shown)", "wiki-refresh" not in low)
+        if exp["suggestions"] == "ask":
+            add("lists every suggestion in the box", "verifying-before-done" in low and "wiki-lint" in low)
+            add("offers the four choices",
+                all(w in low for w in ("agent-builder", "llm-wiki", "keep", "drop")))
+            unchanged = top == sorted(sug["box"]) and all(
+                (box / n).read_text(encoding="utf-8") == b for n, b in sug["box"].items())
+            add("nothing moved or changed without an answer", unchanged, top)
+        else:
+            sent = box / "archive" / "verifying-before-done--freeze-step-takes-only-a-number.md"
+            dropped = box / "archive" / "wiki-lint--flags-quotes-in-code-2.md"
+            st = sent.read_text(encoding="utf-8") if sent.is_file() else ""
+            dt = dropped.read_text(encoding="utf-8") if dropped.is_file() else ""
+            add("the box's top level emptied by the answers", not top, top)
+            add("sent one archived with its decision line",
+                "Decision (" in st and "agent-builder" in st and st.startswith(sug["box"][sent.name]), st[-160:])
+            add("dropped one archived as -2 (the name was taken) with its decision line",
+                "Decision (" in dt and "dropped" in dt.lower(), dt[-160:] or sorted(
+                    p.name for p in (box / "archive").glob("*")))
 
     # ---- Step 7: the closing line ends every wrap-up; the commit and push only with a flag
     final = str(run["result"].get("result") or "").strip().splitlines()

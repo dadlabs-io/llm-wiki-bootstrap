@@ -38,7 +38,7 @@ Install target: `~/.claude/skills/<skill>/SKILL.md`
 | `wiki-promote` | both | Stage → promote with backlinks, the backlink rebuild, INDEX and MAP regen (runs `/wiki-verify` as a sub-step with `--verify`) |
 | `wiki-verify` | both | Flip an entry unverified → verified via sidecar (truth-status lifecycle; added 2026-05-25, registered to travel 2026-07-07) |
 | `wiki-rollback` | both | Roll an entry back to its verified ancestor (pairs with `wiki-verify`; added 2026-05-25, registered to travel 2026-07-07) |
-| `wrap-up` | development | Session-end distillation into wiki entries (written 2026-05-12) |
+| `wrap-up` | development | Session-end distillation into wiki entries (written 2026-05-12); since 2026-09-26 it also puts each file in `_inbox/skill-suggestions/` to the user (send to agent-builder / llm-wiki, keep, drop) and archives the decided ones |
 | `task-list` | both | The project's task list: the At a glance block at the top of `sessions/<persona>/task.md` — one table per owner, numbers never reused, a task removed only on the user's word; `/task-list` or plain speech ("add a task", "delete task 4"). Every edit through `wiki-tasks.py` (2026-09-15; not `/tasks`, which is Claude Code's background-jobs panel) |
 | `wiki-triage` | research (primary), both | Gives each untriaged research source in `_inbox/pending/` one owner: moves its ticket into the `_inbox/intake/<folder>/` bucket whose purpose fits (the buckets are the frontmatter of `_inbox/intake/README.md`; `main` is the catch-all), captures the raw for items another reader gets, logs each call as a precedent, tags each other reader once. Every move through `wiki-triage.py` (2026-09-24, task #42) |
 
@@ -149,7 +149,7 @@ In-project (a wiki inside a code repo):        Notebook in a vault (linked-noteb
 └── llm-wiki/                                  ├── _config/feeds.md        ← with research/ only: the trusted sources, empty
     ├── README.md                              ├── wiki/                   ← HOME, README, _MAP + the taxonomy (section C)
     ├── _config/feeds.md  (with research/)     ├── raw/sessions/
-    ├── how-to/llm-wiki/                       ├── _inbox/{pending,proposed,done,rejected,reports}/   (first use)
+    ├── how-to/llm-wiki/                       ├── _inbox/{pending,proposed,done,rejected,reports,skill-suggestions}/   (first use)
     ├── wiki/                                  └── _signals/               ← truth-status sidecars (first use)
     ├── raw/sessions/
     └── _inbox/, _signals/  (first use)

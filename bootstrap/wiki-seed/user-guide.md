@@ -29,7 +29,7 @@ It is plain Markdown under git. Every entry carries the same frontmatter (tier, 
 | `/wiki-update <url>` | Ingest one source now: fetch it in full, write the entry, file it (`--staged` to review it first). Two or more URLs are queued for the cycle instead. |
 | `/wiki-cycle` | The research cycle: gather, triage, ingest, check, lint, report. `--full` adds the deeper passes. |
 | `/wiki-search "<query>"` | Hybrid search (keyword + meaning + reranking) across the wiki. |
-| `/wrap-up` | End of a session: the journal, the resume files, and the session's durable entries, staged and offered for promotion. |
+| `/wrap-up` | End of a session: the journal, the resume files, and the session's durable entries, staged and offered for promotion; any skill suggestions in the box are put to you. |
 | `/task-list` | The project's task list; plain speech works too ("add a task …", "mark 3 done"). |
 | `/wiki-promote` | Review staged entries and move the ones you approve into `wiki/`. |
 | `/wiki-verify` | Mark an entry verified. Entries never certify themselves. |
@@ -126,6 +126,7 @@ A notebook (in a notebooks vault, or `<project>/llm-wiki/` for a wiki kept insid
 │   ├── proposed/                 staged entries awaiting /wiki-promote   (only while it has some)
 │   ├── rejected/                 entries declined at promotion           (only while it has some)
 │   ├── discovered/               discovery checklists                    (only while it has some)
+│   ├── skill-suggestions/        notes on a skill that got in the way; /wrap-up asks what to do with each; archive/ keeps the decided ones
 │   └── reports/                  every generated report; one folder per cycle run
 └── wiki/
     ├── HOME.md                   the landing page
