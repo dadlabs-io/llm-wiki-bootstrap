@@ -107,8 +107,26 @@ def main() -> int:
               not sh('python x.py > "$T/out.json" 2> "$T/err.txt"; tail -5 "$T/err.txt"'))
         check("cmd >log.txt && head log.txt -> allow (attached redirect)",
               not sh("python x.py >log.txt && head -20 log.txt"))
-        check("cmd 2> err.txt; tail -5 notes.txt -> deny (a different file)",
-              sh('python x.py 2> err.txt; tail -5 notes.txt'))
+        check("cmd 2> err.txt; tail -5 notes.md -> deny (a different file)",
+              sh('python x.py 2> err.txt; tail -5 notes.md'))
+        # 2026-09-26, the first week's review: 27 false blocks, all output rather than documents
+        check("tail an earlier command's .txt output -> allow", not sh("cat -A /tmp/pytest_out.txt | tail -5"))
+        check("tail -12 a repo proof-output .txt -> allow",
+              not sh("tail -12 .do-code-change/x/round6-proof/proof-output-six-frozen-tests.txt"))
+        check("tail a $TEMP .txt capture -> allow", not sh('tail -5 "$TEMP/pytest_out.txt"'))
+        check("Read part of Claude Code's saved tool output (.txt) -> allow",
+              not denied(pre("Read", {"file_path": str(tmp / "tool-results" / "b1.txt"), "limit": 40}, tmp)))
+        check("head a cloned source's README in a scratchpad -> deny (sources are read whole)",
+              sh('head -60 "C:/Users/me/AppData/Local/Temp/claude/p/abc/scratchpad/clones/repo/README.md"'))
+        check("sed -i on a doc, then head it -> allow (checking its own edit)",
+              not sh("sed -i 's/^a$/b/' skills/x/SKILL.md && head -8 skills/x/SKILL.md"))
+        check("printf >> skills/$s/README.md in a loop, then tail one -> allow",
+              not sh("for s in a b; do printf 'x' >> skills/$s/evals/README.md; done; "
+                     "tail -5 skills/b/evals/README.md"))
+        check("sed -i one doc, head a different doc -> deny",
+              sh("sed -i 's/a/b/' skills/x/SKILL.md && head -8 skills/y/SKILL.md"))
+        check("head a file named scratchpad.md in a real folder -> deny",
+              sh("sed -n '1,20p' _inbox/reports/2026-09-24-01/scratchpad.md"))
         check("cmd 2>&1 | tail; tail -2 task.md -> deny (2>&1 names no file)",
               sh("python x.py 2>&1 | tail -3; tail -2 main/task.md"))
         check("PowerShell Get-Content -TotalCount -> deny",

@@ -11,6 +11,12 @@
 
 ## 2026-09-26
 
+### `read-guard.py`: output files and a session's own edits are not documents (task #32, the first week's review)
+- **Why**: every block since 2026-09-19 was reviewed: 195 refused commands and 79 blocked turn-ends across 401 transcripts. About 120 refusals were right (a partial read of a skill, plan, README or wiki entry, or a `cat` the shell would have cut off, each then read whole) and 45 came from the headless skill-test sessions, which the suites already count apart. About 27 were wrong. `.txt` counted as a document, so `tail` on a test result, a script's report or Claude Code's saved tool output was refused. And a session checking its own edit (`sed -i … && head -8` the same file, or a `printf >> skills/$s/…` loop then `tail`) was refused, because the guard only knew redirect targets spelled out in full.
+- **Change**: `.txt` is no longer a document. A file the same command edits with `sed -i` counts as that command's output, like a redirect target, and an output path built from a shell variable matches any path of its shape. Folders are deliberately not exempt: a scratchpad also holds cloned source repositories, and the replay showed 11 partial reads of those (WHITEPAPER.md, README.md, SKILL.md) that must stay blocked.
+- **Proven**: nine new checks in `tests/hooks/test_read_guard.py` from the review's real cases, three of them must-still-deny (a different file after `sed -i`, a real `scratchpad.md` in a notebook, a cloned source's README in a scratchpad). 50/50 on the fix; the old guard fails exactly the six new allow cases (44/50). Replayed over the 195 real refusals: 25 now allowed, every one an output file or an own-edit check; the other 170 unchanged.
+- **Open, the user's call**: do-code-change's append-only logs (`doubt-log.md`, `checkpoints.md`) caused about 34 blocks. A session wanting the newest entry has to read the whole log; they stay documents for now.
+
 ### `/new-wiki`'s next steps name the wiki's real README (task #36, found 2026-09-18)
 - **Why**: Phase B's closing `next_steps` said "Read `llm-wiki/README.md` … + `llm-wiki/how-to/llm-wiki/commands.md`" for every wiki. `llm-wiki/` exists only for a wiki inside the project; a vault notebook (the default) has its README at the notebook root, so the advice pointed at nothing.
 - **Change**: the line gives the full path of the wiki root's README and of `how-to/llm-wiki/commands.md`, taken from `project_paths()`, so it is right for both layouts.

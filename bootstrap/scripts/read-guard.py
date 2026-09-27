@@ -45,7 +45,11 @@ import shlex
 import sys
 from pathlib import Path
 
-DOC_EXTS = {".md", ".markdown", ".mdx", ".txt", ".rst", ".adoc", ".org"}
+# `.txt` left out on 2026-09-26: in the first week every `.txt` block was a command's saved
+# output (test results, a script's report, Claude Code's saved tool output), never a document
+# anyone was asked to read. Folders are not exempt: a scratchpad also holds cloned source
+# repositories, whose documents are read whole like any other.
+DOC_EXTS = {".md", ".markdown", ".mdx", ".rst", ".adoc", ".org"}
 # A Read above this size may need several pages (the Read tool caps one call at
 # about 25,000 tokens); a start-capped Read is only allowed above it.
 ONE_READ_MAX_BYTES = 60_000
@@ -162,12 +166,14 @@ def check_read(tool_input: dict, cwd: str) -> str | None:
 
 
 def _outputs(command: str) -> set[str]:
-    """Files this command writes by redirection. Printing part of one is looking at the
-    command's own output (a stderr capture, a log), not reading a document — the same
-    reason the end-of-turn check skips a document the session wrote itself."""
+    """Files this command writes: by redirection, or edited in place with `sed -i`. Printing
+    part of one is looking at the command's own output or checking its own edit, not reading
+    a document — the same reason the end-of-turn check skips a document the session wrote."""
     out: set[str] = set()
     for seg, _ in segments(command):
         words = _words(seg)
+        if words and Path(words[0]).name.lower() == "sed" and any(w.startswith("-i") for w in words):
+            out.update(w for w in _operands(words) if is_doc(w))
         for i, w in enumerate(words):
             m = _REDIRECT_TO_FILE.match(w)
             if not m:
@@ -176,6 +182,17 @@ def _outputs(command: str) -> set[str]:
             if target:
                 out.add(target.strip("'\""))
     return out
+
+
+_SHELL_VAR = re.compile(r"\$\{?\w+\}?")
+
+
+def _is_output(path: str, outputs: set[str]) -> bool:
+    """`path` is one of the command's outputs; an output path built from a variable
+    (`skills/$s/README.md` in a loop) matches any path of its shape."""
+    return path in outputs or any(
+        "$" in o and re.fullmatch(".*?".join(re.escape(x) for x in _SHELL_VAR.split(o)), path)
+        for o in outputs)
 
 
 def check_shell(command: str, cwd: str) -> str | None:
@@ -189,7 +206,7 @@ def check_shell(command: str, cwd: str) -> str | None:
         if not words:
             continue
         cmd = Path(words[0]).name.lower()
-        docs = [w for w in _operands(words) if is_doc(w) and w not in own_output]
+        docs = [w for w in _operands(words) if is_doc(w) and not _is_output(w, own_output)]
         partial_unix = cmd in ("head", "tail") or (cmd == "sed" and "-n" in words and "-i" not in words)
         if partial_unix and (docs or docs_so_far):
             names = ", ".join(Path(d).name for d in (docs or docs_so_far))
