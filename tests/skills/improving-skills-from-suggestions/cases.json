@@ -1,0 +1,287 @@
+{
+  "skill": "improving-skills-from-suggestions",
+  "source": "agent-builder-bootstrap 061b8e8 skills/improving-skills-from-suggestions/evals/improving-skills-from-suggestions.jsonl, cases kept word for word (fixture_dir re-rooted)",
+  "cases": [
+    {
+      "id": "mixed-box-proposes-one",
+      "should_trigger": true,
+      "tier": "edit",
+      "timeout": 600,
+      "prompt": "Run the improver over the skill suggestions we've received.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n\n## Gotchas\n- **A UTF-8 BOM in the input corrupts the first header** (2026-09-01): export.py opens the input with\n  `encoding=\"utf-8-sig\"`, which strips the BOM, so the first column reads `id`, not `\\ufeffid`.\n",
+          "skills/csv-exporter/scripts/export.py": "import csv\nimport sys\n\n\ndef export(path, out):\n    with open(path, encoding=\"utf-8-sig\", newline=\"\") as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        body = list(rows)\n    with open(out, \"w\", encoding=\"utf-8\", newline=\"\") as fh:\n        w = csv.writer(fh)\n        w.writerow(header)\n        w.writerows(body)\n\n\nif __name__ == \"__main__\":\n    export(sys.argv[1], sys.argv[2])\n",
+          "demo-notebook/raw/code-changes/2026-09-20-csv-export/checkpoints.md": "# Checkpoints — csv-export\n\n## Requirements confirmation — 2026-09-20\nMark: \"yes, export every report as CSV\".\n\n## Implement — 2026-09-20\nStep 2's red test fed tests/data/empty.csv to the exporter: `export.py` raised StopIteration at `header = next(rows)`\non the empty input file instead of writing a CSV. Worked around in our code by checking the file size before calling\nexport.py and writing the header ourselves. The exporter itself was left as it is.\n\n## Finishing decision — 2026-09-20\nMark: \"merge it\".\n",
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": "Skill: csv-exporter\nSeen in: csv-export (2026-09-20)\nIssue: export.py raises StopIteration on an empty input file; the run worked around it by checking the file size first.\nFix: write just the header row when the input is empty\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/csv-exporter--empty-input-crashes.md\n",
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--bom-in-header.md": "Skill: csv-exporter\nSeen in: csv-export (2026-09-20)\nIssue: A UTF-8 BOM at the start of the input made the first header read as \\ufeffid.\nFix: open the input with utf-8-sig\n",
+          "notebook/_inbox/skill-suggestions/received/wiki-update--quote-reworded.md": "Skill: wiki-update\nSeen in: a session (2026-09-22)\nIssue: A blockquote in a research entry was reworded, not copied.\nFix: check every quote against the raw\n"
+        }
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md",
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--bom-in-header.md",
+          "notebook/_inbox/skill-suggestions/received/wiki-update--quote-reworded.md"
+        ],
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/received/archive"
+        ],
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,sys; f=sorted(glob.glob('notebook/raw/skill-suggestions/*/proposals.md')); t=open(f[-1],encoding='utf-8').read() if f else ''; print(f); sys.exit(0 if ('csv-exporter' in t and 'checkpoints.md' in t and 'wiki-update' in t) else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "Did the model propose a change to csv-exporter for the crash on an empty input file?",
+          "expect": true
+        },
+        {
+          "q": "Did the model tell the user the UTF-8 BOM suggestion is already covered by csv-exporter (its Gotchas or export.py)?",
+          "expect": true,
+          "quote_from": "user"
+        },
+        {
+          "q": "Did the model tell the user that wiki-update is not part of this library (not this library's to change)?",
+          "expect": true,
+          "quote_from": "user"
+        },
+        {
+          "q": "Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it for later)?",
+          "expect": true,
+          "quote_from": "user"
+        }
+      ],
+      "judge": "One proposal (P1: csv-exporter, the empty-input StopIteration at `header = next(rows)`, a failing test first, labelled tactical or strategic, evidence quoted from demo-notebook's csv-export checkpoints.md); the BOM suggestion set aside as already covered, citing the Gotchas line or the utf-8-sig open; wiki-update set aside as not this library's (llm-wiki's). The proposals file lists all three; nothing is decided, no suggestion is archived, and csv-exporter is not edited."
+    },
+    {
+      "id": "sent-suggestion-is-filed",
+      "should_trigger": true,
+      "tier": "edit",
+      "prompt": "demo-app's wrap-up sent us a skill suggestion: demo-notebook/_inbox/skill-suggestions/csv-exporter--empty-input-crashes.md. File it for the next improver pass.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n\n## Gotchas\n- **A UTF-8 BOM in the input corrupts the first header** (2026-09-01): export.py opens the input with\n  `encoding=\"utf-8-sig\"`, which strips the BOM, so the first column reads `id`, not `\\ufeffid`.\n",
+          "demo-notebook/_inbox/skill-suggestions/csv-exporter--empty-input-crashes.md": "Skill: csv-exporter\nSeen in: csv-export (2026-09-20)\nIssue: export.py raises StopIteration on an empty input file; the run worked around it by checking the file size first.\nFix: write just the header row when the input is empty\n"
+        }
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md"
+        ],
+        "file_contains": {
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": [
+            "Skill: csv-exporter",
+            "Received from:",
+            "From: demo-notebook"
+          ]
+        },
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/proposals",
+          "notebook/raw/skill-suggestions",
+          "demo-notebook/_inbox/skill-suggestions/csv-exporter--empty-input-crashes.md"
+        ],
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "judge": "Step 0 only: the file is received into notebook/_inbox/skill-suggestions/received/ with a Received from: line, and no pass is run (no proposals file) until one is asked for."
+    },
+    {
+      "id": "empty-box-writes-nothing",
+      "should_trigger": true,
+      "tier": "edit",
+      "prompt": "What have the skill suggestions taught us? Go through what we've received.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n\n## Gotchas\n- **A UTF-8 BOM in the input corrupts the first header** (2026-09-01): export.py opens the input with\n  `encoding=\"utf-8-sig\"`, which strips the BOM, so the first column reads `id`, not `\\ufeffid`.\n",
+          "notebook/raw/skill-suggestions/2026-09-21-demo-notebook/csv-exporter--bom-in-header.md": "Skill: csv-exporter\nSeen in: csv-export (2026-09-20)\nIssue: A UTF-8 BOM broke the first header.\nFix: utf-8-sig\nDecision (2026-09-21, Mark): already covered: skills/csv-exporter/SKILL.md Gotchas\n",
+          "notebook/raw/skill-suggestions/2026-09-21-demo-notebook/proposals.md": "# Proposals, 2026-09-21\n\n(the earlier pass that decided this suggestion)\n"
+        }
+      },
+      "expect": {
+        "regex": [
+          "(?i)(no|none of the|nothing).{0,40}(suggestion|received|to propose)|received (folder )?(is )?empty"
+        ],
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/proposals"
+        ],
+        "files_exist": [
+          "notebook/raw/skill-suggestions/2026-09-21-demo-notebook/csv-exporter--bom-in-header.md"
+        ],
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,sys; f=glob.glob('notebook/raw/skill-suggestions/*/proposals.md'); print(f); sys.exit(0 if len(f) == 1 else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "judge": "The list is empty (the one file is in received/archive/, already decided): the model says nothing has been received, writes no proposals file, and does not re-open the archived suggestion."
+    },
+    {
+      "id": "turned-down-before-not-reproposed",
+      "should_trigger": true,
+      "tier": "gate",
+      "prompt": "Run the improver on the received skill suggestions.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n\n## Gotchas\n- **A UTF-8 BOM in the input corrupts the first header** (2026-09-01): export.py opens the input with\n  `encoding=\"utf-8-sig\"`, which strips the BOM, so the first column reads `id`, not `\\ufeffid`.\n",
+          "skills/csv-exporter/scripts/export.py": "import csv\nimport sys\n\n\ndef export(path, out):\n    with open(path, encoding=\"utf-8-sig\", newline=\"\") as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        body = list(rows)\n    with open(out, \"w\", encoding=\"utf-8\", newline=\"\") as fh:\n        w = csv.writer(fh)\n        w.writerow(header)\n        w.writerows(body)\n\n\nif __name__ == \"__main__\":\n    export(sys.argv[1], sys.argv[2])\n",
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--quote-every-field.md": "Skill: csv-exporter\nSeen in: report-export (2026-09-24)\nIssue: export.py should quote every field.\nFix: csv.QUOTE_ALL\n",
+          "notebook/raw/skill-suggestions/2026-09-21-demo-notebook/csv-exporter--quote-every-field.md": "Skill: csv-exporter\nSeen in: csv-export (2026-09-20)\nIssue: export.py should quote every field.\nFix: csv.QUOTE_ALL\nDecision (2026-09-21, Mark): turned down: quoting only where needed is the CSV convention and two consumers rely on it\n",
+          "notebook/raw/skill-suggestions/2026-09-21-demo-notebook/proposals.md": "# Proposals, 2026-09-21\n\n(the earlier pass that decided this suggestion)\n"
+        }
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--quote-every-field.md"
+        ],
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "Did the model propose again that export.py quote every field?",
+          "expect": false
+        },
+        {
+          "q": "Did the model tell the user this suggestion was turned down before, with the earlier reason (the CSV convention, or consumers relying on it)?",
+          "expect": true,
+          "quote_from": "user"
+        }
+      ],
+      "judge": "The new suggestion matches a turned-down one word for word and carries no new evidence (no record, same issue): it is listed as turned down before with Mark's earlier reason quoted, not proposed; nothing is decided or archived."
+    },
+    {
+      "id": "replay-freeze-step-label",
+      "should_trigger": true,
+      "tier": "gate",
+      "timeout": 600,
+      "prompt": "Please run the improver over the skill suggestions agent-builder has received.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"investment-agent\": {\"root\": \"investment-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "investment-notebook/wiki/README.md": "# investment-agent wiki\n",
+          "investment-notebook/raw/code-changes/2026-09-26-committee-names-from-history/checkpoints.md": "# Checkpoints — committee-names-from-history (task #39)\n\n## Fix round 1 — re-checked by the orchestrator, 2026-09-26\n\n`developer` (unnamed). (3) `has_loaded_commit_for_path` and its SQL deleted (0 references left).\nRe-run fresh by the orchestrator: pytest \"595 passed\"; ruff check, format (162), pyright clean;\ncheck-freeze PASS (22); scope-guard PASS (17); floor-guard clean, exit 0; CLI tests 23 passed. The\nfreeze script takes only an integer `--step`: the three new entries were frozen at 4 and their\n`frozen_at_step` relabelled \"fix-1\" by hand (metadata, not hashed).\n",
+          "notebook/_inbox/skill-suggestions/received/verifying-before-done--check-freeze-py-step-takes-only.md": "Skill: verifying-before-done\nSeen in: committee-names-from-history (2026-09-26)\nIssue: check-freeze.py --step takes only an integer, so the fix round's freeze entries were relabelled by hand.\nFix: let --step take a label (e.g. --step fix-1)\nReceived from: investment-notebook/_inbox/skill-suggestions/archive/verifying-before-done--check-freeze-py-step-takes-only.md\n"
+        },
+        "fixture_dir": "fixtures/replay-freeze-step-label"
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/verifying-before-done--check-freeze-py-step-takes-only.md"
+        ],
+        "commands": [
+          {
+            "cmd": "python -c \"import sys; t=open('skills/verifying-before-done/scripts/check-freeze.py',encoding='utf-8').read(); sys.exit(0 if 'add_argument(\\\"--step\\\", type=int' in t else 1)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,sys; f=sorted(glob.glob('notebook/raw/skill-suggestions/*/proposals.md')); t=open(f[-1],encoding='utf-8').read() if f else ''; print(f); sys.exit(0 if ('check-freeze' in t and '--step' in t and 'checkpoints.md' in t) else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "Did the model point at check-freeze.py's --step argument being declared as an integer?",
+          "expect": true
+        },
+        {
+          "q": "Did the model say whether the proposed change is tactical or strategic?",
+          "expect": true
+        },
+        {
+          "q": "Did the proposal include writing a failing test (a self-test case) before changing the script?",
+          "expect": true
+        }
+      ],
+      "judge": "Replays the first real suggestion (investment-agent, 2026-09-26): one proposal targeting verifying-before-done's check-freeze.py (`--step` is `type=int`), a label accepted beside a number, a failing self-test case first, labelled strategic, evidence copied from the record's 'Fix round 1' paragraph; check-freeze.py is not edited and the suggestion stays in received/."
+    },
+    {
+      "id": "should-not-trigger-direct-gotcha-edit",
+      "should_trigger": false,
+      "prompt": "Add this line to the end of the Gotchas section of skills/csv-exporter/SKILL.md: \"- export.py raises StopIteration on an empty input file; check the file size first.\"",
+      "allowed_tools": "Skill,Read,Grep,Glob,Edit,Write,Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n\n## Gotchas\n- **A UTF-8 BOM in the input corrupts the first header** (2026-09-01): export.py opens the input with\n  `encoding=\"utf-8-sig\"`, which strips the BOM, so the first column reads `id`, not `\\ufeffid`.\n",
+          "skills/csv-exporter/scripts/export.py": "import csv\nimport sys\n\n\ndef export(path, out):\n    with open(path, encoding=\"utf-8-sig\", newline=\"\") as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        body = list(rows)\n    with open(out, \"w\", encoding=\"utf-8\", newline=\"\") as fh:\n        w = csv.writer(fh)\n        w.writerow(header)\n        w.writerows(body)\n\n\nif __name__ == \"__main__\":\n    export(sys.argv[1], sys.argv[2])\n",
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--bom-in-header.md": "Skill: csv-exporter\nSeen in: csv-export (2026-09-20)\nIssue: A UTF-8 BOM broke the first header.\nFix: utf-8-sig\n"
+        }
+      },
+      "expect": {
+        "forbidden_calls": [
+          {
+            "tool": "Skill",
+            "input": "improving-skills-from-suggestions"
+          }
+        ],
+        "file_contains": {
+          "skills/csv-exporter/SKILL.md": [
+            "StopIteration on an empty input file"
+          ]
+        },
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/proposals",
+          "notebook/raw/skill-suggestions"
+        ],
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--bom-in-header.md"
+        ]
+      },
+      "judge": "A direct edit Mark asked for: the line is added to the Gotchas; the improver is not invoked, no proposals file is written, and the received suggestion is left alone."
+    }
+  ]
+}

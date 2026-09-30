@@ -1,0 +1,147 @@
+{
+  "skill": "writing-skill-suggestions",
+  "source": "agent-builder-bootstrap 061b8e8 skills/writing-skill-suggestions/evals/writing-skill-suggestions.jsonl, cases kept word for word (fixture_dir re-rooted)",
+  "cases": [
+    {
+      "id": "friction-logged",
+      "should_trigger": true,
+      "tier": "edit",
+      "prompt": "Heads up: while freezing tests just now, the check-freeze.py script from the verifying-before-done skill refused `--step fix-1`, because --step only takes a number, so I froze the new entries at 4 and fixed the label by hand. Make sure whoever maintains that skill hears about it.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Bash(python *)",
+      "setup": {
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"demo-app\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"demo-app\": {\"root\": \"notebook\"}}}",
+          "notebook/wiki/README.md": "# demo-app wiki\n",
+          "src/parser.py": "import csv\n\n\ndef parse(path):\n    with open(path, newline='') as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        return header, list(rows)\n",
+          "README.md": "# demo-app\n\nParses CSV exports.\n"
+        }
+      },
+      "expect": {
+        "commands": [
+          {
+            "cmd": "python -c \"import glob,sys; f=sorted(glob.glob('notebook/_inbox/skill-suggestions/verifying-before-done--*.md')); t=open(f[0],encoding='utf-8').read() if f else ''; print(f, t); sys.exit(0 if (f and 'Skill: verifying-before-done' in t and 'Seen in:' in t and 'Issue:' in t and 'Fix:' in t and '--step' in t) else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "Did the model ask the user a question before writing the suggestion down?",
+          "expect": false,
+          "quote_from": "user"
+        }
+      ],
+      "judge": "One suggestion in notebook/_inbox/skill-suggestions/, named verifying-before-done--…, four lines: the skill (not check-freeze.py), where it was seen, the --step issue, the fix (a label accepted); written with the skill's script, no question asked first."
+    },
+    {
+      "id": "user-corrects-a-skill",
+      "should_trigger": true,
+      "tier": "edit",
+      "prompt": "The review the reviewing-code skill did on my change put its no-spec line at the top of the summary but never put the item in the needs-a-human bucket, even though its own rules say a MEDIUM file with no spec belongs there. I fixed the summary by hand. Note that for whoever maintains the skill, then tell me when it's done.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Bash(python *)",
+      "setup": {
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"demo-app\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"demo-app\": {\"root\": \"notebook\"}}}",
+          "notebook/wiki/README.md": "# demo-app wiki\n",
+          "src/parser.py": "import csv\n\n\ndef parse(path):\n    with open(path, newline='') as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        return header, list(rows)\n",
+          "README.md": "# demo-app\n\nParses CSV exports.\n"
+        }
+      },
+      "expect": {
+        "commands": [
+          {
+            "cmd": "python -c \"import glob,sys; f=sorted(glob.glob('notebook/_inbox/skill-suggestions/reviewing-code--*.md')); t=open(f[0],encoding='utf-8').read() if f else ''; print(f, t); sys.exit(0 if (f and 'Skill: reviewing-code' in t and 'Seen in:' in t and 'Issue:' in t and 'Fix:' in t and 'needs-a-human' in t) else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "judge": "The user's correction of how a skill did its work is a skill suggestion: reviewing-code--… in the box with the issue (no-spec item missing from needs-a-human) and the fix; the model says it is done."
+    },
+    {
+      "id": "should-not-trigger-project-lesson",
+      "should_trigger": false,
+      "prompt": "Note for later: our parser in src/parser.py crashes with StopIteration on an empty CSV file. We should handle that case when we next touch the parser. What would the fix look like?",
+      "allowed_tools": "Skill,Read,Grep,Glob,Bash(python *)",
+      "setup": {
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"demo-app\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"demo-app\": {\"root\": \"notebook\"}}}",
+          "notebook/wiki/README.md": "# demo-app wiki\n",
+          "src/parser.py": "import csv\n\n\ndef parse(path):\n    with open(path, newline='') as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        return header, list(rows)\n",
+          "README.md": "# demo-app\n\nParses CSV exports.\n"
+        }
+      },
+      "expect": {
+        "forbidden_calls": [
+          {
+            "tool": "Skill",
+            "input": "writing-skill-suggestions"
+          }
+        ],
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions"
+        ],
+        "regex": [
+          "(?i)next\\(|StopIteration|empty"
+        ]
+      },
+      "judge": "A lesson about the project's own code, not about a skill: no suggestion is written and the skill is not invoked; the answer is about the parser (catch StopIteration or check for an empty file)."
+    },
+    {
+      "id": "no-wiki-hands-back-the-lines",
+      "should_trigger": true,
+      "tier": "gate",
+      "prompt": "The doubt-driven-development skill's reviewer edited src/parser.py to test a finding and then reverted it, even though a doubt reviewer is meant to be read-only. Log that as a skill suggestion for its owner.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Bash(python *)",
+      "setup": {
+        "files": {
+          "src/parser.py": "import csv\n\n\ndef parse(path):\n    with open(path, newline='') as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        return header, list(rows)\n",
+          "README.md": "# demo-app\n\nParses CSV exports.\n"
+        }
+      },
+      "expect": {
+        "files_absent": [
+          "notebook",
+          "_inbox"
+        ],
+        "regex": [
+          "(?i)Skill:\\s*doubt-driven-development",
+          "(?i)Issue:",
+          "(?i)\\b(no|not|without)\\b.{0,25}\\b(wiki|notebook)|wiki.{0,40}(found|configured|exists?)"
+        ]
+      },
+      "judge": "No wiki resolves (no wiki-config, no llm-wiki/): the script exits 3 and nothing is written; the model gives the user the four lines so they can be kept, and does not invent a notebook folder."
+    },
+    {
+      "id": "duplicate-is-refused",
+      "should_trigger": true,
+      "tier": "gate",
+      "prompt": "Please log this as a skill suggestion for verifying-before-done, seen in committee-names-from-history: \"check-freeze.py --step takes only an integer, so the fix round's freeze entries were relabelled by hand.\" Fix: let --step take a label.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Bash(python *)",
+      "setup": {
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"demo-app\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"demo-app\": {\"root\": \"notebook\"}}}",
+          "notebook/wiki/README.md": "# demo-app wiki\n",
+          "src/parser.py": "import csv\n\n\ndef parse(path):\n    with open(path, newline='') as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        return header, list(rows)\n",
+          "README.md": "# demo-app\n\nParses CSV exports.\n",
+          "notebook/_inbox/skill-suggestions/verifying-before-done--check-freeze-py-step-takes-only.md": "Skill: verifying-before-done\nSeen in: committee-names-from-history (2026-09-26)\nIssue: check-freeze.py --step takes only an integer, so the fix round's freeze entries were relabelled by hand.\nFix: let --step take a label (e.g. --step fix-1)\n"
+        }
+      },
+      "expect": {
+        "commands": [
+          {
+            "cmd": "python -c \"import glob,sys; f=sorted(glob.glob('notebook/_inbox/skill-suggestions/verifying-before-done--*.md')); t=open(f[0],encoding='utf-8').read() if f else ''; print(f, t); sys.exit(0 if (f and len(f)==1 and 'Skill: verifying-before-done' in t and 'Seen in:' in t and 'Issue:' in t and 'Fix:' in t) else 1)\"",
+            "exit": 0
+          }
+        ],
+        "regex": [
+          "(?i)already"
+        ]
+      },
+      "judge": "The same skill and issue is already in the box: the script refuses (exit 1), the model says it is already there, and the box still holds exactly one verifying-before-done file."
+    }
+  ]
+}
