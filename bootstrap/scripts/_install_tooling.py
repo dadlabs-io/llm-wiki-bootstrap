@@ -81,6 +81,8 @@ TRAVEL_SKILLS = [
     "wiki-discover", "wiki-list", "wiki-triage", "wiki-claims", "wiki-refresh",
     "wiki-report", "wiki-lint", "wiki-promote",
     "wiki-rollback", "wiki-verify",
+    # the skill-suggestions loop, moved from agent-builder's library 2026-09-30 (each carries its own scripts/)
+    "writing-skill-suggestions", "improving-skills-from-suggestions",
 ]
 
 # Agent definitions that travel to every claude-code install (→ ~/.claude/agents/).
