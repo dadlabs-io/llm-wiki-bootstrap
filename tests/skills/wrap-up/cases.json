@@ -274,7 +274,9 @@
       "suggestions": {
         "box": {
           "verifying-before-done--freeze-step-takes-only-a-number.md": "Skill: verifying-before-done\nSeen in: committee-names-from-history (2026-09-26)\nIssue: check-freeze.py --step takes only a number, so the fix round's three freeze entries were relabelled \"fix-1\" by hand.\nFix: let --step take a label (e.g. --step fix-1).\n",
-          "wiki-lint--flags-quotes-in-code.md": "Skill: wiki-lint\nSeen in: beacon session f71a2c90 (2026-09-20)\nIssue: the quote check flagged a `> ` line inside a fenced code block in beacon's README as a misquote.\nFix: none yet.\n"
+          "wiki-lint--flags-quotes-in-code.md": "Skill: wiki-lint\nSeen in: beacon session f71a2c90 (2026-09-20)\nIssue: the quote check flagged a `> ` line inside a fenced code block in beacon's README as a misquote.\nFix: none yet.\n",
+          "frontend-design--palette-ignores-dark-mode.md": "Skill: frontend-design\nSeen in: beacon session f71a2c90 (2026-09-21)\nIssue: the status page it built had no dark-mode colours.\nFix: none yet.\n",
+          "tdd-implementation--doubt-log-order.md": "Skill: tdd-implementation\nSeen in: committee-ingest (2026-09-24)\nIssue: the doubt log recorded the test after the code it tested.\nFix: record the red run before the code step.\nSent (2026-09-27, Mark): agent-builder\n"
         },
         "archive": {
           "wiki-refresh--stale-cadence-table.md": "Skill: wiki-refresh\nSeen in: beacon session 0b11 (2026-09-02)\nIssue: the cadence table disagreed with the spec.\nFix: link the spec.\nDecision (2026-09-03, Mark): sent to llm-wiki\n",
@@ -306,7 +308,8 @@
       "suggestions": {
         "box": {
           "verifying-before-done--freeze-step-takes-only-a-number.md": "Skill: verifying-before-done\nSeen in: committee-names-from-history (2026-09-26)\nIssue: check-freeze.py --step takes only a number, so the fix round's three freeze entries were relabelled \"fix-1\" by hand.\nFix: let --step take a label (e.g. --step fix-1).\n",
-          "wiki-lint--flags-quotes-in-code.md": "Skill: wiki-lint\nSeen in: beacon session f71a2c90 (2026-09-20)\nIssue: the quote check flagged a `> ` line inside a fenced code block in beacon's README as a misquote.\nFix: none yet.\n"
+          "wiki-lint--flags-quotes-in-code.md": "Skill: wiki-lint\nSeen in: beacon session f71a2c90 (2026-09-20)\nIssue: the quote check flagged a `> ` line inside a fenced code block in beacon's README as a misquote.\nFix: none yet.\n",
+          "tdd-implementation--doubt-log-order.md": "Skill: tdd-implementation\nSeen in: committee-ingest (2026-09-24)\nIssue: the doubt log recorded the test after the code it tested.\nFix: record the red run before the code step.\nSent (2026-09-27, Mark): agent-builder\n"
         },
         "archive": {
           "wiki-refresh--stale-cadence-table.md": "Skill: wiki-refresh\nSeen in: beacon session 0b11 (2026-09-02)\nIssue: the cadence table disagreed with the spec.\nFix: link the spec.\nDecision (2026-09-03, Mark): sent to llm-wiki\n",

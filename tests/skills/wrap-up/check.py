@@ -58,6 +58,30 @@ CLOSING = {None: "✅ WRAP-UP COMPLETE: nothing committed ✅",
            "commit": "✅ WRAP-UP COMPLETE: committed, not pushed ✅",
            "push": "✅ WRAP-UP COMPLETE: committed and pushed ✅"}
 SESSION_EDIT = "\n\ndef budget_left_seconds(budget):\n    return max(0.0, budget.remaining())\n"
+AGENT_BUILDER_ID, LLM_WIKI_ID = "1548481349009154138", "1548485551076671538"
+OWNER_WORD = re.compile(r"agent-builder|llm-wiki", re.I)
+UNKNOWN_OWNER = re.compile(
+    r"unknown|not sure|can'?t tell|cannot tell|no usage page|no (how-to )?page|whose|where (should|does) (it|this)|"
+    r"which (project|owner)|neither|not (ours|one of ours|owned)|third.party|plugin", re.I)
+WAITING = re.compile(r"wait|pick.?up|already sent|collect", re.I)
+
+
+def _owner_after(text: str, name: str, span: int = 600) -> set[str]:
+    """The owner word first named after each mention of a skill, within `span` characters.
+
+    A report may name the skill in a table row, a bullet or a sentence; the owner it proposes
+    for that skill comes next, before the next suggestion's owner does.
+    """
+    found = set()
+    for m in re.finditer(re.escape(name), text):
+        w = OWNER_WORD.search(text, m.end(), m.end() + span)
+        if w:
+            found.add(w.group(0).lower())
+    return found
+
+
+def _near(text: str, name: str, pattern: re.Pattern, span: int = 600) -> bool:
+    return any(pattern.search(text, m.end(), m.end() + span) for m in re.finditer(re.escape(name), text))
 
 
 def _rmtree(path) -> None:
@@ -212,8 +236,13 @@ def _reset_notebook(case: dict, ctx: dict) -> None:
         (box / "archive" / name).write_text(body, encoding="utf-8")
 
     flags = case.get("flags") or {}
+    # the two owners' bots, as the real registry carries them: a sent suggestion is tagged to one
+    owners = {name: {"root": f"notebooks/{name}", "discord": {"bot_name": bot, "user_id": uid}}
+              for name, bot, uid in (("agent-builder-bootstrap", "agent-builder", AGENT_BUILDER_ID),
+                                     ("llm-wiki-bootstrap", "llm-wiki", LLM_WIKI_ID))}
     ctx["registry"].write_text(json.dumps(
-        {"notebooks": {NOTEBOOK: {"root": f"notebooks/{NOTEBOOK}", **flags}}}, indent=2), encoding="utf-8")
+        {"notebooks": {NOTEBOOK: {"root": f"notebooks/{NOTEBOOK}", **flags}, **owners}}, indent=2),
+        encoding="utf-8")
     cfg = json.dumps({"tool": "claude-code", "project_name": NOTEBOOK, "notebook": NOTEBOOK,
                       "persona": PERSONA, "registry": ctx["registry"].as_posix(),
                       "scripts_installed_at": ctx["scripts"].as_posix()}, indent=2)
@@ -471,24 +500,44 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("archive/ entries untouched", all(old_archive[n] == b for n, b in sug["archive"].items()),
             [n for n, b in sug["archive"].items() if old_archive[n] != b])
         add("archive/ not read into the report (its wiki-refresh suggestion not shown)", "wiki-refresh" not in low)
+        # a file already marked Sent waits for its owner to collect it: never re-asked, never touched
+        pre_sent = "tdd-implementation--doubt-log-order.md"
+        add("the already-sent suggestion left as it was",
+            (box / pre_sent).is_file() and (box / pre_sent).read_text(encoding="utf-8") == sug["box"][pre_sent])
+        add("the already-sent one listed as waiting for its owner, not asked about",
+            _near(text, "tdd-implementation", WAITING))
         if exp["suggestions"] == "ask":
-            add("lists every suggestion in the box", "verifying-before-done" in low and "wiki-lint" in low)
-            add("offers the four choices",
-                all(w in low for w in ("agent-builder", "llm-wiki", "keep", "drop")))
+            add("lists every suggestion in the box",
+                all(s in low for s in ("verifying-before-done", "wiki-lint", "frontend-design")))
+            # the owner comes from the skill's usage page (2026-09-29, the user's rule)
+            add("proposes agent-builder for verifying-before-done (a do-code-change page)",
+                "agent-builder" in _owner_after(text, "verifying-before-done"),
+                _owner_after(text, "verifying-before-done"))
+            add("proposes llm-wiki for wiki-lint (an llm-wiki page)",
+                "llm-wiki" in _owner_after(text, "wiki-lint"), _owner_after(text, "wiki-lint"))
+            add("says frontend-design's owner is unknown and asks (no usage page)",
+                _near(text, "frontend-design", UNKNOWN_OWNER))
+            add("offers send, keep and drop", all(w in low for w in ("send", "keep", "drop")))
             unchanged = top == sorted(sug["box"]) and all(
                 (box / n).read_text(encoding="utf-8") == b for n, b in sug["box"].items())
             add("nothing moved or changed without an answer", unchanged, top)
         else:
-            sent = box / "archive" / "verifying-before-done--freeze-step-takes-only-a-number.md"
+            name = "verifying-before-done--freeze-step-takes-only-a-number.md"
+            sent = box / name
             dropped = box / "archive" / "wiki-lint--flags-quotes-in-code-2.md"
             st = sent.read_text(encoding="utf-8") if sent.is_file() else ""
             dt = dropped.read_text(encoding="utf-8") if dropped.is_file() else ""
-            add("the box's top level emptied by the answers", not top, top)
-            add("sent one archived with its decision line",
-                "Decision (" in st and "agent-builder" in st and st.startswith(sug["box"][sent.name]), st[-160:])
+            add("the sent one stays in the box for its owner to collect", sent.is_file() and
+                not (box / "archive" / name).exists(), sorted(p.name for p in box.rglob("*.md")))
+            add("the sent one: its four lines kept, a Sent line naming agent-builder, no Decision line",
+                st.startswith(sug["box"][name]) and re.search(r"^Sent \(.*agent-builder", st, re.M | re.I)
+                and "Decision (" not in st, st[-160:])
+            add("the tagged line names the sent file's path, for agent-builder's bot",
+                name in text.replace("\\", "/") and f"<@{AGENT_BUILDER_ID}>" in text)
             add("dropped one archived as -2 (the name was taken) with its decision line",
                 "Decision (" in dt and "dropped" in dt.lower(), dt[-160:] or sorted(
                     p.name for p in (box / "archive").glob("*")))
+            add("the dropped one gone from the box's top level", "wiki-lint--flags-quotes-in-code.md" not in top, top)
 
     # ---- Step 7: the closing line ends every wrap-up; the commit and push only with a flag
     final = str(run["result"].get("result") or "").strip().splitlines()

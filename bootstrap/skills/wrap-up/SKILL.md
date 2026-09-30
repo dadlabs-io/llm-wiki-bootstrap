@@ -234,12 +234,16 @@ With `confirm_before_create: false`, Step 2's table goes above this report. Incl
 
 ### Step 5.5 — The skill-suggestion box (only when it has files)
 
-A session that ran into trouble with a skill (a workaround it forced, a check that missed something, a rule that did not fit, the user correcting how the work was done) may leave a suggestion in `<topic_root>/_inbox/skill-suggestions/`: one file per suggestion, named `<skill>--<short-slug>.md`, four lines (`Skill:`, `Seen in:`, `Issue:`, `Fix:`). The wrap-up puts each one to the user (2026-09-26). Look **only at the top level**: `archive/` holds decided ones and is never read. No folder, or no files: say nothing.
+A session that ran into trouble with a skill (a workaround it forced, a check that missed something, a rule that did not fit, the user correcting how the work was done) may leave a suggestion in `<topic_root>/_inbox/skill-suggestions/`: one file per suggestion, named `<skill>--<short-slug>.md`, four lines (`Skill:`, `Seen in:`, `Issue:`, `Fix:`). The wrap-up puts each one to the user (2026-09-26). A sent suggestion's only copy lives with the skill's owner, never in this project (the user, 2026-09-29). Look **only at the top level**: `archive/` holds dropped ones and is never read. No folder, or no files: say nothing.
 
-1. **In the report**, list each file: the skill, where it was seen, the issue, the fix. Ask per file: **send to agent-builder**, **send to llm-wiki**, **keep for later**, or **drop**. For a skill neither project owns (a plugin, a third-party skill), say whose it looks like; who hears about it is the user's call.
-2. **Don't wait for the answer.** Go on to Steps 6 and 7. A suggestion nobody has answered stays in the box and is shown again next time; it does not make the wrap-up incomplete.
-3. **On the user's answer** (now or later in the session), per file: append one line, `Decision (<YYYY-MM-DD>, <the user's name>): sent to agent-builder` (or `sent to llm-wiki`, or `dropped`), and move the file to `archive/` (create it if needed; a name already there gets `-2`, then `-3`). A file the user keeps stays where it is, unchanged. A sent one also gets one line in the team's Discord channel to the receiving project's bot, tagged with its raw `<@user_id>` from the `discord` block of that notebook in `linked-notebooks.json`, naming the archived file's path; with no Discord tool in the session, give the user that line to post.
-4. **Never send, drop or move a suggestion without the user's word.**
+1. **Whose skill is it.** Find the skill's usage page, `<topic_root>/how-to/<pack>/{skills,agents,workflows}/<name>.md`, where `<name>` is the `Skill:` line. Pack `llm-wiki` → **llm-wiki**; any other pack → **agent-builder** (its library ships every other pack). No page → the owner is **unknown**.
+2. **In the report**, list each file: the skill, where it was seen, the issue, the fix, and the owner with the page it was judged from. Ask per file: **send to <owner>**, **keep for later**, or **drop**; the user may send it elsewhere. An unknown owner (a plugin, a third-party skill): say so and ask where it goes. A file that already has a `Sent (...)` line is not asked about again: list it once as "waiting for pickup by <owner>".
+3. **Don't wait for the answer.** Go on to Steps 6 and 7. A suggestion nobody has answered stays in the box and is shown again next time; it does not make the wrap-up incomplete.
+4. **On the user's answer** (now or later in the session), per file:
+   - **send** → append one line, `Sent (<YYYY-MM-DD>, <the user's name>): <owner>`, and **leave the file in the box**: the owner collects it and removes it from here, so this project keeps no copy. Post one line in the team's Discord channel to the owner's bot, tagged with its raw `<@user_id>` from the `discord` block of the owner's notebook in `linked-notebooks.json`, naming the file's path; with no Discord tool in the session, give the user that line to post.
+   - **drop** → append `Decision (<YYYY-MM-DD>, <the user's name>): dropped` and move the file to `archive/` (create it if needed; a name already there gets `-2`, then `-3`).
+   - **keep** → leave the file where it is, unchanged.
+5. **Never send, drop or move a suggestion without the user's word.**
 
 ### Step 6 — Offer to promote (inline)
 

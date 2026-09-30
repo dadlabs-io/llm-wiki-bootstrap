@@ -9,6 +9,17 @@
 
 ---
 
+## 2026-09-29
+
+### `/wrap-up` sends each skill suggestion to its skill's owner, who keeps the only copy (the user's decision)
+- **Why**: the user, 2026-09-29: a suggestion lives in one place only, the notebook of the library that owns the skill ("it makes sense that it would go where the change is"). Until now a sent suggestion was archived in the sending project and the owner only got a Discord line, so the project kept the record and the owner had none. Step 5.5 also offered "send to agent-builder" and "send to llm-wiki" side by side, leaving the user to work out whose skill it was, although a suggestion about `/wrap-up` itself belongs to llm-wiki.
+- **Change** (Step 5.5):
+  - **Whose skill it is**: the wrap-up finds the skill's usage page, `<topic_root>/how-to/<pack>/{skills,agents,workflows}/<name>.md`. Pack `llm-wiki` is llm-wiki's; every other pack ships from agent-builder's library; no page means the owner is unknown and the user is asked. The report names the owner and the page it judged from, and the user may send it elsewhere.
+  - **Send**: appends `Sent (<date>, <name>): <owner>`, leaves the file in the box, and posts one tagged line to the owner's bot naming the file's path. The owner collects it: agent-builder's `receive` (library `9bb6851`) moves it into its notebook and removes it from the box. It reads only the four labelled lines, so the `Sent` line is harmless. For llm-wiki the session moves it by hand; no receive tool was built.
+  - **Waiting for pickup**: a file already carrying a `Sent` line is not asked about again, only listed once as waiting for its owner.
+  - **Keep and drop**: unchanged. A dropped file is still archived with its Decision line.
+- **Docs**: the wrap-up usage page, the user guide's folder note, INSTALL-INVENTORY's wrap-up row.
+
 ## 2026-09-26
 
 ### `/wrap-up` empties the skill-suggestion box (agent-builder's handoff, the user's design)

@@ -126,7 +126,7 @@ A notebook (in a notebooks vault, or `<project>/llm-wiki/` for a wiki kept insid
 │   ├── proposed/                 staged entries awaiting /wiki-promote   (only while it has some)
 │   ├── rejected/                 entries declined at promotion           (only while it has some)
 │   ├── discovered/               discovery checklists                    (only while it has some)
-│   ├── skill-suggestions/        notes on a skill that got in the way; /wrap-up asks what to do with each; archive/ keeps the decided ones
+│   ├── skill-suggestions/        notes on a skill that got in the way; /wrap-up asks what to do with each; a sent one waits for its skill's owner to collect it; archive/ keeps the dropped ones
 │   └── reports/                  every generated report; one folder per cycle run
 └── wiki/
     ├── HOME.md                   the landing page
