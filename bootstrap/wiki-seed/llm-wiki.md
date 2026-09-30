@@ -31,6 +31,8 @@ version of this list, see [`user-guide.md`](./user-guide.md) (the whole system o
 |---|---|
 | [`wrap-up`](./skills/wrap-up.md) | End of session: updates the session journal and the resume dashboards (handoff, task, active-context), stages durable entries, then offers to promote them |
 | [`task-list`](./skills/task-list.md) | The project's task list at the top of `task.md`: one table per owner; add, mark done, remove only on your word. Plain speech works ("add a task …", "delete task 4") |
+| [`writing-skill-suggestions`](./skills/writing-skill-suggestions.md) | When a skill got in the way: a four-line note in `_inbox/skill-suggestions/`, then the work carries on; `/wrap-up` puts it to you. The whole loop: [skill-suggestions](./skill-suggestions.md) |
+| [`improving-skills-from-suggestions`](./skills/improving-skills-from-suggestions.md) | The owner's side: collects a note sent to it (`receive`), checks it against the run and the skill, proposes changes, records your decision |
 | [`wiki-update`](./skills/wiki-update.md) | Ingest one external source (URL, video, PDF, X post, file, pasted text) and file it directly into the wiki (`--staged` to stage it for review); two or more URLs are queued for `wiki-cycle` |
 | [`wiki-search`](./skills/wiki-search.md) | Hybrid BM25 + vector + reranked search across the wiki |
 | [`wiki-cycle`](./skills/wiki-cycle.md) | The full research cycle: discover → ingest → lint → fix → report |
