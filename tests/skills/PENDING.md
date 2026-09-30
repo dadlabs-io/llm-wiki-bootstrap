@@ -30,6 +30,7 @@ then we can run it").
 | wiki-cycle | 2026-09-25 | Nothing changed in the skill, but Step 5.5's "Then re-run Step 3.5" is now redundant: the promote script rebuilds backlinks, folder indexes and MAP itself. Harmless (idempotent) | the next wiki-cycle run can drop the re-run; changing it is a step change, so it waits for that run |
 | wiki-cycle | 2026-09-23 | Step 2 and its pack page say what `--depth-check`'s exit 1 and 2 mean | wording only; still unchecked: the 2026-09-24 baseline runs quick mode only, and the depth check runs in `--full` |
 | wrap-up | 2026-09-29 | Step 5.5's opening paragraph names agent-builder's skill-suggestions pack page for the process and states the two-way contract (file name and `Skill:` line read here; the four labelled lines never edited, `receive` reads them) instead of restating the note format; the usage page likewise, plus walkthrough item 8 | wording only, after run `20260929-203231`; the next run's `suggestions-ask`/`-decide` should show the same owner, Sent-line and untouched-lines behaviour |
+| wrap-up | 2026-09-30 | Skill-suggestions move, step 7: Step 5.5 and the usage page point at `how-to/llm-wiki/skill-suggestions.md` (the page now ships with llm-wiki) and the two-repo contract becomes a note that the three skills share the file name and four lines | wording only; the same run as the row above checks it |
 
 ## Last full run
 
