@@ -29,6 +29,7 @@ then we can run it").
 | wiki-promote | 2026-09-25 | `wiki-promote.py` runs `wiki-reciprocate-backlinks.py` after the link fixer, so a promoted entry is never left an orphan; the skill's description, Step 3.5 and the pack page say so. Script proven by `tests/scripts/test_promote_backlinks.py` (8/8; 5 failed before the fix) | wording only in the skill; the behaviour is the script's, tested by its free harness; wiki-promote has no model suite |
 | wiki-cycle | 2026-09-25 | Nothing changed in the skill, but Step 5.5's "Then re-run Step 3.5" is now redundant: the promote script rebuilds backlinks, folder indexes and MAP itself. Harmless (idempotent) | the next wiki-cycle run can drop the re-run; changing it is a step change, so it waits for that run |
 | wiki-cycle | 2026-09-23 | Step 2 and its pack page say what `--depth-check`'s exit 1 and 2 mean | wording only; still unchecked: the 2026-09-24 baseline runs quick mode only, and the depth check runs in `--full` |
+| wrap-up | 2026-09-29 | Step 5.5's opening paragraph names agent-builder's skill-suggestions pack page for the process and states the two-way contract (file name and `Skill:` line read here; the four labelled lines never edited, `receive` reads them) instead of restating the note format; the usage page likewise, plus walkthrough item 8 | wording only, after run `20260929-203231`; the next run's `suggestions-ask`/`-decide` should show the same owner, Sent-line and untouched-lines behaviour |
 
 ## Last full run
 

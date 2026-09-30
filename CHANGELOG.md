@@ -19,6 +19,7 @@
   - **Waiting for pickup**: a file already carrying a `Sent` line is not asked about again, only listed once as waiting for its owner.
   - **Keep and drop**: unchanged. A dropped file is still archived with its Decision line.
 - **Docs**: the wrap-up usage page, the user guide's folder note, INSTALL-INVENTORY's wrap-up row.
+- **Who documents what (settled with agent-builder the same evening; the user chose a separate `skill-suggestions` pack)**: agent-builder's pack owns writing notes, `receive` and fixing skills from them, on its page `how-to/skill-suggestions/skill-suggestions.md`; `/wrap-up` documents only its own step and names that page instead of restating the format. The contract runs both ways, and is written into Step 5.5: the note's file name and its `Skill:` line (read here), its four labelled lines (read by `receive`, never edited here), and where the usage pages sit (the owner rule reads it). Whichever side changes one tags the other first. The usage page's walkthrough gains the step (item 8). Wording only; logged in `tests/skills/PENDING.md`.
 
 ## 2026-09-26
 
