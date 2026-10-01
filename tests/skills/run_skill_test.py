@@ -58,7 +58,7 @@ DEFAULT_TOOLS = [
 # Sessions may read (not only run) this repo's scripts: the first smoke run's
 # permission denials were all a session looking at _wiki_config.py and
 # _entry_checks.py outside the sandbox, friction a normal session does not have.
-EXTRA_DIRS = [REPO / "bootstrap" / "scripts"]
+EXTRA_DIRS = [REPO / "scripts"]
 
 
 def load_check(skill: str):
@@ -74,8 +74,8 @@ def load_check(skill: str):
 def render_skill(skill: str, ref: str | None, dest: Path, replacements: dict | None = None) -> Path:
     """Copy the skill folder into dest, {{WIKI_SCRIPTS_DIR}} -> this repo's scripts, then
     each of the suite's replacements (e.g. an install path -> its sandbox copy)."""
-    scripts = (REPO / "bootstrap" / "scripts").as_posix()
-    src_rel = f"bootstrap/skills/{skill}"
+    scripts = (REPO / "scripts").as_posix()
+    src_rel = f"skills/{skill}"
     if ref:
         names = subprocess.run(["git", "-C", str(REPO), "ls-tree", "-r", "--name-only", ref, src_rel],
                                capture_output=True, text=True, check=True).stdout.split()

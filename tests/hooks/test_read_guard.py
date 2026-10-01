@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks for bootstrap/scripts/read-guard.py, run through its real entry point
+"""Checks for scripts/read-guard.py, run through its real entry point
 (JSON on stdin, as Claude Code calls it). Never shipped.
 
     python tests/hooks/test_read_guard.py      # exit 0 = every check passed
@@ -12,7 +12,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-GUARD = Path(__file__).resolve().parents[2] / "bootstrap" / "scripts" / "read-guard.py"
+GUARD = Path(__file__).resolve().parents[2] / "scripts" / "read-guard.py"
 results: list[tuple[bool, str]] = []
 
 

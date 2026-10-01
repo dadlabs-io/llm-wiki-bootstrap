@@ -19,8 +19,8 @@ import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-WRITER = REPO / "bootstrap/skills/writing-skill-suggestions/scripts/skill-suggestion.py"
-IMPROVER = REPO / "bootstrap/skills/improving-skills-from-suggestions/scripts/suggestions.py"
+WRITER = REPO / "skills/writing-skill-suggestions/scripts/skill-suggestion.py"
+IMPROVER = REPO / "skills/improving-skills-from-suggestions/scripts/suggestions.py"
 FLOORS = {WRITER: 34, IMPROVER: 53}
 
 # One sabotage per script behaviour the self-test must catch: (label, script, old, new).

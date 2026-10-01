@@ -22,8 +22,8 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPTS = ROOT / "bootstrap" / "scripts"
-FRAMEWORK = ROOT / "bootstrap" / "framework-docs"
+SCRIPTS = ROOT / "scripts"
+FRAMEWORK = ROOT / "framework-docs"
 
 results: list[tuple[bool, str]] = []
 
@@ -128,7 +128,7 @@ ftext = fm.read_text(encoding="utf-8")
 check("the frontmatter spec has a `standalone` optional-field row", "| `standalone` |" in ftext)
 check("wiki-frontmatter-best-practices framework-version bumped to 13", version(fm) == 13, version(fm))
 
-for home in (ROOT / "bootstrap" / "seed" / "wiki" / "HOME.md.tmpl",):
+for home in (ROOT / "seed" / "wiki" / "HOME.md.tmpl",):
     reason = str(frontmatter(home.read_text(encoding="utf-8")).get("standalone") or "")
     check(f"{home.relative_to(ROOT).as_posix()} declares itself standalone with a reason",
           reason.strip().lower() not in {"", "true", "yes"}, reason)

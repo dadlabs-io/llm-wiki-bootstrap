@@ -42,7 +42,7 @@ Read `_config/feeds.md` at the notebook root (beside `wiki/`). This file defines
 - Vendor/platform blogs
 - Community sources (lower trust, human-approve only)
 
-If `_config/feeds.md` doesn't exist, tell the user and offer to create it from the template: `<bootstrap_source>/bootstrap/templates/feeds.md.tmpl` (`bootstrap_source` is in `~/.claude/wiki-config.json`), written to `_config/feeds.md` with `{{PROJECT_NAME}}` replaced by the notebook's name. `/new-wiki` creates it, empty, for every wiki with a `research/` folder (since 2026-09-26). If the page exists but has no rows yet, say so, ask which sources to add (a name and a URL each), add them as rows (`From` 2026-01-01, `To` `—`), and search nothing until there is at least one; `--query` needs no feeds.
+If `_config/feeds.md` doesn't exist, tell the user and offer to create it from the template: `<bootstrap_source>/templates/feeds.md.tmpl` (`bootstrap_source` is in `~/.claude/wiki-config.json`), written to `_config/feeds.md` with `{{PROJECT_NAME}}` replaced by the notebook's name. `/new-wiki` creates it, empty, for every wiki with a `research/` folder (since 2026-09-26). If the page exists but has no rows yet, say so, ask which sources to add (a name and a URL each), add them as rows (`From` 2026-01-01, `To` `—`), and search nothing until there is at least one; `--query` needs no feeds.
 
 ### Step 2 — Determine which feeds to search
 

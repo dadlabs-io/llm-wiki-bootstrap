@@ -18,7 +18,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "bootstrap" / "scripts" / "wiki-tasks.py"
+SCRIPT = ROOT / "scripts" / "wiki-tasks.py"
 
 results: list[tuple[bool, str]] = []
 

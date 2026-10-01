@@ -107,10 +107,16 @@ def _log(msg):
     print(f"[install-tooling] {msg}")
 
 
+def is_bootstrap_source(folder: Path) -> bool:
+    """The llm-wiki-bootstrap repo root: its installer script beside the /new-wiki skill."""
+    return (folder / "scripts" / "new-wiki.py").is_file() and (folder / "skills" / "new-wiki" / "SKILL.md").is_file()
+
+
 def derive_bootstrap_source(explicit=None):
     """Find the workflows-core / llm-wiki-bootstrap source. Order: explicit arg,
     ~/.claude/wiki-config.json `bootstrap_source`, walk up from this script,
-    walk up — looking for `bootstrap/scripts/new-wiki.py` (layout flattened 2026-08-20)."""
+    walk up — looking for `scripts/new-wiki.py` beside `skills/new-wiki/SKILL.md` (the repo root,
+    since `bootstrap/` was removed 2026-10-01)."""
     if explicit:
         return Path(explicit).resolve()
     try:
@@ -122,11 +128,11 @@ def derive_bootstrap_source(explicit=None):
         pass
     here = Path(__file__).resolve()
     for parent in [here.parent, *here.parents]:
-        if (parent / "bootstrap" / "scripts" / "new-wiki.py").is_file():
+        if is_bootstrap_source(parent):
             return parent.resolve()
     cwd_root = Path.cwd()
     for parent in [cwd_root, *cwd_root.parents]:
-        if (parent / "bootstrap" / "scripts" / "new-wiki.py").is_file():
+        if is_bootstrap_source(parent):
             return parent.resolve()
     return None
 
@@ -273,7 +279,7 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
     the scripts dir and install each TRAVEL_SKILLS dir via the install-skill
     primitive. Idempotent. Returns a summary dict (caller prints)."""
     bootstrap = Path(bootstrap_source)
-    pkg = bootstrap / "bootstrap"
+    pkg = bootstrap
     scripts_src = pkg / "scripts"
     skills_src = pkg / "skills"
     if not scripts_src.is_dir() or not skills_src.is_dir():
@@ -415,7 +421,7 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
     the way install-skill.py writes it; scripts and agents are byte copies.
     """
     bootstrap = Path(bootstrap_source)
-    pkg = bootstrap / "bootstrap"
+    pkg = bootstrap
     skills_src, scripts_src, agents_src = pkg / "skills", pkg / "scripts", pkg / "agents"
     skills_dest = Path(skills_dest) if skills_dest else CC_GLOBAL_SKILLS_DIR
     scripts_dest = Path(scripts_dest) if scripts_dest else CC_GLOBAL_WIKI_SCRIPTS_DIR

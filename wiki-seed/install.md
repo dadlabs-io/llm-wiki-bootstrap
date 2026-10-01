@@ -102,8 +102,8 @@ same refresh; from inside Claude Code, `/new-wiki --sync` refreshes only the glo
 skill. None of these touches a project. To refresh a project's framework-managed docs (the `how-to/llm-wiki/` pages and the six
 framework-contract docs), from the bootstrap clone:
 ```
-python bootstrap/scripts/new-wiki.py --phase docs --check --target-folder <project>   # preview, writes nothing
-python bootstrap/scripts/new-wiki.py --phase docs --target-folder <project>           # refresh
+python scripts/new-wiki.py --phase docs --check --target-folder <project>   # preview, writes nothing
+python scripts/new-wiki.py --phase docs --target-folder <project>           # refresh
 ```
 A bundled install (skills copied into the project) refreshes them by re-running the scaffold
 against the same folder with `--force`.
@@ -111,6 +111,6 @@ against the same folder with `--force`.
 ## Troubleshooting
 
 - **`gh` / `git clone` fails with auth** — repo is public now, no auth needed; check your network
-- **`/new-wiki` says the global tooling is missing or partial** — run `.\install-wiki.ps1` (no flags) once, or let the skill install it; `python <clone>/bootstrap/scripts/new-wiki.py --mode status` shows what is installed, stale or missing
+- **`/new-wiki` says the global tooling is missing or partial** — run `.\install-wiki.ps1` (no flags) once, or let the skill install it; `python <clone>/scripts/new-wiki.py --mode status` shows what is installed, stale or missing
 - **Drive OAuth fails** — see [`drive-setup`](./drive-setup.md)
 - **`/new-wiki` doesn't trigger in Claude Code** — restart Claude Code after install so it picks up the new global skill

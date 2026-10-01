@@ -86,7 +86,7 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
         (d / ".claude").mkdir(parents=True, exist_ok=True)
         (d / ".claude" / "wiki-config.json").write_text(cfg, encoding="utf-8")
     return {"sandbox": sandbox, "project": project, "notebook": sandbox / "notebooks" / NOTEBOOK,
-            "skill_dir": sandbox / "skill" / "wiki-triage", "scripts": repo / "bootstrap" / "scripts",
+            "skill_dir": sandbox / "skill" / "wiki-triage", "scripts": repo / "scripts",
             "env": {"PYTHONIOENCODING": "utf-8"}}
 
 

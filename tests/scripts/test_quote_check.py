@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks for the quote check in bootstrap/scripts/_entry_checks.py (check_quotes,
+"""Checks for the quote check in scripts/_entry_checks.py (check_quotes,
 read_raw_text) and its two callers, the wiki-update.py gate and the mechanical
 lint. Never shipped.
 
@@ -20,7 +20,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-SCRIPTS = Path(__file__).resolve().parents[2] / "bootstrap" / "scripts"
+SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 import _entry_checks as ec  # noqa: E402
 

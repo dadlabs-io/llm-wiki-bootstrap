@@ -117,7 +117,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Bootstrap = $PSScriptRoot
-$Script = Join-Path $Bootstrap "bootstrap\scripts\new-wiki.py"
+$Script = Join-Path $Bootstrap "scripts\new-wiki.py"
 
 if (-not (Test-Path $Script)) {
     Write-Host "ERR: new-wiki.py not found at $Script" -ForegroundColor Red

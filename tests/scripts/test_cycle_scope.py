@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks for bootstrap/scripts/wiki-cycle-scope.py (task #42: C1 scope, C3 checker). Never shipped.
+"""Checks for scripts/wiki-cycle-scope.py (task #42: C1 scope, C3 checker). Never shipped.
 
     python tests/scripts/test_cycle_scope.py    # exit 0 = every check passed
 
@@ -18,7 +18,7 @@ import tempfile
 from pathlib import Path
 
 SCRIPT = Path(os.environ.get("WIKI_SCOPE_SCRIPT") or
-              Path(__file__).resolve().parents[2] / "bootstrap" / "scripts" / "wiki-cycle-scope.py")
+              Path(__file__).resolve().parents[2] / "scripts" / "wiki-cycle-scope.py")
 results: list[tuple[bool, str]] = []
 
 

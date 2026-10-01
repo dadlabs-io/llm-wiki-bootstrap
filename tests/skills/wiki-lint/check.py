@@ -89,7 +89,7 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
     return {"sandbox": sandbox, "project": project, "notebook": nb, "registry": registry,
             "reports": nb / "_inbox" / "reports",
             "skill_dir": sandbox / "skill" / "wiki-lint",
-            "scripts": repo / "bootstrap" / "scripts",
+            "scripts": repo / "scripts",
             "env": {"PYTHONIOENCODING": "utf-8"}}
 
 

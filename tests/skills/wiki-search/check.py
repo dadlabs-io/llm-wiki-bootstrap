@@ -92,7 +92,7 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
                        encoding="utf-8", errors="replace", timeout=600)
     return {"sandbox": sandbox, "project": project, "notebook": nb, "registry": registry,
             "skill_dir": sandbox / "skill" / "wiki-search", "index": index,
-            "scripts": repo / "bootstrap" / "scripts",
+            "scripts": repo / "scripts",
             "env": {"WIKI_QMD_INDEX": index, "WIKI_QMD_CALLER": f"skilltest-search-{model}-{sandbox.parent.name}",
                     "PYTHONIOENCODING": "utf-8"}}
 

@@ -1,6 +1,6 @@
 # LLM-Wiki Install Inventory
 
-Authored 2026-05-12; sections B–F and the tail rewritten 2026-09-08 to describe what ships rather than the May design draft. The complete list of pieces that travel when `/new-wiki` runs the install. **The manifests decide, this file describes**: `TRAVEL_SKILLS`, `TRAVEL_SCRIPTS`, `TRAVEL_AGENTS` and the helper lists in `bootstrap/scripts/_install_tooling.py` are what the installer copies; a row here without a manifest entry does not travel.
+Authored 2026-05-12; sections B–F and the tail rewritten 2026-09-08 to describe what ships rather than the May design draft. The complete list of pieces that travel when `/new-wiki` runs the install. **The manifests decide, this file describes**: `TRAVEL_SKILLS`, `TRAVEL_SCRIPTS`, `TRAVEL_AGENTS` and the helper lists in `scripts/_install_tooling.py` are what the installer copies; a row here without a manifest entry does not travel.
 
 ## Principle
 
@@ -19,7 +19,7 @@ Authored 2026-05-12; sections B–F and the tail rewritten 2026-09-08 to describ
 
 ## A. Global skills
 
-Source-of-truth: `bootstrap/skills/<skill>/SKILL.md`
+Source-of-truth: `skills/<skill>/SKILL.md`
 Install target: `~/.claude/skills/<skill>/SKILL.md`
 
 | Skill | Project type | Purpose |
@@ -46,9 +46,9 @@ Install target: `~/.claude/skills/<skill>/SKILL.md`
 
 ## A2. Global agents
 
-Source-of-truth: `bootstrap/agents/<name>/AGENT.md` (+ sidecars; `evals/` stays gold-only)
+Source-of-truth: `agents/<name>/AGENT.md` (+ sidecars; `evals/` stays gold-only)
 Install target: `~/.claude/agents/<name>.md` (AGENT.md renamed) + `<name>-*.json` sidecars
-Manifest: `TRAVEL_AGENTS` in `bootstrap/scripts/_install_tooling.py` (added 2026-08-20)
+Manifest: `TRAVEL_AGENTS` in `scripts/_install_tooling.py` (added 2026-08-20)
 
 | Agent | Project type | Purpose |
 |---|---|---|
@@ -57,25 +57,25 @@ Manifest: `TRAVEL_AGENTS` in `bootstrap/scripts/_install_tooling.py` (added 2026
 
 ## A3. Pack usage docs (wiki-seed)
 
-Source-of-truth: `bootstrap/wiki-seed/` (the pack page `llm-wiki.md`, plus `user-guide.md`, `commands.md`, `getting-started.md`, `install.md`, `drive-setup.md`) + `bootstrap/skills/<name>/wiki-seed/<name>.md` + `bootstrap/agents/<name>/wiki-seed/<name>.md`
+Source-of-truth: `wiki-seed/` (the pack page `llm-wiki.md`, plus `user-guide.md`, `commands.md`, `getting-started.md`, `install.md`, `drive-setup.md`) + `skills/<name>/wiki-seed/<name>.md` + `agents/<name>/wiki-seed/<name>.md`
 Install target: `<project how-to root>/llm-wiki/<page>.md` + `llm-wiki/skills/<name>.md` + `llm-wiki/agents/<name>.md` (Phase B for a new project; `--phase docs --target-folder <project>` refreshes an existing one)
 
 `user-guide.md` is the one-page guide to the whole system (2026-09-25, task #41). Until then it was a file in the old notebook template that no refresh reached, so three copies drifted apart; it moved here so every notebook gets the same copy and a fix is made once.
-Mechanism: `seed_pack_docs()` in `bootstrap/scripts/new-wiki.py` (added 2026-09-08; the per-skill copy dates from 2026-07-31)
+Mechanism: `seed_pack_docs()` in `scripts/new-wiki.py` (added 2026-09-08; the per-skill copy dates from 2026-07-31)
 
 **Every skill in A and every agent in A2 ships a page; the seeder warns by name for any that does not.** One folder per installed package in the receiving how-to tree (`how-to/llm-wiki/` here; the agent-factory's packs land as `how-to/<pack>/` beside it); a framework refresh never removes another pack's folder.
 
 ## A4. Framework-contract docs
 
-Source-of-truth: `bootstrap/framework-docs/*.md` (six docs, each `framework-contract: true` with a `framework-version`; `bootstrap/topic-template/wiki/best-practices/framework/` until 2026-09-26, when the retired `/wiki-init`'s template folder went)
+Source-of-truth: `framework-docs/*.md` (six docs, each `framework-contract: true` with a `framework-version`; `bootstrap/framework-docs/` until 2026-10-01, `bootstrap/topic-template/wiki/best-practices/framework/` until 2026-09-26, when the retired `/wiki-init`'s template folder went)
 Install target: `<wiki>/project/best-practices/framework/<name>.md` (Phase B for a new project; `--phase docs --target-folder <project>` refreshes an existing one)
-Mechanism: `seed_framework_docs()` in `bootstrap/scripts/new-wiki.py` (2026-09-08): content-compared, a differing project copy is overwritten and named; the reciprocation script's backlink block is ignored in the comparison and preserved. `--check` (same day) reports instead of writing — unchanged / ADD / REPLACE per doc with the version on both sides and a diff, exit 1 when a refresh would change anything. A wiki without `project/` is out of scope and skipped by name. `--all-notebooks` runs check or refresh over every registered notebook with a summary — the standing procedure after a framework change is `--check --all-notebooks`, review, then refresh.
+Mechanism: `seed_framework_docs()` in `scripts/new-wiki.py` (2026-09-08): content-compared, a differing project copy is overwritten and named; the reciprocation script's backlink block is ignored in the comparison and preserved. `--check` (same day) reports instead of writing — unchanged / ADD / REPLACE per doc with the version on both sides and a diff, exit 1 when a refresh would change anything. A wiki without `project/` is out of scope and skipped by name. `--all-notebooks` runs check or refresh over every registered notebook with a summary — the standing procedure after a framework change is `--check --all-notebooks`, review, then refresh.
 
 **These are the framework's canonical copies.** A project keeps its own notes in a sibling file, never by editing one of these — the edit is lost on the next refresh (`--check` shows it first).
 
 ## B. Global scripts
 
-Source-of-truth: `bootstrap/scripts/<script>.py`
+Source-of-truth: `scripts/<script>.py`
 Install target: `~/.claude/wiki-scripts/<script>.py` (`{{WIKI_SCRIPTS_DIR}}` in the skills resolves to it)
 Manifest: `TRAVEL_SCRIPTS` (the commands) + `TOOLING_HELPER_SCRIPTS` / `SHARED_HELPER_SCRIPTS` (the `_`-prefixed modules they import) in `_install_tooling.py`
 
@@ -111,7 +111,7 @@ Manifest: `TRAVEL_SCRIPTS` (the commands) + `TOOLING_HELPER_SCRIPTS` / `SHARED_H
 
 ## C. Templates
 
-Source-of-truth: `bootstrap/templates/` (project files) and `bootstrap/seed/wiki/` (wiki scaffold files)
+Source-of-truth: `templates/` (project files) and `seed/wiki/` (wiki scaffold files)
 Usage: rendered into a new project at `/new-wiki` time (bundled installs also keep a copy at `.claude/wiki-templates/`)
 
 Research/development split removed 2026-06-15 — one merged template set; every project gets the same unified wiki (research/* + project/* + sessions/).
@@ -173,7 +173,7 @@ The flat layout exists so that every notebook in a vault has the same shape (qmd
 
 ## Update mechanism (shipped)
 
-**Source-of-truth lives in `bootstrap/`.** When a skill, script or doc changes there, the installed copies go stale in two places, each with its own refresh:
+**Source-of-truth lives in this repo's shipped folders** (`skills/`, `scripts/`, `agents/`, `templates/`, `seed/`, `wiki-seed/`, `framework-docs/`; inside `bootstrap/` until 2026-10-01). When a skill, script or doc changes there, the installed copies go stale in two places, each with its own refresh:
 
 - **Global tooling** (`~/.claude/skills/`, `~/.claude/wiki-scripts/`, `~/.claude/agents/`): `install-wiki.ps1 -RefreshOnly` / `install-wiki.sh`, or `wiki-upgrade.py` directly — the same copy loop (`_install_tooling.py`), which refuses any skill or agent whose frontmatter does not parse. `/new-wiki --sync` re-runs Phase A, which refreshes only the global `/new-wiki` skill. `new-wiki.py --mode status` (`global_tooling_status()` in `_install_tooling.py`, 2026-09-09) is the drift detector: it compares every installed skill, script and agent with the clone and reports installed / stale / partial / missing. `/new-wiki` reads it before its skills question and Phase B in global mode refuses a partial or missing set (or installs it once with `--install-global-if-missing`, which the installer wrappers pass); a stale set is named, never re-copied by the scaffold. The lint's installed-skill section verifies only that every installed SKILL.md / agent file parses.
 - **Framework-managed docs inside a project** (`how-to/llm-wiki/`, the root marker, `wiki/project/best-practices/framework/`): `new-wiki.py --phase docs --target-folder <project>`; `--check` reports without writing; `--all-notebooks` covers every notebook in the registry. The standing procedure after any change that lands in a notebook is `--check --all-notebooks` → review every REPLACE → refresh → `-RefreshOnly`.

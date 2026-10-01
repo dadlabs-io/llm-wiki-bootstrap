@@ -51,7 +51,7 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
         (d / ".claude" / "wiki-config.json").write_text(cfg, encoding="utf-8")
     return {"sandbox": sandbox, "project": project, "notebook": nb,
             "task_md": nb / "wiki" / "sessions" / PERSONA / "task.md",
-            "skill_dir": sandbox / "skill" / "task-list", "scripts": repo / "bootstrap" / "scripts",
+            "skill_dir": sandbox / "skill" / "task-list", "scripts": repo / "scripts",
             "env": {"PYTHONIOENCODING": "utf-8"}}
 
 

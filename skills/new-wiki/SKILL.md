@@ -89,7 +89,7 @@ Step 1.5  add the sources named at Q9 to _config/feeds.md (only when Q9 named so
 Read `~/.claude/wiki-config.json` for `bootstrap_source` (see "Required: the bootstrap-source path" below if it is missing), then:
 
 ```
-python "<bootstrap_source>/bootstrap/scripts/new-wiki.py" --mode status
+python "<bootstrap_source>/scripts/new-wiki.py" --mode status
 ```
 
 Writes nothing. Prints JSON with `state` — one of:
@@ -181,7 +181,7 @@ Every line is overridable by saying so; a changed line is re-shown before runnin
 - **macOS/Linux**: the Bash tool directly.
 
 ```bash
-python "<bootstrap_source>/bootstrap/scripts/new-wiki.py" \
+python "<bootstrap_source>/scripts/new-wiki.py" \
   --phase B \
   --tool <claude-code|cursor> \
   --project-name <slug> \
@@ -204,7 +204,7 @@ Phase B in global mode checks the tooling itself: it refuses (exit 1, with the f
 
 ### Step 1.5 — Add the sources named at Q9 (only when Q9 named some)
 
-Phase B's JSON gives the page's path as `feeds_file`. Add one row per named source to the table that fits it (a blog or newsletter, a GitHub repo, an arXiv query, a YouTube channel, a vendor blog, or a community aggregator), in that table's columns: the name, the URL or search pattern, the tier by the rubric in the frontmatter spec (`wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`; without `project/`, the bootstrap copy at `<bootstrap_source>/bootstrap/framework-docs/`), `From` 2026-01-01, `To` `—`, topics from what the user said or the project description, and `named at /new-wiki` in Notes. Edit only the table rows. Don't search the sources now: that is `/wiki-discover`'s job.
+Phase B's JSON gives the page's path as `feeds_file`. Add one row per named source to the table that fits it (a blog or newsletter, a GitHub repo, an arXiv query, a YouTube channel, a vendor blog, or a community aggregator), in that table's columns: the name, the URL or search pattern, the tier by the rubric in the frontmatter spec (`wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`; without `project/`, the bootstrap copy at `<bootstrap_source>/framework-docs/`), `From` 2026-01-01, `To` `—`, topics from what the user said or the project description, and `named at /new-wiki` in Notes. Edit only the table rows. Don't search the sources now: that is `/wiki-discover`'s job.
 
 ### Step 2 — Read back the summary + post-install reminders
 
@@ -224,7 +224,7 @@ End with: "Read `how-to/llm-wiki/commands.md` for the full command reference, or
 - Don't proceed without the plan summary being confirmed.
 - Don't pass `--force` without the user's explicit yes to it (Step 1), even though it keeps `CLAUDE.md` / `README.md` / `.gitignore`.
 - Don't ask for a project type — removed 2026-06-15; the two folder questions replaced the last trace of it.
-- Don't edit `<target>/.claude/skills/` by hand in a bundled install — edit `<bootstrap_source>/bootstrap/skills/` and re-sync.
+- Don't edit `<target>/.claude/skills/` by hand in a bundled install — edit `<bootstrap_source>/skills/` and re-sync.
 
 ## Drive OAuth walkthrough (Phase B, only if `--drive-enabled yes`)
 
@@ -242,7 +242,7 @@ If `~/.config/wiki-cycle/client_secrets.json` is missing, the helper prints inst
 
 `/new-wiki --sync` re-runs Phase A — refreshes the global `/new-wiki` skill from the current `bootstrap_source`. Use after `git pull` on the llm-wiki-bootstrap clone. The full global tooling (every skill, script and agent) is refreshed by `install-wiki.ps1 -RefreshOnly` / `wiki-upgrade.py`; `--mode status` shows whether that is needed.
 
-To sync a bundled project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`. To refresh only a project's **framework-managed docs** — the pack usage docs (`how-to/llm-wiki/`: the pack page, one page per skill, one per agent) and, since 2026-09-08, the six framework-contract docs at `wiki/project/best-practices/framework/` — run `python <bootstrap_source>/bootstrap/scripts/new-wiki.py --phase docs --target-folder <project>`; it resolves the wiki through the project's `.claude/wiki-config.json` (or `llm-wiki/how-to/`, or a notebook root), content-compares each framework doc and replaces the ones that differ (naming them, so a project-local edit is visible rather than silently lost), and touches nothing else. Add `--check` to review first: it writes nothing, lists every framework doc as unchanged / ADD / REPLACE with the `framework-version` on both sides and a diff (a lower project version is a stale copy; the same version with different content is a project-local edit the refresh would lose), reports the pack pages a refresh would copy, and exits 1 when anything would change. A wiki without `project/` (a plain notes notebook, or one scaffolded with `--project-folder none`) is named and its framework docs skipped — they are out of scope there; the pack usage docs still refresh. `--all-notebooks` runs either form over every notebook in the registry (`--registry <linked-notebooks.json>`, else the one the cwd's `.claude/wiki-config.json` names) with a one-line-per-notebook summary and a single exit code. This is the Phase 2 / Phase 3 tool of the research-to-framework update process, and the standing procedure after any framework change is `--phase docs --check --all-notebooks`, review every REPLACE, then the same command without `--check`.
+To sync a bundled project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`. To refresh only a project's **framework-managed docs** — the pack usage docs (`how-to/llm-wiki/`: the pack page, one page per skill, one per agent) and, since 2026-09-08, the six framework-contract docs at `wiki/project/best-practices/framework/` — run `python <bootstrap_source>/scripts/new-wiki.py --phase docs --target-folder <project>`; it resolves the wiki through the project's `.claude/wiki-config.json` (or `llm-wiki/how-to/`, or a notebook root), content-compares each framework doc and replaces the ones that differ (naming them, so a project-local edit is visible rather than silently lost), and touches nothing else. Add `--check` to review first: it writes nothing, lists every framework doc as unchanged / ADD / REPLACE with the `framework-version` on both sides and a diff (a lower project version is a stale copy; the same version with different content is a project-local edit the refresh would lose), reports the pack pages a refresh would copy, and exits 1 when anything would change. A wiki without `project/` (a plain notes notebook, or one scaffolded with `--project-folder none`) is named and its framework docs skipped — they are out of scope there; the pack usage docs still refresh. `--all-notebooks` runs either form over every notebook in the registry (`--registry <linked-notebooks.json>`, else the one the cwd's `.claude/wiki-config.json` names) with a one-line-per-notebook summary and a single exit code. This is the Phase 2 / Phase 3 tool of the research-to-framework update process, and the standing procedure after any framework change is `--phase docs --check --all-notebooks`, review every REPLACE, then the same command without `--check`.
 
 ## Required: the bootstrap-source path
 

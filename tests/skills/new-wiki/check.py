@@ -105,7 +105,7 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
     return {"sandbox": box, "project": project, "vault": vault,
             "registry": vault / "linked-notebooks.json",
             "skill_dir": box / "skill" / "new-wiki", "repo": repo,
-            "scripts": repo / "bootstrap" / "scripts", "real": _real_paths(),
+            "scripts": repo / "scripts", "real": _real_paths(),
             "env": {"PYTHONIOENCODING": "utf-8"}}
 
 

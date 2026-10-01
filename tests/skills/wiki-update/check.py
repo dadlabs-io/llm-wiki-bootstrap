@@ -29,7 +29,7 @@ def _suite() -> dict:
 
 
 def _scripts(repo: Path) -> Path:
-    return repo / "bootstrap" / "scripts"
+    return repo / "scripts"
 
 
 def _qmd() -> list[str]:
@@ -105,7 +105,7 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
         (nb / d).mkdir(parents=True, exist_ok=True)
     fw = nb / "wiki" / "project" / "best-practices" / "framework"
     fw.mkdir(parents=True, exist_ok=True)
-    for doc in (repo / "bootstrap" / "framework-docs").glob("*.md"):
+    for doc in (repo / "framework-docs").glob("*.md"):
         shutil.copy2(doc, fw / doc.name)
     raw_names = {}
     for sid in _suite()["sources"]:

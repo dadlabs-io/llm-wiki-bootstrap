@@ -87,8 +87,8 @@ Restart Claude Code after install so it picks up the new skills.
 Those are the five you will use daily. The rest of the pack installs with them — `/wiki`,
 `/wiki-lint`, `/wiki-promote`, `/wiki-refresh`, `/wiki-report`, `/wiki-claims`, `/wiki-verify`,
 `/wiki-rollback`, `/wiki-discover`, `/wiki-list`, `/wiki-triage`, `/task-list` — and every one has a usage page in
-`bootstrap/wiki-seed/` (also copied into each project's `how-to/llm-wiki/`). The install manifests
-are `TRAVEL_SKILLS`, `TRAVEL_SCRIPTS` and `TRAVEL_AGENTS` in `bootstrap/scripts/_install_tooling.py`.
+`wiki-seed/` (also copied into each project's `how-to/llm-wiki/`). The install manifests
+are `TRAVEL_SKILLS`, `TRAVEL_SCRIPTS` and `TRAVEL_AGENTS` in `scripts/_install_tooling.py`.
 
 | Agent | What it's for |
 |---|---|
@@ -193,13 +193,13 @@ git pull
 
 From inside Claude Code, `/new-wiki --sync` refreshes only the global `/new-wiki` skill from
 the recorded bootstrap source; the installer (or `wiki-upgrade.py`) refreshes everything.
-Neither touches a project. `python bootstrap/scripts/new-wiki.py --mode status` says whether a
+Neither touches a project. `python scripts/new-wiki.py --mode status` says whether a
 refresh is due (installed / stale / partial / missing, with the differing files named). To bring a project's framework-managed
 docs (its `how-to/llm-wiki/` pages and the six framework-contract docs) up to date:
 
 ```
-python bootstrap/scripts/new-wiki.py --phase docs --check --target-folder <project>   # preview
-python bootstrap/scripts/new-wiki.py --phase docs --target-folder <project>           # refresh
+python scripts/new-wiki.py --phase docs --check --target-folder <project>   # preview
+python scripts/new-wiki.py --phase docs --target-folder <project>           # refresh
 ```
 
 `--all-notebooks` does either for every notebook in a registry. A bundled install refreshes its

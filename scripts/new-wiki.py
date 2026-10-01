@@ -42,7 +42,7 @@ from _install_tooling import (  # noqa: E402
     TRAVEL_SKILLS, TRAVEL_SCRIPTS, TOOLING_HELPER_SCRIPTS, SHARED_HELPER_SCRIPTS,
     install_tooling as _install_tooling,
     print_summary as _print_tooling_summary,
-    global_tooling_status, format_tooling_status,
+    global_tooling_status, format_tooling_status, is_bootstrap_source,
 )
 from urllib.parse import urlparse
 
@@ -332,7 +332,8 @@ def _slugify(text):
 def _derive_bootstrap_source(args):
     """Find the workflows-core bootstrap path. Checks in order: --bootstrap-source
     arg, wiki-config.json bootstrap_source, walking up from script location,
-    walking up looking for `bootstrap/scripts/new-wiki.py` (layout flattened 2026-08-20)."""
+    walking up looking for `scripts/new-wiki.py` beside `skills/new-wiki/SKILL.md` (the repo root,
+    since `bootstrap/` was removed 2026-10-01)."""
     if args.bootstrap_source:
         return Path(args.bootstrap_source).resolve()
 
@@ -340,17 +341,15 @@ def _derive_bootstrap_source(args):
     if cfg and cfg.get("bootstrap_source"):
         return Path(cfg["bootstrap_source"]).resolve()
 
-    # Try: am I inside a workflows-core checkout?
+    # Try: am I inside an llm-wiki-bootstrap checkout?
     here = Path(__file__).resolve()
     for parent in [here.parent, *here.parents]:
-        candidate = parent / "bootstrap" / "scripts" / "new-wiki.py"
-        if candidate.is_file():
+        if is_bootstrap_source(parent):
             return parent.resolve()
 
     cwd_root = Path.cwd()
     for parent in [cwd_root, *cwd_root.parents]:
-        candidate = parent / "bootstrap" / "scripts" / "new-wiki.py"
-        if candidate.is_file():
+        if is_bootstrap_source(parent):
             return parent.resolve()
 
     return None
@@ -370,7 +369,7 @@ def _phase_tooling_cursor(args):
         _err("could not find bootstrap source. Pass --bootstrap-source <path>.")
         return 1
 
-    pkg = bootstrap / "bootstrap"
+    pkg = bootstrap
     scripts_src = pkg / "scripts"
     skills_src = pkg / "skills"
     if not scripts_src.is_dir() or not skills_src.is_dir():
@@ -540,7 +539,7 @@ def phase_a(args):
         return 1
     _info(f"bootstrap source: {bootstrap}")
 
-    skills_src = bootstrap / "bootstrap" / "skills"
+    skills_src = bootstrap / "skills"
     new_project_skill_src = skills_src / "new-wiki"
     new_project_skill_dst = CC_GLOBAL_SKILLS_DIR / "new-wiki"
 
@@ -727,14 +726,14 @@ RETIRED_HOW_TO_PAGES = ["commands.md", "getting-started.md", "install.md", "driv
 
 def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False, prune_retired: bool = False) -> int:
     """Assemble the llm-wiki pack's usage docs into <how_to_root>/llm-wiki/ (wiki-seed
-    convention, shared with the agent-factory): the pack page from bootstrap/wiki-seed/,
+    convention, shared with the agent-factory): the pack page from wiki-seed/,
     one page per skill from skills/<name>/wiki-seed/ -> llm-wiki/skills/<name>.md, one page
     per agent from agents/<name>/wiki-seed/ -> llm-wiki/agents/<name>.md. Every shipped
     skill (a folder with SKILL.md) and agent (a folder with AGENT.md) is expected to carry a
     page; each one that does not is named in a warning, because an artifact without a usage
     page is installed undocumented (requirement added 2026-09-08). Returns the number of
     pages copied or pruned. Used by Phase B (new project) and --phase docs (refresh an existing one)."""
-    wiki_src = bootstrap / "bootstrap"
+    wiki_src = bootstrap
     skills_src = wiki_src / "skills"
     agents_src = wiki_src / "agents"
     pack_docs_dst = how_to_root / "llm-wiki"
@@ -787,8 +786,9 @@ def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False, pr
     return total
 
 
-# bootstrap/topic-template/wiki/best-practices/framework/ until 2026-09-26, when topic-template retired
-FRAMEWORK_DOCS_SRC = Path("bootstrap") / "framework-docs"
+# bootstrap/framework-docs/ until 2026-10-01 (bootstrap/ removed); bootstrap/topic-template/wiki/best-practices/framework/
+# until 2026-09-26, when topic-template retired
+FRAMEWORK_DOCS_SRC = Path("framework-docs")
 FRAMEWORK_DOCS_DST = Path("project") / "best-practices" / "framework"
 
 
@@ -805,7 +805,7 @@ def seed_framework_docs(bootstrap: Path, wiki_dir: Path, dry_run: bool = False,
     authoring principles, the cycle step contract, ...) at <wiki_dir>/project/best-practices/framework/,
     the path the CLAUDE.md template's precedence rule and every skill point at. Content-compared and
     OVERWRITTEN when different — these are the framework's canonical copies (the gold copy is
-    bootstrap/framework-docs/); a project keeps project-specific notes in
+    framework-docs/); a project keeps project-specific notes in
     a sibling file, never by editing these. Reports every file it replaced so an edit that lived only in
     a project copy is visible rather than silently lost (2026-09-08 — five of nine registered notebooks
     had no framework docs at all, and the two that did had drifted in both directions).
@@ -963,7 +963,7 @@ def _docs_one(bootstrap: Path, target: Path, args, check: bool) -> tuple[int, in
         w, _u, _r = seed_framework_docs(bootstrap, wiki_dir, dry_run=dry, check=check)
         pending += w
     # the marker is the one framework file at the how-to root; it describes the tree, so it travels with the docs
-    marker = bootstrap / "bootstrap" / "seed" / "how-to" / "_FRAMEWORK_MANAGED.md"
+    marker = bootstrap / "seed" / "how-to" / "_FRAMEWORK_MANAGED.md"
     if marker.exists():
         c, s = _copy_tree(marker.parent, how_to, names=[marker.name], dry_run=dry)
         pending += c
@@ -1195,7 +1195,7 @@ def phase_b(args):
     # --project-type is accepted but ignored (back-compat); recorded as "merged".
     project_type = "merged"
 
-    wiki_src = bootstrap / "bootstrap"
+    wiki_src = bootstrap
     skills_src = wiki_src / "skills"
     scripts_src = wiki_src / "scripts"
     templates_src = wiki_src / "templates"

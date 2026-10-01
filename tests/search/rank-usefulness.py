@@ -56,7 +56,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
-WRAPPER = REPO / "bootstrap" / "scripts" / "wiki-qmd-query.py"
+WRAPPER = REPO / "scripts" / "wiki-qmd-query.py"
 LOG = Path(os.environ.get("WIKI_QMD_SLOT_DIR") or Path.home() / ".cache" / "wiki-qmd") / "searches.jsonl"
 SKIP_CALLERS = ("depth-check", "rank-usefulness")
 EXCERPT_CHARS = 700
@@ -92,7 +92,7 @@ def known_titles() -> set[str]:
     if _TITLES is None:
         _TITLES = set()
         try:
-            sys.path.insert(0, str(REPO / "bootstrap" / "scripts"))
+            sys.path.insert(0, str(REPO / "scripts"))
             from _wiki_config import load_registry  # noqa: PLC0415
             reg, reg_path = load_registry()
             for entry in (reg or {}).get("notebooks", {}).values():

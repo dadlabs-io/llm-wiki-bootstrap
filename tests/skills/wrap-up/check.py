@@ -125,7 +125,7 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
             "registry": sandbox / "linked-notebooks.json",
             "wiki": nb / "wiki", "proposed": nb / "_inbox" / "proposed",
             "skill_dir": sandbox / "skill" / "wrap-up",
-            "scripts": repo / "bootstrap" / "scripts",
+            "scripts": repo / "scripts",
             "env": {"PYTHONIOENCODING": "utf-8"}}
 
 

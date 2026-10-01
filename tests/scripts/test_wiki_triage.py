@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks for bootstrap/scripts/wiki-triage.py, the mechanical half of /wiki-triage
+"""Checks for scripts/wiki-triage.py, the mechanical half of /wiki-triage
 (task #42 section T). Never shipped.
 
     python tests/scripts/test_wiki_triage.py    # exit 0 = every check passed
@@ -18,7 +18,7 @@ import tempfile
 from pathlib import Path
 
 SCRIPT = Path(os.environ.get("WIKI_TRIAGE_SCRIPT") or
-              Path(__file__).resolve().parents[2] / "bootstrap" / "scripts" / "wiki-triage.py")
+              Path(__file__).resolve().parents[2] / "scripts" / "wiki-triage.py")
 results: list[tuple[bool, str]] = []
 
 

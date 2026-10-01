@@ -136,7 +136,7 @@ def _seed(ctx: dict) -> None:
         (nb / d / ".gitkeep").touch()
     fw = nb / "wiki" / "project" / "best-practices" / "framework"
     fw.mkdir(parents=True, exist_ok=True)
-    for doc in (repo / "bootstrap" / "framework-docs").glob("*.md"):
+    for doc in (repo / "framework-docs").glob("*.md"):
         shutil.copy2(doc, fw / doc.name)
 
 
@@ -153,7 +153,7 @@ def render_replacements(ctx: dict) -> dict:
 
 def setup(model: str, sandbox: Path, repo: Path) -> dict:
     _rmtree(sandbox)
-    scripts = repo / "bootstrap" / "scripts"
+    scripts = repo / "scripts"
     nb = sandbox / "notebooks" / NOTEBOOK
     project = sandbox / "project"
     ctx = {"sandbox": sandbox, "project": project, "notebook": nb, "repo": repo, "scripts": scripts,
@@ -173,8 +173,8 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
 
     # the wiki-ingester and wiki-checker agents and their sidecars, from this repo, install paths -> sandbox
     repl = render_replacements(ctx)
-    src = repo / "bootstrap" / "agents" / "wiki-ingester"
-    chk = repo / "bootstrap" / "agents" / "wiki-checker"
+    src = repo / "agents" / "wiki-ingester"
+    chk = repo / "agents" / "wiki-checker"
     (sandbox / "agents").mkdir()
     (project / ".claude" / "agents").mkdir()
     for f, dest in ((src / "AGENT.md", project / ".claude" / "agents" / "wiki-ingester.md"),

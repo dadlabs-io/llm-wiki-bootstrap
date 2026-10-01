@@ -31,7 +31,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-SCRIPTS = REPO / "bootstrap" / "scripts"
+SCRIPTS = REPO / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 
