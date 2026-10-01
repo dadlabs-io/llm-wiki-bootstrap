@@ -9,6 +9,15 @@
 
 ---
 
+## 2026-09-30
+
+### The skill-suggestions loop ships with llm-wiki: `writing-skill-suggestions` and `improving-skills-from-suggestions` moved from agent-builder's library (the user's call)
+- **Why**: one process was split across two repositories (agent-builder had the writer, `receive` and the improver; llm-wiki had `/wrap-up`'s step that puts each note to the user), which forced a cross-repo contract, "tag me first" rules, and seeding the pages from another library. Every project has llm-wiki, the box is a notebook `_inbox/` folder, and `--phase docs` already reaches every notebook, so the whole loop now ships here. Agent-builder agreed and stays its main user.
+- **Change**: both skills in `bootstrap/skills/` with their scripts (`skill-suggestion.py`, `suggestions.py`) and template, copied from agent-builder-bootstrap `061b8e8`; only the lines that assumed agent-builder runs them say "this library" (the improver runs in whichever library receives a note). Both in `TRAVEL_SKILLS`. Usage pages in our pack: `how-to/llm-wiki/skill-suggestions.md` (the whole loop) and a page per skill; rows on the pack page and in INSTALL-INVENTORY. `/wrap-up` Step 5.5 links the loop page, and the contract becomes a note that the three skills share the file name and the four labelled lines and change together. Suggestions about the two skills now read as llm-wiki's by the owner rule.
+- **Tests, at full strength**: `tests/scripts/test_skill_suggestions.py` runs both self-tests at their floors (34, 53) and kills four sabotaged copies (8/8, free). Agent-builder's 11 eval cases run here word for word as two suites through `tests/skills/_jsonl_cases.py` (the Skill tool blocked, "not invoked" read as "SKILL.md not opened, no script run"; yes/no questions by a Sonnet judge): writer 5/5 and improver 6/6 on both models, first baselines. Not ported: the free-text judge rubric and the without-skill ablation runs.
+- **Rollout, coordinated**: agent-builder made do-code-change depend on the writer as an external skill (`external_skills: {llm-wiki: [writing-skill-suggestions]}`), stopped installing both at investment-agent's safe point, and our install took them over at once (every installed file identical, self-tests pass from the installed copies). Pages in all 10 notebooks; agent-builder deleted its copies and the old `how-to/skill-suggestions/` folders. A round trip ran end to end on a marked test note.
+- **Plan and record**: `wiki/sessions/main/skill-suggestions-move-plan.md` in the llm-wiki-bootstrap notebook.
+
 ## 2026-09-29
 
 ### `/wrap-up` sends each skill suggestion to its skill's owner, who keeps the only copy (the user's decision)
