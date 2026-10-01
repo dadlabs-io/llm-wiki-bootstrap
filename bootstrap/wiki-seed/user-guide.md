@@ -30,7 +30,7 @@ It is plain Markdown under git. Every entry carries the same frontmatter (tier, 
 | `/wiki-cycle` | The research cycle: gather, triage, ingest, check, lint, report. `--full` adds the deeper passes. |
 | `/wiki-search "<query>"` | Hybrid search (keyword + meaning + reranking) across the wiki. |
 | `/wrap-up` | End of a session: the journal, the resume files, and the session's durable entries, staged and offered for promotion; any skill suggestions in the box are put to you. |
-| `/task-list` | The project's task list; plain speech works too ("add a task …", "mark 3 done"). |
+| `/task-list` | The project's task list, one table per owner and a Backlog for tasks set aside (each keeps its owner); plain speech works too ("add a task …", "mark 3 done", "move 5 to the backlog"). |
 | `/wiki-promote` | Review staged entries and move the ones you approve into `wiki/`. |
 | `/wiki-verify` | Mark an entry verified. Entries never certify themselves. |
 | `/wiki-rollback` | Walk an entry back to its last verified version. |

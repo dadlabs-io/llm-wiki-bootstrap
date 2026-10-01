@@ -88,8 +88,9 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     def board(text):
         b = mod.Board(text)
         m = mod.MARKER_RE.search(text)
-        return b, {r["id"]: {**r, "owner": s["name"]} for s in b.sections for r in s["rows"]}, \
-            (int(m.group(1)) if m else None)
+        # a Backlog row carries its own owner; any other row's owner is its section
+        return b, {r["id"]: {**r, "section": s["name"], "owner": r.get("owner", s["name"])}
+                   for s in b.sections for r in s["rows"]}, (int(m.group(1)) if m else None)
 
     r = run["result"]
     add("session completed", r.get("subtype") == "success" and not r.get("is_error"),

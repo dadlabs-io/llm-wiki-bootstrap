@@ -10,6 +10,10 @@
     {"id": "done-asks", "kind": "done", "task": 2, "say": "I finished the onboarding guide draft, so task 2 is done."},
     {"id": "delete-plain", "kind": "delete", "task": 3, "say": "Delete task 3, we're not doing it."},
     {"id": "waiting-plain", "kind": "set", "task": 1, "say": "Task 1 is waiting on a quote from the registrar.",
-     "expect": {"status": "waiting", "next_has": "quote", "owner": "Mark"}}
+     "expect": {"status": "waiting", "next_has": "quote", "owner": "Mark"}},
+    {"id": "backlog-plain", "kind": "set", "task": 3, "say": "Move task 3 to the backlog, we won't get to it this month.",
+     "expect": {"section": "Backlog", "owner": "main", "status": "to do"}},
+    {"id": "unbacklog-plain", "kind": "set", "task": 6, "seed": "task-with-backlog.md",
+     "say": "Take task 6 off the backlog.", "expect": {"section": "main", "owner": "main", "status": "parked"}}
   ]
 }

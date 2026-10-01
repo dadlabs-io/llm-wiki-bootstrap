@@ -1,9 +1,9 @@
 ---
 name: task-list
-description: "Keeps the project's task list, the At a glance block at the top of sessions/<persona>/task.md in the wiki: one table per owner (the user, each persona or bot, Unassigned), one row per task with a number that is never reused, a status (to do / doing / waiting / parked / done) and what it waits on. Shows the list, adds a task, changes a task's status, owner or next step, marks one done, and removes one only when the user says so. Use when the user types /task-list, or says 'add a task', 'new task', 'put X on the list', 'delete task 4', 'remove task 4', 'mark 2 done', 'task 3 is done', 'task 3 is waiting on Y', 'move task 5 to <owner>', 'what's on my list', 'show my tasks', 'what's left'. Not Claude Code's /tasks (background jobs), and not a session's own scratch to-do list."
-last_reviewed: 2026-09-17
-review_after: 2026-12-17
-reviewed_for_model: claude-opus-5
+description: "Keeps the project's task list, the At a glance block at the top of sessions/<persona>/task.md in the wiki: one table per owner (the user, each persona or bot, Unassigned), then a Backlog table that keeps each set-aside task's owner, one row per task with a number that is never reused, a status (to do / doing / waiting / parked / done) and what it waits on. Shows the list, adds a task, changes a task's status, owner or next step, moves one to the backlog and back, marks one done, and removes one only when the user says so. Use when the user types /task-list, or says 'add a task', 'new task', 'put X on the list', 'delete task 4', 'remove task 4', 'mark 2 done', 'task 3 is done', 'task 3 is waiting on Y', 'move task 5 to <owner>', 'move 5 to the backlog', 'take 5 off the backlog', 'what's on my list', 'show my tasks', 'what's left'. Not Claude Code's /tasks (background jobs), and not a session's own scratch to-do list."
+last_reviewed: 2026-10-01
+review_after: 2026-12-30
+reviewed_for_model: claude-opus-5-5
 ---
 
 # /task-list — the project's task list
@@ -19,16 +19,24 @@ The list is the **At a glance** block at the top of `<wiki>/sessions/<persona>/t
 ```
 
 One `###` section per owner: the user (by name), each persona or bot working in the project, and Unassigned.
+Last comes `### Backlog`, for tasks set aside: its table has an Owner column, so a task keeps its owner while it
+waits there. `Backlog` is never an owner name; the script refuses it as `--owner`.
 
 **Every edit goes through the script, never by hand**: it keeps the numbering, the escaping and the layout.
 
 ```bash
 python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show
-python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py add "<task in one plain line>" --owner <section> [--status <s>] [--next "<text>"]
+python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py add "<task in one plain line>" --owner <section> [--status <s>] [--next "<text>"] [--backlog]
 python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py set <N> [--status <s>] [--next "<text>"] [--owner <section>] [--task "<text>"]
 python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> [--next "<text>"]
+python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py backlog <N>
+python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py unbacklog <N> [--owner <section>]
 python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py remove <N> --confirmed
 ```
+
+`backlog <N>` moves a task into the Backlog and records its owner; `unbacklog <N>` sends it back to that owner's
+section (`--owner` names another, and is needed for an old backlog row with no owner recorded). On a backlog
+row, `set --owner` changes the Owner cell and the task stays in the Backlog; `done` and `remove` work as anywhere.
 
 Run it from the project folder: it finds the wiki and the persona from `.claude/wiki-config.json`,
 walking up from the working directory, so a subfolder of the project works too. You do not need to pass a
@@ -69,6 +77,9 @@ editing the file.
 | "delete task 4", "remove task 4", "drop 4" | `remove 4 --confirmed` |
 | "task 3 is waiting on Y", "park 5", "I'm on 2 now" | `set 3 --status waiting --next "Y"`, `set 5 --status parked`, `set 2 --status doing` |
 | "move 5 to agent-builder", "give 5 to me" | `set 5 --owner <section>` |
+| "move 5 to the backlog", "backlog 5" | `backlog 5` |
+| "take 5 off the backlog", "bring 5 back" | `unbacklog 5` |
+| "add X to the backlog" | `add "<X>" --backlog`, owner as below |
 
 - **Which task:** when the user names a task by its words, not its number, run `show`, find it, and use its
   number. If two tasks could match, or none does, ask. Never guess a number.
@@ -85,6 +96,7 @@ only when asked.
 ## Don't
 
 - Don't edit the block by hand, renumber tasks, or re-sort them.
+- Don't make an owner called Backlog (`set --owner Backlog`): that loses the task's owner. Use `backlog <N>`.
 - Don't remove a task the user did not tell you to remove, even one marked done.
 - Don't confuse it with Claude Code's `/tasks` (background jobs) or a session's own to-do checklist. This list
   lives in the wiki and outlives the session.

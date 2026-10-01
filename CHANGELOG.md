@@ -9,6 +9,13 @@
 
 ---
 
+## 2026-10-01
+
+### `/task-list` gets a Backlog that keeps each task's owner (task #59, agent-builder's skill suggestion, the user's shape)
+- **Why**: the user asked agent-builder to move six parked tasks to a backlog. The list knew only owner sections, so agent-builder made a "Backlog" owner with `set --owner Backlog`, and each task's real owner was lost (it survived only as "yours" in the Next column). The first suggestion through the moved improver (pass `2026-10-01-agent-builder-bootstrap`).
+- **Change**: `wiki-tasks.py` keeps one `### Backlog` section, always last, after Unassigned (the user's order; the suggestion had it before), whose table has an Owner column. `backlog <N>` moves a task there and records its section as the owner; `unbacklog <N> [--owner]` sends it back, recreating the owner's section among the owners if it is gone; `add … --backlog` files straight into it; on a backlog row `set --owner` changes the Owner cell and the row stays, and `done` / `remove` work as anywhere. `Backlog` is refused as an owner name (`add`, `set`, `unbacklog`, `init`). An older 4-column Backlog section (agent-builder's) is read with empty Owner cells and moved last on the next edit; `set <N> --owner` fills each. A list with no backlog prints exactly as before. The skill's description, format note, command block and phrase table ("move 5 to the backlog", "take 5 off the backlog", "add X to the backlog"), its usage page and INSTALL-INVENTORY say so.
+- **Proven**: `tests/scripts/test_wiki_tasks.py` (new, free): 12/38 against the old script, 38/38 after. `show` on this notebook's list prints byte-identical output under the old and new script. Suite: two new cases (`backlog-plain`, `unbacklog-plain`, with a seed list that has a Backlog), scored offline against scripted answers before any spend, then run `20261001-175011` ($0.97): 4/4, both models calling `backlog 3` and `unbacklog 6` directly; merged into both baselines. The seven older cases were not re-run (the user's call; `tests/skills/PENDING.md`).
+
 ## 2026-09-30
 
 ### The skill-suggestions loop ships with llm-wiki: `writing-skill-suggestions` and `improving-skills-from-suggestions` moved from agent-builder's library (the user's call)

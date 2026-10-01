@@ -13,12 +13,19 @@ status; the task stays with its owner. A task leaves the list only on the user's
 word: `done` marks it and asks "remove? (your call)"; `remove` refuses without
 --confirmed, which the skill passes only after the user said to remove it.
 
+The backlog (Mark, 2026-10-01): one `### Backlog` section, always last (after
+Unassigned), whose table carries an Owner column, so a task set aside keeps its
+owner. `backlog <N>` moves a task there, `unbacklog <N>` sends it back to its
+owner's section. "Backlog" is never an owner name.
+
 Usage:
   python wiki-tasks.py [show]
   python wiki-tasks.py init [--owners "Mark,main,Unassigned"]
-  python wiki-tasks.py add "<task>" [--owner <section>] [--status "to do"] [--next "<text>"]
+  python wiki-tasks.py add "<task>" [--owner <section>] [--status "to do"] [--next "<text>"] [--backlog]
   python wiki-tasks.py set <N> [--task ...] [--status ...] [--next ...] [--owner ...]
   python wiki-tasks.py done <N> [--next "<text>"]
+  python wiki-tasks.py backlog <N>
+  python wiki-tasks.py unbacklog <N> [--owner <section>]
   python wiki-tasks.py remove <N> --confirmed
 Every command takes --file <task.md> (default: sessions/<persona>/task.md in the
 project's wiki), --persona <name> (default: the project config's "persona", else
@@ -43,7 +50,10 @@ MARKER_RE = re.compile(r"<!--\s*wiki-tasks\s+next-id:\s*(\d+)\s*-->")
 STATUSES = ("to do", "doing", "waiting", "parked", "done")
 DONE_NEXT = "remove? (your call)"
 PLACEHOLDER_OWNER = "User"
+UNASSIGNED = "Unassigned"
+BACKLOG = "Backlog"
 TABLE_HEAD = ["| # | Task | Status | Next / waiting on |", "|---|---|---|---|"]
+BACKLOG_HEAD = ["| # | Task | Owner | Status | Next / waiting on |", "|---|---|---|---|---|"]
 INTRO = ("Every task, one line each, by owner. A number is never reused. \"waiting\" is a status: the task "
          "stays with its owner. A task leaves this list only when the user says so; a finished one is marked "
          "`done` and the session asks before removing it. Notes on a task go below, keyed by its number.")
@@ -68,6 +78,16 @@ def _status(s: str) -> str:
     if s not in STATUSES:
         raise UserError(f"status must be one of: {', '.join(STATUSES)} (got {s!r})")
     return s
+
+
+def is_backlog(s: dict) -> bool:
+    return s["name"].lower() == BACKLOG.lower()
+
+
+def _owner(name: str) -> str:
+    if name.strip().lower() == BACKLOG.lower():
+        raise UserError(f"{BACKLOG!r} is not an owner: use `backlog <N>` to set a task aside, keeping its owner")
+    return name.strip()
 
 
 class Board:
@@ -98,9 +118,15 @@ class Board:
                 if cur is None:
                     if not is_table:
                         self.intro.append(ln)
+                elif is_backlog(cur) and len(cells) == 5 and cells[0].isdigit():
+                    cur["rows"].append({"id": int(cells[0]), "task": cells[1], "owner": cells[2],
+                                        "status": cells[3], "next": cells[4]})
                 elif len(cells) == 4 and cells[0].isdigit():
-                    cur["rows"].append({"id": int(cells[0]), "task": cells[1],
-                                        "status": cells[2], "next": cells[3]})
+                    # a 4-column row in a Backlog section predates the Owner column: owner not known yet
+                    row = {"id": int(cells[0]), "task": cells[1], "status": cells[2], "next": cells[3]}
+                    if is_backlog(cur):
+                        row["owner"] = ""
+                    cur["rows"].append(row)
                 elif ln.strip() and not is_table:
                     cur["extras"].append(ln)
         # Above every number in the file: the block's own rows and the numbered QUEUE items
@@ -121,8 +147,17 @@ class Board:
         if not create:
             raise UserError(f"no owner section {name!r}; sections: {', '.join(s['name'] for s in self.sections)}")
         new = {"name": name.strip(), "rows": [], "extras": []}
-        idx = next((i for i, s in enumerate(self.sections) if s["name"].lower() == "unassigned"), len(self.sections))
+        last = (UNASSIGNED.lower(), BACKLOG.lower())
+        idx = next((i for i, s in enumerate(self.sections) if s["name"].lower() in last), len(self.sections))
         self.sections.insert(idx, new)
+        return new
+
+    def backlog(self) -> dict:
+        for s in self.sections:
+            if is_backlog(s):
+                return s
+        new = {"name": BACKLOG, "rows": [], "extras": []}
+        self.sections.append(new)
         return new
 
     def find(self, n: int) -> tuple[dict, dict]:
@@ -135,13 +170,21 @@ class Board:
     def block(self) -> list[str]:
         # an empty "User" section is the placeholder the first version created; drop it
         self.sections = [s for s in self.sections if s["rows"] or s["extras"] or s["name"] != PLACEHOLDER_OWNER]
+        # the owners in their own order, then Unassigned, then the Backlog last (Mark, 2026-10-01)
+        rank = {UNASSIGNED.lower(): 1, BACKLOG.lower(): 2}
+        self.sections.sort(key=lambda s: rank.get(s["name"].lower(), 0))
         out = [HEADING, "", f"<!-- wiki-tasks next-id: {self.next_id} -->"]
         intro = "\n".join(self.intro).strip()
         out += [intro or INTRO, ""]
         for s in self.sections:
             s["rows"].sort(key=lambda r: r["status"] == "done")  # stable: done rows sink to the bottom
-            out += [f"### {s['name']}", "", *TABLE_HEAD]
-            out += [f"| {r['id']} | {_cell(r['task'])} | {r['status']} | {_cell(r['next'])} |" for r in s["rows"]]
+            if is_backlog(s):
+                out += [f"### {s['name']}", "", *BACKLOG_HEAD]
+                out += [f"| {r['id']} | {_cell(r['task'])} | {_cell(r['owner'])} | {r['status']} | {_cell(r['next'])} |"
+                        for r in s["rows"]]
+            else:
+                out += [f"### {s['name']}", "", *TABLE_HEAD]
+                out += [f"| {r['id']} | {_cell(r['task'])} | {r['status']} | {_cell(r['next'])} |" for r in s["rows"]]
             if s["extras"]:
                 out += ["", *s["extras"]]
             out.append("")
@@ -178,6 +221,8 @@ def init_board(board: Board, owners: list[str]) -> None:
 
 
 def row_line(s: dict, r: dict) -> str:
+    if is_backlog(s):
+        return f"#{r['id']} | {r['task']} | {r['status']} | {r['next']} | owner: {r['owner'] or '(none yet)'}, in the backlog"
     return f"#{r['id']} | {r['task']} | {r['status']} | {r['next']} | owner: {s['name']}"
 
 
@@ -198,6 +243,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--owner", default="Unassigned")
     p.add_argument("--status", default="to do")
     p.add_argument("--next", default="")
+    p.add_argument("--backlog", action="store_true", help="file it straight into the backlog, keeping --owner")
     p = sub.add_parser("set", parents=[common])
     p.add_argument("n", type=int)
     p.add_argument("--task")
@@ -207,6 +253,11 @@ def main(argv: list[str]) -> int:
     p = sub.add_parser("done", parents=[common])
     p.add_argument("n", type=int)
     p.add_argument("--next")
+    p = sub.add_parser("backlog", parents=[common])
+    p.add_argument("n", type=int)
+    p = sub.add_parser("unbacklog", parents=[common])
+    p.add_argument("n", type=int)
+    p.add_argument("--owner", help="the section to return it to (default: the owner the backlog recorded)")
     p = sub.add_parser("remove", parents=[common])
     p.add_argument("n", type=int)
     p.add_argument("--confirmed", action="store_true", help="the user said to remove this task")
@@ -236,7 +287,7 @@ def main(argv: list[str]) -> int:
                 print(f"{path} already has an At a glance block; nothing changed")
                 print(f"task_file={path}")
                 return 0
-            owners = [o.strip() for o in (args.owners or ",".join(default_owners)).split(",") if o.strip()]
+            owners = [_owner(o) for o in (args.owners or ",".join(default_owners)).split(",") if o.strip()]
             init_board(board, owners)
             changed = "created the At a glance block: " + ", ".join(s["name"] for s in board.sections)
         else:
@@ -249,10 +300,37 @@ def main(argv: list[str]) -> int:
                      "next": args.next.strip()}
                 if r["status"] == "done" and not r["next"]:
                     r["next"] = DONE_NEXT
-                s = board.section(args.owner, create=True)
+                owner = _owner(args.owner)
+                if args.backlog:
+                    existing = next((o for o in board.sections if o["name"].lower() == owner.lower()), None)
+                    r["owner"] = existing["name"] if existing else owner
+                    s = board.backlog()
+                else:
+                    s = board.section(owner, create=True)
                 s["rows"].append(r)
                 board.next_id += 1
                 changed = "added " + row_line(s, r)
+            elif args.cmd == "backlog":
+                s, r = board.find(args.n)
+                if is_backlog(s):
+                    raise UserError(f"#{args.n} is already in the backlog (owner: {r['owner'] or 'none yet'})")
+                s["rows"].remove(r)
+                r["owner"] = s["name"]
+                s = board.backlog()
+                s["rows"].append(r)
+                changed = "moved to the backlog " + row_line(s, r)
+            elif args.cmd == "unbacklog":
+                s, r = board.find(args.n)
+                if not is_backlog(s):
+                    raise UserError(f"#{args.n} is not in the backlog (it is in {s['name']}'s section)")
+                owner = _owner(args.owner) if args.owner else r["owner"]
+                if not owner:
+                    raise UserError(f"#{args.n} has no owner recorded in the backlog: pass --owner <section>")
+                s["rows"].remove(r)
+                del r["owner"]
+                s = board.section(owner, create=True)
+                s["rows"].append(r)
+                changed = "back from the backlog " + row_line(s, r)
             elif args.cmd in ("set", "done"):
                 s, r = board.find(args.n)
                 if args.cmd == "done":
@@ -267,10 +345,15 @@ def main(argv: list[str]) -> int:
                             r["next"] = DONE_NEXT
                     if args.next is not None:
                         r["next"] = args.next.strip()
-                    if args.owner is not None and args.owner.strip().lower() != s["name"].lower():
-                        s["rows"].remove(r)
-                        s = board.section(args.owner, create=True)
-                        s["rows"].append(r)
+                    if args.owner is not None:
+                        owner = _owner(args.owner)
+                        if is_backlog(s):  # a backlog row keeps its place; only its Owner cell changes
+                            existing = next((o for o in board.sections if o["name"].lower() == owner.lower()), None)
+                            r["owner"] = existing["name"] if existing else owner
+                        elif owner.lower() != s["name"].lower():
+                            s["rows"].remove(r)
+                            s = board.section(owner, create=True)
+                            s["rows"].append(r)
                 changed = "updated " + row_line(s, r)
             else:  # remove
                 s, r = board.find(args.n)

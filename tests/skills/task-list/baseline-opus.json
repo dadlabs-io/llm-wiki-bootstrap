@@ -66,5 +66,23 @@
     "next step mentions 'quote'": true,
     "owner is 'Mark'": true,
     "other tasks untouched": true
+  },
+  "backlog-plain": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "section is 'Backlog'": true,
+    "owner is 'main'": true,
+    "status is 'to do'": true,
+    "other tasks untouched": true
+  },
+  "unbacklog-plain": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "section is 'main'": true,
+    "owner is 'main'": true,
+    "status is 'parked'": true,
+    "other tasks untouched": true
   }
 }

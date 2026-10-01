@@ -9,9 +9,9 @@ date: 2026-09-15
 
 # task-list — skill
 
-The project's task list, kept where every session, every bot and you can see it: an **At a glance** block at the top of the session's `task.md` in the wiki. There is one table per owner (you, each persona or bot working in the project, and Unassigned), with one row per task: a number, the task in one plain line, a status, and the next step or what it is waiting on. The list is plain Markdown, and a small script makes every edit, so it works in any harness and you can read it in any editor.
+The project's task list, kept where every session, every bot and you can see it: an **At a glance** block at the top of the session's `task.md` in the wiki. There is one table per owner (you, each persona or bot working in the project, and Unassigned), with one row per task: a number, the task in one plain line, a status, and the next step or what it is waiting on. Last comes a **Backlog** table for tasks set aside; it has an Owner column, so a task keeps its owner while it waits there, and goes back to that owner's table when you bring it back. The list is plain Markdown, and a small script makes every edit, so it works in any harness and you can read it in any editor.
 
-**Trigger:** */task-list*, or plain speech: "add a task …", "put X on the list", "delete task 4", "mark 2 done", "task 3 is waiting on Y", "move 5 to agent-builder", "what's on my list", "what's left". This is not Claude Code's own `/tasks`, which shows background jobs.
+**Trigger:** */task-list*, or plain speech: "add a task …", "put X on the list", "delete task 4", "mark 2 done", "task 3 is waiting on Y", "move 5 to agent-builder", "move 5 to the backlog", "take 5 off the backlog", "what's on my list", "what's left". This is not Claude Code's own `/tasks`, which shows background jobs.
 
 **Input / Output:** what you said, and the list in `wiki/sessions/<persona>/task.md` (the persona comes from the project's `.claude/wiki-config.json`, default `main`). It shows the list, or changes one row and replies with that row. The block sits above the file's `## NOW` and `## QUEUE`. Longer notes on a task go in QUEUE as a numbered item with the task's number.
 
