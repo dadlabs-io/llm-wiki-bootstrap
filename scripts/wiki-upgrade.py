@@ -28,6 +28,11 @@ from _install_tooling import (  # noqa: E402
 
 
 def main() -> int:
+    # Piped on Windows, stdout is cp1252, which has no "→"; the install summary crashed on it
+    # partway through, after the scripts and before the skills (2026-10-01). new-wiki.py does the same.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(
         description="Upgrade the global llm-wiki tooling (skills + scripts) from the master source.")
     ap.add_argument("--bootstrap-source", default=None,

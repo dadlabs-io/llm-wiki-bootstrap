@@ -82,7 +82,7 @@ Manifest: `TRAVEL_SCRIPTS` (the commands) + `TOOLING_HELPER_SCRIPTS` / `SHARED_H
 | Script | Purpose |
 |---|---|
 | `new-wiki.py` | The bootstrap helper behind `/new-wiki`: Phase A / tooling install, Phase B scaffold, `--phase docs [--check] [--all-notebooks]` |
-| `wiki-upgrade.py` | Refresh the global tooling from the recorded bootstrap source (what `install-wiki.ps1 -RefreshOnly` and `/new-wiki --sync` run) |
+| `wiki-upgrade.py` | Refresh the global tooling from the recorded bootstrap source: the same install code (`_install_tooling.install_tooling`) that `install-wiki.ps1 -RefreshOnly` / `install-wiki.sh --refresh-only` reach through `new-wiki.py --mode tooling`. Writes its output as UTF-8, so a piped run on Windows no longer stops at the first `→` (2026-10-01). Checks: `tests/scripts/test_wiki_upgrade.py` |
 | `wiki-update.py` | File an external source as an entry. The write-time gate lives here: it refuses an entry without a TL;DR, without two Related wiki links (a warning for tier `self`), with its layout out of order, or with frontmatter that would not parse. `--revises <slug>` files a later snapshot of a source (checks the older entry exists, implies `--force`). `--slug-for` exits 2 with near matches when no entry matches. Staged entries' links are checked. `internal://` URLs never count as duplicates, and a duplicate prints `duplicate_of=` (2026-09-15) |
 | `wiki-fetch-youtube.py` | YouTube transcript → verbatim raw archive under `raw/` (needs `yt-dlp` on the host) |
 | `wiki-fetch-pdf.py` | PDF (URL or local) → extracted text under `raw/` |
