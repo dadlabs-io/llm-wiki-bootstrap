@@ -12,7 +12,7 @@ and what does not:
   tool (the suite blocks it, so an installed copy can never answer), so "the skill was not
   invoked" is checked as "the session did not run the skill's script and did not open its
   SKILL.md". The files_absent/regex checks beside it carry the rest.
-- `questions`: answered YES or NO by a small judge model (Haiku) from the session's reply,
+- `questions`: answered YES or NO by a judge model (Sonnet) from the session's reply,
   compared with `expect`.
 - `judge` (the free-text rubric) and the without-skill ablation runs are not ported: our
   standard is a baseline per model with the skill, and every rubric's testable parts are
@@ -35,7 +35,7 @@ from pathlib import Path
 ALLOWED_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Bash(python:*)", "Bash(python3:*)", "Bash(git:*)",
                  "Bash(ls:*)", "Bash(cat:*)", "Bash(cd:*)", "Bash(find:*)", "Bash(pwd:*)"]
 DISALLOWED_TOOLS = ["Skill"]
-JUDGE_MODEL = "haiku"
+JUDGE_MODEL = "sonnet"  # Haiku misread a clear "not proposed again" as YES (run 20260930-195308)
 
 HEADER = """You are working in a project at {project}. One skill is available to you in this session: `{skill}`, at {skill_dir}/SKILL.md (its scripts are in that folder). Its description: "{description}" When the request below is one the skill's description covers, read the SKILL.md in full and follow it exactly; when it is not, do not use the skill. Do not use any installed copy of a skill. Write only inside {project}. The user cannot reply while this runs.
 
@@ -145,7 +145,7 @@ def _used_skill(run: dict, ctx: dict) -> list[str]:
     skill_dir = ctx["skill_dir"].as_posix().lower()
     for c in run["tool_calls"]:
         blob = json.dumps(c.get("input") or {}).replace("\\\\", "/").lower()
-        if skill_dir in blob or f"/{ctx['skill']}/" in blob:
+        if skill_dir in blob:  # only the rendered skill's folder: the results path also carries the skill's name
             hits.append(f"{c.get('name')}: {blob[:120]}")
     return hits
 

@@ -1,0 +1,61 @@
+{
+  "mixed-box-proposes-one": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--bom-in-header.md": true,
+    "exists: notebook/_inbox/skill-suggestions/received/wiki-update--quote-reworded.md": true,
+    "absent: notebook/_inbox/skill-suggestions/received/archive": true,
+    "command 1 exits 0": true,
+    "command 2 exits 0": true,
+    "judge: Did the model propose a change to csv-exporter for the crash on an empty input file? -> YES": true,
+    "judge: Did the model tell the user the UTF-8 BOM suggestion is already covered by csv-exporter (i -> YES": true,
+    "judge: Did the model tell the user that wiki-update is not part of this library (not this library -> YES": true,
+    "judge: Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it -> YES": true
+  },
+  "sent-suggestion-is-filed": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": true,
+    "absent: notebook/_inbox/skill-suggestions/proposals": true,
+    "absent: notebook/raw/skill-suggestions": true,
+    "absent: demo-notebook/_inbox/skill-suggestions/csv-exporter--empty-input-crashes.md": true,
+    "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md contains 3 expected text(s)": true,
+    "command 1 exits 0": true
+  },
+  "empty-box-writes-nothing": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/raw/skill-suggestions/2026-09-21-demo-notebook/csv-exporter--bom-in-header.md": true,
+    "absent: notebook/_inbox/skill-suggestions/proposals": true,
+    "reply matches pattern 1: (?i)(no|none of the|nothing).{0,40}(suggestion|received|to p": true,
+    "command 1 exits 0": true,
+    "command 2 exits 0": true
+  },
+  "turned-down-before-not-reproposed": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--quote-every-field.md": true,
+    "command 1 exits 0": true,
+    "judge: Did the model propose again that export.py quote every field? -> NO": true,
+    "judge: Did the model tell the user this suggestion was turned down before, with the earlier reaso -> YES": true
+  },
+  "replay-freeze-step-label": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/verifying-before-done--check-freeze-py-step-takes-only.md": true,
+    "command 1 exits 0": true,
+    "command 2 exits 0": true,
+    "judge: Did the model point at check-freeze.py's --step argument being declared as an integer? -> YES": true,
+    "judge: Did the model say whether the proposed change is tactical or strategic? -> YES": true,
+    "judge: Did the proposal include writing a failing test (a self-test case) before changing the scr -> YES": true
+  },
+  "should-not-trigger-direct-gotcha-edit": {
+    "session completed": true,
+    "the skill is not used (SKILL.md not opened, no script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--bom-in-header.md": true,
+    "absent: notebook/_inbox/skill-suggestions/proposals": true,
+    "absent: notebook/raw/skill-suggestions": true,
+    "skills/csv-exporter/SKILL.md contains 1 expected text(s)": true
+  }
+}
