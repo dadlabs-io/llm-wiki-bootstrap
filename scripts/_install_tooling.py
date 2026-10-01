@@ -21,6 +21,8 @@ import os
 import shutil
 import subprocess
 import sys
+import traceback
+from datetime import datetime
 from pathlib import Path
 
 # ---------- Global install targets (claude-code) ----------
@@ -273,11 +275,36 @@ def install_hooks(events: dict, entry: dict, script_name: str, settings_path: Pa
     return status
 
 
+class InstallIncomplete(Exception):
+    """An install that stopped partway: what was done, where it stopped, and the original error with its
+    traceback, so the caller can say so and keep a record (report_incomplete). 2026-10-01: a crash after
+    the scripts and before any skill left only a traceback, and nothing said the skills were the old ones."""
+
+    def __init__(self, progress: dict, error: BaseException, traceback_text: str):
+        self.progress, self.error, self.traceback_text = progress, error, traceback_text
+        self.stopped_at = progress.get("step", "?")
+        super().__init__(f"install stopped at {self.stopped_at}: {type(error).__name__}: {error}")
+
+
 def install_tooling(bootstrap_source: Path, dry_run: bool = False,
                     skills_dest: Path = None, scripts_dest: Path = None) -> dict:
     """Global claude-code tooling install: copy TRAVEL_SCRIPTS (+ helpers) to
     the scripts dir and install each TRAVEL_SKILLS dir via the install-skill
-    primitive. Idempotent. Returns a summary dict (caller prints)."""
+    primitive. Idempotent. Returns a summary dict (caller prints).
+
+    A missing source raises FileNotFoundError before anything is written. Any
+    error after that raises InstallIncomplete (what was done, where it stopped,
+    the traceback); callers pass it to report_incomplete()."""
+    progress = {"step": "start", "dry_run": dry_run, "scripts": [], "skills": [], "agents": []}
+    try:
+        return _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest, progress)
+    except Exception as e:  # noqa: BLE001 - every failure after the start is reported the same way
+        if progress["step"] == "start":
+            raise
+        raise InstallIncomplete(progress, e, traceback.format_exc()) from e
+
+
+def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest, progress: dict) -> dict:
     bootstrap = Path(bootstrap_source)
     pkg = bootstrap
     scripts_src = pkg / "scripts"
@@ -290,6 +317,7 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
     scripts_dest_value = scripts_dest.expanduser().resolve().as_posix()
 
     # 1) Copy scripts (TRAVEL_SCRIPTS + helpers)
+    progress["step"] = "scripts"
     if not dry_run:
         scripts_dest.mkdir(parents=True, exist_ok=True)
     script_names = list(TRAVEL_SCRIPTS)
@@ -303,10 +331,12 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
         if not s.is_file():
             scripts_missing.append(name)
             continue
+        progress["step"] = f"script {name}"
         if dry_run:
             print(f"  WOULD copy {s} -> {scripts_dest / name}")
         else:
             shutil.copy2(s, scripts_dest / name)
+        progress["scripts"].append(name)
         if name in TOOLING_HELPER_SCRIPTS:
             helpers_copied += 1
         else:
@@ -338,6 +368,7 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
     skills_installed = 0
     skills_failed = []
     for skill in TRAVEL_SKILLS:
+        progress["step"] = f"skill {skill}"
         if not _frontmatter_ok(f"skill {skill}", skills_src / skill / "SKILL.md"):
             skills_failed.append(skill)
             continue
@@ -345,6 +376,7 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
                         skills_dest=skills_dest, scripts_dir=scripts_dest, dry_run=dry_run)
         if rc == 0:
             skills_installed += 1
+            progress["skills"].append(skill)
         else:
             skills_failed.append(skill)
 
@@ -355,6 +387,7 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
     agents_installed = 0
     agents_failed = []
     for agent in TRAVEL_AGENTS:
+        progress["step"] = f"agent {agent}"
         src_dir = agents_src / agent
         agent_md = src_dir / "AGENT.md"
         if not agent_md.is_file():
@@ -374,6 +407,7 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
             for sc in sidecars:
                 shutil.copy2(sc, agents_dest / sc.name)
         agents_installed += 1
+        progress["agents"].append(agent)
 
     # 4) The SessionStart resume hook → ~/.claude/settings.json. Global installs
     #    only: the hook runs for every session on the machine, so it must point
@@ -381,8 +415,10 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
     session_hook = read_guard = "skipped: not the global scripts folder"
     if os.path.normcase(str(scripts_dest.expanduser().resolve())) == \
             os.path.normcase(str(CC_GLOBAL_WIKI_SCRIPTS_DIR.expanduser().resolve())):
+        progress["step"] = "the SessionStart hook"
         session_hook = install_session_hook(session_hook_entry(scripts_dest_value), dry_run=dry_run)
         # 5) The read guard, same rules: global scripts only
+        progress["step"] = "the read-guard hooks"
         read_guard = install_hooks(READ_GUARD_EVENTS,
                                    hook_entry(scripts_dest_value, READ_GUARD_SCRIPT, READ_GUARD_TIMEOUT),
                                    READ_GUARD_SCRIPT, dry_run=dry_run)
@@ -510,6 +546,71 @@ def format_tooling_status(status: dict) -> str:
         if status[key]:
             lines.append(f"  {label}: {', '.join(status[key])}")
     return "\n".join(lines)
+
+
+INSTALL_LOG_DIR = Path.home() / ".cache" / "llm-wiki" / "install-errors"
+
+
+def report_incomplete(exc: InstallIncomplete, command=None, log_dir=None):
+    """Say that an install stopped partway, and keep a record a later session can read.
+
+    Writes the log FIRST (the command, the source, where it stopped, what was and was not done, the full
+    traceback, how to finish), then prints one closing line naming it. The printing cannot itself fail on
+    encoding: the error that stopped the install may have been exactly that. Folder: $WIKI_INSTALL_LOG_DIR,
+    else ~/.cache/llm-wiki/install-errors/. Returns the log's path (None if it could not be written)."""
+    p = exc.progress
+    dry = p.get("dry_run")
+    now = datetime.now().astimezone()
+    skills_left = [s for s in TRAVEL_SKILLS if s not in p["skills"]]
+    agents_left = [a for a in TRAVEL_AGENTS if a not in p["agents"]]
+    error = f"{type(exc.error).__name__}: {exc.error}"
+    body = "\n".join([
+        "llm-wiki install incomplete" + (" (dry run: nothing was written)" if dry else ""),
+        f"when: {now.isoformat(timespec='seconds')}",
+        f"command: {' '.join(str(c) for c in (command or sys.argv))}",
+        f"python: {sys.executable}",
+        f"stopped at: {exc.stopped_at}",
+        f"error: {error}",
+        "",
+        f"done: {len(p['scripts'])} scripts; skills {len(p['skills'])} of {len(TRAVEL_SKILLS)}: "
+        f"{', '.join(p['skills']) or 'none'}; agents {len(p['agents'])} of {len(TRAVEL_AGENTS)}: "
+        f"{', '.join(p['agents']) or 'none'}",
+        f"not done: skills {', '.join(skills_left) or 'none'}; agents {', '.join(agents_left) or 'none'}; "
+        "the hooks, if it stopped before them",
+        "",
+        "to finish: fix the cause above, then re-run `install-wiki.ps1 -RefreshOnly` (or `install-wiki.sh "
+        "--refresh-only`, or `wiki-upgrade.py`); `new-wiki.py --mode status` then shows what is current.",
+        "",
+        "traceback:",
+        exc.traceback_text.rstrip(),
+        "",
+    ])
+    log = None
+    try:
+        folder = Path(log_dir or os.environ.get("WIKI_INSTALL_LOG_DIR") or INSTALL_LOG_DIR)
+        folder.mkdir(parents=True, exist_ok=True)
+        log = folder / f"install-{now.strftime('%Y%m%d-%H%M%S')}.log"
+        log.write_text(body, encoding="utf-8")
+    except OSError:
+        log = None
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (ValueError, OSError):
+                pass
+    done = (f"{len(p['scripts'])} scripts, {len(p['skills'])} of {len(TRAVEL_SKILLS)} skills, "
+            f"{len(p['agents'])} of {len(TRAVEL_AGENTS)} agents {'would have been ' if dry else ''}installed")
+    where = (f"full error and what is left: {log}" if log
+             else "the log could not be written; the traceback was:\n" + exc.traceback_text)
+    line = f"\u26a0\ufe0f INSTALL INCOMPLETE: stopped at {exc.stopped_at} ({error}); {done}; {where}"
+    print()
+    try:
+        print(line)
+    except UnicodeEncodeError:
+        print(line.encode("ascii", "replace").decode("ascii"))
+    sys.stdout.flush()
+    return log
 
 
 def print_summary(summary: dict):

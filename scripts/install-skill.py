@@ -95,6 +95,10 @@ def install_skill(skill: str, tool: str, skills_src: Path, skills_dest: Path,
 
 
 def main() -> int:
+    # Piped on Windows, stdout is cp1252 and a non-ASCII character crashes the print (2026-10-01).
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="Copy one skill onto the local system (reusable primitive).")
     ap.add_argument("--skill", required=True, help="Skill directory name (e.g. wiki-cycle)")
     ap.add_argument("--tool", default="claude-code", choices=["claude-code", "cursor"])

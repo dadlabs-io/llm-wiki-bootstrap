@@ -111,6 +111,7 @@ against the same folder with `--force`.
 ## Troubleshooting
 
 - **`gh` / `git clone` fails with auth** — repo is public now, no auth needed; check your network
+- **An install or refresh ends on `⚠️ INSTALL INCOMPLETE`** — it stopped partway. The line says where (for example `skill wiki`), the error, and how many scripts, skills and agents were installed before it; the rest are still the old copies. The full error, the complete list of what is and is not done, and how to finish are in the log the line names (`~/.cache/llm-wiki/install-errors/install-<time>.log`). Ask Claude "why did the install fail? fix it": it reads that log, fixes the cause, and re-runs the install. Fixing it yourself: deal with the cause, then run `.\install-wiki.ps1` again; `--mode status` (below) confirms everything is current
 - **`/new-wiki` says the global tooling is missing or partial** — run `.\install-wiki.ps1` (no flags) once, or let the skill install it; `python <clone>/scripts/new-wiki.py --mode status` shows what is installed, stale or missing
 - **Drive OAuth fails** — see [`drive-setup`](./drive-setup.md)
 - **`/new-wiki` doesn't trigger in Claude Code** — restart Claude Code after install so it picks up the new global skill

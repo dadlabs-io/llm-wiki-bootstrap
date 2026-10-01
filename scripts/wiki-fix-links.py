@@ -91,6 +91,10 @@ def _fix_file(path: Path, index, dry_run: bool):
 
 
 def main():
+    # Piped on Windows, stdout is cp1252 and a non-ASCII character crashes the print (2026-10-01).
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="Resolve bare-slug/wrong-depth markdown links to correct relative paths.")
     ap.add_argument("--topic", help="Topic name (registry-resolved).")
     ap.add_argument("--vault", help="Vault root override (forces <vault>/<topic>/wiki).")

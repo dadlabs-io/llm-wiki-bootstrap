@@ -265,6 +265,10 @@ def cluster_walk(topic_root: Path, rolled_back_entries: list[Path]) -> list[Path
 
 
 def main() -> int:
+    # Piped on Windows, stdout is cp1252 and a non-ASCII character crashes the print (2026-10-01).
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="Rollback a wiki entry to its verified ancestor")
     ap.add_argument("slug", help="Entry to roll back (slug, relative path, or absolute path)")
     ap.add_argument("--reason", required=True, help="One-paragraph explanation of why this rollback")

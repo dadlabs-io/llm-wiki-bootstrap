@@ -139,6 +139,10 @@ def mirror_frontmatter(entry: Path, dry_run: bool) -> bool:
 
 
 def main() -> int:
+    # Piped on Windows, stdout is cp1252 and a non-ASCII character crashes the print (2026-10-01).
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="Verify a wiki entry (set verified=verified via sidecar)")
     ap.add_argument("slug", help="Entry to verify (slug, relative path, or absolute path)")
     ap.add_argument("--topic", required=True)

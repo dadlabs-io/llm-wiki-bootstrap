@@ -43,6 +43,7 @@ from _install_tooling import (  # noqa: E402
     install_tooling as _install_tooling,
     print_summary as _print_tooling_summary,
     global_tooling_status, format_tooling_status, is_bootstrap_source,
+    InstallIncomplete, report_incomplete,
 )
 from urllib.parse import urlparse
 
@@ -490,6 +491,9 @@ def phase_tooling(args):
             bootstrap, dry_run=args.dry_run,
             skills_dest=CC_GLOBAL_SKILLS_DIR, scripts_dest=CC_GLOBAL_WIKI_SCRIPTS_DIR,
         )
+    except InstallIncomplete as e:  # stopped partway: say so, keep the full error in a log
+        report_incomplete(e)
+        return 1
     except FileNotFoundError as e:
         _err(str(e))
         return 1
@@ -1159,6 +1163,9 @@ def phase_b(args):
                 try:
                     summary = _install_tooling(bootstrap, skills_dest=CC_GLOBAL_SKILLS_DIR,
                                                scripts_dest=CC_GLOBAL_WIKI_SCRIPTS_DIR)
+                except InstallIncomplete as e:  # stopped partway: say so, keep the full error in a log
+                    report_incomplete(e)
+                    return 1
                 except FileNotFoundError as e:
                     _err(str(e))
                     return 1

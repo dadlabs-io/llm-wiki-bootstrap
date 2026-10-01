@@ -23,7 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _install_tooling import (  # noqa: E402
-    install_tooling, derive_bootstrap_source, print_summary,
+    install_tooling, derive_bootstrap_source, print_summary, InstallIncomplete, report_incomplete,
 )
 
 
@@ -59,6 +59,9 @@ def main() -> int:
     print()
     try:
         summary = install_tooling(bootstrap, dry_run=args.dry_run)
+    except InstallIncomplete as e:  # stopped partway: say so, keep the full error in a log
+        report_incomplete(e)
+        return 1
     except FileNotFoundError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
