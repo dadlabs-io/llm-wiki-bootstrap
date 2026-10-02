@@ -14,6 +14,10 @@
     {"id": "gap-disaster-recovery", "kind": "gap",
      "question": "What is Lantern's disaster-recovery RPO?"},
     {"id": "holistic-routes-away", "kind": "holistic",
-     "question": "Is our position on Lantern's retention and latency consistent across all the entries? What contradicts what?"}
+     "question": "Is our position on Lantern's retention and latency consistent across all the entries? What contradicts what?"},
+    {"id": "keyword-machine-lookup", "kind": "lookup", "mode": "keyword",
+     "env": {"WIKI_SEARCH_MODE": "keyword"},
+     "question": "How many documents does Lantern ingest in one batch?",
+     "must_open": ["lantern-ingest-batch-size"], "answer_has": ["250"]}
   ]
 }

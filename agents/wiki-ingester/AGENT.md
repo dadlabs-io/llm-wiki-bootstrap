@@ -71,20 +71,27 @@ with TodoWrite. For each item:
    Slower is accepted; depth is the point. The deep read burns *your* context, and the caller only
    sees your receipt.
 3. **Search the wiki** for related entries — integrate, don't isolate. 3–5 key terms, each with
-   the FULL search through the shared helper:
+   the shared search helper:
    `python ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester --notebook <target notebook> "<term>"`
-   (keyword + meaning + rerank on the GPU; 30 results by default, `-k` to change; the reranker scores every candidate the search fetched, up to `-C` 120; the `_MAP`/`_INDEX` machine files never come back as results). Always pass the
+   (30 results by default, `-k` to change; the `_MAP`/`_INDEX` machine files never come back as results). Always pass the
    target notebook: without it qmd searches every notebook, and a cross-link must stay inside the
-   notebook you are filing into. Several workers run at once and the GPU fits three
-   searches (qmd 2.8.3+), so the helper holds one of three GPU slots per search and the others wait their turn —
-   waiting is expected, not an error. It never falls back to keyword search, and neither do you:
-   quality over speed (user decision 2026-09-13, replacing the 2026-09-12 keyword-only rule — that
-   lock-up was the missing CUDA runtime, not parallelism). Run
-   `python ~/.claude/wiki-scripts/wiki-qmd-query.py --preflight` once before your first item; if
-   it does not report CUDA available, stop the batch and report. If a search exits 75 (GPU still
-   busy after retries) or 124 (timed out), wait a minute and try once more; if it fails again, mark
-   the item **failed: full search unavailable** (it is re-run later, never filed without its
-   cross-links) and say in the receipt that the batch needs fewer parallel workers.
+   notebook you are filing into. Run
+   `python ~/.claude/wiki-scripts/wiki-qmd-query.py --preflight` once before your first item: it
+   names the machine's search mode.
+   - **full** (keyword + meaning + rerank on the GPU; the reranker scores every candidate the search
+     fetched, up to `-C` 120): if the preflight fails, stop the batch and report. Several workers run
+     at once and the GPU fits three searches (qmd 2.8.3+), so the helper holds one of three GPU slots
+     per search and the others wait their turn — waiting is expected, not an error. It never falls
+     back to keyword search, and neither do you: quality over speed (user decision 2026-09-13,
+     replacing the 2026-09-12 keyword-only rule — that lock-up was the missing CUDA runtime, not
+     parallelism). If a search exits 75 (GPU still busy after retries) or 124 (timed out), wait a
+     minute and try once more; if it fails again, mark the item **failed: full search unavailable**
+     (it is re-run later, never filed without its cross-links) and say in the receipt that the batch
+     needs fewer parallel workers.
+   - **keyword** (a machine with no GPU, set at install; task #63, 2026-10-02): the helper runs qmd's
+     keyword index, no model and no GPU slot. It matches words, not meaning, so also search the words
+     other entries would use for the same idea. Never run `qmd query`, `qmd vsearch` or `qmd embed`
+     on such a machine: they load a model, which runs on the CPU and hangs it.
 4. **Synthesize** per the wiki-update flow: TL;DR, blockquoted numbers/quotes with attribution,
    "Related in this wiki" cross-links via `--slug-for` lookups (never guess slugs).
 5. **Eval gate** — two halves since 2026-09-02: `wiki-update.py` runs the mechanical checks itself (TL;DR, Related with 2+ links, tags, stub marking, numbers in blockquotes — `_entry_checks.py`) and REFUSES to file on an error; fix the draft rather than passing `--no-gate` (if you must, give the reason). Since 2026-09-23 it also checks every quote on a `>` line against the raw and warns when a quote is worded differently, not found, or out of order. Fix each one before staging: copy the raw's exact words, or take the line out of `>` as paraphrase. If one stays (the raw lacks a passage you read elsewhere), name it in the receipt's Notes. Your own fidelity score never outranks that warning: all six entries a 2026-09-23 spot-check found wrong had self-scored 3.5-5. You score only the two judgment dimensions — **extraction fidelity** and **synthesis value**, 1–5 each — and that score is advisory, never the gate. Both ≥ 3 → continue. Either below 3 → one

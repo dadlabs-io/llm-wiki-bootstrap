@@ -395,6 +395,55 @@ def wiki_dir(topic=None, vault=None, cwd=None):
     return str(Path(topic_root(topic, cwd)) / "wiki")
 
 
+# ---------- search mode (per machine, ~/.claude/wiki-config.json) ----------
+# qmd's full search (`qmd query`) runs three models. With no GPU they fall back to
+# the CPU and take every core: on 2026-10-02 one full search on the CPU used ~9,900
+# CPU-seconds and hung the laptop without finishing (task #63). So a machine is set to
+#   full    — the GPU search (keyword + meaning + rerank), as before
+#   keyword — `qmd search`, qmd's keyword index; no model ever loads, no `qmd embed`
+# The installer sets it from the GPU check; `wiki-qmd-query.py --set-mode` switches it.
+SEARCH_MODES = ("full", "keyword")
+
+
+def global_config_path() -> Path:
+    """The machine config, ~/.claude/wiki-config.json ($WIKI_GLOBAL_CONFIG overrides, for tests)."""
+    import os
+    return Path(os.environ.get("WIKI_GLOBAL_CONFIG") or Path.home() / ".claude" / "wiki-config.json")
+
+
+def search_mode(config_path=None) -> str:
+    """This machine's search mode. No setting reads as "full": every machine installed
+    before the setting existed had its GPU set up. An unknown value reads as "keyword",
+    the side that never loads a model. $WIKI_SEARCH_MODE overrides the file."""
+    import os
+    value = os.environ.get("WIKI_SEARCH_MODE")
+    if value is None:
+        p = Path(config_path) if config_path else global_config_path()
+        try:
+            value = json.loads(p.read_text(encoding="utf-8")).get("search_mode") if p.is_file() else None
+        except (json.JSONDecodeError, OSError, AttributeError):
+            value = None
+    if value is None:
+        return "full"
+    return value if value in SEARCH_MODES else "keyword"
+
+
+def set_search_mode(mode: str, config_path=None) -> Path:
+    """Write this machine's search mode, keeping every other key. Returns the file written."""
+    if mode not in SEARCH_MODES:
+        raise ValueError(f"search mode must be one of {SEARCH_MODES}, got {mode!r}")
+    from _atomic_io import atomic_write_text
+    p = Path(config_path) if config_path else global_config_path()
+    try:
+        cfg = json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
+    except (json.JSONDecodeError, OSError):
+        cfg = {}
+    cfg["search_mode"] = mode
+    p.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write_text(p, json.dumps(cfg, indent=2, sort_keys=True))
+    return p
+
+
 def list_topics(cwd=None):
     """All known notebooks/topics: registry keys → explicit topics[] →
     [default_topic()]."""

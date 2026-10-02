@@ -92,7 +92,7 @@ The user asks "what did we load?" or "morning report": show the run's report (`/
 | Semantic lint | 1 agent per ~100 entries in scope, up to 4 | a partition of the scope balanced by file count, chosen per run |
 | Lint fixes | up to 3 | fix category |
 
-Ingest workers share three GPU slots for their searches (`wiki-qmd-query.py`); waiting is expected. Spawn every helper **unnamed** (no `name`, no `team_name`): with agent teams enabled a named spawn becomes a teammate whose report never comes back (found by agent-builder, 2026-09-21).
+Ingest workers share three GPU slots for their searches (`wiki-qmd-query.py`); waiting is expected. A keyword machine (no GPU) has no slots: its searches are keyword-only and do not wait. Spawn every helper **unnamed** (no `name`, no `team_name`): with agent teams enabled a named spawn becomes a teammate whose report never comes back (found by agent-builder, 2026-09-21).
 
 ## History behind the rules
 

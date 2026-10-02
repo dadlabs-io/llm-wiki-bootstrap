@@ -13,6 +13,18 @@ fit and a third failed fast with "Failed to create any rerank context"; qmd
 downgrade — when the GPU is full, searches wait their turn, and if that makes
 batches too slow, run fewer workers.
 
+A machine with no GPU (task #63, 2026-10-02): the models fall back to the CPU and
+take every core — one full search on the CPU used ~9,900 CPU-seconds and hung the
+laptop without finishing. So each machine has a search mode in
+~/.claude/wiki-config.json (`search_mode`): `full`, the GPU search above, or
+`keyword`, where this helper runs `qmd search` (qmd's keyword index, no model, about
+a quarter of a second) with the same scoping and filtering, and never `qmd query`,
+`vsearch` or `embed`. The installer sets the mode from the GPU check (CUDA, or Metal
+on a Mac; Vulkan is the backend that hung) and never switches a machine on its own;
+`--set-mode full` switches once a GPU is there and refuses while the check fails.
+Keyword mode is a setting, not a fallback: on a `full` machine a GPU failure is
+still a stop-and-report.
+
 Depth, named for what it is:
   -k  results returned after reranking (default 30; qmd's own flag is -n).
       Measured 2026-09-22 (tests/search/rank-usefulness.py, 18 real queries judged
@@ -57,18 +69,21 @@ Usage:
   python wiki-qmd-query.py --notebook agentic-design "term"  # one notebook
   python wiki-qmd-query.py --all-notebooks "term"            # every notebook
   python wiki-qmd-query.py "term" -k 40 -C 200               # explicit depth
-  python wiki-qmd-query.py --preflight                       # CUDA check + qmd version
+  python wiki-qmd-query.py --preflight                       # the machine's mode; on full, the GPU check + qmd version
+  python wiki-qmd-query.py --set-mode full                   # switch this machine (full needs the GPU check to pass)
   python wiki-qmd-query.py --stats                           # wait/run summary
   python wiki-qmd-query.py --depth-check --notebook agentic-design
 
 Exit codes: qmd's own code on a completed search (0 = ok); 2 = preflight
 failed or usage error; 75 = GPU busy after every retry; 124 = timed out.
---depth-check: 0 = C never reached, 1 = C reached, 2 = nothing measured.
+--depth-check: 0 = C never reached, 1 = C reached, 2 = nothing measured (always,
+on a keyword machine: there is no reranker).
 
 Environment: WIKI_QMD_K, WIKI_QMD_C (other values instead of the defaults),
 WIKI_QMD_SLOTS (default 3; 2 on a qmd older than 2.8.3), WIKI_QMD_SLOT_DIR (default ~/.cache/wiki-qmd),
 WIKI_QMD_BIN (the qmd executable; default: node + qmd's dist/cli/qmd.js),
-WIKI_QMD_INDEX (a named qmd index; default: qmd's own default index).
+WIKI_QMD_INDEX (a named qmd index; default: qmd's own default index),
+WIKI_SEARCH_MODE (full | keyword, instead of the machine's setting).
 """
 
 from __future__ import annotations
@@ -86,7 +101,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import load_config, now_stamp, wiki_dir  # noqa: E402
+from _wiki_config import load_config, now_stamp, wiki_dir, search_mode, set_search_mode  # noqa: E402
 from _entry_checks import split_frontmatter, is_superseded  # noqa: E402
 
 DEFAULT_K = int(os.environ.get("WIKI_QMD_K", "30"))
@@ -110,6 +125,10 @@ GPU_FULL_MARKERS = (
 )
 EXIT_USAGE, EXIT_GPU_BUSY, EXIT_TIMEOUT = 2, 75, 124
 QMD_MIN_VERSION = (2, 8, 3)  # the three-slot default assumes 2.8.3's embed-pool sizing (qmd #799)
+# The GPU backends a full search may run on. Vulkan is not one: on 2026-09-12 qmd's token generation
+# hung under it at 100% CPU on every core (the laptop's CUDA runtime was missing).
+GPU_BACKENDS = ("CUDA", "Metal")
+GPU_CHECK_TIMEOUT = 60  # seconds; node-llama-cpp's inspect lists backends and loads no model
 
 
 def slot_dir() -> Path:
@@ -311,6 +330,17 @@ def run_search(qmd_argv: list[str], n_slots: int, timeout: float, max_wait: floa
     raise AssertionError("unreachable")
 
 
+def run_keyword(qmd_argv: list[str], timeout: float) -> SearchRun:
+    """One `qmd search`: qmd's keyword index, no model. A keyword machine's search, so no GPU
+    slot and no GPU retry."""
+    t0 = time.monotonic()
+    rc, out, err = run_qmd(["search", *qmd_argv], timeout)
+    run_s = time.monotonic() - t0
+    if rc is None:
+        return SearchRun("timeout", None, "", "", 0.0, run_s, 1)
+    return SearchRun("ok" if rc == 0 else "error", rc, out, err, 0.0, run_s, 1)
+
+
 def result_file(first_line: str) -> str:
     """The file name in a text result's header line (qmd://<collection>/<path>.md[:N] #id)."""
     names = re.findall(r"([^/\\]+\.md)", first_line)
@@ -379,34 +409,91 @@ def qmd_version_text() -> str:
         return ""
 
 
+def parse_gpu_inspect(text: str) -> str | None:
+    """'cuda' or 'metal' when node-llama-cpp's `inspect gpu` reports that backend available
+    ("CUDA: available"), else None. Vulkan alone is None (see GPU_BACKENDS)."""
+    for line in (text or "").splitlines():
+        name, _, state = line.strip().partition(":")
+        if name in GPU_BACKENDS and state.strip().lower().startswith("available"):
+            return name.lower()
+    return None
+
+
+def gpu_backend() -> tuple[str | None, str]:
+    """(backend, detail): the GPU a full search would run on ('cuda' or 'metal'), or None and
+    why not. Runs node-llama-cpp's `inspect gpu` from qmd's package folder; loads no model."""
+    npm = shutil.which("npm")
+    if not npm:
+        return None, "npm not found"
+    root = subprocess.run([npm, "root", "-g"], capture_output=True, text=True).stdout.strip()
+    qdir = Path(root) / "@tobilu" / "qmd"
+    if not qdir.is_dir():
+        return None, f"qmd is not installed ({qdir})"
+    kwargs = {"cwd": qdir, "stdout": subprocess.PIPE, "stderr": subprocess.PIPE,
+              "text": True, "encoding": "utf-8", "errors": "replace"}
+    if os.name != "nt":
+        kwargs["start_new_session"] = True
+    proc = subprocess.Popen([shutil.which("npx") or "npx", "--no-install", "node-llama-cpp", "inspect", "gpu"],
+                            **kwargs)
+    try:
+        out, _ = proc.communicate(timeout=GPU_CHECK_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        kill_tree(proc)
+        return None, f"the GPU check did not answer in {GPU_CHECK_TIMEOUT}s"
+    found = [l.strip() for l in out.splitlines() if l.strip().split(":")[0] in (*GPU_BACKENDS, "Vulkan")]
+    return parse_gpu_inspect(out), "; ".join(found) or "no GPU lines in node-llama-cpp's output"
+
+
 def preflight() -> int:
-    """The /wiki-search CUDA check: node-llama-cpp must report CUDA available. Also
-    reports qmd's version; older than QMD_MIN_VERSION is a warning, not a failure —
-    it still searches, but the three-slot default assumes 2.8.3, so on an older qmd
-    a third concurrent search fails and retries."""
+    """Says the machine's search mode. On a full machine, the /wiki-search GPU check:
+    node-llama-cpp must report CUDA or Metal available. Also reports qmd's version;
+    older than QMD_MIN_VERSION is a warning, not a failure — it still searches, but
+    the three-slot default assumes 2.8.3, so on an older qmd a third concurrent
+    search fails and retries. A keyword machine runs no GPU check: it never loads a
+    model."""
+    mode = search_mode()
     want = ".".join(map(str, QMD_MIN_VERSION))
     text = qmd_version_text()
     ver = parse_qmd_version(text)
     if ver is None:
         print(f"[wiki-qmd-query] preflight: qmd version unknown ({text or 'no output'})", file=sys.stderr)
-    elif ver < QMD_MIN_VERSION:
+    elif ver < QMD_MIN_VERSION and mode == "full":
         print(f"[wiki-qmd-query] preflight: WARNING qmd {'.'.join(map(str, ver))} is older than {want} — "
               "upgrade (npm i -g @tobilu/qmd@latest, then qmd doctor) or set WIKI_QMD_SLOTS=2",
               file=sys.stderr)
     else:
         print(f"[wiki-qmd-query] preflight: qmd {'.'.join(map(str, ver))}", file=sys.stderr)
-    npm = shutil.which("npm")
-    if not npm:
-        print("[wiki-qmd-query] preflight: npm not found", file=sys.stderr)
+    if mode == "keyword":
+        print("[wiki-qmd-query] preflight: search mode keyword — this machine runs qmd's keyword search "
+              "only (no model, so no GPU check); switch with --set-mode full once it has a GPU", file=sys.stderr)
+        return 0
+    backend, detail = gpu_backend()
+    print(f"[wiki-qmd-query] preflight: search mode full; GPU check: {detail}", file=sys.stderr)
+    if not backend:
+        print("[wiki-qmd-query] preflight: no CUDA or Metal GPU — stop and report. On a machine with no GPU, "
+              "`--set-mode keyword` makes search keyword-only", file=sys.stderr)
         return EXIT_USAGE
-    root = subprocess.run([npm, "root", "-g"], capture_output=True, text=True).stdout.strip()
-    qdir = Path(root) / "@tobilu" / "qmd"
-    npx = shutil.which("npx") or "npx"
-    r = subprocess.run([npx, "--no-install", "node-llama-cpp", "inspect", "gpu"], cwd=qdir,
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
-    line = next((l.strip() for l in r.stdout.splitlines() if l.strip().startswith("CUDA:")), "")
-    print(f"[wiki-qmd-query] preflight: {line or 'no CUDA line in node-llama-cpp output'}", file=sys.stderr)
-    return 0 if "available" in line.lower() and "not" not in line.lower() else EXIT_USAGE
+    return 0
+
+
+def set_mode(mode: str) -> int:
+    """Switch this machine's search mode. `full` only when the GPU check passes."""
+    backend = None
+    if mode == "full":
+        backend, detail = gpu_backend()
+        if not backend:
+            print(f"[wiki-qmd-query] not switched: the GPU check fails ({detail}). The full search needs "
+                  f"CUDA (an NVIDIA GPU with the CUDA runtime; see the install page) or Metal (a Mac). "
+                  f"This machine stays {search_mode()}.", file=sys.stderr)
+            return EXIT_USAGE
+    path = set_search_mode(mode)
+    if mode == "full":
+        print(f"search mode: full (GPU: {backend}), written to {path}. Next, once: `qmd embed` — it builds the "
+              "meaning index a keyword machine never built; until then the full search has no meaning matches.")
+    else:
+        print(f"search mode: keyword, written to {path}. Searches now run qmd's keyword index only; "
+              "no model loads. Skip `qmd embed` on this machine (`qmd update` keeps the index current).")
+    return 0
 
 
 def stats() -> int:
@@ -423,9 +510,9 @@ def stats() -> int:
           f"error: {sum(r.get('outcome') == 'error' for r in rows)}")
     if done:
         by_c: dict[object, list] = {}
-        for r in done:
-            by_c.setdefault(r.get("C", "?"), []).append(r["run_s"])
-        print("run time by C: " + ", ".join(f"C={c} median {statistics.median(v):.1f}s (n={len(v)})"
+        for r in done:  # a keyword search has no C: listed apart
+            by_c.setdefault(r.get("C", "?") if r.get("mode", "full") == "full" else "keyword", []).append(r["run_s"])
+        print("run time by C: " + ", ".join(f"{c if c == 'keyword' else f'C={c}'} median {statistics.median(v):.1f}s (n={len(v)})"
                                             for c, v in sorted(by_c.items(), key=lambda kv: str(kv[0]))))
         print(f"waited for a slot: {len(waited)} of {len(done)} ok searches"
               + (f"  (median wait {statistics.median(waited):.1f}s, max {max(waited):.1f}s)" if waited else ""))
@@ -528,7 +615,10 @@ def main() -> int:
     ap.add_argument("--retries", type=int, default=3, help="GPU retries after the first attempt (default 3)")
     ap.add_argument("--caller", default=os.environ.get("WIKI_QMD_CALLER", "session"),
                     help="who is searching, for the log (e.g. wiki-ingester, session)")
-    ap.add_argument("--preflight", action="store_true", help="run the CUDA check (and report the qmd version) only")
+    ap.add_argument("--preflight", action="store_true",
+                    help="say the machine's search mode; on full, run the GPU check (and report the qmd version)")
+    ap.add_argument("--set-mode", choices=("full", "keyword"),
+                    help="switch this machine's search mode (full needs the GPU check to pass)")
     ap.add_argument("--stats", action="store_true", help="summarise the search log")
     ap.add_argument("--depth-check", action="store_true",
                     help="search sampled titles from --notebook (or the project's) and report the "
@@ -540,11 +630,18 @@ def main() -> int:
         return stats()
     if args.preflight:
         return preflight()
+    if args.set_mode:
+        return set_mode(args.set_mode)
 
+    mode = search_mode()
     notebook = args.notebook
     if not notebook and not args.all_notebooks:
         notebook = load_config().get("notebook")  # the current project's notebook, if any
     if args.depth_check:
+        if mode == "keyword":
+            print("[wiki-qmd-query] depth check: not measured — this machine is set to keyword search, "
+                  "which has no reranker", file=sys.stderr)
+            return EXIT_USAGE
         if not notebook:
             ap.error("--depth-check needs --notebook (no project notebook found from this folder)")
         return depth_check(notebook, args.queries, args.C, args.slots, args.timeout, args.max_wait, args.retries)
@@ -566,17 +663,20 @@ def main() -> int:
     else:
         files = sum(cols.values())
     c = args.C
-    if args.k > c:
+    if args.k > c and mode == "full":
         print(f"[wiki-qmd-query] note: k={args.k} is larger than C={c}; the reranker only scores "
               f"the top {c} candidates", file=sys.stderr)
     fmt = ("json" if "--json" in qmd_args
            else "other" if any(f in qmd_args for f in ("--files", "--csv", "--md", "--xml")) else "text")
     ask_k = args.k + (EXTRA_FOR_FILTER if fmt != "other" else 0)
-    qmd_args = [*qmd_args, "-n", str(ask_k), "-C", str(c)]
+    qmd_args = [*qmd_args, "-n", str(ask_k)] + (["-C", str(c)] if mode == "full" else [])
 
-    record = {"ts": now_stamp(), "pid": os.getpid(), "caller": args.caller, "query": query_text,
+    record = {"ts": now_stamp(), "pid": os.getpid(), "caller": args.caller, "query": query_text, "mode": mode,
               "slots": args.slots, "k": args.k, "C": c, "files": files, "scope": scope_note}
-    run = run_search(qmd_args, args.slots, args.timeout, args.max_wait, args.retries)
+    if mode == "keyword":
+        run = run_keyword(qmd_args, args.timeout)
+    else:
+        run = run_search(qmd_args, args.slots, args.timeout, args.max_wait, args.retries)
     timing = dict(waited_s=round(run.waited_s, 1), run_s=round(run.run_s, 1), attempts=run.attempts)
     if run.outcome in ("no-slot", "gpu-failing"):
         record.update(outcome="gpu-busy", rc=EXIT_GPU_BUSY, **timing)
@@ -589,18 +689,24 @@ def main() -> int:
     if run.outcome == "timeout":
         record.update(outcome="timeout", rc=EXIT_TIMEOUT, **timing)
         log_call(record)
-        print(f"[wiki-qmd-query] qmd query timed out after {args.timeout:.0f}s (process tree killed) — "
-              "stop and report; run the --preflight CUDA check", file=sys.stderr)
+        print(f"[wiki-qmd-query] qmd {'search' if mode == 'keyword' else 'query'} timed out after "
+              f"{args.timeout:.0f}s (process tree killed) — stop and report"
+              + ("" if mode == "keyword" else "; run the --preflight GPU check"), file=sys.stderr)
         return EXIT_TIMEOUT
     out, dropped = drop_machine_files(run.out, fmt, args.k) if run.rc == 0 else (run.out, 0)
     sys.stdout.write(out)
     if run.err.strip() and run.rc != 0:
         sys.stderr.write(run.err)
-    reranked = reranked_count(run.err)
+    reranked = reranked_count(run.err) if mode == "full" else None
     record.update(outcome=run.outcome, rc=run.rc, machine_files_dropped=dropped, reranked=reranked, **timing)
     log_call(record)
+    status = "ok" if run.rc == 0 else f"rc={run.rc}"
+    if mode == "keyword":
+        print(f"[wiki-qmd-query] keyword search {status} — {scope_note}, k={args.k}; this machine is set to "
+              f"keyword (no GPU: no meaning matches, no reranking); ran {run.run_s:.1f}s", file=sys.stderr)
+        return run.rc
     pool = "" if reranked is None else f", reranked {reranked}{' (reached C — raise C)' if reranked >= c else ''}"
-    print(f"[wiki-qmd-query] full search {'ok' if run.rc == 0 else f'rc={run.rc}'} — {scope_note}, k={args.k}, "
+    print(f"[wiki-qmd-query] full search {status} — {scope_note}, k={args.k}, "
           f"C={c}{pool}; waited {run.waited_s:.1f}s for a GPU slot, ran {run.run_s:.1f}s, attempt {run.attempts}",
           file=sys.stderr)
     return run.rc

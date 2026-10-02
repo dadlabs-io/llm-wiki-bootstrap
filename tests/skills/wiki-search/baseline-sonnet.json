@@ -48,5 +48,18 @@
     "no permission denials": true,
     "nothing written to the notebook": true,
     "routes to /wiki-claims or /wiki-lint --full": true
+  },
+  "keyword-machine-lookup": {
+    "session completed": true,
+    "no permission denials": true,
+    "nothing written to the notebook": true,
+    "searched with the full search helper": true,
+    "no search outside this notebook": true,
+    "states facts only from opened entries (others marked as not read)": true,
+    "never runs a model search (qmd query / vsearch / embed)": true,
+    "its searches ran as keyword": true,
+    "tells the user this machine searches by keyword only": true,
+    "opened lantern-ingest-batch-size": true,
+    "answer states 250": true
   }
 }

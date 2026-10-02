@@ -201,10 +201,19 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             re.findall(r"\brpo\b[^.\n]{0,60}", low)[:2])
         return res
 
+    if case.get("mode") == "keyword":  # a machine with no GPU (task #63): keyword search, never a model
+        cmds = [str(c["input"].get("command", "")) for c in run["tool_calls"] if c["name"] in ("Bash", "PowerShell")]
+        # qmd itself (not the wiki-qmd-query.py helper) running a model subcommand
+        model_runs = [c for c in cmds if re.search(r"(?<![\w-])qmd(\.js)?(?![\w-])[^\n|;&]*\s(query|vsearch|embed)\b|--no-gpu", c)]
+        add("never runs a model search (qmd query / vsearch / embed)", not model_runs, model_runs[:2])
+        add("its searches ran as keyword", searches and all(s.get("mode") == "keyword" for s in searches),
+            [s.get("mode") for s in searches])
+        add("tells the user this machine searches by keyword only", re.search(r"keyword", low), answer[:200])
+
     for slug in case["must_open"]:
         add(f"opened {slug}", slug in opened, sorted(opened))
     for fact in case["answer_has"]:
-        add(f"answer states {fact}", re.search(rf"(?<![\d.]){re.escape(fact)}(?![\d.])", answer), answer[:200])
+        add(f"answer states {fact}", re.search(rf"(?<![\d.]){re.escape(fact)}(?!\d|\.\d)", answer), answer[:200])
     if case["id"] == "snippet-trap-retention":
         add("does not give 30 days as the answer",
             not re.search(r"\b30\s*days?\b", low)

@@ -81,10 +81,12 @@ winget install --id Nvidia.CUDA --version 13.2 --exact --accept-package-agreemen
 That installs only the runtime library and cuBLAS (no compiler, no driver; CUDA 13.1 or newer is what node-llama-cpp's prebuilt binary needs). Open a new terminal afterwards, then verify from qmd's package folder:
 
 ```bash
-(cd "$(npm root -g)/@tobilu/qmd" && npx --no-install node-llama-cpp inspect gpu) | grep -E "^CUDA:"   # must print: CUDA: available
+(cd "$(npm root -g)/@tobilu/qmd" && npx --no-install node-llama-cpp inspect gpu) | grep -E "^(CUDA|Metal):"   # must print: CUDA: available (or Metal: available)
 ```
 
-Without it node-llama-cpp falls back to Vulkan, where token generation can hang indefinitely at 100% CPU (seen 2026-09-12 on an RTX 4070 + Intel iGPU laptop). The `/wiki-search` skill runs this check before the first query and stops if it fails; it does not fall back. On a machine with no NVIDIA GPU, use `qmd search`.
+Without it node-llama-cpp falls back to Vulkan, where token generation can hang indefinitely at 100% CPU (seen 2026-09-12 on an RTX 4070 + Intel iGPU laptop). A Mac uses Metal, with nothing to install.
+
+**A machine with no GPU searches by keyword only.** The installer runs the GPU check once and records the machine's search mode in `~/.claude/wiki-config.json`: `full` when CUDA or Metal is available, `keyword` otherwise. On a keyword machine every wiki search runs qmd's keyword index (`qmd search`: no model, well under a second), and the wiki, `/wrap-up`, the task list and ingest all work as usual. What it gives up is matching by meaning and the reranking: related entries are found by shared words only. Never run `qmd query`, `qmd vsearch` or `qmd embed` there: with no GPU the models run on the CPU and take every core (on 2026-10-02 one full search on a laptop's CPU used about 9,900 CPU-seconds and hung it without finishing). Index upkeep is `qmd update` alone. When the machine gets a GPU, install its runtime (above), run `python ~/.claude/wiki-scripts/wiki-qmd-query.py --set-mode full` (it refuses while the GPU check fails), then `qmd embed` once to build the meaning index; an install refresh says so when a keyword machine has a GPU available. On a `full` machine nothing changes: `/wiki-search` runs the GPU check before its first search and stops if it fails, never falling back.
 
 **Upgrading from an older qmd (2.1 → 2.8).** After `npm i -g @tobilu/qmd@latest`, run `qmd doctor` once before anything else. Its first check migrates the old embeddings to 2.8's fingerprint; until then `qmd status` shows nearly every file as needing embedding, and re-embedding would redo them all for nothing. `qmd status` now also reports orphaned chunks, the vectors of old file versions that 2.1 never pruned: `qmd cleanup` removes them. Then `qmd embed` for any files genuinely pending. On 2.8.3 an 8 GB GPU runs three full searches at once, which is the search helper's default; on an older qmd set `WIKI_QMD_SLOTS=2`.
 

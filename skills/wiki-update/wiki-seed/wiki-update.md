@@ -33,7 +33,7 @@ Ingests one external source into the wiki. You hand it whatever you have (a link
 
 1. **Fetch the raw.** Ordinary web pages are fetched directly. YouTube videos get their transcript, PDFs are converted to text page by page, X posts come from the public syndication API, and pages that need JavaScript are rendered in a browser. A Medium member-only story is read through your own signed-in browser when the session is interactive. A raw that was already saved (handed over by a batch) skips this step.
 2. **Read the raw in full.**
-3. **Search the wiki** for three to five of the source's key terms, with the full search, scoped to this notebook.
+3. **Search the wiki** for three to five of the source's key terms, scoped to this notebook: the full search, or keyword search on a machine with no GPU (see [`wiki-search`](./wiki-search.md)).
 4. **Write the entry**: a TL;DR, the body, the sources, and a Related section linking at least two existing entries. Numbers and quotations go in attributed `>` blockquotes, so they are never paraphrased.
 5. **The gate.** The filing script checks the draft before writing anything; see below. The agent then scores what a script cannot and prints one line: `Scores: extraction fidelity N/5, synthesis value N/5`. The scores are advisory: the agent that wrote the draft never certifies it.
 6. **Add links back** from the related entries to the new one (direct mode only).

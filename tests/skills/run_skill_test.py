@@ -153,6 +153,7 @@ def claude_exe() -> str:
 def run_case(case: dict, model: str, ctx: dict, check, out_dir: Path, tools: list[str], timeout: int) -> dict:
     env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
     env.update(ctx.get("env", {}))
+    env.update(case.get("env", {}))  # a case's own setting, e.g. wiki-search's keyword-machine case
     # tag this case's searches in the search helper's log, so the checks can count them
     caller = f"{env.get('WIKI_QMD_CALLER', 'skilltest')}-{case['id']}"
     env["WIKI_QMD_CALLER"] = caller

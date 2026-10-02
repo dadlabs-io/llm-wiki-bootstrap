@@ -36,7 +36,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, project_root as _project_root, now_stamp  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, project_root as _project_root, now_stamp, search_mode  # noqa: E402
 # Body-level rubric checks — shared with wiki-update.py's pre-write gate so the
 # lint backlog view and the gate enforce ONE rule set (_entry_checks.py, 2026-09-02).
 from _entry_checks import check_entry_body, is_exempt, check_frontmatter_loadable, split_frontmatter, is_superseded, read_raw_text  # noqa: E402
@@ -131,6 +131,12 @@ def scan_installed_frontmatter():
         for sev, code, detail in check_frontmatter_loadable(text):
             issues.append((f"~/.claude/{rel}", f"{sev} {code}", detail))
     return issues, scanned
+
+
+def reindex_command():
+    """What re-indexes this wiki on this machine: a keyword machine (no GPU, task #63) runs
+    `qmd update` only, since `qmd embed` loads a model and would run on the CPU."""
+    return "qmd update" if search_mode() == "keyword" else "qmd update && qmd embed"
 
 
 def qmd_index_coverage(wiki_root):
@@ -804,13 +810,13 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     if qmd_status["state"] == "missing":
         out.append("_`qmd` not on PATH — skipped. `/wiki-search` will not work on this machine._")
     elif qmd_status["state"] == "not-a-collection":
-        out.append(f"_This wiki is NOT a qmd collection — `/wiki-search` returns nothing here. Register it: `qmd collection add \"{wiki_root}\"` (then `qmd embed`)._")
+        out.append(f"_This wiki is NOT a qmd collection — `/wiki-search` returns nothing here. Register it: `qmd collection add \"{wiki_root}\"` (then `{reindex_command()}`)._")
     elif qmd_status["state"] == "error":
         out.append(f"_Could not query qmd: {qmd_status['detail']}_")
     else:
         indexed, on_disk = qmd_status["indexed"], qmd_status["on_disk"]
         if indexed == 0:
-            out.append(f"**Index is EMPTY** — 0 files indexed vs {on_disk} on disk. Run `qmd update && qmd embed`.")
+            out.append(f"**Index is EMPTY** — 0 files indexed vs {on_disk} on disk. Run `{reindex_command()}`.")
         elif indexed == on_disk:
             out.append(f"_{indexed} files indexed = {on_disk} `.md` files on disk._")
         else:

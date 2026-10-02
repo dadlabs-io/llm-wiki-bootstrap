@@ -64,10 +64,12 @@ Promotion into `wiki/` stays with you, through `wiki-promote`.
   entry named, and not ingested unless the caller said force.
 - It has no browser. A login-gated page must be captured by your own session first and handed over
   as a saved raw; without one the item fails as "needs browser capture".
-- It always uses the full search (keyword, meaning and rerank on the GPU), scoped to the target
-  notebook. It checks for CUDA once and stops the batch if CUDA is missing. A search that still fails
-  after one retry fails the item ("full search unavailable") rather than filing it without
-  cross-links; run fewer workers next time.
+- It uses this machine's search, scoped to the target notebook. On a machine with a GPU that is
+  the full search (keyword, meaning and rerank on the GPU): it checks the GPU once and stops the
+  batch if it is missing, and a search that still fails after one retry fails the item ("full search
+  unavailable") rather than filing it without cross-links; run fewer workers next time. On a machine
+  with no GPU (set to keyword search at install) it searches by keyword only, and also tries the
+  words other entries would use for the same idea.
 - A fetch that fails on the documented fallback fetcher too, or an item that runs past about 15
   minutes, fails with its reason. Nothing is dropped silently.
 

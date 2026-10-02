@@ -63,7 +63,7 @@ TRAVEL_SCRIPTS = [
     "wiki-list-render.py",
     "wiki-map-compile.py",
     "wiki-promote.py",
-    "wiki-qmd-query.py",  # full qmd search behind three GPU slots (two before qmd 2.8.3), no keyword fallback, per-call wait/run log (2026-09-13)
+    "wiki-qmd-query.py",  # full qmd search behind three GPU slots (two before qmd 2.8.3), no keyword fallback, per-call wait/run log (2026-09-13); keyword-only on a machine with no GPU (search_mode, 2026-10-02)
     "wiki-reciprocate-backlinks.py",
     "wiki-rollback.py",
     "wiki-search-rerank.py",  # truth-status bucket sort over qmd JSON (search spec surface 1); shipped 2026-09-08
@@ -159,6 +159,20 @@ def _load_frontmatter_checker(scripts_src: Path):
     else:
         _log("WARN: _entry_checks.py missing from package; frontmatter gate disabled")
     return lambda text: []
+
+
+def _load_gpu_check(scripts_src: Path):
+    """gpu_backend() from the PACKAGE's wiki-qmd-query.py (the copy just installed). If it
+    cannot be imported, the check reports no GPU: keyword never loads a model, so it is the
+    safe side for a machine whose state is unknown."""
+    path = scripts_src / "wiki-qmd-query.py"
+    try:
+        spec = importlib.util.spec_from_file_location("_wiki_qmd_query_pkg", path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod.gpu_backend
+    except Exception as e:  # noqa: BLE001 - the search mode must never make the install impossible
+        return lambda: (None, f"GPU check unavailable: {e}")
 
 
 def load_install_skill_fn(scripts_src: Path):
@@ -273,6 +287,45 @@ def install_hooks(events: dict, entry: dict, script_name: str, settings_path: Pa
     tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     tmp.replace(path)
     return status
+
+
+def configure_search_mode(gpu_fn, config_path: Path = None, dry_run: bool = False) -> str:
+    """Set this machine's search mode (`search_mode` in ~/.claude/wiki-config.json) from the
+    GPU check, the first time; after that, never change it, only say when it no longer fits
+    (task #63, 2026-10-02). `gpu_fn()` returns (backend|None, detail): wiki-qmd-query.py's
+    gpu_backend(). Returns the line the summary prints."""
+    path = Path(config_path) if config_path else CC_GLOBAL_CONFIG_PATH
+    try:
+        current = json.loads(path.read_text(encoding="utf-8")).get("search_mode") if path.is_file() else None
+    except (json.JSONDecodeError, OSError, AttributeError):
+        current = None
+    backend, detail = gpu_fn()
+    switch = f"{CC_GLOBAL_WIKI_SCRIPTS_DIR.as_posix()}/wiki-qmd-query.py --set-mode"
+    if current is None:
+        mode = "full" if backend else "keyword"
+        if not dry_run:
+            cfg = {}
+            if path.is_file():
+                try:
+                    cfg = json.loads(path.read_text(encoding="utf-8"))
+                except (json.JSONDecodeError, OSError):
+                    cfg = {}
+            cfg["search_mode"] = mode
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_name(path.name + ".tmp-wiki")
+            tmp.write_text(json.dumps(cfg, indent=2, sort_keys=True), encoding="utf-8")
+            tmp.replace(path)
+        verb = "would be set" if dry_run else "set"
+        if backend:
+            return f"{verb}: full (GPU: {backend})"
+        return (f"{verb}: keyword — no CUDA or Metal GPU ({detail}), so search is keyword-only and no model "
+                f"loads; once the machine has a GPU: python {switch} full")
+    if current == "keyword" and backend:
+        return f"keyword (unchanged) — a GPU is available now ({backend}); to use it: python {switch} full"
+    if current == "full" and not backend:
+        return (f"full (unchanged) — WARNING: the GPU check fails now ({detail}); searches will stop until it "
+                f"is fixed, or on a machine with no GPU: python {switch} keyword")
+    return f"{current} (unchanged)"
 
 
 class InstallIncomplete(Exception):
@@ -422,10 +475,16 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
         read_guard = install_hooks(READ_GUARD_EVENTS,
                                    hook_entry(scripts_dest_value, READ_GUARD_SCRIPT, READ_GUARD_TIMEOUT),
                                    READ_GUARD_SCRIPT, dry_run=dry_run)
+        # 6) This machine's search mode (task #63), from the package's own GPU check
+        progress["step"] = "the search mode"
+        search_mode = configure_search_mode(_load_gpu_check(scripts_src), dry_run=dry_run)
+    else:
+        search_mode = "skipped: not the global scripts folder"
 
     return {
         "session_hook": session_hook,
         "read_guard": read_guard,
+        "search_mode": search_mode,
         "bootstrap": str(bootstrap),
         "scripts_copied": travel_copied,
         "helpers_copied": helpers_copied,
@@ -637,6 +696,7 @@ def print_summary(summary: dict):
     print(f"  agents {verb_s}: {summary.get('agents_installed', 0)}  → {summary.get('agents_dest', '')}")
     print(f"  session hook:     {summary.get('session_hook', '')}  → {CC_GLOBAL_SETTINGS_PATH} (SessionStart)")
     print(f"  read guard:       {summary.get('read_guard', '')}  → {CC_GLOBAL_SETTINGS_PATH} (PreToolUse, Stop, SubagentStop)")
+    print(f"  search mode:      {summary.get('search_mode', '')}  → {CC_GLOBAL_CONFIG_PATH}")
     print(f"  placeholder {{{{WIKI_SCRIPTS_DIR}}}} → {summary['scripts_dest_value']}")
     print()
     print("  Restart Claude Code if these dirs are new so it picks up the")
