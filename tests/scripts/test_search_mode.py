@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""A machine with no GPU searches by keyword only, and never loads a qmd model (task #63). Never shipped.
+"""A machine with no GPU searches by keyword only, and never loads a qmd model (task #63); every machine
+runs the word-pair keyword search (task #64). Never shipped.
 
     python tests/scripts/test_search_mode.py    # exit 0 = every check passed
 
@@ -91,9 +92,23 @@ q = load("wqq", "wiki-qmd-query.py")
 calls: list[list[str]] = []
 
 
+def _row(name: str, i: int = 0) -> dict:
+    return {"docid": f"#{i:06d}", "score": 0.5, "file": f"qmd://C:/nb/wiki/{name}.md", "line": 1,
+            "title": name, "snippet": f"about {name}"}
+
+
 def fake_run_qmd(argv, timeout):
+    """qmd, recorded. `search <q>`: 20 rows of its own plus five shared by every search;
+    `query`: the full search's three rows (shared-0 among them), as JSON or qmd's text layout."""
     calls.append(list(argv))
-    return 0, "[]\n" if "--json" in argv else "", "Reranking 7 chunks\n"
+    if argv[0] == "search":
+        slug = argv[1].replace(" ", "_")
+        rows = [_row(f"shared-{i}", i) for i in range(5)] + [_row(f"{slug}-{i}", i) for i in range(20)]
+        return 0, json.dumps(rows), ""
+    full = [_row("shared-0"), _row("full-1", 1), _row("full-2", 2)]
+    if "--json" in argv:
+        return 0, json.dumps(full), "Reranking 7 chunks\n"
+    return 0, q.render_text(full), "Reranking 7 chunks\n"
 
 
 q.run_qmd = fake_run_qmd
@@ -128,11 +143,30 @@ write_cfg({"search_mode": "keyword"})
 calls.clear()
 rc, out, err = run_main(["--all-notebooks", "tiered context loading", "--json"])
 check("keyword: the search exits 0", rc == 0, err.strip()[-300:])
-check("keyword: qmd was called once", len(calls) == 1, calls)
-check("keyword: it ran `qmd search`", bool(calls) and calls[0][0] == "search", calls)
+check("keyword: every qmd call is `search`", bool(calls) and all(c[0] == "search" for c in calls), calls)
 check("keyword: never `qmd query`, `vsearch` or `embed`", not any(c[0] in ("query", "vsearch", "embed") for c in calls), calls)
-check("keyword: no reranker flag (-C)", bool(calls) and "-C" not in calls[0], calls)
+check("keyword: searched the key words together and in every pair",
+      sorted(c[1] for c in calls) == sorted(["tiered context loading", "tiered context", "tiered loading",
+                                             "context loading"]), sorted(c[1] for c in calls))
+check("keyword: no reranker flag (-C)", bool(calls) and not any("-C" in c for c in calls), calls)
+try:
+    kw_rows = json.loads(out)
+except ValueError:
+    kw_rows = []
+check("keyword: JSON out, at most k=30 rows, each file once",
+      0 < len(kw_rows) <= 30 and len({r["file"] for r in kw_rows}) == len(kw_rows), len(kw_rows))
+check("keyword: an entry every search found ranks first (fused by rank)",
+      bool(kw_rows) and kw_rows[0]["file"].endswith("shared-0.md"), kw_rows[:1])
 check("keyword: the status line says keyword", "keyword" in err.lower(), err.strip()[-300:])
+check("key_terms drops stop words and repeats",
+      q.key_terms("Microsoft Agent Framework agent and workflow channels")
+      == ["Microsoft", "Agent", "Framework", "workflow", "channels"],
+      q.key_terms("Microsoft Agent Framework agent and workflow channels"))
+long_q = "the quick brown fox and a lazy dog over the hill near river bank"
+check("at most 8 key words: the whole + 28 pairs", len(q.keyword_queries(long_q)) == 29
+      and q.key_terms(long_q)[-1] == "river", (len(q.keyword_queries(long_q)), q.key_terms(long_q)))
+check("one or two key words: a single search", q.keyword_queries("tiered context") == ["tiered context"],
+      q.keyword_queries("tiered context"))
 
 # keyword machine: preflight passes without a GPU check
 q.gpu_backend = lambda: (_ for _ in ()).throw(AssertionError("GPU check ran on a keyword machine"))
@@ -154,6 +188,30 @@ rc, out, err = run_main(["--all-notebooks", "tiered context loading"])
 check("full: the search exits 0", rc == 0, err.strip()[-300:])
 check("full: it ran `qmd query`", bool(calls) and calls[0][0] == "query", calls)
 check("full: with the reranker ceiling -C", bool(calls) and "-C" in calls[0], calls)
+check("full: then the word-pair keyword searches, all `search`",
+      len(calls) == 5 and all(c[0] == "search" for c in calls[1:]), [c[:2] for c in calls])
+check("full: text output adds the keyword finds under their own heading, after the full results",
+      "## Also found by keyword search" in out and out.index("full-2") < out.index("## Also found by keyword search"),
+      out[-300:])
+calls.clear()
+rc, out, err = run_main(["--all-notebooks", "tiered context loading", "--json"])
+try:
+    full_rows = json.loads(out)
+except ValueError:
+    full_rows = []
+mine = [r for r in full_rows if r.get("found_by") == "full"]
+extra = [r for r in full_rows if r.get("found_by") == "keyword"]
+check("full JSON: the full search's own rows first, marked found_by full",
+      [r["file"].rsplit("/", 1)[-1] for r in mine] == ["shared-0.md", "full-1.md", "full-2.md"]
+      and full_rows[:3] == mine, [r.get("found_by") for r in full_rows[:4]])
+check("full JSON: then at most 20 keyword finds, marked found_by keyword", 0 < len(extra) <= 20, len(extra))
+check("full JSON: no keyword find repeats a full result",
+      not ({r["file"] for r in extra} & {r["file"] for r in mine}), [r["file"] for r in extra][:3])
+check("full: the status line counts the keyword finds", "found only by keyword search" in err, err.strip()[-300:])
+calls.clear()
+rc, out, err = run_main(["--all-notebooks", "tiered context loading", "--json", "--keyword-extra", "0"])
+check("full: --keyword-extra 0 runs no keyword search", rc == 0 and len(calls) == 1 and calls[0][0] == "query",
+      [c[:2] for c in calls])
 
 q.gpu_backend = lambda: (None, "CUDA: not available")
 rc, out, err = run_main(["--preflight"])

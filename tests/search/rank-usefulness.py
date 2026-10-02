@@ -148,7 +148,9 @@ def load_queries(scope: str | None, n: int, seed: int) -> list[dict]:
 
 def search(query: str, scope: str | None, k: int, timeout: int) -> list[dict]:
     """One real search through the wrapper, as any session would run it."""
-    cmd = [sys.executable, str(WRAPPER), "--caller", "rank-usefulness", "-k", str(k), "--json"]
+    # --keyword-extra 0: this test ranks the full search's own results; the keyword finds a full
+    # machine appends after them (2026-10-02) are not ranked and would read as ranks k+1 onward
+    cmd = [sys.executable, str(WRAPPER), "--caller", "rank-usefulness", "-k", str(k), "--json", "--keyword-extra", "0"]
     if scope and scope != "all notebooks":
         cmd += ["--notebook", scope]
     elif scope == "all notebooks":
