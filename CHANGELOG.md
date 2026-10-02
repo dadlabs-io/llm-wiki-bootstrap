@@ -9,14 +9,12 @@
 
 ---
 
-## 2026-10-02
+## 2026-10-01
 
 ### `/wrap-up` files a skill note that is already home, and still asks about the rest (task #62, the user's rule)
 - **Why**: at the 2026-10-01 wrap-up in llm-wiki's own notebook, Step 5.5 asked send / keep / drop about a note on `/wrap-up` itself. Its owner was llm-wiki, the library this notebook belongs to, so there was no one to send it to. The user: "You're supposed to file the skill suggestion." Asked whether an automatic notebook should also send notes to other owners: "no, lets keep that manual now".
 - **Change** (Step 5.5): the owner's notebook is the registry entry whose `discord.bot_name` is the owner, the bot a send tags. When that notebook is this one, the wrap-up runs the improver's `receive` on the note: it moves into `_inbox/skill-suggestions/received/`, marked `From:` this notebook, for the next improver pass. The report says so, and nobody is asked. Every other note is put to the user as before, even with `confirm_before_create: false`. The rule "nothing sent, dropped or moved without the user's word" names this one exception. The wrap-up usage page, the skill-suggestions loop page (step 2) and the improver's Composition note say so. Only a library's own notebook is affected: in any other project a note about an llm-wiki skill is still asked about and sent.
 - **Proven**: a new suite case, `suggestions-own-library`: a test notebook that the registry makes llm-wiki's own, automatic, holding an own note, an agent-builder note and an already-sent one. Its checks were proven offline first: the correct session passes 11/11, the old behaviour fails 5, an over-eager session that files agent-builder's note too fails 1. Run `20261001-213311`: 6/6 on both models with `suggestions-ask` and `suggestions-decide`, 0 regressions ($3.79). Sonnet needed three tries at `receive`'s path, so the step now says the path is absolute and names the project root. Its re-run `20261001-213917` passed the right arguments from the first call ($0.46). Baseline merged per case.
-
-## 2026-10-01
 
 ### An install that stops partway says so, and leaves a log a session can read; every printing script writes UTF-8 (task #61, the user's ask)
 - **Why**: `wiki-upgrade.py`'s `→` crash (below) stopped an install after the scripts and before any skill, and left only a traceback: nothing said the skills were still the old ones, and once the terminal scrolled nothing was left to ask about. The user: notify when it crashes, so that when asked "why, and fix it" the session knows what the error was.
