@@ -5,9 +5,10 @@ Install the LLM-wiki framework on a fresh machine. Ships the wiki skills (`/new-
 `wiki-ingester` agent, the Python helper scripts, the templates and the seed content.
 After install, scaffold a per-project wiki with `/new-wiki`.
 
-**Install this first** — other tools (e.g.
-[agent-builder-bootstrap](https://github.com/dadlabs-io/agent-builder-bootstrap))
-depend on the wiki skills this puts in place.
+**Install llm-wiki-bootstrap (this repo) first, then
+[agent-builder-bootstrap](https://github.com/dadlabs-io/agent-builder-bootstrap).**
+Agent-builder's skills depend on the wiki skills this repo installs: its do-code-change
+workflow, for one, uses `writing-skill-suggestions` from here.
 
 **This repo is the gold copy** — maintained and committed to directly (see `git log` for history);
 it is no longer generated from `workflows-core`.
