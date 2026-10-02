@@ -41,7 +41,9 @@ The step between them, where each note is put to you, is part of `/wrap-up`: [wr
 
 2. **Put to you at wrap-up.** `/wrap-up` finds the skill's owner and asks you: send, keep, or drop. See
    [wrap-up](./skills/wrap-up.md) for that step. A note you send stays in your box, marked `Sent`, and
-   the owner's bot is tagged with its path; wrap-up does not ask you about it again.
+   the owner's bot is tagged with its path; wrap-up does not ask you about it again. In the owner's own notebook
+   there is no one to send to, so a note about one of its own skills is filed straight into `received/` and the
+   report says so.
 3. **Collected by the owner.** The owner's session moves the note into its own notebook
    (`_inbox/skill-suggestions/received/`), marked `From: <your project>`. Your box keeps no copy. A note already
    there from the same run is not taken twice (your duplicate is removed); the same problem seen in another run is

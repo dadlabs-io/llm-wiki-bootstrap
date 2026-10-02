@@ -64,6 +64,8 @@ UNKNOWN_OWNER = re.compile(
     r"unknown|not sure|can'?t tell|cannot tell|no usage page|no (how-to )?page|whose|where (should|does) (it|this)|"
     r"which (project|owner)|neither|not (ours|one of ours|owned)|third.party|plugin", re.I)
 WAITING = re.compile(r"wait|pick.?up|already sent|collect", re.I)
+FILED = re.compile(r"\bfiled\b|received/|\breceived\b|improver", re.I)
+SENT_TO_SELF = re.compile(r"send (it |this )?to llm-wiki|sent to llm-wiki", re.I)
 
 
 def _owner_after(text: str, name: str, span: int = 600) -> set[str]:
@@ -125,8 +127,17 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
             "registry": sandbox / "linked-notebooks.json",
             "wiki": nb / "wiki", "proposed": nb / "_inbox" / "proposed",
             "skill_dir": sandbox / "skill" / "wrap-up",
-            "scripts": repo / "scripts",
+            "scripts": repo / "scripts", "repo": repo,
             "env": {"PYTHONIOENCODING": "utf-8"}}
+
+
+SUGGESTIONS_INSTALLED = "~/.claude/skills/improving-skills-from-suggestions/scripts/suggestions.py"
+
+
+def render_replacements(ctx: dict) -> dict:
+    """Step 5.5 files a note that is already home with the improver's `receive`: the repo's copy, never the installed one."""
+    return {SUGGESTIONS_INSTALLED:
+            (ctx["repo"] / "skills" / "improving-skills-from-suggestions" / "scripts" / "suggestions.py").as_posix()}
 
 
 def teardown(ctx: dict) -> None:
@@ -236,13 +247,19 @@ def _reset_notebook(case: dict, ctx: dict) -> None:
         (box / "archive" / name).write_text(body, encoding="utf-8")
 
     flags = case.get("flags") or {}
-    # the two owners' bots, as the real registry carries them: a sent suggestion is tagged to one
+    # the two owners' bots, as the real registry carries them: a sent suggestion is tagged to one.
+    # `own_library` (2026-10-02, task #62) makes the test notebook that library's own notebook, as
+    # llm-wiki-bootstrap is llm-wiki's: its entry carries the library's bot, and no other entry does
+    own = case.get("own_library")
     owners = {name: {"root": f"notebooks/{name}", "discord": {"bot_name": bot, "user_id": uid}}
               for name, bot, uid in (("agent-builder-bootstrap", "agent-builder", AGENT_BUILDER_ID),
-                                     ("llm-wiki-bootstrap", "llm-wiki", LLM_WIKI_ID))}
-    ctx["registry"].write_text(json.dumps(
-        {"notebooks": {NOTEBOOK: {"root": f"notebooks/{NOTEBOOK}", **flags}, **owners}}, indent=2),
-        encoding="utf-8")
+                                     ("llm-wiki-bootstrap", "llm-wiki", LLM_WIKI_ID)) if bot != own}
+    entry = {"root": f"notebooks/{NOTEBOOK}", **flags}
+    if own:
+        entry["discord"] = {"bot_name": own, "user_id": {"llm-wiki": LLM_WIKI_ID,
+                                                         "agent-builder": AGENT_BUILDER_ID}[own]}
+    ctx["registry"].write_text(json.dumps({"notebooks": {NOTEBOOK: entry, **owners}}, indent=2),
+                               encoding="utf-8")
     cfg = json.dumps({"tool": "claude-code", "project_name": NOTEBOOK, "notebook": NOTEBOOK,
                       "persona": PERSONA, "registry": ctx["registry"].as_posix(),
                       "scripts_installed_at": ctx["scripts"].as_posix()}, indent=2)
@@ -521,6 +538,30 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             unchanged = top == sorted(sug["box"]) and all(
                 (box / n).read_text(encoding="utf-8") == b for n, b in sug["box"].items())
             add("nothing moved or changed without an answer", unchanged, top)
+        elif exp["suggestions"] == "own":
+            # task #62 (the user, 2026-10-01): in the owning library's own notebook a note about one of its skills is
+            # already home, so it is filed into received/ with no question; a note for another owner is still asked
+            # about, even with confirm_before_create: false
+            own_name = "wiki-lint--flags-quotes-in-code.md"
+            got = box / "received" / own_name
+            gt = got.read_text(encoding="utf-8") if got.is_file() else ""
+            lines = gt.splitlines()
+            add("the own library's note filed in received/", got.is_file(),
+                sorted(p.relative_to(box).as_posix() for p in box.rglob("*.md")))
+            add("filed by receive: From this notebook first, the four lines, Received from",
+                lines[:1] == [f"From: {NOTEBOOK}"] and all(l in lines for l in sug["box"][own_name].splitlines())
+                and any(l.startswith("Received from:") for l in lines), gt[:300])
+            add("the own library's note gone from the box's top level", own_name not in top, top)
+            add("the report says it was filed for the next improver pass", _near(text, "wiki-lint", FILED))
+            add("not offered or sent to its own library (no send to llm-wiki, no tag of its bot)",
+                not SENT_TO_SELF.search(text) and f"<@{LLM_WIKI_ID}>" not in text,
+                (SENT_TO_SELF.search(text) or [""])[0])
+            other = "verifying-before-done--freeze-step-takes-only-a-number.md"
+            add("the agent-builder note left in the box unchanged (no send without the user's word)",
+                (box / other).is_file() and (box / other).read_text(encoding="utf-8") == sug["box"][other], top)
+            add("still asks about the agent-builder note in an automatic notebook",
+                "agent-builder" in _owner_after(text, "verifying-before-done")
+                and all(w in low for w in ("send", "keep", "drop")), _owner_after(text, "verifying-before-done"))
         else:
             name = "verifying-before-done--freeze-step-takes-only-a-number.md"
             sent = box / name
