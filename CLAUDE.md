@@ -165,7 +165,6 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 
 - Don't edit the shipped folders (`skills/`, `scripts/`, `agents/`, `templates/`, `seed/`, `wiki-seed/`, `framework-docs/`; inside `bootstrap/` until 2026-10-01) unless the user explicitly wants to modify the framework. This is a published release package.
 - Don't try to run the per-project skills (`/wiki-update`, `/wrap-up`, etc.) inside this repo — those are for installed projects, not for the bootstrap itself.
-- Don't push changes to this repo on the user's behalf without explicit instruction — it's published.
 
 ## If the user asks for help
 
