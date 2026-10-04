@@ -42,7 +42,9 @@ Google Cloud project must have the Gmail API enabled.
 
 For tests and offline runs: --from-dir reads .eml files instead of Gmail (archive then
 moves them into <dir>/read/), and --resolve-map names a JSON file of url -> final url
-used instead of following redirects over the network.
+used instead of following redirects over the network. $WIKI_GMAIL_FROM_DIR and
+$WIKI_GMAIL_RESOLVE_MAP set the same when the flags are absent: the wiki-cycle skill
+suite uses them, so a session following the skill never reaches the real mailbox.
 
 Exit codes: 0 done; 2 bad input (unknown label, missing review, unknown candidate);
 3 sign-in failed; 1 anything else.
@@ -510,9 +512,11 @@ def cmd_fetch(args) -> int:
     cfg = (load_config() or {}).get("email") or {}
     label = args.label or cfg.get("label") or DEFAULT_LABEL
     done_label = args.done_label or cfg.get("done_label") or DEFAULT_DONE_LABEL
-    source = DirSource(args.from_dir) if args.from_dir else GmailSource(
+    from_dir = args.from_dir or os.environ.get("WIKI_GMAIL_FROM_DIR")
+    map_file = args.resolve_map or os.environ.get("WIKI_GMAIL_RESOLVE_MAP")
+    source = DirSource(from_dir) if from_dir else GmailSource(
         gmail_service(args.client_secrets, args.token_cache), label, done_label)
-    resolve_map = json.loads(Path(args.resolve_map).read_text(encoding="utf-8")) if args.resolve_map else None
+    resolve_map = json.loads(Path(map_file).read_text(encoding="utf-8")) if map_file else None
     resolver = make_resolver(resolve_map, network=not args.no_resolve)
 
     emails = []
@@ -601,7 +605,7 @@ def cmd_fetch(args) -> int:
         "queued": [], "skipped": skipped, "deferred": deferred,
         "notes": f"label {label!r} (done label {done_label!r}); nothing queued until reviewed",
         "errors": [],
-        "label": label, "done_label": done_label, "source": "dir" if args.from_dir else "gmail",
+        "label": label, "done_label": done_label, "source": "dir" if from_dir else "gmail",
         "reviewed": False, "archived_ids": [],
         "emails": [{k: e[k] for k in ("id", "subject", "sender", "date", "words", "web_url", "full_text", "file")}
                    for e in emails],
@@ -707,10 +711,11 @@ def cmd_archive(args) -> int:
               "even --approve none), so no email leaves the label undecided", file=sys.stderr)
         return 2
     if step["source"] == "dir":
-        if not args.from_dir:
+        from_dir = args.from_dir or os.environ.get("WIKI_GMAIL_FROM_DIR")
+        if not from_dir:
             print("error: this fetch read a folder: pass the same --from-dir", file=sys.stderr)
             return 2
-        source = DirSource(args.from_dir)
+        source = DirSource(from_dir)
     else:
         svc = gmail_service(args.client_secrets, args.token_cache)
         source = GmailSource(svc, step["label"], step["done_label"])

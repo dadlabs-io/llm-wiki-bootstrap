@@ -18,6 +18,12 @@ X links) stays put.
 
 Run it as a cycle step right after ingest, or standalone any time to tidy the
 queue. Registry-aware via _wiki_config. Idempotent.
+
+Since triage (2026-09-24) a ticket is moved from `pending/` into one
+`_inbox/intake/<bucket>/` before it is ingested, so the intake buckets are read
+too (2026-10-03, found by the wiki-cycle suite: ingested tickets were left in
+their buckets). Only a file with a `source:` line is a ticket; a bucket's
+README, the triage log and handoff notes are never touched.
 """
 import argparse
 import json
@@ -108,21 +114,26 @@ def main():
     topic_root = Path(_wiki_config.topic_root(args.topic))
     wiki_dir = Path(_wiki_config.wiki_dir(args.topic, args.vault))
     pending = topic_root / "_inbox" / "pending"
+    intake = topic_root / "_inbox" / "intake"
     done = topic_root / "_inbox" / "done"
     proposed = topic_root / "_inbox" / "proposed"
-    if not pending.exists():
-        print(f"No pending dir at {pending}; nothing to dequeue.")
+    queues = ([pending] if pending.is_dir() else []) + (
+        sorted(d for d in intake.iterdir() if d.is_dir()) if intake.is_dir() else [])
+    if not queues:
+        print(f"No pending dir at {pending} and no intake buckets; nothing to dequeue.")
         return 0
 
     ingested = _ingested_source_urls(wiki_dir, proposed)
 
     moved, kept = [], []
-    for p in sorted(pending.glob("*.md")):
+    for p in sorted(f for q in queues for f in q.glob("*.md")):
         if p.name.startswith("_"):  # _pending-list.md is a view, not a queue item
             continue
         txt = p.read_text(encoding="utf-8", errors="ignore")
         m = re.search(r"^source:\s*(\S+)", txt, re.M)
         src = m.group(1) if m else ""
+        if not src and p.parent != pending:
+            continue  # a bucket's README or a handoff note, not a ticket
         if src and _norm(src) in ingested:
             if not args.dry_run:
                 done.mkdir(parents=True, exist_ok=True)
@@ -137,7 +148,7 @@ def main():
         print(json.dumps({**summary, "moved_urls": moved, "kept": kept}, indent=2, ensure_ascii=False))
     else:
         verb = "WOULD DEQUEUE" if args.dry_run else "DEQUEUED"
-        print(f"{verb} {len(moved)} already-ingested item(s) -> _inbox/done/; kept {len(kept)} in pending.")
+        print(f"{verb} {len(moved)} already-ingested item(s) -> _inbox/done/; kept {len(kept)} in pending and the intake buckets.")
         for s in kept:
             print(f"  KEPT: {s}")
     return 0

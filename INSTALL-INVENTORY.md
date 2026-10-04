@@ -91,7 +91,7 @@ Manifest: `TRAVEL_SCRIPTS` (the commands) + `TOOLING_HELPER_SCRIPTS` / `SHARED_H
 | `wiki-list-add.py` | Add a source to the `_inbox/pending/` queue (URL-dedup across pending + proposed + wiki + done); `--raw-path raw/<file>` records a raw already captured, so the ingest files from it (2026-10-03) |
 | `wiki-list-process.py` | Batch-consume `_inbox/pending/` → staged entries |
 | `wiki-list-render.py` | Regenerate the human-readable pending-list view |
-| `wiki-dequeue.py` | Move already-ingested items out of the pending queue |
+| `wiki-dequeue.py` | Move already-ingested items to `_inbox/done/`: from the pending queue and, since 2026-10-03, from every intake bucket (where triage leaves a ticket before it is ingested); a file without a `source:` line (a README, the triage log, a handoff note) is never touched. Checks: `tests/scripts/test_dequeue_intake.py` |
 | `wiki-promote.py` | Move `_inbox/proposed/<slug>.md` → `wiki/<target_folder>/<slug>.md` (the folder from its sidecar), add backlinks into the related entries' Related sections (never into a framework-contract doc, 2026-09-15), then run the link fixer (scoped to the moved entries), `wiki-reciprocate-backlinks.py` (so no promoted entry is left an orphan, 2026-09-25) and the folder-index and MAP regeneration. An entry whose sidecar is missing, invalid or names no folder is held back (exit 4); `--check` validates staging without moving anything; a folder outside the taxonomy is known when it carries a `README.md` (else a warning, 2026-09-24) |
 | `wiki-verify.py` | Sidecar update flipping truth-status to verified (called by `/wiki-verify`) |
 | `wiki-rollback.py` | Walk the `revises:` chain to the verified ancestor + write a rollback entry (called by `/wiki-rollback`) |

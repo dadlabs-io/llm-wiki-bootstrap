@@ -84,13 +84,13 @@ Queue discovery's approved items with `wiki-list-add.py`. Queue the email's with
 **Step 2 — Ingest.** Spawn `wiki-ingester` workers (fall back to `general-purpose` only if it is not installed), **unnamed**, up to 4 at a time, each with a slice of this session's tickets and `--staged` unless `--direct`. Before spawning, read `~/.claude/agents/wiki-ingester-config.json`: with `confirm_model_each_run` true, a session that can ask asks the user which model (default `model_default`); one that cannot uses `model_default` and says so. Pass it as the spawn-time `model`.
 - **YouTube**: when the batch has more than one YouTube item, all of them go to **one** worker, fetched one after another (they share one rate limit the GPU slots do not cover). A 429 is retried once, after that worker's other items; a second 429 fails the item with the reason.
 - A ticket carrying `raw_path` (captured at triage or Step 1.8) is filed from that raw, never fetched again.
-- Each worker runs the full `/wiki-update` flow per source, gate included. **Workers never write `update.json`**: the orchestrator writes `update.json` + `.md` once, from every worker's receipt (staged slugs, skipped and deferred items with reasons).
+- Each worker runs the full `/wiki-update` flow per source, gate included. **Workers never write `update.json`**: the orchestrator writes `update.json` + `.md` once, from every worker's receipt (staged slugs, skipped and deferred items with reasons), with every field of the step contract, `notes` and `errors` included even when empty.
 - After the batch, `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --stats` into the report (searches that waited for a GPU slot; slow waits or "full search unavailable" → fewer workers next time). In `--full`, also `wiki-qmd-query.py --depth-check --notebook <notebook>` once: exit 1 (C was reached) is reported to the user; exit 2 (nothing measured) is never a pass. On a keyword machine (no GPU; `--preflight` says which) there are no GPU slots and no reranker: skip the depth check and report `skipped (keyword search)`.
 
 **Step 2.5 — Dequeue and check staging** (always, after ingest):
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-dequeue.py --topic <notebook>              # pending tickets whose source is now an entry -> done/
+python {{WIKI_SCRIPTS_DIR}}/wiki-dequeue.py --topic <notebook>              # tickets in pending/ or an intake bucket whose source is now an entry -> done/
 python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --check      # exit 1 names each entry promote would hold
 ```
 

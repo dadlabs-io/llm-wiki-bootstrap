@@ -24,6 +24,14 @@ registered project, `other` (bot other-bot), so a case can give the notebook a s
 reader. `triage-shared` sends one live page to other-bot's bucket; `checker-resume`
 resumes a run after ingest with one staged entry from a 21-minute test transcript
 whose entry drops the talk's ninth technique and inflates a number (fixtures/checker/).
+
+Since #65 (2026-10-03) the email step: `email-approve` and `email-unattended` run
+`--discover-only` with `email.enabled` in the project config and three test-written
+emails in sandbox/mail/ (a Medium-style digest, a full-text newsletter, a link roundup
+behind redirects), which the script reads through $WIKI_GMAIL_FROM_DIR and
+$WIKI_GMAIL_RESOLVE_MAP, so no session can reach a real mailbox. Four candidates are in
+the seed notebook's scope (AI agents, language models) and three plainly are not; the
+user's answer is given in the prompt for the first case and absent in the second.
 """
 
 from __future__ import annotations
@@ -165,11 +173,7 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
         indent=2), encoding="utf-8")
     (sandbox / "notebooks" / "other" / "wiki").mkdir(parents=True)
     (sandbox / "notebooks" / "other" / "wiki" / ".gitkeep").touch()
-    cfg = json.dumps({"tool": "claude-code", "project_name": NOTEBOOK, "notebook": NOTEBOOK,
-                      "persona": "main", "registry": ctx["registry"].as_posix()}, indent=2)
-    for d in (project, sandbox):
-        (d / ".claude").mkdir(parents=True, exist_ok=True)
-        (d / ".claude" / "wiki-config.json").write_text(cfg, encoding="utf-8")
+    _write_config(ctx, email=False)
 
     # the wiki-ingester and wiki-checker agents and their sidecars, from this repo, install paths -> sandbox
     repl = render_replacements(ctx)
@@ -189,7 +193,8 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
             text = text.replace(old, new)
         dest.write_text(text, encoding="utf-8")
 
-    (sandbox / ".gitignore").write_text("project/\nskill/\nagents/\n.claude/\n", encoding="utf-8")
+    (sandbox / ".gitignore").write_text("project/\nskill/\nagents/\n.claude/\nmail/\nmail-resolve.json\n",
+                                        encoding="utf-8")
 
     index = f"cycletest-{model}-{sandbox.parent.name}"  # one per run, so two runs never share an index
     _qmd_index_file(index).unlink(missing_ok=True)
@@ -198,8 +203,22 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
                        encoding="utf-8", errors="replace", timeout=600)
     ctx["index"] = index
     ctx["env"] = {"WIKI_QMD_INDEX": index, "WIKI_QMD_CALLER": f"cycletest-{model}-{sandbox.parent.name}",
-                  "PYTHONIOENCODING": "utf-8"}
+                  "PYTHONIOENCODING": "utf-8",
+                  # every case: the email step, if a case turns it on, reads the sandbox's mail, never Gmail
+                  "WIKI_GMAIL_FROM_DIR": str(sandbox / "mail"),
+                  "WIKI_GMAIL_RESOLVE_MAP": str(sandbox / "mail-resolve.json")}
     return ctx
+
+
+def _write_config(ctx: dict, email: bool) -> None:
+    """The project config (and the same at the sandbox root); the email block only for email cases."""
+    cfg = {"tool": "claude-code", "project_name": NOTEBOOK, "notebook": NOTEBOOK,
+           "persona": "main", "registry": ctx["registry"].as_posix()}
+    if email:
+        cfg["email"] = {"enabled": True, "label": "...wiki-inbox", "done_label": "...wiki-inbox/read"}
+    for d in (ctx["project"], ctx["sandbox"]):
+        (d / ".claude").mkdir(parents=True, exist_ok=True)
+        (d / ".claude" / "wiki-config.json").write_text(json.dumps(cfg, indent=2), encoding="utf-8")
 
 
 def teardown(ctx: dict) -> None:
@@ -324,6 +343,62 @@ def _prepare_checker(ctx: dict, cycle_id: str) -> None:
                                                      "timestamp": ctx["started"]}])
 
 
+KOSHY = "https://medium.com/@koshy/restarting-your-agent-is-not-repairing-it-0a1b2c3d4e5f"
+ANA = "https://medium.com/@ana.k/giving-a-coding-agent-memory-that-survives-a-restart-1a2b3c4d5e6f"
+LETTER = "https://skilltest-letters.substack.com/p/what-prompt-caching-changes-for-agents"  # the full-text email
+REPO = "https://github.com/skilltest-org/agent-scratchpad-memory"
+HUSTLE = "https://medium.com/@hustle.daily/i-made-10000-a-month-with-ai-side-hustles-9f8e7d6c5b4a"
+DOOM = "https://medium.com/@listicles/10-websites-better-than-doomscrolling-8e7d6c5b4a3f"
+BREAD = "https://example.org/blog/the-perfect-sourdough-starter"
+ON_TOPIC = {KOSHY, ANA, LETTER, REPO}
+OFF_TOPIC = {HUSTLE, DOOM, BREAD}
+_ESSAY = ("Prompt caching changes how an agent should lay out its context. A cached prefix is billed at a "
+          "fraction of the price and returns faster, so the stable parts of the context belong first: the "
+          "system prompt, the tool definitions, the long reference documents. Anything that changes on every "
+          "turn, such as the latest tool result or the scratchpad, goes last, after the cache breakpoint. ")
+
+
+def _eml(subject: str, sender: str, html: str) -> bytes:
+    from email.message import EmailMessage
+    m = EmailMessage()
+    m["Subject"], m["From"], m["To"] = subject, sender, "user@example.com"
+    m["Date"] = "Thu, 02 Oct 2026 12:50:00 +0000"
+    m.set_content("(html only)")
+    m.add_alternative(html, subtype="html")
+    return bytes(m)
+
+
+def _prepare_email(ctx: dict) -> None:
+    """Three emails in sandbox/mail/ and the redirect map; the project config turns email on."""
+    mail = ctx["sandbox"] / "mail"
+    _rmtree(mail)
+    mail.mkdir(parents=True)
+    digest = f"""<html><body><p>Today's highlights</p>
+<a href="https://medium.com/@koshy?source=email-digest">Koshy</a>
+<a href="{KOSHY}?source=email-abc-digest">Restarting Your Agent Is Not Repairing It</a>
+<a href="{ANA}?source=email-abc-digest">Giving a coding agent memory that survives a restart</a>
+<a href="{HUSTLE}?source=email-abc-digest">I Made $10,000 a Month With AI Side Hustles</a>
+<a href="{DOOM}?source=email-abc-digest">10 Websites Better Than Doomscrolling</a>
+<a href="https://medium.com/me/email-settings">Email settings</a>
+<a href="https://help.medium.com/hc/en-us/articles/unsubscribe">Unsubscribe</a></body></html>"""
+    letter = f"""<html><body><a href="https://substack.com/redirect/view-online">View in browser</a>
+<h1>What prompt caching changes for agents</h1><p>{_ESSAY * 12}</p>
+<a href="https://skilltest-letters.substack.com/subscribe">Subscribe</a></body></html>"""
+    roundup = """<html><body><p>Links of the week</p>
+<a href="https://api.daily.dev/r/mem1">agent-scratchpad-memory: a scratchpad memory layer for coding agents</a>
+<a href="https://api.daily.dev/r/bread">The perfect sourdough starter</a>
+<a href="https://app.daily.dev/settings/notifications">Manage your notifications</a></body></html>"""
+    for name, data in (("m1", _eml("Restarting Your Agent Is Not Repairing It | Koshy", "Medium Daily Digest <noreply@medium.com>", digest)),
+                       ("m2", _eml("What prompt caching changes for agents", "Skilltest Letters <letters@substack.com>", letter)),
+                       ("m3", _eml("Your weekly links", "daily.dev <informer@daily.dev>", roundup))):
+        (mail / f"{name}.eml").write_bytes(data)
+    (ctx["sandbox"] / "mail-resolve.json").write_text(json.dumps({
+        "https://substack.com/redirect/view-online": LETTER,
+        "https://api.daily.dev/r/mem1": REPO,
+        "https://api.daily.dev/r/bread": BREAD,
+    }), encoding="utf-8")
+
+
 def _commit_fixture(ctx: dict, case_id: str) -> None:
     """Commit this case's starting state. One repo per sandbox: deleting and re-creating
     .git between cases fails on Windows (a half-deleted .git broke the next `git add`)."""
@@ -363,6 +438,10 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_resume(ctx, cycle_id)
     elif case["kind"] == "checker":
         _prepare_checker(ctx, cycle_id)
+    _write_config(ctx, email=case["kind"] == "email")
+    if case["kind"] == "email":
+        _prepare_email(ctx)
+    ctx["gmail_token_before"] = (Path.home() / ".config" / "wiki-cycle" / "gmail-token.json").exists()
     _commit_fixture(ctx, case["id"])
     ctx["fixture_files"] = snapshot(ctx)
     return HEADER.format(skill=ctx["skill_dir"].as_posix(), skills=ctx["skill_dir"].parent.as_posix(),
@@ -418,6 +497,58 @@ def add_denials(add, run: dict) -> None:
         f"other: {[d.get('tool_name') for d in other]}; read-guard: {len(guard)}; Skill: {len(skill)}")
 
 
+def _check_email(case: dict, add, ctx: dict, run_dir: Path, stext: str, text: str, workers: list) -> None:
+    nb, mail = ctx["notebook"], ctx["sandbox"] / "mail"
+    sys.path.insert(0, str(ctx["scripts"]))
+    from _entry_checks import split_frontmatter
+    token = Path.home() / ".config" / "wiki-cycle" / "gmail-token.json"
+    add("never reached the real mailbox (no Gmail sign-in)",
+        ctx.get("gmail_token_before") or not token.exists(), "a gmail-token.json appeared")
+    add("no ingest worker spawned (--discover-only)", not workers, [a.get("description") for a in workers])
+    step_file = run_dir / "email-fetch.json"
+    try:
+        step = json.loads(step_file.read_text(encoding="utf-8")) if step_file.is_file() else {}
+    except json.JSONDecodeError:
+        step = {}
+    cands = step.get("candidates") or []
+    add("email-fetch.json written with the candidates", bool(cands), step_file.name)
+    by_url = {_norm_url(c["url"]): c for c in cands}
+    add("every on-topic and off-topic link is a candidate",
+        all(_norm_url(u) in by_url for u in ON_TOPIC | OFF_TOPIC), sorted(by_url))
+    rv_file = run_dir / "email-review.json"
+    try:
+        review = json.loads(rv_file.read_text(encoding="utf-8")) if rv_file.is_file() else {}
+    except json.JSONDecodeError:
+        review = {}
+    undecided = [c["n"] for c in cands if (review.get(str(c["n"])) or {}).get("decision") not in ("recommend", "skip")
+                 or not str((review.get(str(c["n"])) or {}).get("reason", "")).strip()]
+    add("email-review.json: a decision and a reason for every candidate", review and not undecided, undecided)
+    rec = {_norm_url(c["url"]) for c in cands if (review.get(str(c["n"])) or {}).get("decision") == "recommend"}
+    on, off = {_norm_url(u) for u in ON_TOPIC}, {_norm_url(u) for u in OFF_TOPIC}
+    add("every off-topic link skipped", not (rec & off), sorted(rec & off))
+    add("at least 3 of the 4 on-topic links recommended", len(rec & on) >= 3, sorted(rec & on))
+    add("scratchpad records the email step", bool(re.search(r"1\.1[^\n]*email", stext, re.I)))
+    pending = {}
+    for t in (nb / "_inbox" / "pending").glob("*.md"):
+        if not t.name.startswith("_"):
+            fm, _ = split_frontmatter(t.read_text(encoding="utf-8"))
+            pending[_norm_url(fm.get("source"))] = fm
+    left = sorted(p.name for p in mail.glob("*.eml"))
+    archived = sorted(p.name for p in (mail / "read").glob("*.eml")) if (mail / "read").is_dir() else []
+    if case.get("approve"):
+        add("exactly the recommended links queued", set(pending) == rec, {"queued": sorted(pending), "rec": sorted(rec)})
+        letter = pending.get(_norm_url(LETTER)) or {}
+        rp = str(letter.get("raw_path") or "")
+        add("the full-text email queued with its raw in raw/", bool(rp) and (nb / rp).is_file(), rp or "no raw_path")
+        add("every email moved to the done label", not left and len(archived) == 3, {"left": left, "done": archived})
+        add("email-fetch.json records the review", step.get("reviewed") is True
+            and (step.get("summary") or {}).get("queued") == len(rec), step.get("summary"))
+    else:
+        add("nothing queued without the user's answer", not pending, sorted(pending))
+        add("the emails stay in the label", len(left) == 3 and not archived, {"left": left, "done": archived})
+        add("the report gives the recommendations", "recommend" in text, "no 'recommend' in the reply")
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     sys.path.insert(0, str(ctx["scripts"]))
     from _entry_checks import check_entry_file, split_frontmatter
@@ -448,7 +579,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     add("scratchpad status: completed", _scratch_status(stext) == "completed", _scratch_status(stext) or "none")
 
     # ---- the step contract ----
-    jsons = sorted(p for p in run_dir.glob("*.json")) if run_dir.is_dir() else []
+    # email-review.json is the session's judgment of the email candidates, input to a step, not a step
+    jsons = sorted(p for p in run_dir.glob("*.json") if p.name != "email-review.json") if run_dir.is_dir() else []
     mds = {p.stem for p in run_dir.glob("*.md")} if run_dir.is_dir() else set()
     lonely = [p.name for p in jsons if p.stem not in mds]
     add("every step JSON has its .md", jsons and not lonely, lonely)
@@ -466,8 +598,9 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             bad.append(f"{p.name}: missing {miss}, cycle_id {d.get('cycle_id') if isinstance(d, dict) else '?'}")
     add("every step JSON follows the contract (fields, cycle_id)", jsons and not bad, bad)
     present = {p.stem for p in jsons}
-    add("quick steps all wrote their pair", all(s in present for s in QUICK_STEPS),
-        [s for s in QUICK_STEPS if s not in present])
+    if case["kind"] != "email":  # --discover-only stops before ingest and lint
+        add("quick steps all wrote their pair", all(s in present for s in QUICK_STEPS),
+            [s for s in QUICK_STEPS if s not in present])
     full = [s for s in present if s.startswith(FULL_ONLY)]
     add("no --full-only step ran", not full, full)
     add("cycle report written (.md + .json)", (run_dir / f"{cycle_id}-run-cycle-report.md").is_file()
@@ -477,7 +610,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         lsum = json.loads(lint.read_text(encoding="utf-8")).get("summary", {}) if lint.is_file() else {}
     except json.JSONDecodeError:
         lsum = {}
-    add("lint-mechanical.json counts broken links", isinstance(lsum.get("broken_links"), int), lsum)
+    if case["kind"] != "email":
+        add("lint-mechanical.json counts broken links", isinstance(lsum.get("broken_links"), int), lsum)
 
     # ---- what landed ----
     proposed = sorted(k for k in now if k.startswith("_inbox/proposed/") and _is_entry(k))
@@ -488,7 +622,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         n_staged, f"{n_staged} entries in _inbox/proposed/"), len(proposed) == n_staged, proposed)
     p = _script(ctx, "wiki-promote.py", "--topic", NOTEBOOK, "--check")
     add("wiki-promote --check passes", p.returncode == 0, (p.stdout + p.stderr)[-250:])
-    add("pending queue empty", not _tickets(nb / "_inbox" / "pending"), _tickets(nb / "_inbox" / "pending"))
+    if case["kind"] != "email":  # --discover-only leaves what it queued in pending/
+        add("pending queue empty", not _tickets(nb / "_inbox" / "pending"), _tickets(nb / "_inbox" / "pending"))
     add("both tickets in _inbox/done/" if n_done == 2 else f"{n_done} ticket(s) in _inbox/done/",
         len(_tickets(nb / "_inbox" / "done")) == n_done, _tickets(nb / "_inbox" / "done"))
     temp = [k for k in new if k.startswith("_inbox/temp/")]
@@ -545,8 +680,9 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             "corrected" if corrected else ("held" if held else "neither"))
         add("no ingest worker spawned (ingest was done)", not workers, [a.get("description") for a in workers])
     if case["kind"] == "ingest-only":
+        # skipped on the 1.0 line itself ("Phases 1.0, 1, 1.1, 1.5: skipped (mode)") or within its section
         add("scratchpad records the Drive step as skipped",
-            bool(re.search(r"1\.0[^\n]*\n(?:[^\n#]*\n){0,3}?[^\n]*skipped", stext, re.I)))
+            bool(re.search(r"1\.0[^\n]*skipped|1\.0[^\n]*\n(?:[^\n#]*\n){0,3}?[^\n]*skipped", stext, re.I)))
         add("spawned wiki-ingester workers", bool(workers), [a.get("subagent_type") for a in _agent_calls(run)])
         add("workers on model_default (sonnet): the run cannot ask",
             workers and all(str(a.get("model", "")).lower().startswith("sonnet") for a in workers),
@@ -569,6 +705,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             u = {}
         add("update.json covers the whole batch (both items)", len(u.get("queued") or []) == 2,
             f"{len(u.get('queued') or [])} queued")
+    elif case["kind"] == "email":
+        _check_email(case, add, ctx, run_dir, stext, text, workers)
     elif case["kind"] == "resume":
         add("no ingest worker spawned (ingest was done)", not workers, [a.get("description") for a in workers])
         add("nothing ingested twice", len(proposed) == 2 and not [k for k in new if k in proposed], proposed)

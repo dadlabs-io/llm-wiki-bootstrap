@@ -17,7 +17,16 @@
 - **Both checkpoints stay human** (the user, 2026-10-03, after the doctrine conflict was put to them): per-notebook auto-approve settings for discovery and email were built and then taken out again, since principle 6 of the authoring best practices makes URL approval a human checkpoint. Override flags may come back later (a parked task). No framework-contract doc changed.
 - **Docs**: `/wiki-cycle` (mode table, Step 1.1, Step 1.5, the report) and its reference (labels, sign-in, what counts as a candidate, the order of the commands), `/wiki-discover` Step 7 (its Queued table is the recommendation), the wiki-cycle and drive-setup usage pages (a Gmail section), the user guide, INSTALL-INVENTORY.
 - **Proven**: `tests/scripts/test_gmail_fetch.py` 26/26 over four sample emails shaped like the label's (a Medium digest, a full-text Substack newsletter, a link roundup, a plain-text email), with no Gmail or network access. It fails when the archive guard, the junk filter, Medium's tracker strip, the approval check or the known check is removed (each tried). `test_cycle_scope.py` 24/24.
-- **Not yet**: the wiki-cycle suite run (behavioural change), the first real sign-in and fetch on the user's label, install, and the docs refresh.
+- **Suite** (the same day): two new wiki-cycle cases, `email-approve` and `email-unattended`, reading test-written emails through `$WIKI_GMAIL_FROM_DIR` / `$WIKI_GMAIL_RESOLVE_MAP` (new; the flags win when given), so no session can reach a real mailbox. Opus 6/6; Sonnet both email cases. The run found the next two entries' bugs; with them fixed, every case passes on both models (~$20 in all; `tests/skills/PENDING.md` has the runs).
+- **Not yet**: the first real sign-in and fetch on the user's label, install, and the docs refresh.
+
+### `wiki-dequeue.py` also clears the intake buckets (found by the wiki-cycle suite)
+- **Why**: since triage (2026-09-24) a ticket waits in `_inbox/intake/<bucket>/` by the time it is ingested, but the dequeue (`/wiki-cycle` Step 2.5) read only `_inbox/pending/`, so ingested tickets stayed in their buckets. Sonnet failed the suite's "ticket in `done/`" check on the skill both before and after the email change; Opus passed only by moving the ticket by hand.
+- **Change**: the dequeue reads `pending/` and every intake bucket; a ticket whose `source:` is already an entry (filed or staged) moves to `done/`. A file with no `source:` line in a bucket (its README, the triage log, a handoff note) is never touched. A notebook with buckets and no `pending/` folder is still dequeued. Step 2.5's comment and INSTALL-INVENTORY say so.
+- **Proven**: `tests/scripts/test_dequeue_intake.py` 7/10 on the old script (the three bucket checks), 10/10 after; all 16 script tests pass.
+
+### `/wiki-cycle` Step 2: `update.json` carries every contract field
+- Sonnet twice wrote the orchestrator's `update.json` without `notes`; Step 2 now says every field of the step contract, `notes` and `errors` included even when empty. The rerun passed.
 
 ## 2026-10-02
 
