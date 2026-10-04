@@ -1,12 +1,14 @@
 ---
-title: "Drive setup — llm-wiki"
+title: "Drive and Gmail setup — llm-wiki"
 type: how-to
 pack: llm-wiki
 installed_by: install-wiki
-date: 2026-09-08
+date: 2026-10-03
 ---
 
-# Drive setup — one-time OAuth for Google Drive ingest
+# Drive and Gmail setup — one-time OAuth for Google Drive and Gmail ingest
+
+Gmail is set up after Drive, with the same Google app; see [Gmail](#gmail) at the end.
 
 If you opted into Drive ingest at `/new-wiki` time, the installer attempted to walk you through OAuth. If it succeeded, you don't need this doc. If something failed, here's how to fix it.
 
@@ -66,3 +68,21 @@ That works — each project has its own subfolder. The OAuth token is machine-gl
 - **"folder not found"** — the folder or subfolder doesn't exist yet (or got renamed); the script never creates it. Create it in Drive. The cycle logs and continues; no need to fix immediately.
 - **Re-auth loop** — usually a wrong-scope token cached. Delete `~/.config/wiki-cycle/drive-token.json` and re-run `--auth-only`.
 - **Browser doesn't open** — usually a Docker / WSL environment without browser access. Run the OAuth from a graphical desktop session once, then the token works headless.
+
+## Gmail
+
+`/wiki-cycle` can also read a Gmail label of newsletters and saved emails: every article link becomes a candidate the session recommends or skips and you approve, and handled emails move to a done label. It uses the Gmail API with the same Google app as Drive.
+
+1. **Enable the Gmail API** in the same Google Cloud project: https://console.cloud.google.com/apis/library/gmail.googleapis.com
+2. **Create the two labels** in Gmail: one you file emails under, and a done label (defaults `...wiki-inbox` and `...wiki-inbox/read`).
+3. **Turn it on** in the project's `.claude/wiki-config.json`, beside the `drive` block:
+   ```json
+   "email": { "enabled": true, "label": "...wiki-inbox", "done_label": "...wiki-inbox/read" }
+   ```
+4. **Sign in once:**
+   ```bash
+   python ~/.claude/wiki-scripts/wiki-fetch-gmail.py auth
+   ```
+   A browser window opens; approve reading your email and managing its labels (the `gmail.modify` scope: the script reads the label and moves handled emails to the done label; it never sends or deletes). The token caches at `~/.config/wiki-cycle/gmail-token.json`. The script finds the OAuth client the way the Drive script does (`--client-secrets`, `WIKI_GMAIL_CLIENT_SECRETS`, `client_secrets.json` above) or, failing those, reuses the client recorded in the Drive token.
+
+Troubleshooting: **"no Gmail label named …"** means a label name in the config does not match Gmail exactly (nested labels are written `parent/child`). **"Gmail API has not been used in project …"** means step 1 is not done for the project the client belongs to. A sign-in that fails exits 3; the cycle reports it and carries on without email.

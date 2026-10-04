@@ -1,8 +1,8 @@
 ---
 name: wiki-cycle
 description: Run the full research cycle — discover, triage, ingest, check, lint, fix, report. Maintains a scratchpad so the run can be resumed if interrupted. This is the "update the wiki" command. Use when the user says "update the database", "run the cycle", "wiki-cycle", "update the wiki", "full wiki update".
-last_reviewed: 2026-09-24
-review_after: 2026-12-24
+last_reviewed: 2026-10-03
+review_after: 2027-01-01
 reviewed_for_model: claude-opus-5-5
 ---
 
@@ -29,7 +29,9 @@ This is the universal interface: the other `wiki-*` skills (discover, triage, li
 |---|---|---|---|---|---|
 | 0 Run folder + scratchpad | ✓ | ✓ | ✓ | ✓ | ✓ |
 | 1.0 Drive-fetch (only when `drive.enabled`) | ✓ | ✓ | — | ✓ | — |
-| 1 Discover + 1.5 human review | ✓ | ✓ | — | ✓ (then stop) | — |
+| 1 Discover | ✓ | ✓ | — | ✓ | — |
+| 1.1 Email-fetch (only when `email.enabled`) | ✓ | ✓ | — | ✓ | — |
+| 1.5 Human review #1 (discovery and email) | ✓ | ✓ | — | ✓ (then stop) | — |
 | 1.7 Triage | ✓ | ✓ | ✓ | — | — (the user chose them) |
 | 1.8 Browser capture (only when a gated item is this session's) | ✓ | ✓ | ✓ | — | ✓ |
 | 2 Ingest, 2.5 dequeue + staging check | ✓ | ✓ | ✓ | — | ✓ |
@@ -39,7 +41,7 @@ This is the universal interface: the other `wiki-*` skills (discover, triage, li
 | 6 Claims, 6.5 synthesis, 7 refresh | — | ✓ | — | — | — |
 | 8 Report, 9 commit | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-`--lint-only` runs 0, 3 and 8 (`--semantic` adds 4); `--report-only` runs 8 from the last run's JSON; `--refresh-only` runs 7; `--claims-only` runs 6. A step outside the mode is recorded once as `skipped (mode)`; a step inside it that has nothing to do (no Drive, nothing gated, no long transcript) is `skipped (<why>)`. **"full" means full**: it includes synthesis (Step 6.5), always. Run it weekly, or when a batch is 25+ items or cuts across many entries. `--lint-all` makes Steps 4 and 6 read every entry instead of what is new.
+`--lint-only` runs 0, 3 and 8 (`--semantic` adds 4); `--report-only` runs 8 from the last run's JSON; `--refresh-only` runs 7; `--claims-only` runs 6. A step outside the mode is recorded once as `skipped (mode)`; a step inside it that has nothing to do (no Drive, no email, nothing gated, no long transcript) is `skipped (<why>)`. **"full" means full**: it includes synthesis (Step 6.5), always. Run it weekly, or when a batch is 25+ items or cuts across many entries. `--lint-all` makes Steps 4 and 6 read every entry instead of what is new.
 
 Entries are staged in `_inbox/proposed/` unless `--direct`; the user reviews them with `/wiki-promote`. An unattended run never files into `wiki/` directly.
 
@@ -59,9 +61,21 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-drive-folder.py --folder-name "<drive.par
 
 It queues each new URL into `_inbox/pending/`, archives the handled Drive files, and writes `drive-fetch.md` + `drive-fetch.json`. Folder names, OAuth and the archive rules: [reference.md](./reference.md).
 
-**Step 1 — Discover.** Follow `/wiki-discover <notebook>` with the cycle id; it writes `discover.json` + `.md` and one checklist in `_inbox/discovered/`.
+**Step 1 — Discover.** Follow `/wiki-discover <notebook>` with the cycle id; it writes `discover.json` + `.md` and one checklist in `_inbox/discovered/`. Its Queued table is its recommendation.
 
-**Step 1.5 — Human review #1** (on unless `--no-confirm-discovery`). Show the Queued / Skipped / Deferred tables from `discover.md` and wait: "yes go" → queue the approved items; "no" / "abort" → mark the run interrupted and stop; "tweak X" → re-read the edited checklist; "show the raw JSON" → print `discover.json`. Queue **only discovery's approved items** with `wiki-list-add.py` (Drive's are already queued by Step 1.0). Never auto-approve a tier-4 source. `--no-confirm-discovery` (unattended runs) queues tiers 1–3 and defers tier 4.
+**Step 1.1 — Email-fetch** (only when the project config has `email.enabled: true`):
+
+```bash
+python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-gmail.py fetch --topic <notebook> --run-folder <run-folder> --cycle-id <cycle_id>
+```
+
+It reads the Gmail label `email.label` and changes nothing in the mailbox. It writes `email-fetch.json` + `.md`: numbered candidates, one per article link and one per full-text newsletter (an email that is itself the article), with links already in the wiki or the queue listed as known. Each email's text is under `<run-folder>/email/`. **Judge every candidate** as discovery judges its results (in the notebook's scope? new? the tier by author and evidence, `_config/feeds.md` as the starting point), reading the email's text when the title is not enough, and write `<run-folder>/email-review.json`: `{"<n>": {"decision": "recommend" | "skip", "reason": "<one line>"}}` for every one. Exit 3 means the Gmail sign-in failed: record the step as failed, tell the user (`wiki-fetch-gmail.py auth` signs in again), and go on. Labels and sign-in: [reference.md](./reference.md).
+
+**Step 1.5 — Human review #1** (discovery's results and the email candidates). Show discovery's Queued / Skipped / Deferred tables (its Queued table is its recommendation) and the email candidates with each recommendation and reason, then wait. "approve recommended" (or "yes go") → queue every recommended item; "also 14", "drop 7" → adjust first; "no" / "abort" → mark the run interrupted and stop; "tweak X" → re-read the edited checklist; "show the raw JSON" → print the step JSON. Never auto-approve a tier-4 source.
+
+Queue discovery's approved items with `wiki-list-add.py`. Queue the email's with `wiki-fetch-gmail.py queue --topic <notebook> --run-folder <run-folder> --approve recommended|<numbers>|none`, then `wiki-fetch-gmail.py archive --run-folder <run-folder>`, which moves every fetched email to `email.done_label` (it refuses until `queue` has run, so no email leaves the label undecided). An approved full-text newsletter is saved to `raw/` and queued with that raw. Drive's items are already queued by Step 1.0.
+
+`--no-confirm-discovery` (unattended runs) queues discovery's tiers 1–3 and defers tier 4. Email is never approved unattended: such a run lists the candidates and its recommendations in the report, runs neither `queue` nor `archive`, and the emails stay in the label for the next reviewed run.
 
 **Step 1.7 — Triage.** Follow `/wiki-triage` for this notebook: every ticket in `_inbox/pending/` moves into one `_inbox/intake/<folder>/` by the buckets in `_inbox/intake/README.md` (`main` is the catch-all; a notebook without the file has `main` alone), with the raw captured for items another reader gets, and each other reader told once. Then list what this session ingests: the tickets in every bucket whose reader is this session (`wiki-triage.py buckets` says which), including ones the user dropped there directly. Other readers' buckets, and a bucket the user reads (`mark`), are never ingested here.
 
@@ -124,7 +138,7 @@ Then re-run Step 3.5 (promotion adds entries and backlinks at once). If the user
 
 **Step 7 — Refresh scan** (`--full`; `--refresh-only`): follow `/wiki-refresh --overdue-only`.
 
-**Step 8 — Report.** Follow `/wiki-report`, from the run folder's step JSONs: `<cycle_id>-run-cycle-report.md` + `.json`. It lists what was triaged to whom, what was ingested, what the checker found and held, anything left for a browser session, and the search stats.
+**Step 8 — Report.** Follow `/wiki-report`, from the run folder's step JSONs: `<cycle_id>-run-cycle-report.md` + `.json`. It lists what each source brought in (Drive, discovery, email), what was triaged to whom, what was ingested, what the checker found and held, anything left for a browser session, and the search stats.
 
 **Step 9 — Commit.** First delete zero-byte or junk files left by shell redirects (own or a sub-agent's: `output`, `#`, `${...}`, a stray word). Then add **only the notebook's path** (other sessions may have work in the same repository) and commit once, at the end: `Wiki cycle <date> — N ingested, N fixes, N contradictions, N synthesis changes, wiki at N entries`. Set the scratchpad to `completed`, then show the report and offer to act on its recommendations.
 

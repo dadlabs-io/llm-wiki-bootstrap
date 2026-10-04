@@ -171,7 +171,7 @@ def _find_existing_url(topic_root, source):
     return None
 
 
-def add_to_queue(vault_root, topic, source, folder, title, tags, added_by, priority):
+def add_to_queue(vault_root, topic, source, folder, title, tags, added_by, priority, raw_path=""):
     # Registry-aware resolution. When --vault isn't explicitly overridden
     # (vault_root is None), resolve the topic root through the shared config —
     # this handles cross-notebook registry layouts where a topic lives outside
@@ -250,6 +250,10 @@ def add_to_queue(vault_root, topic, source, folder, title, tags, added_by, prior
         lines.append(f"title: {title}")
     if tags:
         lines.append(f"tags: {', '.join(tags)}")
+    if raw_path:
+        # The source is already captured (a full-text email, 2026-10-03): its ingest
+        # files from this raw and never fetches it again.
+        lines.append(f"raw_path: {raw_path}")
     lines.append(f"priority: {priority}")
     lines.append(f"added_at: {datetime.now().astimezone().isoformat(timespec='seconds')}")
     lines.append(f"added_by: {added_by}")
@@ -303,10 +307,12 @@ def main():
                         help="Vault root. Default: resolve the topic root via the registry "
                              f"(_wiki_config.topic_root). Pass to override (legacy <vault>/<topic>; default vault: {DEFAULT_VAULT}).")
     parser.add_argument("--added-by", default="cli", help="Who added this (e.g. 'clawd', 'cli', 'discord')")
+    parser.add_argument("--raw-path", default="", help="raw/<file>, relative to the notebook: the source is already captured")
     args = parser.parse_args()
 
     tags = [t.strip() for t in args.tags.split(",") if t.strip()]
-    return add_to_queue(args.vault, args.topic, args.source, args.folder, args.title, tags, args.added_by, args.priority)
+    return add_to_queue(args.vault, args.topic, args.source, args.folder, args.title, tags, args.added_by,
+                        args.priority, args.raw_path)
 
 
 if __name__ == "__main__":

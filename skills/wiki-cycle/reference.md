@@ -28,8 +28,12 @@ Created at Step 0 as `<run-folder>/scratchpad.md` and updated after every phase;
 ### Phase 1: Discover
 - **Status**: … · **Candidates**: N after dedup · **Checklist**: _inbox/discovered/<date>-discovery.md
 
+### Phase 1.1: Email-fetch
+- **Status**: … · **Emails**: N · **Candidates**: N (full-text N) · **Known**: N · **Recommended**: N · **Review file**: written
+
 ### Phase 1.5: Human review #1
-- **Status**: … · **Approved** N · **Rejected** N · **Deferred** N
+- **Discovery**: **Approved** N · **Rejected** N · **Deferred** N
+- **Email**: **Approved** N of N · **Queued** N · **Archived to the done label** N
 
 ### Phase 1.7: Triage
 - **Status**: … · **Routed**: N (per folder: …) · **Raws captured for other readers**: N · **Readers told**: …
@@ -74,6 +78,16 @@ The folder names come from `.claude/wiki-config.json`: `<parent>` is `drive.pare
 - Files whose URLs queue are **moved** to `<parent>/<subfolder>/_completed/<cycle_id>/` (created if missing; the scan folder itself must exist). Files whose queueing failed stay where they are, for a retry next cycle. A URL already in the wiki is reported, not queued, and its file is archived with the rest.
 - The first run with `--move-handled` asks for OAuth again, once, to widen the scope from read-only to full Drive (it re-parents files).
 - `--out <run-folder>/drive-fetch.md` writes the report and, beside it, `drive-fetch.json` in the step contract's shape (since 2026-09-24; before that the orchestrator wrote the JSON by hand). The scratchpad's counts come from its `summary`.
+
+## Step 1.1 — Email-fetch, in detail
+
+The labels come from `.claude/wiki-config.json`: `email.label` (default `...wiki-inbox`) and `email.done_label` (default `...wiki-inbox/read`), beside the `drive` block. Both must exist in Gmail; a missing one is exit 2.
+
+- **Sign-in**: the Gmail API with the `gmail.modify` scope (read the label, move emails between labels), cached at `~/.config/wiki-cycle/gmail-token.json`. The OAuth client is the Drive one: `--client-secrets`, `WIKI_GMAIL_CLIENT_SECRETS`, `~/.config/wiki-cycle/client_secrets.json`, or the client recorded in the Drive token. Its Google Cloud project needs the Gmail API enabled. `wiki-fetch-gmail.py auth` runs the one-time browser sign-in.
+- **What counts as a candidate**: each article link. Tracking redirects are followed to the article, tracking parameters stripped (Medium's `source=` too), and footer, account, app-store, image, home-page and social-profile links dropped (an X post, an Instagram post or a LinkedIn article stays). An email of 700+ words with few links is a full-text newsletter: the email itself is one candidate, at its "view online" address. The email's own "view online" link is never a separate candidate.
+- **Known**: a link whose canonical form is already a `source_url` in the wiki or staged, or a `source:` in `pending/`, `done/` or an intake bucket, is listed under Skipped and not offered.
+- **Order**: `fetch` (lists, writes nothing to Gmail) → the session's `email-review.json` → `queue` (needs a decision for every candidate) → `archive` (needs `queue` to have run, even `--approve none`). A run interrupted before `archive` leaves the emails in the label; the next run lists them again, and the already-queued links show as known.
+- **Offline**: `--from-dir <folder of .eml>` and `--resolve-map <json>` run it without Gmail or the network (the script's test does).
 
 ## Which notebook a cycle runs against
 

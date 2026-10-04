@@ -51,6 +51,7 @@ TRAVEL_SCRIPTS = [
     "new-wiki.py",
     "read-guard.py",  # PreToolUse/Stop/SubagentStop hook: documents are read whole (2026-09-18)
     "wiki-fetch-drive-folder.py",
+    "wiki-fetch-gmail.py",  # the cycle's email step: a Gmail label's links as reviewed candidates (2026-10-03)
     "wiki-fetch-pdf.py",
     "wiki-fetch-youtube.py",
     "wiki-index.py",

@@ -13,14 +13,16 @@ Runs a notebook's research pipeline end to end: gather new sources, give each on
 
 **Trigger:** */wiki-cycle*, plus "run the cycle", "update the wiki", "full wiki update".
 
-**Input / Output:** consumes the pending queue, the URLs you dropped into the configured Google Drive folder, and the wiki as it stands. Produces entries staged in `_inbox/proposed/` (`--direct` files straight into `wiki/`) and a run folder, `_inbox/reports/<date>/<cycle_id>/`: one JSON and markdown file per step, the scratchpad, the scope files, the checker's reports and the cycle report. A `cycle_id` is `<YYYY-MM-DD>-<NN>`, which is also what `--resume` takes.
+**Input / Output:** consumes the pending queue, the URLs you dropped into the configured Google Drive folder, the emails under your Gmail wiki label, and the wiki as it stands. Produces entries staged in `_inbox/proposed/` (`--direct` files straight into `wiki/`) and a run folder, `_inbox/reports/<date>/<cycle_id>/`: one JSON and markdown file per step, the scratchpad, the scope files, the checker's reports and the cycle report. A `cycle_id` is `<YYYY-MM-DD>-<NN>`, which is also what `--resume` takes.
 
 ## What each mode runs
 
 | | quick (default) | `--full` | `--ingest-only` | `--discover-only` | `--prompt-for-urls` |
 |---|---|---|---|---|---|
 | Drive-fetch, when Drive is on | ✓ | ✓ | — | ✓ | — |
-| Discover, then your review | ✓ | ✓ | — | ✓ (then stops) | — |
+| Discover | ✓ | ✓ | — | ✓ | — |
+| Email-fetch, when email is on | ✓ | ✓ | — | ✓ | — |
+| Your review of discovery's and email's finds | ✓ | ✓ | — | ✓ (then stops) | — |
 | Triage | ✓ | ✓ | ✓ | — | — (you chose them) |
 | Browser capture, when needed | ✓ | ✓ | ✓ | — | ✓ |
 | Ingest, then the staging check | ✓ | ✓ | ✓ | — | ✓ |
@@ -42,18 +44,22 @@ Runs a notebook's research pipeline end to end: gather new sources, give each on
 
 ## Your two checkpoints
 
-1. **After discovery**, the run pauses on what was queued, skipped and deferred; you say go or edit the list. A tier-4 source is never approved for you.
+1. **After discovery and email**, the run pauses on what it found. The session has marked every find *recommend* or *skip*, with a reason; you say "approve recommended", or adjust first ("also 14", "drop 7"). A tier-4 source is never approved for you.
 2. **The morning review**: `/wiki-report` summarises the run, and `/wiki-promote --review` walks each staged entry, including any the checker held, with its report beside it.
 
-`--no-confirm-discovery` skips the first for an unattended run; entries still stage for the second. A `--full` run promotes its own staged entries (the ones the checker did not hold) before claims and synthesis, which read `wiki/`, and its synthesis changes to your best-practices pages are applied only with your approval; a run nobody is watching writes them as a proposal.
+`--no-confirm-discovery` skips the first for discovery on an unattended run (tiers 1–3 are queued, tier 4 waits); entries still stage for the second. Email always waits for you: an unattended run lists its candidates and recommendations in the report and leaves the emails in the label. A `--full` run promotes its own staged entries (the ones the checker did not hold) before claims and synthesis, which read `wiki/`, and its synthesis changes to your best-practices pages are applied only with your approval; a run nobody is watching writes them as a proposal.
 
 ## Drive-fetch
 
 If you enabled Drive ingest at `/new-wiki` time, the cycle starts by pulling URLs from `<parent-folder>/<project-slug>/` in your Drive. URLs are canonicalised (tracking parameters stripped, YouTube links collapsed to `watch?v=<id>`), and one already in the wiki or staged is reported as known, not queued. The rest are queued into `_inbox/pending/`, where triage picks them up. Handled Drive files move to `_completed/<cycle-id>/`; a file whose URL failed to queue stays for the next cycle.
 
+## Email-fetch
+
+With `email.enabled: true` in the project's `.claude/wiki-config.json`, the cycle reads every email under your Gmail label (`email.label`, default `...wiki-inbox`). Newsletters are not hand-picked the way Drive links are, so nothing is queued straight away: every article link becomes a numbered candidate, with tracking redirects followed, tracking parameters stripped, and footer, account, app-store and social-profile links dropped. A full-text newsletter, an email that is itself the article, is one candidate, and if it is approved its text is saved as the raw, so its ingest never fetches it again. Links already in the wiki or the queue are listed as known. After your review, approved candidates are queued and every fetched email moves to the done label (`email.done_label`, default `...wiki-inbox/read`); an email never leaves the label before its links are decided. The first run needs a one-time Gmail sign-in in your browser; [drive-setup](../drive-setup.md) has the steps.
+
 ## When steps skip themselves
 
-- Drive-fetch, when Drive ingest is off for the project.
+- Drive-fetch, when Drive ingest is off for the project; email-fetch, when email is off.
 - Browser capture, when nothing in this project's buckets needs it; the checker, when no staged transcript is long enough.
 - The link normaliser before the lint, unless entries were promoted during the cycle (`--direct` or `--full`).
 - Semantic lint, in quick mode, and in `--full` if one ran in the last 24 hours.

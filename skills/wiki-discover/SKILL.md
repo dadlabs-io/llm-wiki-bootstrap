@@ -1,9 +1,9 @@
 ---
 name: wiki-discover
 description: Discover new content for a topic wiki by searching trusted feeds, deduping against existing entries, and queuing candidates for human review.
-last_reviewed: 2026-09-26
-review_after: 2026-12-26
-reviewed_for_model: claude-fable-5-1
+last_reviewed: 2026-10-03
+review_after: 2027-01-01
+reviewed_for_model: claude-opus-5-5
 ---
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback` and `/new-wiki`. This skill is documented + callable for programmatic use.
@@ -190,7 +190,7 @@ When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/discover.json
 
 ### Step 7 — Queue approved candidates
 
-After the user reviews the checklist (human review #1), queue the approved items:
+The Decisions log's **Queued** table is discovery's recommendation. After the user reviews it (human review #1: "approve recommended", or with the changes they make), queue the approved items:
 
 ```bash
 python {{WIKI_SCRIPTS_DIR}}/wiki-list-add.py \

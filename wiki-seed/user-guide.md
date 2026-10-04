@@ -53,13 +53,13 @@ The rest (`/wiki-discover`, `/wiki-triage`, `/wiki-lint`, `/wiki-claims`, `/wiki
 ```
 gather ──► your review ──► triage ──► ingest ──► checker ──► lint + links ──► report ──► commit
 (Drive,    (approve the    (one owner  (up to 4    (long        (backlinks,
- feeds)     queue)          per source) workers,    transcripts) indexes, map)
-                                        staged)
+ feeds,     recommended)    per source) workers,    transcripts) indexes, map)
+ email)                                 staged)
 ```
 
 `--full` adds a semantic lint of what is new, fixes, promotion of the staged entries, contradiction hunting across claims, a synthesis of the new research against your best-practices pages, and a scan for stale entries. Run it weekly, or after a big batch.
 
-You have **two checkpoints**: after discovery, the run pauses on what it wants to queue (a tier-4 source is never approved for you); and the next morning, `/wiki-report` summarises the run and `/wiki-promote --review` walks what it staged. Changes to your best-practices pages are applied only with your approval.
+You have **two checkpoints**: after discovery and email, the session marks every find *recommend* or *skip* with a reason, and the run pauses for you to say "approve recommended" or adjust (a tier-4 source is never approved for you); and the next morning, `/wiki-report` summarises the run and `/wiki-promote --review` walks what it staged. Changes to your best-practices pages are applied only with your approval.
 
 | Mode | Runs |
 |---|---|
@@ -71,7 +71,7 @@ You have **two checkpoints**: after discovery, the run pauses on what it wants t
 | `--lint-only [--semantic]` | The mechanical lint (plus the semantic pass). |
 | `--claims-only` · `--refresh-only` · `--report-only` | One step on its own. |
 
-Modifiers: `<notebook>` (another registered notebook), `--direct` (file into `wiki/` instead of staging), `--no-confirm-discovery` (no pause, for unattended runs), `--resume <cycle_id>`, `--since <hours>`, `--all-topics`, `--lint-all`. The [`wiki-cycle`](./skills/wiki-cycle.md) page has each step and when it skips itself.
+Modifiers: `<notebook>` (another registered notebook), `--direct` (file into `wiki/` instead of staging), `--no-confirm-discovery` (no discovery pause, for unattended runs; email still waits for you), `--resume <cycle_id>`, `--since <hours>`, `--all-topics`, `--lint-all`. The [`wiki-cycle`](./skills/wiki-cycle.md) page has each step and when it skips itself.
 
 ## Common workflows
 
@@ -83,6 +83,11 @@ Modifiers: `<notebook>` (another registered notebook), `--direct` (file into `wi
 **"I collected links all day."** Paste them all into one `/wiki-update` (they are queued), drop them in your Drive folder if Drive ingest is on, then:
 ```
 /wiki-cycle --ingest-only
+```
+
+**"I filed newsletters under my wiki label."** With email on (the [Drive and Gmail setup](./drive-setup.md) page), a quick run or `--discover-only` reads the label, recommends what is worth ingesting, and moves the handled emails to the done label:
+```
+/wiki-cycle --discover-only
 ```
 
 **"Find new material from sources I trust."** List them in `_config/feeds.md` (or ask the agent to add them), then:
