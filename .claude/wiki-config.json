@@ -9,5 +9,10 @@
     "enabled": true,
     "parent_folder": "__FOR CLAUDE",
     "subfolder": "agentic-design"
+  },
+  "email": {
+    "enabled": true,
+    "label": "...wiki-inbox",
+    "done_label": "...wiki-inbox/read"
   }
 }
