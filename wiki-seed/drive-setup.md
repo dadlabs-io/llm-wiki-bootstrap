@@ -55,7 +55,7 @@ The cycle expects:
     └── <project-slug>/          ← per-project subfolder (defaults to the notebook name)
 ```
 
-Drop files into `<project-slug>/`. Each file just needs to contain the link; Share-to-Drive files from a phone (a title plus a `https://share.google/...` short link) work as they are.
+Drop files into `<project-slug>/`. A link capture just needs to contain the link; Share-to-Drive files from a phone (a title plus a `https://share.google/...` short link) work as they are. A file can also be the source itself: a PDF, a Word, PowerPoint or Excel file, an EPUB, an Outlook message, a Google Slides or Sheets deck, or an image (a screenshot) is saved into the wiki's `raw/` and queued. Anything else, and a note with no link in it, is listed in the cycle's report and left where it is.
 
 The cycle resolves short links, strips tracking parameters, skips URLs already in the wiki, and queues the rest into `_inbox/pending/` at the wiki root (beside `wiki/`). Processed files move into `__FOR CLAUDE/<project-slug>/_completed/<cycle-id>/`.
 

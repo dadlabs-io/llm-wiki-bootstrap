@@ -2,7 +2,7 @@
 """
 Fetch a PDF (URL or local file) and save extracted text as a verbatim raw
 archive file under <topic>/raw/. Sibling to wiki-fetch-youtube.py and
-wiki-fetch-page.js — same pattern: fetch verbatim → save to raw/ → caller
+wiki-fetch-page.py — same pattern: fetch verbatim → save to raw/ → caller
 synthesizes a curated wiki entry on top.
 
 Extraction is hybrid (lifted from ingest-pdf.py in the older

@@ -6,17 +6,19 @@ Step 1 of the `/wiki-update` flow, by source. Every fetcher prints `raw_path=<pa
 
 | Source | Fetcher |
 |---|---|
-| `youtube.com`, `youtu.be` | `wiki-fetch-youtube.py` ([YouTube](#youtube)) |
+| `youtube.com`, `youtu.be` | `wiki-fetch-youtube.py` ([YouTube](#youtube)); a video with no captions: `wiki-transcribe.py` |
+| An Instagram post, `instagram.com/p/…` | `wiki-fetch-page.py` ([Instagram](#instagram)): the caption and every slide's text, no login |
+| An Instagram reel, a podcast episode, an X video, a local audio or video file | `wiki-transcribe.py` ([Speech](#speech-reels-podcasts-video-without-captions)): the caption and a transcript |
 | A PDF: a URL ending `.pdf`, `arxiv.org/pdf/…`, or a local `.pdf` | `wiki-fetch-pdf.py` ([PDF](#pdf)) |
-| `x.com`, `twitter.com` | `wiki-fetch-tweet.js` ([X](#x--twitter)). Never Playwright first: four parallel Playwright fetches once hung the machine with 15 to 20 Chromium processes. |
-| `medium.com`, `*.medium.com`, Medium publications on their own domains (`levelup.gitconnected.com`, `pub.towardsai.net`, …) | [Browser capture](#browser-capture) when the session is interactive and the user is signed in; [Playwright](#playwright-recipe) otherwise. Direct HTTP gets 403. |
-| `threads.net`, `instagram.com`, `bsky.app`, `linkedin.com`, public `notion.so` pages | [Playwright](#playwright-recipe) |
+| `x.com`, `twitter.com` | `wiki-fetch-tweet.js` ([X](#x--twitter)); the page fetcher only as its fallback |
+| `medium.com`, `*.medium.com`, Medium publications on their own domains (`levelup.gitconnected.com`, `pub.towardsai.net`, …) | [Browser capture](#browser-capture) when the session is interactive and the user is signed in; the [page fetcher](#pages-that-need-javascript) otherwise. Direct HTTP gets 403. |
+| `threads.com`, `bsky.app`, `linkedin.com`, public `notion.so` pages | [Page fetcher](#pages-that-need-javascript) |
 | `github.com` repos and files, `gist.github.com` | `wiki-update.py --fetch-only` (rewrites to the raw file; a bare repo URL gets its README) |
 | Anything else | `wiki-update.py --fetch-only` |
 
 `--fetch-only` saves an HTML page as Markdown (MarkItDown, in the scripts' environment): headings, links, lists and quotes are kept, and so are the site's menus and footer, so read past them. It prints `Converted: Markdown`; `Converted: plain text (<reason>)` means MarkItDown was unavailable and the page was saved as before, without links or headings.
 
-A raw under about 1 KB, one that is mostly navigation, or one that says "enable JavaScript" came from the wrong fetcher: use Playwright. An X post is short by nature: judge it by whether the text reads complete, not by its size.
+A raw under about 1 KB, one that is mostly navigation, or one that says "enable JavaScript" came from the wrong fetcher: use the [page fetcher](#pages-that-need-javascript). An X post is short by nature: judge it by whether the text reads complete, not by its size.
 
 ## YouTube
 
@@ -27,6 +29,8 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-you
 Runs on the host; its `yt_dlp` package comes with the scripts' uv environment.
 
 **Check the transcript before you blockquote it.** Auto-captions mis-hear this wiki's vocabulary systematically: "Claude Code" arrives as "Cloud Code" or "Quad Code", `CLAUDE.md` as "quadmd", "CloudMD" or "clawed MD". Correct the entry's own key terms by context before placing a passage in a `>` quote, disclose the correction once in a dated transcription note near the top of the entry, and paraphrase (no blockquote) any passage you cannot disambiguate. Doctrine: authoring best practices, principle 5.
+
+**No captions** (the fetcher stops with "no subtitle file produced"): transcribe the speech instead, `wiki-transcribe.py --url <url>` ([Speech](#speech-reels-podcasts-video-without-captions)).
 
 A video's entry is as long as its content deserves: one good idea makes a short entry, a dense talk a full breakdown. Useful sections: key insights, notable quotes, when to watch it.
 
@@ -44,13 +48,13 @@ Runs on the host: text per page through `pdftotext` (in Git Bash on Windows, pop
 node {{WIKI_SCRIPTS_DIR}}/wiki-fetch-tweet.js --topic <topic> --url <url> --vault <vault_root> --ingested-by claude-code
 ```
 
-One HTTPS request to the public syndication API, on the host: no login, no browser. `--vault` is the vault root, the folder that holds the notebook's folder. When it fails (a deleted or protected post, a block), fetch that one URL with Playwright instead of retrying. If the raw ends with the note about a long-form post and the text reads cut off, fetch that URL with Playwright too.
+One HTTPS request to the public syndication API, on the host: no login, no browser. `--vault` is the vault root, the folder that holds the notebook's folder. When it fails (a deleted or protected post, a block), fetch that one URL with the [page fetcher](#pages-that-need-javascript) instead of retrying. If the raw ends with the note about a long-form post and the text reads cut off, fetch that URL with the page fetcher too. A post whose substance is a video: `wiki-transcribe.py --url <url>`.
 
 ## Browser capture
 
 For a page the user can read in their own browser but no fetcher can: Medium member-only stories, anything behind a login the user holds. The interactive session reads the page through Claude in Chrome, in the user's signed-in session, and saves the text as the raw. This is the user's own access, never a bypass. If the page shows "Member-only story" and the body stops after a few paragraphs, the user is not a member of that site: the item is preview only, so say so in the raw header or skip it, and never ingest the fragment as the article.
 
-**A paywalled page is never fetched another way** (Mark, 2026-10-05): no archive copy, no cache, no proxy. The Playwright fetcher flags one (`paywall=suspected`, and a `paywall:` line in the raw's header) instead of working around it. Read it here, in the user's own browser; if that cannot get through either, tell the user which page it is and leave the item for them: they look for a workaround.
+**A paywalled page is never fetched another way** (Mark, 2026-10-05): no archive copy, no cache, no proxy. The page fetcher flags one (`paywall=suspected`, and a `paywall:` line in the raw's header) instead of working around it. Read it here, in the user's own browser; if that cannot get through either, tell the user which page it is and leave the item for them: they look for a workaround.
 
 **Only the interactive session can do this.** A spawned `wiki-ingester` worker has no browser. For a batch, the session captures every gated raw first, then hands the workers `--source <raw> --source-url <url> --raw-path raw/<file>`.
 
@@ -68,13 +72,26 @@ For a page the user can read in their own browser but no fetcher can: Medium mem
    Keep the author's promotional blocks out or mark them `[Promo: …]`; keep everything else verbatim. A figure that reaches the raw only as the author's caption of a chart is a secondary-summary figure (authoring best practices, principle 5): `sourced` via the author, confidence low.
 3. **Continue at step 2 of the flow**, and file with `--source <synthesis> --source-url <url> --raw-path raw/<file>`. Say in the entry's Sources how the raw was captured ("Raw captured <date> through the user's Medium membership").
 
-## Playwright recipe
+## Pages that need JavaScript
 
-For pages rendered by JavaScript (Medium without a browser session, Threads, Notion, LinkedIn, Instagram, Bluesky) and as the fallback for X. Playwright and Chromium live in the `openclaw` Docker container:
+For pages that show their text only once JavaScript runs (Threads, LinkedIn, public Notion pages, Bluesky, Medium without a browser session) and as the fallback for X. It runs on this machine, in headless Chromium (Playwright, in the scripts' environment; the install fetches the browser):
 
 ```bash
-MSYS_NO_PATHCONV=1 docker exec openclaw bash -c 'mkdir -p /tmp/scratch-vault/<topic> && node /home/node/.openclaw/agents-training/main/skills/research-wiki/wiki-fetch-page.js --topic <topic> --url <url> --vault /tmp/scratch-vault --ingested-by claude-code'
-docker cp openclaw:/tmp/scratch-vault/<topic>/raw/<file>.md "<vault_root>/<topic>/raw/<file>.md"
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-page.py --topic <topic> --url <url> --ingested-by claude-code
 ```
 
-The script exists only at that path inside the container, and the project notebooks are not mounted there, so it writes to a scratch vault and you copy the raw out; the `raw_path=` it prints is the container's. `MSYS_NO_PATHCONV=1` stops Git Bash rewriting the paths (harmless elsewhere). The raw includes the site's chrome (login banners, sidebars): read past it to the post itself.
+The page is saved as Markdown with its site chrome (login banners, sidebars, footers): read past it to the post itself. `paywall=suspected` means the page looked paywalled or nearly empty: see the paywall rule under [Browser capture](#browser-capture). At most two run at once on the machine; a third waits. Exit 3 names the command when Chromium is missing.
+
+## Instagram
+
+An Instagram post goes through the same fetcher (it recognises the URL), with no login: the raw holds the post's whole caption and the text of every carousel slide, clicked through, and never the comments. Each slide's text is Instagram's own automatic recognition of the image, which garbles some words and sometimes finds none ("May be an image of magazine and text"), so each slide image is saved in `<raw>-slides/` and named under its slide. **Read the image** wherever a slide says Instagram recognised no text, or its text reads garbled, and quote only what you read. A dense single-image post is common: its whole substance is the image.
+
+Triage on the caption first: many posts are engagement bait ("comment AGENT and I'll DM you") and need no slides read.
+
+## Speech: reels, podcasts, video without captions
+
+```bash
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-transcribe.py --topic <topic> --url <url> --ingested-by claude-code
+```
+
+Local Whisper (faster-whisper): yt-dlp fetches the audio and the post's caption, and the raw holds the caption and a timestamped transcript, never the comments. On an NVIDIA GPU it runs large-v3-turbo (a one-minute reel in about 5 s; it takes one of the search's GPU slots); without one, the CPU runs `small`, and audio over 20 minutes exits 4 with the override named (`--max-cpu-minutes 0`). `--file <path>` transcribes a local recording. Music with no speech says so. The same auto-caption check as [YouTube](#youtube) applies before you blockquote a transcript.

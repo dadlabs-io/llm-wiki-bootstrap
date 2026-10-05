@@ -59,7 +59,7 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-dri
   --move-handled --archive-subfolder <cycle_id> --out <run-folder>/drive-fetch.md
 ```
 
-It queues each new URL into `_inbox/pending/`, archives the handled Drive files, and writes `drive-fetch.md` + `drive-fetch.json`. Folder names, OAuth and the archive rules: [reference.md](./reference.md).
+It queues each new URL into `_inbox/pending/`; saves each file that is itself the source (a PDF, an Office file, Google Slides/Sheets, an image) as a raw and queues it with that raw; archives the handled Drive files; and writes `drive-fetch.md` + `drive-fetch.json`. A file it cannot read (a text note with no link, an audio memo) stays in Drive and is listed in the step's `deferred`: **tell the user** which files and why, in the report. Exit 3 is a sign-in or API problem, named in one line: record the step as failed, tell the user, and go on. Folder names, OAuth and the archive rules: [reference.md](./reference.md).
 
 **Step 1 — Discover.** Follow `/wiki-discover <notebook>` with the cycle id; it writes `discover.json` + `.md` and one checklist in `_inbox/discovered/`. Its Queued table is its recommendation.
 
@@ -79,7 +79,7 @@ Queue discovery's approved items with `wiki-list-add.py`. Queue the email's with
 
 **Step 1.7 — Triage.** Follow `/wiki-triage` for this notebook: every ticket in `_inbox/pending/` moves into one `_inbox/intake/<folder>/` by the buckets in `_inbox/intake/README.md` (`main` is the catch-all; a notebook without the file has `main` alone), with the raw captured for items another reader gets, and each other reader told once. Then list what this session ingests: the tickets in every bucket whose reader is this session (`wiki-triage.py buckets` says which), including ones the user dropped there directly. Other readers' buckets, and a bucket the user reads (`mark`), are never ingested here.
 
-**Step 1.8 — Browser capture** (only when one of this session's tickets is a login-gated page, or its host refused a direct fetch with 403). The session captures the raw through the user's signed-in browser before any worker starts (the Browser-session capture flow in `wiki-update`'s `fetchers.md`); workers have no browser. A session without a browser leaves that ticket in its bucket, lists it in the report as "needs browser capture", and ingests the rest.
+**Step 1.8 — Browser capture** (only when one of this session's tickets is a login-gated page, or its host refused a direct fetch with 403). Instagram posts and reels, Threads, LinkedIn and Notion need no browser session: workers fetch them headless (`fetchers.md`). The session captures the raw through the user's signed-in browser before any worker starts (the Browser-session capture flow in `wiki-update`'s `fetchers.md`); workers have no browser. A session without a browser leaves that ticket in its bucket, lists it in the report as "needs browser capture", and ingests the rest.
 
 **Step 2 — Ingest.** Spawn `wiki-ingester` workers (fall back to `general-purpose` only if it is not installed), **unnamed**, up to 4 at a time, each with a slice of this session's tickets and `--staged` unless `--direct`. Before spawning, read `~/.claude/agents/wiki-ingester-config.json`: with `confirm_model_each_run` true, a session that can ask asks the user which model (default `model_default`); one that cannot uses `model_default` and says so. Pass it as the spawn-time `model`.
 - **YouTube**: when the batch has more than one YouTube item, all of them go to **one** worker, fetched one after another (they share one rate limit the GPU slots do not cover). A 429 is retried once, after that worker's other items; a second 429 fails the item with the reason.
@@ -138,7 +138,7 @@ Then re-run Step 3.5 (promotion adds entries and backlinks at once). If the user
 
 **Step 7 — Refresh scan** (`--full`; `--refresh-only`): follow `/wiki-refresh --overdue-only`.
 
-**Step 8 — Report.** Follow `/wiki-report`, from the run folder's step JSONs: `<cycle_id>-run-cycle-report.md` + `.json`. It lists what each source brought in (Drive, discovery, email), what was triaged to whom, what was ingested, what the checker found and held, anything left for a browser session, and the search stats.
+**Step 8 — Report.** Follow `/wiki-report`, from the run folder's step JSONs: `<cycle_id>-run-cycle-report.md` + `.json`. It lists what each source brought in (Drive, discovery, email) and the Drive files left unread, what was triaged to whom, what was ingested, what the checker found and held, anything left for a browser session, and the search stats.
 
 **Step 9 — Commit.** First delete zero-byte or junk files left by shell redirects (own or a sub-agent's: `output`, `#`, `${...}`, a stray word). Then add **only the notebook's path** (other sessions may have work in the same repository) and commit once, at the end: `Wiki cycle <date> — N ingested, N fixes, N contradictions, N synthesis changes, wiki at N entries`. Set the scratchpad to `completed`, then show the report and offer to act on its recommendations.
 

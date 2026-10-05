@@ -44,7 +44,7 @@ Before starting, settle the notebook and the folder, and confirm them with the u
 
 Direct mode, the default: use it unless you were asked for `--staged`. Other skills cite these step numbers (step 5 is the gate).
 
-1. **Fetch the raw.** Ordinary pages: `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-update.py --topic <topic> --source <url> --fetch-only`. YouTube, PDFs, X, Medium and pages rendered by JavaScript: [fetchers.md](fetchers.md). Keep the printed `raw_path=`.
+1. **Fetch the raw.** Ordinary pages: `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-update.py --topic <topic> --source <url> --fetch-only`. YouTube, PDFs, X, Medium, Instagram, pages rendered by JavaScript, and speech (reels, podcasts, video without captions): [fetchers.md](fetchers.md). Keep the printed `raw_path=`.
 2. **Read the raw in full.** A thin raw, or one that is mostly site navigation, came from the wrong fetcher.
 3. **Search the wiki** for 3 to 5 key terms from the source, each with the search helper:
    `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --notebook <topic> "<term>"`

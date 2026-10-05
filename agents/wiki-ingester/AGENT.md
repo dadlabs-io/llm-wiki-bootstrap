@@ -49,8 +49,10 @@ source at a time** — complete the full flow for item N before touching item N+
 with TodoWrite. For each item:
 
 1. **Dispatch the right fetcher** per `wiki-update/SKILL.md`'s URL-host dispatch table
-   (urllib default; yt-dlp for YouTube; pdf pipeline for PDFs; syndication script for X — Playwright
-   only as its documented fallback; never two fetchers in flight at once). **You have no browser.**
+   (urllib default; yt-dlp for YouTube; pdf pipeline for PDFs; syndication script for X — the page
+   fetcher only as its documented fallback; `wiki-fetch-page.py` for Instagram posts and pages that need
+   JavaScript; `wiki-transcribe.py` for reels, podcasts and video without captions; never two fetchers in
+   flight at once). Those two run headless on this machine, so they need no browser session. **You have no browser.**
    A login-gated page (a Medium member-only story, anything behind the user's own sign-in) is
    captured by the interactive session through Claude in Chrome BEFORE you are spawned and handed
    to you as `--source <raw> --source-url <url> --raw-path raw/<file>`; if you meet such a URL with
@@ -65,7 +67,9 @@ with TodoWrite. For each item:
      enough to inventory what the repo actually *is* (counts of components, not vibes). The
      `wiki-update.py` bare-repo→README rewrite is a *starting point*, not the read. Fetch further
      files via raw URLs / `git clone --depth 1` into a temp dir / WebFetch as needed.
-   - **YouTube** — the entire transcript, with the ASR quote-integrity check before any blockquote.
+   - **YouTube, a reel, a podcast** — the entire transcript, with the ASR quote-integrity check before any blockquote.
+   - **Instagram post** — the caption and every slide; open each slide image the raw marks as
+     unrecognised or that reads garbled, and quote only what you read.
    - **PDF** — all pages, not the abstract.
    - **Docs sites** — follow the content-bearing pages, not just the landing page.
    Slower is accepted; depth is the point. The deep read burns *your* context, and the caller only
@@ -121,8 +125,9 @@ with TodoWrite. For each item:
 - **Read before you reject** — every item fully fetched and read before any skip decision; every
   rejection content-grounded (quoted passage + overlapping entry slug). No title-pattern or
   domain-heuristic rejections, ever.
-- **One at a time** — no parallel fetches, no parallel items, at most one Playwright/Chromium
-  process ever (the 2026-07-10 4-way-Chromium hang is the incident this prevents).
+- **One at a time** — no parallel fetches, no parallel items, at most one page fetch (headless
+  Chromium) of yours at a time (the 2026-07-10 4-way-Chromium hang is the incident this prevents; the
+  page fetcher also allows at most two on the machine).
 - **Never guess slugs** — always `--slug-for`; never hand-compute `../` relative link depth.
 - **Numbers are blockquoted from the source, never paraphrased** — paraphrased numbers drift.
 - Don't ingest a dedup hit unless the caller explicitly said force; report it instead.
@@ -147,7 +152,7 @@ with TodoWrite. For each item:
 ## If it gets stuck or fails
 Per-item, bounded, loud — the batch always terminates:
 - **Fetch fails** → one attempt with the documented fallback fetcher for that host type (e.g.
-  X syndication → Playwright); if that also fails, mark the item **failed** with the reason and
+  X syndication → the page fetcher; YouTube without captions → `wiki-transcribe.py`); if that also fails, mark the item **failed** with the reason and
   move to the next item. Never blind-retry the same fetcher.
 - **Eval gate fails** → one fix-and-rescore round, then failed-with-scores + a review note at
   `_inbox/temp/<slug>.eval-failed.md` (draft preserved alongside — see step 5). You run unattended
