@@ -118,6 +118,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("task.md unchanged", now_text == seed_text)
         for w in case["mentions"]:
             add(f"reply shows '{w}'", w.lower() in text)
+        for w in case.get("absent", []):  # the overview only: details stay out unless asked for
+            add(f"reply leaves out the detail '{w}'", w.lower() not in text)
         return res
 
     if kind == "add":
@@ -129,6 +131,11 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             for w in case["words"]:
                 add(f"task text has '{w}'", w in row["task"].lower(), row["task"])
             add("status is 'to do'", row["status"] == "to do", row["status"])
+            if case.get("short"):  # a long request: a short row, the rest in its details
+                add(f"task cell at most {mod.TASK_MAX} characters", len(row["task"]) <= mod.TASK_MAX, row["task"])
+                details = " ".join(mod.Board(now_text).details.get(new[0], [])).lower()
+                for w in case.get("details_words", []):
+                    add(f"details have '{w}'", w in details, details[:200])
         add("the script wrote it (next-id marker advanced)", now_marker == seed_b.next_id + 1, now_marker)
         add("other tasks untouched", not changed(set(new)), changed(set(new)))
         if case.get("seed") == "task-no-block.md":

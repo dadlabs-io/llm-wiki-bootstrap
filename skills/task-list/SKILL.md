@@ -1,6 +1,6 @@
 ---
 name: task-list
-description: "Keeps the project's task list, the At a glance block at the top of sessions/<persona>/task.md in the wiki: one table per owner (the user, each persona or bot, Unassigned), then a Backlog table that keeps each set-aside task's owner, one row per task with a number that is never reused, a status (to do / doing / waiting / parked / done) and what it waits on. Shows the list, adds a task, changes a task's status, owner or next step, moves one to the backlog and back, marks one done, and removes one only when the user says so. Use when the user types /task-list, or says 'add a task', 'new task', 'put X on the list', 'delete task 4', 'remove task 4', 'mark 2 done', 'task 3 is done', 'task 3 is waiting on Y', 'move task 5 to <owner>', 'move 5 to the backlog', 'take 5 off the backlog', 'what's on my list', 'show my tasks', 'what's left'. Not Claude Code's /tasks (background jobs), and not a session's own scratch to-do list."
+description: "Keeps the project's task list, the At a glance block at the top of sessions/<persona>/task.md in the wiki: one table per owner (the user, each persona or bot, Unassigned), then a Backlog table that keeps each set-aside task's owner, one short row per task (a number that is never reused, the task, a status: to do / doing / waiting / parked / done, and what it waits on), with each task's longer details kept apart. Shows the list (the short rows; the details on request), adds a task, changes a task's status, owner or next step, moves one to the backlog and back, marks one done, and removes one only when the user says so. Use when the user types /task-list, or says 'add a task', 'new task', 'put X on the list', 'delete task 4', 'remove task 4', 'mark 2 done', 'task 3 is done', 'task 3 is waiting on Y', 'move task 5 to <owner>', 'move 5 to the backlog', 'take 5 off the backlog', 'what's on my list', 'show my tasks', 'what's left', 'show my tasks with details', 'details on 25'. Not Claude Code's /tasks (background jobs), and not a session's own scratch to-do list."
 last_reviewed: 2026-10-01
 review_after: 2026-12-30
 reviewed_for_model: claude-opus-5-5
@@ -25,14 +25,22 @@ waits there. `Backlog` is never an owner name; the script refuses it as `--owner
 **Every edit goes through the script, never by hand**: it keeps the numbering, the escaping and the layout.
 
 ```bash
-uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show
-uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py add "<task in one plain line>" --owner <section> [--status <s>] [--next "<text>"] [--backlog]
-uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py set <N> [--status <s>] [--next "<text>"] [--owner <section>] [--task "<text>"]
-uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> [--next "<text>"]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show [<N>] [--details]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py add "<short task>" --owner <section> [--status <s>] [--next "<short>"] [--details "<the rest>"] [--backlog]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py set <N> [--status <s>] [--next "<short>"] [--owner <section>] [--task "<short>"] [--details "<the rest>"]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> [--next "<short>"] [--details "<the rest>"]
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py backlog <N>
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py unbacklog <N> [--owner <section>]
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py remove <N> --confirmed
 ```
+
+**Short rows, details apart** (Mark, 2026-10-04): the table is a checklist read at a glance, so a row's Task is at
+most 70 characters and its Next at most 60, and the script refuses a longer one (exit 2). Everything else about a
+task (the why, the steps, file names, the evidence) goes in `--details`, any length: the script keeps it under
+`## Task details`, right below the table, as `### #N: <task>`. `set --details` replaces a task's details
+(`--details ""` clears them); `remove` drops them with the task. `show` prints the table only; `show --details`
+adds every task's details; `show <N>` prints one task with its details. A row written before the limits stays as
+it is until you edit that cell; when you do, shorten it and move the rest into `--details` on the same call.
 
 `backlog <N>` moves a task into the Backlog and records its owner; `unbacklog <N>` sends it back to that owner's
 section (`--owner` names another, and is needed for an old backlog row with no owner recorded). On a backlog
@@ -72,6 +80,7 @@ editing the file.
 | The user says | Run |
 |---|---|
 | "/task-list", "what's on my list", "show my tasks", "what's left" | `show`, then give them the tables as printed |
+| "show my tasks with details", "the full list", "details on 25", "what's behind task 25" | `show --details`, or `show 25` for one task |
 | "add a task …", "put X on the list", "remind me to …" | `add "<X>"`, owner as below |
 | "task 3 is done", "mark 3 done", "I finished …" | `done 3 --next "<what happened>"`, then ask whether to remove it |
 | "delete task 4", "remove task 4", "drop 4" | `remove 4 --confirmed` |
@@ -87,8 +96,8 @@ editing the file.
   persona's section when this session will do it; the section of the bot they name; otherwise Unassigned. The
   user's section is named after them when you know their name. On a new block, pass it once:
   `add … --owner "<name>"`.
-- Write the task as one plain line a stranger could act on. Longer notes go under `## QUEUE` in the same file
-  as a numbered item with the task's number (`14. …`).
+- Write the task as a short line a stranger could act on, and the next step as a few words. Anything longer is
+  details: pass it as `--details` on the same call, never squeezed into the row.
 
 After a change, reply with the one line the script printed (number, task, status, owner). Show the whole list
 only when asked.

@@ -18,12 +18,19 @@ Unassigned), whose table carries an Owner column, so a task set aside keeps its
 owner. `backlog <N>` moves a task there, `unbacklog <N>` sends it back to its
 owner's section. "Backlog" is never an owner name.
 
+A short overview, details apart (Mark's design, 2026-10-04: rows had grown to 3-4 lines and the list
+scrolled across two screens): a row's Task is at most 70 characters and its Next at most 60, and
+`add` / `set` / `done` refuse a longer one (exit 2). The rest goes in `--details`, kept in a
+`## Task details` section right under the block, one `### #N: <task>` entry per task. `show` prints
+the overview only; `show --details` adds the details; `show <N>` prints one task with its details.
+A row already longer than the limits is kept as it is until an edit touches that cell.
+
 Usage:
-  python wiki-tasks.py [show]
+  python wiki-tasks.py [show [<N>] [--details]]
   python wiki-tasks.py init [--owners "Mark,main,Unassigned"]
-  python wiki-tasks.py add "<task>" [--owner <section>] [--status "to do"] [--next "<text>"] [--backlog]
-  python wiki-tasks.py set <N> [--task ...] [--status ...] [--next ...] [--owner ...]
-  python wiki-tasks.py done <N> [--next "<text>"]
+  python wiki-tasks.py add "<task>" [--owner <section>] [--status "to do"] [--next "<text>"] [--details "<text>"] [--backlog]
+  python wiki-tasks.py set <N> [--task ...] [--status ...] [--next ...] [--owner ...] [--details ...]
+  python wiki-tasks.py done <N> [--next "<text>"] [--details "<text>"]
   python wiki-tasks.py backlog <N>
   python wiki-tasks.py unbacklog <N> [--owner <section>]
   python wiki-tasks.py remove <N> --confirmed
@@ -52,11 +59,16 @@ DONE_NEXT = "remove? (your call)"
 PLACEHOLDER_OWNER = "User"
 UNASSIGNED = "Unassigned"
 BACKLOG = "Backlog"
+DETAILS_HEADING = "## Task details"
+DETAIL_RE = re.compile(r"^###\s+#(\d+):")
+TASK_MAX, NEXT_MAX = 70, 60  # characters, the overview's two text cells (Mark, 2026-10-04)
 TABLE_HEAD = ["| # | Task | Status | Next / waiting on |", "|---|---|---|---|"]
 BACKLOG_HEAD = ["| # | Task | Owner | Status | Next / waiting on |", "|---|---|---|---|---|"]
 INTRO = ("Every task, one line each, by owner. A number is never reused. \"waiting\" is a status: the task "
          "stays with its owner. A task leaves this list only when the user says so; a finished one is marked "
-         "`done` and the session asks before removing it. Notes on a task go below, keyed by its number.")
+         "`done` and the session asks before removing it. A task's details go in Task details below, under its number.")
+OLD_INTRO = INTRO.replace("A task's details go in Task details below, under its number.",
+                          "Notes on a task go below, keyed by its number.")
 
 
 class UserError(Exception):
@@ -78,6 +90,24 @@ def _status(s: str) -> str:
     if s not in STATUSES:
         raise UserError(f"status must be one of: {', '.join(STATUSES)} (got {s!r})")
     return s
+
+
+def _short(text: str, limit: int, what: str) -> str:
+    """The overview keeps each text cell short; the rest belongs in --details."""
+    text = " ".join(str(text).split())
+    if len(text) > limit:
+        raise UserError(f"{what} is {len(text)} characters; the overview keeps it to {limit}. Shorten it and "
+                        f"put the rest in --details")
+    return text
+
+
+def _detail_lines(text: str) -> list[str]:
+    lines = [ln.rstrip() for ln in str(text).replace("\r\n", "\n").split("\n")]
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    return lines
 
 
 def is_backlog(s: dict) -> bool:
@@ -129,12 +159,43 @@ class Board:
                     cur["rows"].append(row)
                 elif ln.strip() and not is_table:
                     cur["extras"].append(ln)
-        # Above every number in the file: the block's own rows and the numbered QUEUE items
-        # its notes are keyed by, so a new task never takes a number already in use.
-        outside = self.lines if self.start is None else self.lines[:self.start] + self.lines[self.end:]
-        used = [r["id"] for s in self.sections for r in s["rows"]]
+        # The details section (any position in the file): one `### #N: <task>` entry per task.
+        self.details: dict[int, list[str]] = {}
+        self.d_start = next((i for i, ln in enumerate(self.lines) if ln.strip() == DETAILS_HEADING), None)
+        self.d_end = None
+        if self.d_start is not None:
+            self.d_end = next((i for i in range(self.d_start + 1, len(self.lines))
+                               if self.lines[i].startswith("## ")), len(self.lines))
+            cur_id = None
+            for ln in self.lines[self.d_start + 1:self.d_end]:
+                m = DETAIL_RE.match(ln)
+                if m:
+                    cur_id = int(m.group(1))
+                    self.details[cur_id] = []
+                elif cur_id is not None:
+                    self.details[cur_id].append(ln)
+            self.details = {k: _detail_lines("\n".join(v)) for k, v in self.details.items()}
+        # Above every number in the file: the block's own rows, the details' numbers and the numbered
+        # QUEUE items older notes are keyed by, so a new task never takes a number already in use.
+        outside = [ln for i, ln in enumerate(self.lines) if not self._in_block(i)]
+        used = [r["id"] for s in self.sections for r in s["rows"]] + list(self.details)
         used += [int(m.group(1)) for ln in outside if (m := re.match(r"^(\d+)\.\s", ln))]
         self.next_id = max([marker, *[u + 1 for u in used], 1])
+
+    def _in_block(self, i: int) -> bool:
+        """Line i belongs to the At a glance block or to the details section."""
+        return ((self.start is not None and self.start <= i < self.end)
+                or (self.d_start is not None and self.d_start <= i < self.d_end))
+
+    def details_block(self) -> list[str]:
+        titles = {r["id"]: r["task"] for s in self.sections for r in s["rows"]}
+        kept = sorted(n for n, body in self.details.items() if n in titles and body)
+        if not kept:
+            return []
+        out = [DETAILS_HEADING, ""]
+        for n in kept:
+            out += [f"### #{n}: {' '.join(titles[n].split())}", "", *self.details[n], ""]
+        return out
 
     @property
     def exists(self) -> bool:
@@ -175,6 +236,8 @@ class Board:
         self.sections.sort(key=lambda s: rank.get(s["name"].lower(), 0))
         out = [HEADING, "", f"<!-- wiki-tasks next-id: {self.next_id} -->"]
         intro = "\n".join(self.intro).strip()
+        if intro == OLD_INTRO:  # the standard intro from before the details section: brought up to date
+            intro = INTRO
         out += [intro or INTRO, ""]
         for s in self.sections:
             s["rows"].sort(key=lambda r: r["status"] == "done")  # stable: done rows sink to the bottom
@@ -191,10 +254,13 @@ class Board:
         return out
 
     def text(self) -> str:
+        head = self.block() + self.details_block()
         if self.start is None:
-            body = self.lines
-            return "\n".join(self.block() + body) + "\n"
-        return "\n".join(self.lines[:self.start] + self.block() + self.lines[self.end:]) + "\n"
+            body = [ln for i, ln in enumerate(self.lines) if not self._in_block(i)]
+            return "\n".join(head + body) + "\n"
+        before = [ln for i, ln in enumerate(self.lines[:self.start]) if not self._in_block(i)]
+        after = [ln for i, ln in enumerate(self.lines[self.end:], start=self.end) if not self._in_block(i)]
+        return "\n".join(before + head + after) + "\n"
 
 
 def resolve(args) -> tuple[Path, str]:
@@ -235,7 +301,9 @@ def main(argv: list[str]) -> int:
     common.add_argument("--cwd")
     ap = argparse.ArgumentParser(description="The At a glance task list in sessions/<persona>/task.md.")
     sub = ap.add_subparsers(dest="cmd")
-    sub.add_parser("show", parents=[common])
+    p = sub.add_parser("show", parents=[common])
+    p.add_argument("n", type=int, nargs="?", help="one task, with its details")
+    p.add_argument("--details", action="store_true", help="the overview, then every task's details")
     p = sub.add_parser("init", parents=[common])
     p.add_argument("--owners", help="comma-separated owner sections (default: User,<persona>,Unassigned)")
     p = sub.add_parser("add", parents=[common])
@@ -243,6 +311,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--owner", default="Unassigned")
     p.add_argument("--status", default="to do")
     p.add_argument("--next", default="")
+    p.add_argument("--details", help="the task's details (any length), kept under Task details")
     p.add_argument("--backlog", action="store_true", help="file it straight into the backlog, keeping --owner")
     p = sub.add_parser("set", parents=[common])
     p.add_argument("n", type=int)
@@ -250,9 +319,11 @@ def main(argv: list[str]) -> int:
     p.add_argument("--status")
     p.add_argument("--next")
     p.add_argument("--owner")
+    p.add_argument("--details", help="replace the task's details (\"\" clears them)")
     p = sub.add_parser("done", parents=[common])
     p.add_argument("n", type=int)
     p.add_argument("--next")
+    p.add_argument("--details", help="replace the task's details")
     p = sub.add_parser("backlog", parents=[common])
     p.add_argument("n", type=int)
     p = sub.add_parser("unbacklog", parents=[common])
@@ -278,7 +349,13 @@ def main(argv: list[str]) -> int:
                 print(f"no At a glance block in {path} yet — `init` creates one (add/set/done do too)")
                 print(f"task_file={path}")
                 return 3
-            print("\n".join(board.block()).rstrip())
+            if args.n is not None:
+                s, r = board.find(args.n)
+                print(row_line(s, r))
+                body = board.details.get(args.n)
+                print("\n".join(["", *body]) if body else "(no details)")
+            else:
+                print("\n".join(board.block() + (board.details_block() if args.details else [])).rstrip())
             print(f"task_file={path}")
             return 0
 
@@ -296,8 +373,10 @@ def main(argv: list[str]) -> int:
             if args.cmd == "add":
                 if not args.task.strip():
                     raise UserError("the task text is empty")
-                r = {"id": board.next_id, "task": args.task.strip(), "status": _status(args.status),
-                     "next": args.next.strip()}
+                r = {"id": board.next_id, "task": _short(args.task, TASK_MAX, "the task"),
+                     "status": _status(args.status), "next": _short(args.next, NEXT_MAX, "next")}
+                if args.details:
+                    board.details[r["id"]] = _detail_lines(args.details)
                 if r["status"] == "done" and not r["next"]:
                     r["next"] = DONE_NEXT
                 owner = _owner(args.owner)
@@ -333,18 +412,20 @@ def main(argv: list[str]) -> int:
                 changed = "back from the backlog " + row_line(s, r)
             elif args.cmd in ("set", "done"):
                 s, r = board.find(args.n)
+                if args.details is not None:
+                    board.details[args.n] = _detail_lines(args.details)
                 if args.cmd == "done":
                     r["status"] = "done"
-                    r["next"] = args.next.strip() if args.next else DONE_NEXT
+                    r["next"] = _short(args.next, NEXT_MAX, "next") if args.next else DONE_NEXT
                 else:
                     if args.task is not None:
-                        r["task"] = args.task.strip()
+                        r["task"] = _short(args.task, TASK_MAX, "the task")
                     if args.status is not None:
                         r["status"] = _status(args.status)
                         if r["status"] == "done" and args.next is None:
                             r["next"] = DONE_NEXT
                     if args.next is not None:
-                        r["next"] = args.next.strip()
+                        r["next"] = _short(args.next, NEXT_MAX, "next")
                     if args.owner is not None:
                         owner = _owner(args.owner)
                         if is_backlog(s):  # a backlog row keeps its place; only its Owner cell changes
@@ -360,6 +441,7 @@ def main(argv: list[str]) -> int:
                 if not args.confirmed:
                     raise UserError(f"#{args.n} is removed only on the user's word: ask them, then pass --confirmed")
                 s["rows"].remove(r)
+                board.details.pop(r["id"], None)
                 changed = f"removed #{r['id']} ({r['task']}); its number is not reused"
 
         path.parent.mkdir(parents=True, exist_ok=True)
