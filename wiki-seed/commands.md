@@ -21,7 +21,7 @@ Canonical reference for the LLM-wiki framework. Each command works inside Claude
 | `/wiki-cycle` | Batch ingest — discover, ingest (staged for your review), lint, backlinks and indexes, morning report, commit. `--full` adds semantic lint, claims, synthesis and refresh, and promotes. The daily/weekly command for `research/`. |
 | `/wiki-search "<query>"` | Hybrid BM25 + vector + LLM-reranked search across your wiki |
 | `/wrap-up` | End of session: updates the session journal and resume dashboards, proposes durable entries (you confirm), stages them, and offers to promote them. |
-| `/task-list` | The project's task list (top of `task.md`): show it, add a task, mark one done, move one to the backlog (it keeps its owner) and back, remove one only on your word. Plain speech works as well: "add a task …", "move 5 to the backlog", "delete task 4", "what's on my list". |
+| `/task-list` | The project's task list (top of `task.md`), one short row per task with its details kept apart: show it ("with details", or "details on 25", for the rest), add a task, mark one done, move one to the backlog (it keeps its owner) and back, remove one only on your word. Plain speech works as well: "add a task …", "move 5 to the backlog", "delete task 4", "what's on my list". |
 | `/wiki-promote` | Walk staged entries in `_inbox/proposed/` and accept/reject each one |
 | `/wiki-verify` | Mark an entry verified — entries never self-certify |
 | `/wiki-rollback` | Roll an entry back to its verified ancestor |
