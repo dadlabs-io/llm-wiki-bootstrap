@@ -68,7 +68,7 @@ Direct mode, the default: use it unless you were asked for `--staged`. Other ski
    ```
    It prints `wiki_path=`, `wiki_slug=`, `outbound_fixed=` (links it rewrote), `outbound_warnings=` (links it could not resolve: fix them by hand) and `inbound_candidates=` (step 6's list); a duplicate prints `Skip (dedup)` and `duplicate_of=<path>` instead. Delete the temp files once filing succeeds: the synthesis, and the pasted-text source if you wrote one. For a queued item, move its `.queue` file from `_inbox/pending/` to `_inbox/done/` and re-render the list (`wiki-list-render.py --topic <topic>`).
 
-Tier and confidence are defined only in the frontmatter spec ("tier rubric", "confidence scale"): open its tier rubric before you set `--tier`, since posts and individual repositories are tiered by their author and evidence, not by platform or fame. In short: tier is the source's quality, confidence is our entry's reliability; between two adjacent tiers take the lower; tier 4 never auto-ingests. Our own synthesis is tier `self`, filed with `--no-raw` (no raw copy, no `raw_path`).
+Tier and confidence are defined only in the frontmatter spec ("tier rubric", "confidence scale"): open its tier rubric before you set `--tier`, since posts and individual repositories are tiered by their author and evidence, not by platform or fame. In short: tier is the source's quality, confidence is our entry's reliability; between two adjacent tiers take the lower; tier 4 never auto-ingests: it needs a human's yes, and a source the user handed you is that yes, so file it in the mode asked (direct unless `--staged` was asked), never staged by your own choice. Our own synthesis is tier `self`, filed with `--no-raw` (no raw copy, no `raw_path`).
 
 ## Staged mode (`--staged`)
 
