@@ -94,11 +94,9 @@ with tempfile.TemporaryDirectory() as tmp:
     check("another pack's folder untouched", other.read_text(encoding="utf-8") == "another pack's page\n")
     check("current again", it.toolset_status(ROOT, root)["state"] == "current")
     crlf = root / "how-to/llm-wiki/getting-started.md"
-    crlf.write_bytes(crlf.read_bytes().replace(b"
-", b"
-").replace(b"
-", b"
-"))
+    src_bytes = (ROOT / "wiki-seed" / "getting-started.md").read_bytes()
+    lf = src_bytes.replace(b"\r\n", b"\n")
+    crlf.write_bytes(lf if src_bytes != lf else lf.replace(b"\n", b"\r\n"))  # the other line endings
     check("a copy differing only in line endings (git checkout) is current",
           it.toolset_status(ROOT, root)["state"] == "current", it.toolset_status(ROOT, root)["replace"])
 
