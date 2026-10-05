@@ -44,6 +44,7 @@ from _install_tooling import (  # noqa: E402
     print_summary as _print_tooling_summary,
     global_tooling_status, format_tooling_status, is_bootstrap_source,
     InstallIncomplete, report_incomplete,
+    build_tooling_env, find_uv,
 )
 from urllib.parse import urlparse
 
@@ -414,6 +415,14 @@ def _phase_tooling_cursor(args):
     if scripts_missing:
         _warn(f"scripts not found in package (skipped): {scripts_missing}")
 
+    # 1b) The scripts' own uv environment, beside them (task #71)
+    try:
+        env_line = build_tooling_env(pkg, scripts_dest, dry_run=dry)
+    except (FileNotFoundError, RuntimeError) as e:
+        _err(str(e))
+        return 1
+    _ok(f"environment: {env_line}")
+
     print()
 
     # 2) Generate .mdc rules from each travel skill → ~/.cursor/rules/
@@ -664,7 +673,8 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
         _err("  2. Create Project → Enable Drive API → Create OAuth Client ID")
         _err("     (Desktop application)")
         _err(f"  3. Download JSON → save as {DRIVE_CLIENT_SECRETS_PATH}")
-        _err("  4. Then authorise once: python ~/.claude/wiki-scripts/wiki-fetch-drive-folder.py --auth-only")
+        _err("  4. Then authorise once: uv run --project ~/.claude/wiki-scripts python "
+             "~/.claude/wiki-scripts/wiki-fetch-drive-folder.py --auth-only")
         _err("     (it reads the secrets from the path above; /new-wiki --sync does not run this step).")
         _err("============================================================")
         return False
@@ -685,7 +695,7 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
     # No folder listing, no queueing, no file moves.
     try:
         result = subprocess.run(
-            [sys.executable, str(fetch_script), "--auth-only",
+            [find_uv() or "uv", "run", "--project", str(scripts_dir), "python", str(fetch_script), "--auth-only",
              "--client-secrets", str(DRIVE_CLIENT_SECRETS_PATH)],
             capture_output=True, text=True, timeout=300,
         )
@@ -1258,6 +1268,12 @@ def phase_b(args):
         c, s = _copy_tree(scripts_src, paths["scripts"],
                           names=TRAVEL_SCRIPTS + SHARED_HELPER_SCRIPTS, dry_run=args.dry_run)
         _ok(f"scripts: {c} copied, {s} unchanged")
+        # B3b — the scripts' own uv environment, beside them (task #71)
+        try:
+            _ok(f"environment: {build_tooling_env(bootstrap, paths['scripts'], dry_run=args.dry_run)}")
+        except (FileNotFoundError, RuntimeError) as e:
+            _err(str(e))
+            return 1
 
         # B4 — copy templates
         _info(f"copying templates: {templates_src} -> {paths['templates']}")

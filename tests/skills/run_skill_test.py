@@ -50,7 +50,7 @@ REPO = HERE.parents[1]
 PLACEHOLDER = "{{WIKI_SCRIPTS_DIR}}"
 DEFAULT_TOOLS = [
     "Read", "Write", "Edit", "Glob", "Grep",
-    "Bash(python:*)", "Bash(python3:*)", "Bash(node:*)", "Bash(cd:*)", "Bash(ls:*)",
+    "Bash(python:*)", "Bash(python3:*)", "Bash(uv:*)", "Bash(node:*)", "Bash(cd:*)", "Bash(ls:*)",
     "Bash(mv:*)", "Bash(rm:*)", "Bash(mkdir:*)", "Bash(cp:*)", "Bash(cat:*)",
     "Bash(grep:*)", "Bash(head:*)", "Bash(tail:*)", "Bash(wc:*)", "Bash(find:*)", "Bash(xargs:*)",
     "Bash(sort:*)", "Bash(echo:*)", "Bash(pwd:*)",

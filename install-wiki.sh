@@ -95,18 +95,38 @@ if [[ ! -f "$SCRIPT" ]]; then
     exit 2
 fi
 
-if command -v python3 >/dev/null 2>&1; then
-    PY="python3"
-elif command -v python >/dev/null 2>&1; then
-    PY="python"
-else
-    echo "ERR: python not found on PATH. Install Python 3.10+ first: https://www.python.org/" >&2
-    exit 2
-fi
-
 # Detect non-interactive mode (no TTY on stdin). When run by an agent / CI /
 # piped, read hangs or returns empty, so default every prompt.
 if [[ -t 0 ]]; then NONINTERACTIVE="no"; else NONINTERACTIVE="yes"; fi
+
+# ---------- uv (task #71, 2026-10-04) ----------
+# Every wiki script runs in its own uv environment, and this installer runs through uv too, so uv is
+# required (it also fetches the pinned Python when the machine has none). Missing: ask before installing it.
+UV_INSTALL='curl -LsSf https://astral.sh/uv/install.sh | sh'
+if ! command -v uv >/dev/null 2>&1 && [[ -x "$HOME/.local/bin/uv" ]]; then
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+if ! command -v uv >/dev/null 2>&1; then
+    echo "uv is not installed. The wiki scripts run in their own uv environment, so the install needs it."
+    echo "  uv: https://docs.astral.sh/uv/  (official installer: $UV_INSTALL)"
+    if [[ "$NONINTERACTIVE" == "yes" ]]; then
+        echo "ERR: non-interactive run, so nothing was installed. Install uv with the command above, then re-run." >&2
+        exit 2
+    fi
+    read -p "Install uv now? (y/n) [y]: " uvchoice
+    case "${uvchoice:-y}" in
+        y|Y|yes) ;;
+        *) echo "Not installed. Install uv when you want to, then re-run this installer."; exit 2 ;;
+    esac
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    export PATH="$HOME/.local/bin:$PATH"
+    if ! command -v uv >/dev/null 2>&1; then
+        echo "ERR: uv was not found after its installer ran. Open a new terminal and re-run this installer." >&2
+        exit 2
+    fi
+fi
+# new-wiki.py runs in this package's own environment (built from its uv.lock on first use).
+PY=(uv run --quiet --project "$HERE" python)
 
 # ---------- Q1: install target ----------
 # Default is global tooling-only. --target-folder implies a project install.
@@ -152,7 +172,7 @@ if [[ "$MODE" == "tooling" ]]; then
     echo "Installing LLM-wiki global tooling (skills + scripts)..."
     echo "  Bootstrap source: $HERE"
     echo
-    "$PY" "$SCRIPT" \
+    "${PY[@]}" "$SCRIPT" \
         --mode tooling \
         --tool claude-code \
         --bootstrap-source "$HERE"
@@ -183,7 +203,7 @@ if [[ "$DRIVE_ENABLED" == "yes" ]]; then
 fi
 echo
 
-"$PY" "$SCRIPT" \
+"${PY[@]}" "$SCRIPT" \
     --phase A \
     --bootstrap-source "$HERE" \
     --drive-enabled "$DRIVE_ENABLED" \
@@ -235,7 +255,7 @@ if [[ -n "$REGISTRY" ]]; then VAULT_ARGS+=(--registry "$REGISTRY"); fi
 GLOBAL_ARGS=()
 if [[ "$SKILLS_INSTALL" == "global" ]]; then GLOBAL_ARGS=(--install-global-if-missing); fi
 
-"$PY" "$SCRIPT" \
+"${PY[@]}" "$SCRIPT" \
     --phase B \
     --tool "$TOOL" \
     --project-name "$PROJECT_NAME" \

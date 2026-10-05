@@ -44,7 +44,7 @@ HANDOFF_SECTIONS = ("GOAL", "WORK COMPLETED", "CURRENT STATE", "PENDING", "KEY F
                     "CONTEXT FOR CONTINUATION")
 ALLOWED_TOOLS = [
     "Read", "Write", "Edit", "Glob", "Grep",
-    "Bash(python:*)", "Bash(python3:*)", "Bash(git:*)", "Bash(date:*)", "Bash(mkdir:*)",
+    "Bash(python:*)", "Bash(python3:*)", "Bash(uv:*)", "Bash(git:*)", "Bash(date:*)", "Bash(mkdir:*)",
     "Bash(cd:*)", "Bash(ls:*)", "Bash(cat:*)", "Bash(grep:*)", "Bash(head:*)", "Bash(tail:*)",
     "Bash(wc:*)", "Bash(find:*)", "Bash(sort:*)", "Bash(echo:*)", "Bash(pwd:*)", "Bash(sed:*)",
 ]

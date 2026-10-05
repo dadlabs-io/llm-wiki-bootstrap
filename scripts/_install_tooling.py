@@ -105,6 +105,94 @@ TOOLING_HELPER_SCRIPTS = ["install-skill.py", "_atomic_io.py", "_wiki_config.py"
 # scripts run (both global tooling install and per-project Phase B).
 SHARED_HELPER_SCRIPTS = ["_atomic_io.py", "_wiki_config.py", "_entry_checks.py", "_install_tooling.py"]
 
+# The scripts' own uv environment (task #71, 2026-10-04): these three files, at the package root, are copied
+# beside the scripts and `uv sync --locked` builds `.venv` there. Every script then runs as
+# `uv run --project <scripts dir> python <scripts dir>/<x>.py`; the hooks call that environment's python by path.
+ENV_FILES = ["pyproject.toml", "uv.lock", ".python-version"]
+UV_INSTALL_HINT = {
+    "win32": 'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"',
+    "other": "curl -LsSf https://astral.sh/uv/install.sh | sh",
+}
+
+
+def uv_install_command() -> str:
+    """The official one-line uv installer for this platform (https://docs.astral.sh/uv/)."""
+    return UV_INSTALL_HINT["win32" if sys.platform == "win32" else "other"]
+
+
+def find_uv():
+    """The uv executable's path, or None. Also looks in uv's default install folder, which a shell opened
+    before uv was installed does not yet have on PATH."""
+    found = shutil.which("uv")
+    if found:
+        return found
+    for folder in (Path.home() / ".local" / "bin", Path.home() / ".cargo" / "bin"):
+        exe = folder / ("uv.exe" if sys.platform == "win32" else "uv")
+        if exe.is_file():
+            return str(exe)
+    return None
+
+
+def env_python(scripts_dir) -> Path:
+    """The python of the environment built beside the scripts."""
+    venv = Path(scripts_dir) / ".venv"
+    return venv / "Scripts" / "python.exe" if sys.platform == "win32" else venv / "bin" / "python"
+
+
+class UvMissing(FileNotFoundError):
+    """uv is not installed: the scripts' environment cannot be built. A FileNotFoundError, so every caller
+    that already reports a missing source before anything is written reports this the same way."""
+
+
+def build_tooling_env(pkg: Path, scripts_dest: Path, dry_run: bool = False) -> str:
+    """Copy ENV_FILES from the package root beside the scripts and build the environment there with
+    `uv sync --locked`. Raises UvMissing when uv is absent, RuntimeError when the sync fails.
+    Returns the line the summary prints."""
+    pkg, scripts_dest = Path(pkg), Path(scripts_dest)
+    missing = [n for n in ENV_FILES if not (pkg / n).is_file()]
+    if missing:
+        raise FileNotFoundError(f"environment files missing from the package root {pkg}: {', '.join(missing)}")
+    uv = find_uv()
+    if not uv:
+        raise UvMissing(f"uv is not installed, so the scripts' environment cannot be built. "
+                        f"Install it ({uv_install_command()}), open a new terminal, and run the install again.")
+    if dry_run:
+        for n in ENV_FILES:
+            print(f"  WOULD copy {pkg / n} -> {scripts_dest / n}")
+        print(f"  WOULD run {uv} sync --locked --project {scripts_dest.as_posix()}")
+        return f"would be built with uv sync --locked → {env_python(scripts_dest).as_posix()}"
+    scripts_dest.mkdir(parents=True, exist_ok=True)
+    for n in ENV_FILES:
+        shutil.copy2(pkg / n, scripts_dest / n)
+    result = subprocess.run([uv, "sync", "--locked", "--quiet", "--project", str(scripts_dest)],
+                            capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if result.returncode != 0:
+        raise RuntimeError(f"uv sync --locked failed in {scripts_dest} (exit {result.returncode}): "
+                           f"{(result.stderr or result.stdout).strip()}")
+    return f"built with uv sync --locked → {env_python(scripts_dest).as_posix()}"
+
+
+def tooling_env_status(pkg: Path, scripts_dest: Path) -> str:
+    """current | stale | missing | uv-missing: whether the environment beside the scripts exists, carries the
+    package's ENV_FILES, and matches its lock (`uv sync --locked --check`). Read-only."""
+    pkg, scripts_dest = Path(pkg), Path(scripts_dest)
+    if not env_python(scripts_dest).is_file() or not all((scripts_dest / n).is_file() for n in ENV_FILES):
+        return "missing"
+    if any((pkg / n).is_file() and (pkg / n).read_bytes() != (scripts_dest / n).read_bytes() for n in ENV_FILES):
+        return "stale"
+    uv = find_uv()
+    if not uv:
+        return "uv-missing"
+    check = subprocess.run([uv, "sync", "--locked", "--check", "--quiet", "--project", str(scripts_dest)],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace")
+    return "current" if check.returncode == 0 else "stale"
+
+
+def run_command(scripts_dir, script_name: str) -> str:
+    """How a session runs one of the scripts: through uv, in the scripts' own environment."""
+    d = Path(scripts_dir).as_posix().rstrip("/")
+    return f"uv run --project {d} python {d}/{script_name}"
+
 
 def _log(msg):
     print(f"[install-tooling] {msg}")
@@ -214,10 +302,10 @@ _SESSION_HOOK_GUARD = ("import os, runpy, sys; p = sys.argv[1]; "
 
 
 def hook_entry(scripts_dir, script_name: str, timeout: int, python: str = None) -> dict:
-    """A hooks entry: the interpreter that ran the install, named explicitly
-    (`python3` can be the Microsoft Store stub on Windows, `python` can be absent
-    on a Mac), running the script through the -c guard."""
-    py = Path(python or sys.executable).as_posix()
+    """A hooks entry: the python of the scripts' own uv environment, named by its full path, running the
+    script through the -c guard. Never `uv run` here: with the scripts folder gone, `uv run --project`
+    exits 2, and a PreToolUse hook that exits 2 blocks every tool call (measured 2026-10-04)."""
+    py = Path(python or env_python(scripts_dir)).as_posix()
     script = f"{str(scripts_dir).rstrip('/')}/{script_name}"
     return {"type": "command", "command": py, "args": ["-c", _SESSION_HOOK_GUARD, script], "timeout": timeout}
 
@@ -301,7 +389,7 @@ def configure_search_mode(gpu_fn, config_path: Path = None, dry_run: bool = Fals
     except (json.JSONDecodeError, OSError, AttributeError):
         current = None
     backend, detail = gpu_fn()
-    switch = f"{CC_GLOBAL_WIKI_SCRIPTS_DIR.as_posix()}/wiki-qmd-query.py --set-mode"
+    switch = f"{run_command(CC_GLOBAL_WIKI_SCRIPTS_DIR, 'wiki-qmd-query.py')} --set-mode"
     if current is None:
         mode = "full" if backend else "keyword"
         if not dry_run:
@@ -320,12 +408,12 @@ def configure_search_mode(gpu_fn, config_path: Path = None, dry_run: bool = Fals
         if backend:
             return f"{verb}: full (GPU: {backend})"
         return (f"{verb}: keyword — no CUDA or Metal GPU ({detail}), so search is keyword-only and no model "
-                f"loads; once the machine has a GPU: python {switch} full")
+                f"loads; once the machine has a GPU: {switch} full")
     if current == "keyword" and backend:
-        return f"keyword (unchanged) — a GPU is available now ({backend}); to use it: python {switch} full"
+        return f"keyword (unchanged) — a GPU is available now ({backend}); to use it: {switch} full"
     if current == "full" and not backend:
         return (f"full (unchanged) — WARNING: the GPU check fails now ({detail}); searches will stop until it "
-                f"is fixed, or on a machine with no GPU: python {switch} keyword")
+                f"is fixed, or on a machine with no GPU: {switch} keyword")
     return f"{current} (unchanged)"
 
 
@@ -350,6 +438,9 @@ def install_tooling(bootstrap_source: Path, dry_run: bool = False,
     error after that raises InstallIncomplete (what was done, where it stopped,
     the traceback); callers pass it to report_incomplete()."""
     progress = {"step": "start", "dry_run": dry_run, "scripts": [], "skills": [], "agents": []}
+    if not find_uv():  # checked before anything is written: without uv the scripts' environment cannot be built
+        raise UvMissing(f"uv is not installed, so the scripts' environment cannot be built; nothing was installed. "
+                        f"Install it ({uv_install_command()}), open a new terminal, and run the install again.")
     try:
         return _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest, progress)
     except Exception as e:  # noqa: BLE001 - every failure after the start is reported the same way
@@ -365,6 +456,9 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
     skills_src = pkg / "skills"
     if not scripts_src.is_dir() or not skills_src.is_dir():
         raise FileNotFoundError(f"package scripts/ or skills/ missing under {pkg}")
+    env_missing = [n for n in ENV_FILES if not (pkg / n).is_file()]
+    if env_missing:  # the scripts' environment is part of the source: refuse before anything is written
+        raise FileNotFoundError(f"environment files missing from the package root {pkg}: {', '.join(env_missing)}")
 
     skills_dest = Path(skills_dest) if skills_dest else CC_GLOBAL_SKILLS_DIR
     scripts_dest = Path(scripts_dest) if scripts_dest else CC_GLOBAL_WIKI_SCRIPTS_DIR
@@ -395,6 +489,11 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
             helpers_copied += 1
         else:
             travel_copied += 1
+
+    # 1b) The scripts' own uv environment, built beside them (task #71)
+    progress["step"] = "the scripts' environment"
+    tooling_env = build_tooling_env(pkg, scripts_dest, dry_run=dry_run)
+    progress["env"] = True
 
     # 2) Install each skill via the install-skill primitive
     #    Gate (2026-09-08): a SKILL.md / AGENT.md whose frontmatter does not
@@ -483,6 +582,7 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
         search_mode = "skipped: not the global scripts folder"
 
     return {
+        "tooling_env": tooling_env,
         "session_hook": session_hook,
         "read_guard": read_guard,
         "search_mode": search_mode,
@@ -562,8 +662,11 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
         elif src.read_bytes() != dst.read_bytes():
             stale_agents.append(agent)
 
-    missing = bool(missing_skills or missing_scripts or missing_agents)
-    stale = bool(stale_skills or stale_scripts or stale_agents)
+    # The scripts' uv environment (task #71): missing or uv-missing counts as missing, stale as stale.
+    env = tooling_env_status(pkg, scripts_dest)
+
+    missing = bool(missing_skills or missing_scripts or missing_agents) or env in ("missing", "uv-missing")
+    stale = bool(stale_skills or stale_scripts or stale_agents) or env == "stale"
     if len(missing_skills) == len(TRAVEL_SKILLS):
         state = "missing"
     elif missing:
@@ -586,6 +689,7 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
         "stale_scripts": stale_scripts,
         "missing_agents": missing_agents,
         "stale_agents": stale_agents,
+        "env": env,
         "complete": not missing,
         "current": not missing and not stale,
         # one word for the skill's question: installed | stale | partial | missing
@@ -600,6 +704,9 @@ def format_tooling_status(status: dict) -> str:
              f"{status['scripts_expected'] - len(status['missing_scripts'])}/{status['scripts_expected']} scripts, "
              f"{status['agents_expected'] - len(status['missing_agents'])}/{status['agents_expected']} agents "
              f"at {status['skills_dest']}"]
+    if status.get("env") and status["env"] != "current":
+        lines.append(f"  environment: {status['env']}" + (f" (install uv: {uv_install_command()})"
+                                                           if status["env"] == "uv-missing" else ""))
     for key, label in (("missing_skills", "missing skills"), ("missing_scripts", "missing scripts"),
                        ("missing_agents", "missing agents"), ("stale_skills", "stale skills"),
                        ("stale_scripts", "stale scripts"), ("stale_agents", "stale agents")):
@@ -695,6 +802,7 @@ def print_summary(summary: dict):
     verb_s = "would be installed" if dry else "installed"
     print(f"  skills {verb_s}: {summary['skills_installed']}  → {summary['skills_dest']}")
     print(f"  agents {verb_s}: {summary.get('agents_installed', 0)}  → {summary.get('agents_dest', '')}")
+    print(f"  environment:      {summary.get('tooling_env', '')}")
     print(f"  session hook:     {summary.get('session_hook', '')}  → {CC_GLOBAL_SETTINGS_PATH} (SessionStart)")
     print(f"  read guard:       {summary.get('read_guard', '')}  → {CC_GLOBAL_SETTINGS_PATH} (PreToolUse, Stop, SubagentStop)")
     print(f"  search mode:      {summary.get('search_mode', '')}  → {CC_GLOBAL_CONFIG_PATH}")

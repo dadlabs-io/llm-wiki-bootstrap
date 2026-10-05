@@ -114,7 +114,7 @@ def _queue(ctx: dict, name: str) -> Path:
 
 HEADER = """You are running an automated test of the wiki-triage skill. The skill under test is at {skill}/SKILL.md; the wiki-update skill it refers to is at {skills}/wiki-update/. Read the skill and follow it exactly, as if the user had said the message below in this project. Do not use any installed copy of any skill; the Skill tool is not available.
 
-This project's notebook is `proj`; the notebook the user means is `{notebook}`, at {nb}. Run scripts as `python <path> ...`, with no environment-variable prefix, and write only inside {sandbox}. This session has no Discord channel. The user cannot reply while this runs: where the skill says to ask or tell someone, say it in your final message.
+This project's notebook is `proj`; the notebook the user means is `{notebook}`, at {nb}. Run scripts as the skill writes them, `uv run --project <scripts dir> python <path> ...`, with no environment-variable prefix, and write only inside {sandbox}. This session has no Discord channel. The user cannot reply while this runs: where the skill says to ask or tell someone, say it in your final message.
 
 The user said: """
 

@@ -35,7 +35,7 @@ Before starting, settle the notebook and the folder, and confirm them with the u
 
 - **Read before you reject.** Every queued item is fetched and read in full before any tier, cluster or skip decision. A rejection quotes a passage from the source and names the existing entry it overlaps. No title, URL or domain heuristics: the user curated the list.
 - **Numbers and quotes go on `>` lines, attributed to the source.** Inline quotation marks are prose to the gate. Your own synthesis stays plain prose.
-- **The search is this machine's search; there is no fallback.** `wiki-qmd-query.py --preflight` names the machine's mode: `full` (keyword + meaning + rerank on the GPU) or `keyword` (a machine with no GPU: qmd's keyword index, no model). On a full machine, if the preflight fails, or the search helper exits 75 (GPU busy after retries) or 124 (timed out), stop and report it; never switch a machine to keyword to get past a failure.
+- **The search is this machine's search; there is no fallback.** `wiki-qmd-query.py --preflight` names the machine's mode: `full` (keyword + meaning + rerank on the GPU) or `keyword` (a machine with no GPU: qmd's keyword index, no model). On a full machine, if the preflight fails, or the search helper exits 75 (GPU busy after retries) or 124 (timed out), stop and report it; never switch a machine to keyword to get past a failure. On any machine, a search that prints an error instead of results ("no qmd collection", an unknown notebook) is also stop and report: an entry is never filed without step 3's search.
 - **Dedup.** `wiki-update.py` skips a source already in `wiki/` or `_inbox/proposed/` (URLs compared normalised). Go past it only when the user says so. A later snapshot of an evolving source (a repo that grew, a new release) is filed with `--revises <slug>`: it records the older entry, refuses if that entry does not exist, and implies `--force`. `internal://` URLs name a session, not a source, and are never treated as duplicates.
 - **Before deleting a `raw/` file**, grep for its file name as a `raw_path:` value (`grep -rl "raw_path:.*<file name>" <topic>/wiki/`): another entry may cite it. A raw deleted by mistake comes back with `git show <commit>:<path>`.
 - No secrets in an entry, no padding, nothing outside the notebook's scope (its README says what that is).
@@ -44,11 +44,11 @@ Before starting, settle the notebook and the folder, and confirm them with the u
 
 Direct mode, the default: use it unless you were asked for `--staged`. Other skills cite these step numbers (step 5 is the gate).
 
-1. **Fetch the raw.** Ordinary pages: `python {{WIKI_SCRIPTS_DIR}}/wiki-update.py --topic <topic> --source <url> --fetch-only`. YouTube, PDFs, X, Medium and pages rendered by JavaScript: [fetchers.md](fetchers.md). Keep the printed `raw_path=`.
+1. **Fetch the raw.** Ordinary pages: `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-update.py --topic <topic> --source <url> --fetch-only`. YouTube, PDFs, X, Medium and pages rendered by JavaScript: [fetchers.md](fetchers.md). Keep the printed `raw_path=`.
 2. **Read the raw in full.** A thin raw, or one that is mostly site navigation, came from the wrong fetcher.
 3. **Search the wiki** for 3 to 5 key terms from the source, each with the search helper:
-   `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --notebook <topic> "<term>"`
-   Always pass `--notebook`: a cross-link must stay inside the notebook being filed into. It returns 30 results; parallel workers add `--caller wiki-ingester`. On a full machine it holds one of three GPU slots and needs the GPU runtime (`--preflight` checks). On a keyword machine it matches words, not meaning, so also search the words other entries would use for the same idea before deciding what to link.
+   `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --notebook <topic> "<term>"`
+   Always pass `--notebook`: a cross-link must stay inside the notebook being filed into. Read each search's whole output and never pipe it through `head`: in a loop, the cut stops the searches after it (2026-10-04: two of four ran, and the reply said four). It returns 30 results; parallel workers add `--caller wiki-ingester`. On a full machine it holds one of three GPU slots and needs the GPU runtime (`--preflight` checks). On a keyword machine it matches words, not meaning, so also search the words other entries would use for the same idea before deciding what to link.
 4. **Write the synthesis** to `<topic>/_inbox/temp/<slug>.md`:
    - `## TL;DR` that says something the title does not
    - body sections on what matters in the source, and why it is in the wiki
@@ -61,14 +61,14 @@ Direct mode, the default: use it unless you were asked for `--staged`. Other ski
 7. **Add the new entry to their Related sections**, acting on every candidate that fits. After five or more ingests into one area, update its hub page too. (Skipped with `--staged`.)
 8. **File it.** Tags: three or more, including the source's type when it has one (`youtube` for a video).
    ```bash
-   python {{WIKI_SCRIPTS_DIR}}/wiki-update.py --topic <topic> --folder <folder> \
+   uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-update.py --topic <topic> --folder <folder> \
      --source <topic>/_inbox/temp/<slug>.md --source-url <original url> --raw-path <raw_path> \
      --ingested-by claude-code --tier <1|2|3|4|self> --confidence <high|medium|low> \
      --title "<title>" --tags "<tags>"            # add --staged for staged mode
    ```
    It prints `wiki_path=`, `wiki_slug=`, `outbound_fixed=` (links it rewrote), `outbound_warnings=` (links it could not resolve: fix them by hand) and `inbound_candidates=` (step 6's list); a duplicate prints `Skip (dedup)` and `duplicate_of=<path>` instead. Delete the temp files once filing succeeds: the synthesis, and the pasted-text source if you wrote one. For a queued item, move its `.queue` file from `_inbox/pending/` to `_inbox/done/` and re-render the list (`wiki-list-render.py --topic <topic>`).
 
-Tier and confidence are defined only in the frontmatter spec ("tier rubric", "confidence scale"). In short: tier is the source's quality, confidence is our entry's reliability; between two adjacent tiers take the lower; tier 4 never auto-ingests. Our own synthesis is tier `self`, filed with `--no-raw` (no raw copy, no `raw_path`).
+Tier and confidence are defined only in the frontmatter spec ("tier rubric", "confidence scale"): open its tier rubric before you set `--tier`, since posts and individual repositories are tiered by their author and evidence, not by platform or fame. In short: tier is the source's quality, confidence is our entry's reliability; between two adjacent tiers take the lower; tier 4 never auto-ingests. Our own synthesis is tier `self`, filed with `--no-raw` (no raw copy, no `raw_path`).
 
 ## Staged mode (`--staged`)
 
@@ -82,7 +82,7 @@ When you write or edit a sidecar by hand (parallel workers do), follow this exac
 - `target_folder`: the full path under `wiki/` (`research/long-term`), never a bare leaf.
 - `suggested_backlinks`: objects, never strings, `{"file": "<path under wiki/>", "link_text": "<anchor>", "link_target": "<this entry's bare file name>"}`. At most about eight, each an entry you would cite under Related; never `_MAP.md`, `_INDEX.md`, `HOME.md` or a hub page the entry does not extend.
 - Body links by bare file name; the scripts compute the paths.
-- Check it: `python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <topic> --check --slug <slug>`. Exit 0 means it parses and names a folder; promotion holds back an entry that fails. A trailing comma is the usual cause.
+- Check it: `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <topic> --check --slug <slug>`. Exit 0 means it parses and names a folder; promotion holds back an entry that fails. A trailing comma is the usual cause.
 
 ```json
 {

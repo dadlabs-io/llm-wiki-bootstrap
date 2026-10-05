@@ -43,7 +43,7 @@ find <notebook>/wiki -name "*.md" ! -name "_INDEX.md" | wc -l
 
 **C. Mechanical lint** (fast, 2 seconds):
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
   --topic <topic>
 ```
 

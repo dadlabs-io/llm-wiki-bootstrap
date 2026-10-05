@@ -67,7 +67,7 @@ def snapshot(ctx: dict) -> dict:
 
 HEADER = """You are running an automated test of the task-list skill. The skill under test is at {skill}/SKILL.md. Read it and follow it exactly, as if the user had said the message below in this project. Do not use any installed copy of the skill.
 
-The project's wiki is the notebook `{notebook}` at {nb}; this session's persona is `main`. Write only inside {sandbox}. Run scripts as `python <path> ...`, with no environment-variable prefix. The user cannot answer while this runs: where the skill says to ask the user something, ask it in your final reply and stop there, without acting on an answer you do not have.
+The project's wiki is the notebook `{notebook}` at {nb}; this session's persona is `main`. Write only inside {sandbox}. Run scripts as the skill writes them, `uv run --project <scripts dir> python <path> ...`, with no environment-variable prefix. The user cannot answer while this runs: where the skill says to ask the user something, ask it in your final reply and stop there, without acting on an answer you do not have.
 
 The user said: """
 

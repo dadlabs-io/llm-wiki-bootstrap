@@ -9,12 +9,12 @@ A **small** change — wording, a clarified flag, a typo — does not earn a run
 From the repo root:
 
 ```bash
-python tests/skills/run_skill_test.py wiki-update                     # every case, Sonnet and Opus side by side
-python tests/skills/run_skill_test.py wiki-update --models sonnet     # one model
-python tests/skills/run_skill_test.py wiki-update --cases pdf-cached-staged,no-source-redirect
-python tests/skills/run_skill_test.py wiki-update --skill-ref HEAD    # the committed skill, to compare old with new
-python tests/skills/run_skill_test.py wiki-update --save-baseline     # accept this run as the baseline
-python tests/skills/run_skill_test.py wiki-update --tags complex      # the harder cases, run only on request
+uv run python tests/skills/run_skill_test.py wiki-update                     # every case, Sonnet and Opus side by side
+uv run python tests/skills/run_skill_test.py wiki-update --models sonnet     # one model
+uv run python tests/skills/run_skill_test.py wiki-update --cases pdf-cached-staged,no-source-redirect
+uv run python tests/skills/run_skill_test.py wiki-update --skill-ref HEAD    # the committed skill, to compare old with new
+uv run python tests/skills/run_skill_test.py wiki-update --save-baseline     # accept this run as the baseline
+uv run python tests/skills/run_skill_test.py wiki-update --tags complex      # the harder cases, run only on request
 ```
 
 The report is `tests/skills/.results/<skill>/<stamp>/report.md` (not committed): each case per model, pass or fail with turns, cost and minutes, what regressed against the baseline, every failed check, and the live fetch status of the fixture sources. A full wiki-update run is about a dozen sessions per model.

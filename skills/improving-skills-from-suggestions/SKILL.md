@@ -34,7 +34,7 @@ the path spelled out: its last line is `suggestions.py: exit <n> - <meaning>`, s
 path in a shell variable (Claude Code refuses both shapes and the command never runs). Every judgment below is yours.
 
 **Step 0 — Receive (only when a suggestion was sent here).**
-`python <this skill's folder>/scripts/suggestions.py receive "<the path from the message>"`. Exit 0: the file is
+`uv run --project {{WIKI_SCRIPTS_DIR}} python <this skill's folder>/scripts/suggestions.py receive "<the path from the message>"`. Exit 0: the file is
 MOVED into `received/`, with `From: <project>` as its first line and a `Received from:` line naming where it was; this
 notebook now holds the only copy, since the skill is this library's (Mark, 2026-09-29). Exit 1: the same suggestion
 (skill, issue and `Seen in`) is already here, received or decided; the script removes the sender's duplicate, and you
@@ -42,7 +42,7 @@ report which copy is held here. The same skill and issue from another run is rec
 which Step 3 counts. Exit 2: not a suggestion file. Answer the sender, tagged, that it is filed for the next pass (or,
 on exit 1, that it was already here). Done when the file is in `received/` or the refusal has been reported.
 
-**Step 1 — Gather.** `python <this skill's folder>/scripts/suggestions.py list`. Exit 3 means nothing has been
+**Step 1 — Gather.** `uv run --project {{WIKI_SCRIPTS_DIR}} python <this skill's folder>/scripts/suggestions.py list`. Exit 3 means nothing has been
 received: tell Mark so, write nothing, and stop. Exit 0 prints JSON: each suggestion with its `artifact` (`null` when
 the name is not in this library), the run `records` its `Seen in` names, and `earlier` decisions on the same skill;
 `malformed` lists files missing a line, which you name to Mark and leave. Done when every received file is in one of
@@ -90,7 +90,7 @@ Every `decide` names the pass (`--pass <pass>`, the folder Step 3 wrote into) an
 `raw/skill-suggestions/<pass>/`; it refuses a pass with no `proposals.md`, since a decision follows the pass that
 proposed it.
 - Accept: add a task through the `task-list` skill (owner: this library's persona; the task names the target file, the change,
-  and the eval set to run before and after), then `python <this skill's folder>/scripts/suggestions.py decide "<file>"
+  and the eval set to run before and after), then `uv run --project {{WIKI_SCRIPTS_DIR}} python <this skill's folder>/scripts/suggestions.py decide "<file>"
   --pass <pass> --decision "accepted as task <N>"` for each suggestion in that proposal.
 - Turn down: `decide "<file>" --pass <pass> --decision "turned down: <his reason>"`.
 - Later: leave the file where it is; the next pass shows it again.

@@ -20,18 +20,18 @@ Show this project's wiki index: `<notebook>/_INDEX.md`, the full list of entries
 3. Offer to read any specific file in the index if they want to drill in
 4. If `_INDEX.md` is missing or older than the newest file in `wiki/`, regenerate it first:
    ```bash
-   python {{WIKI_SCRIPTS_DIR}}/wiki-index.py --topic <notebook>
+   uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-index.py --topic <notebook>
    ```
 
 ### Other views
 Per-folder indexes (`wiki/<folder>/_INDEX.md`; `sessions/` gets none, retired entries are left out):
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py --topic <notebook>
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-index-per-folder.py --topic <notebook>
 ```
 
 The top-level orientation map (`wiki/_MAP.md`, always loaded through CLAUDE.md):
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-map-compile.py --topic <notebook>
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-map-compile.py --topic <notebook>
 ```
 
 `--topic <name>` on any of these picks another registered notebook.

@@ -125,16 +125,42 @@ if (-not (Test-Path $Script)) {
     exit 2
 }
 
-$py = Get-Command python -ErrorAction SilentlyContinue
-if (-not $py) { $py = Get-Command python3 -ErrorAction SilentlyContinue }
-if (-not $py) {
-    Write-Host "ERR: python not found on PATH. Install Python 3.10+ first: https://www.python.org/" -ForegroundColor Red
-    exit 2
-}
-
 # Detect non-interactive mode (stdin redirected / no console UI). When run by
 # an agent / CI / piped, Read-Host hangs forever, so we default every prompt.
 $nonInteractive = [Console]::IsInputRedirected -or -not [Environment]::UserInteractive
+
+# ---------- uv (task #71, 2026-10-04) ----------
+# Every wiki script runs in its own uv environment, and this installer runs through uv too, so uv is
+# required (it also fetches the pinned Python when the machine has none). Missing: ask before installing it.
+$uvLocal = Join-Path $HOME ".local\bin"
+$uvInstall = 'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"'
+$uv = Get-Command uv -ErrorAction SilentlyContinue
+if (-not $uv -and (Test-Path (Join-Path $uvLocal "uv.exe"))) {
+    $env:Path = "$uvLocal;$env:Path"
+    $uv = Get-Command uv -ErrorAction SilentlyContinue
+}
+if (-not $uv) {
+    Write-Host "uv is not installed. The wiki scripts run in their own uv environment, so the install needs it." -ForegroundColor Yellow
+    Write-Host "  uv: https://docs.astral.sh/uv/  (official installer: $uvInstall)"
+    if ($nonInteractive) {
+        Write-Host "ERR: non-interactive run, so nothing was installed. Install uv with the command above, then re-run." -ForegroundColor Red
+        exit 2
+    }
+    $uvChoice = Read-Host "Install uv now? (y/n) [y]"
+    if ($uvChoice -and $uvChoice -notmatch "^(y|yes)$") {
+        Write-Host "Not installed. Install uv when you want to, then re-run this installer." -ForegroundColor Yellow
+        exit 2
+    }
+    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+    $env:Path = "$uvLocal;$env:Path"
+    $uv = Get-Command uv -ErrorAction SilentlyContinue
+    if (-not $uv) {
+        Write-Host "ERR: uv was not found after its installer ran. Open a new terminal and re-run this installer." -ForegroundColor Red
+        exit 2
+    }
+}
+# new-wiki.py runs in this package's own environment (built from its uv.lock on first use).
+$uvRun = @("run", "--quiet", "--project", $Bootstrap, "python")
 
 # ---------- Q1: install target ----------
 # Default is global tooling-only. -TargetFolder implies a project install.
@@ -177,7 +203,7 @@ if ($Mode -eq "tooling") {
     Write-Host "  Tool:             $Tool"
     Write-Host ""
 
-    & $py.Source $Script `
+    & $uv.Source @uvRun $Script `
         --mode tooling `
         --tool $Tool `
         --bootstrap-source $Bootstrap
@@ -208,7 +234,7 @@ if ($DriveEnabled -eq "yes") {
 }
 Write-Host ""
 
-& $py.Source $Script `
+& $uv.Source @uvRun $Script `
     --phase A `
     --tool $Tool `
     --bootstrap-source $Bootstrap `
@@ -275,7 +301,7 @@ if ($Registry) { $phaseBArgs += @("--registry", $Registry) }
 if ($SkillsInstall -eq "global") { $phaseBArgs += "--install-global-if-missing" }
 # -NoAgentmemory is a deprecated no-op as of 2026-05-14, kept for back-compat.
 
-& $py.Source @phaseBArgs
+& $uv.Source @uvRun @phaseBArgs
 $phaseBExit = $LASTEXITCODE
 
 if ($phaseBExit -eq 0) {

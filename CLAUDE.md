@@ -40,7 +40,7 @@ The user almost certainly wants one of three things:
 Most common case. The interview is the same one `/new-wiki` runs — read
 `skills/new-wiki/SKILL.md` for the contract; this is the summary.
 
-**Step 0 — state check, before any question.** Run `python scripts/new-wiki.py --mode status`
+**Step 0 — state check, before any question.** Run `uv run python scripts/new-wiki.py --mode status`
 (PowerShell tool on Windows). It writes nothing and reports the global tooling as `installed`, `stale`,
 `partial` or `missing`. Installed or stale → the project will use it and nothing is re-copied (a stale set is
 named in the plan summary with `-RefreshOnly` as the fix, never refreshed here). Partial or missing → the
@@ -91,7 +91,7 @@ Once confirmed, run:
 ```
 
 (The review gate is a Phase B flag pair — `--confirm-before-create` / `--confirm-before-promote` — the
-wrappers don't expose; for a non-default gate call `python scripts/new-wiki.py --phase B ...`
+wrappers don't expose; for a non-default gate call `uv run python scripts/new-wiki.py --phase B ...`
 directly with the flag list in the skill. Both default to `true`.)
 
 Pass every value the user gave you — don't drop into the PowerShell `Read-Host` fallback if you can avoid it (it works, but it bypasses your role as the conversational layer).
@@ -153,7 +153,7 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 ## Conventions (when editing the scripts)
 
 - **After any change that lands in a notebook** (a framework-contract doc, a `wiki-seed/` page, the how-to
-  root marker, a skill or script), the standing procedure (SOP, 2026-09-08) is: `python scripts/new-wiki.py --phase docs --check --all-notebooks` (from this repo; the registry comes from `.claude/wiki-config.json`) → review every REPLACE line → the same command without `--check` → `.\install-wiki.ps1 -RefreshOnly`.
+  root marker, a skill or script), the standing procedure (SOP, 2026-09-08) is: `uv run python scripts/new-wiki.py --phase docs --check --all-notebooks` (from this repo; the registry comes from `.claude/wiki-config.json`) → review every REPLACE line → the same command without `--check` → `.\install-wiki.ps1 -RefreshOnly`.
   `--check` writes nothing and exits 1 when any notebook would change; a REPLACE at the *same*
   `framework-version` is a project-local edit the refresh will lose — read it before refreshing. One
   command, nine notebooks, a summary line each; never the hand loop.

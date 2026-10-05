@@ -30,7 +30,7 @@ HERE = Path(__file__).resolve().parent
 NOTEBOOK = "kestrel"
 ALLOWED_TOOLS = [
     "Read", "Write", "Edit", "Glob", "Grep",
-    "Bash(python:*)", "Bash(python3:*)", "Bash(ls:*)", "Bash(cat:*)", "Bash(grep:*)",
+    "Bash(python:*)", "Bash(python3:*)", "Bash(uv:*)", "Bash(ls:*)", "Bash(cat:*)", "Bash(grep:*)",
     "Bash(head:*)", "Bash(tail:*)", "Bash(wc:*)", "Bash(find:*)", "Bash(sort:*)",
     "Bash(echo:*)", "Bash(pwd:*)", "Bash(sed:*)", "Bash(cd:*)", "Bash(mkdir:*)",
 ]
@@ -108,7 +108,7 @@ def snapshot(ctx: dict) -> dict:
 
 HEADER = """You are running an automated test of the wiki-lint skill. The skill under test is at {skill}/SKILL.md. Read it and follow it exactly, as if the user had said the message below in this project. Do not use any installed copy of the skill.
 
-The notebook is `{notebook}`, this project's notebook, at {nb}. Run scripts as `python <path> ...`, with no environment-variable prefix, and write only inside {sandbox}. The user cannot reply while this runs: where the skill says to ask the user something, ask it in your final message and stop there, without acting on an answer you do not have.
+The notebook is `{notebook}`, this project's notebook, at {nb}. Run scripts as the skill writes them, `uv run --project <scripts dir> python <path> ...`, with no environment-variable prefix, and write only inside {sandbox}. The user cannot reply while this runs: where the skill says to ask the user something, ask it in your final message and stop there, without acting on an answer you do not have.
 
 The user said: """
 

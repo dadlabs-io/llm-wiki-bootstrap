@@ -54,7 +54,7 @@ Entries are staged in `_inbox/proposed/` unless `--direct`; the user reviews the
 **Step 1.0 — Drive-fetch** (only when the project config has `drive.enabled: true`):
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-drive-folder.py --folder-name "<drive.parent_folder>" --subfolder <drive.subfolder> \
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-drive-folder.py --folder-name "<drive.parent_folder>" --subfolder <drive.subfolder> \
   --queue-into <notebook> --queue-priority 3 --queue-added-by drive-fetch \
   --move-handled --archive-subfolder <cycle_id> --out <run-folder>/drive-fetch.md
 ```
@@ -66,7 +66,7 @@ It queues each new URL into `_inbox/pending/`, archives the handled Drive files,
 **Step 1.1 — Email-fetch** (only when the project config has `email.enabled: true`):
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-gmail.py fetch --topic <notebook> --run-folder <run-folder> --cycle-id <cycle_id>
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-gmail.py fetch --topic <notebook> --run-folder <run-folder> --cycle-id <cycle_id>
 ```
 
 It reads the Gmail label `email.label` and changes nothing in the mailbox. It writes `email-fetch.json` + `.md`: numbered candidates, one per article link and one per full-text newsletter (an email that is itself the article), with links already in the wiki or the queue listed as known. Each email's text is under `<run-folder>/email/`. **Judge every candidate** as discovery judges its results (in the notebook's scope? new? the tier by author and evidence, `_config/feeds.md` as the starting point), reading the email's text when the title is not enough, and write `<run-folder>/email-review.json`: `{"<n>": {"decision": "recommend" | "skip", "reason": "<one line>"}}` for every one. Exit 3 means the Gmail sign-in failed: record the step as failed, tell the user (`wiki-fetch-gmail.py auth` signs in again), and go on. Labels and sign-in: [reference.md](./reference.md).
@@ -85,13 +85,13 @@ Queue discovery's approved items with `wiki-list-add.py`. Queue the email's with
 - **YouTube**: when the batch has more than one YouTube item, all of them go to **one** worker, fetched one after another (they share one rate limit the GPU slots do not cover). A 429 is retried once, after that worker's other items; a second 429 fails the item with the reason.
 - A ticket carrying `raw_path` (captured at triage or Step 1.8) is filed from that raw, never fetched again.
 - Each worker runs the full `/wiki-update` flow per source, gate included. **Workers never write `update.json`**: the orchestrator writes `update.json` + `.md` once, from every worker's receipt (staged slugs, skipped and deferred items with reasons), with every field of the step contract, `notes` and `errors` included even when empty.
-- After the batch, `python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --stats` into the report (searches that waited for a GPU slot; slow waits or "full search unavailable" → fewer workers next time). In `--full`, also `wiki-qmd-query.py --depth-check --notebook <notebook>` once: exit 1 (C was reached) is reported to the user; exit 2 (nothing measured) is never a pass. On a keyword machine (no GPU; `--preflight` says which) there are no GPU slots and no reranker: skip the depth check and report `skipped (keyword search)`.
+- After the batch, `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --stats` into the report (searches that waited for a GPU slot; slow waits or "full search unavailable" → fewer workers next time). In `--full`, also `wiki-qmd-query.py --depth-check --notebook <notebook>` once: exit 1 (C was reached) is reported to the user; exit 2 (nothing measured) is never a pass. On a keyword machine (no GPU; `--preflight` says which) there are no GPU slots and no reranker: skip the depth check and report `skipped (keyword search)`.
 
 **Step 2.5 — Dequeue and check staging** (always, after ingest):
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-dequeue.py --topic <notebook>              # tickets in pending/ or an intake bucket whose source is now an entry -> done/
-python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --check      # exit 1 names each entry promote would hold
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-dequeue.py --topic <notebook>              # tickets in pending/ or an intake bucket whose source is now an entry -> done/
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --check      # exit 1 names each entry promote would hold
 ```
 
 Fix every sidecar `--check` names before the commit; a worker's receipt is a claim, the check is the evidence.
@@ -99,7 +99,7 @@ Fix every sidecar `--check` names before the commit; a worker's receipt is a cla
 **Step 2.6 — Checker** (only when a staged entry's raw is a long transcript):
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-scope.py --topic <notebook> checker --run-folder <run-folder>
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-scope.py --topic <notebook> checker --run-folder <run-folder>
 ```
 
 For each line it prints (entry, raw, minutes), spawn a `wiki-checker` agent, unnamed, up to 4 at a time, on the model in `~/.claude/agents/wiki-checker-config.json` (`model_default`), briefed with three paths only: the entry, the raw, and `<run-folder>/checker/<slug>.json`. Log each report: `wiki-cycle-scope.py --topic <notebook> checker-log --run-folder <run-folder> --entry <slug> --report <run-folder>/checker/<slug>.json`. A `fix` verdict: correct the staged entry from the report (take out or correct what the raw does not support, add what it skipped, restore the raw's words in quotes), then re-run `wiki-promote.py --check --slug <slug>`. A session that cannot make the fix leaves the entry staged and lists it under "held: checker findings" with its report. **An entry with an uncorrected `fix` report is never promoted.** The checker never edits anything itself.
@@ -107,7 +107,7 @@ For each line it prints (entry, raw, minutes), spawn a `wiki-checker` agent, unn
 **Step 3 — Mechanical lint.** If this run promoted anything into `wiki/` already (`--direct`), run `wiki-fix-links.py --topic <notebook>` first. Then:
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook> --cycle-id <cycle_id> --run-folder <run-folder>
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook> --cycle-id <cycle_id> --run-folder <run-folder>
 ```
 
 **Step 3.5 — Integration scripts** (always, in the modes that run Step 3, staged run or not; cheap and idempotent), each with `--topic <notebook> --cycle-id <cycle_id> --run-folder <run-folder>`: `wiki-reciprocate-backlinks.py`, `wiki-index-per-folder.py`, `wiki-map-compile.py`. Treat a large unexplained `backlinks_added` as a signal to look, not a success.
@@ -115,7 +115,7 @@ python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook> --cycle-i
 **Step 4 — Semantic lint** (`--full`; `--lint-only --semantic`). Not if one ran in the last 24 hours. Scope first:
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-scope.py --topic <notebook> semantic --run-folder <run-folder> [--all when --lint-all]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-scope.py --topic <notebook> semantic --run-folder <run-folder> [--all when --lint-all]
 ```
 
 It writes `semantic-scope.txt`: the entries added or revised since the last semantic lint, plus this run's staged entries (read from `_inbox/proposed/`, since Step 5.5 has not promoted them yet). Spawn one agent per ~100 entries in scope, up to 4, unnamed, each given a slice of the scope balanced by file count and the `/wiki-lint --full` criteria; include the drift-watch deep-compares. Merge their findings into `lint-semantic.json` + `.md` (its `timestamp` is the next run's cut-off).
@@ -125,9 +125,9 @@ It writes `semantic-scope.txt`: the entries added or revised since the last sema
 **Step 5.5 — Promote** (`--full`, before Steps 6 and 6.5, which read `wiki/`). Promote every staged entry not held by the checker, one slug at a time, then normalise links and confirm:
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --auto --slug <slug>     # per entry not held
-python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <notebook>
-python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook>                   # 0 broken links before going on
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --auto --slug <slug>     # per entry not held
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <notebook>
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook>                   # 0 broken links before going on
 ```
 
 Then re-run Step 3.5 (promotion adds entries and backlinks at once). If the user wants staged entries held even in a `--full` run, skip this and tell Steps 6 and 6.5 to treat `_inbox/proposed/` as out of scope.

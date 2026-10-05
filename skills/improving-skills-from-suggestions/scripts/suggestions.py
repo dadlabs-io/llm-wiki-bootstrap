@@ -496,8 +496,8 @@ def cmd_summary(repo_arg: str, pass_name: str, out_arg: Optional[str], notebook:
         return 2
     topic = root.name
     print(f"draft: {out.as_posix()}")
-    wiki_update = (Path.home() / ".claude" / "wiki-scripts" / "wiki-update.py").as_posix()
-    print(f"file it: python {wiki_update} --topic {topic} --folder {WIKI_FOLDER} "
+    scripts = (Path.home() / ".claude" / "wiki-scripts").as_posix()
+    print(f"file it: uv run --project {scripts} python {scripts}/wiki-update.py --topic {topic} --folder {WIKI_FOLDER} "
           f"--source \"{out.as_posix()}\" --raw-path raw/skill-suggestions/{pass_name}/ --ingested-by claude-code "
           f"--tier self --confidence high --title \"{pass_name} skill suggestions\" "
           f"--tags \"skill-suggestions,improver-pass,{','.join(senders)}\"")

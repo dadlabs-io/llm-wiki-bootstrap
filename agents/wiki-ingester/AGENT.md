@@ -72,11 +72,11 @@ with TodoWrite. For each item:
    sees your receipt.
 3. **Search the wiki** for related entries — integrate, don't isolate. 3–5 key terms, each with
    the shared search helper:
-   `python ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester --notebook <target notebook> "<term>"`
+   `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester --notebook <target notebook> "<term>"`
    (30 results by default, `-k` to change; the `_MAP`/`_INDEX` machine files never come back as results). Always pass the
    target notebook: without it qmd searches every notebook, and a cross-link must stay inside the
    notebook you are filing into. Run
-   `python ~/.claude/wiki-scripts/wiki-qmd-query.py --preflight` once before your first item: it
+   `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-qmd-query.py --preflight` once before your first item: it
    names the machine's search mode.
    - **full** (keyword + meaning + rerank on the GPU; the reranker scores every candidate the search
      fetched, up to `-C` 120): if the preflight fails, stop the batch and report. Several workers run
@@ -88,6 +88,9 @@ with TodoWrite. For each item:
      minute and try once more; if it fails again, mark the item **failed: full search unavailable**
      (it is re-run later, never filed without its cross-links) and say in the receipt that the batch
      needs fewer parallel workers.
+   - **Any mode:** a search that prints an error instead of results ("no qmd collection", an unknown
+     notebook) is a setup problem every item would hit: stop the batch and report it. Never file an
+     item without its search (2026-10-04).
    - **keyword** (a machine with no GPU, set at install; task #63, 2026-10-02): the helper runs qmd's
      keyword index, no model and no GPU slot. It matches words, not meaning, so also search the words
      other entries would use for the same idea. Never run `qmd query`, `qmd vsearch` or `qmd embed`
@@ -177,7 +180,7 @@ Every assigned item is accounted for: either **staged** (entry + conforming dot-
 stated reason** — and the reconciliation counts balance (assigned = staged + failed + skipped).
 Before finishing, run the pre-exit checklist **against the assignment you were given, not against
 what you produced**: (1) does the receipt cover every item the caller listed? (2) does
-`python ~/.claude/wiki-scripts/wiki-promote.py --topic <target notebook> --check --slug <slug>` exit 0
+`uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-promote.py --topic <target notebook> --check --slug <slug>` exit 0
 for each staged slug? It proves the sidecar exists, parses, and names a full-path `target_folder` —
 run it, especially after hand-editing a sidecar; do not assert it (2026-09-14: a hand edit left a
 trailing comma and the receipt still said every sidecar conformed). (3) did every staged

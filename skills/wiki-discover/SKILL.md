@@ -95,7 +95,7 @@ For each candidate URL/title found in search results:
 
 2. **Title/concept dedup**: search the wiki for the key concept:
    ```bash
-   python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --notebook <topic> "<key terms from the candidate>"   # THIS notebook only (a match elsewhere is not a duplicate here); needs the preflight from /wiki-search. Full machine: GPU slot + timeout, exit 75/124 is a stop-and-report, not a fallback. Keyword machine (no GPU): words only, so also try the words an existing entry would use
+   uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --notebook <topic> "<key terms from the candidate>"   # THIS notebook only (a match elsewhere is not a duplicate here); needs the preflight from /wiki-search. Full machine: GPU slot + timeout, exit 75/124 is a stop-and-report, not a fallback. Keyword machine (no GPU): words only, so also try the words an existing entry would use
    ```
    If qmd returns a 80%+ match, the concept is already covered — skip unless the new source adds substantial new information.
 
@@ -193,7 +193,7 @@ When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/discover.json
 The Decisions log's **Queued** table is discovery's recommendation. After the user reviews it (human review #1: "approve recommended", or with the changes they make), queue the approved items:
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-list-add.py \
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-list-add.py \
   --topic <topic> \
   --source "<url>" --title "<title>" --priority <1-5> --tags "<tags>" --added-by claude-code
 ```

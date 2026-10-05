@@ -157,7 +157,7 @@ def snapshot(ctx: dict) -> dict:
 
 HEADER = """You are running an automated test of the wiki-update skill. The skill under test is at {skill}/SKILL.md, with its reference files beside it. Read it and follow it exactly, as if the user had typed /wiki-update with the input below. Do not use any installed copy of the skill.
 
-The notebook is `{notebook}`, this project's notebook, at {nb}. Write only inside {sandbox}. Run scripts as `python <path> ...` or `node <path> ...`, with no environment-variable prefix. The user started this run and will read your report, but cannot answer questions while it runs: where the skill says to confirm something with the user, make the reasonable choice and say what you chose.
+The notebook is `{notebook}`, this project's notebook, at {nb}. Write only inside {sandbox}. Run scripts as the skill writes them (`uv run --project <scripts dir> python <path> ...` or `node <path> ...`), with no environment-variable prefix, from {sandbox} or a folder inside it, never from inside the scripts' own repository (its config would point them at the real notebooks). The user started this run and will read your report, but cannot answer questions while it runs: where the skill says to confirm something with the user, make the reasonable choice and say what you chose.
 
 """
 

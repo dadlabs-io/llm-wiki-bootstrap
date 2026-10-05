@@ -32,7 +32,7 @@ import stat
 import subprocess
 from pathlib import Path
 
-ALLOWED_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Bash(python:*)", "Bash(python3:*)", "Bash(git:*)",
+ALLOWED_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Bash(python:*)", "Bash(python3:*)", "Bash(uv:*)", "Bash(git:*)",
                  "Bash(ls:*)", "Bash(cat:*)", "Bash(cd:*)", "Bash(find:*)", "Bash(pwd:*)"]
 DISALLOWED_TOOLS = ["Skill"]
 JUDGE_MODEL = "sonnet"  # Haiku misread a clear "not proposed again" as YES (run 20260930-195308)
@@ -124,8 +124,22 @@ def _claude_exe() -> str:
 
 
 def _judge(question: str, reply: str) -> tuple[bool | None, str]:
+    """The majority of up to three judge calls (stops once two agree). One call alone flipped: on the same
+    reply it said NO once and YES twice (2026-10-04, replay-freeze-step-label)."""
+    votes, raws = [], []
+    for _ in range(3):
+        v, raw = _judge_once(question, reply)
+        votes.append(v)
+        raws.append(raw)
+        for answer in (True, False):
+            if votes.count(answer) >= 2:
+                return answer, " / ".join(raws)
+    return None, " / ".join(raws)
+
+
+def _judge_once(question: str, reply: str) -> tuple[bool | None, str]:
     """YES/NO from a small model reading only the session's reply; None when it gave neither."""
-    ask = ("Below is the final reply an AI assistant gave in a session, then a question about it. "
+    ask =("Below is the final reply an AI assistant gave in a session, then a question about it. "
            "Answer with exactly one word, YES or NO.\n\n<reply>\n" + reply[-12000:] +
            "\n</reply>\n\nQuestion: " + question)
     env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}

@@ -113,6 +113,8 @@ with tempfile.TemporaryDirectory() as tmp:
     src = td / "src"
     for d in ("scripts", "skills", "agents"):
         shutil.copytree(ROOT / d, src / d, ignore=shutil.ignore_patterns("__pycache__"))
+    for f in ("pyproject.toml", "uv.lock", ".python-version"):  # the scripts' environment (task #71)
+        shutil.copy2(ROOT / f, src / f)
     bad = src / "skills" / "wiki" / "SKILL.md"
     bad.write_bytes(b"\xff\xfe\xfa not utf-8 " + bad.read_bytes())
     env = {k: v for k, v in os.environ.items() if k not in ("PYTHONIOENCODING", "PYTHONUTF8")}

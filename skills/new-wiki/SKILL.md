@@ -50,7 +50,7 @@ Cursor variant: substitutes `.cursor/` for `.claude/`, always bundles, and gener
 ```
 User: /new-wiki [name]
    ↓
-Step 0.0  state check  — python new-wiki.py --mode status  (global tooling: installed | stale | partial | missing)
+Step 0.0  state check  — new-wiki.py --mode status  (global tooling: installed | stale | partial | missing)
    ↓
 Round 1 (AskUserQuestion, 2 questions)
    Q1  project name (slug)
@@ -67,7 +67,7 @@ Round 3 (only when needed, ≤3 questions)
    ↓
 Plan summary (tool, target folder, folder tree, skills line, Drive line, feeds line) → wait for "yes" / "go" / "create"
    ↓
-Phase B — python new-wiki.py --phase B ...   (Phase A already done by install-wiki.ps1)
+Phase B — new-wiki.py --phase B ...   (Phase A already done by install-wiki.ps1)
    B1.  mkdir <target> + git init (skipped inside an existing repo)
    B2–4. Copy skills / scripts / templates into the project           — bundled mode only
    B5.  Seed how-to/ (pack usage docs)
@@ -89,7 +89,7 @@ Step 1.5  add the sources named at Q9 to _config/feeds.md (only when Q9 named so
 Read `~/.claude/wiki-config.json` for `bootstrap_source` (see "Required: the bootstrap-source path" below if it is missing), then:
 
 ```
-python "<bootstrap_source>/scripts/new-wiki.py" --mode status
+uv run --project "<bootstrap_source>" python "<bootstrap_source>/scripts/new-wiki.py" --mode status
 ```
 
 Writes nothing. Prints JSON with `state` — one of:
@@ -98,7 +98,7 @@ Writes nothing. Prints JSON with `state` — one of:
 |---|---|---|
 | `installed` | every skill, script and agent in the manifests is in `~/.claude/` and matches the bootstrap clone | use it; no question, no reinstall |
 | `stale` | all present, but some installed copies differ from the clone (`stale_skills` / `stale_scripts` / `stale_agents` list them) | use it; no question; the plan summary names the differing files and says `install-wiki.ps1 -RefreshOnly` refreshes them when the user wants |
-| `partial` | some pieces missing (`missing_*` list them) | ask Q7 |
+| `partial` | some pieces missing (`missing_*` list them, `env` says `missing` when the scripts' uv environment is not built) | ask Q7 |
 | `missing` | none of the wiki skills are installed (only `/new-wiki` from Phase A, or nothing) | ask Q7 |
 
 Also note whether the current folder has a `.cursor/` directory (→ tool `cursor`; otherwise `claude-code`). The tool is stated in the plan summary, not asked.
@@ -177,11 +177,11 @@ Every line is overridable by saying so; a changed line is re-shown before runnin
 ### Step 1 — Run Phase B
 
 **TOOL CHOICE — IMPORTANT**:
-- **Windows**: invoke `python new-wiki.py ...` via the **PowerShell tool**, not the Bash tool. Bash → PowerShell argument bridging mangles empty quoted strings (`--project-description ""` collapses, the next flag becomes the description, exit 2). If the PowerShell tool is denied, ask the user to run the command themselves — do NOT fall back to `bash` → `powershell.exe ...`.
+- **Windows**: invoke `uv run … new-wiki.py ...` via the **PowerShell tool**, not the Bash tool. Bash → PowerShell argument bridging mangles empty quoted strings (`--project-description ""` collapses, the next flag becomes the description, exit 2). If the PowerShell tool is denied, ask the user to run the command themselves — do NOT fall back to `bash` → `powershell.exe ...`.
 - **macOS/Linux**: the Bash tool directly.
 
 ```bash
-python "<bootstrap_source>/scripts/new-wiki.py" \
+uv run --project "<bootstrap_source>" python "<bootstrap_source>/scripts/new-wiki.py" \
   --phase B \
   --tool <claude-code|cursor> \
   --project-name <slug> \
@@ -242,7 +242,7 @@ If `~/.config/wiki-cycle/client_secrets.json` is missing, the helper prints inst
 
 `/new-wiki --sync` re-runs Phase A — refreshes the global `/new-wiki` skill from the current `bootstrap_source`. Use after `git pull` on the llm-wiki-bootstrap clone. The full global tooling (every skill, script and agent) is refreshed by `install-wiki.ps1 -RefreshOnly` / `wiki-upgrade.py`; `--mode status` shows whether that is needed.
 
-To sync a bundled project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`. To refresh only a project's **framework-managed docs** — the pack usage docs (`how-to/llm-wiki/`: the pack page, one page per skill, one per agent) and, since 2026-09-08, the six framework-contract docs at `wiki/project/best-practices/framework/` — run `python <bootstrap_source>/scripts/new-wiki.py --phase docs --target-folder <project>`; it resolves the wiki through the project's `.claude/wiki-config.json` (or `llm-wiki/how-to/`, or a notebook root), content-compares each framework doc and replaces the ones that differ (naming them, so a project-local edit is visible rather than silently lost), and touches nothing else. Add `--check` to review first: it writes nothing, lists every framework doc as unchanged / ADD / REPLACE with the `framework-version` on both sides and a diff (a lower project version is a stale copy; the same version with different content is a project-local edit the refresh would lose), reports the pack pages a refresh would copy, and exits 1 when anything would change. A wiki without `project/` (a plain notes notebook, or one scaffolded with `--project-folder none`) is named and its framework docs skipped — they are out of scope there; the pack usage docs still refresh. `--all-notebooks` runs either form over every notebook in the registry (`--registry <linked-notebooks.json>`, else the one the cwd's `.claude/wiki-config.json` names) with a one-line-per-notebook summary and a single exit code. This is the Phase 2 / Phase 3 tool of the research-to-framework update process, and the standing procedure after any framework change is `--phase docs --check --all-notebooks`, review every REPLACE, then the same command without `--check`.
+To sync a bundled project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`. To refresh only a project's **framework-managed docs** — the pack usage docs (`how-to/llm-wiki/`: the pack page, one page per skill, one per agent) and, since 2026-09-08, the six framework-contract docs at `wiki/project/best-practices/framework/` — run `uv run --project <bootstrap_source> python <bootstrap_source>/scripts/new-wiki.py --phase docs --target-folder <project>`; it resolves the wiki through the project's `.claude/wiki-config.json` (or `llm-wiki/how-to/`, or a notebook root), content-compares each framework doc and replaces the ones that differ (naming them, so a project-local edit is visible rather than silently lost), and touches nothing else. Add `--check` to review first: it writes nothing, lists every framework doc as unchanged / ADD / REPLACE with the `framework-version` on both sides and a diff (a lower project version is a stale copy; the same version with different content is a project-local edit the refresh would lose), reports the pack pages a refresh would copy, and exits 1 when anything would change. A wiki without `project/` (a plain notes notebook, or one scaffolded with `--project-folder none`) is named and its framework docs skipped — they are out of scope there; the pack usage docs still refresh. `--all-notebooks` runs either form over every notebook in the registry (`--registry <linked-notebooks.json>`, else the one the cwd's `.claude/wiki-config.json` names) with a one-line-per-notebook summary and a single exit code. This is the Phase 2 / Phase 3 tool of the research-to-framework update process, and the standing procedure after any framework change is `--phase docs --check --all-notebooks`, review every REPLACE, then the same command without `--check`.
 
 ## Required: the bootstrap-source path
 
@@ -256,6 +256,8 @@ cd ~/llm-wiki-bootstrap
 .\install-wiki.ps1     # Windows
 ./install-wiki.sh      # Mac/Linux
 ```
+
+The installer needs [uv](https://docs.astral.sh/uv/): every wiki script runs in its own uv environment beside the scripts. When uv is missing it asks before installing it.
 
 After that one-time setup, `/new-wiki` works in any project folder.
 

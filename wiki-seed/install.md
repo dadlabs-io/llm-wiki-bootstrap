@@ -50,9 +50,9 @@ If you want the global install first, then create projects separately:
 
 **Globally (per machine):**
 - `~/.claude/skills/` — every wiki skill
-- `~/.claude/wiki-scripts/` — the Python helpers behind them
+- `~/.claude/wiki-scripts/` — the Python helpers behind them, with their own uv environment (`pyproject.toml`, `uv.lock`, `.python-version` and the `.venv` built from them). Every skill runs a script as `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/<script>`, so the packages the scripts need (Google APIs, PDF, YouTube, YAML) are always the locked ones, apart from any project's own environment
 - `~/.claude/agents/` — the `wiki-ingester` agent, with its model config and reading list
-- `~/.claude/settings.json` — a SessionStart hook that lists a wiki project's resume files at startup and after `/clear` (the file is backed up first; other settings are left alone)
+- `~/.claude/settings.json` — a SessionStart hook that lists a wiki project's resume files at startup and after `/clear`, and the read guard; both run the environment's own python (the file is backed up first; other settings are left alone)
 - `~/.claude/wiki-config.json` — records where the bootstrap clone lives
 
 **Per project (when you scaffold one):**
@@ -65,10 +65,9 @@ For Cursor users (Windows installer only; the Mac/Linux installer does not suppo
 
 ## Prerequisites
 
-- Python 3.10+
+- [uv](https://docs.astral.sh/uv/) (the installer asks to install it when it is missing; uv also fetches the pinned Python, so no separate Python install is needed)
 - Git
 - Node.js + `qmd` 2.8.3 or newer (`npm i -g @tobilu/qmd@latest`) for wiki search
-- Only for Google Drive ingest: `pip install google-api-python-client google-auth-oauthlib`
 
 ### Optional: a GPU runtime for `qmd query` (search)
 
@@ -86,7 +85,7 @@ That installs only the runtime library and cuBLAS (no compiler, no driver; CUDA 
 
 Without it node-llama-cpp falls back to Vulkan, where token generation can hang indefinitely at 100% CPU (seen 2026-09-12 on an RTX 4070 + Intel iGPU laptop). A Mac uses Metal, with nothing to install.
 
-**A machine with no GPU searches by keyword only.** The installer runs the GPU check once and records the machine's search mode in `~/.claude/wiki-config.json`: `full` when CUDA or Metal is available, `keyword` otherwise. On a keyword machine every wiki search runs qmd's keyword index (`qmd search`: no model, well under a second; the helper searches the key words together and in every pair, since that index needs every word to match), and the wiki, `/wrap-up`, the task list and ingest all work as usual. What it gives up is matching by meaning and the reranking: related entries are found by shared words only. Never run `qmd query`, `qmd vsearch` or `qmd embed` there: with no GPU the models run on the CPU and take every core (on 2026-10-02 one full search on a laptop's CPU used about 9,900 CPU-seconds and hung it without finishing). Index upkeep is `qmd update` alone. When the machine gets a GPU, install its runtime (above), run `python ~/.claude/wiki-scripts/wiki-qmd-query.py --set-mode full` (it refuses while the GPU check fails), then `qmd embed` once to build the meaning index; an install refresh says so when a keyword machine has a GPU available. On a `full` machine nothing changes: `/wiki-search` runs the GPU check before its first search and stops if it fails, never falling back.
+**A machine with no GPU searches by keyword only.** The installer runs the GPU check once and records the machine's search mode in `~/.claude/wiki-config.json`: `full` when CUDA or Metal is available, `keyword` otherwise. On a keyword machine every wiki search runs qmd's keyword index (`qmd search`: no model, well under a second; the helper searches the key words together and in every pair, since that index needs every word to match), and the wiki, `/wrap-up`, the task list and ingest all work as usual. What it gives up is matching by meaning and the reranking: related entries are found by shared words only. Never run `qmd query`, `qmd vsearch` or `qmd embed` there: with no GPU the models run on the CPU and take every core (on 2026-10-02 one full search on a laptop's CPU used about 9,900 CPU-seconds and hung it without finishing). Index upkeep is `qmd update` alone. When the machine gets a GPU, install its runtime (above), run `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-qmd-query.py --set-mode full` (it refuses while the GPU check fails), then `qmd embed` once to build the meaning index; an install refresh says so when a keyword machine has a GPU available. On a `full` machine nothing changes: `/wiki-search` runs the GPU check before its first search and stops if it fails, never falling back.
 
 **Upgrading from an older qmd (2.1 → 2.8).** After `npm i -g @tobilu/qmd@latest`, run `qmd doctor` once before anything else. Its first check migrates the old embeddings to 2.8's fingerprint; until then `qmd status` shows nearly every file as needing embedding, and re-embedding would redo them all for nothing. `qmd status` now also reports orphaned chunks, the vectors of old file versions that 2.1 never pruned: `qmd cleanup` removes them. Then `qmd embed` for any files genuinely pending. On 2.8.3 an 8 GB GPU runs three full searches at once, which is the search helper's default; on an older qmd set `WIKI_QMD_SLOTS=2`.
 
@@ -104,8 +103,8 @@ same refresh; from inside Claude Code, `/new-wiki --sync` refreshes only the glo
 skill. None of these touches a project. To refresh a project's framework-managed docs (the `how-to/llm-wiki/` pages and the six
 framework-contract docs), from the bootstrap clone:
 ```
-python scripts/new-wiki.py --phase docs --check --target-folder <project>   # preview, writes nothing
-python scripts/new-wiki.py --phase docs --target-folder <project>           # refresh
+uv run python scripts/new-wiki.py --phase docs --check --target-folder <project>   # preview, writes nothing
+uv run python scripts/new-wiki.py --phase docs --target-folder <project>           # refresh
 ```
 A bundled install (skills copied into the project) refreshes them by re-running the scaffold
 against the same folder with `--force`.
@@ -114,6 +113,6 @@ against the same folder with `--force`.
 
 - **`gh` / `git clone` fails with auth** — repo is public now, no auth needed; check your network
 - **An install or refresh ends on `⚠️ INSTALL INCOMPLETE`** — it stopped partway. The line says where (for example `skill wiki`), the error, and how many scripts, skills and agents were installed before it; the rest are still the old copies. The full error, the complete list of what is and is not done, and how to finish are in the log the line names (`~/.cache/llm-wiki/install-errors/install-<time>.log`). Ask Claude "why did the install fail? fix it": it reads that log, fixes the cause, and re-runs the install. Fixing it yourself: deal with the cause, then run `.\install-wiki.ps1` again; `--mode status` (below) confirms everything is current
-- **`/new-wiki` says the global tooling is missing or partial** — run `.\install-wiki.ps1` (no flags) once, or let the skill install it; `python <clone>/scripts/new-wiki.py --mode status` shows what is installed, stale or missing
+- **`/new-wiki` says the global tooling is missing or partial** — run `.\install-wiki.ps1` (no flags) once, or let the skill install it; `uv run --project <clone> python <clone>/scripts/new-wiki.py --mode status` shows what is installed, stale or missing
 - **Drive OAuth fails** — see [`drive-setup`](./drive-setup.md)
 - **`/new-wiki` doesn't trigger in Claude Code** — restart Claude Code after install so it picks up the new global skill

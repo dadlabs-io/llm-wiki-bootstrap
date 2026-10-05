@@ -25,13 +25,13 @@ waits there. `Backlog` is never an owner name; the script refuses it as `--owner
 **Every edit goes through the script, never by hand**: it keeps the numbering, the escaping and the layout.
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show
-python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py add "<task in one plain line>" --owner <section> [--status <s>] [--next "<text>"] [--backlog]
-python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py set <N> [--status <s>] [--next "<text>"] [--owner <section>] [--task "<text>"]
-python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> [--next "<text>"]
-python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py backlog <N>
-python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py unbacklog <N> [--owner <section>]
-python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py remove <N> --confirmed
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py add "<task in one plain line>" --owner <section> [--status <s>] [--next "<text>"] [--backlog]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py set <N> [--status <s>] [--next "<text>"] [--owner <section>] [--task "<text>"]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> [--next "<text>"]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py backlog <N>
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py unbacklog <N> [--owner <section>]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py remove <N> --confirmed
 ```
 
 `backlog <N>` moves a task into the Backlog and records its owner; `unbacklog <N>` sends it back to that owner's

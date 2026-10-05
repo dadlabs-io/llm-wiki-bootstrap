@@ -19,10 +19,10 @@ A raw under about 1 KB, one that is mostly navigation, or one that says "enable 
 ## YouTube
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-youtube.py --topic <topic> --url <url> --ingested-by claude-code
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-youtube.py --topic <topic> --url <url> --ingested-by claude-code
 ```
 
-Runs on the host and needs the `yt_dlp` Python package (`pip install yt-dlp`).
+Runs on the host; its `yt_dlp` package comes with the scripts' uv environment.
 
 **Check the transcript before you blockquote it.** Auto-captions mis-hear this wiki's vocabulary systematically: "Claude Code" arrives as "Cloud Code" or "Quad Code", `CLAUDE.md` as "quadmd", "CloudMD" or "clawed MD". Correct the entry's own key terms by context before placing a passage in a `>` quote, disclose the correction once in a dated transcription note near the top of the entry, and paraphrase (no blockquote) any passage you cannot disambiguate. Doctrine: authoring best practices, principle 5.
 
@@ -31,10 +31,10 @@ A video's entry is as long as its content deserves: one good idea makes a short 
 ## PDF
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-pdf.py --topic <topic> --source <url-or-local-pdf> --ingested-by claude-code
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-pdf.py --topic <topic> --source <url-or-local-pdf> --ingested-by claude-code
 ```
 
-Runs on the host: text per page through `pdftotext` (in Git Bash on Windows, poppler elsewhere), falling back to `pypdf` on pages where the text is poor (`pip install pypdf`); OCR only if tesseract is installed. It saves the raw with the page count and extraction figures and copies the PDF beside it.
+Runs on the host: text per page through `pdftotext` (in Git Bash on Windows, poppler elsewhere), falling back to `pypdf` (in the scripts' uv environment) on pages where the text is poor; OCR only if tesseract is installed. It saves the raw with the page count and extraction figures and copies the PDF beside it.
 
 ## X / Twitter
 

@@ -19,7 +19,7 @@ When the user says: `lint the wiki`, `/wiki-lint`, `quick wiki check`, `wiki hea
 Pure Python script. Fast, deterministic, no LLM in the loop. Reports only — never modifies files.
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py \
   --topic <topic>
 ```
 

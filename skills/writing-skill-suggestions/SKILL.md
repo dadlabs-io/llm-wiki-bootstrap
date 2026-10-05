@@ -33,7 +33,7 @@ goes in its wiki), for fixing the skill yourself, or for going through suggestio
    name. For a script, name the skill it belongs to (`check-freeze.py` is `verifying-before-done`'s). A lesson about
    the project itself stops here: it goes in the project's wiki. Done when you have one name, copied, not composed.
 2. **Write it** with this skill's script, from the project's root:
-   `python <this skill's folder>/scripts/skill-suggestion.py add --skill <name> --seen-in "<run, task or session>"
+   `uv run --project {{WIKI_SCRIPTS_DIR}} python <this skill's folder>/scripts/skill-suggestion.py add --skill <name> --seen-in "<run, task or session>"
    --issue "<what happened>" --fix "<the fix>"`.
    - **Issue** — what happened and where you saw it, in one line: the surprise, with the file or step.
    - **Fix** — the fix that worked, or the one you would suggest; leave `--fix` out when there is none (`none yet`).
@@ -51,7 +51,7 @@ The situation: running the tests, `check-freeze.py freeze --step fix-1` was refu
 number, so the entries were frozen at 4 and relabelled by hand.
 
 ```
-python .claude/skills/writing-skill-suggestions/scripts/skill-suggestion.py add --skill verifying-before-done \
+uv run --project {{WIKI_SCRIPTS_DIR}} python .claude/skills/writing-skill-suggestions/scripts/skill-suggestion.py add --skill verifying-before-done \
   --seen-in "committee-names-from-history" \
   --issue "check-freeze.py --step takes only an integer, so the fix round's freeze entries were relabelled by hand." \
   --fix "let --step take a label (e.g. --step fix-1)"

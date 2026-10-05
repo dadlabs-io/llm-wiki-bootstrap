@@ -52,7 +52,7 @@ EXTRA_SKILLS = ["wiki-update", "wiki-report", "wiki-refresh", "wiki-claims", "wi
 DISALLOWED_TOOLS = ["Skill"]
 ALLOWED_TOOLS = [
     "Read", "Write", "Edit", "Glob", "Grep", "Agent", "Task", "TodoWrite", "WebFetch",
-    "Bash(python:*)", "Bash(python3:*)", "Bash(node:*)", "Bash(cd:*)", "Bash(ls:*)",
+    "Bash(python:*)", "Bash(python3:*)", "Bash(uv:*)", "Bash(node:*)", "Bash(cd:*)", "Bash(ls:*)",
     "Bash(mv:*)", "Bash(rm:*)", "Bash(mkdir:*)", "Bash(cp:*)", "Bash(cat:*)",
     "Bash(grep:*)", "Bash(head:*)", "Bash(tail:*)", "Bash(wc:*)", "Bash(find:*)", "Bash(xargs:*)",
     "Bash(sort:*)", "Bash(echo:*)", "Bash(pwd:*)", "Bash(date:*)", "Bash(git:*)", "Bash(curl:*)",
@@ -418,7 +418,7 @@ HEADER = """You are running an automated test of the wiki-cycle skill. The skill
 
 Every skill it names is rendered beside it: /wiki-update is {skills}/wiki-update/SKILL.md, /wiki-report is {skills}/wiki-report/SKILL.md, and so on for wiki-triage, wiki-refresh, wiki-claims, wiki-discover, wiki-lint, wiki-promote, wiki-list and wiki-search. Where the skill says to run one of them, read that file and follow it; the Skill tool is not available. The wiki-ingester and wiki-checker agents are this project's own (their definitions are in .claude/agents/); their config files are at {agents}. This session has no Discord channel and no browser.
 
-The notebook is `{notebook}`, this project's notebook, at {nb}. The notebooks repository (git) is {sandbox}. Run scripts as `python <path> ...` or `node <path> ...`, with no environment-variable prefix, and write only inside {sandbox}. The user started this run and will read your report, but cannot answer questions while it runs: where the skill says to ask or confirm, make the choice the skill gives for a session that cannot ask, and say what you chose.
+The notebook is `{notebook}`, this project's notebook, at {nb}. The notebooks repository (git) is {sandbox}. Run scripts as the skill writes them, `uv run --project <scripts dir> python <path> ...` or `node <path> ...`, with no environment-variable prefix, and write only inside {sandbox}. The user started this run and will read your report, but cannot answer questions while it runs: where the skill says to ask or confirm, make the choice the skill gives for a session that cannot ask, and say what you chose.
 
 The user typed: """
 

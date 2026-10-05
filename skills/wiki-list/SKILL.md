@@ -34,7 +34,7 @@ What to ask the user (only if not already provided):
 
 Run:
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-list-add.py \
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-list-add.py \
   --topic <topic> \
   --source <url-or-path> \
   --added-by claude-code \
@@ -54,14 +54,14 @@ What to ask:
 
 Dry run:
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-list-process.py \
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-list-process.py \
   --topic <topic> \
   --dry-run
 ```
 
 Real run:
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-list-process.py \
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-list-process.py \
   --topic <topic>
 ```
 

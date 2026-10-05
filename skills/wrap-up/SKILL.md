@@ -119,7 +119,7 @@ Promote the next QUEUE item to NOW as work completes.
 **When `task.md` starts with `## At a glance`** (the `/task-list` block, above NOW), keep it current **through the script, never by hand**: `wiki-tasks.py done <N> --next "<what happened>"` for each task finished this session, `add "<task>" --owner <section>` for work taken on or left for the user, `set <N> --status <s> --next "<text>"` where one moved.
 
 ```bash
-python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> --next "<what happened>"
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> --next "<what happened>"
 ```
 
 **Never `remove`.** A task leaves the list only on the user's word. Name every task you marked done in Step 5's summary and ask there whether to remove them — the ask belongs in the report you are already writing, not left to memory. A `task.md` without the block is left without one.
@@ -238,7 +238,7 @@ A session that ran into trouble with a skill may leave a note in `<topic_root>/_
 
 1. **Whose skill is it.** Find the skill's usage page, `<topic_root>/how-to/<pack>/{skills,agents,workflows}/<name>.md`, where `<name>` is the `Skill:` line. Pack `llm-wiki` → **llm-wiki**; any other pack → **agent-builder** (its library ships every other pack). No page → the owner is **unknown**. The **owner's notebook** is the registry entry (`linked-notebooks.json`) whose `discord` block has `bot_name` equal to the owner; item 5 tags that bot.
 2. **A note that is already home is filed, not asked about** (the user, 2026-10-01: "You're supposed to file the skill suggestion"). When the owner's notebook is this notebook, the note is about a skill this notebook's own library keeps, so there is no one to send it to. Run, alone and as written (its last line states its exit):
-   `python ~/.claude/skills/improving-skills-from-suggestions/scripts/suggestions.py receive "<the note's full path>" --repo "<project root>"`
+   `uv run --project {{WIKI_SCRIPTS_DIR}} python ~/.claude/skills/improving-skills-from-suggestions/scripts/suggestions.py receive "<the note's full path>" --repo "<project root>"`
    The note's path is absolute (a relative one is read from `--repo`, not from the notebook); `<project root>` is the folder holding the project's `.claude/wiki-config.json`, which the script reads to find this notebook. Exit 0 moves it into `_inbox/skill-suggestions/received/`, where the next improver pass reads it; exit 1 means the same note is already there and the box's copy was removed. Either way, list it in the report as filed for the next improver pass, with the line the script printed. Never ask send / keep / drop about it. Any other exit: list it with the error and ask, as in item 3.
 3. **In the report**, list each other file: the skill, where it was seen, the issue, the fix, and the owner with the page it was judged from. Ask per file: **send to <owner>**, **keep for later**, or **drop**; the user may send it elsewhere. An unknown owner (a plugin, a third-party skill): say so and ask where it goes. A file that already has a `Sent (...)` line is not asked about again: list it once as "waiting for pickup by <owner>".
 4. **Don't wait for the answer.** Go on to Steps 6 and 7. A suggestion nobody has answered stays in the box and is shown again next time; it does not make the wrap-up incomplete.
@@ -272,8 +272,8 @@ Promote all now?  (yes / no / pick numbers e.g. "1 3")
 **Reuse the promote script — never reimplement move, sidecar or backlink logic.** It also wires backlinks and regenerates `_INDEX.md` and `_MAP.md`.
 
 ```bash
-python <wiki-scripts>/wiki-promote.py --auto              # all
-python <wiki-scripts>/wiki-promote.py --slug <slug> --auto # one per pick
+uv run --project <wiki-scripts> python <wiki-scripts>/wiki-promote.py --auto              # all
+uv run --project <wiki-scripts> python <wiki-scripts>/wiki-promote.py --slug <slug> --auto # one per pick
 ```
 
 (`<wiki-scripts>` comes from `scripts_installed_at` in wiki-config.json, else `~/.claude/wiki-scripts`.)

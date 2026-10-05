@@ -26,7 +26,7 @@ HERE = Path(__file__).resolve().parent
 NOTEBOOK = "skilltest"
 ALLOWED_TOOLS = [
     "Read", "Glob", "Grep",
-    "Bash(python:*)", "Bash(python3:*)", "Bash(node:*)", "Bash(npx:*)", "Bash(npm:*)", "Bash(qmd:*)",
+    "Bash(python:*)", "Bash(python3:*)", "Bash(uv:*)", "Bash(node:*)", "Bash(npx:*)", "Bash(npm:*)", "Bash(qmd:*)",
     "Bash(cd:*)", "Bash(ls:*)", "Bash(cat:*)", "Bash(grep:*)", "Bash(head:*)", "Bash(tail:*)",
     "Bash(wc:*)", "Bash(find:*)", "Bash(sort:*)", "Bash(echo:*)", "Bash(pwd:*)", "Bash(sed:*)",
 ]
@@ -110,7 +110,7 @@ def snapshot(ctx: dict) -> dict:
 
 HEADER = """You are running an automated test of the wiki-search skill. The skill under test is at {skill}/SKILL.md. Read it and follow it exactly, as if the user had typed /wiki-search with the question below. Do not use any installed copy of the skill.
 
-The notebook is `{notebook}`, this project's notebook, at {nb}. Its search index is named `{index}`: the search helper picks that up by itself (pass it no `--index`); pass `--index {index}` only to a `qmd` command you run directly. Run scripts as `python <path> ...`, with no environment-variable prefix. Do not write, edit or create any file. The user wants the answer to their question and will read your final message, but cannot reply while this runs: where the skill says to offer something or ask the user, say in your final message what you would offer or ask.
+The notebook is `{notebook}`, this project's notebook, at {nb}. Its search index is named `{index}`: the search helper picks that up by itself (pass it no `--index`); pass `--index {index}` only to a `qmd` command you run directly. Run scripts as the skill writes them, `uv run --project <scripts dir> python <path> ...`, with no environment-variable prefix. Do not write, edit or create any file. The user wants the answer to their question and will read your final message, but cannot reply while this runs: where the skill says to offer something or ask the user, say in your final message what you would offer or ask.
 
 The user's question: """
 
