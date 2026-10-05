@@ -83,7 +83,7 @@ def future_label(days: int = 90) -> str:
 # its default stubs, as an empty root, or not at all (new-wiki.py
 # --project-folder / --research-folder stubs|empty|none). sessions/ is always
 # created — /wrap-up writes there. A wiki with neither half is a plain notes
-# notebook (maggies-computer-notes is one); the framework docs skip it.
+# notebook (maggies-computer-notes is one).
 PROJECT_TAXONOMY = [
     "project/components", "project/decisions", "project/architecture",
     "project/patterns", "project/troubleshooting", "project/best-practices",
