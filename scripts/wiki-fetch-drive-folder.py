@@ -41,11 +41,15 @@ Behaviour:
 Setup (one-time):
   1. Create or reuse an OAuth 2.0 Desktop Client in any GCP project that
      has the Google Drive API enabled. Download the client_secret JSON.
-  2. Run this script with --client-secrets <path-to-json>. A browser tab
-     opens; approve the `drive.readonly` scope. The refresh token is
-     cached at ~/.config/wiki-cycle/drive-token.json (override with
-     --token-cache).
-  3. Subsequent runs are silent.
+  2. Save it as ~/.config/wiki-cycle/client_secrets.json (or pass
+     --client-secrets) and run this script with --auth-only. A browser tab
+     opens; approve the Drive scope (full: the cycle moves handled files).
+     The refresh token is cached at ~/.config/wiki-cycle/drive-token.json
+     (override with --token-cache); --auth-only then looks the folders up
+     and reports folder_found / subfolder_found.
+  3. Subsequent runs are silent. A later sign-in reuses the client recorded
+     in the token when the secrets file is gone; a full-Drive token also
+     serves a look-only scan.
 
 Usage:
   python3 wiki-fetch-drive-folder.py \\
@@ -56,7 +60,8 @@ Usage:
 Exit codes:
   0  success, report written
   2  target folder not found in Drive (askable condition)
-  3  authentication failed / cancelled
+  3  authentication failed / cancelled, or a Drive call refused (the API
+     not enabled, a revoked token): one `Error:` line naming the fix
   1  any other error
 """
 
@@ -145,39 +150,69 @@ def _info(msg):
     print(msg, file=sys.stderr)
 
 
+def _scopes_cover(have, need):
+    """True when the granted scopes cover the needed ones; full Drive covers read-only."""
+    have = set(have or [])
+    return all(s in have or (s == DRIVE_SCOPE_READONLY and DRIVE_SCOPE_FULL in have) for s in need)
+
+
+def load_cached_creds(token_cache_path, scopes):
+    """The cached token when it covers `scopes`, else None.
+
+    It keeps the scopes it was granted, so a refresh asks Google for exactly those: a full-Drive token
+    refreshed as drive.readonly is refused (invalid_scope; the 2026-10-05 look-only scan)."""
+    from google.oauth2.credentials import Credentials
+    path = Path(token_cache_path)
+    if not path.exists():
+        return None
+    try:
+        info = json.loads(path.read_text(encoding="utf-8"))
+        creds = Credentials.from_authorized_user_info(info, info.get("scopes"))
+    except Exception as exc:
+        _info(f"Cached token unreadable ({exc}); will re-authenticate.")
+        return None
+    if not _scopes_cover(creds.scopes, scopes):
+        _info("Cached token missing required scopes; will re-authenticate "
+              "with upgraded scope (browser will open).")
+        return None
+    return creds
+
+
+def client_config(client_secrets_path, token_cache_path):
+    """The OAuth client to sign in with: the client secrets file, else the client recorded in the
+    cached token (as wiki-fetch-gmail.py does), else None."""
+    if client_secrets_path and Path(client_secrets_path).expanduser().is_file():
+        return json.loads(Path(client_secrets_path).expanduser().read_text(encoding="utf-8"))
+    path = Path(token_cache_path)
+    if path.is_file():
+        try:
+            tok = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        if tok.get("client_id") and tok.get("client_secret"):
+            return {"installed": {"client_id": tok["client_id"], "client_secret": tok["client_secret"],
+                                  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                                  "token_uri": tok.get("token_uri") or "https://oauth2.googleapis.com/token",
+                                  "redirect_uris": ["http://localhost"]}}
+    return None
+
+
 def get_drive_service(client_secrets_path, token_cache_path, scopes):
     """Return an authenticated Drive v3 service. Runs OAuth flow if needed.
 
-    If the cached token covers a strict subset of the requested scopes
-    (e.g. cached drive.readonly but caller now needs drive), re-auth is
-    triggered automatically — Google's oauthlib will detect the mismatch
-    and prompt the user to grant the upgraded scope."""
+    A cached token is used when its scopes cover the request (full Drive covers read-only); one with
+    too narrow a scope (drive.readonly when the run moves files) triggers a sign-in for the wider one."""
     try:
         from google.auth.transport.requests import Request
-        from google.oauth2.credentials import Credentials
         from google_auth_oauthlib.flow import InstalledAppFlow
         from googleapiclient.discovery import build
     except ImportError as exc:
-        _err(f"missing dependency: {exc}. "
-             "Install with: pip install google-api-python-client google-auth-oauthlib")
+        _err(f"missing dependency: {exc}. The scripts' uv environment lacks it: re-run the global install "
+             "(install-wiki.ps1 -RefreshOnly)")
         sys.exit(1)
 
-    creds = None
     token_cache_path = Path(token_cache_path)
-
-    if token_cache_path.exists():
-        try:
-            creds = Credentials.from_authorized_user_file(str(token_cache_path), scopes)
-        except Exception as exc:
-            _info(f"Cached token unreadable ({exc}); will re-authenticate.")
-            creds = None
-
-    # Force re-auth if cached token is missing any requested scope (scope
-    # upgrade — e.g. switching from readonly to full drive for --move-handled).
-    if creds and not creds.has_scopes(scopes):
-        _info("Cached token missing required scopes; will re-authenticate "
-              "with upgraded scope (browser will open).")
-        creds = None
+    creds = load_cached_creds(token_cache_path, scopes)
 
     if creds and creds.expired and creds.refresh_token:
         try:
@@ -187,19 +222,22 @@ def get_drive_service(client_secrets_path, token_cache_path, scopes):
             creds = None
 
     if not creds or not creds.valid:
-        if not client_secrets_path:
-            _err("no cached token (or scope upgrade required) and "
-                 "--client-secrets not supplied.")
-            sys.exit(3)
-        client_secrets_path = Path(client_secrets_path).expanduser()
-        if not client_secrets_path.exists():
+        if client_secrets_path and not Path(client_secrets_path).expanduser().is_file():
             _err(f"client secrets file not found: {client_secrets_path}")
             sys.exit(3)
-        flow = InstalledAppFlow.from_client_secrets_file(
-            str(client_secrets_path), scopes
-        )
-        # run_local_server opens browser; user approves; flow returns creds
-        creds = flow.run_local_server(port=0, prompt="consent")
+        cfg = client_config(client_secrets_path, token_cache_path)
+        if not cfg:
+            _err("Drive needs a sign-in and there is no OAuth client to sign in with: save the Google app's "
+                 "client_secrets.json at ~/.config/wiki-cycle/client_secrets.json (the drive-setup page), "
+                 "or pass --client-secrets")
+            sys.exit(3)
+        flow = InstalledAppFlow.from_client_config(cfg, scopes)
+        try:
+            # run_local_server opens browser; user approves; flow returns creds
+            creds = flow.run_local_server(port=0, prompt="consent")
+        except Exception as exc:
+            _err(f"Drive sign-in failed: {exc}")
+            sys.exit(3)
         token_cache_path.parent.mkdir(parents=True, exist_ok=True)
         atomic_write_text(token_cache_path, creds.to_json())
         _info(f"Token cached at {token_cache_path}")
@@ -810,13 +848,21 @@ def main():
     service = get_drive_service(args.client_secrets, args.token_cache, scopes)
 
     if args.auth_only:
-        # OAuth completed (get_drive_service ran the flow if needed and cached
-        # the token). Emit a structured success signal and exit.
+        # OAuth completed (get_drive_service ran the flow if needed and cached the token). Look the
+        # folders up too: a real call, so a project without the Drive API fails here and not in the
+        # first cycle, and a missing folder shows now (2026-10-05).
+        folder_id = find_folder_id(service, args.folder_name)
         result = {
             "status": "auth_ok",
             "token_cache": str(args.token_cache),
             "scopes": scopes,
+            "folder": args.folder_name,
+            "folder_found": folder_id is not None,
         }
+        if args.subfolder:
+            result["subfolder"] = args.subfolder
+            result["subfolder_found"] = bool(folder_id) and find_folder_id(
+                service, args.subfolder, parent_id=folder_id) is not None
         print(json.dumps(result))
         _write_activity_log({
             "script": "wiki-fetch-drive-folder",
@@ -998,9 +1044,33 @@ def main():
     return 0
 
 
+def _drive_api_failure(exc):
+    """One line for a refused Drive API call; the usual one is the API not enabled in the client's project."""
+    text = str(exc)
+    if "accessNotConfigured" in text or "has not been used in project" in text:
+        m = re.search(r"project (\d+)", text)
+        project = f" (project {m.group(1)})" if m else ""
+        return ("the Google Drive API is not enabled in the OAuth client's Google Cloud project" + project +
+                ": enable it at https://console.cloud.google.com/apis/library/drive.googleapis.com, "
+                "wait a few minutes, and retry")
+    status = getattr(getattr(exc, "resp", None), "status", None) or type(exc).__name__
+    return f"Drive API call refused ({status}): {' '.join(text.split())[:300]}"
+
+
+def entry():
+    """main(), with a refused Drive API call reported in one line (exit 3), as a failed sign-in is."""
+    try:
+        return main()
+    except Exception as exc:
+        if type(exc).__name__ != "HttpError":  # googleapiclient.errors.HttpError, imported lazily
+            raise
+        _err(_drive_api_failure(exc))
+        return 3
+
+
 if __name__ == "__main__":
     try:
-        sys.exit(main())
+        sys.exit(entry())
     except KeyboardInterrupt:
         _err("interrupted")
         sys.exit(130)

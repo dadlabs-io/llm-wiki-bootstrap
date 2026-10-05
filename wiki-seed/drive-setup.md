@@ -40,11 +40,11 @@ uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-fetch
 
 (A bundled install has the script at `<project>/.claude/wiki-scripts/` instead.) The script reads the client secrets from the path above; `--client-secrets <path>` or the `WIKI_DRIVE_CLIENT_SECRETS` environment variable point it elsewhere.
 
-A browser window opens. Sign in. Approve the "See, edit, create, and delete all of your Google Drive files" scope. The token caches at `~/.config/wiki-cycle/drive-token.json`. Subsequent runs are silent.
+A browser window opens. Sign in. Approve the "See, edit, create, and delete all of your Google Drive files" scope. The token caches at `~/.config/wiki-cycle/drive-token.json`. Subsequent runs are silent. `--auth-only` then looks your folders up and prints `auth_ok` with `folder_found` (and, with `--subfolder <name>`, `subfolder_found`), so a missing API or folder shows here rather than in the first cycle. A later sign-in reuses the Google app recorded in the token if `client_secrets.json` is gone.
 
 ## Scope check
 
-The cycle uses **full Drive scope** (not `drive.readonly`) because `--move-handled` is default-on and moving files needs write access. If the cached token has only `drive.readonly`, the next cycle will re-auth automatically.
+The cycle uses **full Drive scope** (not `drive.readonly`) because `--move-handled` is default-on and moving files needs write access. If the cached token has only `drive.readonly`, the next cycle will re-auth automatically. A look-only scan (`--no-move-handled`) uses a full-scope token as it is.
 
 ## Drive folder structure
 
@@ -65,6 +65,7 @@ That works — each project has its own subfolder. The OAuth token is machine-gl
 
 ## Troubleshooting
 
+- **"the Google Drive API is not enabled …"** — enable it in the project the message names (the link is in the message), wait a few minutes, retry. Any refused Drive call exits 3 with one line.
 - **"folder not found"** — the folder or subfolder doesn't exist yet (or got renamed); the script never creates it. Create it in Drive. The cycle logs and continues; no need to fix immediately.
 - **Re-auth loop** — usually a wrong-scope token cached. Delete `~/.config/wiki-cycle/drive-token.json` and re-run `--auth-only`.
 - **Browser doesn't open** — usually a Docker / WSL environment without browser access. Run the OAuth from a graphical desktop session once, then the token works headless.
