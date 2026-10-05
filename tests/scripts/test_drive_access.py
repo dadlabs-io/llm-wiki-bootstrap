@@ -164,6 +164,11 @@ with tempfile.TemporaryDirectory() as td:
 
     mod.get_drive_service = real_get
 
+# 5. Instagram's share trackers are stripped, so one post is one URL.
+check("Instagram's stkn=, img_index= and igsh= are stripped", mod.strip_tracking(
+    "https://www.instagram.com/p/Dc9hjJ8kgjG/?img_index=3&stkn=bm4z&igsh=x") == "https://www.instagram.com/p/Dc9hjJ8kgjG/",
+      mod.strip_tracking("https://www.instagram.com/p/Dc9hjJ8kgjG/?img_index=3&stkn=bm4z&igsh=x"))
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

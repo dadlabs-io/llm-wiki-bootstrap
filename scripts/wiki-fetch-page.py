@@ -15,6 +15,11 @@ tables survive; when that fails, the page's visible text is saved and the header
 looks paywalled or nearly empty is flagged (`paywall=suspected`, a `paywall:` header line) and never
 fetched another way (Mark, 2026-10-05): read it in the user's own browser, or tell the user.
 
+An Instagram post URL gets its own capture (`--mode auto`, the default): the caption and the text of every
+carousel slide (clicked through; Instagram's automatic description of each image), each slide image saved
+beside the raw in `<raw>-slides/`, never the comments, no login. A reel is refused with a pointer to
+wiki-transcribe.py, which captures its speech.
+
 At most two of these run at once on a machine (an OS lock): four parallel headless browsers once hung it
 (2026-07-10). A third caller waits.
 
@@ -146,6 +151,166 @@ def render(url: str, timeout_ms: int) -> dict:
             browser.close()
 
 
+# ---------- Instagram posts (Mark, 2026-10-05) ----------
+# A raw holds the post's body text (the caption) and the text of every carousel slide, never the comments.
+# No login: Instagram's page carries the whole caption in og:description, and each slide image's alt text is
+# Instagram's own automatic description, which includes the text it recognised on the slide. Only the first
+# slides are in the page at load, so the capture clicks "Next" through the carousel. Each slide image is saved
+# beside the raw, so a garbled description can be checked against the image. A reel is not a post: its
+# substance is speech, which wiki-transcribe.py captures.
+
+# The post's own images: everything in <main> before the "More posts from …" grid (whose thumbnails are other
+# posts: the first version took them as slides, 2026-10-05), minus profile pictures.
+POST_IMAGES_JS = """() => {
+  const w = document.createTreeWalker(document.querySelector('main') || document.body, NodeFilter.SHOW_TEXT);
+  let more = null;
+  while (w.nextNode()) { if (/^\\s*More posts from/.test(w.currentNode.nodeValue)) { more = w.currentNode; break; } }
+  return Array.from(document.querySelectorAll('main img'))
+    .filter(i => !more || (i.compareDocumentPosition(more) & Node.DOCUMENT_POSITION_FOLLOWING))
+    .map(i => ({alt: i.alt || '', src: i.currentSrc || i.src}))
+    .filter(x => x.src && !x.src.startsWith('data:') && !/profile picture/i.test(x.alt));
+}"""
+IG_TRACKING = {"stkn", "img_index", "igsh", "igshid", "utm_source", "utm_medium", "utm_campaign", "utm_content"}
+MAX_SLIDES = 20
+
+
+def instagram_kind(url: str) -> str | None:
+    """"post" for an Instagram post URL, "reel" for a reel, else None."""
+    from urllib.parse import urlparse
+    u = urlparse(url)
+    if not (u.hostname or "").endswith("instagram.com"):
+        return None
+    parts = [p for p in u.path.split("/") if p]
+    if "p" in parts[:2]:
+        return "post"
+    if "reel" in parts[:2] or "reels" in parts[:2]:
+        return "reel"
+    return None
+
+
+def canonical_instagram(url: str) -> str:
+    """The post's URL without Instagram's share trackers (stkn=, img_index=, igsh=)."""
+    from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+    u = urlparse(url)
+    q = [(k, v) for k, v in parse_qsl(u.query) if k not in IG_TRACKING]
+    return urlunparse(u._replace(query=urlencode(q), fragment=""))
+
+
+def parse_og_description(og: str) -> dict:
+    """'534 likes, 2 comments - genai.works on September 3, 2026: "<caption>".' → author, posted, caption."""
+    m = re.match(r'^(?P<stats>.*?) - (?P<author>[\w.]+) on (?P<date>[^:]+): "(?P<caption>.*)"\.?\s*$', og or "", re.S)
+    if not m:
+        return {"author": "", "posted": "", "caption": (og or "").strip()}
+    return {"author": m["author"], "posted": m["date"].strip(), "caption": m["caption"].strip()}
+
+
+def capture_instagram(page) -> dict:
+    """On an open post page: close the login prompt, step through the carousel, collect each slide's alt text
+    and image URL (in order, once each), and read the caption, author and date."""
+    for sel in ('svg[aria-label="Close"]', 'div[role="dialog"] [aria-label="Close"]'):
+        try:
+            page.locator(sel).first.click(timeout=1500)
+            break
+        except Exception:  # noqa: BLE001 - no prompt is the normal case for a page that did not show one
+            pass
+    slides: dict[str, str] = {}
+    for _ in range(MAX_SLIDES + 2):
+        for im in page.evaluate(POST_IMAGES_JS):
+            slides.setdefault(im["src"].split("?")[0], (im["alt"], im["src"]))
+        nxt = page.locator('button[aria-label="Next"]').first
+        try:
+            if len(slides) >= MAX_SLIDES or not nxt.is_visible(timeout=1000):
+                break
+            nxt.click(timeout=2000)
+            page.wait_for_timeout(700)
+        except Exception:  # noqa: BLE001 - the last slide has no Next button
+            break
+    meta = page.evaluate("""() => { const m = s => { const e = document.querySelector(s); return e ? e.getAttribute('content') : ''; };
+        return {og: m('meta[property="og:description"]'), title: m('meta[property="og:title"]'),
+                time: (document.querySelector('main time') || document.querySelector('time') || {}).dateTime || ''}; }""")
+    info = parse_og_description(meta.get("og", ""))
+    return {**info, "title": meta.get("title", ""), "time": meta.get("time", ""),
+            "slides": [{"alt": a, "src": s} for a, s in slides.values()]}
+
+
+def slide_text(alt: str) -> str:
+    """The text Instagram recognised on a slide: the quoted part of "… text that says '<text>'." when present."""
+    alt = (alt or "").replace("‎", "").replace("‏", "").strip()  # Instagram's invisible direction marks
+    m = re.search(r"that says ['‘’](.*)['‘’]\.?\s*$", alt, re.S)
+    if m:
+        return m.group(1).strip()
+    if alt.startswith(("Photo by", "Photo shared by", "Video by")):
+        return f"(Instagram recognised no text: \"{alt}\" Read the image.)"
+    return alt
+
+
+def save_slide_images(page, slides: list[dict], folder: Path) -> list[str | None]:
+    """Each slide image beside the raw (slide-01.jpg …); None where a download failed."""
+    out: list[str | None] = []
+    for i, s in enumerate(slides, 1):
+        try:
+            r = page.request.get(s["src"], timeout=30000)
+            if not r.ok:
+                raise RuntimeError(f"HTTP {r.status}")
+            folder.mkdir(parents=True, exist_ok=True)
+            f = folder / f"slide-{i:02d}.jpg"
+            f.write_bytes(r.body())
+            out.append(f.name)
+        except Exception as e:  # noqa: BLE001 - the raw keeps the description; the image is a check, not the source
+            print(f"  slide {i}: image not saved ({' '.join(str(e).split())[:100]})", file=sys.stderr)
+            out.append(None)
+    return out
+
+
+def build_instagram_raw(url: str, post: dict, images: list[str | None], images_dir: str, ingested_by: str) -> str:
+    n = len(post["slides"])
+    fm = ["---", f"title: {_q(post['title'] or post['caption'][:80])}", f"source_url: {url}",
+          f"author: {_q(post['author'])}", f"posted: {post['time'] or post['posted']}",
+          "fetched_via: playwright-chromium (instagram post, no login)",
+          f"fetched: {datetime.now().astimezone().isoformat(timespec='seconds')}", f"ingested_by: {ingested_by}",
+          "type: instagram-post", f"slides: {n}", "---", ""]
+    body = [f"# {post['author'] or 'Instagram'}: {(post['caption'].splitlines() or [''])[0][:100]}", "",
+            f"**Author**: {post['author']}  ", f"**Posted**: {post['posted'] or post['time']}  ", f"**Source**: <{url}>", "",
+            "## Caption", "", post["caption"] or "_(no caption)_", "", "## Slides", ""]
+    if n:
+        body += ["Each slide's text is Instagram's own automatic recognition of the image: it can garble or "
+                 "cut words. Where it reads oddly, open the image named under it.", ""]
+    for i, (s, img) in enumerate(zip(post["slides"], images), 1):
+        body += [f"### Slide {i}", "", slide_text(s["alt"]) or "_(no text recognised)_", ""]
+        body += [f"Image: [{images_dir}/{img}]({images_dir}/{img})" if img else "Image: not saved", ""]
+    if not n:
+        body += ["_(no slides found: a single image without a description, or the page did not load)_", ""]
+    return "\n".join(fm + body)
+
+
+def fetch_instagram_post(url: str, root: Path, args) -> int:
+    from playwright.sync_api import sync_playwright
+    url = canonical_instagram(url)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            page = browser.new_context(user_agent=USER_AGENT, viewport={"width": 1280, "height": 900}).new_page()
+            page.goto(url, wait_until="networkidle", timeout=args.timeout * 1000)
+            page.wait_for_timeout(1500)
+            post = capture_instagram(page)
+            raw_dir = root / "raw"
+            stem = unique_path(raw_dir / f"{datetime.now():%Y-%m-%d}-{args.slug or slugify(post['author'] + ' ' + post['caption'][:40])}.md").stem
+            images_dir = f"{stem}-slides"
+            images = save_slide_images(page, post["slides"], raw_dir / images_dir)
+        finally:
+            browser.close()
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    raw_path = raw_dir / f"{stem}.md"
+    atomic_write_text(raw_path, build_instagram_raw(url, post, images, images_dir, args.ingested_by))
+    print(f"Saved raw: {raw_path}")
+    print(f"  Author: {post['author']}  Slides: {len(post['slides'])} ({sum(1 for i in images if i)} images saved)")
+    print(f"raw_path={raw_path}")
+    print(f"source_url={url}")
+    if post["title"]:
+        print(f"suggested_title={post['title'].splitlines()[0][:150]}")
+    return 0
+
+
 def slugify(text: str, max_len: int = 50) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
     return s[:max_len].rstrip("-") or "untitled"
@@ -192,12 +357,18 @@ def run(args) -> int:
     if not root.is_dir():
         _err(f"notebook '{topic}' not found at {root}")
         return 2
+    kind = "post" if args.mode == "instagram" else (None if args.mode == "page" else instagram_kind(args.url))
+    if kind == "reel":
+        _err("an Instagram reel: its substance is speech; fetch it with wiki-transcribe.py --url (caption + transcript)")
+        return 2
     slot = acquire_fetch_slot()
     if slot is None:
         _err(f"no page-fetch slot came free in {SLOT_MAX_WAIT}s; retry later")
         return 5
-    print(f"Fetching (playwright): {args.url}", file=sys.stderr)
+    print(f"Fetching (playwright{', instagram post' if kind else ''}): {args.url}", file=sys.stderr)
     try:
+        if kind == "post":
+            return fetch_instagram_post(args.url, root, args)
         page = render(args.url, args.timeout * 1000)
     except Exception as e:  # noqa: BLE001 - Playwright raises many kinds; the message is what matters
         msg = " ".join(str(e).split())
@@ -238,6 +409,9 @@ def main(argv=None) -> int:
     p.add_argument("--ingested-by", default="cli")
     p.add_argument("--slug", default=None)
     p.add_argument("--timeout", type=int, default=45, help="seconds per page load (default 45)")
+    p.add_argument("--mode", choices=["auto", "page", "instagram"], default="auto",
+                   help="auto: an Instagram post URL gets the post capture (caption + every slide), anything else "
+                        "the page; page / instagram force one")
     return run(p.parse_args(argv))
 
 

@@ -124,6 +124,9 @@ TRACKING_PARAMS_TO_STRIP = {
     # Ad-click / mail-merge identifiers
     "fbclid", "gclid", "gbraid", "wbraid", "msclkid", "ttclid", "twclid",
     "igshid", "mc_cid", "mc_eid", "ref_src", "ref_url", "yclid",
+    # Instagram share links (2026-10-05): a share token and which slide was showing, so the same post
+    # arrived under several URLs (32 Drive posts carried stkn=, several img_index=)
+    "stkn", "img_index", "igsh",
 }
 
 YOUTUBE_HOSTS = {"youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be"}
