@@ -19,6 +19,8 @@
     {"id": "email-approve", "kind": "email", "approve": true, "timeout": 2400, "staged": 0, "done": 0,
      "say": "/wiki-cycle --discover-only\n\nMy answer for the review, given now since I cannot answer during the run: approve recommended."},
     {"id": "email-unattended", "kind": "email", "approve": false, "timeout": 2400, "staged": 0, "done": 0,
+     "say": "/wiki-cycle --discover-only"},
+    {"id": "drive-files", "kind": "drive", "timeout": 2400, "staged": 0, "done": 0,
      "say": "/wiki-cycle --discover-only"}
   ],
   "_planned": {

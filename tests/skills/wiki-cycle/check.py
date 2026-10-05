@@ -32,6 +32,12 @@ behind redirects), which the script reads through $WIKI_GMAIL_FROM_DIR and
 $WIKI_GMAIL_RESOLVE_MAP, so no session can reach a real mailbox. Four candidates are in
 the seed notebook's scope (AI agents, language models) and three plainly are not; the
 user's answer is given in the prompt for the first case and absent in the second.
+
+Since #75 (2026-10-05) the Drive step: `drive-files` runs `--discover-only` with `drive.enabled` and a
+test Drive folder on disk (sandbox/drive/, read through $WIKI_DRIVE_FROM_DIR, so no session can reach a
+real Drive; its parent folder name exists in no real Drive either). It holds a link capture, a PDF, a
+PowerPoint deck, an image (each saved as a raw and queued), a note with no link and a voice memo (both
+left in Drive, which the report must tell the user).
 """
 
 from __future__ import annotations
@@ -189,7 +195,7 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
             text = text.replace(old, new)
         dest.write_text(text, encoding="utf-8")
 
-    (sandbox / ".gitignore").write_text("project/\nskill/\nagents/\n.claude/\nmail/\nmail-resolve.json\n",
+    (sandbox / ".gitignore").write_text("project/\nskill/\nagents/\n.claude/\nmail/\nmail-resolve.json\ndrive/\n",
                                         encoding="utf-8")
 
     index = f"cycletest-{model}-{sandbox.parent.name}"  # one per run, so two runs never share an index
@@ -202,16 +208,21 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
                   "PYTHONIOENCODING": "utf-8",
                   # every case: the email step, if a case turns it on, reads the sandbox's mail, never Gmail
                   "WIKI_GMAIL_FROM_DIR": str(sandbox / "mail"),
-                  "WIKI_GMAIL_RESOLVE_MAP": str(sandbox / "mail-resolve.json")}
+                  "WIKI_GMAIL_RESOLVE_MAP": str(sandbox / "mail-resolve.json"),
+                  # and the Drive step reads the sandbox's folder, never Drive
+                  "WIKI_DRIVE_FROM_DIR": str(sandbox / "drive")}
     return ctx
 
 
-def _write_config(ctx: dict, email: bool) -> None:
-    """The project config (and the same at the sandbox root); the email block only for email cases."""
+def _write_config(ctx: dict, email: bool, drive: bool = False) -> None:
+    """The project config (and the same at the sandbox root); the email block only for email cases, the
+    drive block only for the Drive case."""
     cfg = {"tool": "claude-code", "project_name": NOTEBOOK, "notebook": NOTEBOOK,
            "persona": "main", "registry": ctx["registry"].as_posix()}
     if email:
         cfg["email"] = {"enabled": True, "label": "...wiki-inbox", "done_label": "...wiki-inbox/read"}
+    if drive:
+        cfg["drive"] = {"enabled": True, "parent_folder": DRIVE_PARENT, "subfolder": NOTEBOOK}
     for d in (ctx["project"], ctx["sandbox"]):
         (d / ".claude").mkdir(parents=True, exist_ok=True)
         (d / ".claude" / "wiki-config.json").write_text(json.dumps(cfg, indent=2), encoding="utf-8")
@@ -438,6 +449,33 @@ def _prepare_email(ctx: dict) -> None:
     }), encoding="utf-8")
 
 
+DRIVE_PARENT = "__SKILLTEST DRIVE"  # in no real Drive: a run that missed $WIKI_DRIVE_FROM_DIR finds nothing to move
+DRIVE_LINK = "https://example.org/skilltest/handoff-files-between-agent-sessions"
+DRIVE_SOURCES = ("Agent memory survey.pdf", "Orchestrator patterns.pptx", "Screenshot 2026-10-02.png")
+DRIVE_LEFT = ("remember this.txt", "voice memo.mp3")
+DRIVE_TOKEN = Path.home() / ".config" / "wiki-cycle" / "drive-token.json"
+
+
+def _prepare_drive(ctx: dict) -> None:
+    """The test Drive folder: a link capture, three files that are the source, two the cycle leaves."""
+    sys.path.insert(0, str(HERE.parents[1] / "scripts"))
+    from _samples import PNG, tiny_pdf, tiny_pptx
+    root = ctx["sandbox"] / "drive"
+    _rmtree(root)
+    scan = root / DRIVE_PARENT / NOTEBOOK
+    scan.mkdir(parents=True)
+    (scan / "handoff notes.txt").write_text(f"Handoff files between agent sessions {DRIVE_LINK}", encoding="utf-8")
+    (scan / DRIVE_SOURCES[0]).write_bytes(tiny_pdf("A survey of memory architectures for LLM agents"))
+    (scan / DRIVE_SOURCES[1]).write_bytes(tiny_pptx("Orchestrator and worker agents: when to split a task"))
+    (scan / DRIVE_SOURCES[2]).write_bytes(PNG)
+    (scan / DRIVE_LEFT[0]).write_text("look at the agent memory papers again next week", encoding="utf-8")
+    (scan / DRIVE_LEFT[1]).write_bytes(b"ID3")
+
+
+def _mtime(p: Path):
+    return p.stat().st_mtime_ns if p.exists() else None
+
+
 def _commit_fixture(ctx: dict, case_id: str) -> None:
     """Commit this case's starting state. One repo per sandbox: deleting and re-creating
     .git between cases fails on Windows (a half-deleted .git broke the next `git add`)."""
@@ -477,9 +515,12 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_resume(ctx, cycle_id)
     elif case["kind"] == "checker":
         _prepare_checker(ctx, cycle_id)
-    _write_config(ctx, email=case["kind"] == "email")
+    _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
+    if case["kind"] == "drive":
+        _prepare_drive(ctx)
+    ctx["drive_token_before"] = _mtime(DRIVE_TOKEN)
     ctx["gmail_token_before"] = (Path.home() / ".config" / "wiki-cycle" / "gmail-token.json").exists()
     _commit_fixture(ctx, case["id"])
     ctx["fixture_files"] = snapshot(ctx)
@@ -592,6 +633,41 @@ def _check_email(case: dict, add, ctx: dict, run_dir: Path, stext: str, text: st
         add("the report gives the recommendations", "recommend" in text, "no 'recommend' in the reply")
 
 
+def _check_drive(add, ctx: dict, run_dir: Path, text: str, workers: list) -> None:
+    nb, scan = ctx["notebook"], ctx["sandbox"] / "drive" / DRIVE_PARENT / NOTEBOOK
+    sys.path.insert(0, str(ctx["scripts"]))
+    from _entry_checks import split_frontmatter
+    add("never reached the real Drive (its token untouched)", _mtime(DRIVE_TOKEN) == ctx.get("drive_token_before"))
+    add("no ingest worker spawned (--discover-only)", not workers, [a.get("description") for a in workers])
+    step_file = run_dir / "drive-fetch.json"
+    try:
+        step = json.loads(step_file.read_text(encoding="utf-8")) if step_file.is_file() else {}
+    except json.JSONDecodeError:
+        step = {}
+    add("drive-fetch.json written by the script", step.get("step") == "drive-fetch", step_file.name)
+    pending = {}
+    for t in (nb / "_inbox" / "pending").glob("*.md"):
+        if not t.name.startswith("_"):
+            fm, _ = split_frontmatter(t.read_text(encoding="utf-8"))
+            pending[str(fm.get("source") or "")] = fm
+    add("the link capture's URL queued", DRIVE_LINK in pending, sorted(pending))
+    with_raw = [fm for src, fm in pending.items() if "drive.google.com" in src and fm.get("raw_path")
+                and (nb / str(fm["raw_path"])).is_file()]
+    add("the PDF, the deck and the image queued, each with its raw", len(with_raw) == 3 and len(pending) == 4,
+        sorted(pending))
+    left = sorted(p.name for p in scan.iterdir() if p.is_file()) if scan.is_dir() else []
+    done = scan / "_completed" / ctx["cycle_id"]
+    moved = sorted(p.name for p in done.iterdir()) if done.is_dir() else []
+    add("handled files moved to _completed/<cycle_id>/; the note and the memo stay",
+        left == sorted(DRIVE_LEFT) and len(moved) == 4, {"left": left, "moved": moved})
+    report = run_dir / f"{ctx['cycle_id']}-run-cycle-report.md"
+    rtext = report.read_text(encoding="utf-8", errors="replace") if report.is_file() else ""
+    add("the cycle report names both files left in Drive", all(n in rtext for n in DRIVE_LEFT),
+        [n for n in DRIVE_LEFT if n not in rtext])
+    add("the reply tells the user what was left in Drive", all(n.split(".")[0] in text for n in DRIVE_LEFT),
+        [n for n in DRIVE_LEFT if n.split(".")[0] not in text])
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     sys.path.insert(0, str(ctx["scripts"]))
     from _entry_checks import check_entry_file, split_frontmatter
@@ -641,7 +717,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             bad.append(f"{p.name}: missing {miss}, cycle_id {d.get('cycle_id') if isinstance(d, dict) else '?'}")
     add("every step JSON follows the contract (fields, cycle_id)", jsons and not bad, bad)
     present = {p.stem for p in jsons}
-    if case["kind"] != "email":  # --discover-only stops before ingest and lint
+    discover_only = case["kind"] in ("email", "drive")
+    if not discover_only:  # --discover-only stops before ingest and lint
         add("quick steps all wrote their pair", all(s in present for s in QUICK_STEPS),
             [s for s in QUICK_STEPS if s not in present])
     full = [s for s in present if s.startswith(FULL_ONLY)]
@@ -653,7 +730,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         lsum = json.loads(lint.read_text(encoding="utf-8")).get("summary", {}) if lint.is_file() else {}
     except json.JSONDecodeError:
         lsum = {}
-    if case["kind"] != "email":
+    if not discover_only:
         add("lint-mechanical.json counts broken links", isinstance(lsum.get("broken_links"), int), lsum)
 
     # ---- what landed ----
@@ -665,7 +742,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         n_staged, f"{n_staged} entries in _inbox/proposed/"), len(proposed) == n_staged, proposed)
     p = _script(ctx, "wiki-promote.py", "--topic", NOTEBOOK, "--check")
     add("wiki-promote --check passes", p.returncode == 0, (p.stdout + p.stderr)[-250:])
-    if case["kind"] != "email":  # --discover-only leaves what it queued in pending/
+    if not discover_only:  # --discover-only leaves what it queued in pending/
         add("pending queue empty", not _tickets(nb / "_inbox" / "pending"), _tickets(nb / "_inbox" / "pending"))
     add("both tickets in _inbox/done/" if n_done == 2 else f"{n_done} ticket(s) in _inbox/done/",
         len(_tickets(nb / "_inbox" / "done")) == n_done, _tickets(nb / "_inbox" / "done"))
@@ -750,6 +827,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             f"{len(u.get('queued') or [])} queued")
     elif case["kind"] == "email":
         _check_email(case, add, ctx, run_dir, stext, text, workers)
+    elif case["kind"] == "drive":
+        _check_drive(add, ctx, run_dir, text, workers)
     elif case["kind"] == "resume":
         add("no ingest worker spawned (ingest was done)", not workers, [a.get("description") for a in workers])
         add("nothing ingested twice", len(proposed) == 2 and not [k for k in new if k in proposed], proposed)

@@ -79,6 +79,7 @@ The folder names come from `.claude/wiki-config.json`: `<parent>` is `drive.pare
 - **Files, not just links** (2026-10-05): a PDF (through `wiki-fetch-pdf.py`), a Word / PowerPoint / Excel / EPUB / Outlook file or a Google Slides/Sheets deck (MarkItDown; the original kept beside the raw), and an image (saved; its raw tells the ingest to read it) are saved under `raw/` and queued with `raw_path`, their Drive link as the source. A text file with no link and any other type are left in Drive and listed in the report's "Left in Drive" and the JSON's `deferred` with the reason; the summary counts `files_found`, `files_queued`, `files_left`.
 - The first run with `--move-handled` asks for OAuth again, once, to widen the scope from read-only to full Drive (it re-parents files).
 - `--out <run-folder>/drive-fetch.md` writes the report and, beside it, `drive-fetch.json` in the step contract's shape (since 2026-09-24; before that the orchestrator wrote the JSON by hand). The scratchpad's counts come from its `summary`.
+- **Offline**: `--from-dir <folder>` (or `$WIKI_DRIVE_FROM_DIR`) reads `<folder>/<parent>/<subfolder>/` on disk instead of Drive, with no sign-in; handled files move to its `_completed/` (the skill test's Drive case does).
 
 ## Step 1.1 — Email-fetch, in detail
 

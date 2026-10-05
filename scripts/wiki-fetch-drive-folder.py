@@ -51,6 +51,10 @@ Setup (one-time):
      in the token when the secrets file is gone; a full-Drive token also
      serves a look-only scan.
 
+For tests and offline runs: --from-dir (or $WIKI_DRIVE_FROM_DIR) reads a folder
+on disk laid out as <dir>/<folder-name>/<subfolder>/ instead of Drive, with no
+sign-in; handled files move to its _completed/<archive-subfolder>/.
+
 Usage:
   python3 wiki-fetch-drive-folder.py \\
     --client-secrets ~/Downloads/client_secret_*.json \\
@@ -78,7 +82,7 @@ from pathlib import Path
 # Atomic-write helper (icarus §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
-from urllib.parse import urlparse, urlunparse, parse_qs
+from urllib.parse import urlparse, urlunparse, parse_qs, quote, unquote
 
 
 # Path-resolution helpers live in the shared _wiki_config module (single
@@ -247,6 +251,69 @@ def get_drive_service(client_secrets_path, token_cache_path, scopes):
         _info(f"Token cached at {token_cache_path}")
 
     return build("drive", "v3", credentials=creds, cache_discovery=False)
+
+
+class _Done:
+    def __init__(self, value):
+        self.value = value
+
+    def execute(self):
+        return self.value
+
+
+class DirDrive:
+    """A folder on disk standing in for Drive (--from-dir / $WIKI_DRIVE_FROM_DIR; tests and offline runs, as
+    wiki-fetch-gmail.py's --from-dir): <dir>/<folder-name>/<subfolder>/ holds the files, a file's id is its path
+    under <dir>, its type comes from its extension, and moving it to _completed/ is a rename. Only the calls this
+    script makes are served. An id is the path quoted, so it is URL-safe like a real one (the Drive link)."""
+    FOLDER = "application/vnd.google-apps.folder"
+    MIMES = {".txt": "text/plain", ".md": "text/markdown", ".pdf": "application/pdf", ".png": "image/png",
+             ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
+             ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+             ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+             ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+             ".mp3": "audio/mpeg", ".m4a": "audio/mp4"}
+
+    def __init__(self, root):
+        self.root = Path(root)
+
+    def _id(self, path):
+        return quote(path.relative_to(self.root).as_posix(), safe="")
+
+    def _path(self, file_id):
+        return self.root / unquote(file_id)
+
+    def files(self):
+        return self
+
+    def list(self, q="", **_kw):
+        parent = re.search(r"'((?:[^'\\]|\\.)*)' in parents", q)
+        base = self._path(parent.group(1)) if parent else self.root
+        if f"mimeType = '{self.FOLDER}'" in q:
+            name = re.search(r"name = '((?:[^'\\]|\\.)*)'", q).group(1).replace("\\'", "'")
+            hits = [base / name] if (base / name).is_dir() else []
+            return _Done({"files": [{"id": self._id(p), "name": p.name, "mimeType": self.FOLDER} for p in hits]})
+        found = sorted(p for p in base.iterdir() if p.is_file()) if base.is_dir() else []
+        return _Done({"files": [{"id": self._id(p), "name": p.name,
+                                 "mimeType": self.MIMES.get(p.suffix.lower(), "application/octet-stream")}
+                                for p in found]})
+
+    def get_media(self, fileId):  # noqa: N803 - the Google client's argument name
+        return _Done(self._path(fileId).read_bytes())
+
+    def export(self, fileId, mimeType):  # noqa: N803
+        raise RuntimeError(f"{unquote(fileId)}: a folder on disk holds no Google-native files to export")
+
+    def create(self, body, fields=None):
+        path = self._path(body["parents"][0]) / body["name"]
+        path.mkdir(parents=True, exist_ok=True)
+        return _Done({"id": self._id(path)})
+
+    def update(self, fileId, addParents, removeParents=None, fields=None):  # noqa: N803
+        src = self._path(fileId)
+        dest = self._path(addParents) / src.name
+        src.rename(dest)
+        return _Done({"id": self._id(dest), "parents": [addParents]})
 
 
 def find_or_create_subfolder(service, parent_id, name):
@@ -1002,6 +1069,11 @@ def main():
              "(typically the wiki-cycle cycle_id, e.g. '2026-05-03-01'). "
              "Defaults to a UTC timestamp. Only used with --move-handled.",
     )
+    parser.add_argument(
+        "--from-dir", default=os.environ.get("WIKI_DRIVE_FROM_DIR"),
+        help="Read a folder on disk instead of Drive (tests and offline runs; or $WIKI_DRIVE_FROM_DIR): "
+             "<dir>/<folder-name>/<subfolder>/ holds the files, and handled ones move to its _completed/.",
+    )
     args = parser.parse_args()
 
     started = datetime.now().astimezone().isoformat(timespec="seconds")
@@ -1013,7 +1085,10 @@ def main():
         scopes = [DRIVE_SCOPE_FULL]
     else:
         scopes = [DRIVE_SCOPE_READONLY]
-    service = get_drive_service(args.client_secrets, args.token_cache, scopes)
+    if args.from_dir:
+        service = DirDrive(Path(args.from_dir).expanduser())
+    else:
+        service = get_drive_service(args.client_secrets, args.token_cache, scopes)
 
     if args.auth_only:
         # OAuth completed (get_drive_service ran the flow if needed and cached the token). Look the

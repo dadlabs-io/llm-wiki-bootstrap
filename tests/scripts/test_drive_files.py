@@ -32,38 +32,9 @@ drive = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(drive)
 
 
-def tiny_pdf(text: str) -> bytes:
-    """A one-page PDF whose text pdftotext / pypdf can read."""
-    objs = ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
-            None, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
-    stream = f"BT /F1 18 Tf 72 720 Td ({text}) Tj ET".encode()
-    out, offs = bytearray(b"%PDF-1.4\n"), []
-    for i, o in enumerate(objs, 1):
-        offs.append(len(out))
-        body = (f"<< /Length {len(stream)} >>\nstream\n".encode() + stream + b"\nendstream") if o is None else o.encode()
-        out += f"{i} 0 obj\n".encode() + body + b"\nendobj\n"
-    xref = len(out)
-    out += f"xref\n0 {len(objs) + 1}\n0000000000 65535 f \n".encode()
-    out += b"".join(f"{o:010d} 00000 n \n".encode() for o in offs)
-    out += f"trailer\n<< /Size {len(objs) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode()
-    return bytes(out)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _samples import PNG, tiny_pdf, tiny_pptx  # noqa: E402
 
-
-def tiny_pptx(text: str) -> bytes:
-    from pptx import Presentation
-    from pptx.util import Inches
-    prs = Presentation()
-    slide = prs.slides.add_slide(prs.slide_layouts[5])
-    slide.shapes.title.text = "Deck title"
-    slide.shapes.add_textbox(Inches(1), Inches(2), Inches(6), Inches(1)).text_frame.text = text
-    buf = io.BytesIO()
-    prs.save(buf)
-    return buf.getvalue()
-
-
-PNG = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010806000000"
-                    "1f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082")
 FILES = {
     "f-link": ("link.txt", "text/plain", b"A good article https://example.org/article-one"),
     "f-note": ("note.txt", "text/plain", b"remember to look at agent memory later"),
@@ -175,6 +146,41 @@ with tempfile.TemporaryDirectory() as td:
     check("handled files move to _completed; the two left stay",
           {"f-pdf", "f-pptx", "f-gslides", "f-png", "f-link"} <= set(moved_ids)
           and "f-note" not in moved_ids and "f-mp3" not in moved_ids, moved_ids)
+
+# --from-dir: the same files as a folder on disk, through the real command line (the wiki-cycle suite's Drive).
+ON_DISK = {"text/plain", "application/pdf", "image/png", "audio/mpeg",
+           "application/vnd.openxmlformats-officedocument.presentationml.presentation"}
+with tempfile.TemporaryDirectory() as td:
+    import os
+    import subprocess
+    tmp = Path(td)
+    nb = tmp / "vault" / "nb"
+    (nb / "wiki").mkdir(parents=True)
+    (nb / "_inbox" / "pending").mkdir(parents=True)
+    scan = tmp / "drive" / "__FOR CLAUDE" / "nb"
+    scan.mkdir(parents=True)
+    for fid, (name, mime, data) in FILES.items():
+        if mime in ON_DISK:  # a folder on disk has no Google-native files
+            (scan / name).write_bytes(data)
+    out = tmp / "run" / "drive-fetch.md"
+    p = subprocess.run([sys.executable, str(ROOT / "scripts" / "wiki-fetch-drive-folder.py"), "--subfolder", "nb",
+                        "--queue-into", "nb", "--queue-vault", str(tmp / "vault"), "--archive-subfolder", "c1",
+                        "--out", str(out)], capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       env={**os.environ, "WIKI_DRIVE_FROM_DIR": str(tmp / "drive"), "PYTHONIOENCODING": "utf-8"},
+                       timeout=300)
+    check("--from-dir: the scan exits 0 with no sign-in", p.returncode == 0, (p.stderr or p.stdout)[-500:])
+    tickets = [t.read_text(encoding="utf-8") for t in (nb / "_inbox" / "pending").glob("*.md") if not t.name.startswith("_")]
+    sources = {next((ln.split(":", 1)[1].strip() for ln in t.splitlines() if ln.startswith("source:")), "") for t in tickets}
+    check("--from-dir: the link and the four files are queued",
+          "https://example.org/article-one" in sources and len(sources) == 4
+          and all("raw_path: raw/" in t for t in tickets if "example.org" not in t), sorted(sources))
+    left = sorted(x.name for x in scan.iterdir() if x.is_file())
+    done = sorted(x.name for x in (scan / "_completed" / "c1").iterdir()) if (scan / "_completed" / "c1").is_dir() else []
+    check("--from-dir: handled files move to _completed/<cycle>/, the note and the mp3 stay",
+          left == ["note.txt", "voice memo.mp3"] and len(done) == 4, (left, done))
+    rep = out.read_text(encoding="utf-8") if out.is_file() else ""
+    check("--from-dir: the report names what was left and why", "`voice memo.mp3`: left in Drive" in rep
+          and "`note.txt`: left in Drive: no link in it" in rep, rep[-600:])
 
 failed = [n for ok, n in results if not ok]
 for ok, n in results:

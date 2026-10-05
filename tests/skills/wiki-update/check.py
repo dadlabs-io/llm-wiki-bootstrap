@@ -323,6 +323,26 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("source_url is the source", _norm_url(fm.get("source_url")) == _norm_url(case["url"]),
             fm.get("source_url"))
         add("raw captured and named in raw_path", bool(rp) and (nb / rp).is_file(), rp)
+        if case.get("fetcher"):  # the routing in fetchers.md: which script this host goes to
+            add(f"step 1: fetched with {case['fetcher']}", any(case["fetcher"] in b for b in bash))
+            add("step 1: no Docker", not any("docker" in b for b in bash))
+            raw_text = (nb / rp).read_text(encoding="utf-8", errors="replace") if rp and (nb / rp).is_file() else ""
+            if case.get("raw_has"):
+                add(f"raw holds its {case['raw_has']} section", case["raw_has"] in raw_text, rp)
+            if case.get("read_unrecognised_slides"):
+                # fetchers.md, Instagram: read the image wherever Instagram recognised no text
+                blind = re.findall(r"\(Instagram recognised no text[^\n]*\n\s*\nImage: \[[^\]]*?([^/\]]+\.jpg)\]",
+                                   raw_text)
+                unread = [img for img in blind if not any(x.replace("\\", "/").endswith(img) for x in reads)]
+                add("read every slide image Instagram did not recognise", blind and not unread,
+                    f"{len(blind)} unrecognised; unread {unread}")
+            for word in case.get("misheard", []):
+                # fetchers.md, YouTube (the same check for any transcript): no mis-heard term inside a quote. The
+                # transcription note the rule asks for names the mishearing, often as a `>` callout: not a quote
+                # (Opus, run 20261005-154329)
+                quoted = [ln for ln in body.splitlines() if ln.lstrip().startswith(">") and word in ln.lower()
+                          and "transcri" not in ln.lower()]
+                add(f"no quote carries the mis-heard '{word}'", not quoted, quoted[:2])
 
     g = check_entry_file(path)
     add("gate: no errors", not g.get("errors"), g.get("errors"))

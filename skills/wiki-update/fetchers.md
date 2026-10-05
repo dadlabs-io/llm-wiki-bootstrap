@@ -95,3 +95,5 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-transcrib
 ```
 
 Local Whisper (faster-whisper): yt-dlp fetches the audio and the post's caption, and the raw holds the caption and a timestamped transcript, never the comments. On an NVIDIA GPU it runs large-v3-turbo (a one-minute reel in about 5 s; it takes one of the search's GPU slots); without one, the CPU runs `small`, and audio over 20 minutes exits 4 with the override named (`--max-cpu-minutes 0`). `--file <path>` transcribes a local recording. Music with no speech says so. The same auto-caption check as [YouTube](#youtube) applies before you blockquote a transcript.
+
+A reel that will not download (yt-dlp's "empty media response": Instagram throttling, or a private reel) gets one more try after your other work; if that fails too, report it and leave the item, never with cookies or a login.
