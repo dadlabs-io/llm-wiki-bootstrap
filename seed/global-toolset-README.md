@@ -23,6 +23,13 @@ global-toolset/
                                               principles, cycle step contract, …)
 ```
 
+## Finding a tool
+
+Each folder under `how-to/` is one installed pack. Its entry page is `how-to/<pack>/<pack>.md` where there is one
+(`llm-wiki/llm-wiki.md`, `python/python.md`, …); otherwise start with the pages in its `workflows/` or `skills/`
+folder. For this framework, `how-to/llm-wiki/user-guide.md` explains the whole system on one page and
+`commands.md` lists every command. Project notebooks link here instead of keeping their own copies.
+
 ## How it is kept
 
 - **Installed, not edited.** The llm-wiki install (`install-wiki.ps1`, `-RefreshOnly`, `new-wiki.py --mode tooling`)

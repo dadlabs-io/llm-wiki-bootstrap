@@ -27,7 +27,7 @@ See `CLAUDE.md` at the project root for what goes where.
 
 ## How to use it
 
-The usage docs live once for every project, in the global toolset (`{{TOOLSET_DIR}}/how-to/llm-wiki/`). **The whole system on one page**: `{{TOOLSET_DIR}}/how-to/llm-wiki/user-guide.md`. **Every command**: `{{TOOLSET_DIR}}/how-to/llm-wiki/commands.md`.
+**Tools installed on this machine, and how to use them**: the global toolset, `{{TOOLSET_DIR}}/README.md`. It holds one `how-to/<pack>/` folder per installed pack, this framework's (`llm-wiki/`, start with its `user-guide.md`) and every other one.
 
 **Add an external reference (article, doc, video):**
 ```
@@ -53,7 +53,7 @@ Gather → triage → ingest (staged for your review) → check → lint → rep
 
 ## Need help?
 
-**Ask the agent in plain English anytime.** The command reference (`commands.md` in the global toolset) is loaded through `CLAUDE.md`, and the agent reads the other usage pages there when a question needs them. Try:
+**Ask the agent in plain English anytime.** The command reference is loaded through `CLAUDE.md`, and the agent reads the other usage pages in the global toolset when a question needs them. Try:
 
 - "What commands do I have?"
 - "How do I add a URL to the wiki?"
@@ -61,23 +61,7 @@ Gather → triage → ingest (staged for your review) → check → lint → rep
 - "How do I look up prior decisions?"
 - "What's the difference between /wiki-update and /wiki-cycle?"
 
-Or read the docs directly, in `{{TOOLSET_DIR}}/how-to/llm-wiki/`:
-
-| File | When |
-|---|---|
-| `user-guide.md` | How the whole system works, on one page |
-| `getting-started.md` | Your first hour after install |
-| `commands.md` | Every command, one line each |
-| `skills/wiki-update.md` | `/wiki-update` deep dive |
-| `skills/wiki-cycle.md` | `/wiki-cycle` orchestrator |
-| `skills/wrap-up.md` | `/wrap-up` at session end |
-| `skills/wiki-search.md` | `/wiki-search` ranking |
-| `drive-setup.md` | Google Drive OAuth |
-| `install.md` | Installing on another machine |
-
-The global toolset is kept by the framework's install and is never edited by hand; this wiki holds no copy of
-its pages. Your project's own conventions go in `wiki/project/best-practices/`, and anything else project-specific
-anywhere under `wiki/`.
+Your project's own conventions go in `wiki/project/best-practices/`, and anything else project-specific anywhere under `wiki/`.
 
 ## Don't
 
