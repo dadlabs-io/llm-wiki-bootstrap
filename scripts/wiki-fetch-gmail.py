@@ -72,6 +72,7 @@ from urllib.parse import urlparse, urlunparse
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
 from _wiki_config import load_config, now_stamp, today_label, topic_root  # noqa: E402
+from _markdown import html_to_markdown  # noqa: E402 — a full-text email's saved text is Markdown (task #71)
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -205,9 +206,11 @@ def parse_message(raw_bytes: bytes, msg_id: str) -> dict:
     text_part = msg.get_body(preferencelist=("plain",))
     links: list[tuple[str, str]] = []
     text = ""
+    html = None
     if html_part is not None:
+        html = html_part.get_content()
         p = _HTMLText()
-        p.feed(html_part.get_content())
+        p.feed(html)
         links = p.links
         text = p.text()
     if text_part is not None:
@@ -224,7 +227,7 @@ def parse_message(raw_bytes: bytes, msg_id: str) -> dict:
             break
     words = len(text.split())
     return {"id": msg_id, "subject": subject, "sender": sender, "sender_addr": addr.lower(),
-            "date": date, "text": text, "links": links, "words": words, "web_url": web_url}
+            "date": date, "text": text, "links": links, "words": words, "web_url": web_url, "html": html}
 
 
 # ---------- links ----------
@@ -568,10 +571,16 @@ def cmd_fetch(args) -> int:
         e["full_text"] = is_full_text(e, article_links)
         fname = f"{e['date']}-{slugify(e['subject'], 50)}-{e['id'][-8:]}.md"
         e["file"] = f"email/{fname}"
+        # A full-text email becomes a raw, so its HTML is kept as Markdown (headings, links, lists); detection
+        # above reads the plain text either way. Any other email is saved as plain text, for the review.
+        body, converted = e["text"], "text"
+        if e["full_text"] and e.get("html"):
+            md, how = html_to_markdown(e["html"])
+            body, converted = (md, "markdown") if md else (e["text"], f"text ({how})")
         atomic_write_text(run / "email" / fname,
                           f"# {e['subject']}\n\nfrom: {e['sender']}\ndate: {e['date']}\ngmail_id: {e['id']}\n"
                           f"web_url: {e['web_url'] or ''}\nwords: {e['words']}\nfull_text: {str(e['full_text']).lower()}\n"
-                          f"---\n\n{e['text']}\n")
+                          f"converted: {converted}\n---\n\n{body}\n")
         if e["full_text"]:
             n += 1
             url = e["web_url"] or f"gmail:{e['id']}"

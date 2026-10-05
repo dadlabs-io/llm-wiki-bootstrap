@@ -50,7 +50,7 @@ If you want the global install first, then create projects separately:
 
 **Globally (per machine):**
 - `~/.claude/skills/` — every wiki skill
-- `~/.claude/wiki-scripts/` — the Python helpers behind them, with their own uv environment (`pyproject.toml`, `uv.lock`, `.python-version` and the `.venv` built from them). Every skill runs a script as `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/<script>`, so the packages the scripts need (Google APIs, PDF, YouTube, YAML) are always the locked ones, apart from any project's own environment
+- `~/.claude/wiki-scripts/` — the Python helpers behind them, with their own uv environment (`pyproject.toml`, `uv.lock`, `.python-version` and the `.venv` built from them). Every skill runs a script as `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/<script>`, so the packages the scripts need (Google APIs, PDF, YouTube, YAML, and MarkItDown, which turns fetched web pages and newsletters into Markdown) are always the locked ones, apart from any project's own environment
 - `~/.claude/agents/` — the `wiki-ingester` agent, with its model config and reading list
 - `~/.claude/settings.json` — a SessionStart hook that lists a wiki project's resume files at startup and after `/clear`, and the read guard; both run the environment's own python (the file is backed up first; other settings are left alone)
 - `~/.claude/wiki-config.json` — records where the bootstrap clone lives

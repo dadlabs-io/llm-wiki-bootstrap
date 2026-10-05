@@ -174,6 +174,13 @@ with tempfile.TemporaryDirectory() as td:
     check("each email's text is saved for the session to read",
           len(list((runf / "email").glob("*.md"))) == 4 and "State is the hardest part" in
           next((runf / "email").glob("*why-state*")).read_text(encoding="utf-8"))
+    bbg_text = next((runf / "email").glob("*why-state*")).read_text(encoding="utf-8")
+    check("the full-text email is saved as Markdown: its heading and links kept (task #71)",
+          "converted: markdown" in bbg_text and "# Why State is the Hardest Thing" in bbg_text.split("---", 1)[-1]
+          and "[the Raft paper](https://substack.com/redirect/aaa111)" in bbg_text, bbg_text[:400])
+    digest_text = next((runf / "email").glob("*restarting*")).read_text(encoding="utf-8")
+    check("an email that is not full-text is saved as plain text", "converted: text\n" in digest_text
+          and "](" not in digest_text, digest_text[:300])
     check("fetch queues nothing and touches no email",
           not step["queued"] and len(list(mail.glob("*.eml"))) == 4 and len(list((nb / "_inbox" / "pending").glob("*.md"))) == 1)
     check("the step file has the contract's fields",
@@ -218,7 +225,8 @@ with tempfile.TemporaryDirectory() as td:
     check("the raw has the capture header and the article text",
           raws and raws[0].read_text(encoding="utf-8").startswith("# Why State is the Hardest Thing")
           and "source_url: https://bytebytego.substack.com/p/why-state-is-the-hardest-thing" in raws[0].read_text(encoding="utf-8")
-          and "State is the hardest part" in raws[0].read_text(encoding="utf-8"))
+          and "State is the hardest part" in raws[0].read_text(encoding="utf-8")
+          and "[the Raft paper](" in raws[0].read_text(encoding="utf-8"))
     step = json.loads((runf / "email-fetch.json").read_text(encoding="utf-8"))
     check("the step records 3 queued and the rest skipped as not approved",
           step["summary"]["queued"] == 3 and step["reviewed"] is True

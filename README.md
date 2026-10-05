@@ -26,7 +26,7 @@ it is no longer generated from `workflows-core`.
 
 ## Prerequisites
 
-[uv](https://docs.astral.sh/uv/) and Git. Every wiki script runs in its own uv environment, built beside the scripts from this repo's `uv.lock` (the Google, PDF, YouTube and YAML libraries come with it), and uv fetches the pinned Python when the machine has none. The installer asks before installing uv when it is missing. No Node.js required for the global install.
+[uv](https://docs.astral.sh/uv/) and Git. Every wiki script runs in its own uv environment, built beside the scripts from this repo's `uv.lock` (the Google, PDF, YouTube, YAML and MarkItDown libraries come with it), and uv fetches the pinned Python when the machine has none. The installer asks before installing uv when it is missing. No Node.js required for the global install.
 
 ### Optional: a GPU runtime for `qmd query` (search)
 

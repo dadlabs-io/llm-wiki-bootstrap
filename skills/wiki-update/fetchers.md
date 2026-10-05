@@ -14,6 +14,8 @@ Step 1 of the `/wiki-update` flow, by source. Every fetcher prints `raw_path=<pa
 | `github.com` repos and files, `gist.github.com` | `wiki-update.py --fetch-only` (rewrites to the raw file; a bare repo URL gets its README) |
 | Anything else | `wiki-update.py --fetch-only` |
 
+`--fetch-only` saves an HTML page as Markdown (MarkItDown, in the scripts' environment): headings, links, lists and quotes are kept, and so are the site's menus and footer, so read past them. It prints `Converted: Markdown`; `Converted: plain text (<reason>)` means MarkItDown was unavailable and the page was saved as before, without links or headings.
+
 A raw under about 1 KB, one that is mostly navigation, or one that says "enable JavaScript" came from the wrong fetcher: use Playwright. An X post is short by nature: judge it by whether the text reads complete, not by its size.
 
 ## YouTube

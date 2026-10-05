@@ -51,6 +51,7 @@ from _wiki_config import default_vault as _default_vault, default_topic as _defa
 # Mechanical half of the eval rubric — shared with wiki-lint-mechanical.py so
 # the pre-write gate and the lint backlog view enforce ONE set of rules.
 from _entry_checks import check_entry_body, check_frontmatter_loadable, format_result, read_raw_text  # noqa: E402
+from _markdown import html_to_markdown  # noqa: E402 — HTML pages saved as Markdown (task #71)
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -205,7 +206,12 @@ def acquire_source(source, raw_dir, slug_hint, skip_raw_copy=False):
         suggested_title = None
         if is_html:
             suggested_title = extract_html_title(content)
-            body_text = html_to_text(content)
+            body_text, how = html_to_markdown(content)
+            if body_text is None:
+                print(f"  Converted: plain text, links and headings lost ({how})")
+                body_text = html_to_text(content)
+            else:
+                print("  Converted: Markdown (markitdown; headings, links and lists kept; site menus too)")
         else:
             body_text = content
             # For raw text (e.g. gist raw), try to extract title from first H1 or first non-empty line

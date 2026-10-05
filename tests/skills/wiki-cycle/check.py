@@ -352,10 +352,53 @@ DOOM = "https://medium.com/@listicles/10-websites-better-than-doomscrolling-8e7d
 BREAD = "https://example.org/blog/the-perfect-sourdough-starter"
 ON_TOPIC = {KOSHY, ANA, LETTER, REPO}
 OFF_TOPIC = {HUSTLE, DOOM, BREAD}
-_ESSAY = ("Prompt caching changes how an agent should lay out its context. A cached prefix is billed at a "
-          "fraction of the price and returns faster, so the stable parts of the context belong first: the "
-          "system prompt, the tool definitions, the long reference documents. Anything that changes on every "
-          "turn, such as the latest tool result or the scratchpad, goes last, after the cache breakpoint. ")
+# A signed, first-hand essay, so a reader judging it sees a real newsletter: one paragraph repeated twelve times
+# read as filler, and Opus rightly skipped it once (2026-10-04). 700+ words, few links: a full-text email.
+_ESSAY_PARAS = [
+    "By Dana Whitfield, staff engineer on our agent platform. Over the last six weeks we moved four production "
+    "agents onto prompt caching, and the bill was the least interesting thing we learned. This letter is what we "
+    "measured, what surprised us, and the three layout rules we now hold every agent to.",
+    "The first surprise was how little of our context was actually stable. We assumed the system prompt and tool "
+    "definitions never changed between turns. In practice two of the four agents rebuilt their tool list on every "
+    "turn, sorting tools by recent use, so the cached prefix ended after the system prompt and every turn paid full "
+    "price for twenty kilobytes of tool schema. Sorting the tools once, at session start, raised our cache hit rate "
+    "from 31 percent to 88 percent on those two agents without touching anything else.",
+    "The second surprise was the timestamp. One agent put the current time in its system prompt so it could answer "
+    "date questions. That single line, changing every minute, invalidated the whole prefix. We moved the time into "
+    "the last user message, where it belongs, and the agent answered date questions exactly as well as before.",
+    "Third, the scratchpad. Our coding agent keeps a running scratchpad of what it has tried. We had placed it near "
+    "the top, beside the instructions, because it felt important. Every edit to it broke the cache for everything "
+    "after it, including the long reference documents. Moving the scratchpad after the cache breakpoint cut the "
+    "agent's median latency on long sessions by about a third, and its success rate on our internal task suite did "
+    "not move.",
+    "Here are the rules we now apply. One: order the context from most stable to least stable, and treat that order "
+    "as part of the agent's design rather than an accident of how the code assembled it. Two: anything derived from "
+    "the clock, the user, or the last tool call goes after the breakpoint, never before it. Three: when a stable "
+    "block must change, change it between sessions, not mid-session, and accept the one cold turn that follows.",
+    "We also learned where caching does not help. Short sessions of two or three turns rarely reuse a prefix long "
+    "enough to matter, and agents that fan out to many parallel workers each pay their own cold start unless the "
+    "workers share an identical prefix. For the parallel case we now give every worker the same opening block, "
+    "byte for byte, and put the per-worker instructions after it. That alone recovered most of the savings we had "
+    "assumed we were getting.",
+    "A word on measurement. The provider reports cached and uncached input tokens per request, and we log both. "
+    "Before this project nobody looked at the split. Now it sits on the same dashboard as latency and task success, "
+    "and a drop in the cache hit rate pages the owning team the way an error spike does. Two regressions this month "
+    "were caught that way within a day, both caused by a well-meant edit near the top of a system prompt.",
+    "Retrieval needed its own rule. Our support agent pulls three to five documents per question. We used to insert "
+    "them right after the system prompt, which put a different block of text at the front of every request. Now the "
+    "retrieved documents go after the stable reference material and before the conversation, inside the volatile "
+    "part, and the stable part stays byte-identical across every question. The documents themselves are not cached, "
+    "but everything before them is, and that is most of the tokens.",
+    "Finally, tool results. Some of our tools return large payloads, a full file listing or a long log. We trim them "
+    "before they enter the context and keep the full output on disk with a pointer the agent can follow. That is "
+    "good practice for any agent, but caching made the cost visible: a single forty-kilobyte log placed early in a "
+    "session was being re-sent uncached on every later turn, because everything after it had shifted.",
+    "If you take one thing from this letter, make it this: prompt caching is not a billing setting you switch on. "
+    "It is a constraint on how you lay out context, and it rewards the same discipline that makes an agent easier "
+    "to debug. Stable things first, volatile things last, and measure the split so you notice when someone breaks "
+    "it. Next week: what we changed in our evaluation harness so it caches too.",
+]
+_ESSAY = "</p><p>".join(_ESSAY_PARAS)
 
 
 def _eml(subject: str, sender: str, html: str) -> bytes:
@@ -382,7 +425,7 @@ def _prepare_email(ctx: dict) -> None:
 <a href="https://medium.com/me/email-settings">Email settings</a>
 <a href="https://help.medium.com/hc/en-us/articles/unsubscribe">Unsubscribe</a></body></html>"""
     letter = f"""<html><body><a href="https://substack.com/redirect/view-online">View in browser</a>
-<h1>What prompt caching changes for agents</h1><p>{_ESSAY * 12}</p>
+<h1>What prompt caching changes for agents</h1><p>{_ESSAY}</p>
 <a href="https://skilltest-letters.substack.com/subscribe">Subscribe</a></body></html>"""
     roundup = """<html><body><p>Links of the week</p>
 <a href="https://api.daily.dev/r/mem1">agent-scratchpad-memory: a scratchpad memory layer for coding agents</a>
@@ -466,7 +509,11 @@ def _norm_url(u) -> str:
 
 
 def _tickets(folder: Path) -> list[str]:
-    return sorted(p.name for p in folder.glob("*.md") if not p.name.startswith(("_", "README")))
+    """Queue tickets only: a file carrying a `source:` line, the rule wiki-dequeue.py uses. /wiki-discover moves
+    its checklist (`<date>-discovery.md`) into done/ after the review, as its skill says; that is not a ticket
+    (2026-10-04: three email cases failed on it)."""
+    return sorted(p.name for p in folder.glob("*.md") if not p.name.startswith(("_", "README"))
+                  and re.search(r"^source:", p.read_text(encoding="utf-8", errors="replace"), re.M))
 
 
 def _agent_calls(run: dict) -> list[dict]:
