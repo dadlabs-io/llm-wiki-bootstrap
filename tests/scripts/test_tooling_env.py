@@ -48,7 +48,7 @@ with tempfile.TemporaryDirectory() as tmp:
     check("build_tooling_env builds .venv beside the scripts", py.is_file(), line)
     check("the three environment files are copied", all((dest / n).is_file() for n in it.ENV_FILES))
     imp = subprocess.run([uv, "run", "--project", str(dest), "python", "-c",
-                          "import yaml, requests, pypdf, yt_dlp, googleapiclient, google.oauth2, google_auth_oauthlib, markitdown, faster_whisper, ctranslate2, av"],
+                          "import yaml, requests, pypdf, yt_dlp, googleapiclient, google.oauth2, google_auth_oauthlib, markitdown, faster_whisper, ctranslate2, av, playwright"],
                          capture_output=True, text=True)
     check("uv run --project <dest> imports every declared package", imp.returncode == 0, imp.stderr.strip()[-300:])
 
@@ -122,7 +122,7 @@ check("every shipped call to a wiki script runs through uv run --project", not b
 DIST_OF = {"yaml": "pyyaml", "requests": "requests", "pypdf": "pypdf", "yt_dlp": "yt-dlp",
            "googleapiclient": "google-api-python-client", "google": "google-auth",
            "google_auth_oauthlib": "google-auth-oauthlib", "markitdown": "markitdown",
-           "faster_whisper": "faster-whisper", "ctranslate2": "ctranslate2"}
+           "faster_whisper": "faster-whisper", "ctranslate2": "ctranslate2", "playwright": "playwright"}
 declared = set(re.findall(r'^\s*"([A-Za-z0-9_.-]+)', (ROOT / "pyproject.toml").read_text(encoding="utf-8"), re.M))
 local = {p.stem for p in (ROOT / "scripts").glob("*.py")}
 undeclared = []

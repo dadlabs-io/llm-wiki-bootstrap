@@ -16,6 +16,7 @@ dependencies = [
     "faster-whisper>=1.2.1",
     "ctranslate2>=4.6",  # imported directly: the CUDA device count
     "av>=15,<16",
+    "playwright>=1.55",
 ]
 
 [project.optional-dependencies]

@@ -52,6 +52,7 @@ TRAVEL_SCRIPTS = [
     "read-guard.py",  # PreToolUse/Stop/SubagentStop hook: documents are read whole (2026-09-18)
     "wiki-fetch-drive-folder.py",
     "wiki-fetch-gmail.py",  # the cycle's email step: a Gmail label's links as reviewed candidates (2026-10-03)
+    "wiki-fetch-page.py",  # JavaScript-rendered pages in headless Chromium on this machine; replaced the container's node fetcher (2026-10-05)
     "wiki-fetch-pdf.py",
     "wiki-fetch-tweet.js",  # X posts (node, no login); the skills always ran it from here, the list missed it (found 2026-10-05)
     "wiki-fetch-youtube.py",
@@ -289,6 +290,27 @@ def build_tooling_env(pkg: Path, scripts_dest: Path, dry_run: bool = False, extr
         raise RuntimeError(f"uv sync --locked failed in {scripts_dest} (exit {result.returncode}): "
                            f"{(result.stderr or result.stdout).strip()}")
     return f"built with uv sync --locked{with_extras} → {env_python(scripts_dest).as_posix()}"
+
+
+def install_page_browser(scripts_dest: Path, dry_run: bool = False) -> str:
+    """Playwright's Chromium for wiki-fetch-page.py (2026-10-05; the fetcher used to live in a Docker
+    container). Idempotent: an installed browser is not downloaded again. A failure is reported, never
+    raised: only the page fetcher needs it, and it names the same command when Chromium is missing."""
+    uv = find_uv()
+    cmd = [uv or "uv", "run", "--project", str(scripts_dest), "python", "-m", "playwright", "install", "chromium"]
+    if dry_run:
+        print(f"  WOULD run {' '.join(cmd)}")
+        return "would install Chromium for the page fetcher"
+    if not uv:
+        return "skipped: uv not found"
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=900)
+    except (OSError, subprocess.SubprocessError) as e:
+        return f"FAILED ({e}); run: {' '.join(cmd)}"
+    if r.returncode != 0:
+        tail = " ".join((r.stderr or r.stdout).split())[-200:]
+        return f"FAILED (exit {r.returncode}: {tail}); run: {' '.join(cmd)}"
+    return "Chromium for the page fetcher: installed"
 
 
 def tooling_env_status(pkg: Path, scripts_dest: Path, extras=None) -> str:
@@ -618,6 +640,7 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
     progress["step"] = "the scripts' environment"
     tooling_env = build_tooling_env(pkg, scripts_dest, dry_run=dry_run)
     progress["env"] = True
+    page_browser = install_page_browser(scripts_dest, dry_run=dry_run)
 
     # 2) Install each skill via the install-skill primitive
     #    Gate (2026-09-08): a SKILL.md / AGENT.md whose frontmatter does not
@@ -714,6 +737,7 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
 
     return {
         "tooling_env": tooling_env,
+        "page_browser": page_browser,
         "session_hook": session_hook,
         "read_guard": read_guard,
         "search_mode": search_mode,
@@ -947,6 +971,8 @@ def print_summary(summary: dict):
     print(f"  skills {verb_s}: {summary['skills_installed']}  → {summary['skills_dest']}")
     print(f"  agents {verb_s}: {summary.get('agents_installed', 0)}  → {summary.get('agents_dest', '')}")
     print(f"  environment:      {summary.get('tooling_env', '')}")
+    if summary.get("page_browser"):
+        print(f"  page browser:     {summary['page_browser']}")
     print(f"  session hook:     {summary.get('session_hook', '')}  → {CC_GLOBAL_SETTINGS_PATH} (SessionStart)")
     print(f"  read guard:       {summary.get('read_guard', '')}  → {CC_GLOBAL_SETTINGS_PATH} (PreToolUse, Stop, SubagentStop)")
     print(f"  search mode:      {summary.get('search_mode', '')}  → {CC_GLOBAL_CONFIG_PATH}")
