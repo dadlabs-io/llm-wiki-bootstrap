@@ -69,6 +69,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -602,7 +603,7 @@ def queue_entries_into_topic(entries, topic, vault, priority, added_by):
 def render_markdown(folder_name, folder_id, entries, duplicates, scanned_at,
                      queued_into=None, queued_count=None, queue_failed=None,
                      moved_into=None, moved_count=None, move_failed=None,
-                     known_entries=None):
+                     known_entries=None, file_items=None, file_results=None, left_files=None):
     """Return the report as a Markdown string."""
     known_entries = known_entries or []
     known_ids = {e["file_id"] for e in known_entries}
@@ -615,6 +616,8 @@ def render_markdown(folder_name, folder_id, entries, duplicates, scanned_at,
     lines.append(f"**Unique URLs:** {len(entries)}")
     lines.append(f"**Duplicates collapsed:** {len(duplicates)}")
     lines.append(f"**Already in wiki (not queued):** {len(known_entries)}")
+    lines.append(f"**Files that are the source (PDF, document, image):** {len(file_items or [])}")
+    lines.append(f"**Left in Drive (not read):** {len(left_files or [])}")
     if queued_into:
         if queue_failed:
             lines.append(f"**Queued into:** `{queued_into}/_inbox/pending/` — {queued_count} queued, {queue_failed} failed")
@@ -649,6 +652,23 @@ def render_markdown(folder_name, folder_id, entries, duplicates, scanned_at,
         for e in known_entries:
             title = (e["title"] or "").replace("|", "\\|").replace("\n", " ").strip()
             lines.append(f"| {title} | {e['url']} |")
+    if file_items:
+        status = {fid: (st, msg) for fid, st, msg in (file_results or [])}
+        lines.append("")
+        lines.append("## Files (the source itself)")
+        lines.append("")
+        lines.append("| File | Kind | Result |")
+        lines.append("|---|---|---|")
+        for f in file_items:
+            st, msg = status.get(f["file_id"], ("not queued (no --queue-into)", ""))
+            res = f"{st}: {msg}" if msg else st
+            lines.append(f"| {f['file'].replace('|', chr(92) + '|')} | {f['kind']} | {res.replace('|', chr(92) + '|')} |")
+    if left_files:
+        lines.append("")
+        lines.append("## Left in Drive")
+        lines.append("")
+        for f in left_files:
+            lines.append(f"- `{f['file']}`: {f['reason']}")
     if duplicates:
         lines.append("")
         lines.append("## Duplicates collapsed")
@@ -662,7 +682,7 @@ def render_markdown(folder_name, folder_id, entries, duplicates, scanned_at,
     return "\n".join(lines) + "\n"
 
 
-def cycle_step_payload(cycle_id, entries, known_entries, duplicates, queue_results, summary):
+def cycle_step_payload(cycle_id, entries, known_entries, duplicates, queue_results, summary, left_files=None):
     """The drive-fetch step JSON (cycle-step-return-format): queued = URLs written
     to _inbox/pending/, skipped = already in the wiki or a duplicate Drive file,
     deferred = a queue failure with its reason. `summary` carries the contract's
@@ -678,7 +698,10 @@ def cycle_step_payload(cycle_id, entries, known_entries, duplicates, queue_resul
         elif status == "error":
             deferred.append(row(url_of.get(file_id, file_id), message or "queue failed"))
     skipped = ([row(e["url"], "already in wiki") for e in known_entries]
-               + [row(d["url"], f"duplicate of {d['kept_file']}") for d in duplicates])
+               + [row(d["url"], f"duplicate of {d['kept_file']}") for d in duplicates]
+               + [row(url_of.get(fid, fid), "already in wiki") for fid, st, _m in queue_results or [] if st == "known"
+                  and fid not in {e["file_id"] for e in known_entries}])
+    deferred += [row(f["url"], f"{f['reason']} ({f['file']})") for f in left_files or []]
     return {
         "skill": "wiki-fetch-drive-folder",
         "cycle_id": cycle_id,
@@ -694,25 +717,167 @@ def cycle_step_payload(cycle_id, entries, known_entries, duplicates, queue_resul
     }
 
 
+# ---------- files that are the source themselves (2026-10-05, task #69) ----------
+# Until now a PDF, an image or an Office file dropped in the folder was skipped silently and never moved, so it
+# sat there every cycle. Now each is saved under the notebook's raw/ and queued with that raw (the ingest reads
+# it, never refetches): a PDF through wiki-fetch-pdf.py, a document through MarkItDown, an image saved for the
+# session to read. Anything else, and a text file with no link, is named in the report and left in Drive.
+
+GOOGLE_EXPORTS = {  # a Google-native file exported to the Office format MarkItDown reads
+    "application/vnd.google-apps.presentation":
+        ("application/vnd.openxmlformats-officedocument.presentationml.presentation", ".pptx"),
+    "application/vnd.google-apps.spreadsheet":
+        ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx"),
+}
+DOCUMENT_EXTS = {".docx", ".pptx", ".xlsx", ".xls", ".epub", ".msg"}
+
+
+def file_kind(name, mime):
+    """"link" (a text file or Google Doc holding a link), "pdf", "document", "image", or None (not read)."""
+    mime = mime or ""
+    ext = Path(name or "").suffix.lower()
+    if mime == "application/vnd.google-apps.document" or mime.startswith("text/"):
+        return "link"
+    if mime == "application/pdf" or ext == ".pdf":
+        return "pdf"
+    if mime.startswith("image/"):
+        return "image"
+    if mime in GOOGLE_EXPORTS or ext in DOCUMENT_EXTS:
+        return "document"
+    return None
+
+
+def drive_link(file_id):
+    return f"https://drive.google.com/file/d/{file_id}/view"
+
+
+def download_drive_file(service, f, folder: Path) -> Path:
+    """The file's bytes into `folder`, under its own name (a Google-native one exported to Office)."""
+    name = re.sub(r'[<>:"/\\|?*]+', "-", f.get("name") or f["id"]).strip() or f["id"]
+    if f.get("mimeType") in GOOGLE_EXPORTS:
+        mime, ext = GOOGLE_EXPORTS[f["mimeType"]]
+        data = service.files().export(fileId=f["id"], mimeType=mime).execute()
+        name = Path(name).stem + ext
+    else:
+        data = service.files().get_media(fileId=f["id"]).execute()
+    path = folder / name
+    path.write_bytes(data if isinstance(data, bytes) else str(data).encode("utf-8"))
+    return path
+
+
+def _unique(path: Path) -> Path:
+    n = 2
+    cand = path
+    while cand.exists():
+        cand = path.with_name(f"{path.stem}-{n}{path.suffix}")
+        n += 1
+    return cand
+
+
+def save_file_raw(service, item, topic, vault, root: Path, tmp: Path):
+    """Save one Drive file as a raw under root/raw/; returns raw/<file>.md (the path the queue records).
+    Raises with a one-line reason when it cannot."""
+    raw_dir = root / "raw"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    local = download_drive_file(service, item, tmp)
+    stamp = datetime.now().strftime("%Y-%m-%d")
+    slug = re.sub(r"[^a-z0-9]+", "-", Path(item["file"]).stem.lower()).strip("-")[:50] or "drive-file"
+    head = (f"---\ntitle: {json.dumps(item['file'], ensure_ascii=False)}\nsource_url: {item['url']}\n"
+            f"drive_file: {json.dumps(item['file'], ensure_ascii=False)}\n"
+            f"fetched: {datetime.now().astimezone().isoformat(timespec='seconds')}\n")
+    if item["kind"] == "pdf":
+        cmd = [sys.executable, str(Path(__file__).parent / "wiki-fetch-pdf.py"), "--topic", topic,
+               "--source", str(local), "--ingested-by", "drive-fetch", "--slug", slug]
+        if vault:
+            cmd += ["--vault", vault]
+        proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
+        m = re.search(r"^raw_path=(.+)$", proc.stdout or "", re.M)
+        if proc.returncode != 0 or not m:
+            raise RuntimeError(f"wiki-fetch-pdf.py failed: {' '.join((proc.stderr or proc.stdout).split())[-200:]}")
+        return "raw/" + Path(m.group(1).strip()).name
+    if item["kind"] == "document":
+        from _markdown import file_to_markdown  # noqa: E402
+        md, how = file_to_markdown(local)
+        if not md:
+            raise RuntimeError(f"could not convert {item['file']}: {how}")
+        keep = _unique(raw_dir / f"{stamp}-{slug}{local.suffix.lower()}")
+        shutil.copy2(local, keep)
+        raw = _unique(raw_dir / f"{stamp}-{slug}.md")
+        atomic_write_text(raw, head + f"type: drive-document\nconverted: markdown (markitdown)\noriginal: {keep.name}\n---\n\n"
+                               f"# {item['file']}\n\n{md}\n")
+        return f"raw/{raw.name}"
+    # an image: the session reads it
+    keep = _unique(raw_dir / f"{stamp}-{slug}{local.suffix.lower() or '.img'}")
+    shutil.copy2(local, keep)
+    raw = _unique(raw_dir / f"{stamp}-{slug}.md")
+    atomic_write_text(raw, head + f"type: drive-image\nimage: {keep.name}\n---\n\n# {item['file']}\n\n"
+                           f"The source is this image: read it before writing the entry.\n\n![{item['file']}]({keep.name})\n")
+    return f"raw/{raw.name}"
+
+
+def queue_drive_files(service, items, topic, vault, priority, added_by, known_keys=None):
+    """Save each file as a raw and queue it with that raw. Returns (queued, failed, results) like
+    queue_entries_into_topic; a file already in the wiki (its Drive link) is "known"."""
+    import tempfile
+    from _wiki_config import wiki_dir as _wiki_dir  # noqa: E402
+    root = Path(_wiki_dir(topic, vault=vault)).parent
+    add_script = Path(__file__).parent / "wiki-list-add.py"
+    queued, failed, results = 0, 0, []
+    with tempfile.TemporaryDirectory() as td:
+        for item in items:
+            if known_keys and url_dedup_key(item["url"]) in known_keys:
+                results.append((item["file_id"], "known", "already in wiki"))
+                continue
+            try:
+                raw_rel = save_file_raw(service, item, topic, vault, root, Path(td))
+                cmd = [sys.executable, str(add_script), "--topic", topic, "--source", item["url"],
+                       "--added-by", added_by, "--priority", str(priority), "--title", item["file"],
+                       "--raw-path", raw_rel]
+                if vault:
+                    cmd += ["--vault", vault]
+                proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+                if proc.returncode != 0:
+                    raise RuntimeError(((proc.stderr or proc.stdout or "non-zero exit").strip().splitlines() or ["?"])[-1])
+                queued += 1
+                results.append((item["file_id"], "queued", raw_rel))
+            except Exception as exc:  # noqa: BLE001 - one file's failure leaves it in Drive for next time
+                failed += 1
+                results.append((item["file_id"], "error", " ".join(str(exc).split())[:300]))
+                _info(f"  file not queued: {item['file']}: {exc}")
+    return queued, failed, results
+
+
 def scan_folder(service, folder_name, folder_id):
     """Read every file in the folder, resolve and dedupe URLs.
 
-    Each returned entry carries `file_id` (the winner) and `dup_file_ids`
-    (file_ids of any other Drive files that resolved to the same URL).
-    The move step uses dup_file_ids to clean up duplicate-side files
-    once the winner is successfully queued — otherwise they'd be left
-    orphaned in the Drive folder and re-scanned forever."""
+    Returns (entries, duplicates, others). Each entry carries `file_id` (the winner) and `dup_file_ids`
+    (file_ids of any other Drive files that resolved to the same URL); the move step uses them to clean up
+    duplicate-side files once the winner is queued, or they would be re-scanned forever. `others` is
+    {"files": [...], "left": [...]}: files that are the source themselves (pdf / document / image, each with
+    its Drive link as `url`), and files left in Drive with the reason (a text file with no link, a type the
+    cycle does not read)."""
     seen_urls = {}  # canonical url -> entry
     duplicates = []
+    others = {"files": [], "left": []}
     files = list(list_folder_files(service, folder_id))
     _info(f"Found {len(files)} files in '{folder_name}'.")
 
     for f in files:
-        text = read_file_text(service, f["id"], f.get("mimeType", ""))
-        if not text:
+        kind = file_kind(f.get("name", ""), f.get("mimeType", ""))
+        if kind in ("pdf", "document", "image"):
+            others["files"].append({"title": f.get("name", f["id"]), "file": f.get("name", f["id"]), "file_id": f["id"],
+                                    "mimeType": f.get("mimeType", ""), "kind": kind, "url": drive_link(f["id"]),
+                                    "dup_file_ids": [], "id": f["id"], "name": f.get("name", f["id"])})
             continue
-        urls = extract_urls(text)
+        if kind is None:
+            others["left"].append({"file": f.get("name", f["id"]), "file_id": f["id"], "url": drive_link(f["id"]),
+                                   "reason": f"left in Drive: {f.get('mimeType') or 'unknown type'} is not a type the cycle reads"})
+            continue
+        text = read_file_text(service, f["id"], f.get("mimeType", ""))
+        urls = extract_urls(text) if text else []
         if not urls:
+            others["left"].append({"file": f.get("name", f["id"]), "file_id": f["id"], "url": drive_link(f["id"]),
+                                   "reason": "left in Drive: no link in it" if text else "left in Drive: could not be read"})
             continue
         # Take the first URL — these files are one-link captures by convention
         raw_url = urls[0]
@@ -740,7 +905,7 @@ def scan_folder(service, folder_name, folder_id):
             "dup_file_ids": [],
         }
 
-    return list(seen_urls.values()), duplicates
+    return list(seen_urls.values()), duplicates, others
 
 
 def main():
@@ -918,13 +1083,17 @@ def main():
         scan_label = args.folder_name
         folder_id = parent_id
 
-    entries, duplicates = scan_folder(service, scan_label, folder_id)
+    entries, duplicates, others = scan_folder(service, scan_label, folder_id)
+    file_items, left_files = others["files"], others["left"]
+    for lf in left_files:
+        _info(f"  {lf['reason']}: {lf['file']}")
 
     # Already-in-wiki filter (2026-09-02). Compare canonical URL keys against
     # every source_url in the target topic before queueing, so a newsletter
     # link with fresh tracking params does not re-queue an ingested article.
     known_entries = []
-    if args.queue_into and entries and not args.requeue_known:
+    known_keys = set()
+    if args.queue_into and (entries or file_items) and not args.requeue_known:
         known_keys = wiki_source_url_keys(args.queue_into, args.queue_vault)
         entries, known_entries = split_known_entries(entries, known_keys)
         if known_entries:
@@ -942,6 +1111,14 @@ def main():
             args.queue_priority, args.queue_added_by,
         )
         _info(f"Queue result: {queued_count} queued, {queue_failed} failed.")
+    file_results = []
+    if args.queue_into and file_items:
+        _info(f"Saving {len(file_items)} files as raws and queueing them...")
+        fq, ff, file_results = queue_drive_files(service, file_items, args.queue_into, args.queue_vault,
+                                                 args.queue_priority, args.queue_added_by, known_keys)
+        queued_count, queue_failed = (queued_count or 0) + fq, (queue_failed or 0) + ff
+        queue_results = (queue_results or []) + file_results
+        _info(f"Files: {fq} queued, {ff} failed.")
     if known_entries:
         # Mark known items handled so the move step archives their Drive files.
         queue_results = (queue_results or []) + [
@@ -973,7 +1150,7 @@ def main():
         queued_count=queued_count, queue_failed=queue_failed,
         moved_into=moved_into_path,
         moved_count=moved_count, move_failed=move_failed,
-        known_entries=known_entries,
+        known_entries=known_entries, file_items=file_items, file_results=file_results, left_files=left_files,
     )
 
     if args.out:
@@ -983,7 +1160,7 @@ def main():
         _info(f"Wrote report: {out_path}")
         report_target = str(out_path)
         step = cycle_step_payload(
-            args.cycle_id or args.archive_subfolder or "", entries, known_entries, duplicates, queue_results, {
+            args.cycle_id or args.archive_subfolder or "", entries + file_items, known_entries, duplicates, queue_results, {
                 "files_seen": len(entries) + len(duplicates),  # files that yielded a URL
                 "urls_resolved": len(entries),
                 "urls_queued": queued_count or 0,
@@ -993,7 +1170,10 @@ def main():
                 "queue_failed": queue_failed or 0,
                 "moved": moved_count or 0,
                 "move_failed": move_failed or 0,
-            })
+                "files_found": len(file_items),
+                "files_queued": sum(1 for r in file_results if r[1] == "queued"),
+                "files_left": len(left_files),
+            }, left_files=left_files)
         json_path = out_path.with_suffix(".json")
         atomic_write_text(json_path, json.dumps(step, indent=2, ensure_ascii=False))
         _info(f"Wrote step JSON: {json_path}")
@@ -1032,6 +1212,8 @@ def main():
         "folder_id": folder_id,
         "unique_urls": len(entries),
         "duplicates": len(duplicates),
+        "files": len(file_items),
+        "left_in_drive": len(left_files),
         "report": report_target,
     }
     if args.queue_into:

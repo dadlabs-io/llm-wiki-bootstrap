@@ -112,7 +112,7 @@ ENTRIES = [{"title": "One", "url": "https://example.com/one", "file": "one.txt",
 DUPS = [{"file": "one-again.txt", "file_id": "f4", "kept_file": "one.txt", "url": "https://example.com/one"}]
 drive.get_drive_service = lambda *a, **k: object()
 drive.find_folder_id = lambda service, name, parent_id=None: f"id-{name}"
-drive.scan_folder = lambda service, label, folder_id: ([dict(e) for e in ENTRIES], list(DUPS))
+drive.scan_folder = lambda service, label, folder_id: ([dict(e) for e in ENTRIES], list(DUPS), {"files": [], "left": []})
 drive.wiki_source_url_keys = lambda topic, vault=None: {drive.url_dedup_key("https://example.com/known")}
 drive.queue_entries_into_topic = lambda entries, *a: (1, 1, [("f1", "queued", "ok"), ("f2", "error", "boom")])
 drive.move_handled_files = lambda *a, **k: (2, 0, [])

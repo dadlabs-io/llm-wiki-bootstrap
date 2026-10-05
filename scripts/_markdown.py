@@ -34,3 +34,21 @@ def html_to_markdown(html: str) -> tuple[str | None, str]:
     if not text:
         return None, "markitdown returned no text"
     return text, "markitdown"
+
+
+def file_to_markdown(path) -> tuple[str | None, str]:
+    """A local Word, PowerPoint, Excel, EPUB or Outlook file as Markdown (the Drive step, 2026-10-05):
+    (markdown, "markitdown") or (None, why it could not convert). A local file only, never a URL."""
+    global _converter
+    try:
+        from markitdown import MarkItDown
+    except ImportError as e:
+        return None, f"markitdown not installed ({e})"
+    try:
+        if _converter is None:
+            _converter = MarkItDown(enable_plugins=False)
+        result = _converter.convert_local(str(path))
+    except Exception as e:  # noqa: BLE001 - any converter failure is reported, never raised
+        return None, f"markitdown failed: {type(e).__name__}: {e}"
+    text = (result.text_content or "").strip()
+    return (text, "markitdown") if text else (None, "markitdown returned no text")
