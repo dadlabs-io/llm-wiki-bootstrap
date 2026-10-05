@@ -93,6 +93,14 @@ with tempfile.TemporaryDirectory() as tmp:
     check("the retired page removed", not (root / "how-to/llm-wiki/skills/retired-skill.md").exists())
     check("another pack's folder untouched", other.read_text(encoding="utf-8") == "another pack's page\n")
     check("current again", it.toolset_status(ROOT, root)["state"] == "current")
+    crlf = root / "how-to/llm-wiki/getting-started.md"
+    crlf.write_bytes(crlf.read_bytes().replace(b"
+", b"
+").replace(b"
+", b"
+"))
+    check("a copy differing only in line endings (git checkout) is current",
+          it.toolset_status(ROOT, root)["state"] == "current", it.toolset_status(ROOT, root)["replace"])
 
     # --- {{TOOLSET_DIR}} in an installed skill and agent
     text = wc.fill_placeholders("a {{WIKI_SCRIPTS_DIR}} b {{TOOLSET_DIR}} c", "/s", "/t")

@@ -166,8 +166,8 @@ def toolset_status(pkg: Path, root: Path) -> dict:
         dst = root / rel
         if not dst.is_file():
             add.append(rel.as_posix())
-        elif dst.read_bytes() != src.read_bytes():
-            replace.append(rel.as_posix())
+        elif dst.read_bytes().replace(b"\r\n", b"\n") != src.read_bytes().replace(b"\r\n", b"\n"):
+            replace.append(rel.as_posix())  # line endings ignored: git converts them on checkout in either repo
     remove = []
     for sub in ("skills", "agents"):
         folder = root / TOOLSET_PACK / sub
