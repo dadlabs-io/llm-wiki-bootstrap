@@ -374,8 +374,8 @@ def gmail_service(client_secrets: str | None, token_cache: str):
         from google_auth_oauthlib.flow import InstalledAppFlow
         from googleapiclient.discovery import build
     except ImportError as exc:
-        print(f"error: missing dependency: {exc}. Install with: pip install google-api-python-client google-auth-oauthlib",
-              file=sys.stderr)
+        print(f"error: missing dependency: {exc}. The scripts' uv environment lacks it: re-run the global install "
+              "(install-wiki.ps1 -RefreshOnly)", file=sys.stderr)
         sys.exit(1)
     scopes = [GMAIL_SCOPE]
     path = Path(token_cache).expanduser()
@@ -749,9 +749,39 @@ def cmd_archive(args) -> int:
 
 
 def cmd_auth(args) -> int:
-    gmail_service(args.client_secrets, args.token_cache)
-    print(json.dumps({"status": "auth_ok", "token_cache": str(args.token_cache), "scopes": [GMAIL_SCOPE]}))
+    svc = gmail_service(args.client_secrets, args.token_cache)
+    # One real call, so a project without the Gmail API fails here and not in the first cycle (2026-10-05).
+    names = {l["name"] for l in svc.users().labels().list(userId="me").execute().get("labels", [])}
+    cfg = (load_config() or {}).get("email") or {}
+    label = cfg.get("label") or DEFAULT_LABEL
+    done_label = cfg.get("done_label") or DEFAULT_DONE_LABEL
+    print(json.dumps({"status": "auth_ok", "token_cache": str(args.token_cache), "scopes": [GMAIL_SCOPE],
+                      "label": label, "label_found": label in names,
+                      "done_label": done_label, "done_label_found": done_label in names}))
     return 0
+
+
+def _gmail_api_failure(exc) -> str:
+    """One line for a refused Gmail API call; the usual one is the API not enabled in the client's project."""
+    text = str(exc)
+    if "accessNotConfigured" in text or "has not been used in project" in text:
+        m = re.search(r"project (\d+)", text)
+        project = f" (project {m.group(1)})" if m else ""
+        return ("the Gmail API is not enabled in the OAuth client's Google Cloud project" + project + ": enable it at "
+                "https://console.cloud.google.com/apis/library/gmail.googleapis.com, wait a few minutes, and retry")
+    status = getattr(getattr(exc, "resp", None), "status", None) or type(exc).__name__
+    return f"Gmail API call refused ({status}): {' '.join(text.split())[:300]}"
+
+
+def entry() -> int:
+    """main(), with a refused Gmail API call reported in one line (exit 3), as a failed sign-in is."""
+    try:
+        return main()
+    except Exception as exc:
+        if type(exc).__name__ != "HttpError":  # googleapiclient.errors.HttpError, imported lazily
+            raise
+        print(f"error: {_gmail_api_failure(exc)}", file=sys.stderr)
+        return 3
 
 
 def main() -> int:
@@ -784,7 +814,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     try:
-        sys.exit(main())
+        sys.exit(entry())
     except KeyboardInterrupt:
         print("error: interrupted", file=sys.stderr)
         sys.exit(130)
