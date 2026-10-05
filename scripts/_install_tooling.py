@@ -53,6 +53,7 @@ TRAVEL_SCRIPTS = [
     "wiki-fetch-drive-folder.py",
     "wiki-fetch-gmail.py",  # the cycle's email step: a Gmail label's links as reviewed candidates (2026-10-03)
     "wiki-fetch-pdf.py",
+    "wiki-fetch-tweet.js",  # X posts (node, no login); the skills always ran it from here, the list missed it (found 2026-10-05)
     "wiki-fetch-youtube.py",
     "wiki-index.py",
     "wiki-index-per-folder.py",
@@ -69,6 +70,7 @@ TRAVEL_SCRIPTS = [
     "wiki-rollback.py",
     "wiki-search-rerank.py",  # truth-status bucket sort over qmd JSON (search spec surface 1); shipped 2026-09-08
     "wiki-session-start.py",  # SessionStart hook: prints the project's resume files, silent elsewhere (2026-09-14)
+    "wiki-transcribe.py",  # local Whisper speech-to-text for media without captions: reels, podcasts (2026-10-05)
     "wiki-tasks.py",  # the At a glance task list in sessions/<persona>/task.md, behind /task-list (2026-09-15)
     "wiki-cycle-scope.py",  # what /wiki-cycle's semantic lint, claims and checker read (2026-09-24)
     "wiki-triage.py",  # intake buckets + routing pending tickets, behind /wiki-triage (2026-09-24)
@@ -237,16 +239,35 @@ def env_python(scripts_dir) -> Path:
     return venv / "Scripts" / "python.exe" if sys.platform == "win32" else venv / "bin" / "python"
 
 
+def env_extras() -> list[str]:
+    """The environment's optional extras for this machine: `gpu` (CUDA libraries for local Whisper, ~1 GB)
+    only where an NVIDIA GPU answers `nvidia-smi`; nowhere else is the download wasted (2026-10-05)."""
+    smi = shutil.which("nvidia-smi")
+    if not smi:
+        return []
+    try:
+        ok = subprocess.run([smi, "-L"], capture_output=True, timeout=20).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        ok = False
+    return ["gpu"] if ok else []
+
+
+def _extra_args(extras) -> list[str]:
+    return [a for e in extras for a in ("--extra", e)]
+
+
 class UvMissing(FileNotFoundError):
     """uv is not installed: the scripts' environment cannot be built. A FileNotFoundError, so every caller
     that already reports a missing source before anything is written reports this the same way."""
 
 
-def build_tooling_env(pkg: Path, scripts_dest: Path, dry_run: bool = False) -> str:
+def build_tooling_env(pkg: Path, scripts_dest: Path, dry_run: bool = False, extras=None) -> str:
     """Copy ENV_FILES from the package root beside the scripts and build the environment there with
-    `uv sync --locked`. Raises UvMissing when uv is absent, RuntimeError when the sync fails.
-    Returns the line the summary prints."""
+    `uv sync --locked` (plus this machine's extras, env_extras()). Raises UvMissing when uv is absent,
+    RuntimeError when the sync fails. Returns the line the summary prints."""
     pkg, scripts_dest = Path(pkg), Path(scripts_dest)
+    extras = env_extras() if extras is None else list(extras)
+    with_extras = f" --extra {' --extra '.join(extras)}" if extras else ""
     missing = [n for n in ENV_FILES if not (pkg / n).is_file()]
     if missing:
         raise FileNotFoundError(f"environment files missing from the package root {pkg}: {', '.join(missing)}")
@@ -257,22 +278,23 @@ def build_tooling_env(pkg: Path, scripts_dest: Path, dry_run: bool = False) -> s
     if dry_run:
         for n in ENV_FILES:
             print(f"  WOULD copy {pkg / n} -> {scripts_dest / n}")
-        print(f"  WOULD run {uv} sync --locked --project {scripts_dest.as_posix()}")
-        return f"would be built with uv sync --locked → {env_python(scripts_dest).as_posix()}"
+        print(f"  WOULD run {uv} sync --locked{with_extras} --project {scripts_dest.as_posix()}")
+        return f"would be built with uv sync --locked{with_extras} → {env_python(scripts_dest).as_posix()}"
     scripts_dest.mkdir(parents=True, exist_ok=True)
     for n in ENV_FILES:
         shutil.copy2(pkg / n, scripts_dest / n)
-    result = subprocess.run([uv, "sync", "--locked", "--quiet", "--project", str(scripts_dest)],
+    result = subprocess.run([uv, "sync", "--locked", "--quiet", *_extra_args(extras), "--project", str(scripts_dest)],
                             capture_output=True, text=True, encoding="utf-8", errors="replace")
     if result.returncode != 0:
         raise RuntimeError(f"uv sync --locked failed in {scripts_dest} (exit {result.returncode}): "
                            f"{(result.stderr or result.stdout).strip()}")
-    return f"built with uv sync --locked → {env_python(scripts_dest).as_posix()}"
+    return f"built with uv sync --locked{with_extras} → {env_python(scripts_dest).as_posix()}"
 
 
-def tooling_env_status(pkg: Path, scripts_dest: Path) -> str:
+def tooling_env_status(pkg: Path, scripts_dest: Path, extras=None) -> str:
     """current | stale | missing | uv-missing: whether the environment beside the scripts exists, carries the
-    package's ENV_FILES, and matches its lock (`uv sync --locked --check`). Read-only."""
+    package's ENV_FILES, and matches its lock with this machine's extras (`uv sync --locked --check`). Read-only."""
+    extras = env_extras() if extras is None else list(extras)
     pkg, scripts_dest = Path(pkg), Path(scripts_dest)
     if not env_python(scripts_dest).is_file() or not all((scripts_dest / n).is_file() for n in ENV_FILES):
         return "missing"
@@ -281,7 +303,8 @@ def tooling_env_status(pkg: Path, scripts_dest: Path) -> str:
     uv = find_uv()
     if not uv:
         return "uv-missing"
-    check = subprocess.run([uv, "sync", "--locked", "--check", "--quiet", "--project", str(scripts_dest)],
+    check = subprocess.run([uv, "sync", "--locked", "--check", "--quiet", *_extra_args(extras),
+                            "--project", str(scripts_dest)],
                            capture_output=True, text=True, encoding="utf-8", errors="replace")
     return "current" if check.returncode == 0 else "stale"
 

@@ -12,6 +12,18 @@ dependencies = [
     "pyyaml>=6.0",
     "requests>=2.32",
     "yt-dlp>=2026.3.17",
+    # local speech-to-text for media without captions (wiki-transcribe.py, 2026-10-05); av 16+ breaks faster-whisper 1.2.1
+    "faster-whisper>=1.2.1",
+    "ctranslate2>=4.6",  # imported directly: the CUDA device count
+    "av>=15,<16",
+]
+
+[project.optional-dependencies]
+# CUDA 12 cuBLAS + cuDNN 9 for faster-whisper on an NVIDIA GPU (~1 GB): the installer adds --extra gpu only where
+# nvidia-smi answers. They sit beside a system CUDA 13 without conflict (tested 2026-10-05).
+gpu = [
+    "nvidia-cublas-cu12>=12.4; sys_platform == 'win32' or sys_platform == 'linux'",
+    "nvidia-cudnn-cu12>=9,<10; sys_platform == 'win32' or sys_platform == 'linux'",
 ]
 
 [tool.uv]

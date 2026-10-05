@@ -9,6 +9,25 @@
 
 ---
 
+## 2026-10-05
+
+### Local Whisper for media without captions (the cycle shakedown, Mark's call)
+- **Changed**: new `wiki-transcribe.py`. `--url` (an Instagram reel, a video, a podcast episode): yt-dlp fetches the audio and the post's caption, faster-whisper transcribes it locally, and a raw holds the caption and a timestamped transcript, never the comments. `--file` transcribes a local recording. An NVIDIA GPU runs large-v3-turbo in float16 and takes one of the wiki search's GPU slots while it works; without one, the CPU runs `small` in int8, and audio over `--max-cpu-minutes` (default 20) exits 4 with the override named. The scripts' environment gains `faster-whisper`, `ctranslate2` and `av<16` (16+ breaks faster-whisper 1.2.1), plus a `gpu` extra (CUDA 12 cuBLAS + cuDNN 9, ~1 GB) that the installer adds only where `nvidia-smi` answers (`env_extras()`); the status check syncs with the same extras. On Windows the script puts those libraries' folders on the DLL path. `wiki-fetch-tweet.js` joins the install list (the skills always ran it from the scripts folder; the list missed it).
+- **Measured** (a 57 s reel, RTX 4070): 4.8 s on the GPU plus ~5 s to load the model; 29 s on the CPU with `small`; 84 s on the CPU with large-v3-turbo. The CUDA 12 libraries run beside the system CUDA 13.2.
+- **Proven**: `tests/scripts/test_transcribe.py` 29/29 (three planted bugs each caught); `test_tooling_env.py` 20/20 (it now imports faster_whisper, ctranslate2 and av, and maps their names); a real reel transcribed end to end from the installed copy (12.5 s). Installed: environment built with `--extra gpu`, status current.
+- **Not yet**: `/wiki-update`'s fetcher table does not route reels or caption-less video here; that waits for the Instagram post capture (task #67), so one wiki-update suite run covers both.
+
+### Drive and Gmail access problems are named, in one line (the cycle shakedown)
+- **Gmail**: `auth` makes one Gmail call and reports `label_found` / `done_label_found`; any refused API call (the API not enabled, a revoked token) is one `error:` line and exit 3, never a traceback. Found when `auth` said `auth_ok` and `fetch` then crashed: the Gmail API was not enabled in the client's project. `tests/scripts/test_gmail_api_errors.py` 12/12.
+- **Drive**: a full-Drive token now serves a look-only scan (`--no-move-handled` used to ask Google to refresh it as read-only, which it refused); a sign-in reuses the client recorded in the token when `client_secrets.json` is gone; `--auth-only` looks the folders up (`folder_found` / `subfolder_found`); a refused call is one line, exit 3. `tests/scripts/test_drive_access.py` 16/16.
+- Both missing-dependency hints name the uv install, not pip. The drive-setup page says all of it.
+
+### No archive copy of a paywalled page (task #70, Mark's call)
+- **Changed**: `wiki-fetch-page.js` no longer retries a paywalled page through archive.ph; it flags it (`paywall=suspected`, a `paywall:` header line). `fetchers.md`: read it in the user's own browser; if that cannot get through, tell the user and leave the item for them.
+
+### /wiki-update: a tier-4 source the user hands over is filed in the mode asked (task #74)
+- **Changed**: one sentence: "tier 4 never auto-ingests" means it needs a human's yes; the hand-over is that yes, so it is filed direct unless `--staged` was asked, never staged by the session's own choice. Logged in `tests/skills/PENDING.md`.
+
 ## 2026-10-04
 
 ### The task list: a short overview, details apart (agent-builder's suggestion, Mark's design)
