@@ -11,7 +11,7 @@ reviewed_for_model: claude-opus-5
 Files one external source as a wiki entry: the verbatim original under `raw/`, and a synthesis in `wiki/<folder>/` that links into what the wiki already holds. Integration is the point; an entry that sits alone is half the value.
 
 This skill does not restate the rules it follows:
-- Frontmatter fields, tier and confidence: the frontmatter spec, `<wiki>/project/best-practices/framework/wiki-frontmatter-best-practices.md`.
+- Frontmatter fields, tier and confidence: the frontmatter spec, `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`.
 - Authoring doctrine (claim classes, blockquotes, secondary figures, auto-captions): `wiki-authoring-best-practices.md` in the same folder.
 - Structure: `wiki-update.py` refuses to file an entry that fails the gate (step 5).
 
@@ -100,6 +100,6 @@ Tell the user where the entry was filed, the Scores line, any dedup hit and any 
 
 ## Cycle contract
 
-When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract](./best-practices/framework/cycle-step-return-format.md).
+When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md).
 
 The incidents behind these rules are recorded in llm-wiki-bootstrap's `CHANGELOG.md` (2026-09-14, "`/wiki-update` trimmed").

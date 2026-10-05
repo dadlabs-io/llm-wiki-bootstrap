@@ -142,10 +142,6 @@ def _seed(ctx: dict) -> None:
               *[f"wiki/{t}" for t in SCAFFOLD_TAXONOMY]]:
         (nb / d).mkdir(parents=True, exist_ok=True)
         (nb / d / ".gitkeep").touch()
-    fw = nb / "wiki" / "project" / "best-practices" / "framework"
-    fw.mkdir(parents=True, exist_ok=True)
-    for doc in (repo / "framework-docs").glob("*.md"):
-        shutil.copy2(doc, fw / doc.name)
 
 
 def render_replacements(ctx: dict) -> dict:
@@ -501,7 +497,7 @@ def _is_entry(rel: str) -> bool:
         return False
     if rel.startswith("_inbox/proposed/"):
         return True
-    return rel.startswith("wiki/") and not rel.startswith("wiki/sessions/") and "/framework/" not in rel
+    return rel.startswith("wiki/") and not rel.startswith("wiki/sessions/")
 
 
 def _norm_url(u) -> str:

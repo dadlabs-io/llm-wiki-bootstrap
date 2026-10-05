@@ -116,6 +116,103 @@ UV_INSTALL_HINT = {
 }
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _wiki_config import (  # noqa: E402
+    TOOLSET_FRAMEWORK_DOCS, TOOLSET_NAME, fill_placeholders, toolset_location)
+
+# ---------- The global toolset (task #25, 2026-10-04) ----------
+# One notebook holds every global tooling doc once: the llm-wiki pack's usage pages at how-to/llm-wiki/
+# (agent-builder's installer writes its own packs beside it), the how-to root marker, and the six
+# framework-contract docs at wiki/project/best-practices/framework/. No project wiki carries a copy.
+# A global install creates, registers and refreshes it; `new-wiki.py --phase docs` refreshes only it.
+TOOLSET_PACK = Path("how-to") / "llm-wiki"
+
+
+def toolset_files(pkg: Path) -> dict:
+    """{path inside the toolset: source file in the package} for every file this pack keeps there."""
+    pkg = Path(pkg)
+    files = {Path("README.md"): pkg / "seed" / "global-toolset-README.md",
+             Path("how-to") / "_FRAMEWORK_MANAGED.md": pkg / "seed" / "how-to" / "_FRAMEWORK_MANAGED.md"}
+    for page in sorted((pkg / "wiki-seed").glob("*.md")):
+        files[TOOLSET_PACK / page.name] = page
+    for kind, main_file in (("skills", "SKILL.md"), ("agents", "AGENT.md")):
+        for art in sorted((pkg / kind).iterdir()) if (pkg / kind).is_dir() else []:
+            if (art / main_file).is_file():
+                for page in sorted((art / "wiki-seed").glob("*.md")):
+                    files[TOOLSET_PACK / kind / page.name] = page
+    for doc in sorted((pkg / "framework-docs").glob("*.md")):
+        files[TOOLSET_FRAMEWORK_DOCS / doc.name] = doc
+    return files
+
+
+def undocumented_artifacts(pkg: Path) -> list:
+    """Every shipped skill or agent with no wiki-seed page: it would be installed undocumented."""
+    out = []
+    for kind, main_file in (("skill", "SKILL.md"), ("agent", "AGENT.md")):
+        folder = Path(pkg) / f"{kind}s"
+        for art in sorted(folder.iterdir()) if folder.is_dir() else []:
+            if (art / main_file).is_file() and not any((art / "wiki-seed").glob("*.md")):
+                out.append(f"{kind} {art.name}")
+    return out
+
+
+def toolset_status(pkg: Path, root: Path) -> dict:
+    """What a refresh of the toolset at ``root`` would do: files to add, to replace (content differs),
+    and pages of this pack's skills or agents that no longer ship (to remove). Read-only."""
+    root = Path(root)
+    files = toolset_files(pkg)
+    add, replace = [], []
+    for rel, src in files.items():
+        dst = root / rel
+        if not dst.is_file():
+            add.append(rel.as_posix())
+        elif dst.read_bytes() != src.read_bytes():
+            replace.append(rel.as_posix())
+    remove = []
+    for sub in ("skills", "agents"):
+        folder = root / TOOLSET_PACK / sub
+        remove += [(TOOLSET_PACK / sub / p.name).as_posix() for p in sorted(folder.glob("*.md"))
+                   if TOOLSET_PACK / sub / p.name not in files] if folder.is_dir() else []
+    state = "missing" if not root.is_dir() else ("stale" if add or replace or remove else "current")
+    return {"root": root.as_posix(), "state": state, "add": add, "replace": replace, "remove": remove}
+
+
+def _register_toolset(reg_path: Path, root: Path, dry_run: bool) -> str:
+    """Add the toolset's entry to the registry (root relative to it, like every entry). Read-modify-write."""
+    data = json.loads(reg_path.read_text(encoding="utf-8"))
+    notebooks = data.setdefault("notebooks", {}) if "notebooks" in data else data
+    try:
+        value = Path(os.path.relpath(root, reg_path.parent)).as_posix()
+    except ValueError:  # another drive on Windows
+        value = root.as_posix()
+    notebooks[TOOLSET_NAME] = {"root": value}
+    if not dry_run:
+        from _atomic_io import atomic_write_text
+        atomic_write_text(reg_path, json.dumps(data, indent=2) + "\n")  # ASCII escapes, as the file is kept
+    return value
+
+
+def seed_toolset(pkg: Path, dry_run: bool = False, config_path=None) -> dict:
+    """Create (and register) the global toolset if it is not there yet, then make this pack's files in it
+    match the package: add, replace, and remove the pages of skills or agents that no longer ship. Another
+    pack's folder under how-to/ is never touched. Returns the status it acted on, with ``registered``."""
+    root, reg_path, registered = toolset_location(config_path)
+    status = toolset_status(pkg, root)
+    status["registered"] = "already" if registered else "no registry"
+    if reg_path and not registered:
+        status["registered"] = ("would add " if dry_run else "added ") + _register_toolset(reg_path, root, dry_run)
+    if dry_run:
+        return status
+    files = toolset_files(pkg)
+    for rel in status["add"] + status["replace"]:
+        dst = root / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(files[Path(rel)], dst)
+    for rel in status["remove"]:
+        (root / rel).unlink()
+    return status
+
+
 def uv_install_command() -> str:
     """The official one-line uv installer for this platform (https://docs.astral.sh/uv/)."""
     return UV_INSTALL_HINT["win32" if sys.platform == "win32" else "other"]
@@ -280,13 +377,15 @@ def load_install_skill_fn(scripts_src: Path):
             except Exception as e:  # noqa: BLE001
                 _log(f"WARN: could not import install_skill() ({e}); using subprocess fallback")
 
-    def _subprocess_install(skill, tool, skills_src, skills_dest, scripts_dir, dry_run):
+    def _subprocess_install(skill, tool, skills_src, skills_dest, scripts_dir, dry_run, toolset_dir=None):
         cmd = [
             sys.executable, str(install_path),
             "--skill", skill, "--tool", tool,
             "--skills-src", str(skills_src), "--skills-dest", str(skills_dest),
             "--scripts-dir", str(scripts_dir),
         ]
+        if toolset_dir:
+            cmd += ["--toolset-dir", str(toolset_dir)]
         if dry_run:
             cmd.append("--dry-run")
         return subprocess.run(cmd).returncode
@@ -464,6 +563,7 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
     skills_dest = Path(skills_dest) if skills_dest else CC_GLOBAL_SKILLS_DIR
     scripts_dest = Path(scripts_dest) if scripts_dest else CC_GLOBAL_WIKI_SCRIPTS_DIR
     scripts_dest_value = scripts_dest.expanduser().resolve().as_posix()
+    toolset_value = toolset_location()[0].as_posix()  # {{TOOLSET_DIR}} in every installed skill and agent
 
     # 1) Copy scripts (TRAVEL_SCRIPTS + helpers)
     progress["step"] = "scripts"
@@ -527,7 +627,8 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
             skills_failed.append(skill)
             continue
         rc = install_fn(skill=skill, tool="claude-code", skills_src=skills_src,
-                        skills_dest=skills_dest, scripts_dir=scripts_dest, dry_run=dry_run)
+                        skills_dest=skills_dest, scripts_dir=scripts_dest, dry_run=dry_run,
+                        toolset_dir=toolset_value)
         if rc == 0:
             skills_installed += 1
             progress["skills"].append(skill)
@@ -535,7 +636,8 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
             skills_failed.append(skill)
 
     # 3) Install agents (TRAVEL_AGENTS) → ~/.claude/agents/
-    #    AGENT.md → <name>.md; sidecars (<name>-*.json) copied as-is; evals/ not installed.
+    #    AGENT.md → <name>.md; sidecars (<name>-*.json) copied; evals/ not installed. Both get their
+    #    {{WIKI_SCRIPTS_DIR}} / {{TOOLSET_DIR}} filled in, as a skill does.
     agents_src = pkg / "agents"
     agents_dest = CC_GLOBAL_AGENTS_DIR
     agents_installed = 0
@@ -557,9 +659,10 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
                 print(f"  WOULD copy {sc} -> {agents_dest / sc.name}")
         else:
             agents_dest.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(agent_md, agents_dest / f"{agent}.md")
-            for sc in sidecars:
-                shutil.copy2(sc, agents_dest / sc.name)
+            for src_file, dst_name in [(agent_md, f"{agent}.md")] + [(sc, sc.name) for sc in sidecars]:
+                (agents_dest / dst_name).write_text(
+                    fill_placeholders(src_file.read_text(encoding="utf-8"), scripts_dest_value, toolset_value),
+                    encoding="utf-8", newline="")
         agents_installed += 1
         progress["agents"].append(agent)
 
@@ -579,14 +682,21 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
         # 6) This machine's search mode (task #63), from the package's own GPU check
         progress["step"] = "the search mode"
         search_mode = configure_search_mode(_load_gpu_check(scripts_src), dry_run=dry_run)
+        # 7) The global toolset's docs (task #25): the pack pages and the framework-contract docs, once
+        progress["step"] = "the global toolset"
+        toolset = seed_toolset(pkg, dry_run=dry_run)
     else:
         search_mode = "skipped: not the global scripts folder"
+        toolset = None
 
     return {
         "tooling_env": tooling_env,
         "session_hook": session_hook,
         "read_guard": read_guard,
         "search_mode": search_mode,
+        "toolset": toolset,
+        "toolset_value": toolset_value,
+        "undocumented": undocumented_artifacts(pkg),
         "bootstrap": str(bootstrap),
         "scripts_copied": travel_copied,
         "helpers_copied": helpers_copied,
@@ -614,8 +724,10 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
     question is driven by the machine's state, not asked blind) and by Phase B
     as the guard that refuses to point a project at an empty global folder.
 
-    A skill is compared with its {{WIKI_SCRIPTS_DIR}} placeholder substituted
-    the way install-skill.py writes it; scripts and agents are byte copies.
+    A skill or agent is compared with its {{WIKI_SCRIPTS_DIR}} and {{TOOLSET_DIR}}
+    placeholders filled the way the install writes them; scripts are byte copies.
+    ``toolset`` is the global toolset's docs (toolset_status); stale docs make the
+    whole state stale, a missing toolset makes it partial.
     """
     bootstrap = Path(bootstrap_source)
     pkg = bootstrap
@@ -624,6 +736,7 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
     scripts_dest = Path(scripts_dest) if scripts_dest else CC_GLOBAL_WIKI_SCRIPTS_DIR
     agents_dest = Path(agents_dest) if agents_dest else CC_GLOBAL_AGENTS_DIR
     scripts_value = scripts_dest.expanduser().resolve().as_posix()
+    toolset_value = toolset_location()[0].as_posix()
 
     def _read(path: Path):
         try:
@@ -641,7 +754,7 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
         src_text, dst_text = _read(src_md), _read(dst_md)
         if src_text is None:
             continue  # package copy missing — the install would warn, not this check
-        if dst_text is None or src_text.replace("{{WIKI_SCRIPTS_DIR}}", scripts_value) != dst_text:
+        if dst_text is None or fill_placeholders(src_text, scripts_value, toolset_value) != dst_text:
             stale_skills.append(skill)
 
     missing_scripts, stale_scripts = [], []
@@ -660,14 +773,16 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
             continue
         if not dst.is_file():
             missing_agents.append(agent)
-        elif src.read_bytes() != dst.read_bytes():
+        elif fill_placeholders(_read(src) or "", scripts_value, toolset_value) != _read(dst):
             stale_agents.append(agent)
 
     # The scripts' uv environment (task #71): missing or uv-missing counts as missing, stale as stale.
     env = tooling_env_status(pkg, scripts_dest)
+    toolset = toolset_status(pkg, Path(toolset_value))
 
-    missing = bool(missing_skills or missing_scripts or missing_agents) or env in ("missing", "uv-missing")
-    stale = bool(stale_skills or stale_scripts or stale_agents) or env == "stale"
+    missing = (bool(missing_skills or missing_scripts or missing_agents) or env in ("missing", "uv-missing")
+               or toolset["state"] == "missing")
+    stale = bool(stale_skills or stale_scripts or stale_agents) or env == "stale" or toolset["state"] == "stale"
     if len(missing_skills) == len(TRAVEL_SKILLS):
         state = "missing"
     elif missing:
@@ -691,6 +806,7 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
         "missing_agents": missing_agents,
         "stale_agents": stale_agents,
         "env": env,
+        "toolset": toolset,
         "complete": not missing,
         "current": not missing and not stale,
         # one word for the skill's question: installed | stale | partial | missing
@@ -705,6 +821,10 @@ def format_tooling_status(status: dict) -> str:
              f"{status['scripts_expected'] - len(status['missing_scripts'])}/{status['scripts_expected']} scripts, "
              f"{status['agents_expected'] - len(status['missing_agents'])}/{status['agents_expected']} agents "
              f"at {status['skills_dest']}"]
+    ts = status.get("toolset")
+    if ts and ts["state"] != "current":
+        lines.append(f"  global toolset docs: {ts['state']} at {ts['root']} ({len(ts['add'])} to add, "
+                     f"{len(ts['replace'])} to replace, {len(ts['remove'])} to remove)")
     if status.get("env") and status["env"] != "current":
         lines.append(f"  environment: {status['env']}" + (f" (install uv: {uv_install_command()})"
                                                            if status["env"] == "uv-missing" else ""))
@@ -807,7 +927,18 @@ def print_summary(summary: dict):
     print(f"  session hook:     {summary.get('session_hook', '')}  → {CC_GLOBAL_SETTINGS_PATH} (SessionStart)")
     print(f"  read guard:       {summary.get('read_guard', '')}  → {CC_GLOBAL_SETTINGS_PATH} (PreToolUse, Stop, SubagentStop)")
     print(f"  search mode:      {summary.get('search_mode', '')}  → {CC_GLOBAL_CONFIG_PATH}")
+    ts = summary.get("toolset")
+    if ts:
+        verb_t = "would write" if dry else "wrote"
+        print(f"  global toolset:   {verb_t} {len(ts['add'])} new, {len(ts['replace'])} changed, removed "
+              f"{len(ts['remove'])}; registry: {ts['registered']}  → {ts['root']}")
+    else:
+        print("  global toolset:   skipped: not the global scripts folder")
+    if summary.get("undocumented"):
+        _log("WARN: shipped without a usage page (add <artifact>/wiki-seed/<name>.md): "
+             + ", ".join(summary["undocumented"]))
     print(f"  placeholder {{{{WIKI_SCRIPTS_DIR}}}} → {summary['scripts_dest_value']}")
+    print(f"  placeholder {{{{TOOLSET_DIR}}}}      → {summary.get('toolset_value', '')}")
     print()
     print("  Restart Claude Code if these dirs are new so it picks up the")
     print("  new skills + scripts.")

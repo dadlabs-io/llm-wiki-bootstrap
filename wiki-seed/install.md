@@ -54,11 +54,12 @@ If you want the global install first, then create projects separately:
 - `~/.claude/agents/` — the `wiki-ingester` agent, with its model config and reading list
 - `~/.claude/settings.json` — a SessionStart hook that lists a wiki project's resume files at startup and after `/clear`, and the read guard; both run the environment's own python (the file is backed up first; other settings are left alone)
 - `~/.claude/wiki-config.json` — records where the bootstrap clone lives
+- the global toolset — a notebook named `global-toolset` (in your notebooks vault, registered in `linked-notebooks.json`; `~/.claude/global-toolset` on a machine with no vault) holding these usage pages and the six framework-contract docs, once for every project; every install and refresh creates it and brings it up to date, and the skills read the framework docs from it
 
 **Per project (when you scaffold one):**
 - `<project>/.claude/wiki-config.json` — per-project config: which tooling it uses, where the wiki is, the two folder answers
 - `<project>/CLAUDE.md`, `README.md`, `.gitignore`
-- the wiki root — `<project>/llm-wiki/` or a registered notebook in your notebooks vault — with `README`, `how-to/`, `wiki/` (the folders you chose; `sessions/` always) and `raw/sessions/`
+- the wiki root — `<project>/llm-wiki/` or a registered notebook in your notebooks vault — with `README`, `wiki/` (the folders you chose; `sessions/` always) and `raw/sessions/`; no usage docs, which live in the global toolset
 - only with `-SkillsInstall bundled`: `<project>/.claude/skills/`, `wiki-scripts/`, `wiki-templates/` (a private copy of the tooling)
 
 For Cursor users (Windows installer only; the Mac/Linux installer does not support Cursor yet): `.cursor/` replaces `.claude/`, the skills are always bundled, and `.cursor/rules/*.mdc` are generated from the SKILL.md files so Cursor's agent picks them up natively.
@@ -100,11 +101,11 @@ git pull
 The plain run is the refresh (press Enter at its two prompts, or run it non-interactively).
 `-RefreshOnly` is still accepted for old scripts but does nothing extra. `wiki-upgrade.py` does the
 same refresh; from inside Claude Code, `/new-wiki --sync` refreshes only the global `/new-wiki`
-skill. None of these touches a project. To refresh a project's framework-managed docs (the `how-to/llm-wiki/` pages and the six
-framework-contract docs), from the bootstrap clone:
+skill. None of these touches a project. Each refresh also brings the global toolset's docs (these pages and the six
+framework-contract docs) up to date. To refresh those docs alone, from the bootstrap clone:
 ```
-uv run python scripts/new-wiki.py --phase docs --check --target-folder <project>   # preview, writes nothing
-uv run python scripts/new-wiki.py --phase docs --target-folder <project>           # refresh
+uv run python scripts/new-wiki.py --phase docs --check   # preview, writes nothing
+uv run python scripts/new-wiki.py --phase docs           # refresh
 ```
 A bundled install (skills copied into the project) refreshes them by re-running the scaffold
 against the same folder with `--force`.

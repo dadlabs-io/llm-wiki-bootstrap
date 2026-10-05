@@ -729,7 +729,7 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
     confidence, tags. Body footer adds visible links to source_url and raw_path.
 
     `tier` is the source quality tier: 1-4 or `self`. Defined only in the frontmatter spec
-    (`project/best-practices/framework/wiki-frontmatter-best-practices.md`, "tier rubric"),
+    (the global toolset's `wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`, "tier rubric"),
     which tiers posts and individual repositories by author and evidence, not by platform
     (2026-09-23). Not restated here: a paraphrase drifts (the spec's restatement rule).
 

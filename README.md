@@ -73,7 +73,10 @@ cd ~/llm-wiki-bootstrap
 
 No flags needed. Installs all wiki skills to `~/.claude/skills/`, all wiki
 scripts to `~/.claude/wiki-scripts/` (with their uv environment, `.venv`, beside them), and the wiki
-agents to `~/.claude/agents/`. Idempotent.
+agents to `~/.claude/agents/`, and creates the **global toolset**: one notebook, `global-toolset`
+(in your notebooks vault, registered in `linked-notebooks.json`; `~/.claude/global-toolset` with no
+vault), that holds every usage page and the six framework-contract docs once, for every project.
+Idempotent: a refresh brings the toolset's docs up to date with the skills.
 
 Restart Claude Code after install so it picks up the new skills.
 
@@ -90,7 +93,7 @@ Restart Claude Code after install so it picks up the new skills.
 Those are the five you will use daily. The rest of the pack installs with them — `/wiki`,
 `/wiki-lint`, `/wiki-promote`, `/wiki-refresh`, `/wiki-report`, `/wiki-claims`, `/wiki-verify`,
 `/wiki-rollback`, `/wiki-discover`, `/wiki-list`, `/wiki-triage`, `/task-list` — and every one has a usage page in
-`wiki-seed/` (also copied into each project's `how-to/llm-wiki/`). The install manifests
+`wiki-seed/` (installed once, into the global toolset's `how-to/llm-wiki/`). The install manifests
 are `TRAVEL_SKILLS`, `TRAVEL_SCRIPTS` and `TRAVEL_AGENTS` in `scripts/_install_tooling.py`.
 
 | Agent | What it's for |
@@ -115,13 +118,14 @@ the wiki lives — and scaffolds:
 ├── .claude/wiki-config.json ← points at the global skills + scripts (no per-project copy)
 ├── llm-wiki/
 │   ├── README.md
-│   ├── how-to/              ← usage docs, one folder per installed package (llm-wiki/ is the framework's)
-│   ├── wiki/                ← your project's entries: research/, project/ (with the framework-contract docs), sessions/
+│   ├── wiki/                ← your project's entries: research/, project/, sessions/
 │   └── raw/sessions/        ← session snapshots
-├── CLAUDE.md
+├── CLAUDE.md                ← imports the command reference from the global toolset
 ├── README.md
 └── .gitignore
 ```
+
+No usage docs are copied into the project: they live in the global toolset.
 
 Two variants. `--skills-install bundled` (and every Cursor install) copies the skills, scripts
 and templates into the project's `.claude/` (or `.cursor/`) instead of using the global ones. A
@@ -197,16 +201,16 @@ git pull
 From inside Claude Code, `/new-wiki --sync` refreshes only the global `/new-wiki` skill from
 the recorded bootstrap source; the installer (or `wiki-upgrade.py`) refreshes everything.
 Neither touches a project. `uv run python scripts/new-wiki.py --mode status` says whether a
-refresh is due (installed / stale / partial / missing, with the differing files named). To bring a project's framework-managed
-docs (its `how-to/llm-wiki/` pages and the six framework-contract docs) up to date:
+refresh is due (installed / stale / partial / missing, with the differing files named, the global toolset's
+docs included). Every refresh also updates the global toolset; to refresh only its docs:
 
 ```
-uv run python scripts/new-wiki.py --phase docs --check --target-folder <project>   # preview
-uv run python scripts/new-wiki.py --phase docs --target-folder <project>           # refresh
+uv run python scripts/new-wiki.py --phase docs --check   # preview
+uv run python scripts/new-wiki.py --phase docs           # refresh
 ```
 
-`--all-notebooks` does either for every notebook in a registry. A bundled install refreshes its
-project-local skills by re-running the scaffold against the same folder with `--force`.
+A bundled install refreshes its project-local skills by re-running the scaffold against the same
+folder with `--force`.
 
 ## Next step
 

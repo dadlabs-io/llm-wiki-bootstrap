@@ -444,13 +444,60 @@ def set_search_mode(mode: str, config_path=None) -> Path:
     return p
 
 
+# ---------- the global toolset (one notebook for every global tooling doc, task #25) ----------
+# The pack usage docs (how-to/<pack>/) and the six framework-contract docs live once, in the
+# global-toolset notebook, never in a project's wiki (the user, 2026-10-04). Its place: the
+# registry entry of that name; else, with a registry, <registry folder>/notebooks/global-toolset
+# (where the install creates and registers it); else, a machine with no registry,
+# ~/.claude/global-toolset. The install writes the answer into every skill as {{TOOLSET_DIR}}.
+TOOLSET_NAME = "global-toolset"
+TOOLSET_FRAMEWORK_DOCS = Path("wiki") / "project" / "best-practices" / "framework"
+
+
+def toolset_location(config_path=None):
+    """(root, registry_path, registered) for the global toolset; read-only.
+
+    The registry is the machine config's ``registry`` pointer (~/.claude/wiki-config.json, or
+    ``config_path``). ``registered`` is True when the registry already has the entry."""
+    p = Path(config_path) if config_path else global_config_path()
+    try:
+        cfg = json.loads(p.read_text(encoding="utf-8")) if p.is_file() else {}
+    except (json.JSONDecodeError, OSError):
+        cfg = {}
+    reg_value = cfg.get("registry")
+    if not reg_value:
+        return (Path.home() / ".claude" / TOOLSET_NAME).resolve(), None, False
+    reg_path = Path(reg_value)
+    try:
+        data = json.loads(reg_path.read_text(encoding="utf-8"))
+        reg = data.get("notebooks", data)
+    except (json.JSONDecodeError, OSError):
+        reg = {}
+    entry = reg.get(TOOLSET_NAME)
+    root_value = entry.get("root") if isinstance(entry, dict) else entry
+    if root_value:
+        return _abs_against(reg_path, root_value).resolve(), reg_path, True
+    vault = reg_path.parent / "notebooks"
+    return ((vault if vault.is_dir() else reg_path.parent) / TOOLSET_NAME).resolve(), reg_path, False
+
+
+def toolset_dir_value(config_path=None) -> str:
+    """The toolset root as the install writes it for {{TOOLSET_DIR}}: absolute, forward slashes."""
+    return toolset_location(config_path)[0].as_posix()
+
+
+def fill_placeholders(text: str, scripts_value: str, toolset_value: str) -> str:
+    """An installed skill's or agent's text: {{WIKI_SCRIPTS_DIR}} and {{TOOLSET_DIR}} filled in."""
+    return text.replace("{{WIKI_SCRIPTS_DIR}}", scripts_value).replace("{{TOOLSET_DIR}}", toolset_value)
+
+
 def list_topics(cwd=None):
     """All known notebooks/topics: registry keys → explicit topics[] →
     [default_topic()]."""
     cfg = load_config(cwd)
     reg, _ = load_registry(cwd, cfg)
     if reg:
-        return list(reg.keys())
+        return [k for k in reg.keys() if k != TOOLSET_NAME]
     ts = cfg.get("topics")
     if isinstance(ts, list) and ts:
         return [str(t) for t in ts]

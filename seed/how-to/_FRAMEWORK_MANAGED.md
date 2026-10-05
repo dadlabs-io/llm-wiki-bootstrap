@@ -3,64 +3,36 @@ title: "How-to folder — framework-managed, one folder per installed package"
 type: how-to
 pack: llm-wiki
 installed_by: install-wiki
-date: 2026-09-08
+date: 2026-10-04
 ---
 
 # ⚠️ This folder is framework-managed
 
-`llm-wiki/how-to/` (this folder) is shipped and refreshed by the installed packs, and its layout is **one
-folder per installed package** (2026-09-08):
+`how-to/` in the global toolset (this folder) holds the usage docs of every package installed globally on this
+machine, **one folder per package**:
 
 ```
 how-to/
   _FRAMEWORK_MANAGED.md      ← this marker, the only file at the root
   llm-wiki/                  ← the LLM-wiki framework's own pack: llm-wiki.md (entry page),
-                                getting-started.md, commands.md, install.md, drive-setup.md,
-                                skills/<name>.md (one per skill), agents/<name>.md (one per agent)
-  <other-package>/           ← every other pack you install (e.g. agent-builder/) — same shape
+                                getting-started.md, commands.md, user-guide.md, install.md, drive-setup.md,
+                                skill-suggestions.md, skills/<name>.md, agents/<name>.md
+  <other-package>/           ← every other pack you install (e.g. do-code-change/) — same shape
 ```
 
-Each package's folder is written by that package's installer and **overwritten on its next refresh**
-(`new-wiki.py --phase docs --target-folder <project>` refreshes `llm-wiki/`, and with `--check` only reports
-what it would change, `--all-notebooks` doing either for every registered notebook; re-running Phase B with `--force` rewrites the whole framework tree; another pack's
-installer refreshes its own folder). A refresh
-never removes another package's folder. `/new-wiki --sync` refreshes the global skills and never touches a
-project.
-
-Before 2026-09-08 the framework's pages sat flat at this root (`commands.md`, `getting-started.md`,
-`install.md`, `drive-setup.md`, `wiki-cycle.md`, `wiki-search.md`, `wiki-update.md`, `wrap-up.md`,
-`upd-docs.md`). They moved into `llm-wiki/` (the four skill guides folded into their skill pages). A project
-created before then still carries the old root copies until `--phase docs --prune-retired` removes them.
+Each package's folder is written by that package's installer and **overwritten on its next refresh**. The
+llm-wiki install (`install-wiki.ps1 -RefreshOnly`, or `new-wiki.py --phase docs` for the docs alone, with `--check`
+to report first) keeps `llm-wiki/`; another pack's installer keeps its own folder. A refresh never removes
+another package's folder. Until 2026-10-04 every project wiki carried its own copy of these folders; they live
+only here now.
 
 ## Don't hand-edit files here
 
-If you edit one of these docs in place, your changes are at risk on the next refresh.
+An edit made here is lost on the next refresh. Change the page in its package's source (for llm-wiki, the
+llm-wiki-bootstrap repo: `wiki-seed/`, or `<skill>/wiki-seed/`) and refresh.
 
-## Customizing — where your edits belong
+## Project-specific how-to docs
 
-Project-specific how-to docs go under `llm-wiki/wiki/`:
-
-```
-llm-wiki/wiki/how-to/<your-doc>.md
-```
-
-That folder is YOUR content, not framework-managed. It survives every refresh and is the right place for
-project-specific workflows, team conventions that supplement the shipped docs, and notes that reference
-your specific repo.
-
-## Customizing — overriding a shipped doc
-
-Copy the shipped page, e.g. `llm-wiki/how-to/llm-wiki/skills/wrap-up.md`, to
-`llm-wiki/wiki/how-to/wrap-up.md` and edit the copy; add a "Why this diverges" section at the top. The
-shipped version stays untouched as framework canon.
-
-## V2 plan
-
-A future version will layer overrides properly — the framework looks for `wiki/how-to/<name>.md` first and
-falls back to the shipped page — so overrides are first-class. Until then, the copy-elsewhere pattern above
-is the workaround.
-
-## See also
-
-- `llm-wiki/README.md` — the per-project README explains the framework-managed vs user-content split
-- `V2_ROADMAP.md` in the llm-wiki-bootstrap source — tracks the override-layering work
+They belong in the project's own wiki, e.g. `wiki/project/patterns/<your-doc>.md`: that is the project's content,
+never touched by a refresh. To diverge from a shipped page for one project, write the project's version there and
+say at its top why it diverges.

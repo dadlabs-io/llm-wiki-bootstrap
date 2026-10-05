@@ -49,7 +49,7 @@ Entries are staged in `_inbox/proposed/` unless `--direct`; the user reviews the
 
 **Step 0 — run folder.** `cycle_id` = `<local date>-<NN>`, NN the next free number in `_inbox/reports/<date>/`. Create `_inbox/reports/<date>/<cycle_id>/` (the run folder) and its `scratchpad.md` from the template in [reference.md](./reference.md), status `in_progress`. `--resume <cycle_id>`: read that run's scratchpad and continue from the phase after the last `done`; never repeat a done phase (its outputs are on disk).
 
-**Every step writes `<step>.json` + `<step>.md` in the run folder** ([cycle step return format](./best-practices/framework/cycle-step-return-format.md); the JSON is authoritative): the scripts do it when given `--cycle-id <cycle_id> --run-folder <run-folder>` (or `--out` for Drive); for a model step, the orchestrator writes the pair. A step whose JSON says `status != completed` or has `errors` is flagged in the scratchpad; most failures do not block the steps after it. Update the scratchpad after every step.
+**Every step writes `<step>.json` + `<step>.md` in the run folder** ([cycle step return format]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md); the JSON is authoritative): the scripts do it when given `--cycle-id <cycle_id> --run-folder <run-folder>` (or `--out` for Drive); for a model step, the orchestrator writes the pair. A step whose JSON says `status != completed` or has `errors` is flagged in the scratchpad; most failures do not block the steps after it. Update the scratchpad after every step.
 
 **Step 1.0 — Drive-fetch** (only when the project config has `drive.enabled: true`):
 

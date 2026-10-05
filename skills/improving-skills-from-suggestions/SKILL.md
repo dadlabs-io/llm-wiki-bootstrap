@@ -51,8 +51,8 @@ the two lists.
 **Step 2 — Check each suggestion against the evidence.** Read in full the suggestion, the artifact's main file and any
 script or reference the Issue names, and in each record folder `checkpoints.md` plus any file the Issue points to.
 Then put each suggestion in exactly one class:
-- **not this library** — `artifact` is `null`. Say whose it looks like, from the pack its usage page sits in:
-  `how-to/llm-wiki/` is llm-wiki's, any other pack agent-builder's; a plugin's skill is that plugin's, otherwise unknown.
+- **not this library** — `artifact` is `null`. Say whose it looks like, from the pack its usage page sits in, in the global
+  toolset (`{{TOOLSET_DIR}}/how-to/<pack>/`): `llm-wiki/` is llm-wiki's, any other pack agent-builder's; a plugin's skill is that plugin's, otherwise unknown.
 - **already covered** — the artifact already says it or its script already does it; cite the file and line.
 - **turned down before** — an `earlier` entry with `same_issue` and a turned-down decision; quote the decision.
   Propose it again only when the new suggestion carries evidence the earlier one lacked, and name that evidence.

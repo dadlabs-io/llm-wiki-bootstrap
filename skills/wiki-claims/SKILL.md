@@ -133,7 +133,7 @@ For each potential contradiction, the internal record shape is:
 }
 ```
 
-When emitting to the cycle-contract `queued[]` (see [cycle-step-return-format](./best-practices/framework/cycle-step-return-format.md)), map these fields into the contract's shape:
+When emitting to the cycle-contract `queued[]` (see [cycle-step-return-format]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md)), map these fields into the contract's shape:
 - Cross-entry: `{ priority, slug_a, slug_b, claim_a, claim_b, severity, confidence, reason, timestamp }`
 - Intra-entry: `{ priority, slug, claim_a, claim_b, severity, confidence, reason, timestamp }` (single slug, both claims from it)
 
@@ -231,4 +231,4 @@ This is more precise than the agent reading entries and guessing at contradictio
 
 ## Cycle contract
 
-When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract](./best-practices/framework/cycle-step-return-format.md) — that doc defines the shape, counters, and queued/skipped/deferred semantics for this step.
+When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md) — that doc defines the shape, counters, and queued/skipped/deferred semantics for this step.

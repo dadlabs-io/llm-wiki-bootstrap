@@ -77,7 +77,7 @@ For each file, evaluate:
 | 2 | **MISSING CROSS-REFERENCES** | Does this entry mention a topic that has its own dedicated page in the wiki but doesn't link to it? List each missing link with the target page. |
 | 3 | **THIN COVERAGE** | Are there sections that feel under-supported relative to peer entries on similar topics? Is the entry's depth appropriate for its tier and importance? |
 | 4 | **CONCEPT GAPS** | Does this entry mention a project, person, framework, or paper that should be tracked in `concept-gaps-things-mentioned-not-yet-covered.md` but isn't? List the term and where it's mentioned. |
-| 5 | **TIER REVIEW** | Is the assigned `tier` value in frontmatter defensible? Flag any you'd assign differently and explain why. Judge against the tier table in `project/best-practices/framework/wiki-frontmatter-best-practices.md` (the only place the rubric is defined; not restated here). |
+| 5 | **TIER REVIEW** | Is the assigned `tier` value in frontmatter defensible? Flag any you'd assign differently and explain why. Judge against the tier table in `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md` (the only place the rubric is defined; not restated here). |
 | 6 | **OTHER** | Anything else — broken external links, emoji inconsistency, stale tooling references, formatting issues. |
 
 ### Step 3.5: Deep-compare drift-watch entries
@@ -208,4 +208,4 @@ After applying approved fixes, run `wiki-lint-mechanical.py` again to verify:
 
 ## Cycle contract
 
-When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract](./best-practices/framework/cycle-step-return-format.md) — that doc defines the shape, counters, and queued/skipped/deferred semantics for this step.
+When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md) — that doc defines the shape, counters, and queued/skipped/deferred semantics for this step.

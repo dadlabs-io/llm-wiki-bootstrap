@@ -29,21 +29,21 @@ Wiki content, one of two places (Q6):
 Either way the wiki root holds:
 ├── README.md
 ├── _config/feeds.md                   ← only with research/: the trusted sources /wiki-discover searches, created empty (Q9 can fill it)
-├── how-to/llm-wiki/                   ← pack usage docs (framework-managed)
 ├── wiki/
 │   ├── HOME.md, README.md, _MAP.md
 │   ├── project/                       ← Q4: stubs | empty | none   (what we build; /wrap-up files here)
-│   │   ├── components/ decisions/ architecture/ patterns/ troubleshooting/   ← "stubs"
-│   │   └── best-practices/framework/  ← the six framework-contract docs (stubs AND empty; skipped for none)
+│   │   └── components/ decisions/ architecture/ patterns/ troubleshooting/ best-practices/   ← "stubs"
 │   ├── research/                      ← Q5: stubs | empty | none   (what we ingest; /wiki-update files here)
 │   │   └── active/ long-term/ tooling/ best-practices/ interesting-docs/    ← "stubs"
 │   └── sessions/                      ← always (per-persona journals + dashboards, /wrap-up)
 └── raw/sessions/
 ```
 
+No docs are copied into the wiki: the pack usage docs and the six framework-contract docs live once in the global toolset (`{{TOOLSET_DIR}}`), which the global install keeps current; the project's `CLAUDE.md` imports its `how-to/llm-wiki/commands.md`.
+
 Cursor variant: substitutes `.cursor/` for `.claude/`, always bundles, and generates `.cursor/rules/<skill-name>.mdc` from each SKILL.md.
 
-> **Both halves are opt-in.** A wiki with neither `project/` nor `research/` is a plain notes notebook (only `sessions/` is created; the framework-contract docs are skipped, the same rule `--phase docs` applies). A wiki that later needs the other half just creates the folder — every script resolves folders on disk first. Neither half is ever created with the old agentic-design research topics (implementation, skills, orchestration); those are recognised for existing wikis, not scaffolded.
+> **Both halves are opt-in.** A wiki with neither `project/` nor `research/` is a plain notes notebook (only `sessions/` is created). A wiki that later needs the other half just creates the folder — every script resolves folders on disk first. Neither half is ever created with the old agentic-design research topics (implementation, skills, orchestration); those are recognised for existing wikis, not scaffolded.
 
 ## Flow at a glance
 
@@ -70,9 +70,8 @@ Plan summary (tool, target folder, folder tree, skills line, Drive line, feeds l
 Phase B — new-wiki.py --phase B ...   (Phase A already done by install-wiki.ps1)
    B1.  mkdir <target> + git init (skipped inside an existing repo)
    B2–4. Copy skills / scripts / templates into the project           — bundled mode only
-   B5.  Seed how-to/ (pack usage docs)
+   B5.  Create the wiki root (no docs copied: they live in the global toolset)
    B6.  Create the wiki folders from Q4 + Q5 (+ sessions/)
-   B6.1 Land the framework-contract docs at wiki/project/best-practices/framework/ (when project/ exists)
    B7.  Render CLAUDE.md / README.md / .gitignore (never overwrites an existing one)
    B7.6 Create the empty trusted-sources page _config/feeds.md (when research/ exists; never overwrites)
    B8.  Write .claude/wiki-config.json (+ the registry entry for a vault notebook, with project_root = the project folder unless the target is the notebook itself)
@@ -126,9 +125,9 @@ This one answer sets two independent booleans (`confirm_before_create` for `/wra
 **Q3 — Description.** Options: `Wiki for fitness-app (Recommended)` and one plain alternate; the user free-texts anything else.
 
 **Q4 — Project folder?** "Do you want a `project/` folder (what we build — decisions, components, patterns, troubleshooting; `/wrap-up` files here)?"
-- `Yes, with the default stubs (Recommended)` → `--project-folder stubs`: `components/ decisions/ architecture/ patterns/ troubleshooting/ best-practices/`, plus the six framework-contract docs under `best-practices/framework/`
-- `Yes, empty` → `--project-folder empty`: `project/` plus the framework docs; subfolders appear as `/wrap-up` files into them
-- `No` → `--project-folder none`: no `project/`, framework docs skipped
+- `Yes, with the default stubs (Recommended)` → `--project-folder stubs`: `components/ decisions/ architecture/ patterns/ troubleshooting/ best-practices/`
+- `Yes, empty` → `--project-folder empty`: `project/` only; subfolders appear as `/wrap-up` files into them
+- `No` → `--project-folder none`: no `project/`
 
 **Q5 — Research folder?** "Do you want a `research/` folder (what we ingest — articles, videos, papers; `/wiki-update` files here)?"
 - `Yes, with the default stubs (Recommended)` → `--research-folder stubs`: `active/ long-term/ tooling/ best-practices/ interesting-docs/`
@@ -161,7 +160,7 @@ Tool:            claude-code
 Project:         fitness-app — "Wiki for fitness-app"
 Target folder:   C:\github.com\fitness-app          ← the cwd when its leaf name equals the slug, else C:\github.com\<slug>; say so to change it
 Wiki content:    C:\github.com\project-notebooks\notebooks\fitness-app  (registered notebook)
-Folders:         wiki/project/{components,decisions,architecture,patterns,troubleshooting,best-practices/framework}
+Folders:         wiki/project/{components,decisions,architecture,patterns,troubleshooting,best-practices}
                  wiki/research/{active,long-term,tooling,best-practices,interesting-docs}
                  wiki/sessions/
 Skills:          global — installed and current (16 skills, 26 scripts, 1 agent in ~/.claude)
@@ -204,7 +203,7 @@ Phase B in global mode checks the tooling itself: it refuses (exit 1, with the f
 
 ### Step 1.5 — Add the sources named at Q9 (only when Q9 named some)
 
-Phase B's JSON gives the page's path as `feeds_file`. Add one row per named source to the table that fits it (a blog or newsletter, a GitHub repo, an arXiv query, a YouTube channel, a vendor blog, or a community aggregator), in that table's columns: the name, the URL or search pattern, the tier by the rubric in the frontmatter spec (`wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`; without `project/`, the bootstrap copy at `<bootstrap_source>/framework-docs/`), `From` 2026-01-01, `To` `—`, topics from what the user said or the project description, and `named at /new-wiki` in Notes. Edit only the table rows. Don't search the sources now: that is `/wiki-discover`'s job.
+Phase B's JSON gives the page's path as `feeds_file`. Add one row per named source to the table that fits it (a blog or newsletter, a GitHub repo, an arXiv query, a YouTube channel, a vendor blog, or a community aggregator), in that table's columns: the name, the URL or search pattern, the tier by the rubric in the frontmatter spec (`{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`), `From` 2026-01-01, `To` `—`, topics from what the user said or the project description, and `named at /new-wiki` in Notes. Edit only the table rows. Don't search the sources now: that is `/wiki-discover`'s job.
 
 ### Step 2 — Read back the summary + post-install reminders
 
@@ -216,7 +215,7 @@ Then a tailored "you're ready" message, only for the halves that exist:
 - **project/ present** — capture: as you code/decide/debug, the agent files durable items (decisions, components, architecture, patterns, troubleshooting) to `_inbox/proposed/` (beside `wiki/`) inline; `/wrap-up` at session end catches the rest.
 - always — `/wiki-promote --review` to approve staged entries; `/wiki-search "<query>"` to look things up; ask in plain English ("what commands do I have", "show me the wiki").
 
-End with: "Read `how-to/llm-wiki/commands.md` for the full command reference, or `how-to/llm-wiki/getting-started.md` for the first-hour walkthrough. You can also ask me anything in plain English — I have these docs loaded as context."
+End with: "Read `{{TOOLSET_DIR}}/how-to/llm-wiki/commands.md` for the full command reference, or `getting-started.md` beside it for the first-hour walkthrough. You can also ask me anything in plain English — I have these docs loaded as context."
 
 ### Step 3 — Don't
 
@@ -242,7 +241,7 @@ If `~/.config/wiki-cycle/client_secrets.json` is missing, the helper prints inst
 
 `/new-wiki --sync` re-runs Phase A — refreshes the global `/new-wiki` skill from the current `bootstrap_source`. Use after `git pull` on the llm-wiki-bootstrap clone. The full global tooling (every skill, script and agent) is refreshed by `install-wiki.ps1 -RefreshOnly` / `wiki-upgrade.py`; `--mode status` shows whether that is needed.
 
-To sync a bundled project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`. To refresh only a project's **framework-managed docs** — the pack usage docs (`how-to/llm-wiki/`: the pack page, one page per skill, one per agent) and, since 2026-09-08, the six framework-contract docs at `wiki/project/best-practices/framework/` — run `uv run --project <bootstrap_source> python <bootstrap_source>/scripts/new-wiki.py --phase docs --target-folder <project>`; it resolves the wiki through the project's `.claude/wiki-config.json` (or `llm-wiki/how-to/`, or a notebook root), content-compares each framework doc and replaces the ones that differ (naming them, so a project-local edit is visible rather than silently lost), and touches nothing else. Add `--check` to review first: it writes nothing, lists every framework doc as unchanged / ADD / REPLACE with the `framework-version` on both sides and a diff (a lower project version is a stale copy; the same version with different content is a project-local edit the refresh would lose), reports the pack pages a refresh would copy, and exits 1 when anything would change. A wiki without `project/` (a plain notes notebook, or one scaffolded with `--project-folder none`) is named and its framework docs skipped — they are out of scope there; the pack usage docs still refresh. `--all-notebooks` runs either form over every notebook in the registry (`--registry <linked-notebooks.json>`, else the one the cwd's `.claude/wiki-config.json` names) with a one-line-per-notebook summary and a single exit code. This is the Phase 2 / Phase 3 tool of the research-to-framework update process, and the standing procedure after any framework change is `--phase docs --check --all-notebooks`, review every REPLACE, then the same command without `--check`.
+To sync a bundled project install with the current bootstrap (refresh the project's skills + scripts), re-run Phase B against the same target folder with `--force`. The usage docs and the framework-contract docs are not in any project: they live once in the global toolset (`{{TOOLSET_DIR}}`, registered as `global-toolset`), which every global install creates and keeps current. To refresh only those docs, run `uv run --project <bootstrap_source> python <bootstrap_source>/scripts/new-wiki.py --phase docs`; `--check` lists what it would add, replace or remove, writes nothing, and exits 1 when anything would change. A page edited by hand in the toolset is overwritten: change it in the bootstrap source.
 
 ## Required: the bootstrap-source path
 

@@ -69,7 +69,7 @@ Created at Step 0 as `<run-folder>/scratchpad.md` and updated after every phase;
 
 ## Cycle id and run folder
 
-`cycle_id` is `<YYYY-MM-DD>-<NN>`: the local date (`today_label()`), and `NN` the next unused number in `_inbox/reports/<date>/` (`01` first). Everything a run writes lives in `_inbox/reports/<date>/<cycle_id>/`: the scratchpad, each step's `<step>.json` + `<step>.md` (the [cycle step return format](./best-practices/framework/cycle-step-return-format.md); the JSON is authoritative), the scope files, the checker reports under `checker/`, and `<cycle_id>-run-cycle-report.md` + `.json`.
+`cycle_id` is `<YYYY-MM-DD>-<NN>`: the local date (`today_label()`), and `NN` the next unused number in `_inbox/reports/<date>/` (`01` first). Everything a run writes lives in `_inbox/reports/<date>/<cycle_id>/`: the scratchpad, each step's `<step>.json` + `<step>.md` (the [cycle step return format]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md); the JSON is authoritative), the scope files, the checker reports under `checker/`, and `<cycle_id>-run-cycle-report.md` + `.json`.
 
 ## Step 1.0 — Drive-fetch, in detail
 
@@ -91,7 +91,7 @@ The labels come from `.claude/wiki-config.json`: `email.label` (default `...wiki
 
 ## Which notebook a cycle runs against
 
-The one `<cwd>/.claude/wiki-config.json` names (`notebook` + `registry`), resolved by `_wiki_config.py`; a notebook's root is `notebooks[<name>].root` in `linked-notebooks.json`, relative to that file, and `_inbox/`, `raw/`, `how-to/` sit beside its `wiki/`. `/wiki-cycle <notebook>` targets another registered notebook: every script gets `--topic <notebook>`, never `--vault` (a legacy in-project wiki without a registry is the one exception). `--all-topics` iterates `_wiki_config.list_topics()` and runs the mode once per notebook.
+The one `<cwd>/.claude/wiki-config.json` names (`notebook` + `registry`), resolved by `_wiki_config.py`; a notebook's root is `notebooks[<name>].root` in `linked-notebooks.json`, relative to that file, and `_inbox/` and `raw/` sit beside its `wiki/`. `/wiki-cycle <notebook>` targets another registered notebook: every script gets `--topic <notebook>`, never `--vault` (a legacy in-project wiki without a registry is the one exception). `--all-topics` iterates `_wiki_config.list_topics()` and runs the mode once per notebook.
 
 ## Morning review, after an unattended run
 

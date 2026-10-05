@@ -151,7 +151,7 @@ After showing the report:
 - "Want me to re-fetch any of the source URLs and check for changes?"
 - "Want me to search for corroborating sources for the low-confidence entries?"
 
-If the user approves batch updates, update `last_reviewed: <today>` and recalculate `review_after` using the **review cadence table in the frontmatter spec** (`project/best-practices/framework/wiki-frontmatter-best-practices.md`, "review cadence") — the only place the offsets are defined. Do not restate them here: until 2026-09-08 this skill carried its own table (6 / 3 / 3 / 2 / 3 months) that disagreed with the spec (12 / 6 / 6 / 3 / 3 months) on every row, and an agent following this file computed the wrong dates.
+If the user approves batch updates, update `last_reviewed: <today>` and recalculate `review_after` using the **review cadence table in the frontmatter spec** (`{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`, "review cadence") — the only place the offsets are defined. Do not restate them here: until 2026-09-08 this skill carried its own table (6 / 3 / 3 / 2 / 3 months) that disagreed with the spec (12 / 6 / 6 / 3 / 3 months) on every row, and an agent following this file computed the wrong dates.
 
 ### Step 6 — Quick-refresh mode (for batch confirmation)
 
@@ -187,4 +187,4 @@ The `/wiki-report` morning report references this skill's output — the "Stale 
 
 ## Cycle contract
 
-When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract](./best-practices/framework/cycle-step-return-format.md) — that doc defines the shape, counters, and queued/skipped/deferred semantics for this step.
+When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md) — that doc defines the shape, counters, and queued/skipped/deferred semantics for this step.

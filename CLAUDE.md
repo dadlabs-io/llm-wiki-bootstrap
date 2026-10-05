@@ -23,12 +23,15 @@ The LLM-wiki framework installer. Ships:
 - The `/new-wiki` creator skill (installs globally so the user can scaffold projects from anywhere)
 - The per-project skills (`wiki-update`, `wiki-cycle`, `wrap-up`, `wiki-search`, `wiki-promote`, etc.) — the list is `TRAVEL_SKILLS` in `scripts/_install_tooling.py`; don't restate the count here (it was wrong twice)
 - The Python helper scripts (vault management, lint, indexing, Drive ingest) — `TRAVEL_SCRIPTS` in the same file — including `_entry_checks.py`, the shared mechanical gate used by `wiki-update.py` (refuse-to-file), `wiki-lint-mechanical.py` (backlog view) and, since 2026-09-08, `_install_tooling.py` (refuse to install a skill or agent whose frontmatter does not parse)
-- The six framework-contract docs (`framework-docs/`, `framework-contract: true`, `framework-version`) — the gold copies; `new-wiki.py` lands them at every project's `wiki/project/best-practices/framework/` at scaffold time and on `--phase docs`, replacing a drifted project copy and naming it (2026-09-08)
+- The six framework-contract docs (`framework-docs/`, `framework-contract: true`, `framework-version`) — the gold copies; every global install lands them once, at the global toolset's `wiki/project/best-practices/framework/` (2026-10-04; a copy in every project before)
 - Templates for `CLAUDE.md`, `README.md`, `.gitignore` in research/development variants
-- Seed content for the per-project `llm-wiki/` folder (the how-to marker; the how-to pages themselves are the pack docs below, since 2026-09-08). The memory-bank-era best-practices seed was retired 2026-09-13 — `archive/seed-best-practices/`, never shipped; the framework changelog is `CHANGELOG.md` at the repo root
+- Seed content: the wiki scaffold files for a project's `llm-wiki/` folder or notebook, and the global toolset's README and how-to marker (`seed/global-toolset-README.md`, `seed/how-to/`). The memory-bank-era best-practices seed was retired 2026-09-13 — `archive/seed-best-practices/`, never shipped; the framework changelog is `CHANGELOG.md` at the repo root
 - Pack usage docs (wiki-seed): one page per skill (`skills/<name>/wiki-seed/`, each carrying its full
   walkthrough), one per agent, the pack overview plus getting-started / commands / install / drive-setup
-  (`wiki-seed/`), assembled into each project's `llm-wiki/how-to/llm-wiki/` on install
+  (`wiki-seed/`), installed once into the global toolset's `how-to/llm-wiki/`
+- The global toolset (2026-10-04, task #25): the `global-toolset` notebook, registered in `linked-notebooks.json`, holds
+  every usage doc and the framework-contract docs once; no project wiki carries a copy. `seed_toolset()` in
+  `_install_tooling.py` creates and refreshes it on every global install; the skills name it `{{TOOLSET_DIR}}`
 - `install-wiki.ps1` (Windows) and `install-wiki.sh` (Mac/Linux) — the installer entry points
 
 ## What the user probably wants
@@ -130,19 +133,19 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
   manifest in `_install_tooling.py`). First: `wiki-ingester`, the spawnable batch-ingest worker
   `/wiki-cycle` delegates to (added 2026-08-20)
 - `scripts/` — Python helpers behind the skills
-- `seed/` — content that lands in each per-project `llm-wiki/` folder
+- `seed/` — the wiki scaffold files for a project, and the global toolset's README and how-to marker
 - `wiki-seed/` + `skills/<name>/wiki-seed/` — pack usage docs
   (standard wiki-seed convention, shared with the agent-factory): `wiki-seed/llm-wiki.md` is
-  the pack entry page, each skill carries its own one-page usage doc; `new-wiki.py` assembles
-  them into `<target>/llm-wiki/how-to/llm-wiki/{,skills/,agents/}` on install (Phase B) and on
-  `--phase docs` (refresh an existing project's pack docs only; `--check` reports without writing). Distinct from `seed/` (the
+  the pack entry page, each skill carries its own one-page usage doc; every global install copies
+  them into the global toolset's `how-to/llm-wiki/{,skills/,agents/}`, and `new-wiki.py --phase docs` refreshes only
+  those docs (`--check` reports without writing). Distinct from `seed/` (the
   broader project scaffold) — one name per mechanism.
   **Requirement (2026-09-08, shared with the agent-factory): every skill under `skills/`
   and every agent under `agents/` ships `wiki-seed/<name>.md`, and the pack page
   `wiki-seed/llm-wiki.md` lists it.** Adding a skill or agent means four files: the artifact, its
   `wiki-seed/` page (what it does, trigger, inputs/outputs, when it skips itself — written for a
   developer who has never seen this repo, no paths into it), its row in `INSTALL-INVENTORY.md`, and
-  its row in the pack page. `new-wiki.py` (`seed_pack_docs`) warns by name for every shipped skill or
+  its row in the pack page. The install (`undocumented_artifacts`) warns by name for every shipped skill or
   agent without a page — an artifact without one is installed undocumented.
 - `templates/` — `CLAUDE.md`, `README.md`, `.gitignore` templates
 - `tests/skills/` — the standing test baseline per skill (never shipped): `run_skill_test.py <skill>` runs one of
@@ -152,11 +155,12 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 
 ## Conventions (when editing the scripts)
 
-- **After any change that lands in a notebook** (a framework-contract doc, a `wiki-seed/` page, the how-to
-  root marker, a skill or script), the standing procedure (SOP, 2026-09-08) is: `uv run python scripts/new-wiki.py --phase docs --check --all-notebooks` (from this repo; the registry comes from `.claude/wiki-config.json`) → review every REPLACE line → the same command without `--check` → `.\install-wiki.ps1 -RefreshOnly`.
-  `--check` writes nothing and exits 1 when any notebook would change; a REPLACE at the *same*
-  `framework-version` is a project-local edit the refresh will lose — read it before refreshing. One
-  command, nine notebooks, a summary line each; never the hand loop.
+- **After any change to a usage page, a framework-contract doc, the how-to marker, a skill or a script**, the
+  standing procedure (SOP, since 2026-10-04) is one refresh: `.\install-wiki.ps1 -RefreshOnly` (run it plain, or
+  `uv run python scripts/new-wiki.py --mode tooling --tool claude-code --bootstrap-source <this repo>`), then
+  `uv run python scripts/new-wiki.py --mode status`, which must say installed and current, the global toolset included.
+  The docs live only in the global toolset, so no project notebook is touched; commit the toolset's changes in
+  project-notebooks by path (`notebooks/global-toolset`). For the docs alone: `--phase docs --check`, then `--phase docs`.
 - **Date/time** — single rule, helpers in `scripts/_wiki_config.py`:
   - **Date labels** (calendar day a human organizes by — cycle ids, report folders, `date:`/`last_reviewed:`/`review_after:` frontmatter) → **local** date, `today_label()`. Never `datetime.now(timezone.utc)` for a date label (it rolls a night-time run to tomorrow's UTC day).
   - **Timestamps** (a precise instant — `created`, `*_at`, run stamps) → `now_stamp()`: **local time with an explicit UTC offset** (tz-aware ISO-8601, e.g. `2026-06-17T00:05:07-04:00`). Never a naive `.isoformat()` — the zone must always be labelled.

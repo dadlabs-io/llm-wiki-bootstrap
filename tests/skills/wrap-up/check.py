@@ -119,6 +119,9 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
         _rmtree(sandbox)
     nb = sandbox / "notebooks" / NOTEBOOK
     shutil.copytree(HERE / "fixtures" / "seed-notebook", nb)
+    # the usage pages Step 5.5's owner rule reads live in the global toolset, not the notebook
+    toolset = sandbox / "global-toolset"
+    shutil.copytree(HERE / "fixtures" / "toolset", toolset)
     project = sandbox / "project"
     project.mkdir(parents=True)
     cfg_dir = project / ".claude"
@@ -126,7 +129,7 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
     return {"sandbox": sandbox, "project": project, "notebook": nb,
             "registry": sandbox / "linked-notebooks.json",
             "wiki": nb / "wiki", "proposed": nb / "_inbox" / "proposed",
-            "skill_dir": sandbox / "skill" / "wrap-up",
+            "skill_dir": sandbox / "skill" / "wrap-up", "toolset": toolset,
             "scripts": repo / "scripts", "repo": repo,
             "env": {"PYTHONIOENCODING": "utf-8"}}
 

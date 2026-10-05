@@ -79,7 +79,7 @@ qmd ls
 
 1. Show the results to the user (file paths + scores + snippets)
 2. If results look promising, **offer to read one of the matched files** with the Read tool for full context
-2a. **Cite only what you opened (added 2026-09-16).** A hit proves an entry exists, not what it says: the snippet is a fragment picked for similarity to the *query*, and the entry may qualify it, attribute it to a source it rejects, or be superseded by the entry below it. Rely on or quote an entry only after reading it; otherwise offer it as an unread pointer ("there's an entry on X I haven't opened"). Contract: `project/best-practices/framework/tiered-context-loading.md`.
+2a. **Cite only what you opened (added 2026-09-16).** A hit proves an entry exists, not what it says: the snippet is a fragment picked for similarity to the *query*, and the entry may qualify it, attribute it to a source it rejects, or be superseded by the entry below it. Rely on or quote an entry only after reading it; otherwise offer it as an unread pointer ("there's an entry on X I haven't opened"). Contract: `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/tiered-context-loading.md`.
 3. If zero results on `qmd search`, try the full search (`wiki-qmd-query.py`, adds semantic matching on a full machine) or rephrase the query
 4. For browsing what exists, use `/wiki` slash command to show the INDEX
 5. **File the answer, or let it go (added 2026-09-08).** Once the question is answered, decide whether the answer is worth keeping. File-worthy: a comparison the user is likely to revisit; a connection between entries the wiki did not already state; a synthesis across three or more entries; an answer to a gap the wiki could not fill (that one is a `concept-gaps` candidate). Not file-worthy: a plain lookup, a question about wiki structure, a one-off. If file-worthy, ask **once**: "This looks worth keeping — file it as a `project/` entry?" On yes, write the answer to `<topic>/_inbox/temp/<slug>.md` in the entry shape (TL;DR, body, a `## Related` section linking the entries you read) and file it with `wiki-update.py --tier self --no-raw --folder project/<category> --ingested-by claude-code`; if the session will end with `/wrap-up` anyway, hand the answer to that instead. Why: a good answer that stays in the chat is knowledge the wiki paid to derive and then lost (Karpathy's gist names this; the nanzhipro bootstrap skill makes it a step — agentic-design `research/long-term/`).
@@ -94,7 +94,7 @@ qmd search "<query>" --json | uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIK
 qmd search "<query>" --json | uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-search-rerank.py --include-rolled-back    # "what did we used to believe"
 ```
 
-Contract: `project/best-practices/framework/wiki-search-bucket-rerank-spec.md` in every project wiki. Entries with no `verified` field all land in the same bucket, so on a wiki that has not started verifying the order is unchanged.
+Contract: `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-search-bucket-rerank-spec.md`. Entries with no `verified` field all land in the same bucket, so on a wiki that has not started verifying the order is unchanged.
 
 ## Maintenance
 

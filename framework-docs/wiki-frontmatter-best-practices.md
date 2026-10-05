@@ -294,7 +294,7 @@ The `SKILL.md` files that govern every ingest, and the `AGENT.md` of every shipp
 
 ## Related
 
-The six framework-contract docs, of which this is one. They are installed together at `project/best-practices/framework/` in every project wiki by `new-wiki.py` and refreshed by `--phase docs`; this list is the hub so none of them is an orphan in a fresh wiki.
+The six framework-contract docs, of which this is one. They are installed together, once, at `wiki/project/best-practices/framework/` in the global toolset (the `global-toolset` notebook) by every global install, and refreshed by `new-wiki.py --phase docs`; this list is the hub so none of them is an orphan in a fresh wiki.
 
 - [wiki-authoring-best-practices.md](./wiki-authoring-best-practices.md) — the operational principles this spec enforces (especially principles 9 and 11)
 - [cycle-step-return-format.md](./cycle-step-return-format.md) — the orchestrator ↔ step-skill JSON contract

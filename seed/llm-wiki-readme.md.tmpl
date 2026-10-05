@@ -8,7 +8,6 @@ This folder is your project's knowledge layer. The agent reads from here; you wr
 <wiki root>/             ← llm-wiki/ inside a project, or the notebook folder in a vault
 ├── README.md            ← you are here
 ├── _INDEX.md            ← every entry in the wiki (auto-generated)
-├── how-to/              ← usage docs; start with how-to/llm-wiki/user-guide.md
 ├── wiki/                ← THIS PROJECT's entries
 │   ├── HOME.md          ← landing page
 │   ├── _MAP.md          ← always-loaded orientation map (auto-generated)
@@ -28,7 +27,7 @@ See `CLAUDE.md` at the project root for what goes where.
 
 ## How to use it
 
-**The whole system on one page**: [how-to/llm-wiki/user-guide.md](./how-to/llm-wiki/user-guide.md). **Every command**: [how-to/llm-wiki/commands.md](./how-to/llm-wiki/commands.md).
+The usage docs live once for every project, in the global toolset (`{{TOOLSET_DIR}}/how-to/llm-wiki/`). **The whole system on one page**: `{{TOOLSET_DIR}}/how-to/llm-wiki/user-guide.md`. **Every command**: `{{TOOLSET_DIR}}/how-to/llm-wiki/commands.md`.
 
 **Add an external reference (article, doc, video):**
 ```
@@ -54,7 +53,7 @@ Gather → triage → ingest (staged for your review) → check → lint → rep
 
 ## Need help?
 
-**Ask the agent in plain English anytime.** The command reference (`how-to/llm-wiki/commands.md`) is loaded through `CLAUDE.md`, and the agent reads the other `how-to/` pages when a question needs them. Try:
+**Ask the agent in plain English anytime.** The command reference (`commands.md` in the global toolset) is loaded through `CLAUDE.md`, and the agent reads the other usage pages there when a question needs them. Try:
 
 - "What commands do I have?"
 - "How do I add a URL to the wiki?"
@@ -62,41 +61,23 @@ Gather → triage → ingest (staged for your review) → check → lint → rep
 - "How do I look up prior decisions?"
 - "What's the difference between /wiki-update and /wiki-cycle?"
 
-Or read the docs directly:
+Or read the docs directly, in `{{TOOLSET_DIR}}/how-to/llm-wiki/`:
 
 | File | When |
 |---|---|
-| [how-to/llm-wiki/user-guide.md](./how-to/llm-wiki/user-guide.md) | How the whole system works, on one page |
-| [how-to/llm-wiki/getting-started.md](./how-to/llm-wiki/getting-started.md) | Your first hour after install |
-| [how-to/llm-wiki/commands.md](./how-to/llm-wiki/commands.md) | Every command, one line each |
-| [how-to/llm-wiki/skills/wiki-update.md](./how-to/llm-wiki/skills/wiki-update.md) | `/wiki-update` deep dive |
-| [how-to/llm-wiki/skills/wiki-cycle.md](./how-to/llm-wiki/skills/wiki-cycle.md) | `/wiki-cycle` orchestrator |
-| [how-to/llm-wiki/skills/wrap-up.md](./how-to/llm-wiki/skills/wrap-up.md) | `/wrap-up` at session end |
-| [how-to/llm-wiki/skills/wiki-search.md](./how-to/llm-wiki/skills/wiki-search.md) | `/wiki-search` ranking |
-| [how-to/llm-wiki/drive-setup.md](./how-to/llm-wiki/drive-setup.md) | Google Drive OAuth |
-| [how-to/llm-wiki/install.md](./how-to/llm-wiki/install.md) | Installing on another machine |
+| `user-guide.md` | How the whole system works, on one page |
+| `getting-started.md` | Your first hour after install |
+| `commands.md` | Every command, one line each |
+| `skills/wiki-update.md` | `/wiki-update` deep dive |
+| `skills/wiki-cycle.md` | `/wiki-cycle` orchestrator |
+| `skills/wrap-up.md` | `/wrap-up` at session end |
+| `skills/wiki-search.md` | `/wiki-search` ranking |
+| `drive-setup.md` | Google Drive OAuth |
+| `install.md` | Installing on another machine |
 
-## Framework-managed folders — don't hand-edit
-
-⚠️ **`how-to/llm-wiki/` and `wiki/project/best-practices/framework/` are shipped by the framework** and are replaced when the framework refreshes a project's docs (`new-wiki.py --phase docs`). If you edit these files in place, your changes get lost on the next refresh.
-
-**Want to customize?** Put your additions in a separate location:
-
-| Where it lives | What goes there | Survives refreshes? |
-|---|---|---|
-| `how-to/llm-wiki/` | Framework-shipped usage docs | ❌ Replaced on refresh |
-| `wiki/project/best-practices/framework/` | The framework's own contract docs (frontmatter, authoring, cycle format) | ❌ Replaced on refresh |
-| `wiki/project/best-practices/` | **Your project's** conventions and best practices | ✅ Yours forever |
-| `how-to/<your-folder>/` | **Your project's** how-to docs | ✅ Yours forever |
-| Anywhere else under `wiki/` | Project-specific entries | ✅ Yours forever |
-
-Paths are relative to this README (the wiki root).
-
-(V2 will support proper user-override layering — for v1, keep your own pages outside the framework-managed folders.)
-
-## How-to folder
-
-`how-to/` holds one folder per installed package; the framework's own is `how-to/llm-wiki/` (entry page `llm-wiki.md`, the user guide `user-guide.md`, one page per skill under `skills/`). Start with `how-to/llm-wiki/user-guide.md`. **Framework-managed** — see the warning above.
+The global toolset is kept by the framework's install and is never edited by hand; this wiki holds no copy of
+its pages. Your project's own conventions go in `wiki/project/best-practices/`, and anything else project-specific
+anywhere under `wiki/`.
 
 ## Don't
 

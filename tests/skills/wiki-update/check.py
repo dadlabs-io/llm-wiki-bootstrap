@@ -103,10 +103,6 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
     for d in ["_inbox/proposed", "_inbox/pending", "_inbox/done", "_inbox/temp", "raw",
               *[f"wiki/{t}" for t in SCAFFOLD_TAXONOMY]]:
         (nb / d).mkdir(parents=True, exist_ok=True)
-    fw = nb / "wiki" / "project" / "best-practices" / "framework"
-    fw.mkdir(parents=True, exist_ok=True)
-    for doc in (repo / "framework-docs").glob("*.md"):
-        shutil.copy2(doc, fw / doc.name)
     raw_names = {}
     for sid in _suite()["sources"]:
         meta = CACHE / f"{sid}.json"
@@ -196,7 +192,7 @@ def _is_entry(rel: str) -> bool:
         return False
     if rel.startswith("_inbox/proposed/"):
         return True
-    return rel.startswith("wiki/") and not rel.startswith("wiki/sessions/") and "/framework/" not in rel
+    return rel.startswith("wiki/") and not rel.startswith("wiki/sessions/")
 
 
 def _norm_url(u) -> str:

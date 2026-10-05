@@ -21,7 +21,7 @@ After each feed is searched (even with no hits) its last-queried date is set to 
 **How it searches and filters:**
 - Each feed is searched only for material newer than its last-queried date, and never before 2026-01-01, even with `--backfill`. The search tool is web search; results published before the window are dropped, and one whose date cannot be established is deferred.
 - A candidate is a duplicate if its URL is already an entry's source, if a search of this notebook (the full search, or keyword search on a machine with no GPU) finds the concept already covered, or if the URL is already in the pending or done queue.
-- LOW-relevance candidates are dropped unless they come from a tier-1 source, and tier-4 candidates are labelled NEEDS HUMAN REVIEW. Tiers are defined in your notebook's frontmatter spec (`wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`).
+- LOW-relevance candidates are dropped unless they come from a tier-1 source, and tier-4 candidates are labelled NEEDS HUMAN REVIEW. Tiers are defined in the frontmatter spec ([wiki-frontmatter-best-practices.md](../../../wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md), in the global toolset).
 
 **Works with:** approved candidates go onto the queue managed by [`wiki-list`](./wiki-list.md), from which they are ingested. [`wiki-report`](./wiki-report.md) lists the discovery checklists, so you can see what was rejected and why.
 

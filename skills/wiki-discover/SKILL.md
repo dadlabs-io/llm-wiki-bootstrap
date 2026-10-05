@@ -185,7 +185,7 @@ Every discovery run ends with this three-section ledger. Fill in progressively â
 
 ### Return format (cycle contract)
 
-When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/discover.json` and `discover.md` per the [Cycle Step Return Format contract](./best-practices/framework/cycle-step-return-format.md).
+When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/discover.json` and `discover.md` per the [Cycle Step Return Format contract]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md).
 
 
 ### Step 7 â€” Queue approved candidates

@@ -13,6 +13,7 @@ Authored 2026-05-12; sections B–F and the tail rewritten 2026-09-08 to describ
 - **C. Templates** — copied as needed when scaffolding a new project
 - **D. Configuration** — the machine config (`~/.claude/wiki-config.json`), the per-project thin pointer (`<project>/.claude/wiki-config.json`) and the notebook registry (`linked-notebooks.json`)
 - **E. Per-project structure** — created by `/new-wiki` Phase B (empty scaffold, two layouts)
+- **G. The global toolset** — one notebook holding every usage doc and the framework-contract docs once (2026-10-04)
 - **F. External dependencies** — host-installed tools the scripts shell out to
 
 ---
@@ -24,7 +25,7 @@ Install target: `~/.claude/skills/<skill>/SKILL.md`
 
 | Skill | Project type | Purpose |
 |---|---|---|
-| `new-wiki` | both | The bootstrap orchestrator: global tooling install (Phase A / tooling mode), `--mode status` (is the global tooling installed / stale / partial / missing — read before the skills question, 2026-09-09), per-project scaffold (Phase B, with `--project-folder` / `--research-folder stubs\|empty\|none`; with `research/` it also writes the empty trusted-sources page `_config/feeds.md`, and the skill's optional question can fill it, 2026-09-26), `--phase docs` refresh of a project's framework-managed docs |
+| `new-wiki` | both | The bootstrap orchestrator: global tooling install (Phase A / tooling mode), `--mode status` (is the global tooling installed / stale / partial / missing — read before the skills question, 2026-09-09), per-project scaffold (Phase B, with `--project-folder` / `--research-folder stubs\|empty\|none`; with `research/` it also writes the empty trusted-sources page `_config/feeds.md`, and the skill's optional question can fill it, 2026-09-26), `--phase docs` refresh of the global toolset's docs |
 | `wiki` | both | Show the wiki's INDEX (browse rather than search) |
 | `wiki-update` | research (primary), both | Ingests external URLs / files into wiki staging |
 | `wiki-search` | both | Hybrid BM25 + vector + LLM-rerank search via qmd; keyword-only on a machine set to keyword search (no GPU, 2026-10-02) |
@@ -38,7 +39,7 @@ Install target: `~/.claude/skills/<skill>/SKILL.md`
 | `wiki-promote` | both | Stage → promote with backlinks, the backlink rebuild, INDEX and MAP regen (runs `/wiki-verify` as a sub-step with `--verify`) |
 | `wiki-verify` | both | Flip an entry unverified → verified via sidecar (truth-status lifecycle; added 2026-05-25, registered to travel 2026-07-07) |
 | `wiki-rollback` | both | Roll an entry back to its verified ancestor (pairs with `wiki-verify`; added 2026-05-25, registered to travel 2026-07-07) |
-| `wrap-up` | development | Session-end distillation into wiki entries (written 2026-05-12); since 2026-09-26 it also puts each file in `_inbox/skill-suggestions/` to the user (send, keep, drop). Since 2026-09-29 it names each skill's owner from where its usage page sits in `how-to/` (`llm-wiki/` → llm-wiki, any other pack → agent-builder, none → ask). A sent file gets a `Sent` line and is left for the owner to collect, so only the owner keeps a copy; a dropped one is archived. Since 2026-10-01 (evening) a note whose owner keeps its notebook here (the registry entry with the owner's bot) is filed into `received/` with the improver's `receive`, without asking |
+| `wrap-up` | development | Session-end distillation into wiki entries (written 2026-05-12); since 2026-09-26 it also puts each file in `_inbox/skill-suggestions/` to the user (send, keep, drop). Since 2026-09-29 it names each skill's owner from where its usage page sits in `how-to/` (`llm-wiki/` → llm-wiki, any other pack → agent-builder, none → ask); since 2026-10-04 that is the global toolset's `how-to/` (`{{TOOLSET_DIR}}`). A sent file gets a `Sent` line and is left for the owner to collect, so only the owner keeps a copy; a dropped one is archived. Since 2026-10-01 (evening) a note whose owner keeps its notebook here (the registry entry with the owner's bot) is filed into `received/` with the improver's `receive`, without asking |
 | `task-list` | both | The project's task list: the At a glance block at the top of `sessions/<persona>/task.md` — one table per owner, then a Backlog table whose Owner column keeps each set-aside task's owner (2026-10-01), numbers never reused, a task removed only on the user's word; `/task-list` or plain speech ("add a task", "delete task 4", "move 5 to the backlog"). Every edit through `wiki-tasks.py` (2026-09-15; not `/tasks`, which is Claude Code's background-jobs panel) |
 | `writing-skill-suggestions` | both | Writes a skill suggestion: one four-line note (`Skill`, `Seen in`, `Issue`, `Fix`) in the notebook's `_inbox/skill-suggestions/`, through its own `scripts/skill-suggestion.py` (`add`; self-test floor 34). Moved from agent-builder's library 2026-09-30, so the whole loop ships with `/wrap-up`, which puts each note to the user |
 | `improving-skills-from-suggestions` | both | The owner's side of a suggestion: `receive` moves a sent note into the owning library's notebook (`received/`, marked `From:`), `list` / `decide` / `summary` run a pass that proposes changes and records the user's decisions (`scripts/suggestions.py`, self-test floor 53; template `templates/skill-suggestions-README.md`). Runs in whichever library receives the note. Moved from agent-builder's library 2026-09-30 |
@@ -58,31 +59,31 @@ Manifest: `TRAVEL_AGENTS` in `scripts/_install_tooling.py` (added 2026-08-20)
 ## A3. Pack usage docs (wiki-seed)
 
 Source-of-truth: `wiki-seed/` (the pack page `llm-wiki.md`, plus `user-guide.md`, `commands.md`, `getting-started.md`, `install.md`, `drive-setup.md`) + `skills/<name>/wiki-seed/<name>.md` + `agents/<name>/wiki-seed/<name>.md`
-Install target: `<project how-to root>/llm-wiki/<page>.md` + `llm-wiki/skills/<name>.md` + `llm-wiki/agents/<name>.md` (Phase B for a new project; `--phase docs --target-folder <project>` refreshes an existing one)
+Install target: the global toolset (section G): `how-to/llm-wiki/<page>.md` + `how-to/llm-wiki/skills/<name>.md` + `how-to/llm-wiki/agents/<name>.md`, by every global install and by `--phase docs`. Until 2026-10-04 every project wiki got its own copy
 
-`user-guide.md` is the one-page guide to the whole system (2026-09-25, task #41). Until then it was a file in the old notebook template that no refresh reached, so three copies drifted apart; it moved here so every notebook gets the same copy and a fix is made once.
-Mechanism: `seed_pack_docs()` in `scripts/new-wiki.py` (added 2026-09-08; the per-skill copy dates from 2026-07-31)
+`user-guide.md` is the one-page guide to the whole system (2026-09-25, task #41). Until then it was a file in the old notebook template that no refresh reached, so three copies drifted apart; it moved here so there is one copy and a fix is made once.
+Mechanism: `toolset_files()` / `seed_toolset()` in `scripts/_install_tooling.py` (2026-10-04; `seed_pack_docs()` in `new-wiki.py` before, from 2026-09-08)
 
-**Every skill in A and every agent in A2 ships a page; the seeder warns by name for any that does not.** One folder per installed package in the receiving how-to tree (`how-to/llm-wiki/` here; the agent-factory's packs land as `how-to/<pack>/` beside it); a framework refresh never removes another pack's folder.
+**Every skill in A and every agent in A2 ships a page; the install warns by name for any that does not** (`undocumented_artifacts()`). One folder per installed package in the toolset's `how-to/` (`how-to/llm-wiki/` here; the agent-factory's packs land as `how-to/<pack>/` beside it); a refresh removes the pages of this pack's skills or agents that no longer ship, and never touches another pack's folder.
 
 ## A4. Framework-contract docs
 
 Source-of-truth: `framework-docs/*.md` (six docs, each `framework-contract: true` with a `framework-version`; `bootstrap/framework-docs/` until 2026-10-01, `bootstrap/topic-template/wiki/best-practices/framework/` until 2026-09-26, when the retired `/wiki-init`'s template folder went)
-Install target: `<wiki>/project/best-practices/framework/<name>.md` (Phase B for a new project; `--phase docs --target-folder <project>` refreshes an existing one)
-Mechanism: `seed_framework_docs()` in `scripts/new-wiki.py` (2026-09-08): content-compared, a differing project copy is overwritten and named; the reciprocation script's backlink block is ignored in the comparison and preserved. `--check` (same day) reports instead of writing — unchanged / ADD / REPLACE per doc with the version on both sides and a diff, exit 1 when a refresh would change anything. A wiki without `project/` is out of scope and skipped by name. `--all-notebooks` runs check or refresh over every registered notebook with a summary — the standing procedure after a framework change is `--check --all-notebooks`, review, then refresh.
+Install target: the global toolset's `wiki/project/best-practices/framework/<name>.md` (section G), by every global install and by `--phase docs`; the skills name it as `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/`. Until 2026-10-04 (from 2026-09-08) every project wiki with `project/` got its own copy, refreshed by `--phase docs --all-notebooks`
+Mechanism: `seed_toolset()` in `scripts/_install_tooling.py`, content-compared byte for byte; `--phase docs --check` lists what a refresh would add, replace or remove and exits 1 when anything would change.
 
-**These are the framework's canonical copies.** A project keeps its own notes in a sibling file, never by editing one of these — the edit is lost on the next refresh (`--check` shows it first).
+**These are the framework's canonical copies.** A project keeps its own conventions in `wiki/project/best-practices/`; an edit made in the toolset is lost on the next refresh.
 
 ## B. Global scripts
 
 Source-of-truth: `scripts/<script>.py`
-Install target: `~/.claude/wiki-scripts/<script>.py` (`{{WIKI_SCRIPTS_DIR}}` in the skills resolves to it)
+Install target: `~/.claude/wiki-scripts/<script>.py` (`{{WIKI_SCRIPTS_DIR}}` in the skills and agents resolves to it; `{{TOOLSET_DIR}}` to the global toolset's root, 2026-10-04)
 Environment (2026-10-04, task #71): `ENV_FILES` (`pyproject.toml`, `uv.lock`, `.python-version`, at the repo root) are copied beside the scripts and `uv sync --locked` builds `.venv` there (`build_tooling_env()`). Every shipped call runs `uv run --project <scripts dir> python <scripts dir>/<script>`; the hooks run that environment's python by its full path (with the scripts folder gone, `uv run --project` exits 2, which a PreToolUse hook turns into a block on every tool call). A machine without uv is refused before anything is written (`UvMissing`), and the installer wrappers ask before installing uv. `--mode status` reports the environment (`env`: current / stale / missing / uv-missing; stale = an environment file differs from the clone or `uv sync --locked --check` fails). Checks: `tests/scripts/test_tooling_env.py`, which also fails on any third-party import in the scripts that `pyproject.toml` does not declare, and on any shipped call to a wiki script without `uv run --project`
 Manifest: `TRAVEL_SCRIPTS` (the commands) + `TOOLING_HELPER_SCRIPTS` / `SHARED_HELPER_SCRIPTS` (the `_`-prefixed modules they import) in `_install_tooling.py`
 
 | Script | Purpose |
 |---|---|
-| `new-wiki.py` | The bootstrap helper behind `/new-wiki`: Phase A / tooling install, Phase B scaffold, `--phase docs [--check] [--all-notebooks]` |
+| `new-wiki.py` | The bootstrap helper behind `/new-wiki`: Phase A / tooling install, Phase B scaffold, `--phase docs [--check]` (the global toolset's docs only, 2026-10-04) |
 | `wiki-upgrade.py` | Refresh the global tooling from the recorded bootstrap source: the same install code (`_install_tooling.install_tooling`) that `install-wiki.ps1 -RefreshOnly` / `install-wiki.sh --refresh-only` reach through `new-wiki.py --mode tooling`. Writes its output as UTF-8, so a piped run on Windows no longer stops at the first `→` (2026-10-01). An install that stops partway ends on `⚠️ INSTALL INCOMPLETE` and a log (see Update mechanism). Checks: `tests/scripts/test_wiki_upgrade.py` |
 | `wiki-update.py` | File an external source as an entry. The write-time gate lives here: it refuses an entry without a TL;DR, without two Related wiki links (a warning for tier `self`), with its layout out of order, or with frontmatter that would not parse. `--revises <slug>` files a later snapshot of a source (checks the older entry exists, implies `--force`). `--slug-for` exits 2 with near matches when no entry matches. Staged entries' links are checked. `internal://` URLs never count as duplicates, and a duplicate prints `duplicate_of=` (2026-09-15) |
 | `wiki-fetch-youtube.py` | YouTube transcript → verbatim raw archive under `raw/` (needs `yt-dlp` on the host) |
@@ -108,7 +109,7 @@ Manifest: `TRAVEL_SCRIPTS` (the commands) + `TOOLING_HELPER_SCRIPTS` / `SHARED_H
 | `wiki-tasks.py` | The At a glance task list behind `/task-list`: `show`, `init`, `add [--backlog]`, `set`, `done`, `backlog`, `unbacklog [--owner]`, `remove --confirmed` on `sessions/<persona>/task.md` (persona from the project config). Picks each number above every number in the file and records the next free one in a marker comment; refuses a removal without `--confirmed`; keeps the rest of the file as it is (2026-09-15). The `### Backlog` section is always last, after Unassigned, with an Owner column; `Backlog` is refused as an owner name; an older 4-column Backlog section is read with empty Owner cells, filled by `set <N> --owner` (2026-10-01). Checks: `tests/scripts/test_wiki_tasks.py` |
 | `wiki-cycle-scope.py` | What `/wiki-cycle` reads, decided by a script: `semantic` (entries added or revised since the last semantic lint, plus this run's staged; `--all` for everything), `claims` (entries with no claims in the index, or revised since it was written, plus staged), `checker` (staged entries whose raw is a transcript of `min_transcript_minutes`+), `checker-log` (one line per checker report in `_inbox/reports/checker-log.jsonl`). "Added" is a file created after the cut-off (git), "revised" is `last_reviewed` on or after it: machine edits such as backlink blocks never count (2026-09-24, task #42 C1/C3) |
 | `wiki-triage.py` | The mechanical half of `/wiki-triage`: `buckets` (the config, each reader, who "this session" is; a notebook with no `_inbox/intake/README.md` has one bucket, `main`), `check` (exit 1 on a config problem), `pending`, `route <ticket> --to <folder> --reason … [--raw raw/<file>]` (refuses a folder that is not a bucket, moves the ticket, records `raw_path`, appends to `_inbox/intake/triage-log.md`), `log --last N` (the precedents). Never deletes (2026-09-24) |
-| `install-skill.py` (helper) | Copy ONE skill onto the local system with placeholder substitution — the per-skill primitive the installer loops over |
+| `install-skill.py` (helper) | Copy ONE skill onto the local system with placeholder substitution (`{{WIKI_SCRIPTS_DIR}}`, `{{TOOLSET_DIR}}`) — the per-skill primitive the installer loops over, and Phase A's for `/new-wiki` |
 | `_wiki_config.py`, `_entry_checks.py`, `_atomic_io.py`, `_install_tooling.py`, `_markdown.py` (helpers) | Path/registry resolution and the date-time helpers; the shared mechanical entry checks (gate + lint); atomic writes; the install manifests and loop; HTML → Markdown through MarkItDown with a named plain-text fallback (`wiki-update.py --fetch-only`, a full-text email's raw; 2026-10-04, checks `tests/scripts/test_html_markdown.py`) |
 
 ## C. Templates
@@ -125,9 +126,10 @@ Research/development split removed 2026-06-15 — one merged template set; every
 | `.gitignore.tmpl` | Project root .gitignore | every project init |
 | `seed/wiki/{HOME,README,_MAP}.md.tmpl` | Wiki scaffold files rendered inside `wiki/` (the full `_INDEX.md` is written beside `wiki/` by `wiki-index.py` on the first filing) | every project init |
 | `seed/llm-wiki-readme.md.tmpl` | The wiki root's `README.md` (in-project `llm-wiki/` or the notebook folder) | every project init |
+| `seed/global-toolset-README.md`, `seed/how-to/_FRAMEWORK_MANAGED.md` | The global toolset's README and its `how-to/` marker (copied, not rendered) | every global install |
 | `feeds.md.tmpl` | The trusted-sources page `_config/feeds.md` beside `wiki/`, the list `/wiki-discover` searches: its six tables with headers only, for the user to fill (or the sources named at `/new-wiki`'s optional question); never overwrites an existing page. `/wiki-discover` offers the same template when a notebook has none (2026-09-26) | project init with `research/` |
 
-The folder taxonomy under `wiki/` lives in `_wiki_config.py` (the single copy; `new-wiki.py` scaffolds from it and the folder guards read it), in two halves since 2026-09-09: `PROJECT_TAXONOMY` = `project/{components,decisions,architecture,patterns,troubleshooting,best-practices}` and `RESEARCH_TAXONOMY` = `research/{active,long-term,tooling,best-practices,interesting-docs}`, plus `sessions/` always. `/new-wiki` asks for each half separately — `stubs` (the half with those subfolders), `empty` (the root only; subfolders appear as `/wiki-update` or `/wrap-up` file into them) or `none` — via `--project-folder` / `--research-folder`; `taxonomy_for()` turns the two answers into the folder list, and the answers are recorded in the project config as `wiki_folders`. `SCAFFOLD_TAXONOMY` is the default (both halves with stubs). `MERGED_TAXONOMY` is the superset the folder guards in `wiki-update.py` / `wiki-promote.py` recognise: it also carries `LEGACY_RESEARCH_TAXONOMY` = `research/{implementation,skills,orchestration}` — the agentic-design notebook's topics that every new wiki used to receive; recognised for existing wikis, no longer created. The six framework-contract docs land in `project/best-practices/framework/` whenever `project/` exists (section A4).
+The folder taxonomy under `wiki/` lives in `_wiki_config.py` (the single copy; `new-wiki.py` scaffolds from it and the folder guards read it), in two halves since 2026-09-09: `PROJECT_TAXONOMY` = `project/{components,decisions,architecture,patterns,troubleshooting,best-practices}` and `RESEARCH_TAXONOMY` = `research/{active,long-term,tooling,best-practices,interesting-docs}`, plus `sessions/` always. `/new-wiki` asks for each half separately — `stubs` (the half with those subfolders), `empty` (the root only; subfolders appear as `/wiki-update` or `/wrap-up` file into them) or `none` — via `--project-folder` / `--research-folder`; `taxonomy_for()` turns the two answers into the folder list, and the answers are recorded in the project config as `wiki_folders`. `SCAFFOLD_TAXONOMY` is the default (both halves with stubs). `MERGED_TAXONOMY` is the superset the folder guards in `wiki-update.py` / `wiki-promote.py` recognise: it also carries `LEGACY_RESEARCH_TAXONOMY` = `research/{implementation,skills,orchestration}` — the agentic-design notebook's topics that every new wiki used to receive; recognised for existing wikis, no longer created. No framework-contract docs or usage docs are scaffolded into a project (section G).
 
 ## D. Configuration
 
@@ -135,9 +137,9 @@ Three files, three scopes:
 
 | File | Scope | Written by | Carries |
 |---|---|---|---|
-| `~/.claude/wiki-config.json` | machine | Phase A / tooling install; Phase B adds `registry` | `bootstrap_source` (where this clone lives — what `-RefreshOnly`, `/new-wiki --sync` and `--phase docs` read), `install_version`, `last_phase_a`, `drive`, `registry` (the machine-wide fallback pointer to `linked-notebooks.json`, written by the first registry-mode Phase B; lets `--topic <notebook>` resolve from a cwd with no project config, 2026-09-13), `search_mode` (`full` or `keyword`: set by the first global tooling install from the GPU check, never changed by a later one, which only says when it no longer fits; switched with `wiki-qmd-query.py --set-mode`; no key reads as `full`, 2026-10-02) |
+| `~/.claude/wiki-config.json` | machine | Phase A / tooling install; Phase B adds `registry` | `bootstrap_source` (where this clone lives — what `-RefreshOnly`, `/new-wiki --sync` and `--phase docs` read), `install_version`, `last_phase_a`, `drive`, `registry` (the machine-wide fallback pointer to `linked-notebooks.json`, written by the first registry-mode Phase B; lets `--topic <notebook>` resolve from a cwd with no project config, 2026-09-13), `search_mode` (`full` or `keyword`: set by the first global tooling install from the GPU check, never changed by a later one, which only says when it no longer fits; switched with `wiki-qmd-query.py --set-mode`; no key reads as `full`, 2026-10-02). Its `registry` also says where the global toolset is (`_wiki_config.toolset_location()`) |
 | `<project>/.claude/wiki-config.json` | project | Phase B | a thin pointer: `tool`, `project_name`, `notebook` + `registry` (registry model) or the in-project wiki location, `skills_install`, `wiki_folders` (the two `stubs\|empty\|none` answers), `drive`; optional `email` (`enabled`, `label`, `done_label`: the Gmail label `/wiki-cycle` reads; set by hand, see the drive-setup page, 2026-10-03) |
-| `<vault>/linked-notebooks.json` | vault | Phase B (`_upsert_registry`) | every notebook's root + its two booleans `confirm_before_create` / `confirm_before_promote`; the single source of truth for WHERE a wiki is — every `/wiki-*` script resolves through it (`_wiki_config.py`); optional `wrap_up_commit` (`none`/`commit`/`push`, `/wrap-up`'s Step 7 default), set by hand, not by the scaffold (2026-09-25) |
+| `<vault>/linked-notebooks.json` | vault | Phase B (`_upsert_registry`) | every notebook's root + its two booleans `confirm_before_create` / `confirm_before_promote`; the single source of truth for WHERE a wiki is — every `/wiki-*` script resolves through it (`_wiki_config.py`); optional `wrap_up_commit` (`none`/`commit`/`push`, `/wrap-up`'s Step 7 default), set by hand, not by the scaffold (2026-09-25); the `global-toolset` entry (root only), added by the first global install (2026-10-04) |
 
 The agentmemory MCP wiring from the May draft was removed 2026-05-14 (`-NoAgentmemory` is a no-op kept for back-compat).
 
@@ -149,11 +151,10 @@ Created by `/new-wiki` Phase B. Two layouts; the `wiki/` folders are whatever th
 In-project (a wiki inside a code repo):        Notebook in a vault (linked-notebooks.json above it):
 <project>/                                     <vault>/notebooks/<name>/
 ├── .claude/wiki-config.json                   ├── README.md
-├── CLAUDE.md, README.md, .gitignore           ├── how-to/llm-wiki/        ← pack usage docs (+ _FRAMEWORK_MANAGED.md marker)
-└── llm-wiki/                                  ├── _config/feeds.md        ← with research/ only: the trusted sources, empty
-    ├── README.md                              ├── wiki/                   ← HOME, README, _MAP + the taxonomy (section C)
-    ├── _config/feeds.md  (with research/)     ├── raw/sessions/
-    ├── how-to/llm-wiki/                       ├── _inbox/{pending,proposed,done,rejected,reports,skill-suggestions}/   (first use)
+├── CLAUDE.md, README.md, .gitignore           ├── _config/feeds.md        ← with research/ only: the trusted sources, empty
+└── llm-wiki/                                  ├── wiki/                   ← HOME, README, _MAP + the taxonomy (section C)
+    ├── README.md                              ├── raw/sessions/
+    ├── _config/feeds.md  (with research/)     ├── _inbox/{pending,proposed,done,rejected,reports,skill-suggestions}/   (first use)
     ├── wiki/                                  └── _signals/               ← truth-status sidecars (first use)
     ├── raw/sessions/
     └── _inbox/, _signals/  (first use)
@@ -161,7 +162,22 @@ In-project (a wiki inside a code repo):        Notebook in a vault (linked-noteb
 
 Phase B creates the folders above except `_inbox/` and `_signals/`, which the queue, staging and verify scripts create on first use.
 
-The flat layout exists so that every notebook in a vault has the same shape (qmd collections, `_inbox/` staging and `_signals/` sidecars all assume `<root>/wiki/`); the calling code repo then carries only the thin pointer in `.claude/wiki-config.json` and a `CLAUDE.md` that @-imports the notebook's `_MAP.md` by absolute path.
+The flat layout exists so that every notebook in a vault has the same shape (qmd collections, `_inbox/` staging and `_signals/` sidecars all assume `<root>/wiki/`); the calling code repo then carries only the thin pointer in `.claude/wiki-config.json` and a `CLAUDE.md` that @-imports the notebook's `_MAP.md` by absolute path, and the command reference from the global toolset.
+
+## G. The global toolset (2026-10-04, task #25)
+
+One notebook holds every global tooling doc once, for every project (the user, 2026-10-04: no per-notebook copies). Where: the registry entry `global-toolset`; with a registry but no entry, `<registry folder>/notebooks/global-toolset`, where the first global install creates and registers it; with no registry, `~/.claude/global-toolset` (`_wiki_config.toolset_location()`).
+
+```
+global-toolset/
+├── README.md                                 (seed/global-toolset-README.md)
+├── how-to/_FRAMEWORK_MANAGED.md              (seed/how-to/)
+├── how-to/llm-wiki/                          the pack usage docs (section A3)
+├── how-to/<pack>/                            each other pack, written by its own installer (agent-builder's)
+└── wiki/project/best-practices/framework/    the six framework-contract docs (section A4)
+```
+
+Kept by `seed_toolset()` (`_install_tooling.py`) as step 7 of every global install, and by `new-wiki.py --phase docs`. `--mode status` reports it as `toolset` (current / stale / missing, with the files to add, replace and remove); stale docs make the global state stale, a missing toolset makes it partial. It has no `research/`, no sessions, no qmd collection (search stays project-only) and is never edited by hand. The skills and agents name it through `{{TOOLSET_DIR}}`; a rendered project `CLAUDE.md` imports `<toolset>/how-to/llm-wiki/commands.md` by absolute path.
 
 ## F. External dependencies
 
@@ -178,14 +194,14 @@ The flat layout exists so that every notebook in a vault has the same shape (qmd
 **Source-of-truth lives in this repo's shipped folders** (`skills/`, `scripts/`, `agents/`, `templates/`, `seed/`, `wiki-seed/`, `framework-docs/`; inside `bootstrap/` until 2026-10-01). When a skill, script or doc changes there, the installed copies go stale in two places, each with its own refresh:
 
 - **Global tooling** (`~/.claude/skills/`, `~/.claude/wiki-scripts/`, `~/.claude/agents/`): `install-wiki.ps1 -RefreshOnly` / `install-wiki.sh`, or `wiki-upgrade.py` directly — the same copy loop (`_install_tooling.py`), which refuses any skill or agent whose frontmatter does not parse. `/new-wiki --sync` re-runs Phase A, which refreshes only the global `/new-wiki` skill. `new-wiki.py --mode status` (`global_tooling_status()` in `_install_tooling.py`, 2026-09-09) is the drift detector: it compares every installed skill, script and agent with the clone and reports installed / stale / partial / missing. `/new-wiki` reads it before its skills question and Phase B in global mode refuses a partial or missing set (or installs it once with `--install-global-if-missing`, which the installer wrappers pass); a stale set is named, never re-copied by the scaffold. The lint's installed-skill section verifies only that every installed SKILL.md / agent file parses. **An install that stops partway** (2026-10-01, task #61) says so: `install_tooling()` records each script, skill and agent as it lands and raises `InstallIncomplete`; every entry point (`wiki-upgrade.py`, `new-wiki.py --mode tooling` behind both installer scripts, Phase B's `--install-global-if-missing`) passes it to `report_incomplete()`, which writes a log first (`~/.cache/llm-wiki/install-errors/install-<time>.log`, or `$WIKI_INSTALL_LOG_DIR`: the command, where it stopped, the error, what is and is not installed, the traceback, how to finish), then prints one `⚠️ INSTALL INCOMPLETE: stopped at <step> (<error>); <counts>; <log>` line and exits 1. A missing source is still the plain error, since nothing was written. Every shipped command that prints non-ASCII writes UTF-8 (`tests/scripts/test_utf8_output.py` holds that). A global install also sets the machine's search mode the first time, from the GPU check (`configure_search_mode()`; `full` with CUDA or Metal, else `keyword`), and after that only reports it: a keyword machine with a GPU now available, or a full machine whose GPU check fails, is named in the summary with the `--set-mode` command (2026-10-02).
-- **Framework-managed docs inside a project** (`how-to/llm-wiki/`, the root marker, `wiki/project/best-practices/framework/`): `new-wiki.py --phase docs --target-folder <project>`; `--check` reports without writing; `--all-notebooks` covers every notebook in the registry. The standing procedure after any change that lands in a notebook is `--check --all-notebooks` → review every REPLACE → refresh → `-RefreshOnly`.
+- **The global toolset's docs** (`how-to/llm-wiki/`, the root marker, `wiki/project/best-practices/framework/`): every global install refreshes them; `new-wiki.py --phase docs` does only that, `--check` reports without writing. No project notebook holds a copy since 2026-10-04, so a docs change reaches one place.
 - **A bundled install** (skills copied into the project): re-run Phase B against the same folder with `--force` (non-destructive: existing `CLAUDE.md` / `README.md` / `.gitignore` are kept).
 
 ## The May 2026 design questions, as they resolved
 
 1. **`bootstrap_source` locks the install to one checkout** — it does, by design; it is one field in `~/.claude/wiki-config.json` and re-running the installer from a new clone rewrites it. No relocate skill was needed.
 2. **Update notifications** — none; the refresh is idempotent and cheap, so it is run rather than detected. The lint's installed-skill section checks loadability, not staleness.
-3. **Versioning** — the six framework-contract docs carry `framework-version` (compared by `--phase docs`); every skill and the agent carry `last_reviewed` / `review_after` / `reviewed_for_model`; `install_version` is a date stamp. Extending `framework-version` to the other scaffolded files is on the roadmap.
+3. **Versioning** — the six framework-contract docs carry `framework-version`; every skill and the agent carry `last_reviewed` / `review_after` / `reviewed_for_model`; `install_version` is a date stamp. Extending `framework-version` to the other scaffolded files is on the roadmap.
 4. **Test mode** — `--dry-run` on every phase; `--check` on `--phase docs`.
 5. **OS support** — `install-wiki.sh` covers Mac/Linux for Claude Code; Cursor is Windows-only (`-Tool cursor`).
 

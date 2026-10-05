@@ -13,10 +13,10 @@ Both live in the four-layer memory model below.
 ## Where to look
 
 @{{LLM_WIKI_PATH}}/README.md
-@{{LLM_WIKI_PATH}}/how-to/llm-wiki/commands.md
+@{{TOOLSET_DIR}}/how-to/llm-wiki/commands.md
 @{{WIKI_PATH}}/_MAP.md
 
-If the user asks for help (any phrasing — "how do I...", "what commands...", "help"), point them at `{{LLM_WIKI_PATH}}/how-to/llm-wiki/`: `user-guide.md` for how the whole system works, `commands.md` (already loaded) for every command, then the skill page under `skills/` that fits their question.
+If the user asks for help (any phrasing — "how do I...", "what commands...", "help"), point them at `{{TOOLSET_DIR}}/how-to/llm-wiki/` (the global toolset): `user-guide.md` for how the whole system works, `commands.md` (already loaded) for every command, then the skill page under `skills/` that fits their question.
 
 ## Resuming — where we left off (do this on startup)
 
@@ -47,8 +47,7 @@ Folders under `{{WIKI_PATH}}/` (the ones this project uses; each half — `proje
 - **`project/architecture/`** — system-level structural rules
 - **`project/patterns/`** — reusable approaches we adopt elsewhere
 - **`project/troubleshooting/`** — bugs + root causes (so we don't re-debug)
-- **`project/best-practices/`** — project-specific conventions
-- **`project/best-practices/framework/`** — the framework-contract docs (frontmatter spec, authoring principles, cycle step contract, …), refreshed by the framework — don't edit
+- **`project/best-practices/`** — project-specific conventions (the framework's own contract docs live once, in the global toolset — precedence, below)
 - **`research/active/`**, **`research/long-term/`**, **`research/tooling/`**, **`research/best-practices/`**, **`research/interesting-docs/`** — external content by kind: current, settled, tools, ingested best-practice articles, and personal-relevance finds
 
 ### Provenance line (project vs research)
@@ -91,7 +90,7 @@ When in doubt, file it — `/wiki-promote --review` is the gate, so a thin entry
 
 ### Entry shape (when filing inline)
 
-Use the same frontmatter contract that `/wrap-up` uses (the frontmatter spec in `project/best-practices/framework/` is the authority), and stamp `origin: inline` so `/wiki-promote --review` can tell who proposed it:
+Use the same frontmatter contract that `/wrap-up` uses (the frontmatter spec, `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`, is the authority), and stamp `origin: inline` so `/wiki-promote --review` can tell who proposed it:
 
 ```yaml
 ---
@@ -157,9 +156,9 @@ Body sections (skip any that don't apply):
 
 Rules for this project live in several places and will occasionally disagree. Do not average them or pick the friendlier one. Apply this order, and say which rule won:
 
-1. **Framework-contract docs** — entries under `{{WIKI_PATH}}/project/best-practices/framework/` carrying `framework-contract: true` (the frontmatter spec, the authoring principles, the cycle step contract). Canonical. Every other doc is supposed to link to them, never restate them.
+1. **Framework-contract docs** — the docs under `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/` (the global toolset) carrying `framework-contract: true` (the frontmatter spec, the authoring principles, the cycle step contract). Canonical. Every other doc is supposed to link to them, never restate them.
 2. **Skill definitions** — `SKILL.md` files. A skill that restates a contract doc and drifts is a bug: follow the contract doc, flag the skill.
-3. **This CLAUDE.md** and the project's `{{LLM_WIKI_PATH}}/how-to/` docs.
+3. **This CLAUDE.md** and the usage docs in `{{TOOLSET_DIR}}/how-to/`.
 4. **Memory and session notes** — `sessions/`, agent memory. Background, never authority.
 
 Mechanical enforcement outranks prose at every level: if a lint check or a script gate rejects something a doc permits, the gate is right until the rule inside the gate is changed. (Added 2026-09-02 after an ingest hit two docs defining `confidence` differently with nothing saying which won.)

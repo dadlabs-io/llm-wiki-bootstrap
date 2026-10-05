@@ -14,8 +14,10 @@ What a run does, per model (the models run side by side, each in its own sandbox
   1. tests/skills/<skill>/check.py builds a fresh sandbox: a throwaway notebook,
      its own registry and its own qmd index. Real notebooks are never touched.
   2. The skill under test is rendered into the sandbox from the working tree (or
-     from --skill-ref), with {{WIKI_SCRIPTS_DIR}} pointing at this repo's scripts:
-     the run tests the repo's skill and scripts, never the installed copy.
+     from --skill-ref), with {{WIKI_SCRIPTS_DIR}} pointing at this repo's scripts
+     and {{TOOLSET_DIR}} at a global toolset inside the sandbox (this repo's usage
+     pages and framework-contract docs, plus any pages the suite puts there): the
+     run tests the repo's skill, scripts and docs, never the installed copy.
   3. Each case runs as a headless `claude -p` session in the sandbox with only the
      tools the skill needs. Its event stream is kept; the tool calls show which
      steps actually ran.
@@ -48,6 +50,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 PLACEHOLDER = "{{WIKI_SCRIPTS_DIR}}"
+TOOLSET_PLACEHOLDER = "{{TOOLSET_DIR}}"
 DEFAULT_TOOLS = [
     "Read", "Write", "Edit", "Glob", "Grep",
     "Bash(python:*)", "Bash(python3:*)", "Bash(uv:*)", "Bash(node:*)", "Bash(cd:*)", "Bash(ls:*)",
@@ -99,6 +102,17 @@ def render_skill(skill: str, ref: str | None, dest: Path, replacements: dict | N
         except UnicodeDecodeError:
             out.write_bytes(data)
     return dest
+
+
+def build_toolset(root: Path) -> Path:
+    """The sandbox's global toolset: this repo's files as an install lays them out (toolset_files()),
+    added beside whatever the suite already put there (e.g. another pack's usage pages)."""
+    sys.path.insert(0, str(REPO / "scripts"))
+    from _install_tooling import toolset_files
+    for rel, src in toolset_files(REPO).items():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, root / rel)
+    return root
 
 
 def parse_events(lines: list[str]) -> dict:
@@ -193,7 +207,11 @@ def run_model(model: str, cases: list[dict], args, check, stamp_dir: Path, tools
     out_dir = stamp_dir / model
     out_dir.mkdir(parents=True, exist_ok=True)
     ctx = check.setup(model, stamp_dir / f"sandbox-{model}", REPO)
-    repl = check.render_replacements(ctx) if hasattr(check, "render_replacements") else None
+    ctx["toolset"] = Path(ctx.get("toolset") or ctx["sandbox"] / "global-toolset")
+    if ctx["toolset"].resolve().is_relative_to(Path(ctx["sandbox"]).resolve()):  # never write outside the sandbox
+        build_toolset(ctx["toolset"])
+    repl = {TOOLSET_PLACEHOLDER: ctx["toolset"].as_posix(),
+            **(check.render_replacements(ctx) if hasattr(check, "render_replacements") else {})}
     render_skill(args.skill, args.skill_ref, ctx["skill_dir"], repl)
     for extra in getattr(check, "EXTRA_SKILLS", []):  # the skills this one calls, beside it
         render_skill(extra, args.skill_ref, ctx["skill_dir"].parent / extra, repl)

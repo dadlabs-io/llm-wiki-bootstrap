@@ -8,7 +8,7 @@ date: 2026-09-25
 
 # llm-wiki — user guide
 
-> ⚠️ **Framework-managed file.** This is shipped by the LLM-wiki installer and may be overwritten when you refresh the framework. **Don't hand-edit.** To customize, see the wiki root's `README.md` → "Framework-managed folders".
+> ⚠️ **Framework-managed file.** This is shipped by the LLM-wiki installer and may be overwritten when you refresh the framework. **Don't hand-edit.** It lives once, in the global toolset, for every project; to change it, change the framework.
 
 The one page to read to know how this system works: what it is, the commands you type, how an entry gets into the wiki, what the research cycle does, and where everything lives. The other pages in this folder go deeper: [`commands.md`](./commands.md) is the full command reference, [`getting-started.md`](./getting-started.md) your first hour, and `skills/<name>.md` one page per skill.
 
@@ -121,7 +121,6 @@ A notebook (in a notebooks vault, or `<project>/llm-wiki/` for a wiki kept insid
 ├── _INDEX.md                     generated: every entry, by folder
 ├── _config/feeds.md              the trusted sources discovery searches (with research/; you fill it)
 ├── _signals/<slug>.json          truth-status sidecars (/wiki-verify, /wiki-rollback)
-├── how-to/                       framework-managed usage docs (this page)
 ├── raw/                          the sources, verbatim; append-only
 ├── _inbox/                       work in progress
 │   ├── pending/                  queued sources; _pending-list.md is the view
@@ -137,7 +136,6 @@ A notebook (in a notebooks vault, or `<project>/llm-wiki/` for a wiki kept insid
     ├── HOME.md                   the landing page
     ├── _MAP.md                   generated: the compressed map the agent always loads
     ├── project/                  what you build: decisions, patterns, bugs, architecture, …
-    │   └── best-practices/framework/   the framework-contract docs
     ├── research/<folder>/        what you read, one folder per subject
     └── sessions/                 the agent's working memory
         ├── active-context.md     the resume pointer
@@ -145,6 +143,8 @@ A notebook (in a notebooks vault, or `<project>/llm-wiki/` for a wiki kept insid
 ```
 
 A notebook has only the halves it was created with (`project/`, `research/`, or neither); the other can be added any time.
+
+The usage docs (this page and the others in `how-to/`) and the framework-contract docs are not in any notebook: they live once, in the **global toolset**, a notebook named `global-toolset` that the global install keeps current. Each project's `CLAUDE.md` imports `commands.md` from there, and the skills read the framework docs there.
 
 ## Rules the layout keeps
 
@@ -155,7 +155,7 @@ A notebook has only the halves it was created with (`project/`, `research/`, or 
 - **A source waits in `pending/`, is triaged into an `intake/` bucket, and moves to `done/` once ingested.** `done/` is what stops a source being ingested twice.
 - **A page nothing links to** is an orphan, unless its frontmatter declares `standalone: "<reason>"` (the landing page does).
 - **`sessions/` is working memory, not curated content.** `/wrap-up` writes it; the lint and the indexes skip it, and search still finds it.
-- **Framework-managed files** (`how-to/` and `project/best-practices/framework/`) are refreshed from the framework and a local edit is overwritten. Ask for the change in the framework instead.
+- **The global toolset is framework-managed:** its `how-to/` pages and `wiki/project/best-practices/framework/` docs are refreshed from the framework, and a local edit is overwritten. Ask for the change in the framework instead.
 
 ## The ideas it is built on
 
@@ -184,7 +184,7 @@ Or ask the agent in plain English; it reads these pages when a question needs th
 
 ## The framework contracts
 
-In `wiki/project/best-practices/framework/`, refreshed with the framework:
+In the global toolset's `wiki/project/best-practices/framework/`, refreshed with the framework:
 
 - [Wiki frontmatter](../../wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md): the metadata every entry carries.
 - [Wiki authoring](../../wiki/project/best-practices/framework/wiki-authoring-best-practices.md): how an entry's body is laid out.

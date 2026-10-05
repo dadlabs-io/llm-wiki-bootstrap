@@ -43,7 +43,6 @@ SLUG = "harbor-log"
 OTHER = "other-notes"
 PROJECT_STUBS = ("components", "decisions", "architecture", "patterns", "troubleshooting")
 RESEARCH_STUBS = ("active", "long-term", "tooling", "best-practices", "interesting-docs")
-FRAMEWORK_DOCS = 6
 CLAUDE_MD_SEED = "# harbor-log\n\nHand-written project notes. Keep this file exactly as it is.\n"
 REAL_GLOBAL = Path.home() / ".claude" / "wiki-config.json"
 
@@ -102,7 +101,13 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
     (vault / "notebooks").mkdir(parents=True)
     project = box / "work" / SLUG
     project.mkdir(parents=True)
-    return {"sandbox": box, "project": project, "vault": vault,
+    sys.path.insert(0, str(repo / "scripts"))
+    from _wiki_config import toolset_location
+    # Phase B renders the machine's real toolset path into CLAUDE.md, so the skill sees the same one
+    # (the runner builds a toolset only inside a sandbox; this one is the real install's, read only)
+    toolset = toolset_location()[0]
+    return {"sandbox": box, "project": project, "vault": vault, "toolset": toolset,
+            "toolset_dir": toolset.as_posix(),
             "registry": vault / "linked-notebooks.json",
             "skill_dir": box / "skill" / "new-wiki", "repo": repo,
             "scripts": repo / "scripts", "real": _real_paths(),
@@ -279,11 +284,12 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
 
     pdir, fw = wiki / "project", wiki / "project" / "best-practices" / "framework"
     stubs_present = [s for s in PROJECT_STUBS if (pdir / s).is_dir()]
-    fw_docs = len(list(fw.glob("*.md"))) if fw.is_dir() else 0
+    # the usage docs and the framework-contract docs live in the global toolset only (2026-10-04)
+    add("no docs copied into the wiki (how-to/, framework/)",
+        not (wiki_root / "how-to").exists() and not fw.exists())
     if exp["project"] == "none":
         add("no project/ folder", not pdir.exists())
     else:
-        add(f"the {FRAMEWORK_DOCS} framework-contract docs", fw_docs == FRAMEWORK_DOCS, fw_docs)
         if exp["project"] == "stubs":
             add("project/ stub folders", len(stubs_present) == len(PROJECT_STUBS), stubs_present)
         else:
@@ -321,6 +327,10 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     add("global mode: no per-project skills copy", not (project / ".claude" / "skills").exists())
     for name in ("CLAUDE.md", "README.md", ".gitignore"):
         add(f"{name} in the project", (project / name).is_file())
+    claude_md = (project / "CLAUDE.md").read_text(encoding="utf-8") if (project / "CLAUDE.md").is_file() else ""
+    add("CLAUDE.md imports commands.md from the global toolset, every placeholder filled",
+        f"@{ctx['toolset_dir']}/how-to/llm-wiki/commands.md" in claude_md and "{{" not in claude_md,
+        claude_md[claude_md.find("@"):][:160])
     add("git repo initialised", (project / ".git").exists())
 
     reg = json.loads(ctx["registry"].read_text(encoding="utf-8")).get("notebooks", {})

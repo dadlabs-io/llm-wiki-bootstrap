@@ -45,7 +45,9 @@ from _install_tooling import (  # noqa: E402
     global_tooling_status, format_tooling_status, is_bootstrap_source,
     InstallIncomplete, report_incomplete,
     build_tooling_env, find_uv,
+    seed_toolset, toolset_status, undocumented_artifacts, load_install_skill_fn,
 )
+from _wiki_config import toolset_location  # noqa: E402
 from urllib.parse import urlparse
 
 # Force UTF-8 on Windows so emoji / unicode in templates don't crash printing
@@ -78,7 +80,6 @@ def project_paths(tool: str, target: Path, llm_wiki_root: Path = None) -> dict:
       <target>/.claude/wiki-config.json
       <target>/llm-wiki/               ← human-readable wiki content
         ├── README.md                  ← how to use this framework
-        ├── how-to/                    ← seed how-to docs
         └── wiki/                     ← project's research/dev wiki entries
                                          (was previously vault/<topic>/)
 
@@ -110,7 +111,6 @@ def project_paths(tool: str, target: Path, llm_wiki_root: Path = None) -> dict:
         "settings": settings,
         "llm_wiki": llm_wiki,
         "llm_wiki_readme": llm_wiki / "README.md",
-        "llm_wiki_how_to": llm_wiki / "how-to",
         "llm_wiki_wiki": llm_wiki / "wiki",
     }
 
@@ -574,10 +574,16 @@ def phase_a(args):
         else:
             _warn(f"could not generate /new-wiki.mdc (SKILL.md missing?)")
     else:
-        # Claude Code: install /new-wiki skill folder → ~/.claude/skills/new-wiki/
+        # Claude Code: install /new-wiki skill folder → ~/.claude/skills/new-wiki/, through the same
+        # primitive as the full install, so its {{TOOLSET_DIR}} / {{WIKI_SCRIPTS_DIR}} are filled in
         _info(f"installing /new-wiki skill: {new_project_skill_src} -> {new_project_skill_dst}")
-        c, s = _copy_tree(new_project_skill_src, new_project_skill_dst, dry_run=args.dry_run)
-        _ok(f"/new-wiki skill: {c} files copied, {s} unchanged")
+        rc = load_install_skill_fn(bootstrap / "scripts")(
+            skill="new-wiki", tool="claude-code", skills_src=skills_src, skills_dest=CC_GLOBAL_SKILLS_DIR,
+            scripts_dir=CC_GLOBAL_WIKI_SCRIPTS_DIR, dry_run=args.dry_run)
+        if rc:
+            _err(f"/new-wiki skill not installed (exit {rc})")
+            return 1
+        _ok("/new-wiki skill installed")
 
     # Persist bootstrap source path so the skill can find it next time
     cfg = _load_config(CC_GLOBAL_CONFIG_PATH) or {}
@@ -726,370 +732,50 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
 #   <target>/llm-wiki/
 #     ├── README.md                  (rendered from seed/llm-wiki-readme.md.tmpl)
 #     ├── _config/feeds.md           (only with research/: templates/feeds.md.tmpl, the empty trusted-sources page)
-#     ├── how-to/                    (seeded from seed/how-to/)
 #     └── wiki/                     (project's research/dev wiki — was vault)
 #   <target>/CLAUDE.md, README.md, .gitignore (rendered from templates)
 
-# Pages that sat flat at the how-to root before 2026-09-08 and now live under how-to/llm-wiki/ (the four
-# skill guides folded into their skill pages). A refresh never deletes, so they linger in an older project
-# until --prune-retired removes them; without the flag they are only reported. The same goes for a page under
-# llm-wiki/skills/ or llm-wiki/agents/ whose skill or agent no longer ships (found by seed_pack_docs itself).
-RETIRED_HOW_TO_PAGES = ["commands.md", "getting-started.md", "install.md", "drive-setup.md", "wiki-cycle.md",
-                        "wiki-search.md", "wiki-update.md", "wrap-up.md", "upd-docs.md"]
-
-
-def seed_pack_docs(bootstrap: Path, how_to_root: Path, dry_run: bool = False, prune_retired: bool = False) -> int:
-    """Assemble the llm-wiki pack's usage docs into <how_to_root>/llm-wiki/ (wiki-seed
-    convention, shared with the agent-factory): the pack page from wiki-seed/,
-    one page per skill from skills/<name>/wiki-seed/ -> llm-wiki/skills/<name>.md, one page
-    per agent from agents/<name>/wiki-seed/ -> llm-wiki/agents/<name>.md. Every shipped
-    skill (a folder with SKILL.md) and agent (a folder with AGENT.md) is expected to carry a
-    page; each one that does not is named in a warning, because an artifact without a usage
-    page is installed undocumented (requirement added 2026-09-08). Returns the number of
-    pages copied or pruned. Used by Phase B (new project) and --phase docs (refresh an existing one)."""
-    wiki_src = bootstrap
-    skills_src = wiki_src / "skills"
-    agents_src = wiki_src / "agents"
-    pack_docs_dst = how_to_root / "llm-wiki"
-    pack_seed_src = wiki_src / "wiki-seed"
-    total = 0
-    if pack_seed_src.exists():
-        c, s = _copy_tree(pack_seed_src, pack_docs_dst, dry_run=dry_run)
-        total += c
-        _ok(f"seeded pack page(s): {c} copied, {s} unchanged")
-    else:
-        _warn(f"no pack page at {pack_seed_src} — the how-to folder has no entry point")
-    missing = []
-    unshipped = []
-    for kind, src, main_file, sub in (("skill", skills_src, "SKILL.md", "skills"),
-                                      ("agent", agents_src, "AGENT.md", "agents")):
-        if not src.exists():
-            continue
-        n_pages = n_skipped = 0
-        shipped = set()
-        for art_dir in sorted(src.iterdir()):
-            if not art_dir.is_dir() or not (art_dir / main_file).exists():
-                continue
-            page_src = art_dir / "wiki-seed"
-            if page_src.exists() and any(page_src.glob("*.md")):
-                shipped.update(p.name for p in page_src.glob("*.md"))
-                c, s = _copy_tree(page_src, pack_docs_dst / sub, dry_run=dry_run)
-                n_pages += c
-                n_skipped += s
-            else:
-                missing.append(f"{kind} {art_dir.name}")
-        total += n_pages
-        _ok(f"seeded per-{kind} usage pages: {n_pages} copied, {n_skipped} unchanged")
-        if (pack_docs_dst / sub).exists():
-            unshipped += [f"llm-wiki/{sub}/{p.name}" for p in sorted((pack_docs_dst / sub).glob("*.md"))
-                          if p.name not in shipped]
-    if missing:
-        _warn("shipped without a usage page (add <artifact>/wiki-seed/<name>.md — every skill and "
-              "agent must carry one): " + ", ".join(missing))
-    retired = [n for n in RETIRED_HOW_TO_PAGES if (how_to_root / n).exists()] + unshipped
-    if retired:
-        if prune_retired:
-            for n in retired:
-                if not dry_run:
-                    (how_to_root / n).unlink()
-            total += len(retired)
-            _ok(f"{'WOULD remove' if dry_run else 'removed'} {len(retired)} retired page(s): {', '.join(retired)}")
-        else:
-            _warn(f"{len(retired)} retired page(s) (pre-2026-09-08 root pages, or a skill or agent that no longer "
-                  f"ships): {', '.join(retired)} — re-run with --prune-retired to remove them")
-    return total
-
-
-# bootstrap/framework-docs/ until 2026-10-01 (bootstrap/ removed); bootstrap/topic-template/wiki/best-practices/framework/
-# until 2026-09-26, when topic-template retired
-FRAMEWORK_DOCS_SRC = Path("framework-docs")
-FRAMEWORK_DOCS_DST = Path("project") / "best-practices" / "framework"
-
-
-def _framework_version(text: str):
-    """The `framework-version:` value from a doc's frontmatter, or None when it has none."""
-    import re
-    m = re.search(r"^framework-version:\s*(\S+)\s*$", text, flags=re.M)
-    return m.group(1) if m else None
-
-
-def seed_framework_docs(bootstrap: Path, wiki_dir: Path, dry_run: bool = False,
-                        check: bool = False) -> tuple[int, int, list]:
-    """Land the framework-contract docs (`framework-contract: true`, the frontmatter spec, the
-    authoring principles, the cycle step contract, ...) at <wiki_dir>/project/best-practices/framework/,
-    the path the CLAUDE.md template's precedence rule and every skill point at. Content-compared and
-    OVERWRITTEN when different — these are the framework's canonical copies (the gold copy is
-    framework-docs/); a project keeps project-specific notes in
-    a sibling file, never by editing these. Reports every file it replaced so an edit that lived only in
-    a project copy is visible rather than silently lost (2026-09-08 — five of nine registered notebooks
-    had no framework docs at all, and the two that did had drifted in both directions).
-
-    check=True (--check, 2026-09-08) is the review-first mode for a notebook owner: nothing is written;
-    each doc is reported as unchanged, ADD (no project copy) or REPLACE, and a REPLACE names the
-    `framework-version` on both sides — a lower project version is a stale copy, the SAME version with
-    different content is a project-local edit that a refresh would lose — followed by a unified diff of
-    the body (backlink block excluded). dry_run only prints "WOULD write" lines; check explains why.
-    Returns (written, unchanged, replaced_names); under check, `written` counts the docs a refresh
-    would write."""
-    import difflib
-    src = bootstrap / FRAMEWORK_DOCS_SRC
-    dst = wiki_dir / FRAMEWORK_DOCS_DST
-    if not src.is_dir():
-        _warn(f"framework docs missing from package at {src} — nothing seeded")
-        return 0, 0, []
-    written = unchanged = 0
-    replaced = []
-    added = []
-    bl_start, bl_end = "<!-- BACKLINKS-AUTO START -->", "<!-- BACKLINKS-AUTO END -->"
-
-    def _split_backlinks(text: str):
-        """(body_without_block, block_or_empty). The block is per-project state written by
-        wiki-reciprocate-backlinks.py; it is neither compared nor discarded. Anything AFTER the
-        block stays in the body, so a note appended below it is compared (and shows in the --check
-        diff) instead of being dropped unseen — it was, before 2026-09-08."""
-        i = text.find(bl_start)
-        if i < 0:
-            return text, ""
-        j = text.find(bl_end, i)
-        if j < 0:
-            return text[:i], text[i:]
-        end = j + len(bl_end)
-        return text[:i] + text[end:].lstrip("\r\n"), text[i:end]
-
-    def _norm(text: str) -> str:
-        return text.replace("\r\n", "\n").rstrip() + "\n"
-
-    for s in sorted(src.glob("*.md")):
-        d = dst / s.name
-        new_text = s.read_text(encoding="utf-8")
-        keep_block = ""
-        old_body = None
-        if d.exists():
-            old_body, keep_block = _split_backlinks(d.read_text(encoding="utf-8"))
-            if _norm(old_body) == _norm(new_text):
-                unchanged += 1
-                if check:
-                    print(f"  unchanged  {s.name}")
-                continue
-            replaced.append(s.name)
-        else:
-            added.append(s.name)
-        if check:
-            new_v = _framework_version(new_text) or "?"
-            if old_body is None:
-                print(f"  ADD        {s.name}  (no project copy; framework v{new_v})")
-            else:
-                old_v = _framework_version(old_body) or "?"
-                why = ("stale copy" if old_v != new_v
-                       else "same version, content differs — a project-local edit a refresh would lose")
-                print(f"  REPLACE    {s.name}  (project v{old_v} -> framework v{new_v}; {why})")
-                diff = difflib.unified_diff(_norm(old_body).splitlines(), _norm(new_text).splitlines(),
-                                            fromfile=f"project/{s.name}", tofile=f"framework/{s.name}",
-                                            lineterm="", n=1)
-                for line in diff:
-                    print("      " + line)
-        elif dry_run:
-            print(f"  WOULD write {d}")
-        else:
-            d.parent.mkdir(parents=True, exist_ok=True)
-            out = new_text.rstrip() + "\n"
-            if keep_block:
-                out += "\n" + keep_block.rstrip() + "\n"
-            d.write_text(out, encoding="utf-8")
-        written += 1
-    if check:
-        if written:
-            _warn(f"framework-contract docs at {dst}: a refresh would write {written} "
-                  f"({len(added)} added, {len(replaced)} replaced), {unchanged} unchanged — nothing written (--check)")
-        else:
-            _ok(f"framework-contract docs at {dst}: all {unchanged} match the framework's (--check)")
-        return written, unchanged, replaced
-    if replaced:
-        _warn(f"framework docs replaced (project copy differed from the framework's): {', '.join(replaced)}")
-    _ok(f"framework-contract docs -> {dst}: {written} written, {unchanged} unchanged")
-    return written, unchanged, replaced
-
-
-def _resolve_how_to_root(target: Path, registry_arg=None):
-    """Where an EXISTING project's framework-managed how-to tree lives, in this order:
-    the project's thin-pointer .claude/wiki-config.json (notebook + registry -> the notebook root),
-    <target>/llm-wiki/how-to (an in-project wiki), or <target>/how-to when the target is itself a
-    notebook root (has wiki/). Returns None when nothing matches."""
-    cfg = target / ".claude" / "wiki-config.json"
-    if cfg.exists():
-        try:
-            data = json.loads(cfg.read_text(encoding="utf-8"))
-        except Exception as e:  # noqa: BLE001
-            _warn(f"could not read {cfg}: {e}")
-            data = {}
-        reg_path = Path(registry_arg or data.get("registry") or "")
-        name = data.get("notebook")
-        if name and reg_path and reg_path.exists():
-            try:
-                reg = json.loads(reg_path.read_text(encoding="utf-8"))
-                entry = (reg.get("notebooks") or reg).get(name)
-                root_val = entry.get("root") if isinstance(entry, dict) else entry
-                if root_val:
-                    root = Path(root_val)
-                    if not root.is_absolute():
-                        root = (reg_path.parent / root).resolve()
-                    if (root / "how-to").exists() or (root / "wiki").exists():
-                        return root / "how-to"
-            except Exception as e:  # noqa: BLE001
-                _warn(f"could not resolve notebook {name!r} through {reg_path}: {e}")
-    if (target / "llm-wiki" / "how-to").exists():
-        return target / "llm-wiki" / "how-to"
-    if (target / "wiki").exists():
-        return target / "how-to"
-    return None
-
-
-def _docs_one(bootstrap: Path, target: Path, args, check: bool) -> tuple[int, int]:
-    """The docs refresh (or check) of ONE project / notebook root. Returns (rc, pending) where
-    pending is the number of files a refresh would write (check) or wrote (refresh); rc is 1 when
-    the target has no wiki, or under check when anything would change."""
-    how_to = _resolve_how_to_root(target, args.registry)
-    if how_to is None:
-        _err(f"no wiki found for {target}: expected .claude/wiki-config.json, llm-wiki/how-to/, or a "
-             "notebook root with wiki/ — run Phase B first")
-        return 1, 0
-    # --check: report what a refresh would change and write nothing (pack docs and the marker go
-    # through the plain dry-run path; the framework docs get the versioned, diffed report). Exit 1
-    # when anything would change so a script can gate on it.
-    dry = args.dry_run or check
-    if check:
-        _info(f"--check: reporting what a docs refresh of {how_to.parent} would change — nothing is written")
-    _info(f"pack usage docs -> {how_to / 'llm-wiki'}")
-    n = seed_pack_docs(bootstrap, how_to, dry_run=dry, prune_retired=args.prune_retired)
-    pending = n
-    # framework-contract docs live beside the how-to tree, at <wiki>/project/best-practices/framework/;
-    # the wiki is a sibling of how-to/ for a notebook root and for an in-project llm-wiki/ alike.
-    # They are only seeded into a wiki that carries the project/ taxonomy the precedence rule and
-    # the skills assume; a notebook without one (a plain notes wiki with its own folders) is out of
-    # the framework docs' scope and is named rather than given a folder it has no use for (2026-09-08).
-    wiki_dir = how_to.parent / "wiki"
-    if not wiki_dir.is_dir():
-        _warn(f"no wiki/ beside {how_to} — framework-contract docs not refreshed")
-    elif not (wiki_dir / "project").is_dir():
-        _warn(f"{wiki_dir} has no project/ taxonomy — framework-contract docs skipped (out of scope for a "
-              "notebook that does not use the framework's folders; re-run Phase B with --force to add them)")
-    else:
-        w, _u, _r = seed_framework_docs(bootstrap, wiki_dir, dry_run=dry, check=check)
-        pending += w
-    # the marker is the one framework file at the how-to root; it describes the tree, so it travels with the docs
-    marker = bootstrap / "seed" / "how-to" / "_FRAMEWORK_MANAGED.md"
-    if marker.exists():
-        c, s = _copy_tree(marker.parent, how_to, names=[marker.name], dry_run=dry)
-        pending += c
-        _ok(f"how-to root marker: {('would refresh' if dry else 'refreshed') if c else 'unchanged'}")
-    if check:
-        if pending:
-            _warn(f"docs check: a refresh would write {pending} file(s) under {how_to.parent} — exit 1")
-            return 1, pending
-        _ok(f"docs check: {how_to.parent} matches the framework — nothing to refresh")
-        return 0, 0
-    _ok(f"docs refresh done: {n} page(s) copied into {how_to / 'llm-wiki'}")
-    return 0, pending
-
-
-def _registry_notebooks(args) -> list:
-    """[(name, root_path)] for every notebook in the linked-notebooks.json registry — --registry,
-    else the one the cwd's .claude/wiki-config.json points at. Roots resolve against the registry's
-    folder. Empty list (with an error printed) when no registry can be found."""
-    from _wiki_config import load_registry
-    reg = None
-    reg_path = None
-    if args.registry:
-        reg_path = Path(args.registry).resolve()
-        if reg_path.exists():
-            try:
-                data = json.loads(reg_path.read_text(encoding="utf-8"))
-                reg = data.get("notebooks", data)
-            except (json.JSONDecodeError, OSError) as e:
-                _err(f"could not read registry {reg_path}: {e}")
-                return []
-    else:
-        reg, reg_path = load_registry()
-    if not reg:
-        _err("no notebook registry: pass --registry <linked-notebooks.json>, or run from a project whose "
-             ".claude/wiki-config.json names one")
-        return []
-    out = []
-    for name, entry in reg.items():
-        if name.startswith("_"):
-            continue
-        root_val = entry.get("root") if isinstance(entry, dict) else entry
-        if not root_val:
-            _warn(f"registry entry {name!r} has no root — skipped")
-            continue
-        root = Path(root_val)
-        if not root.is_absolute():
-            root = (reg_path.parent / root).resolve()
-        out.append((name, root))
-    return out
-
-
 def phase_docs(args):
-    """--phase docs: refresh ONLY the framework-managed docs of an existing project — the pack usage
-    docs (how-to/llm-wiki/), the six framework-contract docs and the how-to root marker. --phase sync
-    refreshes the global skills and never touches a project; re-running Phase B with --force
-    refreshes the whole how-to tree. This is the narrow path: a project created before the
-    wiki-seed convention (2026-07-31) gets its how-to/llm-wiki/ folder without anything else being
-    rewritten (2026-09-08).
+    """--phase docs: refresh ONLY the global toolset's docs (task #25, 2026-10-04) -- the llm-wiki pack's
+    usage pages (how-to/llm-wiki/), the how-to root marker and the six framework-contract docs
+    (wiki/project/best-practices/framework/), kept once in the global-toolset notebook. No project wiki
+    carries a copy any more, so nothing else is touched. A global install (`--mode tooling`,
+    `install-wiki.ps1 -RefreshOnly`) does the same as one of its steps; this is the narrow path after a
+    docs-only change. The toolset is created and registered when it is not there yet.
 
-    --all-notebooks runs it over every notebook in the registry (the standing procedure after a
-    framework change: `--check --all-notebooks` first, review every REPLACE, then `--all-notebooks`
-    to refresh), with a one-line-per-notebook summary and a single exit code: 1 when any notebook
-    would change under --check, or had no wiki."""
+    --check reports what a refresh would add, replace or remove and writes nothing: exit 1 when anything
+    would change, so a script can gate on it."""
     bootstrap = _derive_bootstrap_source(args)
     if not bootstrap:
         _err("could not find bootstrap source. Pass --bootstrap-source <path> or run Phase A first.")
         return 1
-    check = getattr(args, "check", False)
-    # the report lines go to stdout and the status lines to stderr; keep them in order when piped
-    try:
-        sys.stdout.reconfigure(line_buffering=True)
-    except (AttributeError, ValueError):
-        pass
-    if not getattr(args, "all_notebooks", False):
-        if not args.target_folder:
-            _err("--target-folder is required for --phase docs (the project, or the notebook root), "
-                 "or --all-notebooks for every registered notebook")
-            return 1
-        rc, _pending = _docs_one(bootstrap, Path(args.target_folder).resolve(), args, check)
-        return rc
-    if args.target_folder:
-        _warn("--all-notebooks ignores --target-folder")
-    notebooks = _registry_notebooks(args)
-    if not notebooks:
+    undocumented = undocumented_artifacts(bootstrap)
+    if undocumented:
+        _warn("shipped without a usage page (add <artifact>/wiki-seed/<name>.md -- every skill and "
+              "agent must carry one): " + ", ".join(undocumented))
+    if getattr(args, "check", False):
+        root, _reg, registered = toolset_location()
+        status = toolset_status(bootstrap, root)
+        for key in ("add", "replace", "remove"):
+            for rel in status[key]:
+                print(f"  {key.upper():<8} {rel}")
+        if not registered:
+            print(f"  not registered: a refresh would create and register {root.as_posix()}")
+        if status["state"] == "current" and registered:
+            _ok(f"docs check: the global toolset at {status['root']} matches the framework")
+            return 0
+        _warn(f"docs check: the global toolset at {status['root']} is {status['state']} -- nothing written "
+              "(--check); run the same command without --check to refresh it")
         return 1
-    rows = []
-    worst = 0
-    for name, root in notebooks:
-        print(f"\n=== {name} ({root}) ===", file=sys.stderr)
-        if not root.is_dir():
-            _err(f"{name}: root {root} does not exist — skipped")
-            rows.append((name, "MISSING ROOT"))
-            worst = 1
-            continue
-        rc, pending = _docs_one(bootstrap, root, args, check)
-        if rc:
-            worst = 1
-        if check:
-            status = "clean" if not pending else f"{pending} file(s) would change"
-        else:
-            status = "unchanged" if not pending else f"{pending} file(s) refreshed"
-        if rc and not pending:
-            status = "no wiki"
-        rows.append((name, status))
-    width = max(len(n) for n, _ in rows)
-    print(f"\n{'docs check' if check else 'docs refresh'} — {len(rows)} notebook(s):", file=sys.stderr)
-    for name, status in rows:
-        print(f"  {name.ljust(width)}  {status}", file=sys.stderr)
-    if check and worst:
-        _warn("at least one notebook would change (or has no wiki) — exit 1; review the REPLACE lines above, "
-              "then run the same command without --check to refresh")
-    return worst
+    status = seed_toolset(bootstrap, dry_run=args.dry_run)
+    verb = "would be " if args.dry_run else ""
+    for key, label in (("add", "added"), ("replace", "replaced"), ("remove", "removed")):
+        for rel in status[key]:
+            print(f"  {verb}{label}: {rel}")
+    _ok(f"global toolset docs at {status['root']}: {len(status['add'])} {verb}added, "
+        f"{len(status['replace'])} {verb}replaced, {len(status['remove'])} {verb}removed; "
+        f"registry: {status['registered']}")
+    return 0
 
 
 def phase_b(args):
@@ -1280,29 +966,13 @@ def phase_b(args):
         c, s = _copy_tree(templates_src, paths["templates"], dry_run=args.dry_run)
         _ok(f"templates: {c} copied, {s} unchanged")
 
-    # B5 — create <target>/llm-wiki/ with seed content
+    # B5 — create the wiki root. No docs are copied into a project since 2026-10-04 (task #25): the pack
+    # usage docs and the framework-contract docs live once, in the global toolset, which the global
+    # install keeps current; CLAUDE.md imports the command reference from there.
     if args.dry_run:
-        print(f"WOULD mkdir {paths['llm_wiki']} and seed how-to/, wiki/")
+        print(f"WOULD mkdir {paths['llm_wiki']} and wiki/")
     else:
         paths["llm_wiki"].mkdir(parents=True, exist_ok=True)
-
-    # Seed: how-to/
-    if seed_src.exists() and (seed_src / "how-to").exists():
-        c, s = _copy_tree(seed_src / "how-to", paths["llm_wiki_how_to"], dry_run=args.dry_run)
-        _ok(f"seeded how-to/: {c} files")
-    else:
-        if not args.dry_run:
-            paths["llm_wiki_how_to"].mkdir(parents=True, exist_ok=True)
-        _info("no seed/how-to/ found in bootstrap — created empty folder")
-
-    # Seed: pack usage docs (wiki-seed convention — standard across packs; the pack page,
-    # one page per skill, one page per agent; a shipped artifact without one is warned about).
-    # Same seeder as --phase docs, which refreshes an existing project's how-to/llm-wiki/.
-    seed_pack_docs(bootstrap, paths["llm_wiki_how_to"], dry_run=args.dry_run, prune_retired=args.prune_retired)
-
-    # No best-practices/ seed since 2026-09-13: the memory-bank-era pages were retired
-    # (archive/seed-best-practices/ in the bootstrap repo); project conventions live in
-    # wiki/project/best-practices/, the framework's own docs in its framework/ subfolder.
 
     # B6 — the wiki folders: each half (project/, research/) created with its default
     # stubs, as an empty root, or not at all — the two /new-wiki questions (2026-09-09).
@@ -1324,15 +994,6 @@ def phase_b(args):
         sessions_dir.mkdir(parents=True, exist_ok=True)
     _ok(f"wiki folders applied: {len(folders)} (project/: {args.project_folder}, "
         f"research/: {args.research_folder}, sessions/: always)")
-
-    # B6.1 — framework-contract docs into wiki/project/best-practices/framework/ (the precedence
-    # rule in CLAUDE.md and every skill's "read the spec" pointer assume they are there; 2026-09-08).
-    # They are docs, not stubs: they land whenever project/ exists (stubs or empty) and are skipped
-    # for a wiki without it — the same rule --phase docs applies.
-    if args.project_folder == "none":
-        _info("no project/ folder — framework-contract docs skipped (out of scope without it)")
-    else:
-        seed_framework_docs(bootstrap, wiki_root, dry_run=args.dry_run)
 
     # B6.5 — render wiki scaffold files (_MAP.md, README.md, HOME.md) inside the
     # wiki/ folder from seed/wiki/*.tmpl. These give the agent orientation on day 1
@@ -1360,6 +1021,7 @@ def phase_b(args):
         "PROJECT_DESCRIPTION": description or f"{name} project wiki",
         "PROJECT_TYPE": project_type,
         "WIKI_FOLDERS": wiki_folders_md,
+        "TOOLSET_DIR": toolset_location()[0].as_posix(),
     }
     wiki_seed = seed_src / "wiki"
     if wiki_seed.exists():
@@ -1382,7 +1044,9 @@ def phase_b(args):
     else:
         llm_wiki_path_str = "llm-wiki"
         wiki_path_str = "llm-wiki/wiki"
+    toolset_dir = toolset_location()[0].as_posix()
     template_vars = {
+        "TOOLSET_DIR": toolset_dir,
         "PROJECT_NAME": name,
         "PROJECT_DESCRIPTION": description,
         "LLM_WIKI_PATH": llm_wiki_path_str,
@@ -1572,7 +1236,7 @@ def phase_b(args):
         # The wiki root is <target>/llm-wiki for an in-project wiki and the notebook folder for a
         # vault notebook, so name it by its real path (it said `llm-wiki/` for both until 2026-09-26).
         f"Read `{paths['llm_wiki_readme']}` (wiki overview) + "
-        f"`{paths['llm_wiki_how_to'] / 'llm-wiki' / 'commands.md'}` (command reference)",
+        f"`{toolset_dir}/how-to/llm-wiki/commands.md` (command reference, in the global toolset)",
     ]
     if args.research_folder != "none":
         next_steps += [
@@ -1610,7 +1274,7 @@ def phase_b(args):
         "drive_subfolder": drive_subfolder if drive_enabled_global else None,
         "needs_restart": needs_restart,
         "next_steps": next_steps,
-        "help_anytime": "Ask in plain English. CLAUDE.md loads the command reference (how-to/llm-wiki/commands.md) and the wiki README; the agent reads the other how-to pages when a question needs them.",
+        "help_anytime": f"Ask in plain English. CLAUDE.md loads the command reference ({toolset_dir}/how-to/llm-wiki/commands.md, in the global toolset) and the wiki README; the agent reads the other how-to pages there when a question needs them.",
     }, indent=2))
 
     if needs_restart:
@@ -1660,8 +1324,9 @@ def main():
                         help="A = install /new-wiki skill globally + record bootstrap source. "
                              "B = scaffold a per-project install (skills/scripts/llm-wiki/) at --target-folder. "
                              "sync = re-run A to refresh the global /new-wiki skill (touches no project). "
-                             "docs = refresh only the pack usage docs (how-to/llm-wiki/) of the existing "
-                             "project at --target-folder. Mutually exclusive with --mode.")
+                             "docs = refresh only the global toolset's docs (the pack usage pages and the "
+                             "framework-contract docs; created and registered if missing). Mutually exclusive "
+                             "with --mode.")
     parser.add_argument("--mode", choices=["tooling", "status"], default=None,
                         help="tooling = GLOBAL tooling-only install (all skills + scripts into "
                              "~/.claude/, no project scaffold). status = report the global tooling "
@@ -1700,10 +1365,9 @@ def main():
                              "set that is merely stale — that is install-wiki.ps1 -RefreshOnly.")
     parser.add_argument("--project-folder", choices=list(FOLDER_CHOICES), default="stubs",
                         help="wiki/project/ (what we build; /wrap-up files here): stubs = create it "
-                             "with " + ", ".join(f.split("/")[1] for f in PROJECT_TAXONOMY) + " and the "
-                             "framework-contract docs (default); empty = the folder plus the framework "
-                             "docs, subfolders appear as /wrap-up files into them; none = no project/ "
-                             "(the framework docs are skipped too).")
+                             "with " + ", ".join(f.split("/")[1] for f in PROJECT_TAXONOMY) + " (default); "
+                             "empty = the folder only, subfolders appear as /wrap-up files into them; "
+                             "none = no project/.")
     parser.add_argument("--research-folder", choices=list(FOLDER_CHOICES), default="stubs",
                         help="wiki/research/ (what we ingest; /wiki-update files here): stubs = create it "
                              "with " + ", ".join(f.split("/")[1] for f in RESEARCH_TAXONOMY) + " (default); "
@@ -1730,22 +1394,11 @@ def main():
                         help="Continue even if target folder has unexpected entries")
     parser.add_argument("--no-agentmemory", action="store_true",
                         help="(deprecated, no-op as of 2026-05-14 — agentmemory removed)")
-    parser.add_argument("--prune-retired", action="store_true",
-                        help="With --phase docs (or B --force): delete retired pack pages — the pre-2026-09-08 pages "
-                             "at the how-to root, and pages of skills or agents that no longer ship "
-                             "(otherwise they are only reported)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print actions without writing")
-    parser.add_argument("--all-notebooks", action="store_true",
-                        help="With --phase docs only: run over every notebook in the linked-notebooks.json "
-                             "registry (--registry, else the one the cwd's .claude/wiki-config.json names) "
-                             "instead of one --target-folder; prints a per-notebook summary, exit 1 if any "
-                             "would change under --check.")
     parser.add_argument("--check", action="store_true",
-                        help="With --phase docs only: report what a refresh would change and write nothing. "
-                             "Each framework-contract doc is listed as unchanged / ADD / REPLACE with the "
-                             "framework-version on both sides and a diff (same version but different content "
-                             "= a project-local edit a refresh would lose). Exit 1 when anything would change.")
+                        help="With --phase docs only: list what a refresh of the global toolset would add, "
+                             "replace or remove, and write nothing. Exit 1 when anything would change.")
     args = parser.parse_args()
 
     if args.mode and args.phase:
@@ -1756,9 +1409,6 @@ def main():
         return 1
     if args.check and args.phase != "docs":
         _err("--check is only meaningful with --phase docs")
-        return 1
-    if args.all_notebooks and args.phase != "docs":
-        _err("--all-notebooks is only meaningful with --phase docs")
         return 1
 
     if args.mode == "tooling":
