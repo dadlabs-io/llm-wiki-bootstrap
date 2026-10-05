@@ -85,7 +85,7 @@ Modifiers: `<notebook>` (another registered notebook), `--direct` (file into `wi
 /wiki-cycle --ingest-only
 ```
 
-**"I filed newsletters under my wiki label."** With email on (the [Drive and Gmail setup](./drive-setup.md) page), a quick run or `--discover-only` reads the label, recommends what is worth ingesting, and moves the handled emails to the done label:
+**"I filed newsletters under my wiki label."** With email on (the [Drive and Gmail setup](./drive-setup.md) page), a quick run or `--discover-only` reads the label, recommends what is worth ingesting, and moves the handled emails to the done label, marked read:
 ```
 /wiki-cycle --discover-only
 ```

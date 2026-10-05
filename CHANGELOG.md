@@ -11,6 +11,10 @@
 
 ## 2026-10-05
 
+### Handled emails are marked read; one already deleted is not a failure (cycle 2026-10-05-01, Mark)
+- **Changed**: `wiki-fetch-gmail.py archive` removes `UNREAD` in the same call that moves an email to the done label, so a handled email is finished (Mark: "mark them as read"). An email the user deleted after the fetch (Gmail answers 404) is recorded under `gone_ids` and counted as handled, not as a failure; any other refusal still fails and leaves the email for next time. The step's printed result counts `gone`.
+- **Proven**: `tests/scripts/test_gmail_api_errors.py` 16/16, three new checks (red first: no `UNREAD` removed, the 404 a failure); `test_gmail_fetch.py` 28/28. Skill wording in `/wiki-cycle` Step 1.5, its reference, the drive-setup and user-guide pages; `PENDING.md` row for the next wiki-cycle run.
+
 ### The skills route to the new fetchers, proven by both suites (task #75)
 - **Changed** (`1ca3301`): `/wiki-update`'s `fetchers.md` sends an Instagram post to `wiki-fetch-page.py` (read each slide image Instagram could not read), a reel, a podcast, an X video or a video without captions to `wiki-transcribe.py`, and Threads, LinkedIn, Notion, Bluesky and Medium without a browser session to the page fetcher on this machine; the Docker recipe and `wiki-fetch-page.js` are gone. The `wiki-ingester` agent follows; `/wiki-cycle` Step 1.0 tells the user which Drive files it left and why, Step 1.8 needs no browser for these hosts, and the report lists the Drive files left. After the run, one sentence: a reel that will not download gets one more try, then is reported and left, never with cookies or a login.
 - **New**: `wiki-fetch-drive-folder.py --from-dir` (or `$WIKI_DRIVE_FROM_DIR`) reads a folder on disk laid out like the Drive folder, with no sign-in, as `wiki-fetch-gmail.py --from-dir` does; handled files move to its `_completed/`. It exists for tests and offline runs.

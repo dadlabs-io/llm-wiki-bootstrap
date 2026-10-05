@@ -72,7 +72,7 @@ That works — each project has its own subfolder. The OAuth token is machine-gl
 
 ## Gmail
 
-`/wiki-cycle` can also read a Gmail label of newsletters and saved emails: every article link becomes a candidate the session recommends or skips and you approve, and handled emails move to a done label. It uses the Gmail API with the same Google app as Drive.
+`/wiki-cycle` can also read a Gmail label of newsletters and saved emails: every article link becomes a candidate the session recommends or skips and you approve, and handled emails move to a done label, marked read. It uses the Gmail API with the same Google app as Drive.
 
 1. **Enable the Gmail API** in the same Google Cloud project: https://console.cloud.google.com/apis/library/gmail.googleapis.com
 2. **Create the two labels** in Gmail: one you file emails under, and a done label (defaults `...wiki-inbox` and `...wiki-inbox/read`).

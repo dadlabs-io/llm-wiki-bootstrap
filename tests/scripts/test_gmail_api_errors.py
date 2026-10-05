@@ -161,6 +161,61 @@ if hasattr(mod, "entry"):
             mod.gmail_service = mod_gs
             os.chdir(ROOT)  # Windows cannot remove the working directory
 
+# 6. archive (2026-10-05, cycle 2026-10-05-01): a handled email is moved to the done label AND marked read;
+#    one the user already deleted (Gmail answers 404) is gone, not a failure; any other refusal still fails.
+class ArchiveService:
+    def __init__(self, gone=(), refuse=()):
+        self.calls, self.gone, self.refuse = [], set(gone), set(refuse)
+
+    def users(self):
+        return self
+
+    def labels(self):
+        return self
+
+    def messages(self):
+        return self
+
+    def list(self, userId):  # noqa: N803
+        return _Call({"labels": [{"name": "...wiki-inbox", "id": "L1"}, {"name": "...wiki-inbox/read", "id": "L2"}]})
+
+    def modify(self, userId, id, body):  # noqa: A002, N803 - the Google client's argument names
+        if id in self.gone:
+            return _Call(exc=HttpError(404, f"<HttpError 404 Requested entity was not found: {id}>"))
+        if id in self.refuse:
+            return _Call(exc=HttpError(500, "<HttpError 500 Backend Error>"))
+        self.calls.append((id, body))
+        return _Call({"id": id})
+
+
+with tempfile.TemporaryDirectory() as td:
+    runf = Path(td) / "run"
+    runf.mkdir()
+    step = {"skill": "wiki-fetch-gmail", "cycle_id": "c1", "step": "email-fetch", "timestamp": "t", "status": "completed",
+            "summary": {"emails_seen": 3, "candidates": 0, "full_text_emails": 0, "known": 0, "junk_dropped": 0,
+                        "queued": 0, "archived": 0},
+            "queued": [], "skipped": [], "deferred": [], "notes": "", "errors": [], "label": "...wiki-inbox",
+            "done_label": "...wiki-inbox/read", "source": "gmail", "reviewed": True, "archived_ids": [],
+            "emails": [{"id": i, "subject": i, "sender": "s", "date": "d", "words": 1, "web_url": "", "full_text": False,
+                        "file": ""} for i in ("m1", "m2", "m3")], "candidates": []}
+    (runf / "email-fetch.json").write_text(json.dumps(step), encoding="utf-8")
+    svc = ArchiveService(gone={"m2"})
+    code, out, err = run(["archive", "--run-folder", str(runf)], svc)
+    bodies = dict(svc.calls)
+    check("archive moves a handled email to the done label and marks it read",
+          bodies.get("m1", {}).get("addLabelIds") == ["L2"]
+          and set(bodies.get("m1", {}).get("removeLabelIds", [])) == {"L1", "UNREAD"}, (code, svc.calls, err[:300]))
+    after = json.loads((runf / "email-fetch.json").read_text(encoding="utf-8"))
+    check("an email the user already deleted (404) counts as handled, not failed",
+          code == 0 and "m2" in after.get("archived_ids", []) and not after.get("errors"), (code, out, after.get("errors")))
+    check("... and the step notes it as gone", "m2" in json.dumps(after.get("gone_ids", after.get("notes", ""))), after.get("notes"))
+    after["archived_ids"], after["errors"] = [], []
+    (runf / "email-fetch.json").write_text(json.dumps(after), encoding="utf-8")
+    code, out, err = run(["archive", "--run-folder", str(runf)], ArchiveService(refuse={"m3"}))
+    after = json.loads((runf / "email-fetch.json").read_text(encoding="utf-8"))
+    check("any other refusal is still a failure, left for next time",
+          code == 1 and "m3" not in after.get("archived_ids", []) and after.get("errors"), (code, after.get("errors")))
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

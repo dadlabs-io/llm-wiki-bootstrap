@@ -440,8 +440,10 @@ class GmailSource:
             yield mid, base64.urlsafe_b64decode(m["raw"].encode("ascii"))
 
     def archive(self, mid: str) -> None:
+        """Move to the done label and mark read: a handled email is finished (Mark, 2026-10-05)."""
         self.service.users().messages().modify(
-            userId="me", id=mid, body={"addLabelIds": [self.done_id], "removeLabelIds": [self.label_id]}).execute()
+            userId="me", id=mid,
+            body={"addLabelIds": [self.done_id], "removeLabelIds": [self.label_id, "UNREAD"]}).execute()
 
 
 class DirSource:
@@ -729,6 +731,7 @@ def cmd_archive(args) -> int:
         svc = gmail_service(args.client_secrets, args.token_cache)
         source = GmailSource(svc, step["label"], step["done_label"])
     done = set(step.get("archived_ids") or [])
+    gone = set(step.get("gone_ids") or [])
     moved, failed = 0, 0
     for e in step["emails"]:
         if e["id"] in done:
@@ -738,12 +741,18 @@ def cmd_archive(args) -> int:
             done.add(e["id"])
             moved += 1
         except Exception as exc:  # noqa: BLE001 — a failed move leaves the email for next time
+            if getattr(getattr(exc, "resp", None), "status", None) == 404:
+                # the user deleted it after the fetch (cycle 2026-10-05-01): nothing left to move
+                done.add(e["id"])
+                gone.add(e["id"])
+                continue
             failed += 1
             step["errors"].append({"code": "archive_failed", "message": str(exc), "item": e["id"]})
+    step["gone_ids"] = sorted(gone)
     step["archived_ids"] = sorted(done)
     step["summary"]["archived"] = len(done)
     write_step(run, step)
-    print(json.dumps({"status": "ok" if not failed else "partial", "archived": moved, "failed": failed,
+    print(json.dumps({"status": "ok" if not failed else "partial", "archived": moved, "gone": len(gone), "failed": failed,
                       "to": step["done_label"]}))
     return 1 if failed else 0
 
