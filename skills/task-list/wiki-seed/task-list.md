@@ -13,11 +13,15 @@ The project's task list, kept where every session, every bot and you can see it:
 
 **Trigger:** */task-list*, or plain speech: "add a task …", "put X on the list", "delete task 4", "mark 2 done", "task 3 is waiting on Y", "move 5 to agent-builder", "move 5 to the backlog", "take 5 off the backlog", "what's on my list", "what's left", "show my tasks with details", "details on 25". This is not Claude Code's own `/tasks`, which shows background jobs.
 
-**Input / Output:** what you said, and the list in `wiki/sessions/<persona>/task.md` (the persona comes from the project's `.claude/wiki-config.json`, default `main`). It shows the list (the short rows; with details when you ask, or one task's details by its number), or changes one row and replies with that row. The block and the Task details section sit above the file's `## NOW` and `## QUEUE`. The script refuses a row longer than the limits, so the agent puts the rest in the task's details; a row written before the limits stays as it is until it is next edited.
+**Input / Output:** what you said, and the list in `wiki/sessions/<persona>/task.md` (the persona comes from the project's `.claude/wiki-config.json`, default `main`). It shows the list (the short rows; with details when you ask, or one task's details by its number), or changes one row and replies with the one line the script printed for it (number, task, status, owner). The block and the Task details section sit above the file's `## NOW` and `## QUEUE`. The script refuses a row longer than the limits, so the agent puts the rest in the task's details; a row written before the limits stays as it is until it is next edited.
 
 **Two rules:**
 - **A number is never reused.** The script picks each new number above every number already in the file, including QUEUE's, and records the next free one in a comment in the block.
 - **A task leaves the list only on your word.** "Delete task 4" removes it. A finished task is marked `done`, and the session asks whether to remove it. It never removes a task on its own, and the script refuses to unless the session passes a confirmation flag.
+
+**Naming a task:** by its number, or by its words ("I've finished the build-scripts cleanup"). When the words match exactly one task, the session uses that task without asking you to confirm it; when two could match, or none does, it asks which one you mean. It never guesses a number.
+
+**Moving a task** to another owner changes only its owner: its status and next step stay as they were unless you say otherwise.
 
 Statuses are `to do`, `doing`, `waiting`, `parked` and `done`. "Waiting" keeps the task with its owner; the last column says what it is waiting on.
 
