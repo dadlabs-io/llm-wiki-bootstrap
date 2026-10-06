@@ -36,7 +36,7 @@ version of this list, see [`user-guide.md`](./user-guide.md) (the whole system o
 | [`wiki-update`](./skills/wiki-update.md) | Ingest one external source (URL, video, PDF, X post, file, pasted text) and file it directly into the wiki (`--staged` to stage it for review); two or more URLs are queued for `wiki-cycle` |
 | [`wiki-search`](./skills/wiki-search.md) | Hybrid BM25 + vector + reranked search across the wiki |
 | [`wiki-cycle`](./skills/wiki-cycle.md) | The full research cycle: discover → ingest → lint → fix → report |
-| [`wiki-promote`](./skills/wiki-promote.md) | Review staged entries in `_inbox/proposed/` and move approved ones into the wiki |
+| [`wiki-promote`](./skills/wiki-promote.md) | Review staged entries in `_inbox/proposed/` and move approved ones into the wiki; links, backlinks, indexes, map and the search index are brought up to date |
 | [`wiki`](./skills/wiki.md) | Show the wiki's INDEX — folder tree + curated file list |
 
 ## Capture & queueing
@@ -45,7 +45,7 @@ version of this list, see [`user-guide.md`](./user-guide.md) (the whole system o
 |---|---|
 | [`wiki-list`](./skills/wiki-list.md) | Pending-ingestion queue: drop URLs all day, batch-process later |
 | [`wiki-discover`](./skills/wiki-discover.md) | Search trusted feeds for new content, dedupe, queue candidates |
-| [`wiki-triage`](./skills/wiki-triage.md) | Give each queued source one owner: move it into the intake bucket whose purpose fits (`main` is the catch-all), capture the raw for other readers, log the call |
+| [`wiki-triage`](./skills/wiki-triage.md) | Give each queued source one owner: move it into the intake bucket whose purpose fits (`main` is the catch-all), capture the raw for other readers, log the call; attach each PDF you saved for a page no fetcher could get to the ticket waiting for it |
 
 ## Health & truth maintenance
 

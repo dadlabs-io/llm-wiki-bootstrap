@@ -39,11 +39,11 @@ The rest (`/wiki-discover`, `/wiki-triage`, `/wiki-lint`, `/wiki-claims`, `/wiki
 
 ## How an entry gets into the wiki
 
-1. **Written from the full source.** The agent reads the whole article, transcript, PDF or repository, saves it verbatim to `raw/`, and writes an entry: a TL;DR, the body, a Related section linking other entries, a footer naming the source.
-2. **Gated by a script.** Before anything is written, `wiki-update.py` checks the draft mechanically. It refuses to file an entry with no TL;DR, fewer than two Related links, or its sections out of order; the agent fixes the draft and tries again. It warns on the rest: fewer than three tags, a short entry not tagged `stub`, a figure paraphrased instead of quoted, a `>` quote not found word for word in the raw.
+1. **Written from the full source.** The agent saves the source verbatim to `raw/`, checks it is not a copy of one the wiki already holds under another link (the same file, or nearly the same text), then reads the whole article, transcript, PDF or repository and writes an entry: a TL;DR, the body, a Related section linking other entries, a footer naming the source.
+2. **Gated by a script.** Before anything is written, `wiki-update.py` checks the draft mechanically. It refuses to file an entry with no TL;DR, fewer than two Related links, or its sections out of order; the agent fixes the draft and tries again. It warns on the rest: fewer than three tags, a short entry not tagged `stub`, a figure paraphrased instead of quoted, a `>` quote not found word for word in the raw. A quote the agent read off an image (a slide, a screenshot) is written into the raw first and listed on its own line, so you know to compare it with the image. A fix made after filing is re-checked with `--regate`.
 3. **Staged or filed.** A single `/wiki-update` files straight into `wiki/` unless you ask for `--staged`. A cycle batch and `/wrap-up`'s entries wait in `_inbox/proposed/` until you approve them with `/wiki-promote` (or accept wrap-up's offer).
 4. **Checked, when the source is long.** An entry written from a long video transcript is read against that transcript by a second agent, the `wiki-checker`, before it can be promoted.
-5. **Linked in.** Promotion resolves the links, adds a backlink to every page the entry links to, and regenerates the indexes and the map.
+5. **Linked in.** Promotion resolves the links, adds a backlink to every page the entry links to, regenerates the indexes and the map, and brings the search index up to date, so the new entry is findable at once.
 6. **Verified by a person.** An entry starts `unverified`; `/wiki-verify` records who checked it and when.
 
 ## The research cycle
@@ -52,9 +52,11 @@ The rest (`/wiki-discover`, `/wiki-triage`, `/wiki-lint`, `/wiki-claims`, `/wiki
 
 ```
 gather ──► your review ──► triage ──► ingest ──► checker ──► lint + links ──► report ──► commit
-(Drive,    (approve the    (one owner  (up to 4    (long        (backlinks,
- feeds,     recommended)    per source) workers,    transcripts) indexes, map)
- email)                                 staged)
+(Drive,    (approve the    (one owner  (index      (long        (backlinks,
+ feeds,     recommended)    per source; rebuilt,   transcripts) indexes, map)
+ email)                     your saved  up to 4
+                            PDFs)       workers,
+                                        staged)
 ```
 
 `--full` adds a semantic lint of what is new, fixes, promotion of the staged entries, contradiction hunting across claims, a synthesis of the new research against your best-practices pages, and a scan for stale entries. Run it weekly, or after a big batch.
@@ -84,6 +86,8 @@ Modifiers: `<notebook>` (another registered notebook), `--direct` (file into `wi
 ```
 /wiki-cycle --ingest-only
 ```
+
+**"The report says a page needs saving as PDF."** A page no fetcher can get (a paywall, a login, a site that blocks it) is never copied out of your browser. The report's **⚠️ Needs you** section lists it with its link and the folder to save it into, as a full path you can paste into Chrome's Save dialog (usually the notebook's `_inbox\intake\llm-wiki\`). Open it in Chrome, Print → Save as PDF into that folder; the next cycle attaches the PDF to the ticket waiting for it, by its title, and files it with its full text. A PDF it cannot match is listed for you, never guessed.
 
 **"I filed newsletters under my wiki label."** With email on (the [Drive and Gmail setup](./drive-setup.md) page), a quick run or `--discover-only` reads the label, recommends what is worth ingesting, and moves the handled emails to the done label, marked read:
 ```

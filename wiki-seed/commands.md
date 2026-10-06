@@ -22,7 +22,7 @@ Canonical reference for the LLM-wiki framework. Each command works inside Claude
 | `/wiki-search "<query>"` | Hybrid BM25 + vector + LLM-reranked search across your wiki |
 | `/wrap-up` | End of session: updates the session journal and resume dashboards, proposes durable entries (you confirm), stages them, and offers to promote them. |
 | `/task-list` | The project's task list (top of `task.md`), one short row per task with its details kept apart: show it ("with details", or "details on 25", for the rest), add a task, mark one done, move one to the backlog (it keeps its owner) and back, remove one only on your word. Plain speech works as well: "add a task …", "move 5 to the backlog", "delete task 4", "what's on my list". |
-| `/wiki-promote` | Walk staged entries in `_inbox/proposed/` and accept/reject each one |
+| `/wiki-promote` | Walk staged entries in `_inbox/proposed/` and accept/reject each one; promotion also brings the search index up to date |
 | `/wiki-verify` | Mark an entry verified — entries never self-certify |
 | `/wiki-rollback` | Roll an entry back to its verified ancestor |
 
@@ -33,6 +33,7 @@ These are listed for completeness. `/wiki-cycle` invokes them in order; you can 
 | Command | What it does |
 |---|---|
 | `/wiki-discover` | Search the notebook's trusted sources (`_config/feeds.md`, created empty by `/new-wiki` with a `research/` folder) for new content, dedupe, queue candidates for your review |
+| `/wiki-triage` | Give each queued source one owner (an intake bucket), and attach each PDF you saved for a page no fetcher could get to the ticket waiting for it |
 | `/wiki-list` | Manage the `_inbox/pending/` queue |
 | `/wiki-lint` | Mechanical lint (broken links, orphans, frontmatter, and the body checks that mirror the ingest gate — TL;DR, Related links, tags, stubs, unquoted numbers) and optionally semantic lint |
 | `/wiki-claims` | Extract claims from entries, find contradictions |
