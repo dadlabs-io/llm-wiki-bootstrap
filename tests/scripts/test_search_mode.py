@@ -238,6 +238,52 @@ rc, out, err = run_main(["--set-mode", "keyword"])
 check("--set-mode keyword needs no GPU check", rc == 0 and read_cfg().get("search_mode") == "keyword",
       (rc, read_cfg(), err.strip()[-200:]))
 
+# ---------- --reindex: update the index, then embed on a full machine only (task #81 P1) ----------
+embed_saw_free_slot: list[bool] = []
+_plain_fake = q.run_qmd
+
+
+def reindex_fake(argv, timeout):
+    if argv and argv[0] == "embed":
+        probe = q.Slot(q.slot_dir() / "slot-1.lock")
+        free = probe.try_acquire()
+        if free:
+            probe.release()
+        embed_saw_free_slot.append(free)
+        calls.append(list(argv))
+        return 0, "", "Done! Embedded 12 chunks from 3 documents in 2s\n"
+    if argv and argv[0] == "update":
+        calls.append(list(argv))
+        return 0, "Updated 3 files\n", ""
+    return _plain_fake(argv, timeout)
+
+
+q.run_qmd = reindex_fake
+write_cfg({"search_mode": "keyword"})
+calls.clear()
+rc, out, err = run_main(["--reindex"])
+check("reindex, keyword: exits 0", rc == 0, (rc, err.strip()[-200:]))
+check("reindex, keyword: runs `qmd update` only, never `embed`", calls == [["update"]], calls)
+write_cfg({"search_mode": "full"})
+calls.clear()
+embed_saw_free_slot.clear()
+rc, out, err = run_main(["--reindex"])
+check("reindex, full: exits 0", rc == 0, (rc, err.strip()[-200:]))
+check("reindex, full: `qmd update` then `qmd embed`", calls == [["update"], ["embed"]], calls)
+check("reindex, full: every GPU slot is held while it embeds", embed_saw_free_slot == [False], embed_saw_free_slot)
+check("reindex, full: reports what it embedded", "Embedded 12 chunks" in (out + err), (out + err)[-200:])
+check("reindex: the slots are free again afterwards", q.acquire_slot(3, 0)[0] is not None)
+q.run_qmd = lambda argv, timeout: (calls.append(list(argv)) or (1, "", "boom: index locked\n"))
+calls.clear()
+rc, out, err = run_main(["--reindex"])
+check("reindex: a failed `qmd update` exits non-zero, says why, and does not embed",
+      rc not in (0, None) and "boom" in err and calls == [["update"]], (rc, calls, err.strip()[-200:]))
+q.run_qmd = lambda argv, timeout: (calls.append(list(argv)) or (None, "", ""))
+calls.clear()
+rc, out, err = run_main(["--reindex"])
+check("reindex: a timeout exits 124", rc == 124, (rc, err.strip()[-200:]))
+q.run_qmd = _plain_fake
+
 # ---------- the installer: sets it once, never switches on its own ----------
 it = load("it", "_install_tooling.py")
 check("_install_tooling has configure_search_mode", hasattr(it, "configure_search_mode"))

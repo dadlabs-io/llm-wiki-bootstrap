@@ -322,6 +322,22 @@ def _regenerate_indexes(scripts_dir: Path, topic: str, vault: Path, dry_run: boo
         if result.returncode != 0:
             _warn(f"{script_name} exited {result.returncode}: {result.stderr.strip()[:200]}")
 
+    # The search index LAST, once the entries sit in wiki/ with their links and backlinks
+    # written: until it runs, a search cannot find what was just promoted (task #81 P1;
+    # cycle 2026-10-05-02's workers searched an index 12 days stale). Update, then embed on
+    # a full machine; a few seconds for a handful of entries. Best-effort: a failure warns
+    # and the promotion stands; the lint's index check names the command to run by hand.
+    reindex_cmd = [sys.executable, str(scripts_dir / "wiki-qmd-query.py"), "--reindex"]
+    if dry_run:
+        print(f"  WOULD run: {' '.join(reindex_cmd)}")
+        return
+    result = subprocess.run(reindex_cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    note = (result.stderr.strip().splitlines() or [""])[-1]
+    if result.returncode != 0:
+        _warn(f"search re-index exited {result.returncode}: {note[:300]}")
+    else:
+        _info(note or "search re-indexed")
+
 
 # ---------- Promote ----------
 

@@ -36,14 +36,34 @@ def entry(title: str, related: list[str]) -> str:
             f"tags: [t, test, backlinks]\n---\n\n# {title}\n\n## TL;DR\n\n{title}.\n\n## Related\n\n{links}\n")
 
 
+QMD_ENV: dict[str, str] = {}
+
+
 def run(args, cwd):
     return subprocess.run([sys.executable, str(SCRIPTS / "wiki-promote.py"), *args], cwd=cwd,
                           capture_output=True, text=True, encoding="utf-8",
-                          env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+                          env={**os.environ, "PYTHONIOENCODING": "utf-8", **QMD_ENV})
+
+
+def fake_qmd(folder: Path) -> tuple[Path, Path]:
+    """A stand-in for qmd that only logs its arguments, so the promotion's re-index (task #81 P1)
+    is seen without touching the real index or loading a model."""
+    log = folder / "qmd-calls.log"
+    if os.name == "nt":
+        exe = folder / "fake-qmd.cmd"
+        exe.write_text(f'@echo off\r\necho %*>>"{log}"\r\necho Done! Embedded 0 chunks\r\n', encoding="utf-8")
+    else:
+        exe = folder / "fake-qmd"
+        exe.write_text(f'#!/bin/sh\necho "$@" >> "{log}"\necho "Done! Embedded 0 chunks"\n', encoding="utf-8")
+        exe.chmod(0o755)
+    return exe, log
 
 
 with tempfile.TemporaryDirectory() as td:
     tmp = Path(td)
+    qmd_exe, qmd_log = fake_qmd(tmp)
+    QMD_ENV.update({"WIKI_QMD_BIN": str(qmd_exe), "WIKI_SEARCH_MODE": "full",
+                    "WIKI_QMD_SLOT_DIR": str(tmp / "slots")})
     nb = tmp / "notebooks" / "t"
     dec = nb / "wiki" / "project" / "decisions"
     dec.mkdir(parents=True)
@@ -67,6 +87,9 @@ with tempfile.TemporaryDirectory() as td:
     out = p.stdout + p.stderr
     check("--auto exits 0", p.returncode == 0, out[-400:])
     check("the entry moved to its target folder", (dec / "new-c.md").exists(), out[-300:])
+    qmd_calls = [l.strip() for l in qmd_log.read_text(encoding="utf-8").splitlines()] if qmd_log.exists() else []
+    check("the promotion re-indexes the search: qmd update, then qmd embed",
+          [c.split()[0] for c in qmd_calls if c] == ["update", "embed"], (qmd_calls, out[-300:]))
 
     for old in ("old-a.md", "old-b.md"):
         text = (dec / old).read_text(encoding="utf-8")
@@ -91,6 +114,8 @@ with tempfile.TemporaryDirectory() as td:
     p = run(["--topic", "t", "--auto", "--dry-run"], proj)
     check("--dry-run leaves the backlinks untouched", (dec / "old-a.md").read_text(encoding="utf-8") == before,
           (p.stdout + p.stderr)[-300:])
+    after = [l for l in qmd_log.read_text(encoding="utf-8").splitlines() if l.strip()] if qmd_log.exists() else []
+    check("--dry-run does not re-index", len(after) == len(qmd_calls), after)
 
 failed = [n for ok, n in results if not ok]
 for ok, n in results:

@@ -20,6 +20,7 @@ Moves staged entries out of the holding area and into the live wiki. Staged inge
 - the sidecar deleted, and a truth-status record started for the entry as unverified (the record [`wiki-verify`](./wiki-verify.md) later changes)
 - every page a promoted entry links to naming it back in its auto-maintained backlinks block, so a new entry is never left an orphan (the whole notebook's blocks are rebuilt, so a notebook whose blocks were behind catches up)
 - the folder indexes and the wiki MAP regenerated
+- the search index brought up to date, so the promoted entries show up in [`wiki-search`](./wiki-search.md) straight away: only new and changed entries are processed, a few seconds for a handful (on a machine set to keyword search, the keyword index alone). A failure here is a warning; the promotion stands
 
 A bare or singular folder name is mapped to its full taxonomy folder. A notebook's own folder (one the framework doesn't list, such as `research/agents` or `research/vendors`) counts as known when it has a `README.md` saying what it is for. Any other folder is used as given, with a warning to check the spelling or add the README: a mistyped folder the script creates never gets one, so it keeps warning. Rejected entries move to `_inbox/rejected/` — kept for the audit trail, never deleted.
 

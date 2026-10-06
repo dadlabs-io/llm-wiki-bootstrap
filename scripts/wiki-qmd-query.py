@@ -281,6 +281,54 @@ def run_qmd(argv: list[str], timeout: float) -> tuple[int | None, str, str]:
         return None, "", ""
 
 
+REINDEX_TIMEOUT = float(os.environ.get("WIKI_QMD_REINDEX_TIMEOUT", "3600"))
+
+
+def reindex(mode: str, n_slots: int, max_wait: float) -> int:
+    """Bring qmd's index up to date: `qmd update` (new and changed files), then on a full
+    machine `qmd embed` (vectors for the new chunks) while holding every GPU slot, so no
+    search loads a model beside it. A keyword machine never embeds. Run by wiki-promote.py
+    after each promotion and by /wiki-cycle before its workers search (task #81 P1: no
+    step did, and cycle 2026-10-05-02's workers searched an index 12 days stale)."""
+    rc, out, err = run_qmd(["update"], REINDEX_TIMEOUT)
+    if rc is None:
+        print(f"[wiki-qmd-query] reindex: qmd update timed out after {REINDEX_TIMEOUT:.0f}s", file=sys.stderr)
+        return EXIT_TIMEOUT
+    if rc != 0:
+        print(f"[wiki-qmd-query] reindex: qmd update failed (exit {rc}): {(err or out).strip()[-300:]}",
+              file=sys.stderr)
+        return 1
+    if mode == "keyword":
+        print("[wiki-qmd-query] reindex: qmd update done; keyword machine, no embed", file=sys.stderr)
+        print("reindex=updated")
+        return 0
+    held: list[Slot] = []
+    start = time.monotonic()
+    try:
+        while len(held) < n_slots:
+            slot, _ = acquire_slot(n_slots, max(0.0, max_wait - (time.monotonic() - start)))
+            if slot is None:
+                print(f"[wiki-qmd-query] reindex: could not hold all {n_slots} GPU slots within "
+                      f"{max_wait:.0f}s; index updated, not embedded", file=sys.stderr)
+                return EXIT_GPU_BUSY
+            held.append(slot)
+        rc, out, err = run_qmd(["embed"], REINDEX_TIMEOUT)
+    finally:
+        for slot in held:
+            slot.release()
+    if rc is None:
+        print(f"[wiki-qmd-query] reindex: qmd embed timed out after {REINDEX_TIMEOUT:.0f}s", file=sys.stderr)
+        return EXIT_TIMEOUT
+    lines = [ANSI_RE.sub("", l).strip() for l in (out + "\n" + err).splitlines()]
+    last = next((l for l in reversed(lines) if l and "█" not in l), "")
+    if rc != 0:
+        print(f"[wiki-qmd-query] reindex: qmd embed failed (exit {rc}): {last[-300:]}", file=sys.stderr)
+        return 1
+    print(f"[wiki-qmd-query] reindex: qmd update and embed done. {last}", file=sys.stderr)
+    print("reindex=embedded")
+    return 0
+
+
 def collections() -> dict[str, int]:
     """qmd's collections as {name: file count}. qmd names a collection by the folder
     it indexes (e.g. C:\\...\\notebooks\\agentic-design\\wiki)."""
@@ -755,6 +803,9 @@ def main() -> int:
     ap.add_argument("--set-mode", choices=("full", "keyword"),
                     help="switch this machine's search mode (full needs the GPU check to pass)")
     ap.add_argument("--stats", action="store_true", help="summarise the search log")
+    ap.add_argument("--reindex", action="store_true",
+                    help="bring the index up to date: qmd update, then qmd embed holding every GPU slot "
+                         "(a keyword machine only updates); run after promoting and before ingest workers search")
     ap.add_argument("--depth-check", action="store_true",
                     help="search sampled titles from --notebook (or the project's) and report the "
                          "candidates reranked against C; exit 1 if any search reached C")
@@ -770,6 +821,8 @@ def main() -> int:
         return preflight()
     if args.set_mode:
         return set_mode(args.set_mode)
+    if args.reindex:
+        return reindex(search_mode(), args.slots, args.max_wait)
 
     mode = search_mode()
     notebook = args.notebook

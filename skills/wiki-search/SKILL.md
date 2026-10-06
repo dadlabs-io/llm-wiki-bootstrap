@@ -98,10 +98,9 @@ Contract: `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-search-buc
 
 ## Maintenance
 
-If new entries are added and search seems stale, re-index:
+Every promotion re-indexes the search itself (`wiki-promote.py`, so `/wiki-promote`, `/wrap-up` and `/wiki-cycle` do), and `/wiki-cycle` re-indexes before its workers search. An entry filed straight into `wiki/` (direct mode) waits for the next of those. If search seems stale, re-index by hand:
 ```bash
-qmd update
-qmd embed      # full machines only: it loads the embedding model; a keyword machine runs qmd update alone
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --reindex   # qmd update, then qmd embed on a full machine only
 ```
 
 The collection is configured at: `<vault>/<topic>/wiki/` — the path that was used at install time.
@@ -111,5 +110,4 @@ The collection is configured at: `<vault>/<topic>/wiki/` — the path that was u
 - Don't use the old `wiki-search.py` grep script — it's been replaced by qmd
 - Don't read every matched file unprompted — show snippets first, ask which to drill into
 - Don't answer from snippets — an unopened entry is a pointer, never a source
-- Don't forget to run `qmd update && qmd embed` after batch ingestion (`qmd update` alone on a keyword machine)
 - Don't run `qmd query`, `qmd vsearch` or `qmd embed` on a keyword machine, even to compare: they load a model and hang it on the CPU

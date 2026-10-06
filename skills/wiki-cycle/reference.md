@@ -42,7 +42,7 @@ Created at Step 0 as `<run-folder>/scratchpad.md` and updated after every phase;
 - **Status**: … · **Left in their buckets, listed under Save as PDF**: N (paywall N, login N, blocked N)
 
 ### Phase 2: Ingest
-- **Status**: … · **Items**: N · **Workers**: N (model) · **YouTube**: N, on worker K
+- **Status**: … · **Index**: re-indexed (`--reindex` exit N) · **Items**: N · **Workers**: N (model) · **YouTube**: N, on worker K
 - **Completed**: <slug> → <folder> (scores) … · **Failed**: <item> — <reason>
 
 ### Phase 2.5: Dequeue + staging check
@@ -103,6 +103,7 @@ The user asks "what did we load?" or "morning report": show the run's report (`/
 
 | Task | At once | Split by |
 |---|---|---|
+| Email judging (Step 1.1) | above ~100 candidates: 1 agent per ~100, up to 4 | by email, so each agent holds whole emails: it gets the notebook's scope, its emails' text under `email/` and their candidate numbers, and returns a decision and a reason for each; the session merges them into `email-review.json`, and `queue` refuses a candidate left undecided |
 | Ingest | up to 4 workers | items; every YouTube item of a batch with more than one on the same worker |
 | Checker | up to 4 | one staged entry each (read-only; no GPU) |
 | Semantic lint | 1 agent per ~100 entries in scope, up to 4 | a partition of the scope balanced by file count, chosen per run |
@@ -116,4 +117,6 @@ Ingest workers share three GPU slots for their searches (`wiki-qmd-query.py`); w
 - **Link normaliser before the mechanical lint** when entries were promoted in-cycle: ingest workers write bare-slug links by contract, and until `wiki-fix-links.py` ran end to end every cycle had about 50 broken links fixed by hand.
 - **Dequeue after ingest** (cycles 2026-07-01 and 07-02, 61 stale items each): the staged batch path never moved queue tickets, so every later cycle reconciled them by hand. `wiki-dequeue.py` matches by source URL and is idempotent.
 - **Staging check after ingest** (cycle 2026-09-14-01): a worker's receipt said every sidecar conformed while one had invalid JSON; `wiki-promote.py --check` is the check, not the receipt.
+- **Re-index before ingest and on every promotion** (cycle 2026-10-05-02): no step rebuilt the search index, so the workers searched one 12 days stale and one drafted a whole entry before the filer's dedup found the original. `wiki-qmd-query.py --reindex` runs before Step 2, and `wiki-promote.py` runs it after each promotion.
+- **Email judging split by email** (cycle 2026-10-05-01): 24 emails gave 353 candidates, more than one session judges well; four agents judged slices and the session merged them by hand, three decisions corrected. The Parallel work row writes that down.
 - **The cycle's 2026-09-23 live run** (`2026-09-23-01`) found the gaps this version closes: no triage step, a Drive and a lint step whose JSON the orchestrator wrote by hand, a semantic lint scoped to "every entry" (1,284 files, ~3.2M tokens), workers told to write `update.json`, no place for browser capture, parallel YouTube fetches hitting 429s, and `--ingest-only` read two ways by two models (the 2026-09-24 baseline).

@@ -131,7 +131,10 @@ def setup(model: str, sandbox: Path, repo: Path) -> dict:
             "wiki": nb / "wiki", "proposed": nb / "_inbox" / "proposed",
             "skill_dir": sandbox / "skill" / "wrap-up", "toolset": toolset,
             "scripts": repo / "scripts", "repo": repo,
-            "env": {"PYTHONIOENCODING": "utf-8"}}
+            # Promotion re-indexes the search (task #81 P1): an index of its own per run, so a
+            # wrap-up case never updates or embeds the real one.
+            "index": f"wrapuptest-{model}-{sandbox.parent.name}",
+            "env": {"PYTHONIOENCODING": "utf-8", "WIKI_QMD_INDEX": f"wrapuptest-{model}-{sandbox.parent.name}"}}
 
 
 SUGGESTIONS_INSTALLED = "~/.claude/skills/improving-skills-from-suggestions/scripts/suggestions.py"
@@ -148,6 +151,7 @@ def teardown(ctx: dict) -> None:
         _rmtree(ctx["sandbox"])
     except OSError:
         pass
+    (Path.home() / ".cache" / "qmd" / f"{ctx['index']}.sqlite").unlink(missing_ok=True)
 
 
 def snapshot(ctx: dict) -> dict:
