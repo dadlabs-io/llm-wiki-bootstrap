@@ -65,7 +65,8 @@
           "quote_from": "user"
         }
       ],
-      "judge": "One proposal (P1: csv-exporter, the empty-input StopIteration at `header = next(rows)`, a failing test first, labelled tactical or strategic, evidence quoted from demo-notebook's csv-export checkpoints.md); the BOM suggestion set aside as already covered, citing the Gotchas line or the utf-8-sig open; wiki-update set aside as not this library's (llm-wiki's). The proposals file lists all three; nothing is decided, no suggestion is archived, and csv-exporter is not edited."
+      "judge": "One proposal (P1: csv-exporter, the empty-input StopIteration at `header = next(rows)`, a failing test first, labelled tactical or strategic, evidence quoted from demo-notebook's csv-export checkpoints.md); the BOM suggestion set aside as already covered, citing the Gotchas line or the utf-8-sig open; wiki-update set aside as not this library's (llm-wiki's). The proposals file lists all three; nothing is decided, no suggestion is archived, and csv-exporter is not edited.",
+      "author": "legacy"
     },
     {
       "id": "sent-suggestion-is-filed",
@@ -107,7 +108,8 @@
           }
         ]
       },
-      "judge": "Step 0 only: the file is received into notebook/_inbox/skill-suggestions/received/ with a Received from: line, and no pass is run (no proposals file) until one is asked for."
+      "judge": "Step 0 only: the file is received into notebook/_inbox/skill-suggestions/received/ with a Received from: line, and no pass is run (no proposals file) until one is asked for.",
+      "author": "legacy"
     },
     {
       "id": "empty-box-writes-nothing",
@@ -148,7 +150,8 @@
           }
         ]
       },
-      "judge": "The list is empty (the one file is in received/archive/, already decided): the model says nothing has been received, writes no proposals file, and does not re-open the archived suggestion."
+      "judge": "The list is empty (the one file is in received/archive/, already decided): the model says nothing has been received, writes no proposals file, and does not re-open the archived suggestion.",
+      "author": "legacy"
     },
     {
       "id": "turned-down-before-not-reproposed",
@@ -192,7 +195,8 @@
           "quote_from": "user"
         }
       ],
-      "judge": "The new suggestion matches a turned-down one word for word and carries no new evidence (no record, same issue): it is listed as turned down before with Mark's earlier reason quoted, not proposed; nothing is decided or archived."
+      "judge": "The new suggestion matches a turned-down one word for word and carries no new evidence (no record, same issue): it is listed as turned down before with Mark's earlier reason quoted, not proposed; nothing is decided or archived.",
+      "author": "legacy"
     },
     {
       "id": "replay-freeze-step-label",
@@ -242,7 +246,8 @@
           "expect": true
         }
       ],
-      "judge": "Replays the first real suggestion (investment-agent, 2026-09-26): one proposal targeting verifying-before-done's check-freeze.py (`--step` is `type=int`), a label accepted beside a number, a failing self-test case first, labelled strategic, evidence copied from the record's 'Fix round 1' paragraph; check-freeze.py is not edited and the suggestion stays in received/."
+      "judge": "Replays the first real suggestion (investment-agent, 2026-09-26): one proposal targeting verifying-before-done's check-freeze.py (`--step` is `type=int`), a label accepted beside a number, a failing self-test case first, labelled strategic, evidence copied from the record's 'Fix round 1' paragraph; check-freeze.py is not edited and the suggestion stays in received/.",
+      "author": "legacy"
     },
     {
       "id": "should-not-trigger-direct-gotcha-edit",
@@ -281,7 +286,8 @@
           "notebook/_inbox/skill-suggestions/received/csv-exporter--bom-in-header.md"
         ]
       },
-      "judge": "A direct edit Mark asked for: the line is added to the Gotchas; the improver is not invoked, no proposals file is written, and the received suggestion is left alone."
+      "judge": "A direct edit Mark asked for: the line is added to the Gotchas; the improver is not invoked, no proposals file is written, and the received suggestion is left alone.",
+      "author": "legacy"
     }
   ]
 }

@@ -167,4 +167,17 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("other tasks untouched", not changed({target}), changed({target}))
         return res
 
+    if kind == "done-named":  # finished, named by its words rather than its number
+        row = now_rows.get(target)
+        add(f"task {target} still on the list", row is not None)
+        add(f"task {target} marked done", bool(row) and row["status"] == "done", row)
+        # any wording of the offer to take it off the list, asked as a question or as an open offer
+        removal = any(w in text for w in ("remov", "delet", "take it off", "off the list", "drop it", "clear it"))
+        offer = "?" in run["text"] or any(w in text for w in (
+            "let me know", "tell me", "say the word", "if you want", "if you'd like", "would you like",
+            "shall i", "should i", "want me to"))
+        add("asks whether to remove it", removal and offer, run["text"][-300:])
+        add("other tasks untouched", not changed({target}), changed({target}))
+        return res
+
     raise ValueError(f"unknown case kind: {case['id']}")

@@ -8,7 +8,8 @@
       "mentions": [
         "registrar",
         "build scripts"
-      ]
+      ],
+      "author": "legacy"
     },
     {
       "id": "show-slash",
@@ -17,7 +18,8 @@
       "mentions": [
         "onboarding guide",
         "dark theme"
-      ]
+      ],
+      "author": "legacy"
     },
     {
       "id": "add-plain",
@@ -26,7 +28,8 @@
       "words": [
         "renew",
         "domain"
-      ]
+      ],
+      "author": "legacy"
     },
     {
       "id": "add-no-block",
@@ -36,19 +39,22 @@
       "words": [
         "database",
         "upgrade"
-      ]
+      ],
+      "author": "legacy"
     },
     {
       "id": "done-asks",
       "kind": "done",
       "task": 2,
-      "say": "I finished the onboarding guide draft, so task 2 is done."
+      "say": "I finished the onboarding guide draft, so task 2 is done.",
+      "author": "legacy"
     },
     {
       "id": "delete-plain",
       "kind": "delete",
       "task": 3,
-      "say": "Delete task 3, we're not doing it."
+      "say": "Delete task 3, we're not doing it.",
+      "author": "legacy"
     },
     {
       "id": "waiting-plain",
@@ -59,7 +65,8 @@
         "status": "waiting",
         "next_has": "quote",
         "owner": "Mark"
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "backlog-plain",
@@ -70,7 +77,8 @@
         "section": "Backlog",
         "owner": "main",
         "status": "to do"
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "unbacklog-plain",
@@ -82,7 +90,8 @@
         "section": "main",
         "owner": "main",
         "status": "parked"
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "add-long",
@@ -95,7 +104,8 @@
       "details_words": [
         "redirect",
         "templates"
-      ]
+      ],
+      "author": "legacy"
     },
     {
       "id": "show-overview",
@@ -109,7 +119,8 @@
       "absent": [
         "porkbun",
         "make-release"
-      ]
+      ],
+      "author": "legacy"
     },
     {
       "id": "show-details",
@@ -119,7 +130,26 @@
       "mentions": [
         "porkbun",
         "make-release"
-      ]
+      ],
+      "author": "legacy"
+    },
+    {
+      "id": "move-owner-plain",
+      "kind": "set",
+      "task": 5,
+      "say": "Move task 5 to main, I'd like it looked at.",
+      "expect": {
+        "section": "main",
+        "owner": "main"
+      },
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "done-by-words",
+      "kind": "done-named",
+      "task": 3,
+      "say": "I've finished cleaning up the old build scripts.",
+      "author": "eval-case-writer"
     }
   ]
 }

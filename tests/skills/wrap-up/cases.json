@@ -17,7 +17,8 @@
         "min_staged": 3,
         "creates_dashboards": true,
         "journal": "new"
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "incremental",
@@ -40,7 +41,8 @@
         "min_staged": 3,
         "journal": "append",
         "keeps_other_persona": true
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "none-answer",
@@ -61,7 +63,8 @@
       "expect": {
         "staged": 0,
         "journal": "append"
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "at-a-glance",
@@ -85,7 +88,8 @@
         "min_staged": 3,
         "journal": "append",
         "task_block": true
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "auto-create",
@@ -107,7 +111,8 @@
         "min_staged": 3,
         "journal": "append",
         "prints_table": true
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "auto-promote",
@@ -131,7 +136,8 @@
         "min_staged": 3,
         "journal": "append",
         "promoted": true
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "research-only",
@@ -155,7 +161,8 @@
         "staged": 0,
         "journal": "append",
         "points_at": "wiki-update"
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "trivial",
@@ -179,7 +186,8 @@
         "staged": 0,
         "journal": "append",
         "declines": true
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "auto-push",
@@ -203,7 +211,8 @@
         "min_staged": 3,
         "journal": "append",
         "commit": "push"
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "config-push",
@@ -228,7 +237,8 @@
         "min_staged": 3,
         "journal": "append",
         "commit": "push"
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "flag-overrides-config",
@@ -253,7 +263,8 @@
         "min_staged": 3,
         "journal": "append",
         "commit": "commit"
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "suggestions-ask",
@@ -287,7 +298,8 @@
         "staged": 0,
         "journal": "append",
         "suggestions": "ask"
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "suggestions-decide",
@@ -321,7 +333,8 @@
         "staged": 0,
         "journal": "append",
         "suggestions": "decide"
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "suggestions-own-library",
@@ -354,7 +367,8 @@
         "min_staged": 3,
         "journal": "append",
         "suggestions": "own"
-      }
+      },
+      "author": "legacy"
     }
   ]
 }

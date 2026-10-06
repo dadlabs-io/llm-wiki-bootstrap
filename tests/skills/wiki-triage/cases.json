@@ -5,16 +5,16 @@
      "pending": ["vector-index-tuning", "subagent-harness", "side-hustles", "gpu-cluster-costs", "memory-for-subagents"],
      "expect": {"vector-index-tuning": "memory", "subagent-harness": "agents", "side-hustles": "money",
                 "gpu-cluster-costs": "main", "memory-for-subagents": "main"},
-     "say": "triage the research notebook's pending queue"},
+     "say": "triage the research notebook's pending queue", "author": "legacy"},
     {"id": "single-no-config", "config": "none",
      "pending": ["vector-index-tuning", "gpu-cluster-costs"],
      "expect": {"vector-index-tuning": "main", "gpu-cluster-costs": "main"},
-     "say": "sort the pending items in the research notebook"},
+     "say": "sort the pending items in the research notebook", "author": "legacy"},
     {"id": "user-drop", "config": "shared", "pending": [], "dropped": {"subagent-harness": "memory"},
      "expect": {"subagent-harness": "memory"},
-     "say": "triage the research notebook"},
+     "say": "triage the research notebook", "author": "legacy"},
     {"id": "bad-config", "config": "no-main", "pending": ["vector-index-tuning", "side-hustles"],
      "expect": {"vector-index-tuning": "pending", "side-hustles": "pending"},
-     "say": "triage the research notebook's pending queue"}
+     "say": "triage the research notebook's pending queue", "author": "legacy"}
   ]
 }

@@ -7,21 +7,21 @@
   "cases": [
     {"id": "quick-staged", "kind": "ingest-only", "timeout": 3000,
      "queue": ["context-engineering", "lethal-trifecta"],
-     "say": "/wiki-cycle --ingest-only"},
+     "say": "/wiki-cycle --ingest-only", "author": "legacy"},
     {"id": "resume", "kind": "resume", "timeout": 2400,
-     "say": "/wiki-cycle --resume {cycle_id}"},
+     "say": "/wiki-cycle --resume {cycle_id}", "author": "legacy"},
     {"id": "triage-shared", "kind": "triage", "timeout": 3000,
      "queue": ["context-engineering", "lethal-trifecta"], "mine": "context-engineering", "theirs": "lethal-trifecta",
      "staged": 1, "done": 1,
-     "say": "/wiki-cycle --ingest-only"},
+     "say": "/wiki-cycle --ingest-only", "author": "legacy"},
     {"id": "checker-resume", "kind": "checker", "timeout": 2400, "staged": 1, "done": 0,
-     "say": "/wiki-cycle --resume {cycle_id}"},
+     "say": "/wiki-cycle --resume {cycle_id}", "author": "legacy"},
     {"id": "email-approve", "kind": "email", "approve": true, "timeout": 2400, "staged": 0, "done": 0,
-     "say": "/wiki-cycle --discover-only\n\nMy answer for the review, given now since I cannot answer during the run: approve recommended."},
+     "say": "/wiki-cycle --discover-only\n\nMy answer for the review, given now since I cannot answer during the run: approve recommended.", "author": "legacy"},
     {"id": "email-unattended", "kind": "email", "approve": false, "timeout": 2400, "staged": 0, "done": 0,
-     "say": "/wiki-cycle --discover-only"},
+     "say": "/wiki-cycle --discover-only", "author": "legacy"},
     {"id": "drive-files", "kind": "drive", "timeout": 2400, "staged": 0, "done": 0,
-     "say": "/wiki-cycle --discover-only"}
+     "say": "/wiki-cycle --discover-only", "author": "legacy"}
   ],
   "_planned": {
     "_comment": "Cases from the #42 plan (notebook sessions/main/42-wiki-cycle-plan.md, section D) not built yet. The scope rules behind lint-scope-new and claims-scope-new are proven for free by tests/scripts/test_cycle_scope.py; the model-level cases need a --full run (semantic lint, claims, synthesis) and are tagged complex when built.",

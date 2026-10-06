@@ -8,7 +8,8 @@
       "expect": {
         "no_semantic_report": true,
         "runs_mechanical": true
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "full-finds-planted",
@@ -23,7 +24,8 @@
           "tier"
         ],
         "reads_all_entries": true
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "drift-watch",
@@ -33,7 +35,8 @@
         "semantic_report": true,
         "drift_section": true,
         "reads_canon": true
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "ambiguous-asks",
@@ -42,7 +45,8 @@
       "expect": {
         "asks_which_mode": true,
         "no_semantic_report": true
-      }
+      },
+      "author": "legacy"
     },
     {
       "id": "prior-report-trap",
@@ -57,7 +61,8 @@
         "finds": [
           "contradiction"
         ]
-      }
+      },
+      "author": "legacy"
     }
   ]
 }

@@ -32,7 +32,8 @@
           "quote_from": "user"
         }
       ],
-      "judge": "One suggestion in notebook/_inbox/skill-suggestions/, named verifying-before-done--…, four lines: the skill (not check-freeze.py), where it was seen, the --step issue, the fix (a label accepted); written with the skill's script, no question asked first."
+      "judge": "One suggestion in notebook/_inbox/skill-suggestions/, named verifying-before-done--…, four lines: the skill (not check-freeze.py), where it was seen, the --step issue, the fix (a label accepted); written with the skill's script, no question asked first.",
+      "author": "legacy"
     },
     {
       "id": "user-corrects-a-skill",
@@ -57,7 +58,8 @@
           }
         ]
       },
-      "judge": "The user's correction of how a skill did its work is a skill suggestion: reviewing-code--… in the box with the issue (no-spec item missing from needs-a-human) and the fix; the model says it is done."
+      "judge": "The user's correction of how a skill did its work is a skill suggestion: reviewing-code--… in the box with the issue (no-spec item missing from needs-a-human) and the fix; the model says it is done.",
+      "author": "legacy"
     },
     {
       "id": "should-not-trigger-project-lesson",
@@ -87,7 +89,8 @@
           "(?i)next\\(|StopIteration|empty"
         ]
       },
-      "judge": "A lesson about the project's own code, not about a skill: no suggestion is written and the skill is not invoked; the answer is about the parser (catch StopIteration or check for an empty file)."
+      "judge": "A lesson about the project's own code, not about a skill: no suggestion is written and the skill is not invoked; the answer is about the parser (catch StopIteration or check for an empty file).",
+      "author": "legacy"
     },
     {
       "id": "no-wiki-hands-back-the-lines",
@@ -112,7 +115,8 @@
           "(?i)\\b(no|not|without)\\b.{0,25}\\b(wiki|notebook)|wiki.{0,40}(found|configured|exists?)"
         ]
       },
-      "judge": "No wiki resolves (no wiki-config, no llm-wiki/): the script exits 3 and nothing is written; the model gives the user the four lines so they can be kept, and does not invent a notebook folder."
+      "judge": "No wiki resolves (no wiki-config, no llm-wiki/): the script exits 3 and nothing is written; the model gives the user the four lines so they can be kept, and does not invent a notebook folder.",
+      "author": "legacy"
     },
     {
       "id": "duplicate-is-refused",
@@ -141,7 +145,8 @@
           "(?i)already"
         ]
       },
-      "judge": "The same skill and issue is already in the box: the script refuses (exit 1), the model says it is already there, and the box still holds exactly one verifying-before-done file."
+      "judge": "The same skill and issue is already in the box: the script refuses (exit 1), the model says it is already there, and the box still holds exactly one verifying-before-done file.",
+      "author": "legacy"
     }
   ]
 }

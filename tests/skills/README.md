@@ -4,6 +4,16 @@ A standing test for each shipped skill: one of each kind of input the skill hand
 
 A **small** change — wording, a clarified flag, a typo — does not earn a run of its own: install it and log it in [PENDING.md](PENDING.md), and the next run for that skill checks it (the user, 2026-09-17; a full run costs real money, and the suite exists to catch behavioural regressions). Run the suite when a skill's pending list is worth a run, when a behavioural change lands on top of it, or when something looks wrong in real use. A skill with no baseline at all is never installed on a pending row — there the first run is the baseline.
 
+## Who writes the cases
+
+The session that changes a skill never writes or edits the cases that grade its change (task #86, 2026-10-06; the same rule as agent-builder's skill contract §6). They come from the `eval-case-writer` agent, installed globally by agent-builder: it can only read, it writes from the skill's stated requirement and each scenario, never from the skill, its scripts or its diff, and it hands the cases back as text for the session to save unchanged.
+
+- **Brief:** the skill and its path; its requirement, quoted in full; the scenarios; the mode (`new-set`, `fresh`, `replay` or `legacy-review`); the case format, "llm-wiki's test suite in the folder `tests/skills/<skill>/`"; and, for every mode but `new-set`, the case file `tests/skills/<skill>/cases.json`. Spawn it in the foreground (`subagent_type: eval-case-writer`).
+- **After each behavioural change:** two `fresh` cases, scenarios that did not exist while the change was made. A failure seen in real use gets a `replay` case.
+- **What comes back** is saved unchanged: cases in the suite's existing kinds; a new kind's check as a `kind == "<new>"` branch of `check()` (an existing kind is never changed); any new seed file in full. Its questions go to the user, never answered by the editing session from the skill's own text unless the quoted requirement already settles them.
+- **Author key:** every case ends in `"author": "eval-case-writer" | "human" | "legacy"`. The 80 cases written before this rule are `legacy`; the next time their skill changes, the writer reviews them (`legacy-review`: keep, rewrite or flag each).
+- **Honour rule:** the editing session does not read the suite's cases while it edits the skill. Nothing enforces it; the independence comes from who writes the checks.
+
 ## Run it
 
 From the repo root:
@@ -29,7 +39,7 @@ The report is `tests/skills/.results/<skill>/<stamp>/report.md` (not committed):
 ## Adding a skill
 
 Create `tests/skills/<skill>/` with:
-- `cases.json`: the cases (one of each input the skill handles; tag the expensive or unusual ones `complex`).
+- `cases.json`: the cases (one of each input the skill handles; tag the expensive or unusual ones `complex`), written by `eval-case-writer` in mode `new-set`, which also returns each new kind's check for `check.py`.
 - `check.py`: `prepare_fixtures(repo, refresh)`, `setup(model, sandbox, repo)`, `snapshot(ctx)`, `prompt(case, ctx)`, `check(case, before, after, run, ctx)`, `teardown(ctx)`; optionally `ALLOWED_TOOLS`. A skill that calls other skills (wiki-cycle) also sets `EXTRA_SKILLS` (rendered beside it), `DISALLOWED_TOOLS = ["Skill"]` (so nothing falls through to an installed copy) and `render_replacements(ctx)` (install paths → sandbox copies). `run["error_texts"]` maps each refused call to its error text, so a check can tell the global read-guard hook's blocks from harness friction.
 - `fixtures/`: written-for-the-test inputs only. Third-party text (articles, transcripts, papers) is fetched into `~/.cache/llm-wiki-skilltest/<skill>/` on first use and never committed.
 
