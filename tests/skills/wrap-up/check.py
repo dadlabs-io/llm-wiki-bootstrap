@@ -401,6 +401,11 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         htext = handoff.read_text(encoding="utf-8")
         missing = [s for s in HANDOFF_SECTIONS if s not in htext]
         add("handoff.md has every section", not missing, missing)
+        # task #84 (Mark, 2026-10-06): he reads from the bottom up, so what waits on him is the last section
+        wait_at = htext.rfind("WAITING ON YOU")
+        add("handoff.md ends on the WAITING ON YOU section",
+            wait_at >= 0 and all(htext.rfind(s) < wait_at for s in HANDOFF_SECTIONS),
+            htext[wait_at:wait_at + 120] if wait_at >= 0 else "no WAITING ON YOU section")
         add("handoff.md reflects this session, not the seed",
             "RetryBudget" in htext or "retry" in htext.lower())
     add("task.md written", task_md.is_file())

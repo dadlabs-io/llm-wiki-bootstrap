@@ -100,7 +100,12 @@ CURRENT STATE: [what's running / broken / blocked]
 PENDING: [planned-but-not-done, blockers]
 KEY FILES: [path — role] (max 10)
 CONTEXT FOR CONTINUATION: [what the next session needs; gotchas; references]
+
+⚠️ WAITING ON YOU:
+- [each thing the user must decide, answer or do, one line each with where it is — or "Nothing blocking."]
 ```
+
+**`⚠️ WAITING ON YOU` is always the last section**, even when nothing is waiting: the user reads from the bottom up and looks there first. It holds only what needs the user. Work for the next session goes in PENDING.
 
 **(b) `sessions/<persona>/task.md` — READ first, then update in place.** Never blind-overwrite.
 

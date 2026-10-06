@@ -260,13 +260,29 @@ Based on the data above, suggest 3-5 concrete next actions:
 | Last discovery run | <date or "never"> |
 | Last semantic lint | <date or "never"> |
 | Last claims extraction | <date or "never"> |
+
+---
+
+## ⚠️ Needs you
+
+Everything waiting on the user, one line each, with what to do and where:
+- <N> entries to promote — `/wiki-promote --review`
+- <N> held by the checker — each with its report path
+- **Save as PDF**: each page no fetcher could get — its link, its bucket; open it in Chrome, Print → Save as PDF into the Drive folder
+- <N> files left in Drive — each name and why
+- <N> email candidates not yet approved (an unattended run) — the next reviewed run asks
+- lint fixes or a synthesis proposal awaiting approval — where they are
+
+(If nothing waits: "Nothing.")
 ```
 
 ### Step 3 — Show the user
 
 Print the report inline (not just a file path). The morning report is meant to be READ, not filed and forgotten. Show it directly, then mention where the file is saved.
 
-If `--brief`, just show the Numbers table and Recommendations — skip the details.
+If `--brief`, just show the Numbers table, Recommendations and Needs you — skip the details.
+
+**`⚠️ Needs you` is always the last section**, in the file and inline: the user reads from the bottom up and looks there first.
 
 ## After running
 

@@ -9,6 +9,12 @@
 
 ---
 
+## 2026-10-06
+
+### What waits on you is the last section of the handoff and the cycle report (task #84, Mark)
+- **Changed**: `/wrap-up`'s handoff template (Step 0.5a) ends on `⚠️ WAITING ON YOU:`, one line per thing the user must decide, answer or do, or "Nothing blocking." It is always the last section. Mark reads from the bottom up and looks there first; the yellow marker matches the closing line's style (from the Opus 5.5 playbook: "look first for anything Claude is waiting on you for"). `/wiki-report`'s template ends on `## ⚠️ Needs you`: entries to promote, entries the checker held, the pages to save as PDF, Drive files left, emails not yet approved, and lint fixes or a synthesis proposal awaiting approval, or "Nothing." `/wiki-cycle` Step 8 puts its Save as PDF list inside that section. The usage pages for wrap-up, wiki-report and wiki-cycle say so.
+- **Proven**: two new suite checks, wrap-up "handoff.md ends on the WAITING ON YOU section" and wiki-cycle "the cycle report's last section is Needs you", proven offline (a right output passes; missing or not last fails). A layout change: logged in `tests/skills/PENDING.md` for the next wrap-up and wiki-cycle runs.
+
 ## 2026-10-05
 
 ### One "Save as PDF" path for pages no fetcher can get; nothing is copied out of the browser (task #78, Mark's decision)

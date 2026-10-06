@@ -138,7 +138,7 @@ Then re-run Step 3.5 (promotion adds entries and backlinks at once). If the user
 
 **Step 7 — Refresh scan** (`--full`; `--refresh-only`): follow `/wiki-refresh --overdue-only`.
 
-**Step 8 — Report.** Follow `/wiki-report`, from the run folder's step JSONs: `<cycle_id>-run-cycle-report.md` + `.json`. It lists what each source brought in (Drive, discovery, email) and the Drive files left unread, what was triaged to whom, what was ingested, what the checker found and held, a **Save as PDF** list (every page no fetcher could get, with its link and bucket, and how to save it into the Drive folder), and the search stats.
+**Step 8 — Report.** Follow `/wiki-report`, from the run folder's step JSONs: `<cycle_id>-run-cycle-report.md` + `.json`. It lists what each source brought in (Drive, discovery, email) and the Drive files left unread, what was triaged to whom, what was ingested, what the checker found and held, and the search stats. Its last section is **⚠️ Needs you**: the entries to promote, the ones the checker held, the **Save as PDF** list (every page no fetcher could get, with its link and bucket, and how to save it into the Drive folder), the Drive files left, emails not yet approved, and fixes or synthesis awaiting approval.
 
 **Step 9 — Commit.** First delete zero-byte or junk files left by shell redirects (own or a sub-agent's: `output`, `#`, `${...}`, a stray word). Then add **only the notebook's path** (other sessions may have work in the same repository) and commit once, at the end: `Wiki cycle <date> — N ingested, N fixes, N contradictions, N synthesis changes, wiki at N entries`. Set the scratchpad to `completed`, then show the report and offer to act on its recommendations.
 

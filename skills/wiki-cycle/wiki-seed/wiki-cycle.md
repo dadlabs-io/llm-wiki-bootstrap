@@ -45,7 +45,7 @@ Runs a notebook's research pipeline end to end: gather new sources, give each on
 ## Your two checkpoints
 
 1. **After discovery and email**, the run pauses on what it found. The session has marked every find *recommend* or *skip*, with a reason; you say "approve recommended", or adjust first ("also 14", "drop 7"). A tier-4 source is never approved for you.
-2. **The morning review**: `/wiki-report` summarises the run, and `/wiki-promote --review` walks each staged entry, including any the checker held, with its report beside it.
+2. **The morning review**: `/wiki-report` summarises the run, and `/wiki-promote --review` walks each staged entry, including any the checker held, with its report beside it. The report's last section, **⚠️ Needs you**, lists everything waiting on you (entries to promote, held entries, pages to save as PDF, Drive files left, emails not yet approved, fixes to approve), so you can read it from the bottom.
 
 `--no-confirm-discovery` skips the first for discovery on an unattended run (tiers 1–3 are queued, tier 4 waits); entries still stage for the second. Email always waits for you: an unattended run lists its candidates and recommendations in the report and leaves the emails in the label. A `--full` run promotes its own staged entries (the ones the checker did not hold) before claims and synthesis, which read `wiki/`, and its synthesis changes to your best-practices pages are applied only with your approval; a run nobody is watching writes them as a proposal.
 

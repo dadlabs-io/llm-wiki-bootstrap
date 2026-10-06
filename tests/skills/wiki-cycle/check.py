@@ -725,6 +725,12 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     add("no --full-only step ran", not full, full)
     add("cycle report written (.md + .json)", (run_dir / f"{cycle_id}-run-cycle-report.md").is_file()
         and (run_dir / f"{cycle_id}-run-cycle-report.json").is_file())
+    # task #84 (Mark, 2026-10-06): he reads from the bottom up, so what waits on him is the last section
+    rep = run_dir / f"{cycle_id}-run-cycle-report.md"
+    heads = [l[3:].strip() for l in rep.read_text(encoding="utf-8", errors="replace").splitlines()
+             if l.startswith("## ")] if rep.is_file() else []
+    add("the cycle report's last section is Needs you", bool(heads) and "needs you" in heads[-1].lower(),
+        heads[-1] if heads else "no report")
     lint = run_dir / "lint-mechanical.json"
     try:
         lsum = json.loads(lint.read_text(encoding="utf-8")).get("summary", {}) if lint.is_file() else {}
