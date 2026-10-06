@@ -179,6 +179,7 @@ llm-wiki follows Chappy Asel's [self-improving AI stack](https://x.com/chappyase
 - **Is anything out of date?** `/wiki-cycle --refresh-only`.
 - **What did the last cycle do?** `/wiki-cycle --report-only`.
 - **Where did we leave off?** `wiki/sessions/active-context.md`, then your persona's `handoff.md`.
+- **What's waiting on me?** The last section of the handoff, **⚠️ WAITING ON YOU**, and of each cycle report, **⚠️ Needs you**. Both always come last, so you can read from the bottom.
 
 Or ask the agent in plain English; it reads these pages when a question needs them.
 
