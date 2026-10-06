@@ -35,6 +35,7 @@ Resolution order in every helper: registry (if ``notebook`` + ``registry`` prese
 """
 import json
 import re
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -327,14 +328,31 @@ def notebook_root(name, cwd=None):
     return None
 
 
+def _refuse_unknown(topic, vault_root, cwd=None):
+    """A notebook named on the command line that is neither in the registry nor an existing folder
+    stops the script (exit 2) instead of being created as <vault>/<topic> (task #88: the wiki-cycle
+    suite's sandbox, inside this repo, found this repo's config by walking up, and the Drive step
+    created project-notebooks/notebooks/cycletest/ in the real vault)."""
+    path = Path(vault_root) / topic
+    if path.exists():
+        return
+    _, reg_path = load_registry(cwd)
+    print(f"error: notebook '{topic}' is not in the registry ({reg_path or 'no registry found'}) and "
+          f"{path} does not exist; refusing to create it. Run from the notebook's project folder, or "
+          f"name a registered notebook.", file=sys.stderr)
+    raise SystemExit(2)
+
+
 def topic_root(topic=None, cwd=None):
     """Full path to a topic's root. If ``topic`` is a registry key (a notebook
     name), resolve it through the registry (cross-notebook). Otherwise it's
-    ``<default_vault>/<topic-or-default>``."""
+    ``<default_vault>/<topic-or-default>``, which must already exist when the
+    topic was named (``_refuse_unknown``)."""
     if topic:
         r = _registry_resolve(topic, cwd)
         if r:
             return str(Path(r[0]) / r[1])
+        _refuse_unknown(topic, default_vault(cwd), cwd)
     t = topic or default_topic(cwd)
     return str(Path(default_vault(cwd)) / t)
 
@@ -356,6 +374,7 @@ def resolve_vault_topic(topic=None, vault=None, cwd=None):
         r = _registry_resolve(topic, cwd)
         if r:
             return r[0], r[1]
+        _refuse_unknown(topic, default_vault(cwd), cwd)
     return default_vault(cwd), (topic or default_topic(cwd))
 
 

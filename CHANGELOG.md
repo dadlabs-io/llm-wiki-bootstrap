@@ -11,6 +11,10 @@
 
 ## 2026-10-06
 
+### A notebook name the registry does not know is refused, never created (task #88)
+- **Changed**: `_wiki_config.topic_root()` / `resolve_vault_topic()` (and so `wiki_dir()`) stop with exit 2, naming the registry they read, when a notebook named on the command line is neither registered nor an existing folder. Found by the wiki-cycle suite: a session in the sandbox (which sits inside this repo) found this repo's config by walking up, and the Drive step's `mkdir` created `project-notebooks/notebooks/cycletest/` in the real vault. An explicit `--vault` and an existing unregistered folder resolve as before.
+- **Proven**: `tests/scripts/test_unknown_notebook.py` 12/12 (new); all 28 script harnesses pass.
+
 ### Improver pass 2026-10-06-mixed: nine suggestions built (task #81, Mark accepted all nine)
 - **Changed (search)**: `wiki-qmd-query.py --reindex` (qmd update, then embed on a full machine, holding every GPU slot); `wiki-promote.py` runs it after every promotion and `/wiki-cycle` before ingest (P1: cycle 2026-10-05-02's workers searched an index 12 days stale). `--compact` gives ingest workers one line and one snippet per result, 55% smaller on a real search; a `-k` below 30, `head` or a filter is a breach (P3).
 - **Changed (gate)**: `wiki-update.py --regate <slug>` re-checks a staged or filed entry after a hand fix, writing nothing (P2). Text read off an image goes into the raw under `## Transcribed from <image> by <who>, <date>`, and the quote check reports quotes found only there on their own line (P4).
