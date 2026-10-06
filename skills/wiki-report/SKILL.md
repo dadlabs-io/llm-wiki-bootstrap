@@ -268,7 +268,7 @@ Based on the data above, suggest 3-5 concrete next actions:
 Everything waiting on the user, one line each, with what to do and where:
 - <N> entries to promote — `/wiki-promote --review`
 - <N> held by the checker — each with its report path
-- **Save as PDF**: each page no fetcher could get — its link, its bucket; open it in Chrome, Print → Save as PDF into the Drive folder
+- **Save as PDF**: each page no fetcher could get, its link, and the folder to save it into, written out as a full path the user can paste into Chrome's Save dialog: the intake folder its ticket waits in (e.g. `C:\github.com\project-notebooks\notebooks\agentic-design\_inbox\intake\llm-wiki\`). Open it in Chrome, Print → Save as PDF into that folder (any intake folder, or the Drive folder, works); the next cycle attaches each PDF to its ticket
 - <N> files left in Drive — each name and why
 - <N> email candidates not yet approved (an unattended run) — the next reviewed run asks
 - lint fixes or a synthesis proposal awaiting approval — where they are

@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -223,6 +224,50 @@ def cmd_check(nb: Path, args) -> int:
     return 1 if probs else 0
 
 
+def cmd_attach_pdfs(nb: Path, args) -> int:
+    """PDFs the user saved into an intake folder (or --from <folder>): each converted and attached to the
+    ticket waiting for it as its raw_path, the source URL kept (task #81 P7)."""
+    from _pdf_match import match, set_raw_path, waiting_tickets
+    folders = [Path(args.from_dir)] if args.from_dir else \
+        sorted(d for d in (nb / "_inbox" / "intake").iterdir() if d.is_dir()) if (nb / "_inbox" / "intake").is_dir() else []
+    pdfs = [p for d in folders for p in sorted(d.glob("*.pdf"))]
+    matched, unmatched, ambiguous = match(pdfs, waiting_tickets(nb))
+
+    def where(t: Path) -> str:
+        return t.relative_to(nb / "_inbox").as_posix()
+
+    failed = attached = 0
+    for pdf, t in matched:
+        if args.dry_run:
+            print(f"would attach: {pdf.name} -> {where(t['path'])}")
+            continue
+        proc = subprocess.run([sys.executable, str(Path(__file__).parent / "wiki-fetch-pdf.py"), "--topic", args.topic_name,
+                               "--source", str(pdf), "--ingested-by", "claude-code"],
+                              capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
+        m = re.search(r"^raw_path=(.+)$", proc.stdout or "", re.M)
+        if proc.returncode != 0 or not m:
+            failed += 1
+            print(f"failed: {pdf.name}: {' '.join((proc.stderr or proc.stdout).split())[-200:]}")
+            continue
+        raw = Path(m.group(1).strip())
+        set_raw_path(t["path"], f"raw/{raw.name}")
+        attached += 1
+        copy = raw.with_suffix(".pdf")
+        kept = copy.is_file() and copy.stat().st_size == pdf.stat().st_size
+        if kept:
+            pdf.unlink()
+        print(f"attached: {pdf.name} -> {where(t['path'])} (raw/{raw.name})"
+              + ("" if kept else "; the PDF stays here: no identical copy beside the raw"))
+    for pdf, ts in ambiguous:
+        print(f"ambiguous: {pdf.name}: equally close to {', '.join(where(t['path']) for t in ts)}; attach it by hand "
+              f"(convert with wiki-fetch-pdf.py, then set the right ticket's raw_path)")
+    for pdf in unmatched:
+        print(f"unmatched: {pdf.name}: no waiting ticket shares its title")
+    print(f"attached: {attached}, ambiguous: {len(ambiguous)}, unmatched: {len(unmatched)}"
+          + (f", failed: {failed}" if failed else "") + (" (dry run: nothing changed)" if args.dry_run else ""))
+    return 1 if failed else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[1].strip())
     ap.add_argument("--topic", default=None, help="notebook (default: this project's)")
@@ -238,6 +283,9 @@ def main() -> int:
     lg = sub.add_parser("log")
     lg.add_argument("--last", type=int, default=30)
     sub.add_parser("check")
+    at = sub.add_parser("attach-pdfs")
+    at.add_argument("--from", dest="from_dir", default=None, help="a folder of PDFs (default: every intake bucket)")
+    at.add_argument("--dry-run", action="store_true", help="list the matches, change nothing")
     args = ap.parse_args()
     topic = args.topic or (load_config() or {}).get("notebook")
     if not topic:
@@ -247,8 +295,9 @@ def main() -> int:
     if not (nb / "wiki").is_dir():
         print(f"error: no wiki at {nb}", file=sys.stderr)
         return 2
+    args.topic_name = topic
     return {"buckets": cmd_buckets, "pending": cmd_pending, "route": cmd_route,
-            "log": cmd_log, "check": cmd_check}[args.cmd](nb, args)
+            "log": cmd_log, "check": cmd_check, "attach-pdfs": cmd_attach_pdfs}[args.cmd](nb, args)
 
 
 if __name__ == "__main__":

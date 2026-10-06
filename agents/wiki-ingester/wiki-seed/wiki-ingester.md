@@ -63,8 +63,9 @@ Promotion into `wiki/` stays with you, through `wiki-promote`.
 - A source already in `wiki/` or `_inbox/proposed/` is reported as a duplicate, with the existing
   entry named, and not ingested unless the caller said force.
 - A page no fetcher can get (a paywall or member wall, a login, or a site that blocks the fetcher)
-  fails as "save as PDF": it is never fetched another way. Save it from Chrome as a PDF into your
-  Drive folder, and the next cycle files it with its full text.
+  fails as "save as PDF": it is never fetched another way. Save it from Chrome as a PDF into the
+  intake folder the report names (or your Drive folder); the next cycle attaches it to its ticket
+  and files it with its full text.
 - It uses this machine's search, scoped to the target notebook. On a machine with a GPU that is
   the full search (keyword, meaning and rerank on the GPU): it checks the GPU once and stops the
   batch if it is missing, and a search that still fails after one retry fails the item ("full search

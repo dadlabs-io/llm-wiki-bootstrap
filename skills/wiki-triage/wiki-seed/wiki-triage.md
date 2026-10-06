@@ -34,6 +34,8 @@ buckets:
 
 **How it decides:** it reads the purposes and the recent rows of the triage log first, and files a new source the way a like one was filed; a call you corrected is followed from then on. It reads each source enough to judge it, the whole raw when the title is not enough. It never drops a source for being off-topic: that goes to `main`, and its reader decides.
 
+**PDFs you saved.** A page no fetcher can get (a paywall, a login, a site that blocks it) waits in its bucket as "save as PDF", and the report gives you the folder to save it into as a full path. When you have saved it from Chrome, triage converts the PDF and attaches it to the ticket waiting for it, matched by the words its title shares with the ticket's title and link (a PDF saved to your Drive folder is attached the same way). The ticket keeps the article's real URL. A PDF that matches no ticket, or two equally well, is listed for you and left where it is.
+
 **Where a source comes in decides whether it is triaged:** a source you hand to a session directly is not triaged, since your choice is the triage. A source you drop straight into a bucket folder is already triaged, and its reader picks it up. A source in `_inbox/pending/` is triaged.
 
 **When it skips itself:** an empty `pending/` (it says so). A buckets file with a problem (a missing `main`, a reader the registry does not know): it stops and names the problem, since the file is yours. It never ingests, promotes or deletes anything.

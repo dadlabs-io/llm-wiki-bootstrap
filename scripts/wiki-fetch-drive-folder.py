@@ -897,6 +897,18 @@ def queue_drive_files(service, items, topic, vault, priority, added_by, known_ke
                 continue
             try:
                 raw_rel = save_file_raw(service, item, topic, vault, root, Path(td))
+                # A PDF the user saved for a ticket left as "save as PDF" attaches to that ticket, keeping
+                # its article URL, instead of a second ticket under the Drive link (task #81 P7)
+                if item["kind"] == "pdf":
+                    from _pdf_match import match, set_raw_path, waiting_tickets  # noqa: E402
+                    found, _unmatched, _ambiguous = match([Path(item["file"])], waiting_tickets(root))
+                    if found:
+                        ticket = found[0][1]["path"]
+                        set_raw_path(ticket, raw_rel)
+                        queued += 1
+                        results.append((item["file_id"], "queued", f"{raw_rel}, attached to the waiting ticket "
+                                                                  f"{ticket.relative_to(root / '_inbox').as_posix()}"))
+                        continue
                 cmd = [sys.executable, str(add_script), "--topic", topic, "--source", item["url"],
                        "--added-by", added_by, "--priority", str(priority), "--title", item["file"],
                        "--raw-path", raw_rel]
