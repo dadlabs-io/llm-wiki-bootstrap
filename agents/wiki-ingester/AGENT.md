@@ -76,8 +76,12 @@ with TodoWrite. For each item:
    sees your receipt.
 3. **Search the wiki** for related entries — integrate, don't isolate. 3–5 key terms, each with
    the shared search helper:
-   `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester --notebook <target notebook> "<term>"`
-   (30 results by default, `-k` to change; the `_MAP`/`_INDEX` machine files never come back as results). Always pass the
+   `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester --notebook <target notebook> --compact "<term>"`
+   (`--compact` prints each result as one line, score, title and path under `wiki/`, plus one snippet line, about
+   half the size of the full layout, so read every line of every search: 30 ranked results, then up to 20 found
+   only by keyword. A `-k` below 30, `head`, or your own filter on the output is the same breach as not
+   searching: in cycle 2026-10-05-04 two of four workers cut their searches that way and picked Related links
+   from titles. The `_MAP`/`_INDEX` machine files never come back as results.) Always pass the
    target notebook: without it qmd searches every notebook, and a cross-link must stay inside the
    notebook you are filing into. Run
    `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-qmd-query.py --preflight` once before your first item: it

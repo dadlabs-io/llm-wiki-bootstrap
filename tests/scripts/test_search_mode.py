@@ -238,6 +238,37 @@ rc, out, err = run_main(["--set-mode", "keyword"])
 check("--set-mode keyword needs no GPU check", rc == 0 and read_cfg().get("search_mode") == "keyword",
       (rc, read_cfg(), err.strip()[-200:]))
 
+# ---------- --compact: one line and one snippet line per result, for ingest workers (task #81 P3) ----------
+write_cfg({"search_mode": "full"})
+calls.clear()
+rc, out, err = run_main(["--all-notebooks", "tiered context loading", "--compact"])
+lines = [l for l in out.splitlines() if l.strip()]
+check("compact, full: exits 0", rc == 0, err.strip()[-200:])
+check("compact, full: qmd is asked for JSON", bool(calls) and "--json" in calls[0], calls[:1])
+check("compact, full: no qmd text layout (no Title:/Score: lines)",
+      not any(l.startswith(("Title:", "Score:")) for l in lines), lines[:4])
+check("compact, full: each full result is a score + title + path line",
+      any(l.startswith("50%") and "full-1" in l and "full-1.md" in l for l in lines), lines[:4])
+check("compact, full: then its snippet on the next line, indented",
+      any(l.startswith("50%") and "full-1" in l for l in lines)
+      and lines[[i for i, l in enumerate(lines) if "full-1.md" in l][0] + 1].startswith("      about full-1"), lines[:6])
+check("compact, full: the keyword finds follow under their own heading",
+      "## Also found by keyword search" in out and out.index("full-2") < out.index("## Also found by keyword search"),
+      out[-300:])
+check("compact, full: no qmd:// prefix (paths relative to wiki/)", "qmd://" not in out, out[:200])
+full_text_rc, full_text, _ = run_main(["--all-notebooks", "tiered context loading"])
+# measured on a real search (agentic-design, 2026-10-06): full 33.0 KB, compact 15.0 KB (55% smaller);
+# the fake rows here have one-line snippets, so only "smaller" is checked
+check("compact is smaller than the full text output", len(out) < len(full_text),
+      (len(out), len(full_text)))
+write_cfg({"search_mode": "keyword"})
+calls.clear()
+rc, out, err = run_main(["--all-notebooks", "tiered context loading", "--compact"])
+check("compact, keyword: exits 0 with one result line per row",
+      rc == 0 and sum(1 for l in out.splitlines() if l[:1].isdigit() and "%" in l[:5]) > 0
+      and "Title:" not in out, out[:200])
+write_cfg({"search_mode": "full"})
+
 # ---------- --reindex: update the index, then embed on a full machine only (task #81 P1) ----------
 embed_saw_free_slot: list[bool] = []
 _plain_fake = q.run_qmd

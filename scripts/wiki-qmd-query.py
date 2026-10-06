@@ -513,6 +513,35 @@ def render_text(rows: list[dict]) -> str:
     return "\n".join(out)
 
 
+def wiki_relative(file: str) -> str:
+    """A qmd:// result path as the path under the notebook's wiki/ (what a Related link needs)."""
+    f = str(file).replace("\\", "/")
+    i = f.lower().rfind("/wiki/")
+    return f[i + 6:] if i >= 0 else f.removeprefix("qmd://")
+
+
+def render_compact(rows: list[dict], extras: list[dict] = ()) -> str:
+    """--compact (task #81 P3): one line per result (score, title, path under wiki/) and one snippet
+    line, so an ingest worker can afford to read every search whole. The full text layout is ~180
+    tokens a result, 30 results plus up to 20 keyword finds a search, 3-5 searches a source; two of
+    four workers in cycle 2026-10-05-04 cut it to titles and picked Related links from those."""
+    def block(rs: list[dict]) -> str:
+        out = []
+        for r in rs:
+            s = r.get("score")
+            pct = f"{round(float(s) * 100)}%" if isinstance(s, (int, float)) else "?"
+            snip = next((l.strip() for l in str(r.get("snippet") or "").splitlines()
+                         if l.strip() and not l.lstrip().startswith("@@")), "")
+            snip = snip if len(snip) <= 200 else snip[:197] + "..."
+            out.append(f"{pct}  {r.get('title', '')} — {wiki_relative(r.get('file', ''))}\n      {snip}")
+        return "\n".join(out) + "\n"
+    text = block(list(rows)) if rows else ""
+    if extras:
+        text += (f"\n## Also found by keyword search ({len(extras)}: not in the full search's results above, "
+                 f"not reranked)\n\n" + block(list(extras)))
+    return text
+
+
 def run_keyword(qmd_argv: list[str], timeout: float) -> SearchRun:
     """One `qmd search`: qmd's keyword index, no model. Used on a keyword machine only for the
     output formats the word-pair search does not render (--files, --csv, --md, --xml)."""
@@ -803,6 +832,9 @@ def main() -> int:
     ap.add_argument("--set-mode", choices=("full", "keyword"),
                     help="switch this machine's search mode (full needs the GPU check to pass)")
     ap.add_argument("--stats", action="store_true", help="summarise the search log")
+    ap.add_argument("--compact", action="store_true",
+                    help="one line per result (score, title, path under wiki/) and one snippet line, the keyword "
+                         "finds after them; for ingest workers, who read every search whole")
     ap.add_argument("--reindex", action="store_true",
                     help="bring the index up to date: qmd update, then qmd embed holding every GPU slot "
                          "(a keyword machine only updates); run after promoting and before ingest workers search")
@@ -859,6 +891,8 @@ def main() -> int:
     if args.k > c and mode == "full":
         print(f"[wiki-qmd-query] note: k={args.k} is larger than C={c}; the reranker only scores "
               f"the top {c} candidates", file=sys.stderr)
+    if args.compact and "--json" not in qmd_args:
+        qmd_args = [*qmd_args, "--json"]  # compact is rendered from the JSON rows
     fmt = ("json" if "--json" in qmd_args
            else "other" if any(f in qmd_args for f in ("--files", "--csv", "--md", "--xml")) else "text")
     ask_k = args.k + (EXTRA_FOR_FILTER if fmt != "other" else 0)
@@ -879,7 +913,9 @@ def main() -> int:
                   f"{'timed out' if timed_out else 'failed'}; stop and report", file=sys.stderr)
             return EXIT_TIMEOUT if timed_out else 1
         rows = rows[:args.k]
-        sys.stdout.write(json.dumps(rows, indent=2, ensure_ascii=False) + "\n" if fmt == "json" else render_text(rows))
+        sys.stdout.write(render_compact(rows) if args.compact
+                         else json.dumps(rows, indent=2, ensure_ascii=False) + "\n" if fmt == "json"
+                         else render_text(rows))
         record.update(outcome="ok", rc=0)
         log_call(record)
         print(f"[wiki-qmd-query] keyword search ok — {scope_note}, k={args.k}, {len(rows)} results from "
@@ -937,6 +973,14 @@ def main() -> int:
                 extras = []
             record.update(keyword_extra=len(extras), keyword_searches=n_searches)
             extra_note = f"; +{len(extras)} found only by keyword search ({n_searches} keyword searches, {kw_s:.1f}s)"
+    if args.compact and run.rc == 0:
+        try:
+            all_rows = json.loads(out)
+        except ValueError:
+            all_rows = None
+        if isinstance(all_rows, list):
+            out = render_compact([r for r in all_rows if r.get("found_by") != "keyword"],
+                                 [r for r in all_rows if r.get("found_by") == "keyword"])
     sys.stdout.write(out)
     if run.err.strip() and run.rc != 0:
         sys.stderr.write(run.err)

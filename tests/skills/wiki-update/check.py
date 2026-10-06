@@ -289,6 +289,9 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     off_notebook = [r.get("query") for r in ok_searches if NOTEBOOK not in str(r.get("scope", ""))]
     add("step 3: searched the wiki 3+ times (helper log)", len(ok_searches) >= 3, f"{len(ok_searches)} searches")
     add("step 3: every search in this notebook", ok_searches and not off_notebook, off_notebook)
+    # task #81 P3: a -k cut is the same breach as head (cycle 2026-10-05-04: workers ran -k 6)
+    cut = [(r.get("query"), r.get("k")) for r in ok_searches if int(r.get("k") or 0) < 30]
+    add("step 3: no search cut below k=30", ok_searches and not cut, cut)
     sc = _scores(run["text"])
     add("step 5: printed both judgment scores", None not in sc.values(), sc)
     add("step 5: both scores 3 or more", all(v is not None and v >= 3 for v in sc.values()), sc)

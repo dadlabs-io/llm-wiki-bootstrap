@@ -70,7 +70,9 @@ Promotion into `wiki/` stays with you, through `wiki-promote`.
   batch if it is missing, and a search that still fails after one retry fails the item ("full search
   unavailable") rather than filing it without cross-links; run fewer workers next time. On a machine
   with no GPU (set to keyword search at install) it searches by keyword only, and also tries the
-  words other entries would use for the same idea.
+  words other entries would use for the same idea. Its searches use the compact layout (one line and
+  one snippet line per result, about half the size) and it reads every result: a worker that cut its
+  searches short would be choosing cross-links from titles alone.
 - A fetch that fails on the documented fallback fetcher too, or an item that runs past about 15
   minutes, fails with its reason. Nothing is dropped silently.
 
