@@ -58,7 +58,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 WRAPPER = REPO / "scripts" / "wiki-qmd-query.py"
 LOG = Path(os.environ.get("WIKI_QMD_SLOT_DIR") or Path.home() / ".cache" / "wiki-qmd") / "searches.jsonl"
-SKIP_CALLERS = ("depth-check", "rank-usefulness")
+SKIP_CALLERS = ("depth-check", "rank-usefulness", "question-set", "question-set-probe")
 EXCERPT_CHARS = 700
 VERDICTS = ("useful", "redundant", "noise")
 
@@ -139,7 +139,7 @@ def load_queries(scope: str | None, n: int, seed: int) -> list[dict]:
         if is_junk(q):
             continue
         seen.add(q.lower())
-        distinct.append({"query": q, "scope": r.get("scope"), "ts": r.get("ts")})
+        distinct.append({"query": q, "scope": r.get("scope"), "ts": r.get("ts"), "caller": r.get("caller")})
     if not distinct:
         sys.exit("no usable queries in the log for that scope")
     random.Random(seed).shuffle(distinct)

@@ -1,0 +1,282 @@
+<title>Wiki Search Answer Key</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a judging desk. One question pinned on top, its candidates as a tappable list, a 50-cell progress strip above. */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #17212b;
+  --muted: #5b6875;
+  --line: #d8dee5;
+  --accent: #0e6b66;
+  --accent-soft: #dcefed;
+  --accent-ink: #ffffff;
+  --mark: #fff3c4;
+  --warn: #9a4b00;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11171d; --surface: #182129; --ink: #e4eaf0; --muted: #94a3b1; --line: #2b3742;
+  --accent: #4fc2b8; --accent-soft: #163b39; --accent-ink: #0b1a19; --mark: #3a3418; --warn: #f0a35a;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11171d; --surface: #182129; --ink: #e4eaf0; --muted: #94a3b1; --line: #2b3742;
+  --accent: #4fc2b8; --accent-soft: #163b39; --accent-ink: #0b1a19; --mark: #3a3418; --warn: #f0a35a;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 96px; display: grid; gap: 18px; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+h1 { font: 600 1.45rem/1.2 var(--font-display); letter-spacing: .01em; margin: 0; text-wrap: balance; }
+.tally { font: 500 .85rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.tally b { color: var(--accent); font-weight: 500; }
+
+details.howto { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; }
+details.howto summary { cursor: pointer; font-weight: 600; }
+details.howto ul { margin: 8px 0 2px; padding-left: 1.2em; display: grid; gap: 4px; max-width: 65ch; color: var(--muted); }
+
+.strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 4px; }
+.cell { font: 500 .72rem var(--font-mono); height: 28px; border-radius: 4px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--muted); cursor: pointer; font-variant-numeric: tabular-nums; }
+.cell.started { border-color: var(--accent); color: var(--accent); }
+.cell.done { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.cell.current { outline: 2px solid var(--ink); outline-offset: 1px; }
+.cell:focus-visible, button:focus-visible, .cand:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.question { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--bg);
+  padding-block: 8px 10px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; }
+.qmeta { font: 500 .75rem var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.qtext { font: 500 1.12rem/1.4 var(--font-mono); margin: 0; overflow-wrap: anywhere; }
+
+.banner { border: 1px solid var(--warn); color: var(--warn); border-radius: 6px; padding: 10px 14px; }
+
+.cands { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.cand { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; cursor: pointer; }
+.cand input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; }
+.cand.on { border-color: var(--accent); background: var(--accent-soft); }
+.ctitle { font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+.cfolder { font: .72rem var(--font-mono); color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+.csum { color: var(--muted); font-size: .9rem; margin-top: 4px; overflow-wrap: anywhere; }
+
+.actions { position: fixed; left: 0; right: 0; bottom: 0; z-index: 3; background: var(--surface);
+  border-top: 1px solid var(--line); padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); }
+.actions .row { max-width: 860px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.actions input[type=text] { flex: 1 1 220px; min-width: 0; font: inherit; padding: 7px 10px; border-radius: 5px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+button { font: 600 .9rem var(--font-body); border-radius: 5px; padding: 8px 14px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.none.on { background: var(--mark); border-color: var(--warn); color: var(--ink); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.status { font: .78rem var(--font-mono); color: var(--muted); min-width: 9ch; }
+.hint { color: var(--warn); font-size: .85rem; flex-basis: 100%; }
+@media (prefers-reduced-motion: no-preference) { .cand { transition: background-color .12s, border-color .12s; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Wiki Search Answer Key</h1>
+    <span class="tally" id="tally">loading questions…</span>
+  </header>
+
+  <details class="howto" id="howto" open>
+    <summary>How to label</summary>
+    <ul>
+      <li>Each question is a real search from the agentic-design wiki's log: an ingest worker, discovery, triage or you asked it.</li>
+      <li>Tick every entry you would open to answer it. Leave the rest. The list is in random order on purpose.</li>
+      <li>If nothing in the list answers it, choose <b>None of these</b>. Add a note if an entry you know is missing.</li>
+      <li>Every tick saves as you go. <b>Done, next</b> marks the question finished; you can come back and change it.</li>
+    </ul>
+  </details>
+
+  <nav class="strip" id="strip" aria-label="Questions"></nav>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <section class="question" aria-live="polite">
+    <div class="qmeta" id="qmeta">&nbsp;</div>
+    <p class="qtext" id="qtext">Loading the questions…</p>
+  </section>
+
+  <ul class="cands" id="cands"></ul>
+</div>
+
+<div class="actions">
+  <div class="row">
+    <button id="prev" type="button">Back</button>
+    <button id="none" class="none" type="button">None of these</button>
+    <input id="note" type="text" placeholder="Note (optional): a missing entry, a doubt" aria-label="Note for this question">
+    <span class="status" id="status"></span>
+    <button id="done" class="primary" type="button">Done, next</button>
+    <span class="hint" id="hint" hidden>Tick at least one entry, or choose None of these.</span>
+  </div>
+</div>
+
+<script>
+const CALLERS = { "wiki-ingester": "ingest worker", "discover": "discovery", "triage": "triage", "session": "you, in a session" };
+const S = { qs: [], idx: 0, remote: {}, local: {}, db: null, writable: true };
+const timers = {}, inflight = {}, dirty = {};
+const $ = (id) => document.getElementById(id);
+
+function blank() { return { relevant: [], none: false, done: false, note: "" }; }
+function cur(qid) { return S.local[qid] || S.remote[qid] || blank(); }
+function edit(qid, fn) {
+  const next = JSON.parse(JSON.stringify(cur(qid)));
+  fn(next);
+  S.local[qid] = next;
+  queueSave(qid);
+  render();
+}
+
+function queueSave(qid) {
+  if (!S.db || !S.writable) return;
+  setStatus("Saving…");
+  clearTimeout(timers[qid]);
+  timers[qid] = setTimeout(() => flush(qid), 500);
+}
+async function flush(qid) {
+  timers[qid] = null; // the debounce has fired: a later snapshot may adopt the saved copy
+  if (inflight[qid]) { dirty[qid] = true; return; }
+  inflight[qid] = true;
+  const body = { ...cur(qid), question_id: qid, updated: new Date().toISOString() };
+  const ref = S.db.collection("labels").doc(qid);
+  try {
+    try { await ref.set(body); }
+    catch (e) {
+      if (e && e.code === "unavailable") { await new Promise(r => setTimeout(r, 700 + Math.random() * 800)); await ref.set(body); }
+      else throw e;
+    }
+    setStatus("Saved");
+  } catch (e) {
+    if (e && e.code === "invalid_argument") { S.writable = false; showBanner("This view can't save labels. Open the page from your own claude.ai account."); }
+    else if (e && e.code === "quota_exceeded") showBanner("The page's storage is full, so this tick was not saved.");
+    else setStatus("Not saved: retry");
+  }
+  inflight[qid] = false;
+  if (dirty[qid]) { dirty[qid] = false; flush(qid); }
+}
+
+function setStatus(t) { $("status").textContent = t; }
+function showBanner(t) { const b = $("banner"); b.textContent = t; b.hidden = false; }
+
+function folderOf(id) { return id.replace(/^wiki\//, "").replace(/\/[^/]+$/, ""); }
+
+function render() {
+  const q = S.qs[S.idx];
+  const total = S.qs.length;
+  const doneCount = S.qs.filter(x => cur(x.id).done).length;
+  $("tally").innerHTML = total ? `<b>${doneCount}</b> of ${total} done` : "no questions";
+  const strip = $("strip");
+  strip.replaceChildren(...S.qs.map((x, i) => {
+    const c = cur(x.id), b = document.createElement("button");
+    b.type = "button"; b.className = "cell" + (c.done ? " done" : (c.relevant.length || c.none || c.note) ? " started" : "") + (i === S.idx ? " current" : "");
+    b.textContent = String(i + 1);
+    b.setAttribute("aria-label", `Question ${i + 1}${c.done ? ", done" : ""}`);
+    b.addEventListener("click", () => go(i));
+    return b;
+  }));
+  if (!q) return;
+  const c = cur(q.id);
+  $("qmeta").textContent = `Question ${S.idx + 1} of ${total} · asked by ${CALLERS[q.caller] || q.caller || "a search"} · ${q.candidates.length} candidates`;
+  $("qtext").textContent = q.query;
+  const rel = new Set(c.relevant);
+  $("cands").replaceChildren(...q.candidates.map((cand, i) => {
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+    label.className = "cand" + (rel.has(cand.id) ? " on" : "");
+    const box = document.createElement("input");
+    box.type = "checkbox"; box.id = `c-${q.id}-${i}`; box.checked = rel.has(cand.id); box.disabled = !S.writable;
+    box.addEventListener("change", () => edit(q.id, (d) => {
+      const set = new Set(d.relevant);
+      box.checked ? set.add(cand.id) : set.delete(cand.id);
+      d.relevant = [...set]; if (d.relevant.length) d.none = false; $("hint").hidden = true;
+    }));
+    const text = document.createElement("div");
+    const t = document.createElement("div"); t.className = "ctitle"; t.textContent = cand.title;
+    const f = document.createElement("div"); f.className = "cfolder"; f.textContent = folderOf(cand.id);
+    const s = document.createElement("div"); s.className = "csum"; s.textContent = cand.summary;
+    text.append(t, f, s);
+    label.append(box, text);
+    li.append(label);
+    return li;
+  }));
+  $("none").classList.toggle("on", !!c.none);
+  $("none").setAttribute("aria-pressed", c.none ? "true" : "false");
+  if (document.activeElement !== $("note")) $("note").value = c.note || "";
+  $("prev").disabled = S.idx === 0;
+  for (const id of ["none", "done", "note"]) $(id).disabled = !S.writable;
+}
+
+function go(i) {
+  S.idx = Math.max(0, Math.min(S.qs.length - 1, i));
+  $("hint").hidden = true;
+  try { history.replaceState(null, "", "#" + S.qs[S.idx].id); } catch (e) {}
+  render();
+  window.scrollTo({ top: 0 });
+}
+
+$("prev").addEventListener("click", () => go(S.idx - 1));
+$("none").addEventListener("click", () => {
+  const q = S.qs[S.idx]; if (!q) return;
+  edit(q.id, (d) => { d.none = !d.none; if (d.none) d.relevant = []; });
+  $("hint").hidden = true;
+});
+$("note").addEventListener("input", (e) => {
+  const q = S.qs[S.idx]; if (!q) return;
+  const next = JSON.parse(JSON.stringify(cur(q.id))); next.note = e.target.value; S.local[q.id] = next;
+  queueSave(q.id);
+});
+$("done").addEventListener("click", () => {
+  const q = S.qs[S.idx]; if (!q) return;
+  const c = cur(q.id);
+  if (!c.relevant.length && !c.none) { $("hint").hidden = false; return; }
+  edit(q.id, (d) => { d.done = true; });
+  const after = S.qs.findIndex((x, i) => i > S.idx && !cur(x.id).done);
+  const before = S.qs.findIndex((x) => !cur(x.id).done);
+  go(after >= 0 ? after : before >= 0 ? before : S.idx);
+});
+
+async function start() {
+  try {
+    const res = await fetch("questions.json");
+    const data = await res.json();
+    S.qs = data.questions || [];
+  } catch (e) {
+    $("qtext").textContent = "The questions file did not load. Reload the page.";
+    return;
+  }
+  const want = (location.hash || "").slice(1);
+  const at = S.qs.findIndex(q => q.id === want);
+  S.idx = at >= 0 ? at : 0;
+  render();
+
+  const db = await (window.claude && window.claude.use ? window.claude.use("db") : Promise.resolve(null));
+  if (!db) {
+    S.writable = false;
+    showBanner("Labels can't be saved in this view. Open the page signed in to claude.ai to label.");
+    render();
+    return;
+  }
+  S.db = db;
+  db.collection("labels").onSnapshot((snap) => {
+    for (const d of snap.docs) {
+      const body = d.data();
+      if (!body) continue;
+      S.remote[d.id] = { relevant: body.relevant || [], none: !!body.none, done: !!body.done, note: body.note || "" };
+      if (!inflight[d.id] && !timers[d.id]) delete S.local[d.id];
+    }
+    if (!S.idx && !want) {
+      const first = S.qs.findIndex(x => !cur(x.id).done);
+      if (first > 0) S.idx = first;
+    }
+    render();
+  }, () => { setStatus("Live updates stopped"); });
+}
+start();
+</script>
