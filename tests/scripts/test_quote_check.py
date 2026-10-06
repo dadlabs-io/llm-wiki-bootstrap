@@ -99,6 +99,23 @@ _r = ec.check_entry_body('## TL;DR\nx\n> "an invented sentence that appears in n
 check("a quote problem is a warning, never an error",
       not any("quoted fragment" in e for e in _r["errors"]) and any("quoted fragment" in w for w in _r["warnings"]))
 
+# ── text read off an image, written into the raw under a labelled heading (task #81 P4) ──
+IMAGE_RAW = ("# Ten rules for agents\n\nCaption: a carousel on agent design.\n\n![slide 1](slide-1.jpg)\n\n"
+             "## Transcribed from slide-1.jpg by wiki-ingester, 2026-10-06\n\n"
+             "Give every agent one job and a budget it cannot exceed.\n\n"
+             "## Comments\n\nThe best carousel on agent design this month.\n")
+transcribed_only = warns('> "Give every agent one job and a budget it cannot exceed." — slide 1', IMAGE_RAW)
+check("image text: a quote found only in a transcription gets its own warning",
+      any("transcription" in w for w in transcribed_only))
+check("image text: ... never reported as not found or reworded",
+      not any(k in w for w in transcribed_only for k in ("not found", "worded differently")))
+check("image text: a quote from the source's own text stays clean",
+      warns('> "Caption: a carousel on agent design." — the post', IMAGE_RAW) == [])
+check("image text: the next heading ends the transcription (text after it is the source's own)",
+      warns('> "The best carousel on agent design this month." — a comment', IMAGE_RAW) == [])
+check("image text: a quote in neither is still not found",
+      "not found" in kinds('> "Agents should never be given a budget of any kind at all."', IMAGE_RAW))
+
 # ── raw formats ──────────────────────────────────────────────────────────────
 with tempfile.TemporaryDirectory() as td:
     td = Path(td)

@@ -421,16 +421,40 @@ def _blockquotes(body: str) -> list[str]:
     return blocks
 
 
+_HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
+_TRANSCRIBED_RE = re.compile(r"^Transcribed from .+ by .+", re.I)
+
+
+def split_transcriptions(raw_text: str) -> tuple[str, str]:
+    """(the source's own text, text a worker transcribed from its images). A transcription is a
+    `## Transcribed from <image> by <worker>, <date>` section, ended by the next heading of the same
+    or a higher level (task #81 P4: image-only raws made every slide quote "not found")."""
+    own, transcribed, level = [], [], 0
+    for line in raw_text.splitlines():
+        m = _HEADING_RE.match(line.strip())
+        if m and level and len(m.group(1)) <= level and not _TRANSCRIBED_RE.match(m.group(2)):
+            level = 0
+        if m and _TRANSCRIBED_RE.match(m.group(2)):
+            level = len(m.group(1))
+            continue
+        (transcribed if level else own).append(line)
+    return "\n".join(own), "\n".join(transcribed)
+
+
 def check_quotes(body: str, raw_text: str | None) -> list[str]:
     """Every double-quoted span on a `>` line must be in the raw: each piece
     between ellipses a substring of it, the pieces in the raw's order. A `>`
     line with no quoted span is checked whole, minus a trailing ` — attribution`.
+    A piece found only in a worker's transcription of an image is reported on its
+    own line: the worker checked it against its own reading, not the source.
     Returns warnings (none when there is no raw text)."""
     if not raw_text:
         return []
-    raw = _squash(_norm_quotes(raw_text))
+    own_text, transcribed_text = split_transcriptions(raw_text)
+    raw = _squash(_norm_quotes(own_text))
     raw_rev = raw[::-1]
-    missing, reworded, reordered = [], [], []
+    transcribed = _squash(_norm_quotes(transcribed_text))
+    missing, reworded, reordered, from_image = [], [], [], []
     for block in _blockquotes(_strip_footer(body)):
         block = _norm_quotes(block)
         spans = _QUOTED_SPAN_RE.findall(block)
@@ -445,6 +469,8 @@ def check_quotes(body: str, raw_text: str | None) -> list[str]:
                 at = raw.find(key, pos)
                 if at >= 0:
                     pos = at + len(key)
+                elif transcribed and key in transcribed:
+                    from_image.append(piece.strip())
                 elif key in raw:
                     reordered.append(piece.strip())
                 elif max(_longest_prefix_in(key, raw), _longest_prefix_in(key[::-1], raw_rev)) * 10 >= len(key) * 3:
@@ -461,6 +487,12 @@ def check_quotes(body: str, raw_text: str | None) -> list[str]:
                 f"{len(found)} quoted fragment(s) on `>` lines {label} (e.g. {sample}) — quote the "
                 "source word for word, or take the line out of `>` and write it as paraphrase "
                 "(rubric: extraction fidelity)")
+    if from_image:
+        sample = "; ".join(f'"{p[:80]}{"…" if len(p) > 80 else ""}"' for p in from_image[:3])
+        warnings.append(
+            f"{len(from_image)} quoted fragment(s) on `>` lines checked only against a transcription of an "
+            f"image in the raw (e.g. {sample}): the worker's own reading, not the source's text; a "
+            "reviewer may compare them with the image")
     return warnings
 
 
