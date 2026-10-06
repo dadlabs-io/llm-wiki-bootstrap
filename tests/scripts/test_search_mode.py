@@ -282,7 +282,8 @@ def reindex_fake(argv, timeout):
             probe.release()
         embed_saw_free_slot.append(free)
         calls.append(list(argv))
-        return 0, "", "Done! Embedded 12 chunks from 3 documents in 2s\n"
+        # qmd's real output: a progress bar and cursor hide/show codes around the summary (2026-10-06 live run)
+        return 0, "", "\x1b[?25l██ 100%\n\x1b[?25h\nDone! Embedded 12 chunks from 3 documents in 2s\n\x1b[?25l\x1b[?25h\n"
     if argv and argv[0] == "update":
         calls.append(list(argv))
         return 0, "Updated 3 files\n", ""

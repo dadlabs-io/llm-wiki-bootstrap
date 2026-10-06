@@ -319,7 +319,8 @@ def reindex(mode: str, n_slots: int, max_wait: float) -> int:
     if rc is None:
         print(f"[wiki-qmd-query] reindex: qmd embed timed out after {REINDEX_TIMEOUT:.0f}s", file=sys.stderr)
         return EXIT_TIMEOUT
-    lines = [ANSI_RE.sub("", l).strip() for l in (out + "\n" + err).splitlines()]
+    # every terminal control sequence, not only colours: qmd embed hides and shows the cursor (ESC[?25l)
+    lines = [re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", l).strip() for l in (out + "\n" + err).splitlines()]
     last = next((l for l in reversed(lines) if l and "█" not in l), "")
     if rc != 0:
         print(f"[wiki-qmd-query] reindex: qmd embed failed (exit {rc}): {last[-300:]}", file=sys.stderr)
