@@ -6,9 +6,12 @@ by a one-off script; the Drive route queued a saved PDF as a new ticket under it
 article's URL and queueing the item twice. Both routes now use this: `wiki-triage.py attach-pdfs` for a
 PDF saved into an intake folder, `wiki-fetch-drive-folder.py` for one saved to Drive.
 
-Each PDF goes to its best waiting ticket (one with a source URL and no raw_path yet, in `_inbox/pending/`
-or any intake bucket) by the words it shares with the ticket's title and URL path: three shared words,
-or one long word no other ticket has (an X handle). Two tickets equally good: ambiguous, left to the user.
+Each PDF goes to its best waiting ticket (one with a source URL and no raw_path yet, in an intake bucket:
+a page left as "save as PDF" was triaged, so an untriaged ticket in `_inbox/pending/` is never one) by the
+words it shares with the ticket's title and URL path: three shared words, or one that is a whole segment of
+the ticket's URL path (an X handle, `x.com/beamnxw/...`) and no other ticket's. Two tickets equally good:
+ambiguous, left to the user. (2026-10-06, the wiki-cycle suite: a looser "any word no other ticket has"
+attached "Agent memory survey.pdf" to "Handoff files between agent sessions" on the one word "agent".)
 """
 from __future__ import annotations
 
@@ -39,11 +42,9 @@ def _front(text: str) -> dict:
 
 
 def waiting_tickets(nb: Path) -> list[dict]:
-    """Tickets with a source URL and no raw yet, in _inbox/pending/ and every intake bucket."""
+    """Tickets with a source URL and no raw yet, in every intake bucket."""
     inbox = nb / "_inbox"
-    dirs = [inbox / "pending"]
-    if (inbox / "intake").is_dir():
-        dirs += sorted(d for d in (inbox / "intake").iterdir() if d.is_dir())
+    dirs = sorted(d for d in (inbox / "intake").iterdir() if d.is_dir()) if (inbox / "intake").is_dir() else []
     out = []
     for d in dirs:
         if not d.is_dir():
@@ -55,8 +56,10 @@ def waiting_tickets(nb: Path) -> list[dict]:
             src = fm.get("source", "")
             if not src.startswith(("http://", "https://")) or fm.get("raw_path"):
                 continue
+            path = urlsplit(src).path
             out.append({"path": f, "source": src, "title": fm.get("title", ""),
-                        "words": words(fm.get("title", "")) | words(urlsplit(src).path)})
+                        "words": words(fm.get("title", "")) | words(path),
+                        "segments": {s.lower() for s in path.split("/") if s}})
     return out
 
 
@@ -70,7 +73,7 @@ def match(pdfs: list[Path], tickets: list[dict]):
         scored = []
         for t in tickets:
             shared = mine & t["words"]
-            unique = any(df[w] == 1 and len(w) >= 5 for w in shared)
+            unique = any(df[w] == 1 and len(w) >= 5 and w in t["segments"] for w in shared)
             if len(shared) >= MIN_SHARED or (unique and shared):
                 scored.append((len(shared) + (1 if unique else 0), t))
         ranked[pdf] = sorted(scored, key=lambda s: -s[0])

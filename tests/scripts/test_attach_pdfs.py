@@ -123,6 +123,24 @@ with tempfile.TemporaryDirectory() as td:
     code2, out2 = run_triage(vault)
     check("a second run attaches nothing twice", code2 == 0 and "attached: 0" in out2.lower(), out2[-300:])
 
+# ── the matcher alone: one shared common word is never enough (wiki-cycle suite, 2026-10-06: a Drive run attached
+# "Agent memory survey.pdf" to "Handoff files between agent sessions", a ticket queued seconds earlier) ──
+sys.path.insert(0, str(SCRIPTS))
+import _pdf_match as pm  # noqa: E402
+with tempfile.TemporaryDirectory() as td:
+    nb = Path(td) / "nb"
+    (nb / "_inbox" / "intake" / "main").mkdir(parents=True)
+    (nb / "_inbox" / "pending").mkdir(parents=True)
+    (nb / "_inbox" / "intake" / "main" / "handoff.md").write_text(
+        ticket("https://example.org/skilltest/handoff-files-between-agent-sessions", "Handoff files between agent sessions"),
+        encoding="utf-8")
+    (nb / "_inbox" / "pending" / "fresh.md").write_text(
+        ticket("https://example.org/agent-memory-survey", "Agent memory survey"), encoding="utf-8")
+    found, missed, _ = pm.match([Path("Agent memory survey.pdf")], pm.waiting_tickets(nb))
+    check("one shared word that is not a whole URL segment matches nothing", not found and missed, found)
+    check("an untriaged ticket in pending/ is never a candidate (a save-as-PDF ticket waits in an intake bucket)",
+          all("pending" not in str(t["path"]) for t in pm.waiting_tickets(nb)), [str(t["path"]) for t in pm.waiting_tickets(nb)])
+
 # ── route 2: a PDF saved to Drive attaches to the waiting ticket, not a second ticket ──
 with tempfile.TemporaryDirectory() as td:
     tmp = Path(td)
@@ -130,6 +148,8 @@ with tempfile.TemporaryDirectory() as td:
     scan = tmp / "drive" / "__FOR CLAUDE" / "nb"
     scan.mkdir(parents=True)
     (scan / "The Harness Is the Product _ by Someone _ Medium.pdf").write_bytes(tiny_pdf("The harness is the product."))
+    (scan / "Agent memory survey.pdf").write_bytes(tiny_pdf("A survey of agent memory."))
+    (scan / "handoff.txt").write_text("https://example.org/skilltest/handoff-files-between-agent-sessions", encoding="utf-8")
     p = subprocess.run([sys.executable, str(SCRIPTS / "wiki-fetch-drive-folder.py"), "--subfolder", "nb",
                         "--queue-into", "nb", "--queue-vault", str(vault), "--archive-subfolder", "c1",
                         "--out", str(tmp / "run" / "drive-fetch.md")], capture_output=True, text=True,
@@ -140,7 +160,12 @@ with tempfile.TemporaryDirectory() as td:
     new = [t for t in (nb / "_inbox" / "pending").glob("*.md") if t.name != "done-already.md" and not t.name.startswith("_")]
     check("Drive: the waiting ticket gets the raw, its article URL kept",
           h.get("raw_path", "").startswith("raw/") and h.get("source", "").startswith("https://medium.com/"), h)
-    check("Drive: no second ticket is queued under the Drive link", not new, [t.name for t in new])
+    check("Drive: no second ticket is queued for the attached PDF",
+          not [t for t in new if "harness" in t.name], [t.name for t in new])
+    check("Drive: an unrelated PDF is queued as its own ticket, not attached to the link the same run queued",
+          any("agent-memory-survey" in t.name for t in new)
+          and "raw_path" not in next((t.read_text(encoding="utf-8") for t in new if "handoff" in t.name), "raw_path"),
+          [t.name for t in new])
     check("Drive: the file is archived as handled", (scan / "_completed" / "c1").is_dir()
           and any((scan / "_completed" / "c1").iterdir()), sorted(x.name for x in scan.iterdir()))
 

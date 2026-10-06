@@ -146,6 +146,7 @@ Then re-run Step 3.5 (promotion adds entries and backlinks at once). Each promot
 
 - Don't skip the scratchpad: it is how a run resumes.
 - Don't run more than 4 agents of a kind at once; spawn every one unnamed and in the background.
+- Don't schedule a wake-up or a loop (ScheduleWakeup, `/loop`) while workers run: their results come back by themselves, and a wake-up carrying the cycle's command starts a second cycle after this one ends (the wiki-cycle suite, 2026-10-06: a second run folder and commit 20 minutes later).
 - Don't let workers or the checker write step files, commit, or edit outside their brief.
 - Don't commit mid-cycle; one commit at the end covers the run.
 - Don't skip the report: it is the user's review point.
