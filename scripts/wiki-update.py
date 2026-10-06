@@ -52,6 +52,7 @@ from _wiki_config import default_vault as _default_vault, default_topic as _defa
 # the pre-write gate and the lint backlog view enforce ONE set of rules.
 from _entry_checks import check_entry_body, check_frontmatter_loadable, format_result, read_raw_text, split_frontmatter  # noqa: E402
 from _markdown import html_to_markdown  # noqa: E402 — HTML pages saved as Markdown (task #71)
+from _raw_dedup import check_raw, report  # noqa: E402 — content dedup (task #81 P5)
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -967,6 +968,10 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
         print(f"source_url={source_url}")
         if suggested_title:
             print(f"suggested_title={suggested_title}")
+        # Content dedup before anyone reads it (task #81 P5): the same piece under another URL
+        if raw_path:
+            for line in report(check_raw(Path(raw_path), topic_root), topic_root):
+                print(line)
         return 0
 
     final_title = title or suggested_title or Path(source).stem
@@ -991,6 +996,20 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
             print(f"  Warning: --raw-path {final_raw_path} not found under topic root "
                   f"({topic_root}) or cwd — frontmatter will carry a phantom raw_path.",
                   file=sys.stderr)
+
+    # Content dedup (task #81 P5): a raw that is a copy of one an entry already cites is the same
+    # source under another URL; skipped like a URL duplicate unless --force.
+    if final_raw_path and raw_path_override and not force and Path(final_raw_path).is_file():
+        verdict = check_raw(Path(final_raw_path), topic_root)
+        lines = report(verdict, topic_root)
+        if verdict.duplicate:
+            print("Skip (dedup): this raw is already filed under another source.")
+            for line in lines:
+                print(line)
+            print("Use --force to file it anyway.")
+            return 0
+        for line in lines:
+            print(f"  {line}")
 
     # ── Pre-write gate (2026-09-02): the mechanical half of the eval rubric ──
     # Deterministic checks shared with wiki-lint-mechanical.py (_entry_checks.py).
@@ -1143,6 +1162,24 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
     return 0
 
 
+def check_duplicate(vault_root, topic, target):
+    """--check-duplicate: is this raw a copy of one an entry already cites? Exit 0 no, 3 yes
+    (duplicate_of= names the entry), 2 when the raw does not exist. Run before reading a raw."""
+    topic_root = Path(vault_root) / topic
+    raw = Path(target)
+    if not raw.is_absolute():
+        raw = topic_root / target if (topic_root / target).exists() else raw
+    if not raw.is_file():
+        print(f"Error: --check-duplicate {target}: no such raw under {topic_root} or the cwd", file=sys.stderr)
+        return 2
+    verdict = check_raw(raw, topic_root)
+    for line in report(verdict, topic_root):
+        print(line)
+    if not verdict.duplicate:
+        print("no duplicate found")
+    return 3 if verdict.duplicate else 0
+
+
 def regate_entry(vault_root, topic, target):
     """Re-run the pre-write gate on an entry already staged or filed, writing nothing.
 
@@ -1226,6 +1263,10 @@ def main():
                              "_inbox/proposed/ then wiki/), against its raw_path, after fixing a warning by hand. "
                              "Writes nothing and skips dedup. Exit 0 clean or warnings only, 1 on an error, "
                              "2 when no single entry matches.")
+    parser.add_argument("--check-duplicate", default=None, metavar="RAW",
+                        help="Before reading a raw: is it a copy of a raw an entry (filed or staged) already cites? "
+                             "An exact copy or a near-identical text exits 3 with duplicate_of=; a partial overlap "
+                             "warns; exit 0 otherwise, 2 when the raw does not exist.")
     args = parser.parse_args()
 
     # --topic <registry notebook> resolves through the registry from any cwd;
@@ -1236,6 +1277,8 @@ def main():
         return print_slug_for(args.vault, args.topic, args.folder, args.title)
     if args.regate:
         return regate_entry(args.vault, args.topic, args.regate)
+    if args.check_duplicate:
+        return check_duplicate(args.vault, args.topic, args.check_duplicate)
 
     if not args.source:
         parser.error("--source is required (unless using --slug-for)")

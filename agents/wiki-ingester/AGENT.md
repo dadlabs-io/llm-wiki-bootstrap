@@ -60,8 +60,11 @@ with TodoWrite. For each item:
    **A ticket whose frontmatter has `raw_path:`** was captured at triage: file from that raw
    (`--source <raw> --source-url <the ticket's source> --raw-path <raw_path>`) and never fetch it
    again (2026-09-24).
-2. **Read the source in FULL — depth mandates per type.** No tier / cluster / skip / synthesis
-   decision until the source is fully read:
+2. **Read the source in FULL — depth mandates per type.** First make sure it is not a copy:
+   `--fetch-only` checks its raw's content itself; any other raw (a PDF, a ticket's `raw_path`) gets
+   `wiki-update.py --topic <topic> --check-duplicate <raw_path>`. Exit 3 with `duplicate_of=` is a dedup hit:
+   report it and move on, unread (2026-10-05: a 482-page book already filed was read in full). No tier /
+   cluster / skip / synthesis decision until the source is fully read:
    - **Article/blog** — the full text, not the lede.
    - **GitHub repo** — beyond the README: the tree structure, `docs/`, key source files, examples —
      enough to inventory what the repo actually *is* (counts of components, not vibes). The
