@@ -25,8 +25,8 @@
 - **Status**: done
 - **Routed**: 2 (main 2) · **Raws captured for other readers**: 0 · **Readers told**: none
 
-### Phase 1.8: Browser capture
-- **Status**: skipped (nothing gated)
+### Phase 1.8: Pages no fetcher can get
+- **Status**: skipped (every page could be fetched)
 
 ### Phase 2: Ingest
 - **Status**: done

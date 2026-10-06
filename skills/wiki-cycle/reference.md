@@ -38,8 +38,8 @@ Created at Step 0 as `<run-folder>/scratchpad.md` and updated after every phase;
 ### Phase 1.7: Triage
 - **Status**: … · **Routed**: N (per folder: …) · **Raws captured for other readers**: N · **Readers told**: …
 
-### Phase 1.8: Browser capture
-- **Status**: … · **Captured**: N · **Left for a browser session**: N
+### Phase 1.8: Pages no fetcher can get
+- **Status**: … · **Left in their buckets, listed under Save as PDF**: N (paywall N, login N, blocked N)
 
 ### Phase 2: Ingest
 - **Status**: … · **Items**: N · **Workers**: N (model) · **YouTube**: N, on worker K

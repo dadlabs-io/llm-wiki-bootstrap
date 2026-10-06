@@ -53,10 +53,10 @@ with TodoWrite. For each item:
    fetcher only as its documented fallback; `wiki-fetch-page.py` for Instagram posts and pages that need
    JavaScript; `wiki-transcribe.py` for reels, podcasts and video without captions; never two fetchers in
    flight at once). Those two run headless on this machine, so they need no browser session. **You have no browser.**
-   A login-gated page (a Medium member-only story, anything behind the user's own sign-in) is
-   captured by the interactive session through Claude in Chrome BEFORE you are spawned and handed
-   to you as `--source <raw> --source-url <url> --raw-path raw/<file>`; if you meet such a URL with
-   no raw, mark it **failed: needs browser capture by the session** and move on (2026-09-13).
+   A page no fetcher can get (a paywall or member wall such as a Medium member-only story, a login,
+   or a site that blocks the fetcher) is never captured another way: mark it **failed: save as PDF**
+   (with paywall, login or blocked) and move on; the cycle report lists it for the user to save into
+   the Drive folder (`fetchers.md`, "Pages no fetcher can get"; 2026-10-05).
    **A ticket whose frontmatter has `raw_path:`** was captured at triage: file from that raw
    (`--source <raw> --source-url <the ticket's source> --raw-path <raw_path>`) and never fetch it
    again (2026-09-24).

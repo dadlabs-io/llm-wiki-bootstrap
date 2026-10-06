@@ -22,7 +22,7 @@ This skill does not restate the rules it follows:
 | One URL | The flow below; step 1's fetcher by host is in [fetchers.md](fetchers.md) |
 | Two or more URLs (spaces, lines, bullets or a list) | Queue each with `wiki-list-add.py`, then say "queued N items; run `/wiki-cycle --ingest-only` to drain" |
 | A local file, or pasted text | The flow from step 2; pasted text goes to a temp file first, passed as `--source` |
-| A raw already saved for a URL (a batch hand-over, a browser capture) | The flow from step 2, with no fetcher; file with `--source-url <url> --raw-path raw/<file>` |
+| A raw already saved for a URL (a batch hand-over, a ticket's `raw_path`) | The flow from step 2, with no fetcher; file with `--source-url <url> --raw-path raw/<file>` |
 | Nothing | Stop: "`/wiki-update` needs a source (a URL, file path or pasted text). To capture what we did this session, run `/wrap-up`." Never synthesize from the session. |
 
 `--now <url>` ingests one item from a list immediately; `--queue <url>` queues even a single URL.

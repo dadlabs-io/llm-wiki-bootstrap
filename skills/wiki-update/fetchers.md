@@ -1,6 +1,6 @@
 # wiki-update — fetchers
 
-Step 1 of the `/wiki-update` flow, by source. Every fetcher prints `raw_path=<path>`; keep it for step 8. After fetching, continue at step 2 of the flow in `SKILL.md`. A raw that is already saved (handed over, or captured in the browser) needs no fetcher: start at step 2.
+Step 1 of the `/wiki-update` flow, by source. Every fetcher prints `raw_path=<path>`; keep it for step 8. After fetching, continue at step 2 of the flow in `SKILL.md`. A raw that is already saved (handed over, or from a PDF the user saved) needs no fetcher: start at step 2.
 
 ## Which fetcher
 
@@ -11,7 +11,7 @@ Step 1 of the `/wiki-update` flow, by source. Every fetcher prints `raw_path=<pa
 | An Instagram reel, a podcast episode, an X video, a local audio or video file | `wiki-transcribe.py` ([Speech](#speech-reels-podcasts-video-without-captions)): the caption and a transcript |
 | A PDF: a URL ending `.pdf`, `arxiv.org/pdf/…`, or a local `.pdf` | `wiki-fetch-pdf.py` ([PDF](#pdf)) |
 | `x.com`, `twitter.com` | `wiki-fetch-tweet.js` ([X](#x--twitter)); the page fetcher only as its fallback |
-| `medium.com`, `*.medium.com`, Medium publications on their own domains (`levelup.gitconnected.com`, `pub.towardsai.net`, …) | [Browser capture](#browser-capture) when the session is interactive and the user is signed in; the [page fetcher](#pages-that-need-javascript) otherwise. Direct HTTP gets 403. |
+| `medium.com`, `*.medium.com`, Medium publications on their own domains (`levelup.gitconnected.com`, `pub.towardsai.net`, …) | [Page fetcher](#pages-that-need-javascript). Direct HTTP gets 403, and Medium's Cloudflare often blocks the page fetcher too: then [Save as PDF](#pages-no-fetcher-can-get). |
 | `threads.com`, `bsky.app`, `linkedin.com`, public `notion.so` pages | [Page fetcher](#pages-that-need-javascript) |
 | `github.com` repos and files, `gist.github.com` | `wiki-update.py --fetch-only` (rewrites to the raw file; a bare repo URL gets its README) |
 | Anything else | `wiki-update.py --fetch-only` |
@@ -50,37 +50,25 @@ node {{WIKI_SCRIPTS_DIR}}/wiki-fetch-tweet.js --topic <topic> --url <url> --vaul
 
 One HTTPS request to the public syndication API, on the host: no login, no browser. `--vault` is the vault root, the folder that holds the notebook's folder. When it fails (a deleted or protected post, a block), fetch that one URL with the [page fetcher](#pages-that-need-javascript) instead of retrying. If the raw ends with the note about a long-form post and the text reads cut off, fetch that URL with the page fetcher too. A post whose substance is a video: `wiki-transcribe.py --url <url>`.
 
-## Browser capture
+## Pages no fetcher can get
 
-For a page the user can read in their own browser but no fetcher can: Medium member-only stories, anything behind a login the user holds. The interactive session reads the page through Claude in Chrome, in the user's signed-in session, and saves the text as the raw. This is the user's own access, never a bypass. If the page shows "Member-only story" and the body stops after a few paragraphs, the user is not a member of that site: the item is preview only, so say so in the raw header or skip it, and never ingest the fragment as the article.
+A page behind a paywall or a member wall (Medium member-only stories), behind a login, or on a site that blocks the fetcher (a Cloudflare "you have been blocked" page) has one path: the user saves it. Medium is the usual case, not a special one.
 
-**A paywalled page is never fetched another way** (Mark, 2026-10-05): no archive copy, no cache, no proxy. The page fetcher flags one (`paywall=suspected`, and a `paywall:` line in the raw's header) instead of working around it. Read it here, in the user's own browser; if that cannot get through either, tell the user which page it is and leave the item for them: they look for a workaround.
+- **Never copy a page out of the browser into `raw/`** (2026-10-05). The session may open a page in the user's browser (Claude in Chrome) to read it and judge it, for triage or to tell the user whether it is worth saving, but never saves its text as a raw.
+- **Never fetch it another way** (Mark, 2026-10-05): no archive copy, no cache, no proxy, and never the user's password. The page fetcher flags a paywalled or nearly empty page (`paywall=suspected`, and a `paywall:` line in the raw's header) instead of working around it; a site's block page counts the same. That raw holds no article: delete it (nothing cites it yet).
+- **Save as PDF.** Leave the item where it is (its queue ticket or intake bucket) with the reason "save as PDF: <paywall | login | blocked>", and tell the user which page it is. In a cycle, the report lists every such page under **Save as PDF** with its link. The user opens it in Chrome, Print → Save as PDF, into the Drive folder `<drive.parent_folder>/<drive.subfolder>` (`__FOR CLAUDE/<notebook>` by default); the next cycle's Drive step saves the PDF as a raw and queues it, so it is filed with its full text. A PDF the user hands over directly is a local file ([PDF](#pdf)).
 
-**Only the interactive session can do this.** A spawned `wiki-ingester` worker has no browser. For a batch, the session captures every gated raw first, then hands the workers `--source <raw> --source-url <url> --raw-path raw/<file>`.
-
-1. **Open and read.** `tabs_context_mcp`, then `navigate` to the URL and wait two to three seconds. Medium's `https://medium.com/p/<12-hex-id>` resolves to the canonical URL; a digest email's tracking parameter ending `reader-<publication>-<postid>----N-…` or `reader--<postid>----N-…` carries the post id. Read with `get_page_text` (scripts and screenshots are refused on many hosts), and take the final URL and title from its result. Medium redirects author posts to `<author>.medium.com` and publication posts to the publication's domain, and each host needs its own site permission in the extension: "Permission denied for reading page content on this domain" is that setting, not a fetch error. A page that returns only site chrome was still loading: wait and read again. A feed renders only the cards near the viewport: read it with `read_page` (interactive filter) at each scroll stop and collect the article links.
-2. **Save the raw** with the Write tool (a shell heredoc breaks on article-length text) at `<topic>/raw/<YYYY-MM-DD>-<slug>.md`, header first, then the text with images dropped and captions kept:
-   ```
-   # <article title>
-   source_url: <canonical url>
-   author: <name> (<publication>, if any)
-   published: <date as the page shows it>
-   fetched: <YYYY-MM-DD> via browser capture (<Medium member view | not member-only>; images omitted; charts captions only)
-   ---
-   <full text>
-   ```
-   Keep the author's promotional blocks out or mark them `[Promo: …]`; keep everything else verbatim. A figure that reaches the raw only as the author's caption of a chart is a secondary-summary figure (authoring best practices, principle 5): `sourced` via the author, confidence low.
-3. **Continue at step 2 of the flow**, and file with `--source <synthesis> --source-url <url> --raw-path raw/<file>`. Say in the entry's Sources how the raw was captured ("Raw captured <date> through the user's Medium membership").
+A spawned `wiki-ingester` worker meeting such a page marks the item failed "save as PDF" and moves on.
 
 ## Pages that need JavaScript
 
-For pages that show their text only once JavaScript runs (Threads, LinkedIn, public Notion pages, Bluesky, Medium without a browser session) and as the fallback for X. It runs on this machine, in headless Chromium (Playwright, in the scripts' environment; the install fetches the browser):
+For pages that show their text only once JavaScript runs (Threads, LinkedIn, public Notion pages, Bluesky, Medium) and as the fallback for X. It runs on this machine, in headless Chromium (Playwright, in the scripts' environment; the install fetches the browser):
 
 ```bash
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-page.py --topic <topic> --url <url> --ingested-by claude-code
 ```
 
-The page is saved as Markdown with its site chrome (login banners, sidebars, footers): read past it to the post itself. `paywall=suspected` means the page looked paywalled or nearly empty: see the paywall rule under [Browser capture](#browser-capture). At most two run at once on the machine; a third waits. Exit 3 names the command when Chromium is missing.
+The page is saved as Markdown with its site chrome (login banners, sidebars, footers): read past it to the post itself. `paywall=suspected` means the page looked paywalled or nearly empty: see [Pages no fetcher can get](#pages-no-fetcher-can-get). At most two run at once on the machine; a third waits. Exit 3 names the command when Chromium is missing.
 
 ## Instagram
 

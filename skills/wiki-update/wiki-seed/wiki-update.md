@@ -31,7 +31,7 @@ Ingests one external source into the wiki. You hand it whatever you have (a link
 
 ### What happens, step by step
 
-1. **Fetch the raw.** Ordinary web pages are fetched directly. YouTube videos get their transcript, PDFs are converted to text page by page, X posts come from the public syndication API, and pages that need JavaScript are rendered in a browser. A Medium member-only story is read through your own signed-in browser when the session is interactive. A raw that was already saved (handed over by a batch) skips this step.
+1. **Fetch the raw.** Ordinary web pages are fetched directly. YouTube videos get their transcript, PDFs are converted to text page by page, X posts come from the public syndication API, and pages that need JavaScript are rendered in a headless browser. A page no fetcher can get (a paywall or member wall such as a Medium member-only story, a login, or a site that blocks the fetcher) is never copied out of your browser and never fetched another way: the agent tells you which page it is, and you save it from Chrome as a PDF into your Drive folder, where the next `/wiki-cycle` files it with its full text. A raw that was already saved (handed over by a batch) skips this step.
 2. **Read the raw in full.**
 3. **Search the wiki** for three to five of the source's key terms, scoped to this notebook: the full search, or keyword search on a machine with no GPU (see [`wiki-search`](./wiki-search.md)).
 4. **Write the entry**: a TL;DR, the body, the sources, and a Related section linking at least two existing entries. Numbers and quotations go in attributed `>` blockquotes, so they are never paraphrased.

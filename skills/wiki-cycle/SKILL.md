@@ -33,7 +33,7 @@ This is the universal interface: the other `wiki-*` skills (discover, triage, li
 | 1.1 Email-fetch (only when `email.enabled`) | ✓ | ✓ | — | ✓ | — |
 | 1.5 Human review #1 (discovery and email) | ✓ | ✓ | — | ✓ (then stop) | — |
 | 1.7 Triage | ✓ | ✓ | ✓ | — | — (the user chose them) |
-| 1.8 Browser capture (only when a gated item is this session's) | ✓ | ✓ | ✓ | — | ✓ |
+| 1.8 Pages no fetcher can get (only when one is this session's) | ✓ | ✓ | ✓ | — | ✓ |
 | 2 Ingest, 2.5 dequeue + staging check | ✓ | ✓ | ✓ | — | ✓ |
 | 2.6 Checker (only when a staged raw is a long transcript) | ✓ | ✓ | ✓ | — | ✓ |
 | 3 Mechanical lint, 3.5 integration scripts | ✓ | ✓ | ✓ | — | ✓ |
@@ -41,7 +41,7 @@ This is the universal interface: the other `wiki-*` skills (discover, triage, li
 | 6 Claims, 6.5 synthesis, 7 refresh | — | ✓ | — | — | — |
 | 8 Report, 9 commit | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-`--lint-only` runs 0, 3 and 8 (`--semantic` adds 4); `--report-only` runs 8 from the last run's JSON; `--refresh-only` runs 7; `--claims-only` runs 6. A step outside the mode is recorded once as `skipped (mode)`; a step inside it that has nothing to do (no Drive, no email, nothing gated, no long transcript) is `skipped (<why>)`. **"full" means full**: it includes synthesis (Step 6.5), always. Run it weekly, or when a batch is 25+ items or cuts across many entries. `--lint-all` makes Steps 4 and 6 read every entry instead of what is new.
+`--lint-only` runs 0, 3 and 8 (`--semantic` adds 4); `--report-only` runs 8 from the last run's JSON; `--refresh-only` runs 7; `--claims-only` runs 6. A step outside the mode is recorded once as `skipped (mode)`; a step inside it that has nothing to do (no Drive, no email, no page left to save as PDF, no long transcript) is `skipped (<why>)`. **"full" means full**: it includes synthesis (Step 6.5), always. Run it weekly, or when a batch is 25+ items or cuts across many entries. `--lint-all` makes Steps 4 and 6 read every entry instead of what is new.
 
 Entries are staged in `_inbox/proposed/` unless `--direct`; the user reviews them with `/wiki-promote`. An unattended run never files into `wiki/` directly.
 
@@ -79,11 +79,11 @@ Queue discovery's approved items with `wiki-list-add.py`. Queue the email's with
 
 **Step 1.7 — Triage.** Follow `/wiki-triage` for this notebook: every ticket in `_inbox/pending/` moves into one `_inbox/intake/<folder>/` by the buckets in `_inbox/intake/README.md` (`main` is the catch-all; a notebook without the file has `main` alone), with the raw captured for items another reader gets, and each other reader told once. Then list what this session ingests: the tickets in every bucket whose reader is this session (`wiki-triage.py buckets` says which), including ones the user dropped there directly. Other readers' buckets, and a bucket the user reads (`mark`), are never ingested here.
 
-**Step 1.8 — Browser capture** (only when one of this session's tickets is a login-gated page, or its host refused a direct fetch with 403). Instagram posts and reels, Threads, LinkedIn and Notion need no browser session: workers fetch them headless (`fetchers.md`). The session captures the raw through the user's signed-in browser before any worker starts (the Browser-session capture flow in `wiki-update`'s `fetchers.md`); workers have no browser. A session without a browser leaves that ticket in its bucket, lists it in the report as "needs browser capture", and ingests the rest.
+**Step 1.8 — Pages no fetcher can get** (only when one of this session's tickets is behind a paywall or a login, or on a site that blocks the fetcher). Instagram posts and reels, Threads, LinkedIn, Notion and Medium go to the headless fetchers first (`fetchers.md`); only a page they cannot get lands here. **Never copy a page out of the browser into `raw/`**: the browser may be used to read a page and judge it, nothing more. Leave the ticket in its bucket with the reason "save as PDF", list it in the report under **Save as PDF** with its link, and ingest the rest. The user saves it from Chrome into the Drive folder, and the next cycle's Drive step files it with its full text (`wiki-update`'s `fetchers.md`, "Pages no fetcher can get").
 
 **Step 2 — Ingest.** Spawn `wiki-ingester` workers (fall back to `general-purpose` only if it is not installed), **unnamed**, up to 4 at a time, each with a slice of this session's tickets and `--staged` unless `--direct`. Before spawning, read `~/.claude/agents/wiki-ingester-config.json`: with `confirm_model_each_run` true, a session that can ask asks the user which model (default `model_default`); one that cannot uses `model_default` and says so. Pass it as the spawn-time `model`.
 - **YouTube**: when the batch has more than one YouTube item, all of them go to **one** worker, fetched one after another (they share one rate limit the GPU slots do not cover). A 429 is retried once, after that worker's other items; a second 429 fails the item with the reason.
-- A ticket carrying `raw_path` (captured at triage or Step 1.8) is filed from that raw, never fetched again.
+- A ticket carrying `raw_path` (captured at triage) is filed from that raw, never fetched again. A worker meeting a page no fetcher can get marks it failed "save as PDF"; the report lists it with Step 1.8's.
 - Each worker runs the full `/wiki-update` flow per source, gate included. **Workers never write `update.json`**: the orchestrator writes `update.json` + `.md` once, from every worker's receipt (staged slugs, skipped and deferred items with reasons), with every field of the step contract, `notes` and `errors` included even when empty.
 - After the batch, `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --stats` into the report (searches that waited for a GPU slot; slow waits or "full search unavailable" → fewer workers next time). In `--full`, also `wiki-qmd-query.py --depth-check --notebook <notebook>` once: exit 1 (C was reached) is reported to the user; exit 2 (nothing measured) is never a pass. On a keyword machine (no GPU; `--preflight` says which) there are no GPU slots and no reranker: skip the depth check and report `skipped (keyword search)`.
 
@@ -138,7 +138,7 @@ Then re-run Step 3.5 (promotion adds entries and backlinks at once). If the user
 
 **Step 7 — Refresh scan** (`--full`; `--refresh-only`): follow `/wiki-refresh --overdue-only`.
 
-**Step 8 — Report.** Follow `/wiki-report`, from the run folder's step JSONs: `<cycle_id>-run-cycle-report.md` + `.json`. It lists what each source brought in (Drive, discovery, email) and the Drive files left unread, what was triaged to whom, what was ingested, what the checker found and held, anything left for a browser session, and the search stats.
+**Step 8 — Report.** Follow `/wiki-report`, from the run folder's step JSONs: `<cycle_id>-run-cycle-report.md` + `.json`. It lists what each source brought in (Drive, discovery, email) and the Drive files left unread, what was triaged to whom, what was ingested, what the checker found and held, a **Save as PDF** list (every page no fetcher could get, with its link and bucket, and how to save it into the Drive folder), and the search stats.
 
 **Step 9 — Commit.** First delete zero-byte or junk files left by shell redirects (own or a sub-agent's: `output`, `#`, `${...}`, a stray word). Then add **only the notebook's path** (other sessions may have work in the same repository) and commit once, at the end: `Wiki cycle <date> — N ingested, N fixes, N contradictions, N synthesis changes, wiki at N entries`. Set the scratchpad to `completed`, then show the report and offer to act on its recommendations.
 

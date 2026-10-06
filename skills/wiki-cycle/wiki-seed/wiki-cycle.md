@@ -24,7 +24,7 @@ Runs a notebook's research pipeline end to end: gather new sources, give each on
 | Email-fetch, when email is on | ✓ | ✓ | — | ✓ | — |
 | Your review of discovery's and email's finds | ✓ | ✓ | — | ✓ (then stops) | — |
 | Triage | ✓ | ✓ | ✓ | — | — (you chose them) |
-| Browser capture, when needed | ✓ | ✓ | ✓ | — | ✓ |
+| Pages no fetcher can get, when there are any | ✓ | ✓ | ✓ | — | ✓ |
 | Ingest, then the staging check | ✓ | ✓ | ✓ | — | ✓ |
 | Checker, when a transcript is long | ✓ | ✓ | ✓ | — | ✓ |
 | Mechanical lint, backlinks, indexes, map | ✓ | ✓ | ✓ | — | ✓ |
@@ -37,7 +37,7 @@ Runs a notebook's research pipeline end to end: gather new sources, give each on
 ## The steps you will notice
 
 - **Triage.** Every source waiting in `_inbox/pending/` gets one owner: [`wiki-triage`](./wiki-triage.md) moves it into the bucket whose purpose fits, `_inbox/intake/<folder>/`, and tells the other readers. The cycle then ingests the buckets this project reads, and only those. A notebook with no buckets file has one bucket, `main`, so everything is this project's.
-- **Browser capture.** A login-gated page, or a site that refuses a direct fetch, is captured through your signed-in browser before any worker starts, since workers have no browser. Instagram posts and reels, Threads, LinkedIn and Notion need no browser: they are fetched headless on this machine (an Instagram post's caption and every slide's text; a reel's speech transcribed locally with Whisper). A run without a browser leaves such an item in its bucket and says so.
+- **Save as PDF.** Instagram posts and reels, Threads, LinkedIn, Notion and Medium are fetched headless on this machine (an Instagram post's caption and every slide's text; a reel's speech transcribed locally with Whisper). A page no fetcher can get (a paywall or member wall, a login, or a site that blocks the fetcher) is never copied out of your browser and never fetched another way: it stays in its bucket, and the report lists it under **Save as PDF** with its link. Open it in Chrome, Print → Save as PDF into your Drive folder, and the next cycle's Drive step files it with its full text.
 - **Ingest.** [`wiki-ingester`](../agents/wiki-ingester.md) workers, up to four, each running the full [`wiki-update`](./wiki-update.md) flow with its gate. You may be asked which model to use (set in `~/.claude/agents/wiki-ingester-config.json`); a run that cannot ask uses the default and names it. When a batch has several YouTube videos, one worker fetches them one at a time, because parallel subtitle fetches hit YouTube's rate limit. The cycle writes the ingest step's record from the workers' receipts, then checks what they staged with the promote script, since a receipt is a claim.
 - **The checker.** Every staged entry whose source is a YouTube transcript of 15 minutes or more is read against that transcript by [`wiki-checker`](../agents/wiki-checker.md), a second agent that never saw the writer's notes and cannot edit anything. It reports claims the transcript does not support, sections the entry skipped, and misquotes. An entry it flags is corrected before promotion or held for you with the report; it is never promoted as flagged. Every check is logged in `_inbox/reports/checker-log.jsonl`, so the pass rate by length shows over time whether the 15-minute line should move (`~/.claude/agents/wiki-checker-config.json`).
 - **Semantic lint and claims read what is new.** A `--full` run's semantic lint covers the entries added or revised since the last one, plus this run's staged entries; claims cover the entries with no claims yet, or revised since the index was written. A script decides the scope and writes it to the run folder, and `--lint-all` reads everything instead. A background edit, such as a backlink block, never pulls an entry back in.
@@ -60,7 +60,7 @@ With `email.enabled: true` in the project's `.claude/wiki-config.json`, the cycl
 ## When steps skip themselves
 
 - Drive-fetch, when Drive ingest is off for the project; email-fetch, when email is off.
-- Browser capture, when nothing in this project's buckets needs it; the checker, when no staged transcript is long enough.
+- The Save as PDF list, when every page in this project's buckets could be fetched; the checker, when no staged transcript is long enough.
 - The link normaliser before the lint, unless entries were promoted during the cycle (`--direct` or `--full`).
 - Semantic lint, in quick mode, and in `--full` if one ran in the last 24 hours.
 - Refresh, outside `--full` and `--refresh-only`; it then covers overdue entries only.
