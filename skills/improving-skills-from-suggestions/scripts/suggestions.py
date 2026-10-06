@@ -81,7 +81,7 @@ FIELDS = ("Skill", "Seen in", "Issue", "Fix")
 FROM = "Received from"          # the path the file was taken from
 SENDER = "From"                 # the project it came from: the file's first line (Mark, 2026-09-29)
 MAIN_FILES = (("skills", "SKILL.md", "skill"), ("agents", "AGENT.md", "agent"), ("workflows", "WORKFLOW.md", "workflow"))
-SELF_TEST_MINIMUM = 53       # the exact number of assertions the fixtures run: a dropped block fails
+SELF_TEST_MINIMUM = 56       # the exact number of assertions the fixtures run: a dropped block fails
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _SLUG = re.compile(r"[a-z0-9][a-z0-9-]*[a-z0-9]")
 _RECORD = re.compile(r"^\d{4}-\d{2}-\d{2}-(.+)$")
@@ -461,13 +461,19 @@ def cmd_summary(repo_arg: str, pass_name: str, out_arg: Optional[str], notebook:
         return 1
     senders = sorted({sender_of(r) for r in rows}) or ["unknown"]
     date = pass_name[:10]
-    accepted = sum(1 for r in rows if "accepted" in r["Decision"].lower())
-    turned = sum(1 for r in rows if "turned down" in r["Decision"].lower())
+    # the classes Step 2 and Step 5 record, counted from each decision's leading words; only those present are named
+    # (task #81 P9: "N set aside or later" and "each row names its task" were wrong for an all-covered pass)
+    classes = ("accepted", "turned down", "already covered", "not this library", "not borne out")
+    counts: Dict[str, int] = {}
+    for r in rows:
+        said = decision_text(r["Decision"]).strip().lower()
+        kind = next((c for c in classes if said.startswith(c)), "other")
+        counts[kind] = counts.get(kind, 0) + 1
+    tally = ", ".join(f"{counts[c]} {c}" for c in (*classes, "other") if counts.get(c))
     rel = f"../../../raw/skill-suggestions/{pass_name}"
     lines = ["## TL;DR", "",
              f"{len(rows)} skill suggestion(s) from {', '.join(senders)}, reviewed in the improver pass of {date}: "
-             f"{accepted} accepted, {turned} turned down, {len(rows) - accepted - turned} set aside or later. "
-             "Each row's decision names the task it became.", "",
+             f"{tally}." + (" Each accepted row names the task it became." if counts.get("accepted") else ""), "",
              "## Suggestions", "", "| Skill | Seen in | Issue | Decision |", "|---|---|---|---|"]
     lines += [f"| {_cell(r['Skill'])} | {_cell(r['Seen in'])} | {_cell(r['Issue'])} | {_cell(decision_text(r['Decision']))} |"
               for r in rows]
@@ -711,6 +717,25 @@ def self_test() -> int:
         readme.write_text(readme.read_text(encoding="utf-8") + "\nedited by hand\n", encoding="utf-8")
         quiet(cmd_summary, str(repo), pass_name, str(draft), None)
         check("an existing folder README is never overwritten", readme.read_text(encoding="utf-8").endswith("edited by hand\n"))
+
+        # task #81 P9 (2026-10-05-mixed pass): the TL;DR counted every row that was neither accepted nor turned down
+        # as "set aside or later" and said each row named its task, for a pass where four were already covered and
+        # none became a task. It names the classes actually recorded, and tasks only when one was accepted.
+        tldr = next((l for l in text.splitlines() if "reviewed in the improver pass" in l), "")
+        check("the TL;DR never says 'or later' (a pass folder holds only decided files)", tldr and "or later" not in tldr, tldr)
+        covered = own / "raw" / "skill-suggestions" / "2026-09-27-covered"
+        w(covered / PROPOSALS_FILE, "# proposals\n")
+        w(covered / "a--covered.md", f"{FROM}: x\n" + sug("wiki-update", "run 1", "a")
+          + "Decision (2026-09-27, Mark): already covered: skills/wiki-update/SKILL.md:59\n")
+        w(covered / "b--elsewhere.md", f"{FROM}: x\n" + sug("do-code-change", "run 2", "b")
+          + "Decision (2026-09-27, Mark): not this library: agent-builder\n")
+        draft2 = base / "draft-covered.md"
+        code, out = quiet(cmd_summary, str(repo), "2026-09-27-covered", str(draft2), None)
+        tldr = next((l for l in (draft2.read_text(encoding="utf-8") if draft2.is_file() else "").splitlines()
+                     if "reviewed in the improver pass" in l), "")
+        check("an all-covered pass: the TL;DR names the classes recorded (1 already covered, 1 not this library)",
+              code == 0 and "1 already covered" in tldr and "1 not this library" in tldr, out + tldr)
+        check("... and claims no task and no zero counts", "task" not in tldr and "0 " not in tldr, tldr)
 
         # task 118's rule (2026-09-29, found by this skill's eval set): Claude Code 2.1.284 refuses `...; echo exit $?`, so
         # the script says its own exit code as its last line, and the skill says to run it alone, exactly as written

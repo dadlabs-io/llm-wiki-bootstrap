@@ -1,6 +1,6 @@
 """Harness for the skill-suggestions scripts (moved from agent-builder's library, 2026-09-30).
 
-Each script carries its own self-test (skill-suggestion.py: floor 34; suggestions.py: floor 53),
+Each script carries its own self-test (skill-suggestion.py: floor 34; suggestions.py: floor 56),
 which agent-builder ran as its quality gate. This harness keeps that gate at full strength here:
 it runs both self-tests and requires every assertion to pass at no fewer than the floor, then
 proves the self-tests bite by running them against sabotaged copies of the scripts, each of
@@ -21,7 +21,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 WRITER = REPO / "skills/writing-skill-suggestions/scripts/skill-suggestion.py"
 IMPROVER = REPO / "skills/improving-skills-from-suggestions/scripts/suggestions.py"
-FLOORS = {WRITER: 34, IMPROVER: 53}
+FLOORS = {WRITER: 34, IMPROVER: 56}
 
 # One sabotage per script behaviour the self-test must catch: (label, script, old, new).
 SABOTAGE = [

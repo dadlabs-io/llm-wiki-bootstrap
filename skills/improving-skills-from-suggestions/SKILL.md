@@ -182,6 +182,6 @@ Every hard rule above, once, with what makes a violation fail rather than merely
   line, leaves the file in the project's box and tags this library with its path. A note left in this library's own
   notebook about one of its own skills is filed here by `/wrap-up` itself, with `receive`. `receive` reads the four labelled
   lines and ignores any other, so the `Sent` line is not carried into the copy here.
-- **Script:** `scripts/suggestions.py` — `list`, `receive`, `decide`, `summary`; `--self-test` with a floor of 53.
+- **Script:** `scripts/suggestions.py` — `list`, `receive`, `decide`, `summary`; `--self-test` with a floor of 56.
 - **Template:** `templates/skill-suggestions-README.md`, the folder README `summary` creates when the notebook has none.
 - **Lifecycle:** encoded preference (Mark's loop, 2026-09-26); revisit when the box or its four lines change.
