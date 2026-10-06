@@ -118,6 +118,14 @@ def acquire_fetch_slot(max_wait: float = SLOT_MAX_WAIT, n: int = MAX_PARALLEL):
         time.sleep(1.0)
 
 
+# Known consent managers only (CookieYes, OneTrust, Cookiebot, Didomi, Quantcast, Usercentrics, Osano, TrustArc):
+# a broad "cookie" selector would take article text about cookies with it.
+CONSENT_SELECTORS = ", ".join([
+    "[class^='cky-']", "[class*=' cky-']", "#onetrust-consent-sdk", "#onetrust-banner-sdk", "#CybotCookiebotDialog",
+    "#didomi-host", ".qc-cmp2-container", "#usercentrics-root", ".osano-cm-window", "#truste-consent-track",
+])
+
+
 def pick_title(page_title: str | None, og_title: str | None) -> str:
     """The page's <title>, unless it is just the site's name ("Instagram", "Threads"): then og:title."""
     t, og = (page_title or "").strip(), (og_title or "").strip()
@@ -139,6 +147,9 @@ def render(url: str, timeout_ms: int) -> dict:
                 page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
             page.wait_for_timeout(2000)
             page.evaluate("document.querySelectorAll('script,style,noscript').forEach(e => e.remove())")
+            # Consent managers' banners and preference centres, removed, never answered: no consent is given
+            # (task #81 P6; cycle 2026-10-05-02's Towards Data Science raws opened with ~800 lines of CookieYes).
+            page.evaluate(f"document.querySelectorAll({json.dumps(CONSENT_SELECTORS)}).forEach(e => e.remove())")
             meta = page.evaluate("""() => {
                 const m = s => { const e = document.querySelector(s); return e ? e.getAttribute('content') : null; };
                 return {og: m('meta[property="og:image"]'), ogTitle: m('meta[property="og:title"]'),

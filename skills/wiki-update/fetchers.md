@@ -68,7 +68,7 @@ For pages that show their text only once JavaScript runs (Threads, LinkedIn, pub
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-page.py --topic <topic> --url <url> --ingested-by claude-code
 ```
 
-The page is saved as Markdown with its site chrome (login banners, sidebars, footers): read past it to the post itself. `paywall=suspected` means the page looked paywalled or nearly empty: see [Pages no fetcher can get](#pages-no-fetcher-can-get). At most two run at once on the machine; a third waits. Exit 3 names the command when Chromium is missing.
+The page is saved as Markdown with its site chrome (login banners, sidebars, footers): read past it to the post itself. Cookie-consent banners from the known consent managers (CookieYes, OneTrust, Cookiebot and others) are removed before saving, never accepted (2026-10-06: a Towards Data Science raw went from 1,234 lines to 456). `paywall=suspected` means the page looked paywalled or nearly empty: see [Pages no fetcher can get](#pages-no-fetcher-can-get). At most two run at once on the machine; a third waits. Exit 3 names the command when Chromium is missing.
 
 ## Instagram
 

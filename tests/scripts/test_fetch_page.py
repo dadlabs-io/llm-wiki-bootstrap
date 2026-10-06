@@ -41,6 +41,13 @@ JS_PAGE = f"""<!doctype html><html><head><title>Threads</title>
 document.getElementById('app').innerHTML =
   '<h2>Why state matters</h2><p>{ARTICLE}</p><p>See <a href="https://example.org/raft">the Raft paper</a>.</p>';
 </script></body></html>"""
+CONSENT = " ".join(["We use cookies to improve your browsing experience and to analyse our traffic."] * 30)
+COOKIE_PAGE = f"""<!doctype html><html><head><title>How to work with AI coding agents</title></head><body>
+<div class="cky-consent-container"><div class="cky-consent-bar"><p>We value your privacy. {CONSENT}</p></div></div>
+<div class="cky-modal"><p>Customise consent preferences. {CONSENT}</p></div>
+<div id="onetrust-consent-sdk"><p>OneTrust banner text. {CONSENT}</p></div>
+<div id="CybotCookiebotDialog"><p>Cookiebot banner text. {CONSENT}</p></div>
+<article><h1>How to work with AI coding agents</h1><p>{ARTICLE}</p></article></body></html>"""
 PAYWALL_PAGE = """<!doctype html><html><head><title>A long enough title for a news article</title></head>
 <body><h1>Big story</h1><p>The first paragraph of the story.</p><p>Subscribe to continue reading.</p></body></html>"""
 
@@ -88,6 +95,20 @@ with tempfile.TemporaryDirectory() as td:
               and h.get("fetched_via") == "playwright-chromium" and h.get("meta_description") == "A post about state", h)
         check("a full page is not flagged as paywalled", "paywall" not in h and "paywall=suspected" not in out)
         check("the file is named from the og:title", "someone-on-threads" in raws[0].name, raws[0].name)
+
+    # 1b. Cookie-consent banners (task #81 P6): removed before saving, never accepted. Cycle 2026-10-05-02's
+    # Towards Data Science raws opened with ~800 lines of CookieYes text, 80% of the raw.
+    ck = tmp / "cookies.html"
+    ck.write_text(COOKIE_PAGE, encoding="utf-8")
+    code, out, err = run(["--topic", "nb", "--vault", str(tmp), "--url", ck.as_uri()])
+    craw = max((tmp / "nb" / "raw").glob("*work-with-ai-coding*.md"), default=None)
+    ctext = craw.read_text(encoding="utf-8") if craw else ""
+    check("a page with consent banners is saved with the article", code == 0 and "Agents keep state in files" in ctext,
+          (code, err[-300:]))
+    check("... and none of the banners' text (CookieYes, its preference centre, OneTrust, Cookiebot)",
+          bool(ctext) and not any(s in ctext for s in ("We use cookies", "We value your privacy", "Customise consent",
+                                                       "OneTrust banner", "Cookiebot banner")), ctext[:400])
+    check("... nor is the article flagged as paywalled", "paywall=suspected" not in out, out[-200:])
 
     # 2. A paywall stub: flagged, kept as fetched, never fetched another way.
     code, out, err = run(["--topic", "nb", "--vault", str(tmp), "--url", pw.as_uri()])
