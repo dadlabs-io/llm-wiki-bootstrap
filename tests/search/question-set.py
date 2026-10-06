@@ -223,7 +223,7 @@ def cmd_import(args) -> int:
                        "labelled_by": d.get("labelled_by")}
     LABELS.write_text(json.dumps(dict(sorted(labels.items())), ensure_ascii=False, indent=1), encoding="utf-8")
     done = sum(v["done"] for v in labels.values())
-    print(f"labels: {len(labels)} questions ({done} marked done) -> {LABELS.relative_to(REPO)}")
+    print(f"labels: {len(labels)} questions ({done} marked done) -> {LABELS}")
     for b in bad:
         print(f"  warning: {b}")
     return 0
