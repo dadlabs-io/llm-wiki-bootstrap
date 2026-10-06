@@ -149,6 +149,43 @@ with tempfile.TemporaryDirectory() as td:
     report = p.stdout
     check("lint: reports the quote warning on the filed entry", "worded differently" in report)
 
+    # ── --regate: re-run the gate on an entry already filed, writing nothing (task #81 P2) ──
+    def regate(target):
+        return subprocess.run([sys.executable, str(SCRIPTS / "wiki-update.py"), "--vault", str(td / "vault"),
+                               "--topic", "nb", "--regate", str(target)],
+                              capture_output=True, text=True, encoding="utf-8", timeout=120)
+
+    def tree(root):
+        return {p: p.read_bytes() for p in sorted(root.rglob("*")) if p.is_file()}
+
+    entry_path = filed[0] if filed else nbroot / "missing.md"
+    before = tree(nbroot)
+    p = regate(entry_path)
+    out = p.stdout + p.stderr
+    check("regate: a filed entry with a misquote is re-checked (exit 0, warnings only)", p.returncode == 0)
+    check("regate: prints the quote warning against the raw", "worded differently" in out)
+    check("regate: no dedup refusal", "Skip (dedup)" not in out)
+    check("regate: writes nothing", tree(nbroot) == before)
+    if filed:
+        fixed_text = entry_path.read_text(encoding="utf-8").replace("we had not checkpointed", "we hadn't checkpointed")
+        entry_path.write_text(fixed_text, encoding="utf-8")
+    p = regate(entry_path.stem)
+    out = p.stdout + p.stderr
+    check("regate: by slug, the hand-fixed quote now passes", p.returncode == 0 and "quoted fragment" not in out)
+    proposed = nbroot / "_inbox" / "proposed"
+    proposed.mkdir(parents=True)
+    (proposed / "staged-entry.md").write_text(
+        "---\ntitle: Staged entry\ntier: 3\ntags: [a, b, c]\nraw_path: raw/article.md\n---\n\n"
+        "A staged entry with no TL;DR.\n\n## Related\n\n- [a](a.md)\n- [b](b.md)\n", encoding="utf-8")
+    p = regate("staged-entry")
+    out = p.stdout + p.stderr
+    check("regate: a staged entry is found by slug in _inbox/proposed", "Entry checks: Staged entry" in out)
+    check("regate: a gate error exits 1", p.returncode == 1 and "TL;DR" in out)
+    p = regate("no-such-entry")
+    out = p.stdout + p.stderr
+    check("regate: an unknown entry exits 2 and says so",
+          p.returncode == 2 and "unrecognized" not in out and "no-such-entry" in out)
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

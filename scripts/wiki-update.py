@@ -50,7 +50,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
 # Mechanical half of the eval rubric — shared with wiki-lint-mechanical.py so
 # the pre-write gate and the lint backlog view enforce ONE set of rules.
-from _entry_checks import check_entry_body, check_frontmatter_loadable, format_result, read_raw_text  # noqa: E402
+from _entry_checks import check_entry_body, check_frontmatter_loadable, format_result, read_raw_text, split_frontmatter  # noqa: E402
 from _markdown import html_to_markdown  # noqa: E402 — HTML pages saved as Markdown (task #71)
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
@@ -1143,6 +1143,51 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
     return 0
 
 
+def regate_entry(vault_root, topic, target):
+    """Re-run the pre-write gate on an entry already staged or filed, writing nothing.
+
+    A worker that fixes a gate warning by hand cannot re-file (dedup refuses, and
+    --force makes a `-2` copy), so the fix was never re-checked (task #81 P2,
+    cycles 2026-10-05-03/-04). `target` is a path, or a slug looked up in
+    _inbox/proposed/ first, then anywhere under wiki/. Exit 0 clean or warnings
+    only, 1 on a gate or frontmatter error, 2 when no single entry matches."""
+    topic_root = Path(vault_root) / topic
+    wiki_dir = topic_root / "wiki"
+    path = Path(target)
+    if not path.is_file():
+        slug = Path(target).name.removesuffix(".md")
+        staged = topic_root / "_inbox" / "proposed" / f"{slug}.md"
+        matches = [staged] if staged.is_file() else sorted(wiki_dir.rglob(f"{slug}.md"))
+        if len(matches) != 1:
+            found = ", ".join(str(m) for m in matches) or "none"
+            print(f"Error: --regate {target}: expected one entry in {topic_root}, found {found}",
+                  file=sys.stderr)
+            return 2
+        path = matches[0]
+
+    text = path.read_text(encoding="utf-8")
+    fm_errors = [f"{code}: {detail}" for sev, code, detail in check_frontmatter_loadable(text)
+                 if sev == "ERROR"]
+    fm, body = split_frontmatter(text)
+    tags = fm.get("tags")
+    if isinstance(tags, str):
+        tags = [t.strip() for t in tags.strip("[]").split(",") if t.strip()]
+    raw_file = None
+    rp = str(fm.get("raw_path") or "").strip()
+    if rp and not rp.startswith("("):
+        raw_file = next((c for c in (topic_root / rp, wiki_dir / rp) if c.exists()), None)
+        if raw_file is None:
+            print(f"  Warning: raw_path {rp} not found; quotes are not checked.", file=sys.stderr)
+    gate = check_entry_body(body, tags=tags, tier=fm.get("tier"),
+                            raw_text=read_raw_text(raw_file) if raw_file else None)
+    gate["errors"] = fm_errors + gate["errors"]
+    print(format_result(gate, fm.get("title") or path.stem))
+    print(f"regate_path={path}")
+    print(f"regate_errors={len(gate['errors'])}")
+    print(f"regate_warnings={len(gate['warnings'])}")
+    return 1 if gate["errors"] else 0
+
+
 def main():
     parser = argparse.ArgumentParser(description="Update (add) a source to a topic wiki")
     parser.add_argument("--topic", required=True, help="Topic name (folder under vault)")
@@ -1176,6 +1221,11 @@ def main():
                         help="Override the pre-write mechanical gate (missing TL;DR, fewer than 2 Related links, "
                              "etc. — see _entry_checks.py) and file anyway. Give a reason; it is printed with the "
                              "entry so the override is visible in the cycle log. Warnings never block.")
+    parser.add_argument("--regate", default=None, metavar="SLUG_OR_PATH",
+                        help="Re-run the gate on an entry already staged or filed (a path, or a slug looked up in "
+                             "_inbox/proposed/ then wiki/), against its raw_path, after fixing a warning by hand. "
+                             "Writes nothing and skips dedup. Exit 0 clean or warnings only, 1 on an error, "
+                             "2 when no single entry matches.")
     args = parser.parse_args()
 
     # --topic <registry notebook> resolves through the registry from any cwd;
@@ -1184,6 +1234,8 @@ def main():
     # Lookup mode — no ingestion, just print the slug + path
     if args.slug_for:
         return print_slug_for(args.vault, args.topic, args.folder, args.title)
+    if args.regate:
+        return regate_entry(args.vault, args.topic, args.regate)
 
     if not args.source:
         parser.error("--source is required (unless using --slug-for)")
