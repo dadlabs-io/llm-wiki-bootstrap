@@ -155,6 +155,8 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 
 ## Conventions (when editing the scripts)
 
+- **Commit messages** (the user, 2026-10-06): write every commit message with the `writing-commit-messages` skill, then add the attribution lines.
+
 - **After any change to a usage page, a framework-contract doc, the how-to marker, a skill or a script**, the
   standing procedure (SOP, since 2026-10-04) is one refresh: `.\install-wiki.ps1 -RefreshOnly` (run it plain, or
   `uv run python scripts/new-wiki.py --mode tooling --tool claude-code --bootstrap-source <this repo>`), then
