@@ -429,6 +429,59 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add(f"still suggested: {stem} (shares real topic tags, mentions the subject in its body)",
             bool(hit(stem, title)), named)
         return res
+    if kind == "x-article":
+        # An X Article is a page no fetcher can get (fetchers.md): read the preview, delete that raw,
+        # ask the user to save the page as PDF, never file an entry from the preview alone.
+        # Every check here judges what the session left behind and said, so it is meaningful against
+        # the skill before and after the change.
+        add("no entry filed, staged or live (never from the preview alone)", not entries, entries)
+        leftover = [k for k in new if k.startswith(("raw/", "_inbox/proposed/", "wiki/"))]
+        add("nothing new left in raw/, wiki/ or _inbox/proposed/ (preview raw deleted; no page copied in)",
+            not leftover, leftover)
+        touched = [k for k in changed if k.startswith("wiki/") and _is_entry(k)]
+        add("no existing entry edited", not touched, touched)
+        say = text.replace("\\", "/")
+        add("reply asks the user to save the page as PDF",
+            bool(re.search(r"(save|export|print)\w*\b[^\n]{0,60}\bpdf\b|\bpdf\b[^\n]{0,60}(save|export)", say)))
+        add("reply tells the user which page (status id or title)",
+            case["status_id"] in say or case["title"].lower() in say)
+        sb = ctx["sandbox"].as_posix().lower()
+        alts = [sb] + (["/" + sb[0] + sb[2:]] if sb[1:3] == ":/" else [])
+        add("reply names a full folder path inside the sandbox to save it to (path, see question 1)",
+            any(a in say for a in alts))
+        banned = ("archive.org", "archive.ph", "archive.is", "archive.today", "webcache.googleusercontent",
+                  "r.jina.ai", "12ft.io", "wayback")
+        used = sorted({b for c in run["tool_calls"] for b in banned if b in json.dumps(c.get("input", "")).lower()})
+        add("no archive, cache or proxy route tried", not used, used)
+        return res
+    if kind == "x-post-photo":
+        # An ordinary X post is still filed as before (staged). The photo check is meaningful only for
+        # the new fetcher: the old one did not link photos at original size.
+        add("exactly one new entry, in _inbox/proposed/",
+            len(entries) == 1 and entries[0].startswith("_inbox/proposed/"), entries)
+        if len(entries) != 1:
+            return res
+        path = nb / entries[0]
+        entry_text = path.read_text(encoding="utf-8")
+        fm, body = split_frontmatter(entry_text)
+        add("filed by wiki-update.py (its Source footer and frontmatter)",
+            bool(fm.get("ingested_by")) and "**Source**" in entry_text)
+        missing = [f for f in REQUIRED_FM if not fm.get(f)]
+        add("frontmatter complete", not missing, missing)
+        add("source_url is the post", case["status_id"] in str(fm.get("source_url", "")), fm.get("source_url"))
+        rp = str(fm.get("raw_path", "")).strip().strip('"').strip("'")
+        raw_ok = bool(rp) and (nb / rp).is_file()
+        add("raw captured and named in raw_path", raw_ok, rp)
+        raw_text = (nb / rp).read_text(encoding="utf-8", errors="replace") if raw_ok else ""
+        add("entry is about the post's subject", case["subject"] in entry_text.lower(), case["subject"])
+        urls = re.findall(r"https://pbs\.twimg\.com/media/[^\s)\]\"'<>]+", raw_text)
+        add("raw links its photo at original size, name=orig (new fetcher only)",
+            bool(urls) and all("name=orig" in u for u in urls), urls[:3])
+        g = check_entry_file(path)
+        add("gate: no errors", not g.get("errors"), g.get("errors"))
+        side = path.with_suffix(".proposed_metadata.json")
+        add("sidecar written", side.is_file(), side.name)
+        return res
     # ---- an ingest ----
     staged = case.get("mode") == "staged"
     where = "_inbox/proposed/" if staged else "wiki/"
