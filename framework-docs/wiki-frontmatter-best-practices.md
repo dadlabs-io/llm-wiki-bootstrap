@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 13
-last_reviewed: 2026-09-24
-review_after: 2026-12-24
+framework-version: 14
+last_reviewed: 2026-10-11
+review_after: 2027-01-11
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
 
@@ -59,6 +59,7 @@ Path is relative to the topic root (the folder containing `_INDEX.md`), **not** 
 | `superseded_by` | relative path | When an entry is retired in favor of another, point to the successor, with `status: superseded` alongside. Keep both entries per both-sides-stay (principle 4). A retired entry stays on disk but leaves the INDEX, the MAP and search results, and the lint exempts it from the body checks and the orphan list (`is_superseded()` in `_entry_checks.py`, 2026-09-14). |
 | `describes` | relative path, optionally `<path>@<commit>` | The code this entry describes — a file or folder in the project's repo, optionally pinned to the commit it was read at (`bootstrap/scripts/wiki-promote.py@1f90bf4`). Only for a `project/` entry about code: a component, a script's behaviour, an architecture rule enforced in code. It gives staleness a **content trigger**: when that file moves on, the entry is flagged for re-reading without waiting for `review_after`. Calendar review still applies — the two signals catch different failures, see [review cadence](#review-cadence-default-review_after-offset). The path is relative to the project's repo: the notebook's `project_root` in the registry (`linked-notebooks.json`), or the folder above `llm-wiki/` for a wiki inside its project. Omit it on every entry that does not describe code; a missing `describes` is never a lint error. (added 2026-09-16; checked by the lint since 2026-09-17) |
 | `standalone` | quoted string: the reason | A page that no other page is meant to link to — the wiki's `HOME.md`, a hub — says so in its own frontmatter: `standalone: "the landing page: reading starts here"`. The lint then leaves it off the orphan list and lists it apart with the reason, and the cycle counts a run clean only at zero orphans. The reason is required: a blank value, `true` or `yes` is not honoured, and the page stays an orphan with a note. It is the one way to exempt a page; there is no built-in list. (added 2026-09-24) |
+| `source_completeness` | `preview` \| `summary` | The entry was filed from a raw that holds only part of its source: the raw's own frontmatter says `completeness: preview` (the opening only: an X Article or long post, a paywalled page) or `summary` (a description in place of the source). A raw with no `completeness:`, or `full`, is the whole source. `wiki-update.py` refuses to file from a partial raw and writes this field only when the user said to file it anyway (`--partial-source '<why>'`), so the entry never reads as covering the whole source. Never written by hand. (added 2026-10-11, task #96) |
 | `recall_count` | int | Reserved for future memory-signal tracking (principle 10 federation, memory architecture). Do not write manually yet. See [memory-signals-sidecar-vs-frontmatter-pattern.md](./memory-signals-sidecar-vs-frontmatter-pattern.md) — the sidecar pattern is the production-bound implementation route; this field is the frontmatter mirror for entries where the signal is editorially-set, not telemetry-derived. |
 | `access_count` | int | Same as above — reserved. |
 

@@ -50,7 +50,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
 # Mechanical half of the eval rubric — shared with wiki-lint-mechanical.py so
 # the pre-write gate and the lint backlog view enforce ONE set of rules.
-from _entry_checks import check_entry_body, check_frontmatter_loadable, format_result, read_raw_text, split_frontmatter  # noqa: E402
+from _entry_checks import (PARTIAL_COMPLETENESS, check_entry_body, check_frontmatter_loadable, format_result,  # noqa: E402
+                           raw_completeness, read_raw_text, split_frontmatter)
 from _markdown import html_to_markdown  # noqa: E402 — HTML pages saved as Markdown (task #71)
 from _raw_dedup import check_raw, report  # noqa: E402 — content dedup (task #81 P5)
 from _source_identity import source_key  # noqa: E402 — one source identity for every dedup (task #96)
@@ -724,7 +725,7 @@ def resolve_revises(wiki_dir, value):
 
 def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
                   ingested_by=None, raw_path=None, tier=None, confidence=None,
-                  staged=False, revises=None):
+                  staged=False, revises=None, source_completeness=None):
     """Write the curated copy under wiki/{folder}/{slug}.md.
 
     Frontmatter includes: title, date, source_url, raw_path, ingested_by, tier,
@@ -791,6 +792,8 @@ def write_curated(wiki_dir, folder, slug, title, body, source_url, tags,
         fm_lines.append(f"confidence: {confidence}")
     if revises:
         fm_lines.append(f"revises: {revises}")
+    if source_completeness:
+        fm_lines.append(f"source_completeness: {source_completeness}")
     # Lifecycle fields — required on every entry (SKILL.md) and keyed by
     # wiki-refresh. Written in BOTH staged and direct paths. review_after
     # cadence follows importance (frontmatter spec, "review cadence", revised
@@ -899,7 +902,7 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
                 ingested_by=None, source_url_override=None, raw_path_override=None,
                 force=False, fetch_only=False, no_raw=False, skip_integration=False,
                 tier=None, confidence=None, staged=False, allow_new_top_folder=False,
-                no_gate=None, revises=None):
+                no_gate=None, revises=None, partial_source=None):
     topic_root = Path(vault_root) / topic
     if not topic_root.exists():
         print(f"Error: topic '{topic}' not found at {topic_root}", file=sys.stderr)
@@ -1012,6 +1015,25 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
         for line in lines:
             print(f"  {line}")
 
+    # A raw that holds only part of its source (task #96): an entry filed from it would read as covering the
+    # whole. Refused unless the user said to file it anyway (--partial-source), and then the entry says so.
+    completeness = raw_completeness(final_raw_path) if final_raw_path else None
+    if completeness and completeness not in PARTIAL_COMPLETENESS:
+        print(f"  Refusing to file: the raw's mark `completeness: {completeness}` is not one of full, "
+              f"{', '.join(PARTIAL_COMPLETENESS[:-1])} or {PARTIAL_COMPLETENESS[-1]}. Fix the raw's frontmatter.",
+              file=sys.stderr)
+        return 1
+    if completeness and not partial_source:
+        print(f"  Refusing to file: the raw holds only a {completeness} of its source (completeness: "
+              f"{completeness}). Get the whole source (a page no fetcher can get is saved as PDF by the user), "
+              f"or, on the user's word, re-run with --partial-source '<why>' to file it marked as a {completeness}.",
+              file=sys.stderr)
+        return 1
+    if completeness:
+        print(f"  PARTIAL SOURCE (--partial-source, the raw is a {completeness}): {partial_source}")
+    elif partial_source:
+        print("  Note: the raw is not marked partial, so --partial-source was not needed; filed unmarked.")
+
     # ── Pre-write gate (2026-09-02): the mechanical half of the eval rubric ──
     # Deterministic checks shared with wiki-lint-mechanical.py (_entry_checks.py).
     # The agent's self-score covers only the judgment dimensions (extraction
@@ -1041,7 +1063,7 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
         curated_path = write_curated(
             wiki_dir, folder, final_slug, final_title, body, final_source_url, tags,
             ingested_by=ingested_by, raw_path=final_raw_path, tier=tier, confidence=confidence,
-            staged=staged, revises=revises_rel,
+            staged=staged, revises=revises_rel, source_completeness=completeness,
         )
     except FrontmatterError as e:
         print(f"  Refusing to file: the frontmatter would not parse ({e}). Nothing was written.",
@@ -1259,6 +1281,11 @@ def main():
                         help="Override the pre-write mechanical gate (missing TL;DR, fewer than 2 Related links, "
                              "etc. — see _entry_checks.py) and file anyway. Give a reason; it is printed with the "
                              "entry so the override is visible in the cycle log. Warnings never block.")
+    parser.add_argument("--partial-source", default=None, metavar="REASON",
+                        help="File an entry whose raw holds only part of its source (its frontmatter says "
+                             "completeness: preview or summary: an X Article or long post, a paywalled page), which "
+                             "is refused otherwise. Only on the user's word; the entry gets source_completeness: and "
+                             "the reason is printed.")
     parser.add_argument("--regate", default=None, metavar="SLUG_OR_PATH",
                         help="Re-run the gate on an entry already staged or filed (a path, or a slug looked up in "
                              "_inbox/proposed/ then wiki/), against its raw_path, after fixing a warning by hand. "
@@ -1300,6 +1327,7 @@ def main():
         allow_new_top_folder=args.allow_new_top_folder,
         no_gate=args.no_gate,
         revises=args.revises,
+        partial_source=args.partial_source,
     )
 
 

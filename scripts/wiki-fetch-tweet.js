@@ -133,7 +133,8 @@ function buildRaw(tweet, opts) {
   // The raw's title and Markdown for one syndication payload. An X Article (a non-empty `article`)
   // comes back as its title, cover and opening only: the full text needs a logged-in session, so the
   // raw is marked `completeness: preview` and says how the full text is got (task #96, from Chubby
-  // Skills' x-ingest; the field names checked against a real Article payload, 2026-10-11).
+  // Skills' x-ingest; the field names checked against a real Article payload, 2026-10-11). A long post
+  // (`note_tweet`, which holds only an id) is the same: `text` is its first 280 characters and a link.
   const name = tweet.user ? tweet.user.name : 'Unknown';
   const author = tweet.user ? `${tweet.user.name} (@${tweet.user.screen_name})` : 'unknown';
   const article = tweet.article && tweet.article.title ? tweet.article : null;
@@ -160,8 +161,8 @@ function buildRaw(tweet, opts) {
     `favorite_count: ${tweet.favorite_count ?? ''}`,
     `conversation_count: ${tweet.conversation_count ?? ''}`,
   ];
+  if (article || hasNoteTweet) fm.push('completeness: preview');
   if (article) {
-    fm.push('completeness: preview');
     if (article.rest_id) fm.push(`article_url: https://x.com/i/article/${article.rest_id}`);
   }
   fm.push('---', '');
@@ -192,11 +193,12 @@ function buildRaw(tweet, opts) {
     );
   }
 
-  if (hasNoteTweet) {
+  if (hasNoteTweet && !article) {
     body.push(
-      '> **Note**: this tweet has a `note_tweet` (long-form "Article") payload the syndication API does',
-      '> not expand — the `text` field above may be truncated relative to the full post. If the content',
-      '> reads as cut off, fall back to the Playwright recipe to capture the full note-tweet body.',
+      '> **Preview only**: this is a long post. The public API gives its first 280 characters and a link,',
+      '> not the full text, which needs a logged-in session (the page fetcher gets nothing from X). To file',
+      '> the whole post, ask the user to save the post\'s page as PDF (wiki-update fetchers.md, "Pages no',
+      '> fetcher can get"); never fetch it another way.',
       ''
     );
   }
@@ -209,8 +211,8 @@ function buildRaw(tweet, opts) {
     title,
     author,
     content: fm.join('\n') + body.join('\n'),
-    completeness: article ? 'preview' : null,
-    hasNoteTweet,
+    completeness: article || hasNoteTweet ? 'preview' : null,
+    isArticle: !!article,
   };
 }
 
@@ -261,12 +263,15 @@ async function main() {
   fs.writeFileSync(rawPath, raw.content, 'utf-8');
 
   if (raw.completeness === 'preview') {
-    console.error('WARNING: this post is an X Article; only its title, cover and opening were captured (a preview).');
+    const what = raw.isArticle
+      ? 'an X Article; only its title, cover and opening were captured'
+      : 'a long post; only its first 280 characters were captured';
+    console.error(`WARNING: this post is ${what} (a preview).`);
     console.error('The full text needs the user to save the page as PDF; see the note in the raw.');
   }
   console.log(`Saved raw: ${rawPath}`);
   console.log(`  Author: ${raw.author}`);
-  console.log(`  Length: ${tweet.text.length} chars${raw.hasNoteTweet ? ' (+ untruncated note_tweet not captured)' : ''}`);
+  console.log(`  Length: ${tweet.text.length} chars${raw.completeness ? ' (a preview: the rest was not captured)' : ''}`);
   console.log('');
   console.log(`raw_path=${rawPath}`);
   console.log(`source_url=${args.url}`);

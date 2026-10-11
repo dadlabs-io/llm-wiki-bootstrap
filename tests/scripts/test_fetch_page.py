@@ -94,6 +94,7 @@ with tempfile.TemporaryDirectory() as td:
               h.get("converted") == "markdown" and h.get("title") == "someone on Threads: agents and state"
               and h.get("fetched_via") == "playwright-chromium" and h.get("meta_description") == "A post about state", h)
         check("a full page is not flagged as paywalled", "paywall" not in h and "paywall=suspected" not in out)
+        check("... nor marked partial", "completeness" not in h and "completeness=" not in out)
         check("the file is named from the og:title", "someone-on-threads" in raws[0].name, raws[0].name)
 
     # 1b. Cookie-consent banners (task #81 P6): removed before saving, never accepted. Cycle 2026-10-05-02's
@@ -118,6 +119,8 @@ with tempfile.TemporaryDirectory() as td:
     check("a paywall stub is saved and flagged (paywall=suspected, a paywall: line)",
           code == 0 and "paywall=suspected" in out and "user's signed-in browser" in h.get("paywall", ""), (code, h))
     check("... with nothing fetched from elsewhere", "archive" not in raw.read_text(encoding="utf-8").lower())
+    check("... and marked a preview (completeness: preview, completeness=preview), so it cannot be filed as whole",
+          h.get("completeness") == "preview" and "completeness=preview" in out, (h.get("completeness"), out[-200:]))
 
     # 3. No such notebook.
     code, out, err = run(["--topic", "nope", "--vault", str(tmp), "--url", js.as_uri()])

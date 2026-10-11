@@ -23,7 +23,8 @@ wiki-transcribe.py, which captures its speech.
 At most two of these run at once on a machine (an OS lock): four parallel headless browsers once hung it
 (2026-07-10). A third caller waits.
 
-Prints raw_path=, source_url=, suggested_title= (and paywall=suspected). Exit codes: 0 saved; 1 the page
+Prints raw_path=, source_url=, suggested_title= (and paywall=suspected, completeness=preview: the raw is marked a
+preview, so wiki-update.py will not file it as the whole source). Exit codes: 0 saved; 1 the page
 could not be fetched; 2 bad input (no such notebook); 3 Chromium is not installed (the message names the
 command); 5 no fetch slot came free in time.
 """
@@ -352,7 +353,7 @@ def build_raw(url: str, page: dict, ingested_by: str) -> tuple[str, bool]:
     if paywall:
         n = len((page["text"] or "").strip())
         note = f"suspected paywall or truncated page ({n} chars): read it in the user's signed-in browser, or tell the user"
-        fm.append(f"paywall: {_q(note)}")
+        fm += [f"paywall: {_q(note)}", "completeness: preview"]  # a preview at most: never filed as whole (task #96)
     if page.get("description"):
         fm.append(f"meta_description: {_q(page['description'][:300])}")
     if page.get("og_image"):
@@ -405,6 +406,7 @@ def run(args) -> int:
         print(f"suggested_title={page['title']}")
     if paywall:
         print("paywall=suspected")
+        print("completeness=preview")
     return 0
 
 

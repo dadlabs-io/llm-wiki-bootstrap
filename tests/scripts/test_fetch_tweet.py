@@ -65,6 +65,23 @@ PHOTO = {
 }
 PHOTO_URL = "https://x.com/GithubProjects/status/2075588383297171604"
 
+# A long post (over 280 characters), x.com/DanKornas/status/2081497527690678357: `note_tweet` holds only an id,
+# and `text` is the opening cut off mid-sentence with a t.co link to the rest. The page fetcher gets nothing
+# from X without a login (0 characters, 2026-10-11).
+LONG = {
+    "__typename": "Tweet",
+    "created_at": "2026-08-02T14:00:00.000Z",
+    "id_str": "2081497527690678357",
+    "text": "Large coding requests can turn an AI assistant into a black box. Break the work into checkpoints you "
+            "can review.\n\nAI Dev Tasks is a set of Markdown prompt files for developers using AI coding "
+            "assistants to plan and implement features.\n\nIt helps you move from feature idea to "
+            "https://t.co/ui5kzl2J2e",
+    "user": {"name": "Dan Kornas", "screen_name": "DanKornas"},
+    "note_tweet": {"id": "Tm90ZVR3ZWV0UmVzdWx0czoyMDgxNDk3NTI3NTkwMDI3MjY0"},
+    "mediaDetails": [{"type": "photo", "media_url_https": "https://pbs.twimg.com/media/HOL293fWEAAvzVn.png"}],
+}
+LONG_URL = "https://x.com/DanKornas/status/2081497527690678357"
+
 HARNESS = """
 const m = require(process.argv[1]);
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
@@ -115,11 +132,27 @@ pc = ph.get("content", "")
 pfm = frontmatter(pc)
 check("a plain post builds", "content" in ph, ph.get("error", ""))
 check("a plain post stays typed tweet", pfm.get("type") == "tweet", pfm.get("type"))
-check("a plain post has no completeness mark (step 3 adds full)", "completeness" not in pfm, pfm)
+check("a plain post has no completeness mark (only a partial raw is marked)", "completeness" not in pfm, pfm)
+check("... and reports none", ph.get("completeness") is None, ph.get("completeness"))
 check("a photo is linked at original size", "https://pbs.twimg.com/media/HM34opBaoAAfAmT.jpg?name=orig" in pc)
 check("a video keeps its video URL, untouched",
       "https://video.twimg.com/ext_tw_video/1/pu/vid/a.mp4" in pc and "a.mp4?name=orig" not in pc)
 check("a plain post's title is its text", "PraisonAI lets you deploy" in ph.get("title", ""), ph.get("title"))
+
+# --- A long post (note_tweet): the API gives its opening only ---
+lg = build(LONG, LONG_URL)
+lc = lg.get("content", "")
+lfm = frontmatter(lc)
+check("a long post builds", "content" in lg, lg.get("error", ""))
+check("a long post stays typed tweet", lfm.get("type") == "tweet", lfm.get("type"))
+check("a long post raw is marked a preview", lfm.get("completeness") == "preview", lfm.get("completeness"))
+check("... and reports it", lg.get("completeness") == "preview", lg.get("completeness"))
+check("its opening is kept", LONG["text"] in lc)
+check("the note says only the opening was captured and to save the page as PDF",
+      "preview only" in lc.lower() and "pdf" in lc.lower() and "never fetch it another way" in lc.lower(), lc[-700:])
+check("the note no longer calls it an Article or sends to a Playwright recipe",
+      "article" not in lc.lower().split("## media")[0].split("---", 3)[-1] and "playwright" not in lc.lower(),
+      lc[-700:])
 
 # --- A photo URL that already has a query keeps it ---
 q = dict(PHOTO, mediaDetails=[{"type": "photo",

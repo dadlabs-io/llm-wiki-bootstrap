@@ -405,6 +405,30 @@ def read_raw_text(path) -> str | None:
     return None
 
 
+# How much of its source a raw holds (task #96, from Chubby Skills): a fetcher that got only part of it writes
+# `completeness: preview` (the opening: an X Article or long post, a paywalled page) or `summary` (a description
+# in place of the source). No mark, or `full`, is the whole source. Raws saved before the mark carry its old
+# signs: the page fetcher's `paywall:` line and the X fetcher's long-post note.
+PARTIAL_COMPLETENESS = ("preview", "summary")
+_LONG_POST_NOTE = "> **Note**: this tweet has a `note_tweet`"
+
+
+def raw_completeness(path) -> str | None:
+    """The raw's completeness mark when it is not the whole source ("preview", "summary", or an unknown value
+    as written), else None. A folder, a PDF or a missing file has no mark."""
+    path = Path(path)
+    if not path.is_file() or path.suffix.lower() not in {".md", ".txt"}:
+        return None
+    text = path.read_text(encoding="utf-8", errors="replace")
+    fm, body = split_frontmatter(text)
+    mark = str(fm.get("completeness") or "").strip().strip("\"'").lower()
+    if mark and mark != "full":
+        return mark
+    if not mark and (fm.get("paywall") or any(l.startswith(_LONG_POST_NOTE) for l in body.splitlines())):
+        return "preview"
+    return None
+
+
 def _blockquotes(body: str) -> list[str]:
     """Each run of consecutive `>` lines as one string, fenced code removed.
     Obsidian callouts (`> [!note]`) are our own notes, not source text."""

@@ -126,7 +126,7 @@ check("cycle-step-return-format framework-version bumped to 3", version(csf) == 
 fm = FRAMEWORK / "wiki-frontmatter-best-practices.md"
 ftext = fm.read_text(encoding="utf-8")
 check("the frontmatter spec has a `standalone` optional-field row", "| `standalone` |" in ftext)
-check("wiki-frontmatter-best-practices framework-version bumped to 13", version(fm) == 13, version(fm))
+check("wiki-frontmatter-best-practices framework-version bumped to 13 or later", version(fm) >= 13, version(fm))
 
 for home in (ROOT / "seed" / "wiki" / "HOME.md.tmpl",):
     reason = str(frontmatter(home.read_text(encoding="utf-8")).get("standalone") or "")
