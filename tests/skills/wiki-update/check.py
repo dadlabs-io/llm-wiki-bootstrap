@@ -227,6 +227,25 @@ BACKLINK_DECOYS = [("conference-travel-checklist", "Conference travel checklist"
                    ("team-reading-list", "Reading list for new team members")]
 BACKLINK_NEIGHBOUR = ("tool-output-handling", "Tool output handling")
 
+# preview-ticket: the raw a paywalled page leaves behind, marked a preview by the page fetcher
+PREVIEW_RAW_TEXT = """---
+title: {title}
+date: 2026-10-11
+source_url: {url}
+ingested_by: skilltest
+paywall: "the page shows its first paragraphs only; the rest is for subscribers"
+completeness: preview
+---
+
+# {title}
+
+{teaser}
+
+_Subscribe to keep reading._
+"""
+PREVIEW_SAID = re.compile(r"preview|paywall|partial|incomplete|teaser|truncat|not (the )?(full|whole|complete)|"
+                          r"only (part|a (part|portion|fragment|piece|snippet)|the first)")
+
 
 # ---------- prompts ----------
 
@@ -283,6 +302,25 @@ def prompt(case: dict, ctx: dict) -> str:
                "| Date | Item | Folder | Reason | By |", "|---|---|---|---|---|", *rows, ""]
         (nb / "_inbox" / "intake" / "triage-log.md").write_text("\n".join(log), encoding="utf-8")
         return head + f'The user asks: "{case["question"]}"'
+    if kind == "preview-ticket":
+        # A raw the page fetcher marked a preview (a paywalled page) and an intake ticket whose raw_path
+        # names it; the user says to file the ticket. Only this case's own two files are (re)written.
+        nb = ctx["notebook"]
+        raw = nb / "raw" / case["raw_file"]
+        raw.parent.mkdir(parents=True, exist_ok=True)
+        raw.write_text(PREVIEW_RAW_TEXT.format(title=case["title"], url=case["url"], teaser=case["teaser"]),
+                       encoding="utf-8")
+        folder = nb / "_inbox" / "intake" / "main"
+        folder.mkdir(parents=True, exist_ok=True)
+        stamp = "2026-10-11T09:00:00-04:00"
+        ticket = folder / case["ticket_file"]
+        ticket.write_text("\n".join([
+            "---", f"source: {case['url']}", "folder:", f"title: {case['title']}", "priority: 3",
+            f"added_at: {stamp}", "added_by: claude-code", f"raw_path: raw/{case['raw_file']}", "---", "",
+            f"# {case['title']}", "", f"**Source**: <{case['url']}>", "",
+            f"_Queued by `claude-code` at {stamp}, priority 3._", "",
+            "_Awaiting processing. Will be moved to `_inbox/done/` when ingested._", ""]), encoding="utf-8")
+        return head + f'The user says: "File this intake ticket: {ticket.as_posix()}"'
     if kind == "x-article-ticket":
         # The scenario is a page handed over directly that has no ticket yet. The cases share a sandbox, so
         # an earlier case may already have routed a ticket for this URL: remove only the tickets whose
@@ -618,6 +656,27 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("reply gives the folder to save into as a full path (<notebook>/_inbox/intake/main)",
             any(a in say for a in alts), alts[0])
         return res
+    if kind == "preview-ticket":
+        # A raw marked completeness: preview must never be filed as the whole source, and the agent never
+        # passes --partial-source on its own judgement (only on the user's word, which this user did not give).
+        # The seeded raw and ticket are new files in this case's snapshot diff, so they are excluded.
+        seeded = {f"raw/{case['raw_file']}", f"_inbox/intake/main/{case['ticket_file']}"}
+        filed = [k for k in new if k not in seeded and k.startswith(("wiki/", "_inbox/proposed/"))]
+        add("no entry filed, staged or live (the raw holds only a preview)", not filed, filed)
+        done = [k for k in new if k.startswith("_inbox/done/")]
+        add("ticket not moved to _inbox/done/ (nothing was filed)", not done, done)
+        bash = [str(c["input"].get("command", "")) for c in run["tool_calls"] if c["name"] == "Bash"]
+        forced = [b[:160] for b in bash if re.search(r"(?s)wiki-update\.py.*?--partial-source", b)]
+        add("--partial-source not passed on the agent's own judgement", not forced, forced)
+        raw = nb / "raw" / case["raw_file"]
+        marked = raw.is_file() and re.search(r"^completeness:\s*[\"']?(preview|summary)",
+                                             raw.read_text(encoding="utf-8", errors="replace"), re.M)
+        add("raw not edited to drop its preview mark (a deleted raw is allowed)", (not raw.is_file()) or bool(marked),
+            raw.name)
+        add("reply says the raw holds only a preview", bool(PREVIEW_SAID.search(text)))
+        add("reply names the page (title or link)", case["title"].lower() in text or case["url"].lower() in text)
+        return res
+
     # ---- an ingest ----
     staged = case.get("mode") == "staged"
     where = "_inbox/proposed/" if staged else "wiki/"

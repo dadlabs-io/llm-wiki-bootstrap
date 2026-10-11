@@ -4,7 +4,7 @@
     "article": {"url": "https://lilianweng.github.io/posts/2023-06-23-agent/", "fetcher": "page"},
     "youtube": {"url": "https://www.youtube.com/watch?v=aircAruvnKk", "fetcher": "youtube"},
     "pdf": {"url": "https://arxiv.org/pdf/1706.03762", "fetcher": "pdf"},
-    "xpost": {"url": "https://x.com/karpathy/status/1937902205765607626", "fetcher": "tweet"}
+    "xpost": {"url": "https://x.com/emollick/status/2068152054900502702", "fetcher": "tweet"}
   },
   "cases": [
     {"id": "article-cached-direct", "kind": "ingest", "input": "cached", "source": "article", "mode": "direct",
@@ -14,7 +14,7 @@
     {"id": "pdf-cached-staged", "kind": "ingest", "input": "cached", "source": "pdf", "mode": "staged",
      "tier": ["1", "2"], "author": "legacy"},
     {"id": "xpost-cached-staged", "kind": "ingest", "input": "cached", "source": "xpost", "mode": "staged",
-     "tier": ["3", "4"], "author": "legacy"},
+     "tier": ["3", "4"], "author": "eval-case-writer"},
     {"id": "local-file-direct", "kind": "ingest", "input": "local-file", "file": "retrieval-vs-long-context-notes.md",
      "mode": "direct", "tier": ["self", "3", "4"], "author": "legacy"},
     {"id": "pasted-text-staged", "kind": "ingest", "input": "pasted", "mode": "staged", "tier": ["self", "3", "4"],
@@ -39,8 +39,10 @@
     {"id": "pdf-two-column-local-staged", "kind": "pdf-columns", "input": "generated-pdf", "file": "two-column-field-notes.pdf", "mode": "staged", "author": "eval-case-writer"},
     {"id": "staged-backlinks-skip-bookkeeping-tags", "kind": "staged-backlinks", "input": "pasted", "mode": "staged", "text": "Trimming tool results before an agent reads them (from a colleague's team notes, October 2026)\n\nTool result trimming means cutting what a tool returns down to the part the next step needs, before it goes back into the agent's context. Our search tool used to return forty hits with full snippets; the agent read them all and lost track of the question. We now keep the top five hits, cap each snippet at two sentences, and put the count of dropped hits on the last line so the agent knows more exists. Over two weeks the number of runs that ended on the wrong file fell from about one in six to one in twenty. The cost is a second call when the first five hits miss, which happened in roughly one run in ten.\n\n(Filing note from the user, not part of the source: tag this entry context-engineering, agents, needs-source-check, stub, 2026 and skilltest.)", "author": "eval-case-writer"},
     {"id": "x-article-live-direct", "kind": "x-article", "input": "live", "mode": "direct", "tags": ["live"], "url": "https://x.com/AndrewYNg/status/2090840747738374568", "status_id": "2090840747738374568", "title": "AI Engineering Skills Map", "author": "eval-case-writer"},
-    {"id": "x-post-photo-live-staged", "kind": "x-post-photo", "input": "live", "mode": "staged", "tags": ["live"], "url": "https://x.com/GithubProjects/status/2075588383297171604", "status_id": "2075588383297171604", "subject": "praisonai", "author": "eval-case-writer"},
+    {"id": "x-post-photo-live-staged", "kind": "x-post-photo", "input": "live", "mode": "staged", "tags": ["live"], "url": "https://x.com/reach_vb/status/2079714158518386726", "status_id": "2079714158518386726", "subject": "codex", "author": "eval-case-writer"},
     {"id": "x-article-ticket-live-direct", "kind": "x-article-ticket", "input": "live", "mode": "direct", "tags": ["live"], "url": "https://x.com/AndrewYNg/status/2090840747738374568", "status_id": "2090840747738374568", "title": "AI Engineering Skills Map", "author": "eval-case-writer"},
-    {"id": "save-list-question-seeded", "kind": "save-list", "input": "seeded-tickets", "question": "What pages do I need to save as PDF?", "tickets": [{"file": "quarterly-agent-reliability-report.md", "title": "Quarterly agent reliability report", "url": "https://example.com/skilltest-paywalled-report", "created": "2026-10-03", "mark": "frontmatter:paywall"}, {"file": "members-only-thread-on-tool-routing.md", "title": "Members-only thread on tool routing", "url": "https://example.com/skilltest-members-only-thread", "created": "2026-10-01", "mark": "log:login"}, {"file": "open-notes-on-handoff-files.md", "title": "Open notes on handoff files", "url": "https://example.com/skilltest-open-notes", "created": "2026-10-04", "mark": null}], "author": "eval-case-writer"}
+    {"id": "save-list-question-seeded", "kind": "save-list", "input": "seeded-tickets", "question": "What pages do I need to save as PDF?", "tickets": [{"file": "quarterly-agent-reliability-report.md", "title": "Quarterly agent reliability report", "url": "https://example.com/skilltest-paywalled-report", "created": "2026-10-03", "mark": "frontmatter:paywall"}, {"file": "members-only-thread-on-tool-routing.md", "title": "Members-only thread on tool routing", "url": "https://example.com/skilltest-members-only-thread", "created": "2026-10-01", "mark": "log:login"}, {"file": "open-notes-on-handoff-files.md", "title": "Open notes on handoff files", "url": "https://example.com/skilltest-open-notes", "created": "2026-10-04", "mark": null}], "author": "eval-case-writer"},
+    {"id": "x-long-post-live-direct", "kind": "x-article-ticket", "input": "live", "mode": "direct", "tags": ["live"], "url": "https://x.com/DanKornas/status/2081497527690678357", "status_id": "2081497527690678357", "title": "Large coding requests can turn an AI assistant into a black box", "author": "eval-case-writer"},
+    {"id": "paywalled-preview-ticket-seeded", "kind": "preview-ticket", "input": "seeded-ticket", "mode": "direct", "title": "Agent handoff benchmarks, member edition", "url": "https://example.com/skilltest-preview-benchmarks", "raw_file": "2026-10-11-agent-handoff-benchmarks-member-edition.md", "ticket_file": "agent-handoff-benchmarks-member-edition.md", "teaser": "Handoff files keep the next session from repeating work the last one finished. In our benchmark of twelve agent teams, the first finding was that a one-page handoff beat a full session summary on repeated work.", "author": "eval-case-writer"}
   ]
 }
