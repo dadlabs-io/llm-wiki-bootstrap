@@ -11,6 +11,13 @@
 
 ## 2026-10-11
 
+### X Articles come back as a marked preview; X photos at full size (task #96 step 2, from the Chubby Skills read)
+
+- **Why**: an X Article's syndication payload has a bare t.co link as its `text`, so `wiki-fetch-tweet.js` saved a raw titled after that link and holding nothing of the article, with no sign that the article was missing (2026-09-02: Andrew Ng's skills-map Article). Photos were linked at X's reduced size (a real post: 78 KB, 135 KB at the original).
+- **Changed**: a payload with an `article` gives a raw titled after the article, with its title as a heading, its cover image, its `preview_text`, the article's own URL (`article_url`), `type: x-article` and `completeness: preview`, and a note saying the full text needs the user's Save as PDF. The script warns on stderr and prints `completeness=preview`. Never the logged-in GraphQL path Chubby Skills uses with the user's cookies. Photos and the cover are linked with `name=orig`; videos keep their own URL. The field names come from a real Article payload (Chubby's test fixture is hand-written). `buildRaw()` is exported for tests; the CLI runs only when the file is run directly.
+- **Docs**: fetchers.md's X section: an Article is a page no fetcher can get; read the preview, delete it, ask for the PDF, never file from the preview.
+- **Proven**: new `tests/scripts/test_fetch_tweet.py`, 20 checks on payloads trimmed from two real posts, 2/20 before, 20/20 after; a live run on both posts. Not installed yet: the fetchers.md change is behavioural, so it waits for the wiki-update suite run with step 3.
+
 ### One source, one key: every duplicate check uses the same rule (task #96 step 1, from the Chubby Skills read)
 
 - **Why**: four scripts decided "is this the same source" four ways. Filing (`wiki-update.py`) normalised case, `www.`, tracking tags and youtu.be links. The Drive and Gmail steps (`url_dedup_key`) collapsed YouTube forms but not X. The queue (`wiki-list-add.py`) compared the exact text. The dequeue (`wiki-dequeue.py`) cut every query off. None knew an x.com post from the same twitter.com post, so the same post could be filed twice. And the dequeue's cut made every `youtube.com/watch?v=` link match every other, so once any YouTube entry existed, a video never ingested was moved to `done/` and silently dropped from the queue.

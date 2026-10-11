@@ -48,7 +48,9 @@ Runs on the host: text per page through `pdftotext` in reading order, column by 
 node {{WIKI_SCRIPTS_DIR}}/wiki-fetch-tweet.js --topic <topic> --url <url> --vault <vault_root> --ingested-by claude-code
 ```
 
-One HTTPS request to the public syndication API, on the host: no login, no browser. `--vault` is the vault root, the folder that holds the notebook's folder. When it fails (a deleted or protected post, a block), fetch that one URL with the [page fetcher](#pages-that-need-javascript) instead of retrying. If the raw ends with the note about a long-form post and the text reads cut off, fetch that URL with the page fetcher too. A post whose substance is a video: `wiki-transcribe.py --url <url>`.
+One HTTPS request to the public syndication API, on the host: no login, no browser. `--vault` is the vault root, the folder that holds the notebook's folder. When it fails (a deleted or protected post, a block), fetch that one URL with the [page fetcher](#pages-that-need-javascript) instead of retrying. If the raw ends with the note about a long-form post and the text reads cut off, fetch that URL with the page fetcher too. A post whose substance is a video: `wiki-transcribe.py --url <url>`. Photos are linked at their original size.
+
+**An X Article** (a long-form post with a title and a cover) prints `completeness=preview` and a warning: the public API gives its title, cover image and opening lines only, and the raw is typed `x-article` and marked `completeness: preview`. The full text needs a logged-in session, so it is a [page no fetcher can get](#pages-no-fetcher-can-get): read the preview to judge it, delete that raw (nothing cites it), and ask the user to save the post's page as PDF. Never file an entry from the preview alone.
 
 ## Pages no fetcher can get
 

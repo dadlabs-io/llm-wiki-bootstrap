@@ -120,6 +120,100 @@ function uniquePath(target) {
   return candidate;
 }
 
+function originalSize(url) {
+  // A pbs.twimg.com/media photo is served at a reduced size unless the URL asks for the original
+  // (`name=orig`: 78 KB vs 135 KB on a real post, 2026-10-11). Anything else is returned unchanged.
+  if (!url || !/^https:\/\/pbs\.twimg\.com\/media\//.test(url)) return url;
+  const u = new URL(url);
+  u.searchParams.set('name', 'orig');
+  return u.toString();
+}
+
+function buildRaw(tweet, opts) {
+  // The raw's title and Markdown for one syndication payload. An X Article (a non-empty `article`)
+  // comes back as its title, cover and opening only: the full text needs a logged-in session, so the
+  // raw is marked `completeness: preview` and says how the full text is got (task #96, from Chubby
+  // Skills' x-ingest; the field names checked against a real Article payload, 2026-10-11).
+  const name = tweet.user ? tweet.user.name : 'Unknown';
+  const author = tweet.user ? `${tweet.user.name} (@${tweet.user.screen_name})` : 'unknown';
+  const article = tweet.article && tweet.article.title ? tweet.article : null;
+  const headline = article ? article.title : tweet.text;
+  const title = `${name} on X: "${headline.slice(0, 200)}${headline.length > 200 ? '…' : ''}"`;
+  const hasNoteTweet = !!tweet.note_tweet;
+  const mediaLines = (tweet.mediaDetails || []).map((m, i) => {
+    const url = m.type === 'photo'
+      ? originalSize(m.media_url_https)
+      : (m.video_info?.variants?.[0]?.url || m.media_url_https || '(no direct url)');
+    return `- Media ${i + 1} (${m.type}): ${url}`;
+  });
+
+  const fm = [
+    '---',
+    `title: ${JSON.stringify(title)}`,
+    `source_url: ${opts.url}`,
+    `fetched_via: syndication-api`,
+    `fetched: ${new Date().toISOString()}`,
+    `ingested_by: ${opts.ingestedBy}`,
+    `type: ${article ? 'x-article' : 'tweet'}`,
+    `author: ${JSON.stringify(author)}`,
+    `created_at: ${tweet.created_at || ''}`,
+    `favorite_count: ${tweet.favorite_count ?? ''}`,
+    `conversation_count: ${tweet.conversation_count ?? ''}`,
+  ];
+  if (article) {
+    fm.push('completeness: preview');
+    if (article.rest_id) fm.push(`article_url: https://x.com/i/article/${article.rest_id}`);
+  }
+  fm.push('---', '');
+
+  const body = [
+    `# ${title}`,
+    '',
+    `**Source**: <${opts.url}>`,
+    `**Author**: ${author}`,
+    '',
+    '---',
+    '',
+    tweet.text,
+    '',
+  ];
+
+  if (article) {
+    const cover = originalSize(article.cover_media?.media_info?.original_img_url);
+    body.push(`## ${article.title}`, '');
+    if (cover) body.push(`Cover image: ${cover}`, '');
+    if (article.preview_text) body.push(article.preview_text, '');
+    body.push(
+      '> **Preview only**: this post is an X Article. The public API gives its title, cover and opening',
+      '> lines, not the full text, which needs a logged-in session. To file the whole article, ask the user',
+      '> to save the post\'s page as PDF (wiki-update fetchers.md, "Pages no fetcher can get"); never fetch',
+      '> it another way.',
+      ''
+    );
+  }
+
+  if (hasNoteTweet) {
+    body.push(
+      '> **Note**: this tweet has a `note_tweet` (long-form "Article") payload the syndication API does',
+      '> not expand — the `text` field above may be truncated relative to the full post. If the content',
+      '> reads as cut off, fall back to the Playwright recipe to capture the full note-tweet body.',
+      ''
+    );
+  }
+
+  if (mediaLines.length) {
+    body.push('## Media', '', ...mediaLines, '');
+  }
+
+  return {
+    title,
+    author,
+    content: fm.join('\n') + body.join('\n'),
+    completeness: article ? 'preview' : null,
+    hasNoteTweet,
+  };
+}
+
 async function main() {
   const args = parseArgs(process.argv);
 
@@ -149,12 +243,7 @@ async function main() {
     process.exit(1);
   }
 
-  const author = tweet.user ? `${tweet.user.name} (@${tweet.user.screen_name})` : 'unknown';
-  const title = `${tweet.user ? tweet.user.name : 'Unknown'} on X: "${tweet.text.slice(0, 200)}${tweet.text.length > 200 ? '…' : ''}"`;
-  const hasNoteTweet = !!tweet.note_tweet;
-  const mediaLines = (tweet.mediaDetails || []).map(
-    (m, i) => `- Media ${i + 1} (${m.type}): ${m.media_url_https || m.video_info?.variants?.[0]?.url || '(no direct url)'}`
-  );
+  const raw = buildRaw(tweet, { url: args.url, ingestedBy: args.ingestedBy });
 
   const topicRoot = path.join(args.vault, args.topic);
   if (!fs.existsSync(topicRoot)) {
@@ -165,64 +254,31 @@ async function main() {
   fs.mkdirSync(rawDir, { recursive: true });
 
   const date = new Date().toISOString().slice(0, 10);
-  const slug = args.slugOverride || slugify(title);
+  const slug = args.slugOverride || slugify(raw.title);
   const rawFilename = `${date}-${slug}.md`;
   const rawPath = uniquePath(path.join(rawDir, rawFilename));
 
-  const fm = [
-    '---',
-    `title: ${JSON.stringify(title)}`,
-    `source_url: ${args.url}`,
-    `fetched_via: syndication-api`,
-    `fetched: ${new Date().toISOString()}`,
-    `ingested_by: ${args.ingestedBy}`,
-    `type: tweet`,
-    `author: ${JSON.stringify(author)}`,
-    `created_at: ${tweet.created_at || ''}`,
-    `favorite_count: ${tweet.favorite_count ?? ''}`,
-    `conversation_count: ${tweet.conversation_count ?? ''}`,
-    '---',
-    '',
-  ];
+  fs.writeFileSync(rawPath, raw.content, 'utf-8');
 
-  const body = [
-    `# ${title}`,
-    '',
-    `**Source**: <${args.url}>`,
-    `**Author**: ${author}`,
-    '',
-    '---',
-    '',
-    tweet.text,
-    '',
-  ];
-
-  if (hasNoteTweet) {
-    body.push(
-      '> **Note**: this tweet has a `note_tweet` (long-form "Article") payload the syndication API does',
-      '> not expand — the `text` field above may be truncated relative to the full post. If the content',
-      '> reads as cut off, fall back to the Playwright recipe to capture the full note-tweet body.',
-      ''
-    );
+  if (raw.completeness === 'preview') {
+    console.error('WARNING: this post is an X Article; only its title, cover and opening were captured (a preview).');
+    console.error('The full text needs the user to save the page as PDF; see the note in the raw.');
   }
-
-  if (mediaLines.length) {
-    body.push('## Media', '', ...mediaLines, '');
-  }
-
-  const content = fm.join('\n') + body.join('\n');
-  fs.writeFileSync(rawPath, content, 'utf-8');
-
   console.log(`Saved raw: ${rawPath}`);
-  console.log(`  Author: ${author}`);
-  console.log(`  Length: ${tweet.text.length} chars${hasNoteTweet ? ' (+ untruncated note_tweet not captured)' : ''}`);
+  console.log(`  Author: ${raw.author}`);
+  console.log(`  Length: ${tweet.text.length} chars${raw.hasNoteTweet ? ' (+ untruncated note_tweet not captured)' : ''}`);
   console.log('');
   console.log(`raw_path=${rawPath}`);
   console.log(`source_url=${args.url}`);
-  console.log(`suggested_title=${title}`);
+  console.log(`suggested_title=${raw.title}`);
+  if (raw.completeness) console.log(`completeness=${raw.completeness}`);
 }
 
-main().catch((e) => {
-  console.error(`ERROR: unexpected failure: ${e.stack || e.message}`);
-  process.exit(1);
-});
+module.exports = { buildRaw, originalSize };
+
+if (require.main === module) {
+  main().catch((e) => {
+    console.error(`ERROR: unexpected failure: ${e.stack || e.message}`);
+    process.exit(1);
+  });
+}
