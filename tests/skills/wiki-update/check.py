@@ -248,6 +248,55 @@ def prompt(case: dict, ctx: dict) -> str:
         return head + "The user's input: " + " ".join(case["urls"])
     if kind == "dedup":
         return head + "The user's input: " + _suite()["sources"][case["source"]]["url"]
+    if kind == "save-list":
+        # Seed the notebook the question is asked in with three routed tickets in the intake bucket,
+        # in the shapes wiki-list-add.py and wiki-triage.py route write: one marked in its frontmatter
+        # (save_as_pdf), one marked only by a triage-log row (matched to it by the ticket's source URL),
+        # one unmarked. The cases share a sandbox, so the pending and intake folders are emptied first
+        # and an earlier case's tickets cannot join the list.
+        nb = ctx["notebook"]
+        for d in ("_inbox/pending", "_inbox/intake"):
+            shutil.rmtree(nb / d, ignore_errors=True)
+        (nb / "_inbox" / "pending").mkdir(parents=True, exist_ok=True)
+        folder = nb / "_inbox" / "intake" / "main"
+        folder.mkdir(parents=True, exist_ok=True)
+        rows = []
+        for t in case["tickets"]:
+            mark = t.get("mark") or ""
+            stamp = f"{t['created']}T09:00:00-04:00"
+            lines = ["---"]
+            if mark.startswith("frontmatter:"):
+                lines.append(f"save_as_pdf: {mark.split(':', 1)[1]}")
+            lines += [f"source: {t['url']}", "folder:", f"title: {t['title']}", "priority: 3",
+                      f"added_at: {stamp}", "added_by: claude-code", "---", "",
+                      f"# {t['title']}", "",
+                      f"**Source**: <{t['url']}>", "",
+                      f"_Queued by `claude-code` at {stamp}, priority 3._", "",
+                      "_Awaiting processing. Will be moved to `_inbox/done/` when ingested._", ""]
+            (folder / t["file"]).write_text("\n".join(lines), encoding="utf-8")
+            if mark.startswith("log:"):
+                rows.append(f"| {t['created']} | {t['url']} | main | "
+                            f"save as PDF: {mark.split(':', 1)[1]} (a members-only thread) | nb |")
+        log = ["# Triage log", "",
+               "One row per call, newest last. `/wiki-triage` reads the recent rows as precedents; "
+               "a correction by the user is a row like any other.", "",
+               "| Date | Item | Folder | Reason | By |", "|---|---|---|---|---|", *rows, ""]
+        (nb / "_inbox" / "intake" / "triage-log.md").write_text("\n".join(log), encoding="utf-8")
+        return head + f'The user asks: "{case["question"]}"'
+    if kind == "x-article-ticket":
+        # The scenario is a page handed over directly that has no ticket yet. The cases share a sandbox, so
+        # an earlier case may already have routed a ticket for this URL: remove only the tickets whose
+        # source is this page, from pending and from every intake bucket (the triage log is left alone).
+        nb = ctx["notebook"]
+        for sub in ("_inbox/pending", "_inbox/intake"):
+            root = nb / sub
+            for p in sorted(root.rglob("*.md")) if root.is_dir() else []:
+                if p.name == "triage-log.md":
+                    continue
+                t = p.read_text(encoding="utf-8", errors="replace")
+                if re.search(r"^source:.*" + re.escape(case["status_id"]), t, re.M):
+                    p.unlink()
+        return head + f"The user's input: {case['url']}"
     if inp == "cached":
         url = _suite()["sources"][case["source"]]["url"]
         raw = ctx["raw_names"].get(case["source"], "<missing fixture>")
@@ -481,6 +530,93 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("gate: no errors", not g.get("errors"), g.get("errors"))
         side = path.with_suffix(".proposed_metadata.json")
         add("sidecar written", side.is_file(), side.name)
+        return res
+    if kind == "x-article-ticket":
+        # A page the user hands over that no fetcher can get gets a ticket on the save-as-PDF list:
+        # no entry, no raw, the ticket in the intake bucket marked, the user told. These checks judge
+        # what the session left behind and said; they hold against the skill before and after the change.
+        sid = case["status_id"]
+        add("no entry filed, staged or live (never from the preview alone)", not entries, entries)
+        raws = [k for k in new if k.startswith("raw/")]
+        add("no raw left in raw/ (preview deleted; no page copied in)", not raws, raws)
+        found = []
+        for sub in ("_inbox/intake", "_inbox/pending"):
+            for p in sorted((nb / sub).rglob("*.md")) if (nb / sub).is_dir() else []:
+                try:
+                    tfm, _tb = split_frontmatter(p.read_text(encoding="utf-8", errors="replace"))
+                except Exception:
+                    continue
+                if isinstance(tfm, dict) and sid in str(tfm.get("source") or tfm.get("source_url") or ""):
+                    found.append((p.relative_to(nb).as_posix(), tfm))
+        in_main = [f for f in found if f[0].startswith("_inbox/intake/main/")]
+        add("a ticket for the page waits in _inbox/intake/main/", bool(in_main), [f[0] for f in found])
+        add("no copy of the ticket left anywhere else (pending or another bucket)",
+            len(found) == len(in_main), [f[0] for f in found])
+        if in_main:
+            tfm = in_main[0][1]
+            why = str(tfm.get("save_as_pdf") or "").strip().strip('"').strip("'").lower()
+            add("ticket marked save_as_pdf: paywall, login or blocked", why in ("paywall", "login", "blocked"), why)
+            add("ticket has no raw_path (the page stays on the list)", not tfm.get("raw_path"), tfm.get("raw_path"))
+        logrel = "_inbox/intake/triage-log.md"
+        logtxt = (nb / logrel).read_text(encoding="utf-8", errors="replace").lower() if (nb / logrel).is_file() else ""
+        add("triage log gained a 'save as PDF: <why>' row in this run",
+            (logrel in new or logrel in changed) and bool(re.search(r"save as pdf: (paywall|login|blocked)", logtxt)),
+            logrel)
+        say = text.replace("\\", "/")
+        add("reply asks the user to save the page as PDF",
+            bool(re.search(r"(save|export|print)\w*\b[^\n]{0,60}\bpdf\b|\bpdf\b[^\n]{0,60}(save|export)", say)))
+        add("reply tells the user which page (status id or title)",
+            sid in say or case["title"].lower() in say)
+        sb = (nb / "_inbox" / "intake" / "main").as_posix().lower()
+        alts = [sb] + (["/" + sb[0] + sb[2:]] if sb[1:3] == ":/" else [])
+        add("reply names the intake folder as a full path (<notebook>/_inbox/intake/main)",
+            any(a in say for a in alts), alts[0])
+        banned = ("archive.org", "archive.ph", "archive.is", "archive.today", "webcache.googleusercontent",
+                  "r.jina.ai", "12ft.io", "wayback")
+        used = sorted({b for c in run["tool_calls"] for b in banned if b in json.dumps(c.get("input", "")).lower()})
+        add("no archive, cache or proxy route tried", not used, used)
+        return res
+    if kind == "save-list":
+        # The question "what pages do I need to save as PDF?" is answered from the list: the two marked
+        # pages with their links and the folder, the unmarked ticket not offered as a page to save,
+        # nothing filed or moved.
+        folder = nb / "_inbox" / "intake" / "main"
+        seeded = {f"_inbox/intake/main/{t['file']}" for t in case["tickets"]} | {"_inbox/intake/triage-log.md"}
+        stray = [k for k in new if k not in seeded and not k.startswith("_inbox/temp/")]
+        add("nothing filed, fetched or queued (no new file beyond the seeded tickets)", not stray, stray)
+        moved = []
+        for t in case["tickets"]:
+            p = folder / t["file"]
+            if not p.is_file():
+                moved.append(f"{t['file']}: gone from _inbox/intake/main/")
+                continue
+            tfm, _tb = split_frontmatter(p.read_text(encoding="utf-8", errors="replace"))
+            mark = t.get("mark") or ""
+            want = mark.split(":", 1)[1] if mark.startswith("frontmatter:") else ""
+            got = str(tfm.get("save_as_pdf") or "").strip().strip('"').strip("'")
+            if got != want or tfm.get("raw_path") or t["url"] not in str(tfm.get("source") or ""):
+                moved.append(f"{t['file']}: save_as_pdf={got!r} raw_path={tfm.get('raw_path')!r}")
+        add("all three tickets still in _inbox/intake/main/, marks and sources as seeded", not moved, moved)
+        say = text.replace("\\", "/")
+        lines = say.split("\n")
+        negated = re.compile(r"\b(not|isn'?t|aren'?t|no|without|excluded?|left out|omit\w*|skip\w*|"
+                             r"unmarked|ordinary|other)\b")
+        for t in case["tickets"]:
+            if t.get("mark"):
+                add(f"reply lists the page: {t['title']} (its link)", t["url"].lower() in say, t["url"])
+            else:
+                # named only to say it is not on the list is allowed; offered as a page to save is not
+                offered = []
+                for i, ln in enumerate(lines):
+                    if t["url"].lower() in ln or t["title"].lower() in ln:
+                        near = (lines[i - 1] + " " if i else "") + ln
+                        if not negated.search(near):
+                            offered.append(ln.strip()[:120])
+                add(f"reply does not offer the unmarked page as one to save: {t['title']}", not offered, offered)
+        sb = folder.as_posix().lower()
+        alts = [sb] + (["/" + sb[0] + sb[2:]] if sb[1:3] == ":/" else [])
+        add("reply gives the folder to save into as a full path (<notebook>/_inbox/intake/main)",
+            any(a in say for a in alts), alts[0])
         return res
     # ---- an ingest ----
     staged = case.get("mode") == "staged"

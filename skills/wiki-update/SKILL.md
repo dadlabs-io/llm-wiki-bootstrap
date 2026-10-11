@@ -23,6 +23,7 @@ This skill does not restate the rules it follows:
 | Two or more URLs (spaces, lines, bullets or a list) | Queue each with `wiki-list-add.py`, then say "queued N items; run `/wiki-cycle --ingest-only` to drain" |
 | A local file, or pasted text | The flow from step 2; pasted text goes to a temp file first, passed as `--source` |
 | A raw already saved for a URL (a batch hand-over, a ticket's `raw_path`) | The flow from step 2, with no fetcher; file with `--source-url <url> --raw-path raw/<file>` |
+| A question about what waits to be saved as PDF ("what do I need to save?") | Run `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-triage.py --topic <topic> save-list` and give the user what it prints: each page, its link, why, and the full folder path ([fetchers.md](fetchers.md), "Pages no fetcher can get") |
 | Nothing | Stop: "`/wiki-update` needs a source (a URL, file path or pasted text). To capture what we did this session, run `/wrap-up`." Never synthesize from the session. |
 
 `--now <url>` ingests one item from a list immediately; `--queue <url>` queues even a single URL.

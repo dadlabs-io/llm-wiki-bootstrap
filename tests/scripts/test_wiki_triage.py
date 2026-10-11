@@ -162,6 +162,51 @@ with tempfile.TemporaryDirectory() as td:
           p.stdout.startswith("3 call(s); the last 2:") and "example.com/a" not in p.stdout and "example.com/c" in p.stdout,
           p.stdout)
 
+    # ── save as PDF: route marks the ticket, save-list lists what the user must save (task #96, Mark) ──
+    p = run("--topic", "research", "save-list")
+    check("save-list with nothing waiting: exit 0, says so", p.returncode == 0 and "nothing" in p.stdout.lower(),
+          (p.returncode, p.stdout, p.stderr[-200:]))
+    titled = ticket("https://x.com/AndrewYNg/status/2090840747738374568").replace(
+        "folder:\n", "folder:\ntitle: Andrew Ng - AI Engineering Skills Map\n")
+    (pend / "3-2026-10-11-100004-t4.md").write_text(titled, encoding="utf-8")
+    (pend / "3-2026-10-11-100005-t5.md").write_text(ticket("https://medium.com/@a/paywalled-story"), encoding="utf-8")
+    (pend / "3-2026-10-11-100006-t6.md").write_text(ticket("https://example.com/ordinary"), encoding="utf-8")
+    p = run("--topic", "research", "route", "3-2026-10-11-100004-t4.md", "--to", "main", "--reason", "an X Article",
+            "--save-as-pdf", "login")
+    t4 = intake / "main" / "3-2026-10-11-100004-t4.md"
+    t4_text = t4.read_text(encoding="utf-8") if t4.is_file() else ""
+    check("route --save-as-pdf: exit 0", p.returncode == 0, p.stderr[-200:])
+    check("route --save-as-pdf: the ticket itself is marked save_as_pdf: login", "\nsave_as_pdf: login\n" in t4_text,
+          t4_text[:200])
+    lg_text = (intake / "triage-log.md").read_text(encoding="utf-8")
+    check("route --save-as-pdf: the log reason says save as PDF", "save as PDF: login" in lg_text, lg_text[-200:])
+    p = run("--topic", "research", "route", "3-2026-10-11-100005-t5.md", "--to", "other", "--reason", "x",
+            "--save-as-pdf", "because")
+    check("route --save-as-pdf with an unknown reason: exit 2, ticket still pending",
+          p.returncode == 2 and (pend / "3-2026-10-11-100005-t5.md").is_file(), p.returncode)
+    # an older ticket: marked only by its log reason, the way routes were written before the flag
+    p = run("--topic", "research", "route", "3-2026-10-11-100005-t5.md", "--to", "other",
+            "--reason", "save as PDF: paywall (member-only)")
+    p = run("--topic", "research", "route", "3-2026-10-11-100006-t6.md", "--to", "proj", "--reason", "memory")
+    p = run("--topic", "research", "save-list")
+    out = p.stdout
+    check("save-list: exit 0", p.returncode == 0, p.stderr[-200:])
+    check("save-list: counts the two pages waiting", out.startswith("2 page(s)"), out[:120])
+    check("save-list: the marked ticket, by its title and link",
+          "Andrew Ng - AI Engineering Skills Map" in out and "https://x.com/AndrewYNg/status/2090840747738374568" in out, out)
+    check("save-list: the older ticket marked only in the log", "https://medium.com/@a/paywalled-story" in out, out)
+    check("save-list: each one's reason", "login" in out and "paywall" in out, out)
+    check("save-list: the full folder path to save each into", str(intake / "main") in out and str(intake / "other") in out,
+          out)
+    check("save-list: an ordinary ticket waiting for ingest is not listed", "example.com/ordinary" not in out, out)
+    check("save-list: a ticket routed with a raw is not listed", "example.com/a\n" not in out and "example.com/a " not in out,
+          out)
+    # once the user's PDF is attached (raw_path set), the page leaves the list
+    t4.write_text(t4_text.replace("---\n", "---\nraw_path: raw/andrew.md\n", 1), encoding="utf-8")
+    p = run("--topic", "research", "save-list")
+    check("save-list: a page whose PDF is attached leaves the list",
+          p.stdout.startswith("1 page(s)") and "AndrewYNg" not in p.stdout, p.stdout[:200])
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

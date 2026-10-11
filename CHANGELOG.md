@@ -11,6 +11,12 @@
 
 ## 2026-10-11
 
+### The save-as-PDF list: every page waiting for the user, in one place (task #96, Mark's answer)
+
+- **Why** (Mark: "you need to create the list of what I need to get and you need to tell me"): a page no fetcher can get was marked "save as PDF" only in the triage log's reason, and listed only in a cycle report. A page the user handed over directly had no ticket, so no folder to save into and no place on any list (the X Article run: Sonnet said "save it anywhere").
+- **Changed**: `wiki-triage.py route --save-as-pdf <paywall|login|blocked>` marks the ticket itself (`save_as_pdf:`) and logs "save as PDF: <why> (<reason>)". New `wiki-triage.py save-list`: every waiting page with its title, link, why, and the full folder path to save it into; older tickets marked only by a "save as PDF" log reason are included; a page leaves the list once `attach-pdfs` gives its ticket a raw. fetchers.md: a page handed over directly is queued and routed to `main` with `--save-as-pdf`, and the list is shown to the user whenever it grows. wiki-update's input table: "what do I need to save?" runs `save-list`. wiki-triage's step 5 uses the flag; its Don't list says `/wiki-update`'s routing is not a triage call. Usage pages for both.
+- **Proven**: `tests/scripts/test_wiki_triage.py` +14 checks, 34/45 before, 45/45 after. On the real notebooks (agentic-design, llm-wiki-bootstrap, investment-agent) the list is empty, which is right: the 2026-10-05 pages were all attached. Skill suite: two fresh cases from `eval-case-writer`, saved unchanged, `x-article-ticket-live-direct` (a ticket in `intake/main` marked, the folder named) and `save-list-question-seeded`. First run `20261011-171810` 3/6: two check faults the writer fixed (a shared sandbox already held the ticket; naming an excluded page counted as offering it) and one skill gap (Sonnet answered the question by hand, with no folder: the input-table row). Rerun `20261011-172138` 4/4. About $4.
+
 ### X Articles come back as a marked preview; X photos at full size (task #96 step 2, from the Chubby Skills read)
 
 - **Why**: an X Article's syndication payload has a bare t.co link as its `text`, so `wiki-fetch-tweet.js` saved a raw titled after that link and holding nothing of the article, with no sign that the article was missing (2026-09-02: Andrew Ng's skills-map Article). Photos were linked at X's reduced size (a real post: 78 KB, 135 KB at the original).

@@ -25,7 +25,9 @@ the catch-all: an item that fits no bucket clearly, or two equally, goes there.
 
     wiki-triage.py buckets  [--topic N]          the buckets, their readers, who is "me"
     wiki-triage.py pending  [--topic N]          tickets waiting in _inbox/pending/
-    wiki-triage.py route <ticket> --to <folder> --reason "<why>" [--raw raw/<file>] [--topic N]
+    wiki-triage.py route <ticket> --to <folder> --reason "<why>" [--raw raw/<file>]
+                         [--save-as-pdf paywall|login|blocked] [--topic N]
+    wiki-triage.py save-list [--topic N]       the pages waiting for the user to save as PDF
     wiki-triage.py log      [--last 30] [--topic N]   past calls, the precedents
     wiki-triage.py check    [--topic N]          validate the config (exit 1 on a problem)
 
@@ -33,6 +35,13 @@ the catch-all: an item that fits no bucket clearly, or two equally, goes there.
 `raw_path` in it when --raw names a captured raw, and appends a row to
 `_inbox/intake/triage-log.md`. Nothing is ever deleted.
 (2026-09-24, task #42 section T.)
+
+A page no fetcher can get (a paywall, a login, a site that blocks the fetcher) is routed with
+`--save-as-pdf <why>`: the ticket carries `save_as_pdf: <why>` and waits for the user's PDF.
+`save-list` is the list the user works from: every such page with its link and the full path of the
+folder to save it into, older tickets marked only by a "save as PDF" log reason included; a page
+leaves it when `attach-pdfs` gives its ticket a raw (task #96, Mark 2026-10-11: "you need to create
+the list of what I need to get and you need to tell me").
 """
 from __future__ import annotations
 
@@ -52,6 +61,9 @@ if hasattr(sys.stdout, "reconfigure"):
 LOG_HEADER = ("# Triage log\n\nOne row per call, newest last. `/wiki-triage` reads the recent rows as precedents;"
               " a correction by the user is a row like any other.\n\n"
               "| Date | Item | Folder | Reason | By |\n|---|---|---|---|---|\n")
+
+
+SAVE_REASONS = ("paywall", "login", "blocked")
 
 
 def _registry() -> dict:
@@ -186,6 +198,11 @@ def cmd_route(nb: Path, args) -> int:
             return 2
         text = re.sub(r"^raw_path:.*\n", "", text, flags=re.M)
         text = re.sub(r"\A---\s*\n", f"---\nraw_path: {args.raw}\n", text, count=1)
+    reason = args.reason
+    if args.save_as_pdf:
+        text = re.sub(r"^save_as_pdf:.*\n", "", text, flags=re.M)
+        text = re.sub(r"\A---\s*\n", f"---\nsave_as_pdf: {args.save_as_pdf}\n", text, count=1)
+        reason = f"save as PDF: {args.save_as_pdf} ({args.reason.strip()})"
     dest_dir = nb / "_inbox" / "intake" / args.to
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / src.name
@@ -195,7 +212,7 @@ def cmd_route(nb: Path, args) -> int:
     body = log.read_text(encoding="utf-8") if log.is_file() else LOG_HEADER
     item = _front(text).get("source", src.name)
     cell = lambda s: str(s).replace("|", "\\|").replace("\n", " ").strip()  # noqa: E731
-    body += f"| {today_label()} | {cell(item)} | {args.to} | {cell(args.reason)} | {cell(args.by or me())} |\n"
+    body += f"| {today_label()} | {cell(item)} | {args.to} | {cell(reason)} | {cell(args.by or me())} |\n"
     atomic_write_text(log, body)
     reader = folders[args.to].get("reader")
     print(f"routed {src.name} -> _inbox/intake/{args.to}/ (reader: {reader}"
@@ -222,6 +239,39 @@ def cmd_check(nb: Path, args) -> int:
     print(f"{len(bs)} bucket(s), {'configured' if configured else 'default (no README)'}; "
           f"{len(probs)} problem(s)")
     return 1 if probs else 0
+
+
+def _log_reasons(nb: Path) -> dict:
+    """Each item's latest triage-log reason (a later route of the same source wins)."""
+    log = nb / "_inbox" / "intake" / "triage-log.md"
+    out = {}
+    for row in (log.read_text(encoding="utf-8").splitlines() if log.is_file() else []):
+        cells = [c.strip().replace("\\|", "|") for c in re.split(r"(?<!\\)\|", row)[1:-1]]
+        if len(cells) == 5 and cells[0] != "Date" and not set(cells[0]) <= {"-"}:
+            out[cells[1]] = cells[3]
+    return out
+
+
+def cmd_save_list(nb: Path, args) -> int:
+    from _pdf_match import waiting_tickets
+    reasons = _log_reasons(nb)
+    pages = []
+    for t in waiting_tickets(nb):
+        why = _front(t["path"].read_text(encoding="utf-8", errors="replace")).get("save_as_pdf", "").strip()
+        logged = reasons.get(t["source"], "")
+        if not why and logged.lower().startswith("save as pdf"):
+            rest = logged.split(":", 1)[1].strip() if ":" in logged else ""
+            why = next((w for w in SAVE_REASONS if rest.lower().startswith(w)), rest or "unknown")
+        if why:
+            pages.append((t, why))
+    if not pages:
+        print("Nothing waiting: no page needs saving as PDF.")
+        return 0
+    print(f"{len(pages)} page(s) waiting for you to save as PDF: open each in Chrome, Print -> Save as PDF, "
+          f"into the folder shown. The next /wiki-cycle attaches each PDF to its page and files it.")
+    for t, why in pages:
+        print(f"\n- {t['title'] or t['source']}\n  link: {t['source']}\n  why: {why}\n  save into: {t['path'].parent}")
+    return 0
 
 
 def cmd_attach_pdfs(nb: Path, args) -> int:
@@ -280,6 +330,9 @@ def main() -> int:
     r.add_argument("--reason", required=True)
     r.add_argument("--raw", default=None, help="the captured raw, relative to the notebook (raw/<file>)")
     r.add_argument("--by", default=None, help="who decided (default: this session's reader name)")
+    r.add_argument("--save-as-pdf", choices=SAVE_REASONS, default=None,
+                   help="a page no fetcher can get: mark the ticket as waiting for the user's PDF")
+    sub.add_parser("save-list")
     lg = sub.add_parser("log")
     lg.add_argument("--last", type=int, default=30)
     sub.add_parser("check")
@@ -297,7 +350,8 @@ def main() -> int:
         return 2
     args.topic_name = topic
     return {"buckets": cmd_buckets, "pending": cmd_pending, "route": cmd_route,
-            "log": cmd_log, "check": cmd_check, "attach-pdfs": cmd_attach_pdfs}[args.cmd](nb, args)
+            "log": cmd_log, "check": cmd_check, "attach-pdfs": cmd_attach_pdfs,
+            "save-list": cmd_save_list}[args.cmd](nb, args)
 
 
 if __name__ == "__main__":
