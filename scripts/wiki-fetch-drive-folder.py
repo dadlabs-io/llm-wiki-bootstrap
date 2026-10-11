@@ -82,6 +82,7 @@ from pathlib import Path
 # Atomic-write helper (icarus §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
+from _source_identity import source_key  # noqa: E402
 from urllib.parse import urlparse, urlunparse, parse_qs, quote, unquote
 
 
@@ -532,10 +533,9 @@ def canonical_url(url):
 
 
 def url_dedup_key(url):
-    """Comparison key: canonical URL, scheme-insensitive, trailing slash dropped."""
-    c = canonical_url(url or "")
-    c = re.sub(r"^https?://", "", c)
-    return c.rstrip("/")
+    """Comparison key: `_source_identity.source_key()`, the one every duplicate check uses since
+    2026-10-11 (task #96), so an x.com post matches its twitter.com link and a Short its watch link."""
+    return source_key(url or "")
 
 
 def resolve_url(url, timeout=25):

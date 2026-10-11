@@ -53,6 +53,7 @@ from _wiki_config import default_vault as _default_vault, default_topic as _defa
 from _entry_checks import check_entry_body, check_frontmatter_loadable, format_result, read_raw_text, split_frontmatter  # noqa: E402
 from _markdown import html_to_markdown  # noqa: E402 — HTML pages saved as Markdown (task #71)
 from _raw_dedup import check_raw, report  # noqa: E402 — content dedup (task #81 P5)
+from _source_identity import source_key  # noqa: E402 — one source identity for every dedup (task #96)
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -596,27 +597,12 @@ def _curate_backlink_candidates(inbound, wiki_dir, max_n=8, entry_path=None):
 
 
 def normalize_source_url(url):
-    """The form two source URLs are compared in: scheme and host lowercased,
-    `www.` and the trailing slash dropped, http -> https, fragment and tracking
-    parameters (utm_*, ref, source) removed, youtu.be/<id> -> youtube.com/watch?v=<id>,
-    and the path lowercased — GitHub's owner/repo is case-insensitive, and two
-    agentic-design duplicates differed only as NousResearch/nousresearch and
-    VoltAgent/voltagent (2026-09-14). The query keeps its case: YouTube ids are
-    case-sensitive. Non-web schemes (internal://) keep their scheme."""
-    u = str(url).strip().strip("\"'<>")
-    parts = urllib.parse.urlsplit(u)
-    if not parts.scheme or not parts.netloc:
-        return u.rstrip("/")
-    scheme = parts.scheme.lower()
-    scheme = "https" if scheme in ("http", "https") else scheme
-    host = parts.netloc.lower()
-    host = host[4:] if host.startswith("www.") else host
-    path, query = parts.path, parts.query
-    if host == "youtu.be" and path.strip("/"):
-        host, path, query = "youtube.com", "/watch", urllib.parse.urlencode({"v": path.strip("/")})
-    keep = [(k, v) for k, v in urllib.parse.parse_qsl(query, keep_blank_values=True)
-            if not k.lower().startswith("utm_") and k.lower() not in {"ref", "source"}]
-    return urllib.parse.urlunsplit((scheme, host, path.lower().rstrip("/"), urllib.parse.urlencode(keep), ""))
+    """The key two source URLs are compared by: `_source_identity.source_key()`, shared with the
+    queue, the dequeue and the Drive/Gmail steps since 2026-10-11 (task #96). It keeps this
+    function's old rules (scheme-blind, `www.`, trailing slash, fragment and tracking tags dropped,
+    the path lowercased for GitHub's case-blind owner/repo, 2026-09-14) and adds one key per X post,
+    YouTube video, arXiv paper and Instagram post whatever form the link takes."""
+    return source_key(url)
 
 
 def find_existing_by_url(wiki_root, url, also=()):

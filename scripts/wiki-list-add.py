@@ -34,6 +34,7 @@ from pathlib import Path
 # Atomic-write helper (icarus §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
+from _source_identity import source_key  # noqa: E402
 
 
 # Path-resolution helpers live in the shared _wiki_config module (single
@@ -123,8 +124,10 @@ def regenerate_pending_list(vault_root, topic):
 def _scan_for_url(path_iter, keys, target_url):
     """Iterate over `.md` files yielded by path_iter, scan the first 30 lines
     of each for any of `keys` (`source:` for queue tickets, `source_url:` for
-    wiki entries), and return the first file whose value equals target_url.
+    wiki entries), and return the first file whose value is the same source as
+    target_url, compared by `source_key()` (exact text until 2026-10-11, task #96).
     Returns the Path or None. Tolerates unreadable files (skips silently)."""
+    target_key = source_key(target_url)
     for p in path_iter:
         try:
             text = p.read_text(encoding="utf-8")
@@ -138,7 +141,7 @@ def _scan_for_url(path_iter, keys, target_url):
                     # Strip quotes if wrapped — frontmatter often uses "..."
                     if existing.startswith(('"', "'")) and existing.endswith(existing[0]):
                         existing = existing[1:-1]
-                    if existing == target_url:
+                    if source_key(existing) == target_key:
                         return p
                     break  # only check the first matching key per file
             else:

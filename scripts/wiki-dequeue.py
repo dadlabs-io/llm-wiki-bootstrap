@@ -31,16 +31,15 @@ import os
 import re
 import shutil
 import sys
-import urllib.parse
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _wiki_config  # noqa: E402
+from _source_identity import source_key  # noqa: E402
 
 
 def _norm(u: str) -> str:
-    """Normalize a URL for matching: strip scheme/www, decode %-escapes,
-    collapse arxiv ids, drop query/fragment.
+    """The key a ticket's source and an entry's source_url are matched by.
 
     GitHub URLs: keep the full blob/tree path when one is present (only
     normalizing away the `blob/<branch>/` or `tree/<branch>/` noise) — do
@@ -64,23 +63,11 @@ def _norm(u: str) -> str:
     re-queued (recoverable); a false positive silently drops a genuinely new
     source (not recoverable without exactly this kind of forensic dig).
     """
-    u = (u or "").strip().lower().rstrip("/")
-    u = re.sub(r"^https?://", "", u)
-    u = re.sub(r"^www\.", "", u)
-    u = u.split("?")[0].split("#")[0]
-    u = urllib.parse.unquote(u)  # decode %2F etc. BEFORE matching, not after
-    m = re.search(r"arxiv\.org/(?:abs|pdf|html)/(\d+\.\d+)", u)
-    if m:
-        return "arxiv:" + m.group(1)
-    m = re.match(r"github\.com/([^/]+)/([^/]+)(/.*)?$", u)
-    if m:
-        user, repo, rest = m.group(1), m.group(2), m.group(3) or ""
-        repo = repo.replace(".git", "")
-        if rest:
-            rest = re.sub(r"^/(?:blob|tree)/[^/]+/", "/", rest)
-            return f"github:{user}/{repo}{rest}"
-        return f"github:{user}/{repo}"
-    return u
+    # Since 2026-10-11 (task #96) the key is _source_identity.source_key(), shared with filing,
+    # the queue and the Drive/Gmail steps; it keeps the GitHub and arXiv rules above. The query is
+    # no longer cut off: that made every youtube.com/watch?v= link match every other, so a video
+    # never ingested was moved to done/ as soon as any YouTube entry existed.
+    return source_key(u)
 
 
 def _ingested_source_urls(wiki_dir: Path, proposed_dir: Path):
