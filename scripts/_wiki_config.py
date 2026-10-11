@@ -167,6 +167,19 @@ def is_session_dashboard(path) -> bool:
     return in_sessions(path) and not is_session_journal(path)
 
 
+# ---------- tasks/ (the task stack, task #89) ----------
+# A project on cards keeps one card per task in wiki/tasks/ (+ ORDER.md, archive/).
+# Cards are not entries: lint/map/index/reciprocate skip the folder, search drops
+# it, and an entry's link into it is a valid link. The lint runs the task check.
+TASKS_FOLDER = "tasks"
+
+
+def in_tasks(path) -> bool:
+    """True if ``path`` (relative to the wiki root) is under the top-level ``tasks/``."""
+    parts = Path(path).parts
+    return bool(parts) and parts[0] == TASKS_FOLDER
+
+
 def _find_config_path(cwd=None):
     """Walk up from cwd to the filesystem root; return the first existing
     ``.claude/wiki-config.json`` Path, or None. Makes resolution robust to being

@@ -40,6 +40,19 @@ main) and --cwd <dir>. `add`, `set` and `done` create the block when it is missi
 
 Prints the row it changed and `task_file=<path>`. Exit 0 ok; 2 bad input, an
 unknown task number, no wiki, or remove without --confirmed; 3 show found no block.
+
+Cards (task #89, agent-builder's task-stack design, 2026-10-10): a project whose wiki has
+tasks/ORDER.md keeps one card per task in tasks/<id>-<slug>.md instead (_task_cards.py).
+The same commands then work on the cards, prints `tasks_dir=<path>`, and adds:
+  python wiki-tasks.py check                         # the six rules; exit 1 on a breach
+  python wiki-tasks.py order <N> --top|--bottom|--before <M>|--after <M>
+  python wiki-tasks.py log <N> "<what happened>"     # a dated line in the card's **Log**
+  add/set also take --priority P1|P2|P3, --tags "a,b", --waiting-on "<text>", --link <target>
+`migrate [--dry-run] [--now <N>]` turns this persona's task.md into cards (it is what
+switches a project on): each live task's row, Task details and numbered QUEUE note move
+whole into its card, the rest of task.md goes unchanged to tasks/archive/task-md-<YYYY-MM>.md,
+and task.md becomes a two-line pointer. --tasks-dir <dir> names the cards folder (tests).
+Exit 1 also means `check` found a breach.
 """
 
 from __future__ import annotations
@@ -50,7 +63,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import _task_cards as tc  # noqa: E402
 from _atomic_io import atomic_write_text  # noqa: E402
+from _wiki_config import today_label  # noqa: E402
 
 HEADING = "## At a glance"
 MARKER_RE = re.compile(r"<!--\s*wiki-tasks\s+next-id:\s*(\d+)\s*-->")
@@ -71,8 +86,7 @@ OLD_INTRO = INTRO.replace("A task's details go in Task details below, under its 
                           "Notes on a task go below, keyed by its number.")
 
 
-class UserError(Exception):
-    pass
+UserError = tc.UserError  # one error type for both layouts
 
 
 def _cells(line: str) -> list[str]:
@@ -292,6 +306,267 @@ def row_line(s: dict, r: dict) -> str:
     return f"#{r['id']} | {r['task']} | {r['status']} | {r['next']} | owner: {s['name']}"
 
 
+# ---------- cards (tasks/ORDER.md present) ----------
+
+def card_line(c: "tc.Card") -> str:
+    nxt = f"waiting on: {c.get('waiting_on')}" if c.get("status") == "waiting" else c.get("next")
+    return f"#{c.id} | {c.get('title')} | {c.get('status')} | {nxt} | owner: {c.get('owner')}, list: {c.get('list')}"
+
+
+def _apply(c: "tc.Card", stack: "tc.Stack", args) -> None:
+    """The field flags of add / set onto one card."""
+    if getattr(args, "task", None) is not None and args.cmd == "set":
+        c.fields["title"] = _short(args.task, TASK_MAX, "the task")
+    if getattr(args, "status", None) is not None:
+        word = " ".join(str(args.status).lower().split())
+        if word == "parked":  # task.md's "park 5": on cards that is the backlog
+            c.fields["list"], c.fields["status"] = "backlog", "ready"
+            if c.id in stack.order:
+                stack.order.remove(c.id)
+        else:
+            c.fields["status"] = tc.card_status(word)
+    waiting = c.get("status") == "waiting"
+    if getattr(args, "waiting_on", None) is not None:
+        c.fields["waiting_on"] = " ".join(args.waiting_on.split())
+    if getattr(args, "next", None) is not None:
+        text = _short(args.next, NEXT_MAX, "next")
+        if waiting and getattr(args, "waiting_on", None) is None and args.status is not None:
+            c.fields["waiting_on"] = text  # "set 3 --status waiting --next Y": Y is what it waits on
+        else:
+            c.fields["next"] = text
+    if not waiting:
+        c.fields["waiting_on"] = ""
+    if getattr(args, "owner", None) is not None and args.cmd == "set":
+        c.fields["owner"] = _owner(args.owner)
+    if getattr(args, "priority", None) is not None:
+        p = args.priority.strip().upper()
+        if p and p not in tc.PRIORITIES:
+            raise UserError(f"priority must be one of {', '.join(tc.PRIORITIES)} (or \"\" to clear it)")
+        c.fields["priority"] = p
+    if getattr(args, "tags", None) is not None:
+        c.fields["tags"] = [t.strip() for t in args.tags.split(",") if t.strip()]
+    if getattr(args, "link", None):
+        links = list(c.get("links") or [])
+        c.fields["links"] = links + [ln for ln in args.link if ln not in links]
+    if getattr(args, "details", None) is not None:
+        c.set_details(args.details)
+
+
+def cards_main(args, stack: "tc.Stack") -> int:
+    today = today_label()
+    where = f"tasks_dir={stack.dir}"
+    if args.cmd == "show":
+        if args.n is not None:
+            print(stack.find(args.n).path.read_text(encoding="utf-8").rstrip())
+        else:
+            lines = tc.render(stack, args.tag)
+            if args.details:
+                cards = stack.by_id()
+                for n in stack.order:
+                    if n in cards and cards[n].body.strip():
+                        lines += ["", f"### #{n}: {cards[n].get('title')}", "", cards[n].body.strip()]
+            print("\n".join(lines))
+        print(where)
+        return 0
+    if args.cmd == "check":
+        errs = stack.check()
+        print("\n".join(errs) if errs else "ok: the six task rules hold")
+        print(where)
+        return 1 if errs else 0
+    if args.cmd in ("init", "migrate"):
+        raise UserError(f"this project is already on cards ({stack.order_path} exists)")
+
+    before = stack.check()
+    if args.cmd == "add":
+        if not args.task.strip():
+            raise UserError("the task text is empty")
+        c = stack.new_card(_short(args.task, TASK_MAX, "the task"), _owner(args.owner), today)
+        stack.order.append(c.id)
+        _apply(c, stack, args)
+        if args.backlog and c.get("list") == "current":
+            c.fields["list"] = "backlog"
+            stack.order.remove(c.id)
+        if c.get("status") == "done" and not c.get("next"):
+            c.fields["next"] = DONE_NEXT
+        changed = "added " + card_line(c)
+    else:
+        c = stack.find(args.n)
+        if args.cmd == "set":
+            _apply(c, stack, args)
+            changed = "updated " + card_line(c)
+        elif args.cmd == "done":
+            c.fields["status"], c.fields["waiting_on"] = "done", ""
+            c.fields["next"] = _short(args.next, NEXT_MAX, "next") if args.next else DONE_NEXT
+            if args.details is not None:
+                c.set_details(args.details)
+            changed = "updated " + card_line(c)
+        elif args.cmd == "backlog":
+            if c.get("list") == "backlog":
+                raise UserError(f"#{args.n} is already in the backlog (owner: {c.get('owner')})")
+            c.fields["list"] = "backlog"
+            if c.id in stack.order:
+                stack.order.remove(c.id)
+            changed = "moved to the backlog " + card_line(c)
+        elif args.cmd == "unbacklog":
+            if c.get("list") != "backlog":
+                raise UserError(f"#{args.n} is not in the backlog (list: {c.get('list')})")
+            c.fields["list"] = "current"
+            if args.owner:
+                c.fields["owner"] = _owner(args.owner)
+            stack.order.append(c.id)
+            changed = "back from the backlog " + card_line(c)
+        elif args.cmd == "remove":
+            if not args.confirmed:
+                raise UserError(f"#{args.n} is removed only on the user's word: ask them, then pass --confirmed")
+            if c.get("list") == "done":
+                raise UserError(f"#{args.n} was already removed from the list")
+            c.fields["list"] = "done"
+            if c.id in stack.order:
+                stack.order.remove(c.id)
+            changed = f"removed #{c.id} ({c.get('title')}) from the list; its card stays, list: done"
+        elif args.cmd == "order":
+            stack.place(c.id, top=args.top, bottom=args.bottom, before=args.before, after=args.after)
+            changed = f"#{c.id} is now {stack.order.index(c.id) + 1} of {len(stack.order)} in ORDER.md"
+        elif args.cmd == "log":
+            if not args.text.strip():
+                raise UserError("the log text is empty")
+            c.add_log(f"{today}: {' '.join(args.text.split())}")
+            changed = f"logged on #{c.id}: {today}: {' '.join(args.text.split())}"
+        else:
+            raise UserError(f"{args.cmd} does not apply to cards")
+    stack.touch(c, today)
+    stack.save(before)
+    print(changed)
+    print(where)
+    return 0
+
+
+# ---------- migrate: task.md -> cards ----------
+
+QUEUE_ITEM_RE = re.compile(r"^(\d+)\.\s")
+
+
+def _ranges(lines: list[str], heading: str, item_re: re.Pattern) -> dict[int, tuple[int, int]]:
+    """id -> (start, end) of each numbered item under a `## ` heading, up to the next item or heading."""
+    start = next((i for i, ln in enumerate(lines) if ln.strip() == heading), None)
+    if start is None:
+        return {}
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+    out: dict[int, tuple[int, int]] = {}
+    cur, cur_start = None, None
+    for i in range(start + 1, end + 1):
+        ln = lines[i] if i < end else "## "
+        m = item_re.match(ln)
+        if m or ln.startswith("#"):
+            if cur is not None and cur not in out:
+                stop = i
+                while stop > cur_start and not lines[stop - 1].strip():
+                    stop -= 1
+                out[cur] = (cur_start, stop)
+            cur, cur_start = (int(m.group(1)), i) if m else (None, None)
+    return out
+
+
+def migrate(board: Board, task_path: Path, tasks_dir: Path, now_id: int | None, dry_run: bool) -> int:
+    today = today_label()
+    if not board.exists:
+        raise UserError(f"{task_path} has no At a glance block: nothing to migrate")
+    if tasks_dir.exists() and any(tasks_dir.glob("*.md")):
+        raise UserError(f"{tasks_dir} already holds files; migrate only into an empty folder")
+    archive = tasks_dir / tc.ARCHIVE_DIR / f"task-md-{today[:7]}.md"
+    if archive.exists():
+        raise UserError(f"{archive} already exists")
+    lines = board.lines
+    details_at = _ranges(lines, DETAILS_HEADING, DETAIL_RE)
+    queue_at = _ranges(lines, "## QUEUE", QUEUE_ITEM_RE)
+
+    stack = tc.Stack(tasks_dir)
+    stack.virtual = True
+    moved: set[int] = set()
+    report = []
+    for s in board.sections:  # file order
+        for r in s["rows"]:
+            word = r["status"].strip().lower()
+            in_backlog = is_backlog(s) or word == "parked"
+            status = "ready" if word in ("parked", "to do", "todo", "to-do") else word
+            if status not in tc.STATUSES:
+                raise UserError(f"#{r['id']}: status {r['status']!r} has no card status")
+            owner = (r.get("owner") or UNASSIGNED) if is_backlog(s) else s["name"]
+            body = list(board.details.get(r["id"], []))
+            note = []
+            if r["id"] in queue_at:
+                a, b = queue_at[r["id"]]
+                note = lines[a:b]
+                body += ([""] if body else []) + ["**From the old QUEUE**", ""] + note
+            c = tc.Card(tasks_dir / f"{r['id']}-{tc.slugify(r['task'])}.md",
+                        {"id": r["id"], "title": " ".join(r["task"].split()), "owner": owner,
+                         "list": "backlog" if in_backlog else "current", "status": status,
+                         "next": "" if status == "waiting" else r["next"],
+                         "waiting_on": (r["next"] or "not recorded in task.md") if status == "waiting" else "",
+                         "priority": "", "tags": [], "created": today, "updated": today, "links": []},
+                        "\n".join(body).strip("\n"))
+            stack.cards.append(c)
+            stack.dirty.add(r["id"])
+            if not in_backlog:
+                stack.order.append(r["id"])
+            moved.add(r["id"])
+            report.append(f"card {c.path.name} | list {c.get('list')} | status {status} | owner {owner} | "
+                          f"details {len(board.details.get(r['id'], []))} lines | QUEUE note "
+                          f"{f'{len(note)} lines' if note else 'none'}")
+    if now_id is not None:
+        if now_id not in stack.order:
+            raise UserError(f"--now {now_id}: not a current task")
+        stack.place(now_id, top=True)
+    stack.next_id = board.next_id
+
+    # the archive: task.md less the block and the pieces moved whole into cards
+    drop = set(range(board.start, board.end))
+    for n, (a, b) in list(details_at.items()) + list(queue_at.items()):
+        if n in moved:
+            drop.update(range(a, b))
+    if board.d_start is not None and not any(
+            lines[i].strip() for i in range(board.d_start + 1, board.d_end) if i not in drop):
+        drop.update(range(board.d_start, board.d_end))
+    kept, blank = [], False
+    for i, ln in enumerate(lines):
+        if i in drop:
+            continue
+        if not ln.strip():
+            if blank or not kept:
+                continue
+            blank = True
+        else:
+            blank = False
+        kept.append(ln)
+    archive_text = (f"# task.md as it was on {today}, less the tasks moved to cards\n\n"
+                    f"The live tasks went to `wiki/tasks/<id>-<slug>.md` on {today}: each one's row, Task details "
+                    "and numbered QUEUE note, moved whole. Everything else of the old task.md is below, unchanged.\n\n"
+                    + "\n".join(kept).rstrip() + "\n")
+    rel = archive.relative_to(tasks_dir.parent).as_posix()
+    pointer = (f"# Tasks moved to cards ({today})\n\n"
+               f"Every task is a card in `tasks/`, `tasks/ORDER.md` is the working order, and this file's history "
+               f"is in `{rel}`.\n")
+
+    errs = stack.check()
+    print("\n".join(report))
+    print("ORDER.md: " + (", ".join(str(n) for n in stack.order) or "(empty)") + f"; next-id {stack.next_id}")
+    print(f"archive: {archive} ({len(kept)} lines kept of {len(lines)})")
+    print(f"task.md: becomes a two-line pointer to tasks/ ({task_path})")
+    print("check: " + ("ok, the six task rules hold" if not errs else "\n  " + "\n  ".join(errs)))
+    if errs:
+        raise UserError("refused: the migrated cards would break the task rules (above)")
+    if dry_run:
+        print("dry run: nothing written")
+    else:
+        archive.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write_text(archive, archive_text)
+        stack.save([])
+        atomic_write_text(task_path, pointer)
+        print(f"migrated {len(stack.cards)} tasks to cards")
+    print(f"tasks_dir={tasks_dir}")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -299,21 +574,41 @@ def main(argv: list[str]) -> int:
     common.add_argument("--file")
     common.add_argument("--persona")
     common.add_argument("--cwd")
+    common.add_argument("--tasks-dir", help="the cards folder (default: the wiki's tasks/)")
+    fields = argparse.ArgumentParser(add_help=False)  # card fields; refused on a task.md list
+    fields.add_argument("--priority")
+    fields.add_argument("--tags", help="comma-separated; replaces the card's tags")
+    fields.add_argument("--waiting-on")
+    fields.add_argument("--link", action="append", help="a link to keep on the card (repeatable)")
     ap = argparse.ArgumentParser(description="The At a glance task list in sessions/<persona>/task.md.")
     sub = ap.add_subparsers(dest="cmd")
     p = sub.add_parser("show", parents=[common])
     p.add_argument("n", type=int, nargs="?", help="one task, with its details")
     p.add_argument("--details", action="store_true", help="the overview, then every task's details")
+    p.add_argument("--tag", help="cards only: just the tasks with this tag")
     p = sub.add_parser("init", parents=[common])
     p.add_argument("--owners", help="comma-separated owner sections (default: User,<persona>,Unassigned)")
-    p = sub.add_parser("add", parents=[common])
+    sub.add_parser("check", parents=[common])
+    p = sub.add_parser("order", parents=[common])
+    p.add_argument("n", type=int)
+    p.add_argument("--top", action="store_true")
+    p.add_argument("--bottom", action="store_true")
+    p.add_argument("--before", type=int)
+    p.add_argument("--after", type=int)
+    p = sub.add_parser("log", parents=[common])
+    p.add_argument("n", type=int)
+    p.add_argument("text")
+    p = sub.add_parser("migrate", parents=[common])
+    p.add_argument("--dry-run", action="store_true", help="list what would move; write nothing")
+    p.add_argument("--now", type=int, help="the task to put first in ORDER.md")
+    p = sub.add_parser("add", parents=[common, fields])
     p.add_argument("task")
     p.add_argument("--owner", default="Unassigned")
     p.add_argument("--status", default="to do")
     p.add_argument("--next", default="")
     p.add_argument("--details", help="the task's details (any length), kept under Task details")
     p.add_argument("--backlog", action="store_true", help="file it straight into the backlog, keeping --owner")
-    p = sub.add_parser("set", parents=[common])
+    p = sub.add_parser("set", parents=[common, fields])
     p.add_argument("n", type=int)
     p.add_argument("--task")
     p.add_argument("--status")
@@ -338,7 +633,21 @@ def main(argv: list[str]) -> int:
 
     try:
         path, persona = resolve(args)
+        # a wiki's tasks/ sits beside sessions/: <wiki>/sessions/<persona>/task.md -> <wiki>/tasks
+        tasks_dir = (Path(args.tasks_dir) if args.tasks_dir
+                     else None if args.file else tc.tasks_dir_of(path.parent.parent.parent))
+        if tasks_dir is not None and tc.is_on(tasks_dir):
+            return cards_main(args, tc.Stack(tasks_dir))
+        if args.cmd in ("check", "order", "log"):
+            raise UserError(f"`{args.cmd}` works on cards; this project keeps its tasks in {path}")
+        if args.cmd in ("add", "set") and any(getattr(args, k, None) is not None
+                                              for k in ("priority", "tags", "waiting_on", "link")):
+            raise UserError(f"--priority, --tags, --waiting-on and --link are card fields; {path} has none")
         board = Board(path.read_text(encoding="utf-8") if path.is_file() else "")
+        if args.cmd == "migrate":
+            if tasks_dir is None:
+                raise UserError("migrate needs the cards folder: run it from the project, or pass --tasks-dir")
+            return migrate(board, path, tasks_dir, args.now, args.dry_run)
         # No placeholder section for the user: theirs is created, under their name, by the first task
         # given to them (investment-agent, 2026-09-15: a first `add --owner main` left an empty "User"
         # section beside the "Mark" one made next).

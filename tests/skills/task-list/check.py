@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -73,12 +74,197 @@ The user said: """
 
 
 def prompt(case: dict, ctx: dict) -> str:
-    shutil.copy2(HERE / "fixtures" / case.get("seed", DEFAULT_SEED), ctx["task_md"])  # a fresh list per case
+    tasks_dir = ctx["notebook"] / "wiki" / "tasks"
+    if tasks_dir.exists():  # a project is on cards exactly when wiki/tasks/ORDER.md exists: never leave one behind
+        shutil.rmtree(tasks_dir)
+    if case.get("tasks_seed"):  # a card project: the seed folder becomes wiki/tasks/, and there is no task.md
+        shutil.copytree(HERE / "fixtures" / case["tasks_seed"], tasks_dir)
+        if ctx["task_md"].exists():
+            ctx["task_md"].unlink()
+    else:
+        shutil.copy2(HERE / "fixtures" / case.get("seed", DEFAULT_SEED), ctx["task_md"])  # a fresh list per case
     return HEADER.format(skill=ctx["skill_dir"].as_posix(), notebook=NOTEBOOK, nb=ctx["notebook"].as_posix(),
                          sandbox=ctx["sandbox"].as_posix()) + case["say"]
 
 
+# ---- card projects (tasks/ORDER.md): checks read the files only, with their own small parser ----
+CARD_KINDS = ("card-top", "card-done-named")
+CARD_REQUIRED = ("id", "title", "owner", "list", "status", "created", "updated")
+CARD_LISTS = ("current", "backlog", "done")
+CARD_STATUSES = ("ready", "doing", "waiting", "done")
+
+
+def _card_fields(text: str):
+    """(front matter fields as normalised strings, body) of one card; ({}, text) when it has no front matter."""
+    lines = text.replace("\r\n", "\n").split("\n")
+    if not lines or lines[0].strip() != "---":
+        return {}, text.strip()
+    end = next((i for i in range(1, len(lines)) if lines[i].strip() == "---"), None)
+    if end is None:
+        return {}, text.strip()
+    fields = {}
+    for ln in lines[1:end]:
+        if ":" not in ln or ln.lstrip().startswith("#"):
+            continue
+        key, _, val = ln.partition(":")  # the first colon only: a title may hold more
+        val = re.sub(r"\s+#.*$", "", val).strip()
+        if val.startswith("["):
+            val = re.sub(r"[\s\"']", "", val)
+        else:
+            if len(val) >= 2 and val[0] == val[-1] and val[0] in "\"'":
+                val = val[1:-1]
+            val = " ".join(val.split())
+        fields[key.strip()] = val
+    return fields, "\n".join(lines[end + 1:]).strip()
+
+
+def _card_state(tasks: Path):
+    """(cards {file name: (fields, body)}, ORDER.md ids top to bottom, next-id or None, other file names, has ORDER.md)"""
+    cards, others = {}, []
+    for p in sorted(tasks.rglob("*")):
+        if not p.is_file():
+            continue
+        rel = p.relative_to(tasks).as_posix()
+        if rel == "ORDER.md":
+            continue
+        if re.match(r"^\d+-[^/]*\.md$", rel):
+            cards[rel] = _card_fields(p.read_text(encoding="utf-8"))
+        else:
+            others.append(rel)
+    order_path = tasks / "ORDER.md"
+    text = order_path.read_text(encoding="utf-8") if order_path.is_file() else ""
+    m = re.search(r"<!--\s*next-id:\s*(\d+)\s*-->", text)
+    ids = [int(x) for x in re.findall(r"^\s*[-*]\s*(\d+)\b", text, re.M)]  # the id is the key; a title is optional
+    return cards, ids, (int(m.group(1)) if m else None), others, order_path.is_file()
+
+
+def _card_rules(cards: dict, order: list, next_id) -> list[str]:
+    """The six rules of the card design; returns the violations (empty when all hold)."""
+    bad, by_prefix, by_field = [], {}, {}
+    for name, (f, _) in cards.items():
+        pre = int(re.match(r"^(\d+)-", name).group(1))
+        by_prefix.setdefault(pre, []).append(name)
+        cid = f.get("id", "")
+        if cid.isdigit():
+            by_field.setdefault(int(cid), []).append(name)
+        if not (cid.isdigit() and int(cid) == pre):
+            bad.append(f"3: {name} does not start with its own id (id field '{cid}')")
+        missing = [k for k in CARD_REQUIRED if not f.get(k)]
+        if missing:
+            bad.append(f"4: {name} lacks {missing}")
+        if f.get("list") and f["list"] not in CARD_LISTS:
+            bad.append(f"4: {name} list '{f['list']}'")
+        if f.get("status") and f["status"] not in CARD_STATUSES:
+            bad.append(f"4: {name} status '{f['status']}'")
+        if bool(f.get("waiting_on")) != (f.get("status") == "waiting"):
+            bad.append(f"5: {name} waiting_on '{f.get('waiting_on', '')}' with status '{f.get('status')}'")
+    for d in (by_prefix, by_field):
+        for i, names in d.items():
+            if len(names) > 1:
+                bad.append(f"3: id {i} shared by {names}")
+    ids = set(by_prefix) | set(by_field)
+    current = {int(f["id"]) for f, _ in cards.values() if f.get("list") == "current" and f.get("id", "").isdigit()}
+    for i in sorted(current):
+        if order.count(i) != 1:
+            bad.append(f"1: current card {i} appears {order.count(i)} times in ORDER.md")
+    for i in sorted(set(order) - current):
+        bad.append(f"1: ORDER.md holds {i}, which is not a current card")
+    for i in sorted(set(order) - ids):
+        bad.append(f"2: ORDER.md holds {i}, which has no card")
+    if next_id is None or (ids and next_id <= max(ids)):
+        bad.append(f"6: next-id {next_id} is not above every card id")
+    return bad
+
+
+def check_cards(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
+    res = []
+
+    def add(name, ok, detail=""):
+        res.append({"name": name, "ok": bool(ok), "detail": str(detail)[:300]})
+
+    r = run["result"]
+    add("session completed", r.get("subtype") == "success" and not r.get("is_error"),
+        r.get("subtype") or run.get("stderr_tail") or "no result event")
+    denials = r.get("permission_denials") or []
+    add("no permission denials", not denials, [d.get("tool_name") if isinstance(d, dict) else d for d in denials])
+
+    nb = ctx["notebook"]
+    tasks = nb / "wiki" / "tasks"
+    s_cards, s_order, _, s_others, _ = _card_state(HERE / "fixtures" / case["tasks_seed"])
+    cards, order, next_id, others, has_order = _card_state(tasks)
+    target, kind = case["target"] if "target" in case else case["task"], case["kind"]
+
+    def file_of(cs, i):
+        return next((n for n in cs if int(n.split("-")[0]) == i), None)
+
+    def fields_of(cs, i):
+        n = file_of(cs, i)
+        return cs[n][0] if n else {}
+
+    def now_id():  # NOW: the first card in ORDER.md whose status is not done
+        return next((i for i in order if fields_of(cards, i).get("status") != "done"), None)
+
+    rel_task_md = ctx["task_md"].relative_to(nb).as_posix()
+    touched = sorted(k for k in set(before) | set(after)
+                     if k != rel_task_md and not k.startswith("wiki/tasks/") and before.get(k) != after.get(k))
+    add("ORDER.md still there", has_order)
+    add("same card files, none added, renamed or deleted", sorted(cards) == sorted(s_cards) and others == s_others,
+        sorted(set(cards) ^ set(s_cards)) or others)
+    add("the six rules hold", not _card_rules(cards, order, next_id), _card_rules(cards, order, next_id))
+    add("task.md not touched (a card project has none)", not ctx["task_md"].exists())
+    add("nothing else in the notebook touched", not touched, touched)
+    add(f"NOW is {case['now_after']}", now_id() == case["now_after"], now_id())
+
+    tname = file_of(s_cards, target)
+    t_now = fields_of(cards, target)
+
+    def untouched(skip_ids, allowed):
+        """cards other than skip_ids: every field except `allowed`, and the body, as in the seed."""
+        diff = []
+        for name, (f, body) in s_cards.items():
+            i = int(name.split("-")[0])
+            if i in skip_ids or name not in cards:
+                continue
+            nf, nbody = cards[name]
+            if {k: v for k, v in f.items() if k not in allowed} != {k: v for k, v in nf.items() if k not in allowed} \
+                    or body != nbody:
+                diff.append(i)
+        return diff
+
+    if kind == "card-top":
+        want = [target] + [i for i in s_order if i != target]
+        add(f"ORDER.md is {want}: {target} on top, the rest in their old order", order == want, order)
+        add(f"task {target} is still a current card, not done",
+            t_now.get("list") == "current" and t_now.get("status") in ("ready", "doing"), t_now)
+        s_fields = s_cards[tname][0]
+        keep = {k for k in s_fields if k not in ("updated", "status")}
+        add(f"task {target}: only status/updated may differ", all(t_now.get(k) == s_fields[k] for k in keep), t_now)
+        add("no other card changed", not untouched({target}, {"updated"}), untouched({target}, {"updated"}))
+        return res
+
+    if kind == "card-done-named":
+        add(f"task {target} marked done", t_now.get("status") == "done", t_now)
+        add(f"task {target} stays on the current list (nothing removed)", t_now.get("list") == "current", t_now)
+        add(f"task {target} still in ORDER.md exactly once", order.count(target) == 1, order)
+        add("ORDER.md holds the same cards", sorted(order) == sorted(s_order), order)
+        s_fields = s_cards[tname][0]
+        keep = {k for k in s_fields if k not in ("status", "next", "waiting_on", "updated")}
+        add(f"task {target}: its other fields unchanged", all(t_now.get(k) == s_fields[k] for k in keep), t_now)
+        add("no other card changed", not untouched({target}, {"updated"}), untouched({target}, {"updated"}))
+        text = run["text"].lower()
+        removal = any(w in text for w in ("remov", "delet", "take it off", "off the list", "drop it", "clear it"))
+        offer = "?" in run["text"] or any(w in text for w in (
+            "let me know", "tell me", "say the word", "if you want", "if you'd like", "would you like",
+            "shall i", "should i", "want me to"))
+        add("asks whether to remove it", removal and offer, run["text"][-300:])
+        return res
+
+    raise ValueError(f"unknown card case kind: {case['id']}")
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
+    if case["kind"] in CARD_KINDS:
+        return check_cards(case, before, after, run, ctx)
     mod = _tasks(ctx["scripts"])
     res = []
 

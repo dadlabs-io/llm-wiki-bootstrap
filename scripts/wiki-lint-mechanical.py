@@ -36,7 +36,8 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, project_root as _project_root, now_stamp, search_mode  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, in_tasks as _in_tasks, project_root as _project_root, now_stamp, search_mode  # noqa: E402
+import _task_cards  # noqa: E402
 # Body-level rubric checks — shared with wiki-update.py's pre-write gate so the
 # lint backlog view and the gate enforce ONE rule set (_entry_checks.py, 2026-09-02).
 from _entry_checks import check_entry_body, is_exempt, check_frontmatter_loadable, split_frontmatter, is_superseded, read_raw_text  # noqa: E402
@@ -110,8 +111,8 @@ def collect_md_files(wiki_root):
         if path.name in {"_INDEX.md", "_MAP.md"}:
             continue  # skip auto-generated index/map files
         rel = path.relative_to(wiki_root)
-        if "_inbox" in rel.parts or _in_sessions(rel):
-            continue  # _inbox = scratch/reports; sessions/ = non-curated working/episodic memory
+        if "_inbox" in rel.parts or _in_sessions(rel) or _in_tasks(rel):
+            continue  # _inbox = scratch/reports; sessions/ = non-curated working/episodic memory; tasks/ = cards
         yield path
 
 
@@ -327,6 +328,10 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
         return 1
 
     files = list(collect_md_files(wiki_root))
+
+    # The task stack (task #89): cards are not entries, so they get the task check, not the entry rules
+    on_cards = _task_cards.is_on(_task_cards.tasks_dir_of(wiki_root))
+    task_problems = _task_cards.Stack(_task_cards.tasks_dir_of(wiki_root)).check() if on_cards else []
 
     # Pass 1: build a map of all wiki files (resolved absolute paths)
     file_map = {p.resolve(): p for p in files}
@@ -654,9 +659,19 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                f"entries failing a hard rule={body_err_files}, warnings-only={body_warn_files}")
     out.append(f"**Code drift (`describes`)**: changed={len(describes_changed)}, "
                f"invalid={len(describes_invalid)}, not checked={len(describes_unchecked)}")
+    if on_cards:
+        out.append(f"**Task cards (`tasks/`)**: {len(task_problems)} rule breach(es)")
     out.append("")
     out.append("---")
     out.append("")
+
+    if on_cards:
+        out.append("## 🗂️ Task cards")
+        out.append("")
+        out.append("_None — the six task rules hold._" if not task_problems
+                   else "Fix each by hand or with `wiki-tasks.py`; `wiki-tasks.py check` re-runs this.")
+        out += [f"- {p}" for p in task_problems]
+        out.append("")
 
     # Section: broken links
     out.append("## 🔗 Broken Links")
@@ -1047,6 +1062,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             "missing_confidence": len(missing_confidence),
             "invalid_confidence": len(invalid_confidence),
             "unquoted_yaml": len(unquoted_yaml),
+            "task_problems": len(task_problems),
         }, broken_links, orphans, standalone, wiki_root, report_path)
         print(f"Cycle step files: {Path(run_folder) / 'lint-mechanical.json'} (+ .md)")
 
@@ -1056,7 +1072,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     # backlogs are backfilled — flipping them is a one-line change here.
     # Non-strict (default) always returns 0 — report is informational.
     if strict:
-        if broken_links or icarus_total > 0 or invalid_ingested_by:
+        if broken_links or icarus_total > 0 or invalid_ingested_by or task_problems:
             return 1
     return 0
 

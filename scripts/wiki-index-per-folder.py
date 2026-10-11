@@ -43,7 +43,7 @@ from __future__ import annotations
 import sys as _sys  # noqa: E402
 from pathlib import Path as _ShimPath  # noqa: E402
 _sys.path.insert(0, str(_ShimPath(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, future_label as _future_label  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, in_tasks as _in_tasks, future_label as _future_label  # noqa: E402
 import argparse
 import json
 import re
@@ -298,8 +298,8 @@ def main() -> int:
         # Skip hidden, _-prefixed (e.g. _inbox), and already-processed.
         if child.name.startswith((".", "_")):
             continue
-        if _in_sessions(child.relative_to(wiki_root)):
-            continue  # sessions/ = non-curated working/episodic memory; no per-folder INDEX
+        if _in_sessions(child.relative_to(wiki_root)) or _in_tasks(child.relative_to(wiki_root)):
+            continue  # sessions/ = non-curated working/episodic memory, tasks/ = cards; no per-folder INDEX
         if child.resolve() in seen_dirs:
             continue
         seen_dirs.add(child.resolve())

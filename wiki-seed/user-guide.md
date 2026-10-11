@@ -30,7 +30,7 @@ It is plain Markdown under git. Every entry carries the same frontmatter (tier, 
 | `/wiki-cycle` | The research cycle: gather, triage, ingest, check, lint, report. `--full` adds the deeper passes. |
 | `/wiki-search "<query>"` | Hybrid search (keyword + meaning + reranking) across the wiki. |
 | `/wrap-up` | End of a session: the journal, the resume files, and the session's durable entries, staged and offered for promotion; any skill suggestions in the box are put to you. |
-| `/task-list` | The project's task list: one short row per task, one table per owner and a Backlog for tasks set aside (each keeps its owner); each task's longer details are kept apart and shown on request ("show my tasks with details", "details on 25"); plain speech works too ("add a task …", "mark 3 done", "move 5 to the backlog"). |
+| `/task-list` | The project's task list: one short row per task, one table per owner and a Backlog for tasks set aside (each keeps its owner); each task's longer details are kept apart and shown on request ("show my tasks with details", "details on 25"); plain speech works too ("add a task …", "mark 3 done", "move 5 to the backlog"). A project can keep its tasks as cards instead, one file per task, worked in a set order. |
 | `/wiki-promote` | Review staged entries and move the ones you approve into `wiki/`. |
 | `/wiki-verify` | Mark an entry verified. Entries never certify themselves. |
 | `/wiki-rollback` | Walk an entry back to its last verified version. |
@@ -141,6 +141,7 @@ A notebook (in a notebooks vault, or `<project>/llm-wiki/` for a wiki kept insid
     ├── _MAP.md                   generated: the compressed map the agent always loads
     ├── project/                  what you build: decisions, patterns, bugs, architecture, …
     ├── research/<folder>/        what you read, one folder per subject
+    ├── tasks/                    task cards, one per task, and ORDER.md   (only in a project on cards)
     └── sessions/                 the agent's working memory
         ├── active-context.md     the resume pointer
         └── <persona>/            handoff.md, task.md, and <YYYY-MM>/ journals
@@ -158,7 +159,7 @@ The usage docs (this page and the others in `how-to/`) and the framework-contrac
 - **An empty `_inbox/` folder is removed.** `proposed/`, `rejected/` and `discovered/` exist only while they hold something, so the listing alone shows what awaits you.
 - **A source waits in `pending/`, is triaged into an `intake/` bucket, and moves to `done/` once ingested.** `done/` is what stops a source being ingested twice.
 - **A page nothing links to** is an orphan, unless its frontmatter declares `standalone: "<reason>"` (the landing page does).
-- **`sessions/` is working memory, not curated content.** `/wrap-up` writes it; the lint and the indexes skip it, and search still finds it.
+- **`sessions/` is working memory, not curated content.** `/wrap-up` writes it; the lint and the indexes skip it, and search still finds it. Task cards (`tasks/`) are skipped too, search included; the lint checks them against their own rules instead.
 - **The global toolset is framework-managed:** its `how-to/` pages and `wiki/project/best-practices/framework/` docs are refreshed from the framework, and a local edit is overwritten. Ask for the change in the framework instead.
 
 ## The ideas it is built on

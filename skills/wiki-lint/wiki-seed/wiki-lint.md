@@ -13,7 +13,7 @@ A health check on the wiki, available at two depths. The default pass is a fast 
 
 **Trigger:** */wiki-lint* — also "lint the wiki", "wiki health check", "check the wiki for issues". For the deep pass: */wiki-lint --full*, "semantic lint", "find contradictions", "find missing connections in the wiki".
 
-**Input / Output:** Reads the entries under `wiki/` (not `sessions/` or the generated `_INDEX.md` / `_MAP.md`). The mechanical mode prints its report and saves it to `_inbox/reports/lint-report.md` (`_inbox/` sits beside `wiki/` at the notebook root). It covers:
+**Input / Output:** Reads the entries under `wiki/` (not `sessions/`, task cards in `tasks/`, or the generated `_INDEX.md` / `_MAP.md`). The mechanical mode prints its report and saves it to `_inbox/reports/lint-report.md` (`_inbox/` sits beside `wiki/` at the notebook root). It covers:
 
 - broken links, live `[[wikilink]]` syntax the link checker cannot follow, and orphan pages (a retired entry is not an orphan; a page meant to stand alone, such as the wiki's HOME, says so with `standalone: "<reason>"` in its frontmatter and is listed apart with that reason)
 - stale "pending" notes of our own: "pending ingestion" or "awaiting fetch" in any entry; "not yet built" or a `TODO:` marker in our own (tier `self`) entries only, since in a research entry those words are usually the source describing its own plans. Quotes, code, links and frontmatter are skipped
@@ -23,8 +23,9 @@ A health check on the wiki, available at two depths. The default pass is a fast 
 - the truth-status and lineage fields (`verified`, `type`, `revises`, `contradicted_by`, and the like)
 - search-index coverage: files the search index holds against `.md` files on disk
 - the body checks shared with the ingest gate: a TL;DR, a Related section with at least two wiki links (a warning for tier `self`), the entry layout (body, then the Source/Raw footer, then the auto backlinks block), three or more tags, `stub` on thin entries, and numbers on `>` blockquote lines rather than in prose. Here they only warn: they show the backlog in existing entries, while the gate refuses a new entry that breaks a hard rule (TL;DR, Related, layout, or frontmatter that would not parse). Hub, system and framework-contract pages and retired entries are exempt.
+- task cards, in a project that keeps one card per task (`wiki/tasks/` with `tasks/ORDER.md`): the cards are not entries, so none of the checks above apply to them, though a link to a card still resolves. Instead the report gives a Task cards section listing every break of the cards' six rules (each current card in `ORDER.md` exactly once, every listed number has a card, numbers unique, required fields set, a waiting card says what it waits on, the next number above every card)
 
-The run exits 0. With `--strict` it exits 1 on broken links, an invalid truth-status or lineage field, or an out-of-range `ingested_by`.
+The run exits 0. With `--strict` it exits 1 on broken links, an invalid truth-status or lineage field, an out-of-range `ingested_by`, or a broken task-card rule.
 
 The full mode runs the mechanical pass first, then additionally writes `_inbox/reports/<agent>-semantic-lint-<date>.md`, evaluating every entry against six criteria — contradictions, missing cross-references, thin coverage, concept gaps, tier accuracy, and a catch-all — plus a drift-watch section for entries you have flagged as needing a deep comparison against a named canonical source.
 

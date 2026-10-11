@@ -1,6 +1,6 @@
 ---
 name: task-list
-description: "Keeps the project's task list, the At a glance block at the top of sessions/<persona>/task.md in the wiki: one table per owner (the user, each persona or bot, Unassigned), then a Backlog table that keeps each set-aside task's owner, one short row per task (a number that is never reused, the task, a status: to do / doing / waiting / parked / done, and what it waits on), with each task's longer details kept apart. Shows the list (the short rows; the details on request), adds a task, changes a task's status, owner or next step, moves one to the backlog and back, marks one done, and removes one only when the user says so. Use when the user types /task-list, or says 'add a task', 'new task', 'put X on the list', 'delete task 4', 'remove task 4', 'mark 2 done', 'task 3 is done', 'task 3 is waiting on Y', 'move task 5 to <owner>', 'move 5 to the backlog', 'take 5 off the backlog', 'what's on my list', 'show my tasks', 'what's left', 'show my tasks with details', 'details on 25'. Not Claude Code's /tasks (background jobs), and not a session's own scratch to-do list."
+description: "Keeps the project's task list, the At a glance block at the top of sessions/<persona>/task.md in the wiki: one table per owner (the user, each persona or bot, Unassigned), then a Backlog table that keeps each set-aside task's owner, one short row per task (a number that is never reused, the task, a status: to do / doing / waiting / parked / done, and what it waits on), with each task's longer details kept apart. Shows the list (the short rows; the details on request), adds a task, changes a task's status, owner or next step, moves one to the backlog and back, marks one done, and removes one only when the user says so. Use when the user types /task-list, or says 'add a task', 'new task', 'put X on the list', 'delete task 4', 'remove task 4', 'mark 2 done', 'task 3 is done', 'task 3 is waiting on Y', 'move task 5 to <owner>', 'move 5 to the backlog', 'take 5 off the backlog', 'what's on my list', 'show my tasks', 'what's left', 'show my tasks with details', 'details on 25'. On a project with task cards (wiki/tasks/ORDER.md, one card per task) it does the same on the cards, and also reorders them ('put 5 first', 'do 5 after 3') and adds a dated note to one ('note on 12: …'). Not Claude Code's /tasks (background jobs), and not a session's own scratch to-do list."
 last_reviewed: 2026-10-01
 review_after: 2026-12-30
 reviewed_for_model: claude-opus-5-5
@@ -23,6 +23,10 @@ Last comes `### Backlog`, for tasks set aside: its table has an Owner column, so
 waits there. `Backlog` is never an owner name; the script refuses it as `--owner`.
 
 **Every edit goes through the script, never by hand**: it keeps the numbering, the escaping and the layout.
+
+**A project on cards** (its wiki has `tasks/ORDER.md`; every call ends `tasks_dir=` instead of `task_file=`) keeps
+one card per task instead of the block. Read `cards.md` beside this file before the first command there: the same
+commands work, plus `order`, `log` and `check`.
 
 ```bash
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show [<N>] [--details]

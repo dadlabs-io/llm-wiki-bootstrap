@@ -150,6 +150,24 @@
       "task": 3,
       "say": "I've finished cleaning up the old build scripts.",
       "author": "eval-case-writer"
+    },
+    {
+      "id": "card-move-to-top",
+      "kind": "card-top",
+      "tasks_seed": "card-project",
+      "task": 7,
+      "now_after": 7,
+      "say": "Do task 7 next — put it at the top.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-done-by-words",
+      "kind": "card-done-named",
+      "tasks_seed": "card-project",
+      "task": 3,
+      "now_after": 1,
+      "say": "I've finished writing the onboarding guide draft.",
+      "author": "eval-case-writer"
     }
   ]
 }

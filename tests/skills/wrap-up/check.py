@@ -54,6 +54,18 @@ DECLINES = re.compile(
     r"not worth (a|an) (wiki )?entry|too (trivial|small|thin)|doesn'?t merit|"
     r"no candidates|nothing to file|nothing durable", re.I)
 ASKS_REMOVE = re.compile(r"remove", re.I)
+CARD_LISTS = ("current", "backlog", "done")
+CARD_STATUSES = ("ready", "doing", "waiting", "done")
+CARD_REQUIRED = ("id", "title", "owner", "list", "status", "created", "updated")
+EMPTY_VALUES = ("", "null", "~")
+SEED_CARD_IDS = {1, 2, 3, 4, 5}
+SEED_STATE = {1: {"list": "current", "status": "doing", "owner": "main", "waiting_on": ""},
+              2: {"list": "current", "status": "doing", "owner": "main", "waiting_on": ""},
+              3: {"list": "current", "status": "waiting", "owner": "dana", "waiting_on": "vendor reply"},
+              4: {"list": "backlog", "status": "ready", "owner": "main", "waiting_on": ""},
+              5: {"list": "done", "status": "done", "owner": "main", "waiting_on": ""}}
+SEED_LOG = {1: "- 2026-10-07: Opened the task; found the seam is only described in code comments.",
+            2: "- 2026-10-06: Drafted RetryBudget as an elapsed-time allowance in beacon/retry.py."}
 CLOSING = {None: "✅ WRAP-UP COMPLETE: nothing committed ✅",
            "commit": "✅ WRAP-UP COMPLETE: committed, not pushed ✅",
            "push": "✅ WRAP-UP COMPLETE: committed and pushed ✅"}
@@ -292,6 +304,16 @@ def _reset_notebook(case: dict, ctx: dict) -> None:
         ctx["notebook_head"] = _git(nbrepo, "rev-parse", "HEAD").strip()
 
 
+def _reset_cards(case: dict, ctx: dict) -> None:
+    """wiki/tasks/ back to this case's card seed, or gone: a project is on cards exactly when it has tasks/ORDER.md."""
+    tasks = ctx["wiki"] / "tasks"
+    if tasks.exists():
+        _rmtree(tasks)
+    seed = case.get("cards")
+    if seed:
+        shutil.copytree(HERE / "fixtures" / "cards" / seed, tasks)
+
+
 HEADER = """You are running an automated test of the wrap-up skill. The skill under test is at {skill}/SKILL.md. Read it and follow it exactly, as if this were the end of a real session in this project. Do not use any installed copy of the skill.
 
 You are in the `beacon` project at {project}; its notebook is `{notebook}` at {nb}, and this session's persona is `{persona}`. This session's id is `{sid}` — use it where the skill asks for a session id. Write only inside {sandbox}, and run scripts as `python <path> ...` with no environment-variable prefix.
@@ -306,6 +328,7 @@ The user cannot reply while this runs. Where the skill says to wait for the user
 def prompt(case: dict, ctx: dict) -> str:
     _reset_project(case, ctx)
     _reset_notebook(case, ctx)
+    _reset_cards(case, ctx)
     answers = []
     if case.get("answer"):
         answers.append(f"At the proposal table (Step 2), the user answers: `{case['answer']}`.")
@@ -339,6 +362,170 @@ def _promoted(ctx: dict) -> list[Path]:
     return sorted(out)
 
 
+def _read_cards(tasks: Path) -> tuple[dict, str]:
+    """Every card under wiki/tasks (not ORDER.md) as file name -> {"fm", "body"}, and ORDER.md's text."""
+    cards = {}
+    for p in sorted(tasks.glob("*.md")):
+        if p.name == "ORDER.md":
+            continue
+        text = p.read_text(encoding="utf-8")
+        fm, body = {}, text
+        m = re.match(r"---\r?\n(.*?)\r?\n---\r?\n?(.*)\Z", text, re.S)
+        if m:
+            body = m.group(2)
+            for line in m.group(1).splitlines():
+                k = re.match(r"([A-Za-z_]+):\s*(.*?)\s*$", line)
+                if k and not line.startswith((" ", "\t")):
+                    fm[k.group(1)] = k.group(2)
+        cards[p.name] = {"fm": fm, "body": body}
+    order_file = tasks / "ORDER.md"
+    return cards, (order_file.read_text(encoding="utf-8") if order_file.is_file() else "")
+
+
+def _cval(card: dict, key: str) -> str:
+    v = str(card["fm"].get(key, "")).strip().strip("\"'").strip()
+    return "" if v in EMPTY_VALUES else v
+
+
+def _card_rule_problems(cards: dict, order: str) -> list[str]:
+    """The six rules of a card project, each read from the files alone."""
+    problems, ids = [], {}
+    for name, c in cards.items():
+        missing = [k for k in CARD_REQUIRED if not _cval(c, k)]
+        if missing:
+            problems.append(f"{name}: required field missing {missing}")
+        cid = _cval(c, "id")
+        if cid.isdigit():
+            ids.setdefault(int(cid), []).append(name)
+            if not re.match(rf"0*{int(cid)}-", name):
+                problems.append(f"{name}: file name does not start with its id {cid}")
+        else:
+            problems.append(f"{name}: id {cid!r} is not a number")
+        if _cval(c, "list") not in CARD_LISTS:
+            problems.append(f"{name}: list {_cval(c, 'list')!r}")
+        if _cval(c, "status") not in CARD_STATUSES:
+            problems.append(f"{name}: status {_cval(c, 'status')!r}")
+        if (_cval(c, "status") == "waiting") != bool(_cval(c, "waiting_on")):
+            problems.append(f"{name}: waiting_on must be filled exactly when status is waiting")
+    problems += [f"id {i} on several cards {n}" for i, n in ids.items() if len(n) > 1]
+    order_ids = [int(i) for i in re.findall(r"^-\s*(\d+)\b", order, re.M)]
+    problems += [f"id {i} listed twice in ORDER.md" for i in set(order_ids) if order_ids.count(i) > 1]
+    current = {i for i, n in ids.items() if _cval(cards[n[0]], "list") == "current"}
+    if current - set(order_ids):
+        problems.append(f"current cards missing from ORDER.md: {sorted(current - set(order_ids))}")
+    if set(order_ids) - current:
+        problems.append(f"ORDER.md ids with no current card: {sorted(set(order_ids) - current)}")
+    nxt = re.search(r"<!--\s*next-id:\s*(\d+)\s*-->", order)
+    if not nxt:
+        problems.append("ORDER.md has no next-id comment")
+    elif ids and int(nxt.group(1)) <= max(ids):
+        problems.append(f"next-id {nxt.group(1)} is not above the highest id {max(ids)}")
+    return problems
+
+
+def _log_lines(body: str):
+    """The dated bullet lines under a `**Log**` heading, or None when the card has no such heading."""
+    m = re.search(r"^\*\*Log\*\*:?\s*$", body, re.M)
+    if not m:
+        return None
+    return [ln for ln in body[m.end():].splitlines() if re.match(r"-\s+\d{4}-\d{2}-\d{2}:\s*\S", ln)]
+
+
+def _check_cards(case: dict, before: dict, after: dict, run: dict, ctx: dict, add) -> None:
+    """kind "cards": a project on the task stack (wiki/tasks/ORDER.md exists). Reads the cards, never the commands."""
+    from datetime import date
+    exp = case.get("expect") or {}
+    text = run["text"]
+    today = date.today().isoformat()
+    r = run["result"]
+    add("session completed", r.get("subtype") == "success" and not r.get("is_error"),
+        r.get("subtype") or run.get("stderr_tail") or "no result event")
+    errs = run.get("error_texts") or {}
+    denials = [d for d in (r.get("permission_denials") or [])
+               if not (isinstance(d, dict) and "read-guard:" in str(errs.get(d.get("tool_use_id"), "")))]
+    add("no permission denials", not denials,
+        [d.get("tool_name") if isinstance(d, dict) else d for d in denials])
+
+    wiki = ctx["wiki"]
+    tasks = wiki / "tasks"
+    cards, order = _read_cards(tasks)
+    add("tasks/ORDER.md is still there", (tasks / "ORDER.md").is_file())
+    problems = _card_rule_problems(cards, order)
+    add("the six card rules hold", bool(cards) and not problems, problems or "no cards found")
+    by_id = {int(_cval(c, "id")): c for c in cards.values() if _cval(c, "id").isdigit()}
+    order_ids = [int(i) for i in re.findall(r"^-\s*(\d+)\b", order, re.M)]
+    nxt = re.search(r"<!--\s*next-id:\s*(\d+)\s*-->", order)
+    nxt = int(nxt.group(1)) if nxt else None
+
+    # a task leaves the list only on the user's word: nothing deleted, nothing set to list: done
+    add("no card deleted (every seeded id still has a card)", SEED_CARD_IDS <= set(by_id),
+        sorted(SEED_CARD_IDS - set(by_id)))
+    done_list = {i for i, c in by_id.items() if _cval(c, "list") == "done"}
+    add("no card moved to list: done", done_list == {5}, sorted(done_list))
+
+    touched = {int(k): v for k, v in (exp.get("touched") or {}).items()}
+    for cid, want in touched.items():
+        c = by_id.get(cid)
+        add(f"touched card has the expected status, is still list current and still in ORDER.md ({cid})",
+            c is not None and _cval(c, "status") == want and _cval(c, "list") == "current" and cid in order_ids,
+            {k: _cval(c, k) for k in ("status", "list")} if c else "no such card")
+        lines = _log_lines(c["body"]) if c else None
+        add(f"touched card has exactly one Log line dated today under **Log** ({cid})",
+            lines is not None and sum(1 for ln in lines if re.match(rf"-\s+{today}:\s*\S", ln)) == 1,
+            lines if lines is not None else "no **Log** heading")
+        add(f"touched card keeps its earlier Log line ({cid})", bool(c) and SEED_LOG[cid] in c["body"])
+    changed = []
+    for cid, want in SEED_STATE.items():
+        if cid in touched:
+            continue
+        c = by_id.get(cid)
+        got = {k: _cval(c, k) for k in want} if c else None
+        if got != want:
+            changed.append((cid, got))
+    add("no other card changed its list, status, owner or waiting_on", not changed, changed)
+
+    if exp.get("names"):
+        add("the summary names the finished task", bool(re.search(exp["names"], text)))
+        add("the summary asks whether to remove it", bool(ASKS_REMOVE.search(text)))
+    if exp.get("new_card"):
+        new = sorted(i for i in by_id if i not in SEED_CARD_IDS)
+        add("exactly one new card", len(new) == 1, new)
+        if len(new) == 1:
+            nc = by_id[new[0]]
+            add("new card is list current and the last line of ORDER.md",
+                _cval(nc, "list") == "current" and order_ids[-1:] == [new[0]], order_ids)
+            add("next-id advanced past the seed's 6 and above the new id",
+                nxt is not None and nxt > 6 and nxt > new[0], nxt)
+            add("new card is about the manifest rotation",
+                exp["new_card"] in (nc["body"] + _cval(nc, "title")).lower(), _cval(nc, "title"))
+
+    # task.md on a card project is a pointer: no NOW/QUEUE section, no 'Earlier —' history
+    persona_dir = wiki / "sessions" / PERSONA
+    task_md = persona_dir / "task.md"
+    if task_md.is_file():
+        tt = task_md.read_text(encoding="utf-8")
+        add("task.md carries no NOW or QUEUE section and no Earlier history",
+            not re.search(r"(?m)^\s*(?:#{1,6}\s*|\*\*)?(?:NOW|QUEUE)\b", tt)
+            and not re.search(r"Earlier\s*[—–-]", tt), tt[:120])
+
+    # the handoff, the journal and active-context are written as on any project
+    handoff = persona_dir / "handoff.md"
+    add("handoff.md written with every section", handoff.is_file() and
+        not [s for s in HANDOFF_SECTIONS if s not in handoff.read_text(encoding="utf-8")])
+    journals = _journals(ctx)
+    add("exactly one journal for this session, named with the session id",
+        len(journals) == 1 and SID in journals[0].name, [p.name for p in journals])
+    active = wiki / "sessions" / "active-context.md"
+    add("active-context.md written with this persona's section",
+        active.is_file() and f"## {PERSONA}" in active.read_text(encoding="utf-8"))
+    final = str(run["result"].get("result") or "").strip().splitlines()
+    last = final[-1].strip() if final else ""
+    add("ends on the closing line", last == CLOSING[None], f"last line: {last[:120]!r}")
+    wiki_rel = {k for k in set(before) | set(after) if before.get(k) != after.get(k) and k.startswith("wiki/")}
+    stray = sorted(k for k in wiki_rel if not k.startswith(("wiki/sessions/", "wiki/tasks/")))
+    add("wrote nothing into wiki/ but sessions/ and tasks/", not stray, stray)
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     gate = _load(ctx["scripts"], "_entry_checks.py", "entry_checks")
     cfgmod = _load(ctx["scripts"], "_wiki_config.py", "wiki_config")
@@ -349,6 +536,10 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
 
     def add(name, ok, detail=""):
         res.append({"name": name, "ok": bool(ok), "detail": str(detail)[:300]})
+
+    if case.get("kind") == "cards":
+        _check_cards(case, before, after, run, ctx, add)
+        return res
 
     r = run["result"]
     add("session completed", r.get("subtype") == "success" and not r.get("is_error"),

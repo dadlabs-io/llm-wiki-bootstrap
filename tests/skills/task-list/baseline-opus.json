@@ -48,6 +48,37 @@
     "status is 'to do'": true,
     "other tasks untouched": true
   },
+  "card-done-by-words": {
+    "session completed": true,
+    "no permission denials": true,
+    "ORDER.md still there": true,
+    "same card files, none added, renamed or deleted": true,
+    "the six rules hold": true,
+    "task.md not touched (a card project has none)": true,
+    "nothing else in the notebook touched": true,
+    "NOW is 1": true,
+    "task 3 marked done": true,
+    "task 3 stays on the current list (nothing removed)": true,
+    "task 3 still in ORDER.md exactly once": true,
+    "ORDER.md holds the same cards": true,
+    "task 3: its other fields unchanged": true,
+    "no other card changed": true,
+    "asks whether to remove it": true
+  },
+  "card-move-to-top": {
+    "session completed": true,
+    "no permission denials": true,
+    "ORDER.md still there": true,
+    "same card files, none added, renamed or deleted": true,
+    "the six rules hold": true,
+    "task.md not touched (a card project has none)": true,
+    "nothing else in the notebook touched": true,
+    "NOW is 7": true,
+    "ORDER.md is [7, 3, 1, 4, 2]: 7 on top, the rest in their old order": true,
+    "task 7 is still a current card, not done": true,
+    "task 7: only status/updated may differ": true,
+    "no other card changed": true
+  },
   "delete-plain": {
     "session completed": true,
     "no permission denials": true,
@@ -63,6 +94,23 @@
     "task 2 still on the list": true,
     "task 2 marked done": true,
     "asks whether to remove it": true,
+    "other tasks untouched": true
+  },
+  "done-by-words": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "task 3 still on the list": true,
+    "task 3 marked done": true,
+    "asks whether to remove it": true,
+    "other tasks untouched": true
+  },
+  "move-owner-plain": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "section is 'main'": true,
+    "owner is 'main'": true,
     "other tasks untouched": true
   },
   "show-details": {

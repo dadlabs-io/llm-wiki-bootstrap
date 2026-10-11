@@ -8,8 +8,8 @@ Active persona: **main** (`sessions/<persona>/` is per persona; an installed rol
 architect reads its own folder; a session that works as another persona sets `"persona"` in `.claude/wiki-config.json`).
 
 At startup and after `/clear`, the llm-wiki SessionStart hook (`wiki-session-start.py`, installed globally) lists the
-paths of `<notebook>/wiki/sessions/active-context.md` and `sessions/<persona>/handoff.md` + `task.md`; read the files it
-lists before the first reply (`<notebook>` is `C:/github.com/project-notebooks/notebooks/llm-wiki-bootstrap`, this repo's
+paths of `<notebook>/wiki/sessions/active-context.md` and `sessions/<persona>/handoff.md`, then `tasks/ORDER.md` and the NOW card (this notebook keeps one card per
+task since 2026-10-10; `task.md` is a pointer); read the files it lists before the first reply (`<notebook>` is `C:/github.com/project-notebooks/notebooks/llm-wiki-bootstrap`, this repo's
 own notebook per `.claude/wiki-config.json`). **Fallback** — if no hook message is in your context, read them yourself,
 each if present; with no `handoff.md` yet, read the
 newest journal under `sessions/<persona>/<YYYY-MM>/`, else treat the project as new.

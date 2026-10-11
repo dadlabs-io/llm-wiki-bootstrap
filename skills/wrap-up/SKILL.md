@@ -127,6 +127,8 @@ Promote the next QUEUE item to NOW as work completes.
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> --next "<what happened>"
 ```
 
+**When the wiki has `tasks/ORDER.md`** (the project keeps one card per task; 2026-10-10), there is no NOW / QUEUE to write: `task.md` is only a pointer, so leave it. Use the same commands on the cards (`done`, `add`, `set`), and log each card this session worked on, once: `wiki-tasks.py log <N> "<what happened>"`. When the NOW card is finished, the next card in `ORDER.md` becomes NOW; to change that order, use `wiki-tasks.py order <N> --top`.
+
 **Never `remove`.** A task leaves the list only on the user's word. Name every task you marked done in Step 5's summary and ask there whether to remove them — the ask belongs in the report you are already writing, not left to memory. A `task.md` without the block is left without one.
 
 **(c) `sessions/active-context.md` — update ONLY your persona's lines** (Status / Recent / Next) in this cross-persona dashboard. Do NOT touch another persona's section; do NOT rewrite the file. Skip only if your section already describes what you are doing.

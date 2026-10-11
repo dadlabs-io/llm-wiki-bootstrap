@@ -565,7 +565,7 @@ def _curate_backlink_candidates(inbound, wiki_dir, max_n=8, entry_path=None):
         name = path.name.lower()
         if name in _NO_BACKLINK_FILES or name.startswith("_"):
             continue
-        if "/" not in rel or rel.split("/", 1)[0] == "sessions":
+        if "/" not in rel or rel.split("/", 1)[0] in ("sessions", "tasks"):
             continue
         linked = path.stem.lower() in outbound
         multiword = " " in term

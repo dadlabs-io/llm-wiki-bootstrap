@@ -65,7 +65,8 @@ What it does:
   - runs `qmd query` under a timeout that kills the whole process tree
   - GPU full or a transient CUDA fault: back off and retry; after the last
     retry exit 75 — stop and report; NEVER a fallback to `qmd search`
-  - drops the machine files (_MAP.md, _INDEX.md) from text and --json results;
+  - drops the machine files (_MAP.md, _INDEX.md) and the task stack (wiki/tasks/) from text and
+    --json results;
     they are orientation pages, never a link target
   - logs one JSON line per call to <slot-dir>/searches.jsonl, including how many
     candidates qmd reranked; --stats sums it
@@ -573,16 +574,23 @@ def retired(qmd_file: str) -> bool:
     return is_superseded(split_frontmatter(head)[0])
 
 
+def task_file(qmd_file: str) -> bool:
+    """A file under the wiki's tasks/ (cards, ORDER.md, the archive): the task stack is outside search
+    (task #89, Mark: "having tasks outside of the search is fine"). qmd indexes the whole wiki/, and its
+    per-collection `ignore` is YAML-only, so the results drop them here."""
+    return re.search(r"/wiki/tasks/", qmd_file.replace("\\", "/"), re.I) is not None
+
+
 def drop_machine_files(out: str, fmt: str, k: int) -> tuple[str, int]:
-    """Remove _MAP/_INDEX results and retired entries (2026-09-14), then trim to
-    k; returns (output, dropped count)."""
+    """Remove _MAP/_INDEX results, retired entries (2026-09-14) and task cards (2026-10-10), then trim
+    to k; returns (output, dropped count)."""
     if fmt == "json":
         try:
             rows = json.loads(out)
         except ValueError:
             return out, 0
         keep = [r for r in rows if Path(str(r.get("file", ""))).name.lower() not in MACHINE_FILES
-                and not retired(str(r.get("file", "")))]
+                and not retired(str(r.get("file", ""))) and not task_file(str(r.get("file", "")))]
         return json.dumps(keep[:k], indent=2) + "\n", len(rows) - len(keep)
     if fmt == "text":
         lines = out.splitlines(keepends=True)
@@ -595,7 +603,8 @@ def drop_machine_files(out: str, fmt: str, k: int) -> tuple[str, int]:
                 head.append(line)
             else:
                 cur.append(line)
-        keep = [b for b in blocks if result_file(b[0]) not in MACHINE_FILES and not retired(b[0])]
+        keep = [b for b in blocks if result_file(b[0]) not in MACHINE_FILES and not retired(b[0])
+                and not task_file(b[0])]
         return "".join(head) + "".join("".join(b) for b in keep[:k]), len(blocks) - len(keep)
     return out, 0
 

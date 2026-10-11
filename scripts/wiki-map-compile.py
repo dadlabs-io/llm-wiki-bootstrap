@@ -388,8 +388,8 @@ def process(wiki_root: Path, topic: str, dry_run: bool = False) -> dict:
     for child in sorted(wiki_root.iterdir()):
         if not child.is_dir() or child.name.startswith("."):
             continue
-        if child.name == "sessions":
-            continue  # non-curated working/episodic memory — not orientation knowledge
+        if child.name in ("sessions", "tasks"):
+            continue  # non-curated working/episodic memory and the task cards — not orientation knowledge
         entries = collect_folder_entries(child)
         if entries:
             folder_data[child.name] = entries

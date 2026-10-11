@@ -17,7 +17,8 @@ points the shared skills at that project's own wiki. The agents (below) are the 
 subagents, installed to `~/.claude/agents/`: an ingest worker (2026-08-20) and a checker that
 reads its work against the source (2026-09-24). The hook, added to
 `~/.claude/settings.json`, lists a wiki project's resume files (`sessions/active-context.md`, then
-`sessions/<persona>/handoff.md` and `task.md`) when a session starts and after `/clear`, so the
+`sessions/<persona>/handoff.md` and `task.md`, or on task cards `tasks/ORDER.md` and the NOW card)
+when a session starts and after `/clear`, so the
 session picks up where the last one left off; outside a wiki project it prints nothing.
 
 Every skill has its own page in the sibling `skills/` folder — linked below. For the guided
@@ -30,7 +31,7 @@ version of this list, see [`user-guide.md`](./user-guide.md) (the whole system o
 | Skill | One line |
 |---|---|
 | [`wrap-up`](./skills/wrap-up.md) | End of session: updates the session journal and the resume dashboards (handoff, task, active-context), stages durable entries, then offers to promote them |
-| [`task-list`](./skills/task-list.md) | The project's task list at the top of `task.md`: short rows (the details kept apart, shown on request), one table per owner, then a Backlog that keeps each set-aside task's owner; add, mark done, move to the backlog and back, remove only on your word. Plain speech works ("add a task …", "move 5 to the backlog", "delete task 4") |
+| [`task-list`](./skills/task-list.md) | The project's task list at the top of `task.md`: short rows (the details kept apart, shown on request), one table per owner, then a Backlog that keeps each set-aside task's owner; add, mark done, move to the backlog and back, remove only on your word. Plain speech works ("add a task …", "move 5 to the backlog", "delete task 4"). A project can move to task cards instead: one file per task in `wiki/tasks/`, worked in the order `tasks/ORDER.md` sets |
 | [`writing-skill-suggestions`](./skills/writing-skill-suggestions.md) | When a skill got in the way: a four-line note in `_inbox/skill-suggestions/`, then the work carries on; `/wrap-up` puts it to you. The whole loop: [skill-suggestions](./skill-suggestions.md) |
 | [`improving-skills-from-suggestions`](./skills/improving-skills-from-suggestions.md) | The owner's side: collects a note sent to it (`receive`), checks it against the run and the skill, proposes changes, records your decision |
 | [`wiki-update`](./skills/wiki-update.md) | Ingest one external source (URL, video, PDF, X post, file, pasted text) and file it directly into the wiki (`--staged` to stage it for review); two or more URLs are queued for `wiki-cycle` |

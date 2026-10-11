@@ -22,7 +22,7 @@ If the user asks for help (any phrasing — "how do I...", "what commands...", "
 
 Active persona: **main** (`sessions/<persona>/` is per persona; an installed role agent such as developer or architect reads its own folder; a session that works as another persona sets `"persona"` in `.claude/wiki-config.json`).
 
-At startup and after `/clear`, the llm-wiki SessionStart hook lists the paths of `{{WIKI_PATH}}/sessions/active-context.md` and `sessions/<persona>/handoff.md` + `task.md`; read the files it lists before the first reply. **Fallback** — if no hook message is in your context (no hook on this machine), read them yourself, each if present; with no `handoff.md` yet, read the newest journal under `sessions/<persona>/<YYYY-MM>/`, else treat the project as new. Also read the project status doc if this project keeps one: (none yet — e.g. `project/roadmap.md`).
+At startup and after `/clear`, the llm-wiki SessionStart hook lists the paths of `{{WIKI_PATH}}/sessions/active-context.md` and `sessions/<persona>/handoff.md` + `task.md` (on task cards, `tasks/ORDER.md` and the NOW card instead of `task.md`); read the files it lists before the first reply. **Fallback** — if no hook message is in your context (no hook on this machine), read them yourself, each if present; with no `handoff.md` yet, read the newest journal under `sessions/<persona>/<YYYY-MM>/`, else treat the project as new. Also read the project status doc if this project keeps one: (none yet — e.g. `project/roadmap.md`).
 Open the first reply, whatever the user said, with one paragraph on where we left off and what is next. A project with a Discord bot does its channel catch-up after this read.
 
 ## Where memory lives (four-layer model)
@@ -42,6 +42,7 @@ The split makes "what to load on session start" structurally clear: sessions + p
 Folders under `{{WIKI_PATH}}/` (the ones this project uses; each half — `project/`, `research/` — exists only if it was chosen at scaffold time or added since):
 - **`sessions/<persona>/YYYY-MM/`** — per-agent episodic log; immutable once written
 - **`sessions/active-context.md`**, **`sessions/<persona>/{handoff,task}.md`** — the resume dashboards; overwritten in place by `/wrap-up`, listed at startup by the SessionStart hook (Resuming, above). The task list at the top of `task.md` is kept by `/task-list`.
+- **`tasks/`** (only once the project moves to task cards) — one card per task plus `tasks/ORDER.md`, the working order; `task.md` becomes a pointer. `/task-list` and `/wrap-up` keep them; the lint checks their rules.
 - **`project/components/`** — modules / classes / systems we've built
 - **`project/decisions/`** — ADR-style decisions with the *why* preserved
 - **`project/architecture/`** — system-level structural rules

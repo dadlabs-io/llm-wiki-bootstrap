@@ -34,8 +34,9 @@ Checks:
 - **Code drift (added 2026-09-17)** — each `describes: <path>[@<commit>]` checked against the project's repo (the registry entry's `project_root`, or the folder above an in-project `llm-wiki/`): changed since the pinned commit or after `last_reviewed` (re-read the entry), invalid (bad path or commit, or outside `project/`), or not checked (no repo). Warn-only, even with `--strict`
 - Icarus schema invariants (`verified` / `type` enums, `contradicted_by` / `revises` / `review_of` / `synthesis_of` references)
 - **Body checks (added 2026-09-02)** — the mechanical half of the eval rubric, via `_entry_checks.py`, the SAME code `wiki-update.py` runs as a hard pre-write gate on every new entry: `## TL;DR` present (bold `**TL;DR**` lead accepted), `## Related` with 2+ wiki links (warning for `tier: self`), 3+ tags, thin entries (under 30 lines and under 300 words) tagged `stub`, numeric claims outside a `>` blockquote. Here they are the **backlog view** over existing entries and warn only; wiki-root hub pages and `framework-contract: true` docs are exempt.
+- **Task cards (added 2026-10-10)** — in a project on cards (`wiki/tasks/ORDER.md` exists) the cards are not entries: `tasks/` is skipped by every check above (a link to a card still resolves), and the report's `## 🗂️ Task cards` section lists each break of the cards' six rules instead
 
-Exit code: `--strict` fails on broken links, icarus invariant violations, and out-of-enum `ingested_by`. Presence and body checks stay warn-only in strict mode until their backlogs are worked down (one-line flip in the script's exit block). New entries never join the backlog: the gate in `wiki-update.py` refuses them at write time.
+Exit code: `--strict` fails on broken links, icarus invariant violations, out-of-enum `ingested_by`, and task-card rule breaks. Presence and body checks stay warn-only in strict mode until their backlogs are worked down (one-line flip in the script's exit block). New entries never join the backlog: the gate in `wiki-update.py` refuses them at write time.
 
 Output: report printed to stdout + saved at `<topic>/_inbox/reports/lint-report.md`.
 
@@ -63,7 +64,7 @@ If the file doesn't exist, skip this step. Topic owners can choose whether to ma
 
 ### Step 2: Read ALL files first
 
-Read every `.md` file in `<topic>/wiki/` (excluding _INDEX.md) using the Read tool. **Read them all before writing any findings.** This gives you full context for cross-reference and contradiction detection — you can't judge if something is missing a link unless you know what pages exist.
+Read every `.md` file in `<topic>/wiki/` (excluding _INDEX.md and the task cards in `tasks/`) using the Read tool. **Read them all before writing any findings.** This gives you full context for cross-reference and contradiction detection — you can't judge if something is missing a link unless you know what pages exist.
 
 For drift-watch entries (from Step 1.5), also read the named canon source(s) — these are typically `.claude/skills/<skill>/SKILL.md` files outside the wiki, or other internal docs.
 

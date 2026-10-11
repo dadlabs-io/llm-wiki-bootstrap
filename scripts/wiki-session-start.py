@@ -14,7 +14,8 @@ Claude Code adds what it prints to the session's context. For each session:
   - resolves the project's wiki the way every wiki script does (_wiki_config:
     a registry notebook, or an in-project llm-wiki/)
   - prints, as the hook's JSON output, the paths of sessions/active-context.md,
-    sessions/<persona>/handoff.md and sessions/<persona>/task.md (each if present)
+    sessions/<persona>/handoff.md and sessions/<persona>/task.md (each if present;
+    a project on cards, with tasks/ORDER.md, gets ORDER.md and the NOW card instead)
     with the startup checklist to run before the first reply (additionalContext,
     for Claude), and one line for the user — the handoff's GOAL — shown in the
     terminal at startup (systemMessage)
@@ -104,8 +105,16 @@ def hook_output(start: Path) -> dict | None:
         return None
     persona = str(cfg.get("persona") or "main").strip().lower()
     sessions = wiki / "sessions"
-    files = [f for f in (sessions / "active-context.md", sessions / persona / "handoff.md",
-                         sessions / persona / "task.md") if f.is_file()]
+    # Cards (task #89): a project with tasks/ORDER.md reads ORDER.md and the NOW card, never every card
+    # nor the old task.md (agent-builder's design, Mark: "all it would have to read would be the top now one")
+    import _task_cards as tc
+    tasks = tc.tasks_dir_of(wiki)
+    on_cards = tc.is_on(tasks)
+    now_card = tc.Stack(tasks).now() if on_cards else None
+    task_files = ([tasks / tc.ORDER_NAME] + ([now_card.path] if now_card else [])) if on_cards \
+        else [sessions / persona / "task.md"]
+    files = [f for f in (sessions / "active-context.md", sessions / persona / "handoff.md", *task_files)
+             if f.is_file()]
     if not files:
         return None
     name = cfg.get("project_name") or root.name
@@ -117,6 +126,10 @@ def hook_output(start: Path) -> dict | None:
              "1. Read each of these files in full: the whole file, no head/tail or byte or line limit, and "
              "every part if it comes back in parts:"]
     lines += [f"   {i}. {f} ({f.stat().st_size / 1024:.1f} KB)" for i, f in enumerate(files, 1)]
+    if on_cards:
+        lines.append(f"   The tasks are cards in {tasks}: read only the NOW card above (the first in ORDER.md not "
+                     "done), no other card." if now_card else
+                     f"   The tasks are cards in {tasks}, and ORDER.md has no open task: ask the user what to work on.")
     lines += ["2. Read in full each memory file the MEMORY.md index in your context points to.",
               "3. Do every other step in the project CLAUDE.md's Resuming section (e.g. the intake inbox, the "
               "Discord channel catch-up).",
