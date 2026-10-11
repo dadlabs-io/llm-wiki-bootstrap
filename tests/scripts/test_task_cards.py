@@ -384,6 +384,18 @@ with tempfile.TemporaryDirectory() as tmp:
     check("search: card and ORDER.md results are dropped, an entry kept",
           dropped == 2 and "project/decisions/x.md" in kept and "tasks/" not in kept, kept)
 
+    # --- card file names: cut at the last whole word within 50 characters (agent-builder's pilot)
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import _task_cards as tcm
+    long_title = "GitHub CI: run our tests in Actions, read results automatically"
+    s = tcm.slugify(long_title)
+    check("slug: a long title is cut at a whole word, not mid-word",
+          len(s) <= 50 and long_title.lower().replace(":", "").replace(",", "").replace(" ", "-").startswith(s)
+          and s == "github-ci-run-our-tests-in-actions-read-results", s)
+    check("slug: a short title is kept whole", tcm.slugify("Decide the -C ceiling: 120 or 200")
+          == "decide-the-c-ceiling-120-or-200")
+    check("slug: one word longer than 50 is still cut at 50", len(tcm.slugify("x" * 70)) == 50)
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

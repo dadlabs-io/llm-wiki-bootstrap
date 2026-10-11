@@ -67,7 +67,10 @@ def is_on(tasks_dir: Path) -> bool:
 
 def slugify(title: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", str(title).lower()).strip("-")
-    return s[:50].rstrip("-") or "task"
+    if len(s) > 50:
+        cut = s[:51]  # a hyphen at index 50 means the 50th character ends a whole word
+        s = cut[:cut.rfind("-")] if "-" in cut else s[:50]  # the last whole word; one long word is cut at 50
+    return s.rstrip("-") or "task"
 
 
 def card_status(s: str) -> str:
