@@ -26,7 +26,8 @@ waits there. `Backlog` is never an owner name; the script refuses it as `--owner
 
 **A project on cards** (its wiki has `tasks/ORDER.md`; every call ends `tasks_dir=` instead of `task_file=`) keeps
 one card per task instead of the block. Read `cards.md` beside this file before the first command there: the same
-commands work, plus `order`, `log` and `check`.
+commands work, plus `order`, `log` and `check`. Read it too before moving a project onto cards (only on the user's
+word): its last section is the checklist.
 
 ```bash
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show [<N>] [--details]

@@ -1,7 +1,7 @@
 # /task-list on cards — the task stack
 
-Read this when the project is on cards: its wiki has `tasks/ORDER.md`, and every `wiki-tasks.py` call ends with
-`tasks_dir=<path>` instead of `task_file=`. The same script and the same two rules apply; this file says only what
+Read this when the project is on cards (its wiki has `tasks/ORDER.md`, and every `wiki-tasks.py` call ends with
+`tasks_dir=<path>` instead of `task_file=`), and before moving a project onto cards. The same script and the same two rules apply; this file says only what
 is different. (agent-builder's design, 2026-10-10, agreed with Mark; agent-builder-bootstrap is the first project on
 cards.)
 
@@ -48,8 +48,22 @@ Everything in SKILL.md's table works the same, with these differences:
 
 ## Moving a project onto cards
 
-Only on the user's word. `migrate --dry-run` lists each card it would write (with its details and its numbered QUEUE
-note), the ORDER.md it would write and the archive. Show the user, then run `migrate --now <N>`, where N is the
-task to put first. Each live task's row, Task details and QUEUE note move whole into its card. Everything else in
+Only on the user's word. Each live task's row, Task details and QUEUE note move whole into its card. Everything else in
 task.md (NOW's history, closed notes) goes unchanged to `tasks/archive/task-md-<YYYY-MM>.md`, and task.md becomes a
-pointer. Afterwards, the startup hook lists ORDER.md and the NOW card instead of task.md.
+pointer. The checklist (from agent-builder's pilot and this notebook's move, 2026-10-10):
+
+1. **Add any task still only in the conversation, then commit task.md** by path. A task not yet written is the one
+   lost in a move.
+2. **`migrate --dry-run`, and show the user every line:** the card count (compare it with the At a glance rows), each
+   card's list and status, the details and QUEUE-note line counts (a live task with a long QUEUE note and 0 lines
+   means the note was missed), the ORDER.md it proposes, the archive's lines kept. Nothing is written.
+3. **Choose NOW with the user.** The proposed ORDER.md takes the current tasks by owner table in file order, so the
+   user's own table comes first. `--now <N>` puts N first; after the run, fix the rest with `order <N> --after <M>`.
+4. **`migrate --now <N>`, then `check`, then commit `wiki/tasks/` and the task.md pointer** with a pathspec
+   (`git commit -- <paths>`): another session's staged file must not ride along.
+5. **Change the project's CLAUDE.md Resuming lines.** The startup hook switches by itself, but an existing project's
+   CLAUDE.md still names task.md: it should read handoff.md, then ORDER.md and the NOW card, and no other card.
+6. **Sweep what still describes task.md:** the project's auto-memory (`~/.claude/projects/<project>/memory/`), its
+   CLAUDE.md, and any skill suggestion in its box about task.md's layout that the cards replace.
+7. A persona's list moves on its own: a second persona's `sessions/<persona>/task.md` stays until it is migrated too
+   (`--persona <name>`).
