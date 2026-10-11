@@ -54,6 +54,30 @@ DECLINES = re.compile(
     r"not worth (a|an) (wiki )?entry|too (trivial|small|thin)|doesn'?t merit|"
     r"no candidates|nothing to file|nothing durable", re.I)
 ASKS_REMOVE = re.compile(r"remove", re.I)
+OFFER = re.compile(r"\?|let me know|tell me|say the word|if you(?:'d)? (?:want|like)|would you like|shall i|should i|want me to",
+                   re.I)
+REMOVED = re.compile(r"\bremoved\b|\bdeleted\b|\btook\b.{0,30}\boff\b|\btaken off\b|off the (task )?list|\bdropped\b|\bcleared\b", re.I)
+BASE_REMOVAL = re.compile(r"\b(remove|delete)\b|take (it|that|this|them) off|drop it|clear it", re.I)
+OFFER_WORDS = ("let me know", "tell me", "say the word", "if you want", "if you'd like", "would you like",
+               "shall i", "should i", "want me to")
+
+
+def _asks_about_removing(raw: str, task_id: int, name_pattern: str | None = None) -> bool:
+    """True when a question or open offer about removing is about THIS task: its number or its name pattern.
+
+    Sentences are cut at . ! ? ; and newlines. A sentence that names another task's number is not about this
+    task, because a session-finished task is rightly asked about (requirement A).
+    """
+    own = re.compile(rf"(?:task|card|#)\s*0?{task_id}\b", re.I)
+    for m in re.finditer(r"[^.!?;\n]+[.!?;]?", raw):
+        s = m.group().strip()
+        if not (BASE_REMOVAL.search(s) and (s.endswith("?") or any(o in s.lower() for o in OFFER_WORDS))):
+            continue
+        about_own = bool(own.search(s) or (name_pattern and re.search(name_pattern, s, re.I)))
+        names_other = any(int(n) != task_id for n in re.findall(r"(?:task|card|#)\s*0?(\d+)\b", s, re.I))
+        if about_own and not names_other:
+            return True
+    return False
 CARD_LISTS = ("current", "backlog", "done")
 CARD_STATUSES = ("ready", "doing", "waiting", "done")
 CARD_REQUIRED = ("id", "title", "owner", "list", "status", "created", "updated")
@@ -335,7 +359,12 @@ def prompt(case: dict, ctx: dict) -> str:
     if case.get("promote_answer"):
         answers.append(f"At the promotion prompt (Step 6), the user answers: `{case['promote_answer']}`.")
     if case.get("finished_task"):
-        answers.append(f"For the task list: task {case['finished_task']} was finished in this session.")
+        n = case["finished_task"]
+        if case["finished_by"] == "user":
+            answers.append(f"For the task list: the user said during this session that task {n} is done.")
+        else:
+            answers.append(f"For the task list: you (the session) finished task {n} yourself; "
+                           f"the user has not said it is done or to remove it.")
     if case.get("suggestion_answer"):
         answers.append(f"Shown the skill suggestions, the user (Mark) answers: {case['suggestion_answer']}.")
     block = ("\n".join(answers) + "\n\n") if answers else ""
@@ -457,11 +486,12 @@ def _check_cards(case: dict, before: dict, after: dict, run: dict, ctx: dict, ad
     nxt = re.search(r"<!--\s*next-id:\s*(\d+)\s*-->", order)
     nxt = int(nxt.group(1)) if nxt else None
 
-    # a task leaves the list only on the user's word: nothing deleted, nothing set to list: done
+    user_done = {int(i) for i in (exp.get("user_done") or [])}
+    # a task leaves the list only on the user's word: nothing deleted, list: done only for what the user said is done
     add("no card deleted (every seeded id still has a card)", SEED_CARD_IDS <= set(by_id),
         sorted(SEED_CARD_IDS - set(by_id)))
     done_list = {i for i, c in by_id.items() if _cval(c, "list") == "done"}
-    add("no card moved to list: done", done_list == {5}, sorted(done_list))
+    add("no card moved to list: done except the user's own", done_list == {5} | user_done, sorted(done_list))
 
     touched = {int(k): v for k, v in (exp.get("touched") or {}).items()}
     for cid, want in touched.items():
@@ -474,9 +504,26 @@ def _check_cards(case: dict, before: dict, after: dict, run: dict, ctx: dict, ad
             lines is not None and sum(1 for ln in lines if re.match(rf"-\s+{today}:\s*\S", ln)) == 1,
             lines if lines is not None else "no **Log** heading")
         add(f"touched card keeps its earlier Log line ({cid})", bool(c) and SEED_LOG[cid] in c["body"])
+    seed_order_txt = _read_cards(HERE / "fixtures" / "cards" / case["cards"])[1]
+    seed_order = [int(i) for i in re.findall(r"^-\s*(\d+)\b", seed_order_txt, re.M)]
+    for cid in sorted(user_done):  # the user said it is done: done, list: done, off ORDER.md, card kept, Log, updated
+        c = by_id.get(cid)
+        add(f"the user's done task is status done and list: done ({cid})",
+            c is not None and _cval(c, "status") == "done" and _cval(c, "list") == "done",
+            {k: _cval(c, k) for k in ("status", "list")} if c else "no such card")
+        add(f"it is out of ORDER.md and the other cards keep their order ({cid})",
+            cid not in order_ids and [i for i in order_ids if i in seed_order] == [i for i in seed_order if i not in user_done],
+            order_ids)
+        lines = _log_lines(c["body"]) if c else None
+        add(f"it has a Log line dated today under **Log** ({cid})",
+            lines is not None and any(re.match(rf"-\s+{today}:\s*\S", ln) for ln in lines),
+            lines if lines is not None else "no **Log** heading")
+        add(f"it keeps its earlier Log line ({cid})", bool(c) and SEED_LOG[cid] in c["body"])
+        add(f"its updated date is today ({cid})", c is not None and _cval(c, "updated") == today,
+            _cval(c, "updated") if c else "no such card")
     changed = []
     for cid, want in SEED_STATE.items():
-        if cid in touched:
+        if cid in touched or cid in user_done:
             continue
         c = by_id.get(cid)
         got = {k: _cval(c, k) for k in want} if c else None
@@ -486,7 +533,12 @@ def _check_cards(case: dict, before: dict, after: dict, run: dict, ctx: dict, ad
 
     if exp.get("names"):
         add("the summary names the finished task", bool(re.search(exp["names"], text)))
+    if exp.get("asks_remove"):  # a task the session finished itself: marked done, stays, the summary asks
         add("the summary asks whether to remove it", bool(ASKS_REMOVE.search(text)))
+    if user_done:  # a task the user said is done: the summary says it was removed and does not ask
+        add("the summary says the task was removed", bool(REMOVED.search(text)), text[-300:])
+        add("the summary does not ask whether to remove the user's done task",
+            not any(_asks_about_removing(text, cid, exp.get("names")) for cid in user_done), text[-300:])
     if exp.get("new_card"):
         new = sorted(i for i in by_id if i not in SEED_CARD_IDS)
         add("exactly one new card", len(new) == 1, new)
@@ -526,6 +578,159 @@ def _check_cards(case: dict, before: dict, after: dict, run: dict, ctx: dict, ad
     add("wrote nothing into wiki/ but sessions/ and tasks/", not stray, stray)
 
 
+def _asks_to_remove(text: str) -> bool:
+    """The summary offers to remove the task: it says 'remove' and asks (a question mark or an open offer)."""
+    return bool(ASKS_REMOVE.search(text) and OFFER.search(text))
+
+
+def _preamble(run: dict, add) -> None:
+    r = run["result"]
+    add("session completed", r.get("subtype") == "success" and not r.get("is_error"),
+        r.get("subtype") or run.get("stderr_tail") or "no result event")
+    errs = run.get("error_texts") or {}
+    denials = [d for d in (r.get("permission_denials") or [])
+               if not (isinstance(d, dict) and "read-guard:" in str(errs.get(d.get("tool_use_id"), "")))]
+    add("no permission denials", not denials,
+        [d.get("tool_name") if isinstance(d, dict) else d for d in denials])
+
+
+def _closing_line(run: dict, add) -> None:
+    final = str(run["result"].get("result") or "").strip().splitlines()
+    last = final[-1].strip() if final else ""
+    add("ends on the closing line", last == CLOSING[None], f"last line: {last[:120]!r}")
+
+
+def _check_tasks_plain(case: dict, before: dict, after: dict, run: dict, ctx: dict, add) -> None:
+    """kind "tasks-plain": a task.md list (the At a glance block); the session finished a task itself."""
+    exp, text = case["expect"], run["text"]
+    _preamble(run, add)
+    task_md = ctx["wiki"] / "sessions" / PERSONA / "task.md"
+    add("task.md still there", task_md.is_file())
+    ttext = task_md.read_text(encoding="utf-8") if task_md.is_file() else ""
+    board = _load(ctx["scripts"], "wiki-tasks.py", "wiki_tasks").Board(ttext)
+    rows = {r["id"]: r for s in board.sections for r in s["rows"]}
+    fin = exp["finished"]
+    add("At a glance block kept, NOW and QUEUE kept below it",
+        ttext.lstrip().startswith("## At a glance") and "## NOW" in ttext and "## QUEUE" in ttext, ttext[:60])
+    add("no task removed (the user did not call any task done)", {1, 2, 3, 4} <= set(rows), sorted(rows))
+    add(f"task {fin} (finished by the session) is marked done and still on the list",
+        rows.get(fin, {}).get("status") == "done", rows.get(fin))
+    add("the summary names the finished task by its words", bool(re.search(exp["names"], text, re.I)))
+    add("the summary asks whether to remove it", _asks_to_remove(text), text[-300:])
+    add("the other tasks keep their status",
+        {i: rows.get(i, {}).get("status") for i in (1, 2, 3)} == {1: "doing", 2: "to do", 3: "waiting"},
+        {i: rows.get(i, {}).get("status") for i in (1, 2, 3)})
+    _closing_line(run, add)
+
+
+def _check_cards_stack(case: dict, before: dict, after: dict, run: dict, ctx: dict, add) -> None:
+    """kind "cards-stack": cards seeded from a fixture whose card `progressed` has no **Log** heading.
+    The session finished card `finished` itself, progressed another, and was asked for a new task and a backlog task."""
+    from datetime import date
+    today = date.today().isoformat()
+    exp, text = case["expect"], run["text"]
+    _preamble(run, add)
+    wiki = ctx["wiki"]
+    tasks = wiki / "tasks"
+    cards, order = _read_cards(tasks)
+    seed_cards, seed_order = _read_cards(HERE / "fixtures" / "cards" / case["cards"])
+    add("tasks/ORDER.md is still there", (tasks / "ORDER.md").is_file())
+    problems = _card_rule_problems(cards, order)
+    add("the six card rules hold", bool(cards) and not problems, problems or "no cards found")
+
+    def by_id_of(cs):
+        return {int(_cval(c, "id")): c for c in cs.values() if _cval(c, "id").isdigit()}
+
+    def same(a, b):
+        return a["fm"] == b["fm"] and a["body"].strip() == b["body"].strip()
+
+    def core(c):  # a card without its updated date
+        return ({k: v for k, v in c["fm"].items() if k != "updated"}, c["body"].strip())
+
+    by_id, seed_by_id = by_id_of(cards), by_id_of(seed_cards)
+    order_ids = [int(i) for i in re.findall(r"^-\s*(\d+)\b", order, re.M)]
+    seed_order_ids = [int(i) for i in re.findall(r"^-\s*(\d+)\b", seed_order, re.M)]
+    fid, pid = exp["finished"], exp["progressed"]
+
+    add("no card deleted", set(seed_by_id) <= set(by_id), sorted(set(seed_by_id) - set(by_id)))
+    done_now = {i for i, c in by_id.items() if _cval(c, "list") == "done"}
+    done_seed = {i for i, c in seed_by_id.items() if _cval(c, "list") == "done"}
+    add("no card moved to list: done (the user called none of them done)", done_now == done_seed, sorted(done_now))
+
+    # A: the session finished card `fid` itself: marked done, stays, position kept, the summary asks
+    fc = by_id.get(fid)
+    add(f"card {fid} (finished by the session) is status done and still list current",
+        fc is not None and _cval(fc, "status") == "done" and _cval(fc, "list") == "current",
+        {k: _cval(fc, k) for k in ("status", "list")} if fc else "no such card")
+    add(f"card {fid} keeps its position in ORDER.md",
+        [i for i in order_ids if i in seed_by_id] == seed_order_ids, order_ids)
+    add(f"card {fid}: id, title, owner, priority and created unchanged",
+        fc is not None and all(_cval(fc, k) == _cval(seed_by_id[fid], k)
+                               for k in ("id", "title", "owner", "priority", "created")))
+    add("the summary names the finished task by its words", bool(re.search(exp["names"], text, re.I)))
+    add("the summary asks whether to remove it", _asks_to_remove(text), text[-300:])
+
+    # 7: card `pid` had no Log heading; logging to it creates one
+    pc = by_id.get(pid)
+    lines = _log_lines(pc["body"]) if pc else None
+    add(f"card {pid} had no Log heading and now has one with a line dated today",
+        lines is not None and any(re.match(rf"-\s+{today}:", ln) for ln in lines),
+        lines if lines is not None else "no **Log** heading")
+    add(f"card {pid} is still list current and not done",
+        pc is not None and _cval(pc, "list") == "current" and _cval(pc, "status") != "done",
+        {k: _cval(pc, k) for k in ("status", "list")} if pc else "no such card")
+
+    # 8: every card the wrap-up touches has updated = today; the cards it did not touch are exactly as seeded
+    stale = [i for i, sc in seed_by_id.items()
+             if i in by_id and core(by_id[i]) != core(sc) and _cval(by_id[i], "updated") != today]
+    add("every seeded card the wrap-up changed has updated = today", not stale, stale)
+    add(f"cards {fid} and {pid} both have updated = today",
+        all(c is not None and _cval(c, "updated") == today for c in (fc, pc)),
+        [_cval(c, "updated") if c else None for c in (fc, pc)])
+    moved = [i for i in seed_by_id if i not in (fid, pid) and (i not in by_id or not same(by_id[i], seed_by_id[i]))]
+    add("the other seeded cards are exactly as they were", not moved, moved)
+
+    # 10 and 11: the two new cards
+    new = sorted(set(by_id) - set(seed_by_id))
+    cur = [i for i in new if _cval(by_id[i], "list") == "current"]
+    bak = [i for i in new if _cval(by_id[i], "list") == "backlog"]
+    add("exactly two new cards: one current, one backlog", len(new) == 2 and len(cur) == 1 and len(bak) == 1,
+        {i: _cval(by_id[i], "list") for i in new})
+    if len(cur) == 1:
+        nc = by_id[cur[0]]
+        add("new current card: status ready, owner is this session's persona, in ORDER.md once",
+            _cval(nc, "status") == "ready" and _cval(nc, "owner").lower() == PERSONA and order_ids.count(cur[0]) == 1,
+            {k: _cval(nc, k) for k in ("status", "owner")})
+        add("new current card is about the manifest rotation",
+            "manifest" in (_cval(nc, "title") + nc["body"]).lower(), _cval(nc, "title"))
+        add("new current card has created and updated = today",
+            _cval(nc, "created") == today and _cval(nc, "updated") == today,
+            (_cval(nc, "created"), _cval(nc, "updated")))
+    if len(bak) == 1:
+        nb_ = by_id[bak[0]]
+        add("new backlog card: list backlog, status ready, owner is the user (Mark), not in ORDER.md",
+            _cval(nb_, "status") == "ready" and _cval(nb_, "owner").lower() == "mark" and bak[0] not in order_ids,
+            {k: _cval(nb_, k) for k in ("list", "status", "owner")} | {"in_order": bak[0] in order_ids})
+        add("new backlog card is about the vendor's sandbox keys",
+            bool(re.search(r"sandbox|vendor|account manager", (_cval(nb_, "title") + nb_["body"]).lower())),
+            _cval(nb_, "title"))
+        add("new backlog card has created and updated = today",
+            _cval(nb_, "created") == today and _cval(nb_, "updated") == today,
+            (_cval(nb_, "created"), _cval(nb_, "updated")))
+
+    # 9: the task.md pointer is left exactly as it was
+    ptr = wiki / "sessions" / PERSONA / "task.md"
+    seed_ptr = (HERE / "fixtures" / "seeds" / "task-pointer.md").read_text(encoding="utf-8")
+    add("task.md pointer left exactly as it was",
+        ptr.is_file() and ptr.read_text(encoding="utf-8").replace("\r\n", "\n") == seed_ptr.replace("\r\n", "\n"),
+        ptr.read_text(encoding="utf-8")[:120] if ptr.is_file() else "task.md is gone")
+
+    _closing_line(run, add)
+    wiki_rel = {k for k in set(before) | set(after) if before.get(k) != after.get(k) and k.startswith("wiki/")}
+    stray = sorted(k for k in wiki_rel if not k.startswith(("wiki/sessions/", "wiki/tasks/")))
+    add("wrote nothing into wiki/ but sessions/ and tasks/", not stray, stray)
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     gate = _load(ctx["scripts"], "_entry_checks.py", "entry_checks")
     cfgmod = _load(ctx["scripts"], "_wiki_config.py", "wiki_config")
@@ -539,6 +744,12 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
 
     if case.get("kind") == "cards":
         _check_cards(case, before, after, run, ctx, add)
+        return res
+    if case.get("kind") == "tasks-plain":
+        _check_tasks_plain(case, before, after, run, ctx, add)
+        return res
+    if case.get("kind") == "cards-stack":
+        _check_cards_stack(case, before, after, run, ctx, add)
         return res
 
     r = run["result"]
@@ -610,12 +821,25 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             add("At a glance block kept", ttext.lstrip().startswith("## At a glance"), ttext[:60])
             board = _load(ctx["scripts"], "wiki-tasks.py", "wiki_tasks").Board(ttext)
             rows = {r["id"]: r for s in board.sections for r in s["rows"]}
-            # nothing REMOVED; adding a task is required of a wrap-up, so the set may grow
-            add("no task removed", {1, 2, 3, 4} <= set(rows), sorted(rows))
-            fin = case.get("finished_task")
-            add(f"task {fin} marked done", rows.get(fin, {}).get("status") == "done", rows.get(fin))
-            add("asks before removing a done task", bool(ASKS_REMOVE.search(text)))
-            add("other owner's task untouched", rows.get(3, {}).get("status") == "waiting", rows.get(3))
+            fin, by = case.get("finished_task"), case.get("finished_by")
+            low = text.lower()
+            if by == "user":  # the user's word: marked done and removed, named in the summary, no question
+                add(f"task {fin} removed (the user said it is done)", fin not in rows, rows.get(fin))
+                add("no other task removed (adding one is allowed)", ({1, 2, 3, 4} - {fin}) <= set(rows), sorted(rows))
+                add("summary names the task and says it was removed",
+                    all(w in low for w in case["finished_words"]) and bool(REMOVED.search(text)), text[-300:])
+                add("summary does not ask whether to remove the user's done task",
+                    not _asks_about_removing(text, fin, "|".join(re.escape(w) for w in case["finished_words"])),
+                    text[-300:])
+            elif by == "session":  # the session's own finish: marked done, stays, the summary asks
+                add("no task removed", {1, 2, 3, 4} <= set(rows), sorted(rows))
+                add(f"task {fin} marked done", rows.get(fin, {}).get("status") == "done", rows.get(fin))
+                add("summary names the task", all(w in low for w in case["finished_words"]), text[-300:])
+                add("asks whether to remove it", bool(ASKS_REMOVE.search(text)))
+            else:
+                raise ValueError(f"{case['id']}: finished_by must be 'user' or 'session'")
+            if fin != 3:
+                add("other owner's task untouched", rows.get(3, {}).get("status") == "waiting", rows.get(3))
             add("NOW and QUEUE kept below the block", "## NOW" in ttext and "## QUEUE" in ttext)
         else:
             add("task.md has NOW and QUEUE", "## NOW" in ttext and "## QUEUE" in ttext, ttext[:80])

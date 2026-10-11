@@ -58,12 +58,16 @@
     "nothing else in the notebook touched": true,
     "NOW is 1": true,
     "task 3 marked done": true,
-    "task 3 stays on the current list (nothing removed)": true,
-    "task 3 still in ORDER.md exactly once": true,
-    "ORDER.md holds the same cards": true,
+    "task 3 moved to list: done": true,
+    "task 3 no longer in ORDER.md": true,
+    "ORDER.md holds the other cards in their old order": true,
+    "task 3: its card file is kept": true,
     "task 3: its other fields unchanged": true,
     "no other card changed": true,
-    "asks whether to remove it": true
+    "task 3: a Log line dated today under **Log**": true,
+    "task 3: its earlier Log line kept": true,
+    "reply does not ask whether to remove it": true,
+    "reply names the task, not just its number": true
   },
   "card-move-to-top": {
     "session completed": true,
@@ -87,22 +91,13 @@
     "no other task removed or changed": true,
     "numbering kept (next-id marker unchanged)": true
   },
-  "done-asks": {
-    "session completed": true,
-    "no permission denials": true,
-    "no other file in the notebook touched": true,
-    "task 2 still on the list": true,
-    "task 2 marked done": true,
-    "asks whether to remove it": true,
-    "other tasks untouched": true
-  },
   "done-by-words": {
     "session completed": true,
     "no permission denials": true,
     "no other file in the notebook touched": true,
-    "task 3 still on the list": true,
-    "task 3 marked done": true,
-    "asks whether to remove it": true,
+    "task 3 removed from the list": true,
+    "reply does not ask whether to remove it": true,
+    "reply names the task, not just its number": true,
     "other tasks untouched": true
   },
   "move-owner-plain": {
@@ -164,5 +159,57 @@
     "next step mentions 'quote'": true,
     "owner is 'Mark'": true,
     "other tasks untouched": true
+  },
+  "done-by-number": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "task 2 removed from the list": true,
+    "reply does not ask whether to remove it": true,
+    "reply names the task, not just its number": true,
+    "other tasks untouched": true
+  },
+  "done-self-asks": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "task 2 still on the list": true,
+    "task 2 marked done": true,
+    "no task removed": true,
+    "the reply says what was done, naming the task by its words": true,
+    "the reply asks whether to remove it": true,
+    "other tasks keep their status, section and owner": true
+  },
+  "card-done-self-keeps-position": {
+    "session completed": true,
+    "no permission denials": true,
+    "ORDER.md still there": true,
+    "same card files, none added, renamed or deleted": true,
+    "the six rules hold": true,
+    "nothing else in the notebook touched": true,
+    "task 7 marked done": true,
+    "task 7 stays on the current list (nothing removed)": true,
+    "ORDER.md unchanged ([3, 1, 4, 7, 2]): the finished card keeps its position": true,
+    "task 7: its other fields unchanged": true,
+    "no other card changed at all": true,
+    "the reply says what was done, naming the task by its words": true,
+    "the reply asks whether to remove it": true,
+    "a leftover task.md is only a pointer (no NOW/QUEUE, no task rows, no task titles)": true
+  },
+  "card-reorder-after": {
+    "session completed": true,
+    "no permission denials": true,
+    "ORDER.md still there": true,
+    "same card files, none added, renamed or deleted": true,
+    "the six rules hold": true,
+    "nothing else in the notebook touched": true,
+    "ORDER.md is [1, 3, 4, 7, 2]": true,
+    "a pure reorder: every card keeps the status it had": true,
+    "a pure reorder: every card keeps the list it was on": true,
+    "the moved card's updated date is today (2026-10-11)": true,
+    "task 3: only updated differs from the seed": true,
+    "no other card changed at all": true,
+    "task.md not recreated (a card project has none)": true,
+    "the reply names the moved task by its words": true
   }
 }

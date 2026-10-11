@@ -17,7 +17,7 @@ The project's task list, kept where every session, every bot and you can see it:
 
 **Two rules:**
 - **A number is never reused.** The script picks each new number above every number already in the file, including QUEUE's, and records the next free one in a comment in the block.
-- **A task leaves the list only on your word.** "Delete task 4" removes it. A finished task is marked `done`, and the session asks whether to remove it. It never removes a task on its own, and the script refuses to unless the session passes a confirmation flag.
+- **A task leaves the list only on your word.** "Delete task 4" removes it. So does "task 4 is done": your saying so is the word, so the session marks it done and removes it without asking. A task the session finished itself is marked `done` and stays on the list; the session tells you what was done and asks whether to remove it, so you can check nothing was missed. It never removes a task on its own, and the script refuses to unless the session passes a confirmation flag.
 
 **Naming a task:** by its number, or by its words ("I've finished the build-scripts cleanup"). When the words match exactly one task, the session uses that task without asking you to confirm it; when two could match, or none does, it asks which one you mean. It never guesses a number.
 
@@ -25,7 +25,7 @@ The project's task list, kept where every session, every bot and you can see it:
 
 Statuses are `to do`, `doing`, `waiting`, `parked` and `done`. "Waiting" keeps the task with its owner; the last column says what it is waiting on.
 
-**Works with:** [`wrap-up`](./wrap-up.md) keeps the list current at the end of a session: it marks the session's finished tasks done (and asks before removing any), adds the tasks it took on or left for you, and moves statuses that changed. The SessionStart hook points each new session at the same `task.md`, so the list is in view from the first reply.
+**Works with:** [`wrap-up`](./wrap-up.md) keeps the list current at the end of a session: it marks the session's finished tasks done (and asks before removing any it finished itself), adds the tasks it took on or left for you, and moves statuses that changed. The SessionStart hook points each new session at the same `task.md`, so the list is in view from the first reply.
 
 **Task cards (since 2026-10-10; agent-builder-bootstrap and llm-wiki-bootstrap so far):** a project can keep its tasks as a stack of cards instead: one file per task in `wiki/tasks/`, each with its fields at the top and its details, steps and a dated log below, plus `tasks/ORDER.md`, which lists the current tasks in the order you'll work on them. NOW is the first one there not yet done, and a session starts by reading only that card, not the whole list. The same requests work on cards. You can also reorder ("put 5 first", "do 5 after 3"), add a dated note to a card ("note on 12: …"), tag tasks and show one tag's tasks, and give a task a priority. A check covers six rules (each current task listed in ORDER.md exactly once, numbers unique and never reused, required fields set), and the script refuses any change that would break one. A project switches over when you say so: a dry run shows each card it would write, then the move carries each task's row, details and notes into its card whole, and keeps the rest of the old `task.md` in an archive. Every other project stays on `task.md`.
 

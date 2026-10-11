@@ -1,7 +1,7 @@
 ## At a glance
 
 <!-- wiki-tasks next-id: 7 -->
-Every task, one line each, by owner. A number is never reused. "waiting" is a status: the task stays with its owner. A task leaves this list only when the user says so; a finished one is marked `done` and the session asks before removing it. Notes on a task go below, keyed by its number.
+Every task, one line each, by owner. A number is never reused. "waiting" is a status: the task stays with its owner. A task leaves this list only when the user says so: a task the user calls done is removed, and one the session finished is marked `done` until the user agrees to remove it. A task's details go in Task details below, under its number.
 
 ### Mark
 

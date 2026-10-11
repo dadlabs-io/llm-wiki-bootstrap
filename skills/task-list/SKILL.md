@@ -71,11 +71,13 @@ editing the file.
 
 1. **A number is never reused.** The script picks it. Never renumber, and never re-add a removed task under
    its old number.
-2. **A task leaves the list only on the user's word.**
+2. **A task leaves the list only on the user's word.** (Mark, 2026-10-11: "if I say it's done then it's done
+   so we can remove it. If you say it's done, I need to be informed so I can decide if it is actually done.")
    - When the user says to delete or remove task N, that is their word: run `remove <N> --confirmed`.
-   - When a task is finished (the user says it is done, or you finished it this session), run
-     `done <N> --next "<what happened>"`, then ask: "Task N is done. Remove it from the list?" Remove it
-     only on a yes.
+   - When the user says task N is done, that is their word too: run `done <N> --next "<what happened>"`, then
+     `remove <N> --confirmed`, without asking.
+   - When you finished a task yourself, run `done <N> --next "<what happened>"`, tell the user what was done,
+     and ask: "Task N is done. Remove it from the list?" They may find something missed. Remove it only on a yes.
    - Never pass `--confirmed` on your own judgement.
 
 "Waiting" is a status: the task stays with its owner, and `--next` says what it waits on.
@@ -87,7 +89,7 @@ editing the file.
 | "/task-list", "what's on my list", "show my tasks", "what's left" | `show`, then give them the tables as printed |
 | "show my tasks with details", "the full list", "details on 25", "what's behind task 25" | `show --details`, or `show 25` for one task |
 | "add a task …", "put X on the list", "remind me to …" | `add "<X>"`, owner as below |
-| "task 3 is done", "mark 3 done", "I finished …" | `done 3 --next "<what happened>"`, then ask whether to remove it |
+| "task 3 is done", "mark 3 done", "I finished …" | `done 3 --next "<what happened>"`, then `remove 3 --confirmed` (their word) |
 | "delete task 4", "remove task 4", "drop 4" | `remove 4 --confirmed` |
 | "task 3 is waiting on Y", "park 5", "I'm on 2 now" | `set 3 --status waiting --next "Y"`, `set 5 --status parked`, `set 2 --status doing` |
 | "move 5 to agent-builder", "give 5 to me" | `set 5 --owner <section>` |
@@ -111,6 +113,6 @@ only when asked.
 
 - Don't edit the block by hand, renumber tasks, or re-sort them.
 - Don't make an owner called Backlog (`set --owner Backlog`): that loses the task's owner. Use `backlog <N>`.
-- Don't remove a task the user did not tell you to remove, even one marked done.
+- Don't remove a task you marked done yourself until the user says yes.
 - Don't confuse it with Claude Code's `/tasks` (background jobs) or a session's own to-do checklist. This list
   lives in the wiki and outlives the session.

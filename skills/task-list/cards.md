@@ -26,7 +26,8 @@ Everything in SKILL.md's table works the same, with these differences:
 |---|---|
 | "park 5" | `backlog 5` (`set 5 --status parked` does the same) |
 | "task 3 is waiting on Y" | `set 3 --status waiting --next "Y"`: Y becomes `waiting_on`. A wait with nothing named is refused |
-| "task 3 is done" | `done 3 --next "<what happened>"`: it stays in ORDER.md until the user says to remove it; then ask |
+| "task 3 is done" | `done 3 --next "<what happened>"`, `log 3 "<what happened>"`, then `remove 3 --confirmed` (their word) |
+| (you finished 3) | `done 3 --next "<what happened>"` and `log 3 "<what happened>"`: it stays in ORDER.md, above NOW, until the user says yes to removing it; ask |
 | "remove task 4" | `remove 4 --confirmed`: `list: done`, out of ORDER.md; the card stays |
 | "do 5 next", "put 5 first", "5 after 3" | `order 5 --top`, `order 5 --after 3` (`--before`, `--bottom`) |
 | "make 5 a P1", "tag 5 pilot" | `set 5 --priority P1`, `set 5 --tags "pilot"` (replaces the tags) |

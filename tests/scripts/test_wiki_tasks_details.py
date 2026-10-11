@@ -151,6 +151,14 @@ with tempfile.TemporaryDirectory() as td:
     t = f.read_text(encoding="utf-8")
     check("the old standard intro is replaced by the new one", "Notes on a task go below" not in t
           and "A task's details go in Task details below" in t, t[:400])
+    # the intro from before Mark's 2026-10-11 done rule (the user's "done" removes; the session's asks)
+    prev = old.replace("Notes on a task go below, keyed by its number.",
+                       "A task's details go in Task details below, under its number.")
+    f = fresh(td, BASE.replace("Intro line.", prev))
+    run(f, "set", "3", "--status", "doing")
+    t = f.read_text(encoding="utf-8")
+    check("the pre-2026-10-11 intro is replaced by one stating the done rule",
+          "the session asks before removing it" not in t and "a task the user calls done is removed" in t, t[:500])
     f = fresh(td)
     run(f, "set", "3", "--status", "doing")
     check("a project's own intro is kept", "Intro line." in f.read_text(encoding="utf-8"))

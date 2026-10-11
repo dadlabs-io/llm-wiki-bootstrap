@@ -80,10 +80,15 @@ TASK_MAX, NEXT_MAX = 70, 60  # characters, the overview's two text cells (Mark, 
 TABLE_HEAD = ["| # | Task | Status | Next / waiting on |", "|---|---|---|---|"]
 BACKLOG_HEAD = ["| # | Task | Owner | Status | Next / waiting on |", "|---|---|---|---|---|"]
 INTRO = ("Every task, one line each, by owner. A number is never reused. \"waiting\" is a status: the task "
+         "stays with its owner. A task leaves this list only when the user says so: a task the user calls done is "
+         "removed, and one the session finished is marked `done` until the user agrees to remove it. "
+         "A task's details go in Task details below, under its number.")
+# the standard intros of earlier versions, brought up to date on the next write
+_ASKS = ("Every task, one line each, by owner. A number is never reused. \"waiting\" is a status: the task "
          "stays with its owner. A task leaves this list only when the user says so; a finished one is marked "
-         "`done` and the session asks before removing it. A task's details go in Task details below, under its number.")
-OLD_INTRO = INTRO.replace("A task's details go in Task details below, under its number.",
-                          "Notes on a task go below, keyed by its number.")
+         "`done` and the session asks before removing it. ")
+OLD_INTROS = {_ASKS + "Notes on a task go below, keyed by its number.",  # before the details section
+              _ASKS + "A task's details go in Task details below, under its number."}  # before 2026-10-11's done rule
 
 
 UserError = tc.UserError  # one error type for both layouts
@@ -250,7 +255,7 @@ class Board:
         self.sections.sort(key=lambda s: rank.get(s["name"].lower(), 0))
         out = [HEADING, "", f"<!-- wiki-tasks next-id: {self.next_id} -->"]
         intro = "\n".join(self.intro).strip()
-        if intro == OLD_INTRO:  # the standard intro from before the details section: brought up to date
+        if intro in OLD_INTROS:
             intro = INTRO
         out += [intro or INTRO, ""]
         for s in self.sections:
