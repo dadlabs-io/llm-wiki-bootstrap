@@ -85,3 +85,7 @@ Promotion into `wiki/` stays with you, through `wiki-promote`.
 - It never promotes, never verifies an entry's truth status, never commits (the caller does), and in
   staged mode never touches an existing entry. It works on one source and one fetch at a time and
   cannot spawn workers of its own.
+- Its temporary files (saved search output, downloads, cloned repositories) go in a scratch folder
+  of its own, which `wiki-cycle` names in each worker's brief (or the worker makes one), and which it
+  deletes at the end. Workers running side by side never share one: in one cycle, two workers saved
+  search output under the same file name and one read the other's results.

@@ -7,7 +7,8 @@ synthesizes a curated wiki entry on top.
 
 Extraction is hybrid (lifted from ingest-pdf.py in the older
 research-data-ingestion skill):
-  1. Per-page text via `pdftotext` (primary)
+  1. Per-page text via `pdftotext` in reading order (primary; never -layout, which
+     interleaves a two-column paper's columns)
   2. Per-page fallback to `pypdf` when text quality is low
   3. Optional OCR fallback via tesseract (when --ocr auto/tesseract and
      tesseract is installed). Skipped silently if tesseract missing.
@@ -118,7 +119,10 @@ def is_low_quality(text, threshold):
 
 
 def extract_page_pdftotext(pdf_path, page):
-    cmd = ["pdftotext", "-layout", "-nopgbrk", "-f", str(page), "-l", str(page), pdf_path, "-"]
+    # Reading order, never -layout: -layout puts a line of each column on one output line, so a
+    # two-column paper's sentences interleave and no multi-line quote matches the raw (#92/#93,
+    # 2026-10-10: on 24 arXiv PDFs, sentences kept word for word: plain 87%, -layout 59%).
+    cmd = ["pdftotext", "-nopgbrk", "-f", str(page), "-l", str(page), pdf_path, "-"]
     result = subprocess.run(cmd, check=False, capture_output=True, text=True)
     if result.returncode != 0:
         return ""
@@ -155,13 +159,13 @@ def extract_hybrid(pdf_path, quality_threshold, ocr_mode):
     except ImportError as e:
         raise RuntimeError("pypdf is required. Install: pip install pypdf") from e
 
-    # pdftotext (poppler) is preferred for layout fidelity, but it's optional:
+    # pdftotext (poppler) is preferred for its reading order, but it's optional:
     # when absent (e.g. a Windows host without poppler) we fall back to pure
     # pypdf rather than hard-failing — pypdf alone handles most digital PDFs.
     have_pdftotext = has_command("pdftotext")
     if not have_pdftotext:
         sys.stderr.write("[wiki-fetch-pdf] pdftotext not found; using pypdf-only extraction "
-                         "(install poppler-utils for higher-fidelity layout extraction).\n")
+                         "(install poppler-utils for reading-order extraction).\n")
 
     ocr_enabled = False
     if ocr_mode == "tesseract":

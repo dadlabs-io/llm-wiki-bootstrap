@@ -40,7 +40,7 @@ A video's entry is as long as its content deserves: one good idea makes a short 
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-pdf.py --topic <topic> --source <url-or-local-pdf> --ingested-by claude-code
 ```
 
-Runs on the host: text per page through `pdftotext` (in Git Bash on Windows, poppler elsewhere), falling back to `pypdf` (in the scripts' uv environment) on pages where the text is poor; OCR only if tesseract is installed. It saves the raw with the page count and extraction figures and copies the PDF beside it.
+Runs on the host: text per page through `pdftotext` in reading order, column by column, so a quote that runs over several lines of a two-column paper is in the raw (2026-10-10; it used `-layout` before, which interleaved the columns: a raw saved earlier may still be mixed, so check a quote that is not found against the PDF beside it) (in Git Bash on Windows, poppler elsewhere), falling back to `pypdf` (in the scripts' uv environment) on pages where the text is poor; OCR only if tesseract is installed. It saves the raw with the page count and extraction figures and copies the PDF beside it.
 
 ## X / Twitter
 

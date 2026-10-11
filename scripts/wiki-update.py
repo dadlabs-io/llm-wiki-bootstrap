@@ -405,6 +405,17 @@ NOISE_TERMS = {
 }
 
 
+# Tags that record an entry's state, not its subject: never a search term, never a shared tag
+# (#94, agent-builder's suggestion 2026-10-10: entries sharing only `needs-source-check` and the
+# notebook's own tag were suggested as backlinks). A bare year and the notebook's name count too.
+BOOKKEEPING_TAGS = {"needs-source-check", "stub", "auto-generated", "autogen", "index", "session-journal"}
+
+
+def _is_bookkeeping_tag(tag, notebook=None):
+    t = str(tag).lower().strip()
+    return t in BOOKKEEPING_TAGS or bool(re.fullmatch(r"\d{4}", t)) or (bool(notebook) and t == notebook.lower())
+
+
 def _title_search_terms(title, slug=None, tags=None):
     """Build a small set of low-noise search terms from a title + slug + tags.
 
@@ -436,7 +447,7 @@ def _title_search_terms(title, slug=None, tags=None):
         for tag in tags:
             if isinstance(tag, str):
                 t = tag.lower().strip()
-                if t and t not in NOISE_TERMS:
+                if t and t not in NOISE_TERMS and not _is_bookkeeping_tag(t):
                     terms.add(t)
     # Filter: each term must be at least 4 chars and not in noise list
     return {t for t in terms if len(t) >= 4 and t not in NOISE_TERMS}
@@ -492,6 +503,7 @@ def find_inbound_candidates(new_path, wiki_dir, title, max_results=15):
             body = md.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
+        body = split_frontmatter(body)[1]  # a word in another entry's tags line is not a mention of it (#94)
         body_lower = body.lower()
 
         # Skip if already linked (the new entry's stem appears as a markdown link target)
@@ -540,6 +552,8 @@ def _curate_backlink_candidates(inbound, wiki_dir, max_n=8, entry_path=None):
     one shared generic tag such as "vaults" or "personal-assistant" suggested
     unrelated entries, and a 2026-09-23 cycle worker cut 5 of 12 by hand
     (finding 8). Files the entry links to and multi-word matches need no tags.
+    Bookkeeping tags (``BOOKKEEPING_TAGS``, a bare year, the notebook's own name) never
+    count as shared (#94).
 
     Rank: (1) files the new entry links to in its own body — the reciprocal
     half of bidirectional linking; (2) multi-word title/subtitle matches;
@@ -555,7 +569,8 @@ def _curate_backlink_candidates(inbound, wiki_dir, max_n=8, entry_path=None):
             outbound = {Path(t).stem.lower() for t in re.findall(r"\]\(([^)#]+\.md)", body)}
         except OSError:
             pass
-        own_tags = {t.lower() for t in _read_frontmatter_tags(entry_path)}
+        own_tags = {t.lower() for t in _read_frontmatter_tags(entry_path)
+                    if not _is_bookkeeping_tag(t, notebook=wiki_dir.parent.name)}
     freq = {}
     for _path, term, _snip in inbound:
         freq[term] = freq.get(term, 0) + 1

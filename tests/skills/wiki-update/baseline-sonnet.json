@@ -246,5 +246,30 @@
     "sidecar written": true,
     "wiki-promote --check passes": true,
     "temp files cleaned up": true
+  },
+  "staged-backlinks-skip-bookkeeping-tags": {
+    "session completed": true,
+    "no permission denials": true,
+    "exactly one new entry, in _inbox/proposed/": true,
+    "premise: the entry carries the bookkeeping tags and the notebook tag the user asked for": true,
+    "sidecar written": true,
+    "sidecar has a suggested_backlinks list": true,
+    "not suggested: conference-travel-checklist": true,
+    "not suggested: auto-generated-glossary": true,
+    "not suggested: team-reading-list": true,
+    "still suggested: tool-output-handling (shares real topic tags, mentions the subject in its body)": true
+  },
+  "pdf-two-column-local-staged": {
+    "session completed": true,
+    "no permission denials": true,
+    "exactly one new entry, in _inbox/proposed/": true,
+    "filed by wiki-update.py (its Source footer and frontmatter)": true,
+    "raw captured and named in raw_path": true,
+    "raw holds the left-column multi-line sentence whole": true,
+    "raw holds the right-column multi-line sentence whole": true,
+    "raw not edited by hand": true,
+    "entry quotes the whole multi-line sentence in a > blockquote": true,
+    "gate: no errors": true,
+    "sidecar written": true
   }
 }

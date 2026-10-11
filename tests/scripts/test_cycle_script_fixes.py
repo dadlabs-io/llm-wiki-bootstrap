@@ -180,6 +180,38 @@ with tempfile.TemporaryDirectory() as td:
     check("backlinks: a multi-word title match is suggested", "title-phrase.md" in kept, sorted(kept))
     check("backlinks: an entry the new one links to is suggested", "linked-one.md" in kept, sorted(kept))
 
+# ── #94 (agent-builder's suggestion, 2026-10-10): bookkeeping tags never link entries ──
+with tempfile.TemporaryDirectory() as td:
+    w = Path(td) / "agentic-design" / "wiki"          # the notebook's own name is a tag on every entry
+    f = w / "research" / "evals"
+    f.mkdir(parents=True)
+    new = Path(td) / "new-entry.md"
+    new.write_text(entry("Ponytail benchmark notes", ["agentic-design", "needs-source-check", "stub", "2026",
+                                                      "ponytail", "evals"], "Body.\n"), encoding="utf-8")
+    cands = {
+        # only the status tag and the notebook tag in common; the status tag sits in its frontmatter alone
+        "status-only.md": (["agentic-design", "needs-source-check"], "A paper on compilers."),
+        # a year and the notebook tag in common, one body mention
+        "year-and-notebook.md": (["2026", "agentic-design"], "Mentions ponytail once."),
+        # a real neighbour: two topical tags in common and a body mention
+        "real-neighbour.md": (["ponytail", "evals", "agentic-design"], "Ponytail's evaluation harness."),
+    }
+    for name, (tags, body) in cands.items():
+        (f / name).write_text(entry(name, tags, body), encoding="utf-8")
+    terms = upd._title_search_terms("Ponytail benchmark notes", slug="ponytail-benchmark-notes",
+                                    tags=["needs-source-check", "stub", "auto-generated", "2026", "ponytail"])
+    check("#94: status tags and a bare year are never search terms",
+          not terms & {"needs-source-check", "stub", "auto-generated", "2026"} and "ponytail" in terms, sorted(terms))
+    inbound = upd.find_inbound_candidates(new, w, "Ponytail benchmark notes")
+    found = {p.name for p, _t, _s in inbound}
+    check("#94: a tag found only in another entry's frontmatter is not a mention", "status-only.md" not in found,
+          sorted(found))
+    kept = {p.name for p, _t, _s in upd._curate_backlink_candidates(inbound, w, max_n=8, entry_path=new)}
+    check("#94: a year plus the notebook's own tag do not count as two shared tags",
+          "year-and-notebook.md" not in kept, sorted(kept))
+    check("#94: two topical shared tags and a body mention are still suggested", "real-neighbour.md" in kept,
+          sorted(kept))
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

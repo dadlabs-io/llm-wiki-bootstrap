@@ -9,6 +9,15 @@
 
 ---
 
+## 2026-10-11
+
+### Four suggestions from agent-builder, built (tasks #91-#94; improver pass `2026-10-10-agent-builder-bootstrap`)
+
+- **#92/#93, PDFs in reading order**: `wiki-fetch-pdf.py` runs `pdftotext` without `-layout`, which put a line of each column on one output line, so a two-column paper's multi-line quotes never matched the raw (two runs: arXiv 2608.11888, 2609.26758/26550). Measured first, on Mark's question whether MarkItDown does better: 24 arXiv PDFs against arXiv's HTML text, sentences found word for word: plain `pdftotext` 87%, `-layout` 59%, MarkItDown 58% (two-column papers: plain 78-98%, `-layout` 2-10%, MarkItDown 1-7%). New `tests/scripts/test_fetch_pdf_columns.py` builds a two-column PDF (1/4 before, 4/4 after); `fetchers.md` says a raw saved before may still be mixed.
+- **#94, bookkeeping tags never link entries**: `wiki-update.py` no longer uses `needs-source-check`, `stub`, `auto-generated`, `autogen`, `index`, `session-journal`, a bare year or the notebook's own name as a search term or a shared tag, and a word inside another entry's frontmatter is not a mention. On real agentic-design entries: one had 7 suggested backlinks matched only on `needs-source-check`, now 0. `tests/scripts/test_cycle_script_fixes.py` +4 (3 failed first).
+- **#91, one scratch folder per worker**: `/wiki-cycle` Step 2 names `<cycle_id>-worker-<N>/` in each worker's brief, never inside the notebook (committed at Step 9); the `wiki-ingester` agent writes every temporary file there (or in its own `mktemp -d` folder), deletes it at the end, and checks that before exit. Usage page.
+- **Tests**: new cases from `eval-case-writer` (saved unchanged; `prompt()` branches on Mark's word): wiki-update `pdf-two-column-local-staged`, `staged-backlinks-skip-bookkeeping-tags` (+4 seed entries); wiki-cycle `parallel-workers-own-folders`, `worker-download-stays-in-own-folder` (+5 live sources). `run_skill_test.py` records each tool call's `id` and `parent_tool_use_id`, so a check can tell one worker's calls from another's. Runs: wiki-update 4 old cases 8/8, new 4/4 (after the writer moved the PDF's text in scope: Sonnet had rightly refused an off-topic paper); wiki-cycle 2 old 4/4, new 4/4 after three check fixes by the writer and one wording fix (Sonnet had put the folders in the run folder). About $55 of runs.
+
 ## 2026-10-10
 
 ### The task stack: one card per task and an order file, switched on per project (task #89, agent-builder's design, agreed with Mark)

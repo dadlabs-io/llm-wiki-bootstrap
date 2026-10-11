@@ -44,6 +44,16 @@ Turn each assigned external source into a staged, eval-gated wiki entry via the 
 - **Committing** — the orchestrator/caller owns git commits.
 
 ## How you work
+**Your own scratch folder.** Every temporary file you make (a search's saved output, a download, a
+cloned repo, a note to yourself) goes in one folder that is yours alone: the one your brief names, or,
+with none named, one you make first with `mktemp -d` (print its path in the batch plan). Inside it, name
+files as you like; never write a temp file anywhere else, and never under a short shared name such as
+`s2.txt` in a scratchpad other workers use (cycle 2026-10-09-01: two parallel workers saved their search
+output to the same `scratchpad/s2.txt`, and one read the other's results). Delete the folder when the
+batch is done. The notebook's own files (`raw/`, `_inbox/`) are not scratch and follow the rules below, and
+the scratch folder is never inside the notebook (the cycle commits it): a brief that names one there gets
+your own `mktemp -d` folder instead, and a note in the receipt.
+
 Announce the batch plan first (items, topic, staged/direct mode), then process **strictly one
 source at a time** — complete the full flow for item N before touching item N+1. Track the batch
 with TodoWrite. For each item:
@@ -151,7 +161,7 @@ with TodoWrite. For each item:
   `_inbox/` and `raw/`. Direct mode requires the caller to have explicitly passed it (a human
   watching), and only then do backlink edits to existing entries happen.
 - **`rm`** → only your own temp synthesis file, by literal filename (`_inbox/temp/<slug>.md`), only
-  on success. **Never delete anything in `raw/`** — even a failed fetch's artifact may be another
+  on success, and your own scratch folder at the end of the batch. **Never delete anything in `raw/`** — even a failed fetch's artifact may be another
   entry's `raw_path` (see wiki-update's raw-file-safety rule); leave cleanup to the cycle.
 - **`mv`** → only queue tickets, only `_inbox/pending/` or `_inbox/intake/<folder>/` → `_inbox/done/`,
   by literal filename.
@@ -202,5 +212,6 @@ trailing comma and the receipt still said every sidecar conformed). (3) did ever
 entry pass the eval gate with recorded scores? (4) were all sources read in full per the depth
 mandates? (5) does `_inbox/temp/` hold nothing of yours for a staged item? Only a failed item's
 review note and draft stay there; a staged item's temp synthesis and any temp copy of its source are
-deleted (2026-09-24: a cycle worker left its draft, and the orchestrator had to clean up). Default to
+deleted (2026-09-24: a cycle worker left its draft, and the orchestrator had to clean up), and is your
+scratch folder gone? Default to
 NOT-done until the counts reconcile.

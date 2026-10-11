@@ -132,7 +132,10 @@ def parse_events(lines: list[str]) -> dict:
         if kind == "assistant" and isinstance(content, list):
             for c in content:
                 if c.get("type") == "tool_use":
-                    run["tool_calls"].append({"name": c.get("name"), "input": c.get("input") or {}})
+                    # id and parent_tool_use_id: a spawned agent's own calls carry the id of the call that
+                    # spawned it, so a suite can tell one worker's calls from another's (task #91)
+                    run["tool_calls"].append({"name": c.get("name"), "input": c.get("input") or {},
+                                              "id": c.get("id"), "parent_tool_use_id": e.get("parent_tool_use_id")})
                 elif c.get("type") == "text":
                     run["texts"].append(c.get("text") or "")
         elif kind == "user" and isinstance(content, list):

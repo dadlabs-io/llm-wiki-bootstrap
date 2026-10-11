@@ -35,6 +35,8 @@
     {"id": "two-urls-queue", "kind": "queue",
      "urls": ["https://example.com/skilltest-queue-one", "https://example.com/skilltest-queue-two"], "author": "legacy"},
     {"id": "no-source-redirect", "kind": "redirect", "author": "legacy"},
-    {"id": "dedup-article", "kind": "dedup", "source": "article", "author": "legacy"}
+    {"id": "dedup-article", "kind": "dedup", "source": "article", "author": "legacy"},
+    {"id": "pdf-two-column-local-staged", "kind": "pdf-columns", "input": "generated-pdf", "file": "two-column-field-notes.pdf", "mode": "staged", "author": "eval-case-writer"},
+    {"id": "staged-backlinks-skip-bookkeeping-tags", "kind": "staged-backlinks", "input": "pasted", "mode": "staged", "text": "Trimming tool results before an agent reads them (from a colleague's team notes, October 2026)\n\nTool result trimming means cutting what a tool returns down to the part the next step needs, before it goes back into the agent's context. Our search tool used to return forty hits with full snippets; the agent read them all and lost track of the question. We now keep the top five hits, cap each snippet at two sentences, and put the count of dropped hits on the last line so the agent knows more exists. Over two weeks the number of runs that ended on the wrong file fell from about one in six to one in twenty. The cost is a second call when the first five hits miss, which happened in roughly one run in ten.\n\n(Filing note from the user, not part of the source: tag this entry context-engineering, agents, needs-source-check, stub, 2026 and skilltest.)", "author": "eval-case-writer"}
   ]
 }

@@ -507,7 +507,7 @@ def prompt(case: dict, ctx: dict) -> str:
     ctx["started"] = now_stamp()
     cycle_id = f"{_today(ctx)}-01"
     ctx["cycle_id"] = cycle_id
-    if case["kind"] == "ingest-only":
+    if case["kind"] in ("ingest-only", "scratch"):
         _prepare_quick(case, ctx)
     elif case["kind"] == "triage":
         _prepare_triage(case, ctx)
@@ -835,6 +835,207 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_email(case, add, ctx, run_dir, stext, text, workers)
     elif case["kind"] == "drive":
         _check_drive(add, ctx, run_dir, text, workers)
+    elif case["kind"] == "scratch":
+        import posixpath
+        import shlex
+        import tempfile
+
+        def slash(p):
+            return str(p).replace("\\", "/")
+
+        def drive(p):
+            m = re.match(r"^/([A-Za-z])/(.*)$", p)
+            return f"{m.group(1)}:/{m.group(2)}" if m and os.name == "nt" else p
+
+        def norm(p):
+            p = drive(slash(p).strip().strip("\"'"))
+            if not p:
+                return ""
+            p = posixpath.normpath(p).rstrip("/")  # resolves "." and ".." segments
+            return p.lower() if os.name == "nt" else p
+
+        # the folder each worker's brief names: <cycle_id>-worker-<N>
+        pat = re.compile(r"([^\s\"'`<>(),;|]*" + re.escape(cycle_id) + r"-worker-\d+)")
+        spawns = [c for c in run["tool_calls"] if c["name"] in ("Agent", "Task")
+                  and str((c.get("input") or {}).get("subagent_type", "")) == "wiki-ingester"]
+        briefs = [sorted({slash(m).rstrip("/") for m in pat.findall(str((c.get("input") or {}).get("prompt", "")))})
+                  for c in spawns]
+        folders = [b[0] for b in briefs if len(b) == 1]
+        owner = {}  # id of the call that spawned a worker -> that worker's folder
+        for c, b in zip(spawns, briefs):
+            cid = c.get("id") or c.get("tool_use_id")
+            if cid and len(b) == 1:
+                owner[cid] = b[0]
+        need = case.get("workers", 1)
+        add(f"spawned at least {need} wiki-ingester worker(s)", len(spawns) >= need, len(spawns))
+        add("every worker's brief names one scratch folder, <cycle_id>-worker-<N>",
+            bool(spawns) and all(len(b) == 1 for b in briefs), briefs)
+        add("no two workers share a scratch folder", bool(folders) and len(set(folders)) == len(folders), folders)
+        add("no scratch folder inside the notebook (raw/ and _inbox/ are not scratch)",
+            bool(folders) and not [f for f in folders if norm(f).startswith(norm(nb) + "/")], folders)
+
+        # where each worker's own temp files went, from its own tool calls
+        def resolve(p, cwd):
+            p = p.strip().strip("\"'")
+            if cwd and not re.match(r"^(/|[A-Za-z]:|~|\$)", p):
+                return slash(cwd).rstrip("/") + "/" + p
+            return p
+
+        def drop_heredocs(cmd):
+            """The command without heredoc bodies (the line with <<WORD stays, the body up to the terminator goes)."""
+            kept, term = [], None
+            for ln in cmd.split("\n"):
+                if term is not None:
+                    if ln.strip() == term:
+                        term = None
+                    continue
+                kept.append(ln)
+                m = re.search(r"(?<!<)<<(?!<)-?\s*(?:'([^']+)'|\"([^\"]+)\"|\\?([A-Za-z_][A-Za-z0-9_]*))", ln)
+                if m:
+                    term = next(g for g in m.groups() if g)
+            return "\n".join(kept)
+
+        def mask_quotes(s):
+            """Same length as s, with the inside of every quoted string replaced by '_'."""
+            out, q, esc = [], None, False
+            for ch in s:
+                if q:
+                    if esc:
+                        out.append("_")
+                        esc = False
+                    elif ch == "\\" and q == '"':
+                        out.append("_")
+                        esc = True
+                    elif ch == q:
+                        q = None
+                        out.append(ch)
+                    else:
+                        out.append("_")
+                else:
+                    if ch in "'\"":
+                        q = ch
+                    out.append(ch)
+            return "".join(out)
+
+        def temp_targets(c):
+            inp, out = c.get("input") or {}, []
+            if c["name"] == "Write":
+                out.append(str(inp.get("file_path", "")))
+            elif c["name"] == "Bash":
+                cwd = None
+                cmd = drop_heredocs(str(inp.get("command", "")))
+                masked = mask_quotes(cmd)
+                spans, start = [], 0
+                for m in re.finditer(r"&&|\|\||;|\n|\|", masked):
+                    spans.append((start, m.start()))
+                    start = m.end()
+                spans.append((start, len(masked)))
+                for a, b in spans:
+                    oseg, mseg = cmd[a:b], masked[a:b]
+                    for m in re.finditer(r"(?<![<>&])\d?>>?\s*(?!&)([^\s<>()&|;]+)", mseg):
+                        out.append(resolve(oseg[m.start(1):m.end(1)], cwd))
+                    try:
+                        t = shlex.split(oseg.strip())
+                    except ValueError:
+                        t = oseg.split()
+                    if not t:
+                        continue
+                    if t[0] == "cd" and len(t) > 1:
+                        cwd = t[1]
+                    elif t[0] == "curl":
+                        for i, x in enumerate(t):
+                            if x in ("-o", "--output") and i + 1 < len(t):
+                                out.append(resolve(t[i + 1], cwd))
+                            elif x in ("-O", "--remote-name"):
+                                out.append(resolve(t[-1].split("?")[0].rstrip("/").split("/")[-1], cwd))
+                    elif t[0] == "wget":
+                        for i, x in enumerate(t):
+                            if x == "-O" and i + 1 < len(t):
+                                out.append(resolve(t[i + 1], cwd))
+                            elif x == "-P" and i + 1 < len(t):
+                                out.append(resolve(t[i + 1], cwd) + "/download")
+                    elif t[0] == "git" and len(t) > 2 and t[1] == "clone":
+                        skip = {"--depth", "-b", "--branch", "-o", "--origin", "-c", "--config", "--filter", "--reference"}
+                        pos, i = [], 2
+                        while i < len(t):
+                            if t[i] in skip:
+                                i += 2
+                                continue
+                            if not t[i].startswith("-"):
+                                pos.append(t[i])
+                            i += 1
+                        if pos:
+                            out.append(resolve(pos[1] if len(pos) > 1 else pos[0].rstrip("/").split("/")[-1].removesuffix(".git"), cwd))
+                    elif t[0] == "mktemp":
+                        args = [x for x in t[1:] if not x.startswith("-")]
+                        tmpd = [x.split("=", 1)[1] for x in t[1:] if x.startswith("--tmpdir=")]
+                        if args or tmpd:
+                            out.extend(resolve(x, cwd) for x in (args or tmpd))
+                        else:
+                            out.append("<system-temp>/mktemp")
+                    elif t[0] == "tee":
+                        out.extend(resolve(x, cwd) for x in t[1:] if not x.startswith("-"))
+            return out
+
+        nbn, bad, seen, identified = norm(nb), [], 0, 0
+        for c in run["tool_calls"]:
+            pid = c.get("parent_tool_use_id") or c.get("parent")
+            if pid not in owner:
+                continue
+            identified += 1
+            mine = norm(owner[pid])
+            for p in temp_targets(c):
+                n = norm(p) if p else ""
+                if not n or "$" in n or "`" in n or n in ("/dev/null", "/dev/stdout", "/dev/stderr", "-", "nul"):
+                    continue
+                seen += 1
+                if n.startswith("<system-temp>"):
+                    ok = False
+                elif re.match(r"^(/|[a-z]:/|~)", n, re.I):
+                    ok = n == mine or n.startswith(mine + "/") or n.startswith(nbn + "/")
+                else:
+                    ok = n.split("/")[0] in ("raw", "_inbox", "wiki")
+                if not ok:
+                    bad.append(f"{mine.rsplit('/', 1)[-1]}: {p}")
+        add("workers' own tool calls are identifiable in the run (spawn id and parent id)", identified > 0,
+            f"{identified} worker calls, {len(owner)} workers")
+        add("every temp file a worker itself created is inside its own folder, none elsewhere (a worker that made none passes)",
+            not bad, bad[:8] or f"{seen} temp targets, all inside the owner's folder or the notebook's raw/ and _inbox/")
+
+        # each worker deleted its folder when its batch was done
+        left = {f for f in folders if Path(drive(f)).exists()}
+        tmp = Path(tempfile.gettempdir())
+        for base, pats in ((ctx["sandbox"], [f"**/{cycle_id}-worker-*"]),
+                           (tmp, [f"{cycle_id}-worker-*", f"*/{cycle_id}-worker-*"])):
+            for pt in pats:
+                try:
+                    left.update(slash(x) for x in base.glob(pt))
+                except OSError:
+                    pass
+        add("each worker deleted its scratch folder", bool(folders) and not left, sorted(left))
+
+        # on disk: loose files at the sandbox root, in the project folder, or in _inbox/ outside its queue folders
+        top_ok = {".git", ".gitignore", ".claude", "notebooks", "linked-notebooks.json", "skill", "agents",
+                  "mail", "mail-resolve.json", "drive", "project", "global-toolset"}
+        sb, proj, stray = ctx["sandbox"], ctx["project"], []
+        for q in sb.iterdir():
+            if q.name not in top_ok:
+                stray += [slash(x.relative_to(sb)) for x in ([q] if q.is_file() else q.rglob("*")) if x.is_file()]
+        for x in proj.rglob("*"):
+            rel = x.relative_to(proj).parts
+            if x.is_file() and rel[0] != ".claude" and "__pycache__" not in rel:
+                stray.append(slash(x.relative_to(sb)))
+        stray += [k for k in new if k.startswith("_inbox/")
+                  and k.split("/")[1] not in ("proposed", "pending", "done", "reports", "intake")]
+        stray = [s for s in stray if "-worker-" not in s]
+        add("no loose temp file left at the sandbox root, in the project folder, or in _inbox/", not stray, stray[:10])
+
+        urls = {_norm_url(_suite()["sources"][s]["url"]) for s in case["queue"]}
+        got = {_norm_url(split_frontmatter((nb / k).read_text(encoding="utf-8"))[0].get("source_url")) for k in proposed}
+        if case.get("pdf"):
+            add("the PDF source was ingested", any("arxiv.org" in g for g in got), sorted(got))
+        else:
+            add("each queued source staged once", got == urls, sorted(got))
     elif case["kind"] == "resume":
         add("no ingest worker spawned (ingest was done)", not workers, [a.get("description") for a in workers])
         add("nothing ingested twice", len(proposed) == 2 and not [k for k in new if k in proposed], proposed)

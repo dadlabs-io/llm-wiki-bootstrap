@@ -149,6 +149,85 @@ def snapshot(ctx: dict) -> dict:
             for p in nb.rglob("*") if p.is_file()}
 
 
+# ---------- generated two-column PDF (written for the test; no binary is committed) ----------
+
+PDF_QUOTE_START = "The team found that rewriting"
+PDF_LEFT = [
+    "Field notes on scratchpad memory in long-running agents",
+    "Six agent teams took part in a spring trial of how an agent should keep its session notes while it "
+    "works through a long task. Each team kept its usual model and its usual tools, and only the way the "
+    "agent wrote and reread its scratchpad was changed.",
+    "The team found that rewriting the scratchpad into a short summary after every tenth step, rather than "
+    "appending to it after every step, cut the number of runs that repeated finished work by about a third "
+    "across the six agent teams in the trial.",
+    "Engineers on the smaller teams reported that the summary was easy to audit once the agent marked each "
+    "line as done, open or dropped.",
+]
+PDF_RIGHT = [
+    "Agents differ in how well they reread their own notes, and the trial recorded which lines of the "
+    "scratchpad the agent actually used when it chose its next step.",
+    "Notes written in the last few steps were reread most often by the agent, and moving older decisions "
+    "into a long-term store that was searched on demand removed most of the clutter that the append-only "
+    "scratchpad had built up.",
+    "A second round of the trial is planned for the autumn, when the agents will work on longer tasks that "
+    "span more than one session.",
+]
+PDF_LEFT_SENTENCE, PDF_RIGHT_SENTENCE = PDF_LEFT[2], PDF_RIGHT[1]
+
+
+def _norm_ws(s: str) -> str:
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _pdf_text(s: str) -> str:
+    return s.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+
+def _write_two_column_pdf(path: Path) -> None:
+    """A one-page, two-column PDF of the text above, drawn line by line at fixed x positions
+    (left column x=72, right column x=320), so a layout-preserving extraction puts a row of
+    each column on one output line."""
+    import textwrap
+
+    def column(paras: list[str], x: int) -> str:
+        ops = [f"BT /F1 10 Tf 12 TL {x} 740 Td"]
+        for para in paras:
+            for line in textwrap.wrap(para, 38):
+                ops.append(f"({_pdf_text(line)}) Tj T*")
+            ops.append("T*")
+        ops.append("ET")
+        return "\n".join(ops)
+
+    stream = (column(PDF_LEFT, 72) + "\n" + column(PDF_RIGHT, 320)).encode("ascii")
+    objs = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 5 0 R "
+        b"/Resources << /Font << /F1 4 0 R >> >> >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream",
+    ]
+    out = bytearray(b"%PDF-1.4\n")
+    offsets = []
+    for i, o in enumerate(objs, 1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % i + o + b"\nendobj\n"
+    xref = len(out)
+    out += b"xref\n0 %d\n" % (len(objs) + 1) + b"0000000000 65535 f \n"
+    for off in offsets:
+        out += b"%010d 00000 n \n" % off
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objs) + 1, xref)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(bytes(out))
+
+
+# staged-backlinks: entries that must NOT appear in suggested_backlinks, and the one that must
+BACKLINK_DECOYS = [("conference-travel-checklist", "Conference travel checklist"),
+                   ("auto-generated-glossary", "Auto-generated glossary"),
+                   ("team-reading-list", "Reading list for new team members")]
+BACKLINK_NEIGHBOUR = ("tool-output-handling", "Tool output handling")
+
+
 # ---------- prompts ----------
 
 HEADER = """You are running an automated test of the wiki-update skill. The skill under test is at {skill}/SKILL.md, with its reference files beside it. Read it and follow it exactly, as if the user had typed /wiki-update with the input below. Do not use any installed copy of the skill.
@@ -181,6 +260,12 @@ def prompt(case: dict, ctx: dict) -> str:
         return head + f"The user's input: the local file {(ctx['sandbox'] / 'inputs' / case['file']).as_posix()}{staged}"
     if inp == "pasted":
         return head + f"The user pasted this text:{staged}\n\n{case['text']}"
+    if inp == "generated-pdf":
+        pdf = ctx["sandbox"] / "inputs" / case["file"]
+        _write_two_column_pdf(pdf)
+        return head + (f"The user's input: the local file {pdf.as_posix()}{staged} "
+                       f"The user asks that the entry quote, word for word as a `>` blockquote, the sentence of "
+                       f"the paper that begins \"{PDF_QUOTE_START}\".")
     raise ValueError(f"unknown case shape: {case['id']}")
 
 
@@ -273,6 +358,77 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
                                                                "duplicate", "already filed", "already ingested")))
         return res
 
+    if kind == "pdf-columns":
+        add("exactly one new entry, in _inbox/proposed/",
+            len(entries) == 1 and entries[0].startswith("_inbox/proposed/"), entries)
+        if len(entries) != 1:
+            return res
+        path = nb / entries[0]
+        entry_text = path.read_text(encoding="utf-8")
+        fm, body = split_frontmatter(entry_text)
+        add("filed by wiki-update.py (its Source footer and frontmatter)",
+            bool(fm.get("ingested_by")) and "**Source**" in entry_text)
+        rp = str(fm.get("raw_path", "")).strip().strip('"').strip("'")
+        raw_file = nb / rp if rp else None
+        raw_ok = bool(raw_file) and raw_file.is_file()
+        add("raw captured and named in raw_path", raw_ok, rp)
+        raw_text = raw_file.read_text(encoding="utf-8", errors="replace") if raw_ok else ""
+        raw_n = _norm_ws(raw_text)
+        # requirement 1: a sentence running over several lines of one column is whole in the raw
+        add("raw holds the left-column multi-line sentence whole", _norm_ws(PDF_LEFT_SENTENCE) in raw_n,
+            PDF_LEFT_SENTENCE[:60])
+        add("raw holds the right-column multi-line sentence whole", _norm_ws(PDF_RIGHT_SENTENCE) in raw_n,
+            PDF_RIGHT_SENTENCE[:60])
+        # ... and it got there without hand edits to the raw
+        bash_cmds = [str(c["input"].get("command", "")) for c in run["tool_calls"] if c["name"] == "Bash"]
+        hand = [str(c["input"].get("file_path", "")) for c in run["tool_calls"]
+                if c["name"] in ("Write", "Edit", "NotebookEdit")
+                and "/raw/" in str(c["input"].get("file_path", "")).replace("\\", "/")]
+        hand += [b[:120] for b in bash_cmds
+                 if re.search(r">>?\s*\S*raw/|sed\s+-i[^|;&\n]*raw/|tee\s[^|;&\n]*raw/", b)]
+        add("raw not edited by hand", not hand, hand)
+        # the quote: a `>` blockquote that holds the whole sentence word for word
+        quoted = _norm_ws(" ".join(re.sub(r"^\s*(?:>\s*)+", "", ln) for ln in body.splitlines()
+                                   if ln.lstrip().startswith(">")))
+        add("entry quotes the whole multi-line sentence in a > blockquote",
+            _norm_ws(PDF_LEFT_SENTENCE) in quoted, quoted[:120])
+        g = check_entry_file(path)
+        add("gate: no errors", not g.get("errors"), g.get("errors"))
+        side = path.with_suffix(".proposed_metadata.json")
+        add("sidecar written", side.is_file(), side.name)
+        return res
+    if kind == "staged-backlinks":
+        add("exactly one new entry, in _inbox/proposed/",
+            len(entries) == 1 and entries[0].startswith("_inbox/proposed/"), entries)
+        if len(entries) != 1:
+            return res
+        path = nb / entries[0]
+        fm, _body = split_frontmatter(path.read_text(encoding="utf-8"))
+        tags = [str(t).strip().lower() for t in (fm.get("tags") or [])]
+        need = ["needs-source-check", "stub", "2026", NOTEBOOK]
+        add("premise: the entry carries the bookkeeping tags and the notebook tag the user asked for",
+            all(t in tags for t in need), tags)
+        side = path.with_suffix(".proposed_metadata.json")
+        add("sidecar written", side.is_file(), side.name)
+        try:
+            data = json.loads(side.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            data = {}
+        sb = data.get("suggested_backlinks") if isinstance(data, dict) else None
+        add("sidecar has a suggested_backlinks list", isinstance(sb, list), type(sb).__name__)
+        named = [json.dumps(i, ensure_ascii=False).lower() for i in (sb or [])]
+
+        def hit(stem: str, title: str) -> list[str]:
+            return [n for n in named if stem in n or title.lower() in n]
+
+        # requirement 2: no entry whose only link to the new one is a bookkeeping tag, the notebook
+        # tag, or a match inside its own frontmatter
+        for stem, title in BACKLINK_DECOYS:
+            add(f"not suggested: {stem}", not hit(stem, title), hit(stem, title))
+        stem, title = BACKLINK_NEIGHBOUR
+        add(f"still suggested: {stem} (shares real topic tags, mentions the subject in its body)",
+            bool(hit(stem, title)), named)
+        return res
     # ---- an ingest ----
     staged = case.get("mode") == "staged"
     where = "_inbox/proposed/" if staged else "wiki/"
