@@ -55,6 +55,7 @@ TRAVEL_SCRIPTS = [
     "wiki-fetch-gmail.py",  # the cycle's email step: a Gmail label's links as reviewed candidates (2026-10-03)
     "wiki-fetch-page.py",  # JavaScript-rendered pages in headless Chromium on this machine; replaced the container's node fetcher (2026-10-05)
     "wiki-fetch-pdf.py",
+    "wiki-fetch-repo.py",  # a whole GitHub repo's prose as one raw, at a recorded commit (task #107, 2026-10-12)
     "wiki-fetch-tweet.js",  # X posts (node, no login); the skills always ran it from here, the list missed it (found 2026-10-05)
     "wiki-fetch-youtube.py",
     "wiki-index.py",

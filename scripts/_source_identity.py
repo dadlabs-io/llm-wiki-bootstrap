@@ -30,6 +30,21 @@ X_HOSTS = {"x.com", "twitter.com"}
 X_STATUS = re.compile(r"^/(?:[^/]+/status(?:es)?|i/web/status|i/status)/(\d+)(?:/|$)")
 ARXIV_ID = re.compile(r"^/(?:abs|pdf|html)/(\d{4}\.\d{4,5})(?:v\d+)?(?:\.pdf)?/?$")
 INSTAGRAM_POST = re.compile(r"^/(?:p|reel|reels|tv)/([A-Za-z0-9_-]+)")
+ARXIV_PAPER = re.compile(r"^/(?:abs|pdf|html)/(\d{4}\.\d{4,5}(?:v\d+)?)(?:\.pdf)?/?$")
+
+
+def arxiv_pdf_url(url) -> str | None:
+    """The PDF of an arXiv paper link (`abs`, `pdf` or `html`, version kept), else None. Discovery's
+    arXiv feeds and triage hand over abs links, whose page is the abstract alone (task #104, 2026-10-12)."""
+    try:
+        parts = urllib.parse.urlsplit(str(url or "").strip())
+    except ValueError:
+        return None
+    host = re.sub(r"^www\.", "", (parts.hostname or "").lower())
+    if parts.scheme.lower() not in ("http", "https") or host != "arxiv.org":
+        return None
+    m = ARXIV_PAPER.match(parts.path)
+    return f"https://arxiv.org/pdf/{m.group(1)}" if m else None
 
 
 def _youtube_id(host: str, path: str, query: dict) -> str | None:

@@ -53,8 +53,8 @@ from _wiki_config import default_vault as _default_vault, default_topic as _defa
 from _entry_checks import (PARTIAL_COMPLETENESS, check_entry_body, check_frontmatter_loadable, format_result,  # noqa: E402
                            raw_completeness, read_raw_text, split_frontmatter)
 from _markdown import html_to_markdown  # noqa: E402 — HTML pages saved as Markdown (task #71)
-from _raw_dedup import check_raw, report  # noqa: E402 — content dedup (task #81 P5)
-from _source_identity import source_key  # noqa: E402 — one source identity for every dedup (task #96)
+from _raw_dedup import check_raw, citing_entries, report  # noqa: E402 — content dedup (task #81 P5)
+from _source_identity import arxiv_pdf_url, source_key  # noqa: E402 — one source identity for every dedup (task #96)
 # Force UTF-8 stdout on Windows so Unicode in wiki content doesn't crash printing
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -97,6 +97,29 @@ def unique_path(target):
         if not candidate.exists():
             return candidate
         n += 1
+
+
+RAW_SOURCE_URL_RE = re.compile(r"^source_url:\s*(.+?)\s*$", re.M)
+
+
+def raw_for_source(raw_dir, source):
+    """The raw already fetched from this source (its header's `source_url`, compared by `source_key`),
+    else None. A re-fetch is never an exact copy (the `fetched:` stamp differs), so before task #106
+    each re-run of --fetch-only left a `-2` raw (cycle 2026-10-11-01, worker 2)."""
+    key = source_key(source)
+    if not key or not Path(raw_dir).is_dir():
+        return None
+    for p in sorted(Path(raw_dir).glob("*.md")):
+        try:
+            with open(p, encoding="utf-8", errors="replace") as f:
+                head = f.read(4000)
+        except OSError:
+            continue
+        fm = re.match(r"\A---\s*\n(.*?)\n---", head, re.S)
+        m = RAW_SOURCE_URL_RE.search(fm.group(1)) if fm else None
+        if m and source_key(m.group(1).strip().strip("\"'")) == key:
+            return p
+    return None
 
 
 # ── Source acquisition ──────────────────────────────────────────────────────
@@ -902,7 +925,7 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
                 ingested_by=None, source_url_override=None, raw_path_override=None,
                 force=False, fetch_only=False, no_raw=False, skip_integration=False,
                 tier=None, confidence=None, staged=False, allow_new_top_folder=False,
-                no_gate=None, revises=None, partial_source=None):
+                no_gate=None, revises=None, partial_source=None, refetch=False):
     topic_root = Path(vault_root) / topic
     if not topic_root.exists():
         print(f"Error: topic '{topic}' not found at {topic_root}", file=sys.stderr)
@@ -958,8 +981,31 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
     slug_hint = slugify(title) if title else None
     is_url = source.startswith(("http://", "https://"))
     skip_raw_copy = no_raw or (bool(raw_path_override) and not is_url)
+    # An arXiv paper link is a PDF: this fetch would save the abstract page (an abs link) or the PDF's
+    # bytes as text (a pdf link). The script routes it, not a table row a session may skip (task #104).
+    if is_url and not skip_raw_copy and arxiv_pdf_url(source):
+        print(f"Refusing to fetch: {source} is an arXiv paper; this fetch would save no paper text. Run:\n"
+              f"  wiki-fetch-pdf.py --topic {topic} --source {source} --ingested-by <who>\n"
+              "(it downloads the PDF and keeps this link as source_url; then continue at step 2)", file=sys.stderr)
+        return 2
+    # A source fetched before is read from that raw, not fetched again (task #106); --refetch saves a
+    # new copy on purpose (the source changed). A raw an entry already cites is a duplicate.
+    prior = raw_for_source(raw_dir, source) if (fetch_only and is_url and not refetch) else None
+    if prior:
+        citing = citing_entries(topic_root).get(prior.name.rsplit(".", 1)[0], [])
+        if citing:
+            for e in citing:
+                print(f"Duplicate: {source} was fetched before into raw/{prior.name}, which "
+                      f"{e.relative_to(topic_root).as_posix()} cites")
+                print(f"duplicate_of={e}")
+            return 0
+        print(f"  Reused: {source} was fetched before into raw/{prior.name}, which no entry cites yet "
+              "(--refetch saves a new copy)")
     try:
-        raw_path, body, suggested_title, source_url = acquire_source(source, raw_dir, slug_hint, skip_raw_copy=skip_raw_copy)
+        if prior:
+            raw_path, body, suggested_title, source_url = prior, None, None, source
+        else:
+            raw_path, body, suggested_title, source_url = acquire_source(source, raw_dir, slug_hint, skip_raw_copy=skip_raw_copy)
     except Exception as e:
         print(f"Error acquiring source: {e}", file=sys.stderr)
         return 1
@@ -1299,6 +1345,7 @@ def main():
     parser.add_argument("--no-index", action="store_true", help="Skip _INDEX.md regeneration")
     parser.add_argument("--force", action="store_true", help="Re-ingest even if source URL already in wiki")
     parser.add_argument("--fetch-only", action="store_true", help="Only fetch source to raw/, do NOT file a curated wiki entry. Prints raw_path= for the caller to read and synthesize on top of.")
+    parser.add_argument("--refetch", action="store_true", help="With --fetch-only: save a new raw even when one was fetched from this source before (the source changed). Without it, an earlier raw is reused.")
     parser.add_argument("--no-raw", action="store_true", help="Self-authored content with no external source. Skip the raw/ copy and omit raw_path from frontmatter. Use for design docs, decisions, session synthesis, etc.")
     parser.add_argument("--tier", default=None, choices=["1", "2", "3", "4", "self"], help="Source quality tier: 1=peer-reviewed/primary (papers, official spec docs, source code), 2=established documentation (vendor docs, framework docs, official blog), 3=reputable expert/first-hand (founder posts, expert blogs, conf talks, journalism), 4=community (Medium, Reddit, anonymous gists), self=self-authored synthesis. STRONGLY recommended for every new entry — prerequisite for source-quality-aware answer weighting and the future nightly auto-ingest cycle's quarantine rules.")
     parser.add_argument("--confidence", default=None, choices=["high", "medium", "low"], help="Entry confidence level. Measures how reliable OUR entry is (not the source — that's tier). high=primary source fetched + corroborated, medium=single good source fetched, low=synthesized from secondary refs or source not fetched. STRONGLY recommended for every new entry.")
@@ -1355,6 +1402,7 @@ def main():
         raw_path_override=args.raw_path,
         force=args.force,
         fetch_only=args.fetch_only,
+        refetch=args.refetch,
         no_raw=args.no_raw,
         skip_integration=args.skip_integration,
         tier=args.tier,

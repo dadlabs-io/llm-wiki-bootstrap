@@ -346,6 +346,15 @@ def prompt(case: dict, ctx: dict) -> str:
                            f"{raw.as_posix()}, the saved original of {case['url']}. "
                            f"File it with --source-url {case['url']} --raw-path raw/{case['raw_file']}.{staged}")
         return head + f"The user's input: the local file {(ctx['sandbox'] / 'inputs' / case['file']).as_posix()}{staged}"
+    if kind == "arxiv-abs":
+        return head + (f"The user's input: {case['url']}{staged} "
+                       f"The user asks that the entry quote, word for word as a `>` blockquote, one sentence "
+                       f"from the paper's experiments or results, taken from a page after the first page.")
+    if kind == "repo-whole":
+        return head + (f"The user's input: {case['url']}{staged} "
+                       f"The user asks for the whole repository, not just its README: its documentation and other "
+                       f"prose files too. The user asks that the entry quote, word for word as a `>` blockquote, "
+                       f"one sentence from one of the repository's documentation pages other than the README.")
     if inp == "cached":
         url = _suite()["sources"][case["source"]]["url"]
         raw = ctx["raw_names"].get(case["source"], "<missing fixture>")
@@ -713,6 +722,148 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("gate: no errors", not g.get("errors"), g.get("errors"))
         return res
 
+    if kind == "arxiv-abs":
+        # Task #104: an arXiv abs link is filed from the paper's full text. The raw is the PDF fetcher's
+        # (## Page N sections, source_url the abs link, the PDF beside it), never a page raw of the abstract;
+        # source_url on the entry is the abs link as given; the paper is tier 1; and the entry quotes a
+        # passage that is on a later page of the raw and not on page 1 (so not from the abstract).
+        add("exactly one new entry, in _inbox/proposed/",
+            len(entries) == 1 and entries[0].startswith("_inbox/proposed/"), entries)
+        new_raw_md = [k for k in new if k.startswith("raw/") and k.lower().endswith(".md")]
+        new_pdf = [k for k in new if k.startswith("raw/") and k.lower().endswith(".pdf")]
+        page_re = re.compile(r"^## Page \d+ \(", re.M)
+        unpaged = [k for k in new_raw_md
+                   if not page_re.search((nb / k).read_text(encoding="utf-8", errors="replace"))]
+        add("no page raw (a raw without ## Page N sections) left in raw/", not unpaged, unpaged)
+        add("the paper's PDF was copied into raw/", bool(new_pdf), new_pdf)
+        if len(entries) != 1:
+            return res
+        path = nb / entries[0]
+        entry_text = path.read_text(encoding="utf-8")
+        fm, body = split_frontmatter(entry_text)
+        add("filed by wiki-update.py (its Source footer and frontmatter)",
+            bool(fm.get("ingested_by")) and "**Source**" in entry_text)
+        add("source_url is the abs link as given", _norm_url(fm.get("source_url")) == _norm_url(case["url"]),
+            fm.get("source_url"))
+        add("tier is 1 (an arXiv paper)", str(fm.get("tier", "")).strip().strip('"').strip("'") in case["tier"],
+            fm.get("tier"))
+        rp = str(fm.get("raw_path", "")).strip().strip('"').strip("'")
+        raw_file = nb / rp if rp else None
+        raw_ok = bool(raw_file) and raw_file.is_file()
+        add("raw_path names a raw that exists", raw_ok, rp)
+        if raw_ok:
+            raw_text = raw_file.read_text(encoding="utf-8", errors="replace")
+            rfm, _rb = split_frontmatter(raw_text)
+            add("raw's source_url is the abs link", _norm_url(rfm.get("source_url")) == _norm_url(case["url"]),
+                rfm.get("source_url"))
+            add("raw is the paper's pages (two or more ## Page N sections)", len(page_re.findall(raw_text)) >= 2,
+                len(page_re.findall(raw_text)))
+            m2 = re.search(r"^## Page 2\b", raw_text, re.M)
+            first_n = _norm_ws(raw_text[:m2.start()] if m2 else raw_text).lower()
+            later_n = _norm_ws(raw_text[m2.start():]).lower() if m2 else ""
+            groups, cur = [], []
+            for ln in body.splitlines():
+                if ln.lstrip().startswith(">"):
+                    cur.append(re.sub(r"^\s*(?:>\s*)+", "", ln))
+                elif cur:
+                    groups.append(cur)
+                    cur = []
+            if cur:
+                groups.append(cur)
+            hit = ""
+            for g_ in groups:
+                words = _norm_ws(" ".join(g_)).lower().split()
+                for i in range(0, max(0, len(words) - 9)):
+                    w = " ".join(words[i:i + 10])
+                    if w in later_n and w not in first_n:
+                        hit = w
+                        break
+                if hit:
+                    break
+            add("entry quotes, in a > blockquote, a passage found on page 2 or later of the raw and not on page 1",
+                bool(hit), hit or f"{len(groups)} blockquote(s)")
+        g = check_entry_file(path)
+        add("gate: no errors", not g.get("errors"), g.get("errors"))
+        side = path.with_suffix(".proposed_metadata.json")
+        add("sidecar written", side.is_file(), side.name)
+        return res
+    if kind == "repo-whole":
+        # Task #107: a whole GitHub repository is fetched with wiki-fetch-repo.py, which writes ONE raw
+        # (type: github-repo, commit:, files:, a `## File: <path>` section per prose file, README first).
+        # The entry is filed from that raw: raw_path names it, source_url is the repo URL, and the quote is
+        # a passage from a non-README `## File:` section that the README does not hold.
+        add("exactly one new entry, in _inbox/proposed/",
+            len(entries) == 1 and entries[0].startswith("_inbox/proposed/"), entries)
+        if len(entries) != 1:
+            return res
+        path = nb / entries[0]
+        entry_text = path.read_text(encoding="utf-8")
+        fm, body = split_frontmatter(entry_text)
+        add("filed by wiki-update.py (its Source footer and frontmatter)",
+            bool(fm.get("ingested_by")) and "**Source**" in entry_text)
+        add("source_url is the repo URL", _norm_url(fm.get("source_url")) == _norm_url(case["url"]),
+            fm.get("source_url"))
+        rp = str(fm.get("raw_path", "")).strip().strip('"').strip("'")
+        raw_file = nb / rp if rp else None
+        raw_ok = bool(raw_file) and raw_file.is_file()
+        add("raw_path names a raw that exists", raw_ok, rp)
+        if raw_ok:
+            raw_text = raw_file.read_text(encoding="utf-8", errors="replace")
+            mh = re.match(r"\A---\s*\n(.*?)\n---", raw_text, re.S)
+            head_fm = mh.group(1) if mh else ""
+            add("raw's source_url is the repo URL",
+                any(_norm_url(v) == _norm_url(case["url"])
+                    for v in re.findall(r"^source_url:\s*(.+)$", head_fm, re.M)), head_fm[:120])
+            add("raw is type: github-repo", bool(re.search(r"^type:\s*[\"']?github-repo[\"']?\s*$", head_fm, re.M)),
+                head_fm[:120])
+            add("raw carries a commit: sha", bool(re.search(r"^commit:\s*[\"']?[0-9a-f]{7,40}\b", head_fm, re.M)),
+                head_fm[:120])
+            add("raw carries a files: count", bool(re.search(r"^files:\s*[\"']?\d+", head_fm, re.M)), head_fm[:120])
+            parts = re.split(r"^## File:[ \t]*(.+?)[ \t]*$", raw_text, flags=re.M)
+            sections = [(parts[i].strip().strip("`"), parts[i + 1]) for i in range(1, len(parts) - 1, 2)]
+
+            def is_readme(p: str) -> bool:
+                return "/" not in p and p.rsplit("/", 1)[-1].lower().startswith("readme")
+
+            readme_n = _norm_ws(" ".join(b for p, b in sections if is_readme(p))).lower()
+            other_n = _norm_ws(" ".join(b for p, b in sections if not is_readme(p))).lower()
+            add("raw has ## File: sections, the README and at least one other file",
+                len(sections) >= 2 and bool(readme_n) and bool(other_n),
+                f"{len(sections)} sections: {[p for p, _ in sections][:6]}")
+            groups, cur = [], []
+            for ln in body.splitlines():
+                if ln.lstrip().startswith(">"):
+                    cur.append(re.sub(r"^\s*(?:>\s*)+", "", ln))
+                elif cur:
+                    groups.append(cur)
+                    cur = []
+            if cur:
+                groups.append(cur)
+            hit = ""
+            for g_ in groups:
+                words = _norm_ws(" ".join(g_)).lower().split()
+                for i in range(0, max(0, len(words) - 9)):
+                    w = " ".join(words[i:i + 10])
+                    if w in other_n and w not in readme_n:
+                        hit = w
+                        break
+                if hit:
+                    break
+            add("entry quotes, in a > blockquote, a passage from a non-README ## File: section that the README lacks",
+                bool(hit), hit or f"{len(groups)} blockquote(s)")
+            # the raw is the fetcher's own, never built or edited by hand
+            hand = [str(c["input"].get("file_path", "")) for c in run["tool_calls"]
+                    if c["name"] in ("Write", "Edit", "NotebookEdit")
+                    and "/raw/" in str(c["input"].get("file_path", "")).replace("\\", "/")]
+            hand += [str(c["input"].get("command", ""))[:120] for c in run["tool_calls"] if c["name"] == "Bash"
+                     and re.search(r">>?\s*\S*raw/|sed\s+-i[^|;&\n]*raw/|tee\s[^|;&\n]*raw/",
+                                   str(c["input"].get("command", "")))]
+            add("raw not written or edited by hand", not hand, hand)
+        g = check_entry_file(path)
+        add("gate: no errors", not g.get("errors"), g.get("errors"))
+        side = path.with_suffix(".proposed_metadata.json")
+        add("sidecar written", side.is_file(), side.name)
+        return res
     # ---- an ingest ----
     staged = case.get("mode") == "staged"
     where = "_inbox/proposed/" if staged else "wiki/"

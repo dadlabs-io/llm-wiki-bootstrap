@@ -19,6 +19,7 @@ are installed. The original PDF is preserved alongside the extracted text.
 Usage (inside container):
     python3 wiki-fetch-pdf.py --topic <topic> --source /path/to/file.pdf
     python3 wiki-fetch-pdf.py --topic <topic> --source https://arxiv.org/pdf/2310.08560
+    python3 wiki-fetch-pdf.py --topic <topic> --source https://arxiv.org/abs/2310.08560   # the PDF; source_url stays abs
 """
 
 import argparse
@@ -45,6 +46,7 @@ from typing import List, Optional, Tuple
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
+from _source_identity import arxiv_pdf_url  # noqa: E402 — an arXiv abs link is fetched as its PDF (task #104)
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -239,11 +241,14 @@ def fetch_pdf(vault_root, topic, source, ingested_by, ocr_mode, quality_threshol
 
     is_url = source.startswith(("http://", "https://"))
     source_url = source if is_url else f"file://{os.path.abspath(source)}"
+    fetch_from = (arxiv_pdf_url(source) or source) if is_url else source
 
     with tempfile.TemporaryDirectory(prefix="wiki-fetch-pdf-src-") as temp_dir:
         if is_url:
             try:
-                pdf_path = download_pdf(source, temp_dir)
+                if fetch_from != source:
+                    print(f"  arXiv paper: {source} -> {fetch_from}")
+                pdf_path = download_pdf(fetch_from, temp_dir)
             except Exception as e:
                 print(f"ERROR downloading PDF: {e}", file=sys.stderr)
                 return 1
@@ -270,7 +275,7 @@ def fetch_pdf(vault_root, topic, source, ingested_by, ocr_mode, quality_threshol
 
         # Title from filename or URL
         if is_url:
-            url_name = urllib.parse.urlparse(source).path.rstrip("/").split("/")[-1] or "pdf-source"
+            url_name = urllib.parse.urlparse(fetch_from).path.rstrip("/").split("/")[-1] or "pdf-source"
             title_base = url_name.replace(".pdf", "")
         else:
             title_base = Path(pdf_path).stem

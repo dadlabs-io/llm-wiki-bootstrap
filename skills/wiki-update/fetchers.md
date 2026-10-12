@@ -9,11 +9,12 @@ Step 1 of the `/wiki-update` flow, by source. Every fetcher prints `raw_path=<pa
 | `youtube.com`, `youtu.be` | `wiki-fetch-youtube.py` ([YouTube](#youtube)); a video with no captions: `wiki-transcribe.py` |
 | An Instagram post, `instagram.com/p/…` | `wiki-fetch-page.py` ([Instagram](#instagram)): the caption and every slide's text, no login |
 | An Instagram reel, a podcast episode, an X video, a local audio or video file | `wiki-transcribe.py` ([Speech](#speech-reels-podcasts-video-without-captions)): the caption and a transcript |
-| A PDF: a URL ending `.pdf`, `arxiv.org/pdf/…`, or a local `.pdf` | `wiki-fetch-pdf.py` ([PDF](#pdf)) |
+| A PDF: a URL ending `.pdf`, an arXiv paper (`arxiv.org/abs/…`, `/pdf/…` or `/html/…`), or a local `.pdf` | `wiki-fetch-pdf.py` ([PDF](#pdf)) |
 | `x.com`, `twitter.com` | `wiki-fetch-tweet.js` ([X](#x--twitter)); the page fetcher only as its fallback |
 | `medium.com`, `*.medium.com`, Medium publications on their own domains (`levelup.gitconnected.com`, `pub.towardsai.net`, …) | [Page fetcher](#pages-that-need-javascript). Direct HTTP gets 403, and Medium's Cloudflare often blocks the page fetcher too: then [Save as PDF](#pages-no-fetcher-can-get). |
 | `threads.com`, `bsky.app`, `linkedin.com`, public `notion.so` pages | [Page fetcher](#pages-that-need-javascript) |
 | `github.com` repos and files, `gist.github.com` | `wiki-update.py --fetch-only` (rewrites to the raw file; a bare repo URL gets its README) |
+| A whole GitHub repo: its docs, every SKILL.md, not only the README | `wiki-fetch-repo.py` ([Whole repository](#whole-repository)) |
 | Anything else | `wiki-update.py --fetch-only` |
 
 `--fetch-only` saves an HTML page as Markdown (MarkItDown, in the scripts' environment): headings, links, lists and quotes are kept, and so are the site's menus and footer, so read past them. It prints `Converted: Markdown`; `Converted: plain text (<reason>)` means MarkItDown was unavailable and the page was saved as before, without links or headings.
@@ -40,7 +41,17 @@ A video's entry is as long as its content deserves: one good idea makes a short 
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-pdf.py --topic <topic> --source <url-or-local-pdf> --ingested-by claude-code
 ```
 
-Runs on the host: text per page through `pdftotext` in reading order, column by column, so a quote that runs over several lines of a two-column paper is in the raw (2026-10-10; it used `-layout` before, which interleaved the columns: a raw saved earlier may still be mixed, so check a quote that is not found against the PDF beside it) (in Git Bash on Windows, poppler elsewhere), falling back to `pypdf` (in the scripts' uv environment) on pages where the text is poor; OCR only if tesseract is installed. It saves the raw with the page count and extraction figures and copies the PDF beside it.
+Runs on the host: text per page through `pdftotext` in reading order, column by column, so a quote that runs over several lines of a two-column paper is in the raw (2026-10-10; it used `-layout` before, which interleaved the columns: a raw saved earlier may still be mixed, so check a quote that is not found against the PDF beside it) (in Git Bash on Windows, poppler elsewhere), falling back to `pypdf` (in the scripts' uv environment) on pages where the text is poor; OCR only if tesseract is installed. It saves the raw with the page count and extraction figures and copies the PDF beside it. An arXiv `abs` or `html` link is fetched as its PDF and kept as the raw's `source_url`; `wiki-update.py --fetch-only` refuses an arXiv paper link and prints this command (2026-10-12: an abs link had saved the abstract page alone).
+
+## Whole repository
+
+When the repo itself is the source (a skills pack, a tool whose docs say what it does), not just its README:
+
+```bash
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fetch-repo.py --topic <topic> --url https://github.com/<owner>/<repo> --ingested-by claude-code
+```
+
+A shallow clone at the current commit: the README first, then every Markdown or reStructuredText file under `## File: <path>`, so every quote is checked against the raw; code, tests and fixtures, `.github/`, vendored and build folders, other languages' copies and boilerplate (code of conduct, security policy) are left out. The header records the commit and the file list: a later snapshot is filed with `--revises`. Over 1,500 KB it stops (exit 4) and lists the files by size: raise `--max-kb` when the whole repo really is the source, or fetch the files that matter. Use it when the user asks for the whole repo or a ticket says so; a bare repo link otherwise goes through `--fetch-only` and its README (2026-10-12: two whole-repo raws had been built by hand).
 
 ## X / Twitter
 
