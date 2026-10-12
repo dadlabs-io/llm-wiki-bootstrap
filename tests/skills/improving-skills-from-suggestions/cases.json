@@ -66,7 +66,7 @@
         }
       ],
       "judge": "One proposal (P1: csv-exporter, the empty-input StopIteration at `header = next(rows)`, a failing test first, labelled tactical or strategic, evidence quoted from demo-notebook's csv-export checkpoints.md); the BOM suggestion set aside as already covered, citing the Gotchas line or the utf-8-sig open; wiki-update set aside as not this library's (llm-wiki's). The proposals file lists all three; nothing is decided, no suggestion is archived, and csv-exporter is not edited.",
-      "author": "legacy"
+      "author": "eval-case-writer"
     },
     {
       "id": "sent-suggestion-is-filed",
@@ -109,7 +109,7 @@
         ]
       },
       "judge": "Step 0 only: the file is received into notebook/_inbox/skill-suggestions/received/ with a Received from: line, and no pass is run (no proposals file) until one is asked for.",
-      "author": "legacy"
+      "author": "eval-case-writer"
     },
     {
       "id": "empty-box-writes-nothing",
@@ -130,9 +130,6 @@
         }
       },
       "expect": {
-        "regex": [
-          "(?i)(no|none of the|nothing).{0,40}(suggestion|received|to propose)|received (folder )?(is )?empty"
-        ],
         "files_absent": [
           "notebook/_inbox/skill-suggestions/proposals"
         ],
@@ -150,8 +147,19 @@
           }
         ]
       },
-      "judge": "The list is empty (the one file is in received/archive/, already decided): the model says nothing has been received, writes no proposals file, and does not re-open the archived suggestion.",
-      "author": "legacy"
+      "questions": [
+        {
+          "q": "Did the model tell the user that no new skill suggestions are waiting in received (nothing to propose)?",
+          "expect": true,
+          "quote_from": "user"
+        },
+        {
+          "q": "Did the model propose a change to any skill?",
+          "expect": false
+        }
+      ],
+      "judge": "The list is empty (the one file is in raw/, already decided): the model says nothing has been received, writes no proposals file, and does not re-open the decided suggestion.",
+      "author": "eval-case-writer"
     },
     {
       "id": "turned-down-before-not-reproposed",
@@ -196,7 +204,7 @@
         }
       ],
       "judge": "The new suggestion matches a turned-down one word for word and carries no new evidence (no record, same issue): it is listed as turned down before with Mark's earlier reason quoted, not proposed; nothing is decided or archived.",
-      "author": "legacy"
+      "author": "eval-case-writer"
     },
     {
       "id": "replay-freeze-step-label",
@@ -242,12 +250,12 @@
           "expect": true
         },
         {
-          "q": "Did the proposal include writing a failing test (a self-test case) before changing the script?",
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the proposal say that the first step is to write a test (a self-test case) that fails against the current script, before the script is changed?",
           "expect": true
         }
       ],
       "judge": "Replays the first real suggestion (investment-agent, 2026-09-26): one proposal targeting verifying-before-done's check-freeze.py (`--step` is `type=int`), a label accepted beside a number, a failing self-test case first, labelled strategic, evidence copied from the record's 'Fix round 1' paragraph; check-freeze.py is not edited and the suggestion stays in received/.",
-      "author": "legacy"
+      "author": "eval-case-writer"
     },
     {
       "id": "should-not-trigger-direct-gotcha-edit",
@@ -287,7 +295,137 @@
         ]
       },
       "judge": "A direct edit Mark asked for: the line is added to the Gotchas; the improver is not invoked, no proposals file is written, and the received suggestion is left alone.",
-      "author": "legacy"
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "accepted-fix-came-back-did-not-hold",
+      "should_trigger": true,
+      "tier": "gate",
+      "timeout": 600,
+      "prompt": "Run the improver over the skill suggestions we've received.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n\n## Gotchas\n- **A UTF-8 BOM in the input corrupts the first header** (2026-09-01): export.py opens the input with\n  `encoding=\"utf-8-sig\"`, which strips the BOM, so the first column reads `id`, not `\\ufeffid`.\n- **An empty input file** (2026-10-02): export.py checks the file size and writes an empty output file instead of raising StopIteration.\n",
+          "skills/csv-exporter/scripts/export.py": "import csv\nimport os\nimport sys\n\n\ndef export(path, out):\n    if os.path.getsize(path) == 0:\n        open(out, \"w\").close()\n        return\n    with open(path, encoding=\"utf-8-sig\", newline=\"\") as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        body = list(rows)\n    with open(out, \"w\", encoding=\"utf-8\", newline=\"\") as fh:\n        w = csv.writer(fh)\n        w.writerow(header)\n        w.writerows(body)\n\n\nif __name__ == \"__main__\":\n    export(sys.argv[1], sys.argv[2])\n",
+          "demo-notebook/raw/code-changes/2026-10-09-quarterly-export/checkpoints.md": "# Checkpoints — quarterly-export\n\n## Implement — 2026-10-09\nStep 3's test fed tests/data/bom-only.csv (three bytes: a UTF-8 BOM and nothing else) to the exporter: `export.py` raised StopIteration at `header = next(rows)`. The size check added for empty files does not catch it. Worked around in our code by stripping the BOM and writing the empty output ourselves. The exporter itself was left as it is.\n\n## Finishing decision — 2026-10-09\nMark: \"merge it\".\n",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--empty-input-crashes.md": "Skill: csv-exporter\nSeen in: csv-export (2026-09-20)\nIssue: export.py raises StopIteration on an empty input file; the run worked around it by checking the file size first.\nFix: write an empty output when the input is empty\nDecision (2026-10-02, Mark): accepted as task 57\n",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/proposals.md": "# Proposals, 2026-10-02\n\n(the earlier pass that decided this suggestion)\n",
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes-again.md": "Skill: csv-exporter\nSeen in: quarterly-export (2026-10-09)\nIssue: export.py still raises StopIteration at `header = next(rows)` on an input holding only a UTF-8 BOM (three bytes, no rows): the size check from the earlier fix lets it through. The run worked around it by stripping the BOM first.\nFix: catch StopIteration around next(rows) and write an empty output\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/csv-exporter--empty-input-crashes-again.md\n"
+        }
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes-again.md",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--empty-input-crashes.md"
+        ],
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/received/archive"
+        ],
+        "file_contains": {
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--empty-input-crashes.md": [
+            "accepted as task 57"
+          ]
+        },
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import sys; a=open('notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--empty-input-crashes.md',encoding='utf-8').read(); b=open('notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes-again.md',encoding='utf-8').read(); sys.exit(1 if ('Outcome (' in a or 'Outcome (' in b or 'Decision (' in b) else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,re,sys; f=[p for p in glob.glob('notebook/raw/skill-suggestions/*/proposals.md') if '2026-10-02-demo-notebook' not in p]; t=' '.join(open(p,encoding='utf-8').read() for p in f); print(f); sys.exit(0 if ('csv-exporter' in t and 'checkpoints.md' in t and re.search(r'\\b57\\b', t)) else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Did the model tell the user that the earlier accepted fix for the empty-input crash (task 57) did not hold?",
+          "expect": true,
+          "quote_from": "user"
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Did the model support its statement that the earlier fix did not hold with evidence from the later run (a quote from the run's record, or a description of what failed after the fix)?",
+          "expect": true,
+          "quote_from": "user"
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply put the lesson forward again as a proposal marked as a repeat, and name the earlier accepted task (task 57) as the one that did not hold?",
+          "expect": true,
+          "quote_from": "user"
+        },
+        {
+          "q": "Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it for later)?",
+          "expect": true,
+          "quote_from": "user"
+        }
+      ],
+      "judge": "The new suggestion is the empty-input lesson again, from a run (2026-10-09) after the fix accepted as task 57 (2026-10-02). The pass says task 57's fix did not hold, quoting the checkpoints.md evidence, and proposes the lesson again as a repeat naming task 57. It records no Outcome line on the old note and no Decision on the new one (Mark has not answered), archives nothing, and edits nothing under skills/.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "applies-to-narrow-scope-kept-in-proposal",
+      "should_trigger": true,
+      "tier": "edit",
+      "timeout": 600,
+      "prompt": "Run the improver over the skill suggestions we've received.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n\n## Gotchas\n- **A UTF-8 BOM in the input corrupts the first header** (2026-09-01): export.py opens the input with\n  `encoding=\"utf-8-sig\"`, which strips the BOM, so the first column reads `id`, not `\\ufeffid`.\n",
+          "skills/csv-exporter/scripts/export.py": "import csv\nimport sys\n\n\ndef export(path, out):\n    with open(path, encoding=\"utf-8-sig\", newline=\"\") as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        body = list(rows)\n    with open(out, \"w\", encoding=\"utf-8\", newline=\"\") as fh:\n        w = csv.writer(fh)\n        w.writerow(header)\n        w.writerows(body)\n\n\nif __name__ == \"__main__\":\n    export(sys.argv[1], sys.argv[2])\n",
+          "demo-notebook/raw/code-changes/2026-10-10-report-archive/checkpoints.md": "# Checkpoints — report-archive\n\n## Implement — 2026-10-10\nOn the Windows build agent the archive step exported to a 270-character output path under the agent's workspace: `export.py` failed with FileNotFoundError at the open of the output file. The same export on the Linux CI runner succeeded. Worked around in our code by exporting to a short path and moving the file afterwards. The exporter itself was left as it is.\n\n## Finishing decision — 2026-10-10\nMark: \"merge it\".\n",
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--long-output-path-windows.md": "Skill: csv-exporter\nSeen in: report-archive (2026-10-10)\nIssue: on Windows, export.py fails with FileNotFoundError at the open of the output file when the output path is longer than 260 characters; the run worked around it by exporting to a short path and moving the file.\nFix: on Windows, use the extended-length path form for long output paths before opening them\nApplies to: Windows only, output paths over 260 characters; other platforms are not affected\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/csv-exporter--long-output-path-windows.md\n"
+        }
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--long-output-path-windows.md"
+        ],
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/received/archive"
+        ],
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,sys; f=sorted(glob.glob('notebook/raw/skill-suggestions/*/proposals.md')); t=open(f[-1],encoding='utf-8').read() if f else ''; print(f); sys.exit(0 if ('csv-exporter' in t and 'checkpoints.md' in t and 'windows' in t.lower()) else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "Did the model propose a change to csv-exporter for the failure on a long output path under Windows?",
+          "expect": true
+        },
+        {
+          "q": "The reply is a proposal, so no code is written or run in this session. Does the proposed change say it applies only on Windows (and, where the note limits it, only to long output paths), with other platforms left as they are, rather than proposing it for every platform?",
+          "expect": true
+        },
+        {
+          "q": "The reply is a proposal, so no code is written or run in this session. Does the proposal state the scope the received suggestion gave (Windows, output paths over 260 characters) as the scope of the proposed change?",
+          "expect": true
+        }
+      ],
+      "judge": "One proposal (csv-exporter, the long output path on Windows, a failing test first, evidence quoted from demo-notebook's report-archive checkpoints.md). Its change is scoped to the note's Applies to line: Windows and output paths over 260 characters, not a rule for every platform or every path. The proposals file lists it; nothing is decided or archived and csv-exporter is not edited.",
+      "author": "eval-case-writer"
     }
   ]
 }

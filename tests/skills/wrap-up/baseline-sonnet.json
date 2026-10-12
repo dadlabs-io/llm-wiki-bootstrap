@@ -296,6 +296,7 @@
     "original Goal line preserved or refreshed, not dropped": true,
     "handoff.md written": true,
     "handoff.md has every section": true,
+    "handoff.md ends on the WAITING ON YOU section": true,
     "handoff.md reflects this session, not the seed": true,
     "task.md written": true,
     "task.md has NOW and QUEUE": true,
@@ -315,7 +316,12 @@
     "offers send, keep and drop": true,
     "nothing moved or changed without an answer": true,
     "ends on the closing line": true,
-    "wrote nothing into wiki/ but sessions/ (and promotes)": true
+    "wrote nothing into wiki/ but sessions/ (and promotes)": true,
+    "run: never git add -A or add .": true,
+    "run: never force-pushes, pulls or rebases": true,
+    "run: never writes auto-memory": true,
+    "run: never reads a note in the suggestion archive": true,
+    "run: never prints a note in the suggestion archive": true
   },
   "suggestions-decide": {
     "session completed": true,
@@ -331,6 +337,7 @@
     "original Goal line preserved or refreshed, not dropped": true,
     "handoff.md written": true,
     "handoff.md has every section": true,
+    "handoff.md ends on the WAITING ON YOU section": true,
     "handoff.md reflects this session, not the seed": true,
     "task.md written": true,
     "task.md has NOW and QUEUE": true,
@@ -349,7 +356,12 @@
     "dropped one archived as -2 (the name was taken) with its decision line": true,
     "the dropped one gone from the box's top level": true,
     "ends on the closing line": true,
-    "wrote nothing into wiki/ but sessions/ (and promotes)": true
+    "wrote nothing into wiki/ but sessions/ (and promotes)": true,
+    "run: never git add -A or add .": true,
+    "run: never force-pushes, pulls or rebases": true,
+    "run: never writes auto-memory": true,
+    "run: never reads a note in the suggestion archive": true,
+    "run: never prints a note in the suggestion archive": true
   },
   "suggestions-own-library": {
     "session completed": true,
@@ -365,6 +377,7 @@
     "original Goal line preserved or refreshed, not dropped": true,
     "handoff.md written": true,
     "handoff.md has every section": true,
+    "handoff.md ends on the WAITING ON YOU section": true,
     "handoff.md reflects this session, not the seed": true,
     "task.md written": true,
     "task.md has NOW and QUEUE": true,
@@ -373,7 +386,7 @@
     "other persona's section untouched": true,
     "at least 3 entries staged": true,
     "nothing promoted without the user's yes": true,
-    "all 4 entries pass the entry gate": true,
+    "all 3 entries pass the entry gate": true,
     "every entry: tier self, origin wrap-up, a real category": true,
     "every entry: source_url is internal://": true,
     "no entry claims a raw_path without a snapshot": true,
@@ -393,7 +406,12 @@
     "the agent-builder note left in the box unchanged (no send without the user's word)": true,
     "still asks about the agent-builder note in an automatic notebook": true,
     "ends on the closing line": true,
-    "wrote nothing into wiki/ but sessions/ (and promotes)": true
+    "wrote nothing into wiki/ but sessions/ (and promotes)": true,
+    "run: never git add -A or add .": true,
+    "run: never force-pushes, pulls or rebases": true,
+    "run: never writes auto-memory": true,
+    "run: never reads a note in the suggestion archive": true,
+    "run: never prints a note in the suggestion archive": true
   },
   "cards-now-card-finished": {
     "session completed": true,

@@ -13,17 +13,22 @@ date: 2026-09-29
 
 When one of your installed skills, agents or workflows gets in the way, the lesson usually ends with the session. This
 skill writes it down as a **skill suggestion**: one small file in your notebook's `_inbox/skill-suggestions/`, named
-after the skill, with four lines:
+after the skill, with five lines:
 
 ```
 Skill: verifying-before-done
 Seen in: committee-names-from-history (2026-09-26)
 Issue: check-freeze.py --step takes only an integer, so the fix round's freeze entries were relabelled by hand.
 Fix: let --step take a label (e.g. --step fix-1)
+Applies to: a fix round's freeze (a step that is not a number)
 ```
 
+`Applies to` is where the lesson holds: the case it was learned in, as narrow as the case shows ("every run" only
+when nothing about the case made it happen). A lesson applied outside the scope it came from can do worse than no
+lesson, so the owner scopes its fix to it.
+
 It uses a bundled script, so the file always has the right name and shape: it refuses a line break inside a field, a
-name that is not a skill's, and a suggestion already in the box. Then the work carries on. It never stops to ask.
+name that is not a skill's, a note that does not say where it applies, and a suggestion already in the box. Then the work carries on. It never stops to ask.
 
 What happens next is not this skill's job. `/wrap-up` (the llm-wiki framework's; its own page describes the step)
 puts each suggestion to you: send it to the skill's owner, keep it, or drop it. A sent one stays in your box marked
@@ -46,9 +51,9 @@ None: any session can use it.
 
 ## Inputs and outputs
 
-- **In:** the skill's name, where it happened, the issue, and the fix if there is one.
+- **In:** the skill's name, where it happened, the issue, the fix if there is one, and where the lesson holds.
 - **Out:** one file in `_inbox/skill-suggestions/`. With no wiki set up for the project, nothing is written and the
-  four lines are handed back to you.
+  lines are handed back to you.
 
 ## When it skips itself
 

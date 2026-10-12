@@ -14,8 +14,8 @@ Claude Code adds what it prints to the session's context. For each session:
   - resolves the project's wiki the way every wiki script does (_wiki_config:
     a registry notebook, or an in-project llm-wiki/)
   - prints, as the hook's JSON output, the paths of sessions/active-context.md,
-    sessions/<persona>/handoff.md and sessions/<persona>/task.md (each if present;
-    a project on cards, with tasks/ORDER.md, gets ORDER.md and the NOW card instead)
+    sessions/<persona>/handoff.md, tasks/ORDER.md and the NOW card (each if present;
+    the task.md list it listed before was removed with task #90, 2026-10-12)
     with the startup checklist to run before the first reply (additionalContext,
     for Claude), and one line for the user — the handoff's GOAL — shown in the
     terminal at startup (systemMessage)
@@ -111,8 +111,7 @@ def hook_output(start: Path) -> dict | None:
     tasks = tc.tasks_dir_of(wiki)
     on_cards = tc.is_on(tasks)
     now_card = tc.Stack(tasks).now() if on_cards else None
-    task_files = ([tasks / tc.ORDER_NAME] + ([now_card.path] if now_card else [])) if on_cards \
-        else [sessions / persona / "task.md"]
+    task_files = ([tasks / tc.ORDER_NAME] + ([now_card.path] if now_card else [])) if on_cards else []
     files = [f for f in (sessions / "active-context.md", sessions / persona / "handoff.md", *task_files)
              if f.is_file()]
     if not files:
@@ -130,6 +129,8 @@ def hook_output(start: Path) -> dict | None:
         lines.append(f"   The tasks are cards in {tasks}: read only the NOW card above (the first in ORDER.md not "
                      "done), no other card." if now_card else
                      f"   The tasks are cards in {tasks}, and ORDER.md has no open task: ask the user what to work on.")
+    else:
+        lines.append(f"   There are no task cards yet ({tasks / tc.ORDER_NAME}); the first /task-list add starts them.")
     lines += ["2. Read in full each memory file the MEMORY.md index in your context points to.",
               "3. Do every other step in the project CLAUDE.md's Resuming section (e.g. the intake inbox, the "
               "Discord channel catch-up).",

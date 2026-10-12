@@ -11,6 +11,12 @@
 
 ## 2026-10-12
 
+### A skill suggestion says where its lesson holds; a pass records whether an earlier fix held (task #100)
+
+- **Why**: three papers from cycle 2026-10-11-01 (DAEDALUS, AECG, SelfSuite; agentic-design's memory details page, Principle 8 note of 2026-10-12) measured what makes a stored lesson safe to reuse: a lesson reused outside the scope it was learned in did worse than no memory (AECG: removing scope preservation cost up to 16.89 points), and a lesson store should keep an outcome record of whether each lesson held when used again (SelfSuite). Our skill suggestions recorded the lesson and its fix, but neither.
+- **What**: a fifth line, `Applies to: <where the lesson holds>`; `skill-suggestion.py add` requires `--applies-to` (exit 2 without it). `suggestions.py`: `receive` keeps the line; `list` gives each suggestion its `applies_to` and lists `fixes`, every accepted fix with no outcome yet or on a skill a received suggestion names; new `outcome <decided file> --held yes|no --evidence "<line>" --pass <pass>` appends `Outcome (<date>, pass <pass>): held|did not hold - <evidence>` to an accepted, decided note (refused otherwise); `summary` adds an Applies to column and an "Earlier fixes checked" section. The improver's Step 2 checks each listed fix (the same lesson back: did not hold; a later record of the same case handled: held; neither: nothing recorded), Step 3 scopes each change to the note's Applies to. `/wrap-up` Step 5.5 lists where a note applies. Usage pages, the folder README template, INSTALL-INVENTORY.
+- **Migration**: none. Four-line notes already in a box or received stay valid (no Applies to; the page shows a dash). A caller of `skill-suggestion.py add` adds `--applies-to`.
+
 ### The tier rubric is printed where a tier is chosen; `/wiki-refresh`'s checks have a size (task #99)
 
 - **Why**: scored over saved runs, Sonnet set `--tier` without opening the frontmatter spec in about 1 run in 5, though the skill said to open its tier rubric first (Opus never skipped it). And of every check, verify, re-run and re-read line in the shipped skills, only `/wiki-refresh`'s Step 3 left a self-judged check open-ended; ParanoiaEval (agentic-design WN-S7) found that a stated size removes most excess checking.

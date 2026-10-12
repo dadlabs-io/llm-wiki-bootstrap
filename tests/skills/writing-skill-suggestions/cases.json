@@ -20,7 +20,7 @@
       "expect": {
         "commands": [
           {
-            "cmd": "python -c \"import glob,sys; f=sorted(glob.glob('notebook/_inbox/skill-suggestions/verifying-before-done--*.md')); t=open(f[0],encoding='utf-8').read() if f else ''; print(f, t); sys.exit(0 if (f and 'Skill: verifying-before-done' in t and 'Seen in:' in t and 'Issue:' in t and 'Fix:' in t and '--step' in t) else 1)\"",
+            "cmd": "python -c \"import glob,sys; f=sorted(glob.glob('notebook/_inbox/skill-suggestions/verifying-before-done--*.md')); t=open(f[0],encoding='utf-8').read() if f else ''; print(f, t); sys.exit(0 if (f and 'Skill: verifying-before-done' in t and 'Seen in:' in t and 'Issue:' in t and 'Fix:' in t and 'Applies to:' in t and '--step' in t) else 1)\"",
             "exit": 0
           }
         ]
@@ -32,8 +32,8 @@
           "quote_from": "user"
         }
       ],
-      "judge": "One suggestion in notebook/_inbox/skill-suggestions/, named verifying-before-done--…, four lines: the skill (not check-freeze.py), where it was seen, the --step issue, the fix (a label accepted); written with the skill's script, no question asked first.",
-      "author": "legacy"
+      "judge": "One suggestion in notebook/_inbox/skill-suggestions/, named verifying-before-done--…, five lines: the skill (not check-freeze.py), where it was seen, the --step issue, the fix (a label accepted), and an Applies to line; written with the skill's script, no question asked first.",
+      "author": "eval-case-writer"
     },
     {
       "id": "user-corrects-a-skill",
@@ -53,13 +53,13 @@
       "expect": {
         "commands": [
           {
-            "cmd": "python -c \"import glob,sys; f=sorted(glob.glob('notebook/_inbox/skill-suggestions/reviewing-code--*.md')); t=open(f[0],encoding='utf-8').read() if f else ''; print(f, t); sys.exit(0 if (f and 'Skill: reviewing-code' in t and 'Seen in:' in t and 'Issue:' in t and 'Fix:' in t and 'needs-a-human' in t) else 1)\"",
+            "cmd": "python -c \"import glob,sys; f=sorted(glob.glob('notebook/_inbox/skill-suggestions/reviewing-code--*.md')); t=open(f[0],encoding='utf-8').read() if f else ''; print(f, t); sys.exit(0 if (f and 'Skill: reviewing-code' in t and 'Seen in:' in t and 'Issue:' in t and 'Fix:' in t and 'Applies to:' in t and 'needs-a-human' in t) else 1)\"",
             "exit": 0
           }
         ]
       },
-      "judge": "The user's correction of how a skill did its work is a skill suggestion: reviewing-code--… in the box with the issue (no-spec item missing from needs-a-human) and the fix; the model says it is done.",
-      "author": "legacy"
+      "judge": "The user's correction of how a skill did its work is a skill suggestion: reviewing-code--… in the box with the issue (no-spec item missing from needs-a-human), the fix and an Applies to line; the model says it is done.",
+      "author": "eval-case-writer"
     },
     {
       "id": "should-not-trigger-project-lesson",
@@ -90,7 +90,7 @@
         ]
       },
       "judge": "A lesson about the project's own code, not about a skill: no suggestion is written and the skill is not invoked; the answer is about the parser (catch StopIteration or check for an empty file).",
-      "author": "legacy"
+      "author": "eval-case-writer"
     },
     {
       "id": "no-wiki-hands-back-the-lines",
@@ -112,11 +112,12 @@
         "regex": [
           "(?i)Skill:\\s*doubt-driven-development",
           "(?i)Issue:",
+          "(?i)Applies to:",
           "(?i)\\b(no|not|without)\\b.{0,25}\\b(wiki|notebook)|wiki.{0,40}(found|configured|exists?)"
         ]
       },
-      "judge": "No wiki resolves (no wiki-config, no llm-wiki/): the script exits 3 and nothing is written; the model gives the user the four lines so they can be kept, and does not invent a notebook folder.",
-      "author": "legacy"
+      "judge": "No wiki resolves (no wiki-config, no llm-wiki/): the script exits 3 and nothing is written; the model gives the user the lines, including an Applies to line, so they can be kept, and does not invent a notebook folder.",
+      "author": "eval-case-writer"
     },
     {
       "id": "duplicate-is-refused",
@@ -145,8 +146,74 @@
           "(?i)already"
         ]
       },
-      "judge": "The same skill and issue is already in the box: the script refuses (exit 1), the model says it is already there, and the box still holds exactly one verifying-before-done file.",
-      "author": "legacy"
+      "judge": "The same skill and issue is already in the box (an old four-line note, which still counts as the same issue): the script refuses (exit 1), the model says it is already there, and the box still holds exactly one verifying-before-done file.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "applies-to-names-the-narrow-situation",
+      "should_trigger": true,
+      "tier": "edit",
+      "prompt": "Heads up: the syncing-notebooks skill's sync.sh failed for me with 'cannot create symlink' when I ran it from Git Bash on Windows; the same script worked fine for my teammates on Mac and Linux. I copied the files across by hand. Make sure whoever maintains that skill hears about it, and suggest it copy the files instead of symlinking when it finds it is on Windows.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Bash(python *)",
+      "setup": {
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"demo-app\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"demo-app\": {\"root\": \"notebook\"}}}",
+          "notebook/wiki/README.md": "# demo-app wiki\n",
+          "src/parser.py": "import csv\n\n\ndef parse(path):\n    with open(path, newline='') as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        return header, list(rows)\n",
+          "README.md": "# demo-app\n\nParses CSV exports.\n"
+        }
+      },
+      "expect": {
+        "commands": [
+          {
+            "cmd": "python -c \"import glob,re,sys; f=sorted(glob.glob('notebook/_inbox/skill-suggestions/syncing-notebooks--*.md')); t=open(f[0],encoding='utf-8').read() if f else ''; m=re.search(r'(?im)^Applies to:(.*)$',t); a=m.group(1) if m else ''; print(f, t); sys.exit(0 if (len(f)==1 and 'Skill: syncing-notebooks' in t and 'Seen in:' in t and 'Issue:' in t and 'Fix:' in t and re.search(r'(?i)windows|git bash',a)) else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "Did the model ask the user a question before writing the suggestion down?",
+          "expect": false,
+          "quote_from": "user"
+        }
+      ],
+      "judge": "One suggestion in notebook/_inbox/skill-suggestions/, named syncing-notebooks--…, with the four lines as before plus an Applies to line that names the narrow situation (Windows / Git Bash), not 'every run' and not blank; written with the skill's script, no question asked first.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "applies-to-drawn-from-the-case-when-scope-unstated",
+      "should_trigger": true,
+      "tier": "edit",
+      "prompt": "The drafting-changelogs skill listed every commit in the repo's history instead of only the ones since the last release when I asked it for the 0.4 changelog of demo-app, and I trimmed the list by hand. Note that for whoever maintains the skill, then tell me when it's done.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Bash(python *)",
+      "setup": {
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"demo-app\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"demo-app\": {\"root\": \"notebook\"}}}",
+          "notebook/wiki/README.md": "# demo-app wiki\n",
+          "src/parser.py": "import csv\n\n\ndef parse(path):\n    with open(path, newline='') as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        return header, list(rows)\n",
+          "README.md": "# demo-app\n\nParses CSV exports.\n"
+        }
+      },
+      "expect": {
+        "commands": [
+          {
+            "cmd": "python -c \"import glob,re,sys; f=sorted(glob.glob('notebook/_inbox/skill-suggestions/drafting-changelogs--*.md')); t=open(f[0],encoding='utf-8').read() if f else ''; m=re.search(r'(?im)^Applies to:[ \\t]*(\\S.{3,})$',t); print(f, t); sys.exit(0 if (len(f)==1 and 'Skill: drafting-changelogs' in t and 'Seen in:' in t and 'Issue:' in t and 'Fix:' in t and m) else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "Did the model ask the user a question (for example where the problem applies) before writing the suggestion down?",
+          "expect": false,
+          "quote_from": "user"
+        }
+      ],
+      "judge": "One suggestion in notebook/_inbox/skill-suggestions/, named drafting-changelogs--…, written without asking the user anything, with Skill, Seen in, Issue and Fix as before and a non-empty Applies to line taken from the case described (a release changelog, listing since the last release), not a question back to the user.",
+      "author": "eval-case-writer"
     }
   ]
 }

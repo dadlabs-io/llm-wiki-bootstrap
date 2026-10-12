@@ -161,8 +161,13 @@ def _find_existing_url(topic_root, source):
     # Order matters — most recent/relevant first. A URL in pending/ is "still
     # queued"; in proposed/ is "already ingested but unpromoted"; in wiki/ is
     # "already published"; in done/ is "queue ticket cleaned up after ingest".
+    # A triaged ticket waits in _inbox/intake/<bucket>/ until its reader ingests it (/wiki-triage, 2026-09-24);
+    # a bucket's README and the triage log carry no `source:` line, so they never match (task #109, 2026-10-12).
+    intake_dir = topic_root / "_inbox" / "intake"
+    buckets = sorted(d for d in intake_dir.iterdir() if d.is_dir()) if intake_dir.is_dir() else []
     locations = [
         ("pending/", (p for p in pending_dir.glob("*.md") if not p.name.startswith("_")), ("source:",)),
+        *((f"intake/{b.name}/", b.glob("*.md"), ("source:",)) for b in buckets),
         ("proposed/", proposed_dir.rglob("*.md"), ("source_url:", "source:")),
         ("wiki/", wiki_dir.rglob("*.md"), ("source_url:",)),
         ("done/", done_dir.glob("*.md"), ("source:",)),
@@ -201,6 +206,7 @@ def add_to_queue(vault_root, topic, source, folder, title, tags, added_by, prior
     # can vary. Check against every location where this URL might already exist:
     #
     #   1. _inbox/pending/        — open queue tickets (look for `source:` line)
+    #      _inbox/intake/<bucket>/ — triaged tickets waiting for their reader (same line)
     #   2. _inbox/done/           — processed queue tickets (same `source:` line)
     #   3. _inbox/proposed/       — staged-but-not-promoted wiki entries
     #                                (frontmatter `source_url:` field)

@@ -21,8 +21,8 @@ the library that maintains the skills.
 
 | Skill | One line |
 |---|---|
-| [`writing-skill-suggestions`](./skills/writing-skill-suggestions.md) | Writes the note: four lines (`Skill`, `Seen in`, `Issue`, `Fix`) in your notebook's `_inbox/skill-suggestions/`, then the work carries on |
-| [`improving-skills-from-suggestions`](./skills/improving-skills-from-suggestions.md) | The owner's side: collects a note sent to it, checks it against the run and the skill as it stands, proposes changes, records your decision, archives the note and indexes it in the wiki |
+| [`writing-skill-suggestions`](./skills/writing-skill-suggestions.md) | Writes the note: five lines (`Skill`, `Seen in`, `Issue`, `Fix`, `Applies to`) in your notebook's `_inbox/skill-suggestions/`, then the work carries on |
+| [`improving-skills-from-suggestions`](./skills/improving-skills-from-suggestions.md) | The owner's side: collects a note sent to it, checks it against the run and the skill as it stands, proposes changes scoped to where the lesson holds, records your decision and whether each earlier fix held, archives the note and indexes it in the wiki |
 
 The step between them, where each note is put to you, is part of `/wrap-up`: [wrap-up](./skills/wrap-up.md).
 
@@ -37,7 +37,12 @@ The step between them, where each note is put to you, is part of `/wrap-up`: [wr
    Seen in: committee-names-from-history (2026-09-26)
    Issue: check-freeze.py --step takes only an integer, so the fix round's freeze entries were relabelled by hand.
    Fix: let --step take a label (e.g. --step fix-1)
+   Applies to: a fix round's freeze (a step that is not a number)
    ```
+
+   `Applies to` says where the lesson holds, as narrow as the case shows: a lesson reused outside the scope it was
+   learned in can do worse than no lesson at all (2026-10-12, from three papers on agent memory). Notes written
+   before then have the first four lines only.
 
 2. **Put to you at wrap-up.** `/wrap-up` finds the skill's owner and asks you: send, keep, or drop. See
    [wrap-up](./skills/wrap-up.md) for that step. A note you send stays in your box, marked `Sent`, and
@@ -51,14 +56,17 @@ The step between them, where each note is put to you, is part of `/wrap-up`: [wr
 4. **Proposed.** When you ask the owner for a pass, the improver checks each note against the run's record and the
    skill as it stands today. It sets aside what the skill already covers, what belongs to another library, what you
    turned down before, and what the record does not bear out, each with its reason, and writes one proposal per
-   lesson: the file and place to change, the exact change, the evidence quoted from the record, tactical or
-   strategic. It never edits a skill.
+   lesson: the file and place to change, the exact change (scoped to where the lesson holds), the evidence quoted
+   from the record, tactical or strategic. It also checks every fix you accepted earlier: the same lesson coming
+   back means the fix did not hold; a record of the skill handling the same case cleanly means it held; with neither,
+   nothing is recorded. It never edits a skill.
 5. **Decided, archived and indexed.** You accept a proposal (it becomes a task, made with the skill's tests run
    before and after), turn it down, or leave it for later. Each decided note moves to
    `raw/skill-suggestions/<date>-<project>/` in the owner's notebook with your decision as its last line, beside
-   the proposals you were shown. One wiki page per pass, in `wiki/project/skill-suggestions/`, lists every note,
-   your decision and the task it became, and links each archived file, so a wiki search finds what projects have
-   told the library.
+   the proposals you were shown. An earlier fix the pass judged gets an `Outcome` line (held, or did not hold, with
+   the evidence) on its archived note. One wiki page per pass, in `wiki/project/skill-suggestions/`, lists every
+   note, where it applies, your decision and the task it became, and the earlier fixes it checked, and links each
+   archived file, so a wiki search finds what projects have told the library and which fixes held.
 6. **You are told.** The owner's bot tags your project's bot with what became of each note and where the page is.
 
 ## Typical session
@@ -77,7 +85,8 @@ The step between them, where each note is put to you, is part of `/wrap-up`: [wr
 
 ## Limits
 
-- A project with no wiki has no box: the four lines are handed back to you instead of being written.
+- A project with no wiki has no box: the note's lines are handed back to you instead of being written.
+- An outcome is recorded only when there is evidence: a fix nobody has used since stays without one.
 - The owner is found from where the skill's usage page sits in your notebook; a skill with no page there means
   wrap-up asks you who owns it.
 - Nothing is proposed until someone asks for a pass: a sent note waits in the owner's notebook until then.

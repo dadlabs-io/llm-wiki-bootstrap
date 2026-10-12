@@ -9,6 +9,7 @@ A skill suggestion is a four-line file a run drops into its project notebook's `
   Seen in: <run, task or session> (<date>)
   Issue: <what happened>
   Fix: <the fix, or "none yet">
+  Applies to: <where the lesson holds>   (since task #100, 2026-10-12; older notes have the first four only)
 
 `/wrap-up` puts each one to Mark; one he sends to agent-builder is moved here by `receive`, into this library's own
 notebook under `_inbox/skill-suggestions/received/`, marked with the project it came from. A suggestion lives in one
@@ -25,8 +26,9 @@ Subcommands:
   list     JSON on stdout: every received suggestion with its library artifact (skills/<n>/SKILL.md,
            agents/<n>/AGENT.md or workflows/<n>/WORKFLOW.md, else null: not this library), the run records its
            `Seen in` names (raw/code-changes/<date>-<slug>/ in any notebook the registry lists), and the earlier
-           decisions on the same skill; malformed files are listed apart; the `pass` name and the `proposals_file`
-           Step 3 writes. Exit 0; 3 when the folder holds no suggestion (nothing to do; never a result); 2 when it
+           decisions on the same skill (each with its Applies to, whether it was accepted, and its outcome so far);
+           malformed files are listed apart; `fixes`, every accepted fix with no outcome yet or on a skill a received
+           suggestion names; the `pass` name and the `proposals_file` Step 3 writes. Exit 0; 3 when the folder holds no suggestion (nothing to do; never a result); 2 when it
            cannot run.
   receive  file one suggestion sent here: MOVED into received/ (this notebook holds the only copy; Mark, 2026-09-29),
            with `From: <project>` as its first line and a `Received from:` line naming the path it was taken from.
@@ -36,7 +38,12 @@ Subcommands:
   decide   append the decision and move the file into raw/skill-suggestions/<pass>/. Exit 0; 2 cannot run (a file
            outside received/'s top level, an empty or multi-line decision, a bad --date or --pass, or a pass whose
            proposals.md does not exist: a decision comes after the pass that proposed it).
-  summary  draft the pass's wiki page (TL;DR, one row per decided suggestion, the raw files) and create the folder
+  outcome  record whether an accepted fix held when its skill was used again (task #100; SelfSuite's outcome ledger):
+           append `Outcome (<date>, pass <pass>): held|did not hold - <evidence>` to the decided file, left in place.
+           Exit 0; 2 cannot run (--held not yes/no, an empty or multi-line --evidence, a file that is not decided or
+           was not accepted, a pass whose proposals.md does not exist).
+  summary  draft the pass's wiki page (TL;DR, one row per decided suggestion with its Applies to, the earlier fixes
+           the pass checked with their outcomes, the raw files) and create the folder
            README from the template if missing; prints the wiki-update.py command that files it. Exit 0; 1 refused (a
            suggestion in the pass folder carries no decision); 2 cannot run.
 
@@ -47,6 +54,7 @@ Usage:
   python scripts/suggestions.py list [--repo .] [--notebook <root>] [--library <root>]
   python scripts/suggestions.py receive <suggestion file> [--repo .] [--notebook <root>]
   python scripts/suggestions.py decide <received file> --decision "<text>" --pass <YYYY-MM-DD>-<name> [--date YYYY-MM-DD] [--repo .] [--notebook <root>]
+  python scripts/suggestions.py outcome <decided file> --held yes|no --evidence "<one line>" --pass <YYYY-MM-DD>-<name> [--date YYYY-MM-DD] [--repo .] [--notebook <root>]
   python scripts/suggestions.py summary --pass <YYYY-MM-DD>-<name> [--out <draft.md>] [--repo .] [--notebook <root>]
   python scripts/suggestions.py --self-test
 
@@ -78,10 +86,11 @@ README_TEMPLATE = Path(__file__).resolve().parent.parent / "templates" / "skill-
 _PASS = re.compile(r"^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*$")
 _TOKEN = re.compile(r"\{\{[A-Z_]+\}\}")    # a template token, filled from a table of values (archive-change.py's render)
 FIELDS = ("Skill", "Seen in", "Issue", "Fix")
+APPLIES = "Applies to"          # where the lesson holds (task #100); notes written before it have none
 FROM = "Received from"          # the path the file was taken from
 SENDER = "From"                 # the project it came from: the file's first line (Mark, 2026-09-29)
 MAIN_FILES = (("skills", "SKILL.md", "skill"), ("agents", "AGENT.md", "agent"), ("workflows", "WORKFLOW.md", "workflow"))
-SELF_TEST_MINIMUM = 56       # the exact number of assertions the fixtures run: a dropped block fails
+SELF_TEST_MINIMUM = 72       # the exact number of assertions the fixtures run: a dropped block fails
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _SLUG = re.compile(r"[a-z0-9][a-z0-9-]*[a-z0-9]")
 _RECORD = re.compile(r"^\d{4}-\d{2}-\d{2}-(.+)$")
@@ -180,16 +189,27 @@ def one_line(value: str) -> str:
 def parse(text: str) -> Dict[str, str]:
     out: Dict[str, str] = {}
     decisions: List[str] = []
+    outcomes: List[str] = []
     for line in text.splitlines():
         if line.startswith("Decision"):
             decisions.append(one_line(line))
             continue
-        for f in FIELDS + (FROM, SENDER):
+        if line.startswith("Outcome ("):
+            outcomes.append(one_line(line))
+            continue
+        for f in FIELDS + (APPLIES, FROM, SENDER):
             if line.startswith(f + ":"):
                 out.setdefault(f, one_line(line[len(f) + 1:]))
     if decisions:
         out["Decision"] = " | ".join(decisions)
+    if outcomes:
+        out["Outcome"] = " | ".join(outcomes)
     return out
+
+
+def accepted(fields: Dict[str, str]) -> bool:
+    """A decision that made the suggestion a task: the fix whose outcome a later pass records."""
+    return decision_text(fields.get("Decision", "")).strip().lower().startswith("accepted")
 
 
 def missing_fields(fields: Dict[str, str]) -> List[str]:
@@ -295,7 +315,18 @@ def cmd_list(repo_arg: str, notebook: Optional[str], library: Optional[str]) -> 
     out: Dict[str, object] = {"notebook": root.as_posix(), "found_by": how, "library": lib.as_posix(),
                               "received": received.as_posix(), "pass": pass_name,
                               "proposals_file": (root / RAW / pass_name / PROPOSALS_FILE).as_posix(),
-                              "suggestions": [], "malformed": []}
+                              "suggestions": [], "malformed": [], "fixes": []}
+    skills_now = set()
+    for p in files:
+        with contextlib.suppress(OSError):
+            skills_now.add(parse(p.read_text(encoding="utf-8")).get("Skill"))
+    # task #100: every accepted fix with no outcome yet, and every accepted fix on a skill a suggestion in this pass
+    # names (a fix that held once can still fail later), so the pass checks whether each held
+    for a, f in earlier_all:
+        if accepted(f) and (not f.get("Outcome") or f.get("Skill") in skills_now):
+            out["fixes"].append({"file": a.as_posix(), "skill": f.get("Skill"), "issue": f.get("Issue", ""),
+                                 "applies_to": f.get(APPLIES), "decision": f.get("Decision", ""),
+                                 "outcome": f.get("Outcome", "")})
     for p in files:
         try:
             fields = parse(p.read_text(encoding="utf-8"))
@@ -309,10 +340,11 @@ def cmd_list(repo_arg: str, notebook: Optional[str], library: Optional[str]) -> 
         artifact, kind = artifact_of(lib, fields["Skill"])
         out["suggestions"].append({
             "file": p.as_posix(), "skill": fields["Skill"], "seen_in": fields["Seen in"], "issue": fields["Issue"],
-            "fix": fields["Fix"], "received_from": fields.get(FROM),
+            "fix": fields["Fix"], "applies_to": fields.get(APPLIES), "received_from": fields.get(FROM),
             "artifact": artifact, "kind": kind,
             "records": records_for(fields["Seen in"], roots, fields.get(FROM)),
             "earlier": [{"file": a.as_posix(), "issue": f.get("Issue", ""), "decision": f.get("Decision", ""),
+                         "applies_to": f.get(APPLIES), "accepted": accepted(f), "outcome": f.get("Outcome", ""),
                          "same_issue": same_lesson(f, fields)}
                         for a, f in earlier_all if f.get("Skill") == fields["Skill"]]})
     print(json.dumps(out, indent=2, ensure_ascii=False))
@@ -354,7 +386,8 @@ def cmd_receive(repo_arg: str, source_arg: str, notebook: Optional[str]) -> int:
                       f"{source.as_posix()} is removed", file=sys.stderr)
                 return 1
     taken_from = source.resolve().as_posix()
-    body = (f"{SENDER}: {sender_of({FROM: taken_from})}\n" + "".join(f"{f}: {fields[f]}\n" for f in FIELDS)
+    body = (f"{SENDER}: {sender_of({FROM: taken_from})}\n"
+            + "".join(f"{f}: {fields[f]}\n" for f in FIELDS + (APPLIES,) if fields.get(f))
             + f"{FROM}: {taken_from}\n")
     try:
         received.mkdir(parents=True, exist_ok=True)
@@ -412,6 +445,58 @@ def cmd_decide(repo_arg: str, file_arg: str, decision: str, pass_name: str, date
         print(f"suggestions: cannot run - recording the decision failed ({e})", file=sys.stderr)
         return 2
     print(f"decided: {target.as_posix()}")
+    return 0
+
+
+def cmd_outcome(repo_arg: str, file_arg: str, held: str, evidence: str, pass_name: str, date: Optional[str],
+                notebook: Optional[str], today: Optional[dt.date] = None) -> int:
+    """Record whether an accepted fix held when its skill was used again (task #100; SelfSuite's outcome ledger):
+    append `Outcome (<date>, pass <pass>): held|did not hold - <evidence>` to the decided file, which stays where it
+    is. Only an accepted suggestion has a fix to judge; the evidence is one line, and with none nothing is recorded."""
+    today = today or dt.date.today()
+    if held not in ("yes", "no"):
+        print(f"suggestions: cannot run - --held {held!r} is not yes or no", file=sys.stderr)
+        return 2
+    if "\n" in evidence or "\r" in evidence or not evidence.strip():
+        print("suggestions: cannot run - --evidence must be one non-empty line (with no evidence, record nothing)",
+              file=sys.stderr)
+        return 2
+    if date is not None and not _DATE.match(date):
+        print(f"suggestions: cannot run - --date {date} is not YYYY-MM-DD", file=sys.stderr)
+        return 2
+    if not _PASS.match(pass_name or ""):
+        print(f"suggestions: cannot run - --pass {pass_name!r} is not <YYYY-MM-DD>-<name> (the pass list named)",
+              file=sys.stderr)
+        return 2
+    repo = Path(repo_arg).resolve()
+    root, how = resolve_notebook(repo, notebook)
+    if root is None:
+        print(f"suggestions: cannot run - {how}", file=sys.stderr)
+        return 2
+    if not (root / RAW / pass_name / PROPOSALS_FILE).is_file():
+        print(f"suggestions: cannot run - {(root / RAW / pass_name / PROPOSALS_FILE).as_posix()} does not exist: an "
+              f"outcome is recorded by the pass that checked it (Step 3 writes that file)", file=sys.stderr)
+        return 2
+    f = Path(file_arg).expanduser()
+    f = (f if f.is_absolute() else repo / f).resolve()
+    if f not in [p.resolve() for p in decided_files(root)]:
+        print(f"suggestions: cannot run - {f.as_posix()} is not a decided suggestion (a file in a pass folder under "
+              f"{(root / RAW).as_posix()})", file=sys.stderr)
+        return 2
+    text = f.read_text(encoding="utf-8")
+    if not accepted(parse(text)):
+        print(f"suggestions: cannot run - {f.as_posix()} was not accepted, so there is no fix to judge",
+              file=sys.stderr)
+        return 2
+    line = (f"Outcome ({date or today.isoformat()}, pass {pass_name}): "
+            f"{'held' if held == 'yes' else 'did not hold'} - {one_line(evidence)}\n")
+    try:
+        with open(f, "a", encoding="utf-8", newline="\n") as fh:
+            fh.write(("" if text.endswith("\n") else "\n") + line)
+    except OSError as e:
+        print(f"suggestions: cannot run - recording the outcome failed ({e})", file=sys.stderr)
+        return 2
+    print(f"outcome: {f.as_posix()}: {line.strip()}")
     return 0
 
 
@@ -474,9 +559,21 @@ def cmd_summary(repo_arg: str, pass_name: str, out_arg: Optional[str], notebook:
     lines = ["## TL;DR", "",
              f"{len(rows)} skill suggestion(s) from {', '.join(senders)}, reviewed in the improver pass of {date}: "
              f"{tally}." + (" Each accepted row names the task it became." if counts.get("accepted") else ""), "",
-             "## Suggestions", "", "| Skill | Seen in | Issue | Decision |", "|---|---|---|---|"]
-    lines += [f"| {_cell(r['Skill'])} | {_cell(r['Seen in'])} | {_cell(r['Issue'])} | {_cell(decision_text(r['Decision']))} |"
-              for r in rows]
+             "## Suggestions", "", "| Skill | Seen in | Applies to | Issue | Decision |", "|---|---|---|---|---|"]
+    lines += [f"| {_cell(r['Skill'])} | {_cell(r['Seen in'])} | {_cell(r.get(APPLIES) or '—')} | {_cell(r['Issue'])} | "
+              f"{_cell(decision_text(r['Decision']))} |" for r in rows]
+    # task #100: the earlier fixes this pass judged, each outcome as it was recorded (the line names the pass)
+    checked = []
+    for p in decided_files(root):
+        with contextlib.suppress(OSError):
+            f = parse(p.read_text(encoding="utf-8"))
+            mine = [o for o in f.get("Outcome", "").split(" | ") if f"pass {pass_name})" in o]
+            if mine:
+                checked.append((f, re.sub(r"^Outcome \([^)]*\):\s*", "", mine[-1])))
+    if checked:
+        lines += ["", "## Earlier fixes checked", "", "| Skill | Issue | Decision | Outcome |", "|---|---|---|---|"]
+        lines += [f"| {_cell(f.get('Skill', ''))} | {_cell(f.get('Issue', ''))} | "
+                  f"{_cell(decision_text(f.get('Decision', '')))} | {_cell(o)} |" for f, o in checked]
     lines += ["", "## Working files", "", f"- [{PROPOSALS_FILE}]({rel}/{PROPOSALS_FILE}): the proposals put to Mark"]
     lines += [f"- [{r['file']}]({rel}/{r['file']})" for r in rows]
     lines += ["", "## Related in this wiki", "", "- [skill-suggestions/ — folder purpose](README.md)", ""]
@@ -737,6 +834,80 @@ def self_test() -> int:
               code == 0 and "1 already covered" in tldr and "1 not this library" in tldr, out + tldr)
         check("... and claims no task and no zero counts", "task" not in tldr and "0 " not in tldr, tldr)
 
+        # task #100 (DAEDALUS, AECG, SelfSuite): a note says where its lesson holds, and a pass records whether an
+        # accepted fix held the next time, never without evidence
+        scoped = w(other / BOX / "wiki-update--scoped.md",
+                   sug("wiki-update", "run 9 (2026-09-28)", "A scoped lesson.") + "Applies to: Windows Git Bash\n")
+        code, out = quiet(cmd_receive, str(repo), str(scoped), None)
+        got_scoped = received / "wiki-update--scoped.md"
+        body = got_scoped.read_text(encoding="utf-8") if got_scoped.is_file() else ""
+        check("receive keeps the Applies to line, after the four older lines",
+              code == 0 and body.splitlines()[1:6] == ["Skill: wiki-update", "Seen in: run 9 (2026-09-28)",
+                                                       "Issue: A scoped lesson.", "Fix: none yet",
+                                                       "Applies to: Windows Git Bash"], out + body)
+        code, out = quiet(cmd_list, str(repo), None, str(repo))
+        data3 = json.loads(out) if code == 0 else {}
+        sc = [s for s in data3.get("suggestions", []) if s["file"].endswith("wiki-update--scoped.md")]
+        check("list gives each suggestion its applies_to (null for a four-line note)",
+              sc and sc[0]["applies_to"] == "Windows Git Bash"
+              and all(s["applies_to"] is None for s in data3.get("suggestions", []) if s["skill"] == "code-reviewer"),
+              str(sc))
+        fixes = {Path(f["file"]).name: f for f in data3.get("fixes", [])}
+        check("list names every accepted fix with no outcome yet, and no fix that was not accepted",
+              "verifying-before-done--freeze-step.md" in fixes and "code-reviewer--older-2.md" not in fixes
+              and "a--covered.md" not in fixes, str(sorted(fixes)))
+        check("a fix carries its skill, issue and decision",
+              fixes.get("verifying-before-done--freeze-step.md", {}).get("skill") == "verifying-before-done"
+              and "accepted as task 88" in fixes.get("verifying-before-done--freeze-step.md", {}).get("decision", ""),
+              str(fixes.get("verifying-before-done--freeze-step.md")))
+        accepted_file = pass_dir / "verifying-before-done--freeze-step.md"
+        before = accepted_file.read_text(encoding="utf-8")
+        new_pass = "2026-09-28-other"
+        new_pass_dir = own / RAW / new_pass
+        code, out = quiet(cmd_outcome, str(repo), str(accepted_file), "no", "the same lesson came back from run 9",
+                          new_pass, None, None, day)
+        check("outcome refuses a pass whose proposals.md does not exist (exit 2)", code == 2 and "proposals.md" in out, out)
+        w(new_pass_dir / PROPOSALS_FILE, "# Proposals\n")
+        check("outcome refuses --held other than yes or no (exit 2)",
+              quiet(cmd_outcome, str(repo), str(accepted_file), "maybe", "x", new_pass, None, None, day)[0] == 2)
+        check("outcome refuses an empty or multi-line evidence (exit 2)",
+              quiet(cmd_outcome, str(repo), str(accepted_file), "no", " ", new_pass, None, None, day)[0] == 2
+              and quiet(cmd_outcome, str(repo), str(accepted_file), "no", "a\nb", new_pass, None, None, day)[0] == 2)
+        check("outcome refuses a file that is not decided (still in received/) (exit 2)",
+              quiet(cmd_outcome, str(repo), str(got_scoped), "no", "x", new_pass, None, None, day)[0] == 2)
+        check("outcome refuses a decided file that was not accepted: no fix to judge (exit 2)",
+              quiet(cmd_outcome, str(repo), str(pass_dir / "code-reviewer--older-2.md"), "yes", "x", new_pass,
+                    None, None, day)[0] == 2)
+        check("no refused outcome changed the file", accepted_file.read_text(encoding="utf-8") == before)
+        code, out = quiet(cmd_outcome, str(repo), str(accepted_file), "no", "the same lesson came back from run 9",
+                          new_pass, None, None, day)
+        check("outcome appends a dated line naming the pass, and the file stays in its own pass folder (exit 0)",
+              code == 0 and accepted_file.read_text(encoding="utf-8") == before
+              + f"Outcome (2026-09-27, pass {new_pass}): did not hold - the same lesson came back from run 9\n", out)
+        code, out = quiet(cmd_list, str(repo), None, str(repo))
+        data4 = json.loads(out) if code == 0 else {}
+        check("a fix with an outcome is no longer listed while no new suggestion names its skill",
+              not any(Path(f["file"]).name == accepted_file.name for f in data4.get("fixes", [])), str(data4.get("fixes")))
+        w(received / "verifying-before-done--again.md", sug("verifying-before-done", "run 10", "Still an integer."))
+        code, out = quiet(cmd_list, str(repo), None, str(repo))
+        data5 = json.loads(out) if code == 0 else {}
+        back = [f for f in data5.get("fixes", []) if Path(f["file"]).name == accepted_file.name]
+        check("... and is listed again, with its outcome so far, when a new suggestion names its skill",
+              back and "did not hold" in back[0].get("outcome", ""), str(data5.get("fixes")))
+        (received / "verifying-before-done--again.md").unlink()
+        draft3 = base / "draft-outcomes.md"
+        code, out = quiet(cmd_summary, str(repo), new_pass, str(draft3), None)
+        text3 = draft3.read_text(encoding="utf-8") if draft3.is_file() else ""
+        check("the pass's page lists the earlier fixes it checked, with the outcome it recorded",
+              code == 0 and "## Earlier fixes checked" in text3 and "| verifying-before-done |" in text3
+              and "did not hold - the same lesson came back from run 9" in text3, out + text3)
+        check("the page's table has an Applies to column, a dash for a four-line note",
+              "| Skill | Seen in | Applies to | Issue | Decision |" in text
+              and "| verifying-before-done | committee-names-from-history (2026-09-26) | — |" in text, text[:900])
+        check("a page whose pass checked no earlier fix has no such section",
+              "## Earlier fixes checked" not in (draft2.read_text(encoding="utf-8") if draft2.is_file() else "x"))
+        got_scoped.unlink()
+
         # task 118's rule (2026-09-29, found by this skill's eval set): Claude Code 2.1.284 refuses `...; echo exit $?`, so
         # the script says its own exit code as its last line, and the skill says to run it alone, exactly as written
         code, out = quiet(main, ["list", "--repo", str(repo)])
@@ -773,7 +944,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Gather, receive and decide the skill suggestions sent to this library.")
     ap.add_argument("--self-test", action="store_true", help="prove every rule still fires on a known-bad fixture")
     sub = ap.add_subparsers(dest="cmd")
-    for name in ("list", "receive", "decide", "summary"):
+    for name in ("list", "receive", "decide", "outcome", "summary"):
         p = sub.add_parser(name)
         p.add_argument("--repo", default=".", help="the library repository (default: current directory)")
         p.add_argument("--notebook", default=None, help="this library's notebook root; overrides the wiki-config lookup")
@@ -787,6 +958,13 @@ def main(argv: Optional[List[str]] = None) -> int:
             p.add_argument("--pass", dest="pass_name", required=True,
                            help="the pass that proposed it, <YYYY-MM-DD>-<name> (its raw folder holds proposals.md)")
             p.add_argument("--date", default=None, help="YYYY-MM-DD (default: today)")
+        if name == "outcome":
+            p.add_argument("file", help="an accepted, decided suggestion (in a pass folder under raw/skill-suggestions/)")
+            p.add_argument("--held", required=True, choices=("yes", "no"), help="did the fix hold when used again")
+            p.add_argument("--evidence", required=True, help="one line: the record or new suggestion that shows it")
+            p.add_argument("--pass", dest="pass_name", required=True,
+                           help="the pass that checked it, <YYYY-MM-DD>-<name> (its raw folder holds proposals.md)")
+            p.add_argument("--date", default=None, help="YYYY-MM-DD (default: today)")
         if name == "summary":
             p.add_argument("--pass", dest="pass_name", required=True, help="the pass whose wiki page to draft")
             p.add_argument("--out", default=None, help="where to write the draft (default: <notebook>/_inbox/temp/)")
@@ -799,6 +977,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         code = cmd_receive(args.repo, args.file, args.notebook)
     elif args.cmd == "decide":
         code = cmd_decide(args.repo, args.file, args.decision, args.pass_name, args.date, args.notebook)
+    elif args.cmd == "outcome":
+        code = cmd_outcome(args.repo, args.file, args.held, args.evidence, args.pass_name, args.date, args.notebook)
     elif args.cmd == "summary":
         code = cmd_summary(args.repo, args.pass_name, args.out, args.notebook)
     else:
@@ -814,6 +994,7 @@ EXIT_MEANING = {("list", 0): "suggestions listed", ("list", 3): "nothing receive
                 ("list", 2): "cannot run", ("receive", 0): "filed in received/",
                 ("receive", 1): "refused: already here; the sender's duplicate removed", ("receive", 2): "cannot run",
                 ("decide", 0): "decided and moved into the pass folder", ("decide", 2): "cannot run",
+                ("outcome", 0): "outcome recorded on the decided suggestion", ("outcome", 2): "cannot run",
                 ("summary", 0): "draft written; file it with the command above",
                 ("summary", 1): "refused: a suggestion in the pass has no decision", ("summary", 2): "cannot run"}
 

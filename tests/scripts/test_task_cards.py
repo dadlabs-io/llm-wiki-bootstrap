@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
-"""Checks for task #89: the task stack (one card per task, tasks/ORDER.md). Never shipped.
+"""Checks for the task stack (one card per task, tasks/ORDER.md). Never shipped.
 
     uv run python tests/scripts/test_task_cards.py    # exit 0 = every check passed
 
-agent-builder's design (its task 173, agreed with Mark 2026-10-10): a project whose wiki has
-tasks/ORDER.md keeps each task as a card, tasks/<id>-<slug>.md (YAML fields, then the body);
-ORDER.md lists the current cards' ids in working order with the next-id counter; NOW is the
-first card there not done. `migrate` turns task.md into cards (each live task's row, Task
-details and QUEUE note moved whole; the rest archived unchanged; task.md a pointer). `check`
-runs six rules, and every write that would add a breach is refused.
+agent-builder's design (its task 173, agreed with Mark 2026-10-10): each task is a card,
+tasks/<id>-<slug>.md (YAML fields, then the body); ORDER.md lists the current cards' ids in
+working order with the next-id counter; NOW is the first card there not done. `check` runs six
+rules, and every write that would add a breach is refused.
+
+Task #90 (2026-10-12, every notebook on cards): cards are the only layout. The task.md list, its
+`migrate` and `init`, and the --file / --persona flags are gone; the first `add` in a project with
+no tasks/ORDER.md starts it on cards; a project that still keeps a task.md list is refused, never
+written past (Mark: nothing gets lost).
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -24,65 +28,33 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "wiki-tasks.py"
 
-TASK_MD = """## At a glance
+# the stack the checks below start from (task #89's test made it by migrating a task.md)
+SEED_CARDS = {
+    5: ("swap-the-embedding-model", {"title": "Swap the embedding model", "owner": "main", "list": "backlog",
+                                     "status": "ready", "next": "only if measured"}, ""),
+    11: ("decide-how-personas-work", {"title": "Decide how personas work", "owner": "Mark", "list": "backlog",
+                                      "status": "ready", "next": "thinking it over"}, ""),
+    12: ("label-the-search-questions", {"title": "Label the search questions", "owner": "Mark", "list": "current",
+                                        "status": "ready", "next": "a few days"}, "Fifty questions on the labelling page."),
+    20: ("build-the-stack-cards-order", {"title": 'Build "the stack": cards + ORDER', "owner": "main",
+                                         "list": "current", "status": "doing", "next": "questions first"},
+         "The spec is the intake note.\nSecond line of details."),
+    21: ("clean-the-tds-links", {"title": "Clean the TDS links", "owner": "main", "list": "current",
+                                 "status": "waiting", "waiting_on": "Mark's yes"}, ""),
+    22: ("finished-thing", {"title": "Finished thing", "owner": "main", "list": "current", "status": "done",
+                            "next": "remove? (your call)"}, ""),
+}
+SEED_ORDER = [20, 12, 21, 22]
 
-<!-- wiki-tasks next-id: 30 -->
-Intro line.
+TASK_MD_LIST = """## At a glance
 
-### Mark
-
-| # | Task | Status | Next / waiting on |
-|---|---|---|---|
-| 11 | Decide how personas work | parked | thinking it over |
-| 12 | Label the search questions | to do | a few days |
+<!-- wiki-tasks next-id: 3 -->
 
 ### main
 
 | # | Task | Status | Next / waiting on |
 |---|---|---|---|
-| 20 | Build "the stack": cards + ORDER | doing | questions first |
-| 21 | Clean the TDS links | waiting | Mark's yes |
-| 22 | Finished thing | done | remove? (your call) |
-
-### Unassigned
-
-| # | Task | Status | Next / waiting on |
-|---|---|---|---|
-
-### Backlog
-
-| # | Task | Owner | Status | Next / waiting on |
-|---|---|---|---|---|
-| 5 | Swap the embedding model | main | parked | only if measured |
-
-## Task details
-
-### #12: Label the search questions
-
-Fifty questions on the labelling page.
-
-### #20: Build "the stack": cards + ORDER
-
-The spec is the intake note.
-Second line of details.
-
-### #9: An old removed task
-
-Orphan details stay in the archive.
-
-## NOW
-2026-10-06: the last session's summary.
-
-Earlier — 2026-10-05: an older summary.
-
-## QUEUE
-20. **The stack's long note.** It spans
-    two lines, indented.
-19. (CLOSED) A closed task's note.
-5. **Embedding swap note.**
-
-### Parked (optional)
-- A parked idea in prose.
+| 1 | A task still kept in task.md | to do | |
 """
 
 results: list[tuple[bool, str]] = []
@@ -92,8 +64,10 @@ def check(name: str, ok: bool, detail: object = ""):
     results.append((bool(ok), name + (f"  [{detail}]" if not ok and detail != "" else "")))
 
 
-def run(f: Path, tasks: Path, *args: str) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, str(SCRIPT), *args, "--file", str(f), "--tasks-dir", str(tasks)],
+def run(tasks: Path, *args: str) -> subprocess.CompletedProcess:
+    # from the temp folder, never this repo: a script that resolved the wiki from its working directory once
+    # wrote these tests' tasks into the real notebook's task.md (2026-10-12, the pre-#90 script in the red run)
+    return subprocess.run([sys.executable, str(SCRIPT), *args, "--tasks-dir", str(tasks)], cwd=tasks.parents[1],
                           capture_output=True, text=True, encoding="utf-8", env={**os.environ, "PYTHONIOENCODING": "utf-8"})
 
 
@@ -113,138 +87,132 @@ def snapshot(d: Path) -> dict:
     return {p.relative_to(d).as_posix(): p.read_text(encoding="utf-8") for p in sorted(d.rglob("*.md"))}
 
 
-def setup(td: Path) -> tuple[Path, Path]:
-    wiki = td / "wiki"
-    (wiki / "sessions" / "main").mkdir(parents=True, exist_ok=True)
-    f = wiki / "sessions" / "main" / "task.md"
-    f.write_text(TASK_MD, encoding="utf-8")
-    return f, wiki / "tasks"
+def seed(tasks: Path) -> None:
+    tasks.mkdir(parents=True, exist_ok=True)
+    for n, (slug, fields, body) in SEED_CARDS.items():
+        fm = {"id": n, **{k: "" for k in ("next", "waiting_on", "priority")}, **fields, "tags": [],
+              "created": "2026-10-10", "updated": "2026-10-10", "links": []}
+        text = "---\n" + yaml.safe_dump(fm, sort_keys=False, allow_unicode=True) + "---\n" + (f"\n{body}\n" if body else "")
+        (tasks / f"{n}-{slug}.md").write_text(text, encoding="utf-8")
+    titles = {n: f[1]["title"] for n, f in SEED_CARDS.items()}
+    (tasks / "ORDER.md").write_text("<!-- next-id: 30 -->\n" + "".join(f"- {n} {titles[n]}\n" for n in SEED_ORDER),
+                                    encoding="utf-8")
 
 
 with tempfile.TemporaryDirectory() as tmp:
     td = Path(tmp)
 
-    # --- task.md mode: the card-only commands and fields are refused
-    f, tasks = setup(td / "a")
-    for args in (("check",), ("order", "20", "--top"), ("log", "20", "x"), ("set", "20", "--priority", "P1")):
-        p = run(f, tasks, *args)
-        check(f"task.md list: `{' '.join(args)}` is refused (exit 2)", p.returncode == 2, (p.returncode, p.stderr))
-    check("task.md list: nothing written by the refusals", f.read_text(encoding="utf-8") == TASK_MD
-          and not tasks.exists())
+    # --- a project with no tasks yet: show says so; the first add starts it on cards
+    fresh = td / "fresh" / "wiki" / "tasks"
+    (fresh.parent / "sessions" / "main").mkdir(parents=True)
+    p = run(fresh, "show")
+    check("no tasks yet: show exits 3 and says the first add starts the list",
+          p.returncode == 3 and "add" in p.stdout and not fresh.exists(), (p.returncode, p.stdout))
+    p = run(fresh, "add", "The first task", "--owner", "main")
+    check("the first add creates tasks/ORDER.md and card 1", p.returncode == 0 and (fresh / "ORDER.md").is_file()
+          and order(fresh) == [1] and card(fresh, 1)[0]["title"] == "The first task", (p.stdout, p.stderr))
+    check("... with next-id 2", "<!-- next-id: 2 -->" in (fresh / "ORDER.md").read_text(encoding="utf-8"))
+    check("... and no task.md written", not any((fresh.parent / "sessions").rglob("task.md")))
+    p = run(fresh, "check")
+    check("the new stack passes check", p.returncode == 0, p.stdout + p.stderr)
 
-    # --- migrate --dry-run writes nothing and says what would move
-    p = run(f, tasks, "migrate", "--dry-run")
-    check("migrate --dry-run exits 0", p.returncode == 0, p.stderr)
-    check("dry run: nothing written", f.read_text(encoding="utf-8") == TASK_MD and not tasks.exists())
-    check("dry run: lists every task and the check", all(f"card {n}-" in p.stdout for n in (5, 11, 12, 20, 21, 22))
-          and "check: ok" in p.stdout and "dry run: nothing written" in p.stdout, p.stdout)
-    check("dry run: names the QUEUE note it moves", "card 20-build-the-stack-cards-order.md" in p.stdout
-          and "QUEUE note 2 lines" in p.stdout, p.stdout)
+    # --- a project that still keeps its tasks in a task.md list is refused, nothing written
+    old = td / "old" / "wiki"
+    (old / "sessions" / "main").mkdir(parents=True)
+    (old / "sessions" / "main" / "task.md").write_text(TASK_MD_LIST, encoding="utf-8")
+    for args in (("add", "A new task"), ("show",), ("set", "1", "--next", "x")):
+        p = run(old / "tasks", *args)
+        check(f"a task.md list still in sessions/: `{args[0]}` refused (exit 2), naming the file",
+              p.returncode == 2 and "task.md" in p.stderr, (p.returncode, p.stderr))
+    check("... nothing written", not (old / "tasks").exists()
+          and (old / "sessions" / "main" / "task.md").read_text(encoding="utf-8") == TASK_MD_LIST)
+    ptr = td / "ptr" / "wiki"
+    (ptr / "sessions" / "main").mkdir(parents=True)
+    (ptr / "sessions" / "main" / "task.md").write_text("# Tasks moved to cards\n\nSee tasks/.\n", encoding="utf-8")
+    p = run(ptr / "tasks", "add", "Fine beside a pointer")
+    check("a task.md that is only a pointer does not block add", p.returncode == 0, p.stderr)
 
-    # --- migrate for real, NOW's task first
-    p = run(f, tasks, "migrate", "--now", "20")
-    check("migrate exits 0", p.returncode == 0, p.stderr)
-    check("ORDER.md: the current tasks in file order, --now first; backlog and parked out",
-          order(tasks) == [20, 12, 21, 22], order(tasks))
-    check("ORDER.md keeps next-id", "<!-- next-id: 30 -->" in (tasks / "ORDER.md").read_text(encoding="utf-8"))
-    fm, body, path20 = card(tasks, 20)
-    check("card 20: fields from its row", fm["title"] == 'Build "the stack": cards + ORDER' and fm["owner"] == "main"
-          and fm["list"] == "current" and fm["status"] == "doing" and fm["next"] == "questions first", fm)
-    check("card 20: the title with quotes and a colon round-trips through YAML", fm["title"].count('"') == 2)
-    check("card 20: its Task details moved whole", "The spec is the intake note.\nSecond line of details." in body, body)
-    check("card 20: its QUEUE note moved whole, indented line kept",
-          "**From the old QUEUE**" in body and "20. **The stack's long note.** It spans\n    two lines, indented." in body,
-          body)
-    fm, _, _ = card(tasks, 11)
-    check("card 11 (parked in Mark's section): list backlog, status ready, owner Mark",
-          (fm["list"], fm["status"], fm["owner"]) == ("backlog", "ready", "Mark"), fm)
-    fm, _, _ = card(tasks, 5)
-    check("card 5 (Backlog row): list backlog, owner from the Owner column",
-          (fm["list"], fm["status"], fm["owner"]) == ("backlog", "ready", "main"), fm)
-    fm, _, _ = card(tasks, 21)
-    check("card 21 (waiting): waiting_on from its Next cell", fm["status"] == "waiting"
-          and fm["waiting_on"] == "Mark's yes" and not fm.get("next"), fm)
-    fm, _, _ = card(tasks, 12)
-    check("card 12: `to do` became ready", fm["status"] == "ready", fm)
-    archive = next((tasks / "archive").glob("task-md-*.md")).read_text(encoding="utf-8")
-    check("archive: NOW's history kept", "2026-10-06: the last session's summary." in archive
-          and "Earlier — 2026-10-05" in archive, archive)
-    check("archive: a closed task's QUEUE note and the Parked prose kept",
-          "19. (CLOSED) A closed task's note." in archive and "- A parked idea in prose." in archive, archive)
-    check("archive: an orphan details entry kept", "Orphan details stay in the archive." in archive, archive)
-    check("archive: moved pieces are not duplicated", "The stack's long note" not in archive
-          and "Second line of details." not in archive and "| 20 |" not in archive and "Embedding swap note" not in archive,
-          archive)
-    t = f.read_text(encoding="utf-8")
-    check("task.md is now a short pointer to tasks/", len(t.strip().splitlines()) <= 3 and "tasks/ORDER.md" in t
-          and "archive/task-md-" in t, t)
+    # --- the task.md commands and flags are gone
+    tasks = td / "a" / "wiki" / "tasks"
+    seed(tasks)
+    for args in (("migrate",), ("init",), ("show", "--file", "x.md"), ("show", "--persona", "arch")):
+        p = run(tasks, *args)
+        check(f"`{' '.join(args)}` is not a command or flag any more (exit 2)", p.returncode == 2, p.returncode)
 
     # --- check passes; show gives NOW first
-    p = run(f, tasks, "check")
-    check("check after migrate: ok, exit 0", p.returncode == 0 and "ok" in p.stdout, p.stdout + p.stderr)
-    p = run(f, tasks, "show")
+    p = run(tasks, "check")
+    check("check on the seeded stack: ok, exit 0", p.returncode == 0 and "ok" in p.stdout, p.stdout + p.stderr)
+    p = run(tasks, "show")
     check("show: NOW is the first card not done, and prints tasks_dir=",
           p.returncode == 0 and "NOW: #20 " in p.stdout and "tasks_dir=" in p.stdout, p.stdout)
     check("show: the backlog is listed with owners", "| 5 | Swap the embedding model | main |" in p.stdout, p.stdout)
-    p = run(f, tasks, "show", "20")
+    p = run(tasks, "show", "20")
     check("show 20: the card in full", "The spec is the intake note." in p.stdout and "id: 20" in p.stdout, p.stdout)
+    _, _, path20 = card(tasks, 20)
 
-    # --- add: a new card, the next id, appended to ORDER.md
-    p = run(f, tasks, "add", "Write the pilot notes", "--owner", "main", "--priority", "P2", "--tags", "pilot,docs")
+    # --- add: a new card, the next id, appended to ORDER.md; a "to do" status is ready
+    p = run(tasks, "add", "Write the pilot notes", "--owner", "main", "--priority", "P2", "--tags", "pilot,docs")
     fm, _, _ = card(tasks, 30)
     check("add: card 30 with the given fields", p.returncode == 0 and fm["priority"] == "P2"
           and fm["tags"] == ["pilot", "docs"] and fm["status"] == "ready" and fm["list"] == "current", (p.stderr, fm))
     check("add: appended to ORDER.md, next-id 31", order(tasks)[-1] == 30
           and "<!-- next-id: 31 -->" in (tasks / "ORDER.md").read_text(encoding="utf-8"))
-    p = run(f, tasks, "add", "Someday idea", "--owner", "Mark", "--backlog")
+    p = run(tasks, "add", "Someday idea", "--owner", "Mark", "--backlog")
     fm, _, _ = card(tasks, 31)
     check("add --backlog: list backlog, not in ORDER.md", fm["list"] == "backlog" and 31 not in order(tasks), fm)
-    p = run(f, tasks, "show", "--tag", "pilot")
+    p = run(tasks, "show", "--tag", "pilot")
     check("show --tag: only the tagged tasks", "| 30 |" in p.stdout and "| 20 |" not in p.stdout, p.stdout)
+    p = run(tasks, "show", "--details")
+    check("show --details: the details after the overview", "Fifty questions on the labelling page." in p.stdout
+          and "NOW: #20 " in p.stdout, p.stdout)
 
     # --- waiting and waiting_on (rule 5)
-    p = run(f, tasks, "set", "12", "--status", "waiting", "--next", "Mark's labels")
+    p = run(tasks, "set", "12", "--status", "waiting", "--next", "Mark's labels")
     fm, _, _ = card(tasks, 12)
     check("set --status waiting --next Y: waiting_on Y", p.returncode == 0 and fm["waiting_on"] == "Mark's labels", fm)
-    p = run(f, tasks, "set", "12", "--status", "doing")
+    p = run(tasks, "set", "12", "--status", "doing")
     fm, _, _ = card(tasks, 12)
     check("leaving waiting clears waiting_on", fm["status"] == "doing" and not fm.get("waiting_on"), fm)
     before = snapshot(tasks)
-    p = run(f, tasks, "set", "12", "--status", "waiting")
+    p = run(tasks, "set", "12", "--status", "waiting")
     check("waiting with nothing to wait on is refused (rule 5), nothing written",
           p.returncode == 2 and "rule 5" in p.stderr and snapshot(tasks) == before, p.stderr)
 
     # --- done stays in ORDER.md; NOW moves on; remove takes it out, the card stays
-    run(f, tasks, "done", "20", "--next", "built")
-    p = run(f, tasks, "show")
+    run(tasks, "done", "20", "--next", "built")
+    p = run(tasks, "show")
     check("done 20: still in ORDER.md, NOW moves to the next open card, the done one is named",
           20 in order(tasks) and "NOW: #12 " in p.stdout and "remove: #20" in p.stdout, p.stdout)
-    p = run(f, tasks, "remove", "20")
+    p = run(tasks, "remove", "20")
     check("remove without --confirmed: exit 2", p.returncode == 2, p.stderr)
-    p = run(f, tasks, "remove", "20", "--confirmed")
+    p = run(tasks, "remove", "20", "--confirmed")
     fm, _, _ = card(tasks, 20)
     check("remove --confirmed: list done, out of ORDER.md, card kept",
           p.returncode == 0 and fm["list"] == "done" and 20 not in order(tasks) and path20.exists(), (p.stderr, fm))
 
-    # --- backlog / unbacklog / order
-    run(f, tasks, "backlog", "21")
+    # --- backlog / unbacklog / order / owner
+    run(tasks, "backlog", "21")
     check("backlog 21: out of ORDER.md", 21 not in order(tasks) and card(tasks, 21)[0]["list"] == "backlog")
-    run(f, tasks, "unbacklog", "21")
+    run(tasks, "unbacklog", "21")
     check("unbacklog 21: back at the end of ORDER.md", order(tasks)[-1] == 21 and card(tasks, 21)[0]["list"] == "current")
-    run(f, tasks, "order", "21", "--top")
+    run(tasks, "order", "21", "--top")
     check("order --top", order(tasks)[0] == 21, order(tasks))
-    run(f, tasks, "order", "30", "--before", "12")
+    run(tasks, "order", "30", "--before", "12")
     o = order(tasks)
     check("order --before", o.index(30) == o.index(12) - 1, o)
-    p = run(f, tasks, "order", "31", "--top")
+    p = run(tasks, "order", "31", "--top")
     check("order on a backlog card: exit 2", p.returncode == 2, p.stderr)
-    p = run(f, tasks, "set", "30", "--status", "parked")
+    p = run(tasks, "set", "30", "--status", "parked")
     check("set --status parked on cards: to the backlog", card(tasks, 30)[0]["list"] == "backlog"
           and 30 not in order(tasks), p.stdout + p.stderr)
+    run(tasks, "set", "21", "--owner", "Mark")
+    check("set --owner: the card's owner changes", card(tasks, 21)[0]["owner"] == "Mark")
+    p = run(tasks, "set", "21", "--owner", "Backlog")
+    check("Backlog is not an owner: exit 2", p.returncode == 2, p.stderr)
 
     # --- log, details, the slug
-    run(f, tasks, "log", "12", "started labelling")
-    run(f, tasks, "log", "12", "half done")
+    run(tasks, "log", "12", "started labelling")
+    run(tasks, "log", "12", "half done")
     _, body, _ = card(tasks, 12)
     check("log: a **Log** section with dated lines, in order",
           re.search(r"\*\*Log\*\*\n\n- \d{4}-\d{2}-\d{2}: started labelling\n- \d{4}-\d{2}-\d{2}: half done", body), body)
@@ -252,30 +220,32 @@ with tempfile.TemporaryDirectory() as tmp:
     # source and the steps written into the details)
     _, _, p12 = card(tasks, 12)
     before = p12.read_text(encoding="utf-8")
-    p = run(f, tasks, "set", "12", "--details", "Done so far: half labelled.")
+    p = run(tasks, "set", "12", "--details", "Done so far: half labelled.")
     check("set --details on a card with details is refused (exit 2), the card untouched, the options named",
           p.returncode == 2 and p12.read_text(encoding="utf-8") == before and "--append-details" in p.stderr
           and "log 12" in p.stderr, (p.returncode, p.stderr))
-    p = run(f, tasks, "done", "12", "--details", "Finished.")
+    p = run(tasks, "done", "12", "--details", "Finished.")
     check("done --details on a card with details is refused too, and the card is not marked done",
           p.returncode == 2 and p12.read_text(encoding="utf-8") == before, p.returncode)
-    p = run(f, tasks, "set", "12", "--append-details", "Done so far: half labelled.")
+    p = run(tasks, "set", "12", "--append-details", "Done so far: half labelled.")
     _, body, _ = card(tasks, 12)
     check("--append-details adds a paragraph after the details, before the Log, keeping both",
           p.returncode == 0 and re.search(r"Fifty questions[^\n]*\n(?:[^\n]+\n)*\nDone so far: half labelled\.\n\n\*\*Log\*\*",
                                           body) is not None and "half done" in body, body)
-    run(f, tasks, "set", "12", "--details", "New details only.", "--replace-details")
+    run(tasks, "set", "12", "--details", "New details only.", "--replace-details")
     _, body, _ = card(tasks, 12)
     check("set --details --replace-details replaces the details and keeps the log",
           body.lstrip().startswith("New details only.") and "Fifty questions" not in body
           and "Done so far" not in body and "half done" in body, body)
     _, _, p12 = card(tasks, 12)
-    run(f, tasks, "set", "12", "--task", "Label the fifty search questions")
+    run(tasks, "set", "12", "--task", "Label the fifty search questions")
     _, _, p12b = card(tasks, 12)
     check("set --task: the title changes, the file name never does", p12 == p12b
           and card(tasks, 12)[0]["title"] == "Label the fifty search questions")
     check("ORDER.md's title is refreshed from the card",
           "- 12 Label the fifty search questions" in (tasks / "ORDER.md").read_text(encoding="utf-8"))
+    p = run(tasks, "add", "x" * 71)
+    check("a task over 70 characters is refused (exit 2)", p.returncode == 2 and "70" in p.stderr, p.stderr)
 
     # --- check catches hand edits, rule by rule
     good = snapshot(tasks)
@@ -290,7 +260,7 @@ with tempfile.TemporaryDirectory() as tmp:
     def edits(name: str, fn, rule: str):
         restore()
         fn()
-        p_ = run(f, tasks, "check")
+        p_ = run(tasks, "check")
         check(f"check: {name} -> {rule}, exit 1", p_.returncode == 1 and rule in p_.stdout, p_.stdout + p_.stderr)
 
     o_path = tasks / "ORDER.md"
@@ -306,13 +276,13 @@ with tempfile.TemporaryDirectory() as tmp:
     edits("a file name that is not its id",
           lambda: card(tasks, 21)[2].rename(tasks / "77-wrong.md"), "rule 3")
     edits("a status outside the fixed words",
-          lambda: card(tasks, 30)[2].write_text(card(tasks, 30)[2].read_text(encoding="utf-8")
+          lambda: card(tasks, 31)[2].write_text(card(tasks, 31)[2].read_text(encoding="utf-8")
                                                 .replace("status: ready", "status: someday"), encoding="utf-8"), "rule 4")
     edits("a required field removed",
           lambda: card(tasks, 21)[2].write_text(re.sub(r"^owner:.*\n", "", card(tasks, 21)[2].read_text(encoding="utf-8"),
                                                        flags=re.M), encoding="utf-8"), "rule 4")
     edits("waiting_on filled on a card not waiting",
-          lambda: card(tasks, 30)[2].write_text(card(tasks, 30)[2].read_text(encoding="utf-8")
+          lambda: card(tasks, 31)[2].write_text(card(tasks, 31)[2].read_text(encoding="utf-8")
                                                 .replace("waiting_on:\n", "waiting_on: someone\n"), encoding="utf-8"),
           "rule 5")
     edits("next-id not above every id", lambda: o_path.write_text(o_path.read_text(encoding="utf-8")
@@ -324,14 +294,11 @@ with tempfile.TemporaryDirectory() as tmp:
     # --- a write never adds a breach, and a breach already there does not block an unrelated write
     restore()
     o_path.write_text(o_path.read_text(encoding="utf-8") + "- 99\n", encoding="utf-8")
-    p = run(f, tasks, "set", "21", "--next", "unrelated edit")
+    p = run(tasks, "set", "21", "--next", "unrelated edit")
     check("an unrelated write goes through beside an existing breach", p.returncode == 0, p.stderr)
     restore()
-    p = run(f, tasks, "migrate")
-    check("migrate on a project already on cards: exit 2", p.returncode == 2, p.stderr)
 
-    # --- the SessionStart hook: on cards it lists ORDER.md and the NOW card, never task.md or other cards
-    import json
+    # --- the SessionStart hook: ORDER.md and the NOW card, never task.md or other cards
     proj = td / "proj"
     wiki = proj / "llm-wiki" / "wiki"
     (proj / ".claude").mkdir(parents=True)
@@ -339,7 +306,7 @@ with tempfile.TemporaryDirectory() as tmp:
                                                        encoding="utf-8")
     (wiki / "sessions" / "main").mkdir(parents=True)
     (wiki / "sessions" / "main" / "handoff.md").write_text("GOAL: carry on\n", encoding="utf-8")
-    (wiki / "sessions" / "main" / "task.md").write_text(TASK_MD, encoding="utf-8")
+    (wiki / "sessions" / "main" / "task.md").write_text("# Tasks moved to cards\n", encoding="utf-8")
     hook = ROOT / "scripts" / "wiki-session-start.py"
 
     def context() -> str:
@@ -348,16 +315,19 @@ with tempfile.TemporaryDirectory() as tmp:
         return json.loads(p_.stdout)["hookSpecificOutput"]["additionalContext"] if p_.stdout.strip() else ""
 
     ctx = context()
-    check("hook, task.md project: lists task.md as before", "task.md" in ctx and "ORDER.md" not in ctx, ctx)
+    check("hook, no cards yet: the handoff is listed, never task.md, and the first add is named",
+          "handoff.md" in ctx and "task.md" not in ctx and not re.search(r"^\s+\d+\. .*ORDER\.md", ctx, re.M)
+          and "no task cards yet" in ctx, ctx)
     ptasks = wiki / "tasks"
-    run(wiki / "sessions" / "main" / "task.md", ptasks, "migrate", "--now", "21")
+    seed(ptasks)
+    run(ptasks, "order", "21", "--top")
     ctx = context()
     now_card = next(ptasks.glob("21-*.md"))
     check("hook, cards: lists ORDER.md and the NOW card", str(ptasks / "ORDER.md") in ctx and str(now_card) in ctx, ctx)
     check("hook, cards: no other card and no task.md", "20-build" not in ctx and "12-label" not in ctx
           and "task.md" not in ctx and "read only the NOW card" in ctx, ctx)
     for n in (21, 20, 12, 22):
-        run(wiki / "sessions" / "main" / "task.md", ptasks, "done", str(n))
+        run(ptasks, "done", str(n))
     ctx = context()
     check("hook, cards, nothing open: no card listed, ask the user", "ask the user what to work on" in ctx
           and not re.search(r"\\tasks\\\d+-|/tasks/\d+-", ctx), ctx)

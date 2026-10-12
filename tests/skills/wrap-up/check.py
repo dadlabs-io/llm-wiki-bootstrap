@@ -340,7 +340,7 @@ def _reset_cards(case: dict, ctx: dict) -> None:
 
 HEADER = """You are running an automated test of the wrap-up skill. The skill under test is at {skill}/SKILL.md. Read it and follow it exactly, as if this were the end of a real session in this project. Do not use any installed copy of the skill.
 
-You are in the `beacon` project at {project}; its notebook is `{notebook}` at {nb}, and this session's persona is `{persona}`. This session's id is `{sid}` — use it where the skill asks for a session id. Write only inside {sandbox}, and run scripts as `python <path> ...` with no environment-variable prefix.
+You are in the `beacon` project at {project}; its notebook is `{notebook}` at {nb}, and this session's persona is `{persona}`. This session's id is `{sid}` — use it where the skill asks for a session id. Write only inside {sandbox}, and run scripts as the skill writes them, `uv run --project <scripts dir> python <path> ...`, with no environment-variable prefix.
 
 The user cannot reply while this runs. Where the skill says to wait for the user, take the answers given below as already spoken; where it says to offer or ask something with no answer given, say in your final message what you would offer or ask, and do not act on an answer you do not have.
 
@@ -532,7 +532,7 @@ def _check_cards(case: dict, before: dict, after: dict, run: dict, ctx: dict, ad
     add("no other card changed its list, status, owner or waiting_on", not changed, changed)
 
     if exp.get("names"):
-        add("the summary names the finished task", bool(re.search(exp["names"], text)))
+        add("the summary names the finished task", bool(re.search(exp["names"], text, re.I)))
     if exp.get("asks_remove"):  # a task the session finished itself: marked done, stays, the summary asks
         add("the summary asks whether to remove it", bool(ASKS_REMOVE.search(text)))
     if user_done:  # a task the user said is done: the summary says it was removed and does not ask

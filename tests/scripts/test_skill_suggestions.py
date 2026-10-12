@@ -21,7 +21,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 WRITER = REPO / "skills/writing-skill-suggestions/scripts/skill-suggestion.py"
 IMPROVER = REPO / "skills/improving-skills-from-suggestions/scripts/suggestions.py"
-FLOORS = {WRITER: 34, IMPROVER: 56}
+FLOORS = {WRITER: 38, IMPROVER: 72}
 
 # One sabotage per script behaviour the self-test must catch: (label, script, old, new).
 SABOTAGE = [
@@ -36,6 +36,16 @@ SABOTAGE = [
     ("improver: a re-sent suggestion never recognised", IMPROVER,
      "def same_suggestion(a: Dict[str, str], b: Dict[str, str]) -> bool:\n",
      "def same_suggestion(a: Dict[str, str], b: Dict[str, str]) -> bool:\n    return False\n"),
+    # task #100: where a lesson holds, and whether an accepted fix held
+    ("writer: --applies-to no longer required", WRITER, "    if not applies:\n", "    if False:\n"),
+    ("improver: receive drops the Applies to line", IMPROVER, "for f in FIELDS + (APPLIES,) if fields.get(f))",
+     "for f in FIELDS if fields.get(f))"),
+    ("improver: an outcome recorded on a fix never accepted", IMPROVER,
+     "def accepted(fields: Dict[str, str]) -> bool:\n",
+     "def accepted(fields: Dict[str, str]) -> bool:\n    return True\n"),
+    ("improver: a fix with an outcome listed forever", IMPROVER,
+     "if accepted(f) and (not f.get(\"Outcome\") or f.get(\"Skill\") in skills_now):",
+     "if accepted(f):"),
 ]
 
 results: list[tuple[str, bool, str]] = []

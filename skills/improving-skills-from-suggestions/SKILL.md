@@ -1,6 +1,6 @@
 ---
 name: improving-skills-from-suggestions
-description: "Turns the skill suggestions sent to this library (four-line notes a run left when a skill got in the way, filed in the notebook's _inbox/skill-suggestions/received/) into proposals Mark picks from: checks each against its run's record and the skill, agent or workflow as it stands today, sets aside what is already covered, not this library's, turned down before or not borne out, groups repeats, and writes one proposal per lesson with the exact change, the quoted evidence, and whether it is tactical or strategic, while editing no artifact. Use when asked to run the improver, to go through or process the received skill suggestions, or what the suggestions have taught us; and, for filing only, when a skill suggestion arrives tagged for this library's bot. Not for writing a suggestion (writing-skill-suggestions), emptying a project's own suggestion box (/wrap-up), or a direct edit to a skill."
+description: "Turns the skill suggestions sent to this library (five-line notes a run left when a skill got in the way, filed in the notebook's _inbox/skill-suggestions/received/) into proposals Mark picks from: checks each against its run's record and the skill, agent or workflow as it stands today, sets aside what is already covered, not this library's, turned down before or not borne out, groups repeats, writes one proposal per lesson with the exact change scoped to where the lesson holds, the quoted evidence, and whether it is tactical or strategic, and records whether each earlier accepted fix held when used again, while editing no artifact. Use when asked to run the improver, to go through or process the received skill suggestions, or what the suggestions have taught us; and, for filing only, when a skill suggestion arrives tagged for this library's bot. Not for writing a suggestion (writing-skill-suggestions), emptying a project's own suggestion box (/wrap-up), or a direct edit to a skill."
 last_reviewed: 2026-09-29
 review_after: 2026-12-28
 reviewed_for_model: claude-opus-5-5
@@ -10,8 +10,8 @@ disallowed-tools: Edit, NotebookEdit
 # Improving skills from suggestions
 
 ## What this does
-A **skill suggestion** is a four-line note (`Skill`, `Seen in`, `Issue`, `Fix`) a run leaves when one of the
-library's skills, agents or workflows got in the way. `/wrap-up` puts each one to Mark in its own project; the ones
+A **skill suggestion** is a five-line note (`Skill`, `Seen in`, `Issue`, `Fix`, `Applies to`; notes from before
+2026-10-12 have no `Applies to`) a run leaves when one of the library's skills, agents or workflows got in the way. `/wrap-up` puts each one to Mark in its own project; the ones
 he sends here wait in this library's notebook under `_inbox/skill-suggestions/received/`. This skill is the improver
 of Warp's two-skill loop: it turns those notes into small, evidenced **proposals** for Mark, and he decides which
 become work. It proposes; it never edits the library.
@@ -44,9 +44,9 @@ on exit 1, that it was already here). Done when the file is in `received/` or th
 
 **Step 1 — Gather.** `uv run --project {{WIKI_SCRIPTS_DIR}} python <this skill's folder>/scripts/suggestions.py list`. Exit 3 means nothing has been
 received: tell Mark so, write nothing, and stop. Exit 0 prints JSON: each suggestion with its `artifact` (`null` when
-the name is not in this library), the run `records` its `Seen in` names, and `earlier` decisions on the same skill;
-`malformed` lists files missing a line, which you name to Mark and leave. Done when every received file is in one of
-the two lists.
+the name is not in this library), its `applies_to`, the run `records` its `Seen in` names, and `earlier` decisions on
+the same skill; `malformed` lists files missing a line, which you name to Mark and leave; `fixes` lists the earlier
+accepted fixes to check (Step 2). Done when every received file is in one of the two lists.
 
 **Step 2 — Check each suggestion against the evidence.** Read in full the suggestion, the artifact's main file and any
 script or reference the Issue names, and in each record folder `checkpoints.md` plus any file the Issue points to.
@@ -59,13 +59,25 @@ Then put each suggestion in exactly one class:
 - **not borne out** — neither the record nor the artifact shows what the Issue says; say what you searched.
 - **propose** — the record or the artifact shows it, and the artifact does not already cover it.
 
-Done when every suggestion has one class and each class rests on a quote or a named search.
+Then **check each earlier fix** in `fixes` (task #100: an outcome record on every lesson, after SelfSuite): did it
+hold when its skill was used again?
+- **Did not hold** — a suggestion in this pass shows the same lesson again after the fix was made. Quote it; the new
+  suggestion is proposed again, as a repeat whose earlier fix (name its task) did not hold.
+- **Held** — a record dated after the fix shows the skill in the same situation, inside the fix's `applies_to`,
+  without the issue. Quote it.
+- **No evidence yet** — neither. Record nothing: an outcome is never guessed (AECG counts a failure only when the
+  evidence agrees).
+
+Done when every suggestion has one class, each class rests on a quote or a named search, and every fix in `fixes`
+is held, did not hold, or no evidence yet.
 
 **Step 3 — Write the proposals.** One proposal per lesson: suggestions about the same artifact and the same lesson are
 one proposal, with the number of runs that showed it (two or more is recurring). Each proposal carries:
 - **Target** — the file and the place in it: a Gotchas line, a step, a script's function.
-- **Change** — the exact words to add, or the behaviour to change. A Gotcha records the surprise and the fix that
-  worked, never a count of failures. A script or lint change names the failing test that comes first.
+- **Change** — the exact words to add, or the behaviour to change, scoped to the note's `Applies to`: a Gotcha or
+  rule says when it applies, and a lesson from one case is never written as a rule for all. A Gotcha records the
+  surprise and the fix that worked, never a count of failures. A script or lint change names the failing test that
+  comes first.
 - **Tactical or strategic** — tactical patches the case at hand; strategic fixes what produced it. Lead with the
   strategic one where both exist, and pair a tactical one with its strategic follow-up.
 - **Evidence** — each record's path and a quote of at most two lines, copied from the record file word for word (or
@@ -78,12 +90,14 @@ there, and either recurring or costly once. At most three such proposals per pas
 
 Write the file at `proposals_file` from the JSON (`raw/skill-suggestions/<pass>/proposals.md`; the script names the
 pass `<today>-<sender>` and gives a second pass the same day its own folder): the proposals first, numbered P1, P2, …,
-then every other suggestion under its class with its reason. Done when every received suggestion appears in the file
-exactly once.
+then every other suggestion under its class with its reason, then `## Earlier fixes`: each fix in `fixes` with its
+outcome and the quote, or "no evidence yet". Done when every received suggestion and every listed fix appears in the
+file exactly once.
 
 **Step 4 — Put them to Mark.** Never an edit here: the library stays exactly as it was, and an accepted proposal is
-made later as its own task. Show the proposals in your reply, with the file's path, and ask one question per
-proposal: accept (it becomes a task), turn it down (and why), or later. Then stop and wait for his answer.
+made later as its own task. Show the proposals in your reply, with the file's path, and the earlier fixes' outcomes,
+and ask one question per proposal: accept (it becomes a task), turn it down (and why), or later. Then stop and wait
+for his answer.
 
 **Step 5 — Record his answers (only once he has answered).**
 Every `decide` names the pass (`--pass <pass>`, the folder Step 3 wrote into) and moves the file there, under
@@ -96,10 +110,14 @@ proposed it.
 - Later: leave the file where it is; the next pass shows it again.
 - A suggestion in another class, once Mark has seen the file: `decide` with its class and reason ("already covered:
   <file:line>", "not this library: <owner>", "not borne out: <what was searched>").
+- Each earlier fix found to have held or not, once Mark has seen the file: `uv run --project {{WIKI_SCRIPTS_DIR}}
+  python <this skill's folder>/scripts/suggestions.py outcome "<the fix's file>" --held yes|no --evidence "<the
+  quote, one line>" --pass <pass>`. It appends a dated `Outcome` line to the decided file, left where it is. A fix
+  with no evidence yet gets nothing.
 
 Then keep the pass in the wiki (Mark, 2026-09-29), once every file in the pass folder is decided:
-1. `suggestions.py summary --pass <pass>` drafts the pass's page (TL;DR, one row per suggestion with its decision, the
-   raw files) and creates `wiki/project/skill-suggestions/README.md` if missing; it refuses while a file in the pass
+1. `suggestions.py summary --pass <pass>` drafts the pass's page (TL;DR, one row per suggestion with where it applies
+   and its decision, the earlier fixes this pass checked with their outcomes, the raw files) and creates `wiki/project/skill-suggestions/README.md` if missing; it refuses while a file in the pass
    folder has no decision.
 2. File the draft with the `wiki-update.py` command it prints (tier `self`, `--raw-path raw/skill-suggestions/<pass>/`),
    and delete the draft once filed.
@@ -107,8 +125,8 @@ Then keep the pass in the wiki (Mark, 2026-09-29), once every file in the pass f
    which of its suggestions were processed, the decision on each (the task it became), and the pass's wiki page. The
    project keeps no copy, so this message is its record that the suggestion was handled.
 
-Done when every file Mark answered is in its pass folder, the pass's page is filed, every sender has been told, and
-every accepted proposal is a task.
+Done when every file Mark answered is in its pass folder, every outcome found is recorded, the pass's page is filed,
+every sender has been told, and every accepted proposal is a task.
 
 ## Examples
 
@@ -118,6 +136,7 @@ Skill: verifying-before-done
 Seen in: committee-names-from-history (2026-09-26)
 Issue: check-freeze.py --step takes only an integer, so the fix round's freeze entries were relabelled by hand.
 Fix: let --step take a label (e.g. --step fix-1).
+Applies to: a fix round's freeze (a step that is not a number)
 ```
 
 Its proposal:
@@ -149,6 +168,10 @@ Every hard rule above, once, with what makes a violation fail rather than merely
   headless case can reach.
 - "Nothing is proposed for an artifact outside this library" → `script`: `list` sets `artifact` to `null` for a name
   with no SKILL.md, AGENT.md or WORKFLOW.md in the library; placing it in the class is `prose`, checked by an eval case.
+- "An outcome is recorded only on an accepted fix, with one line of evidence, by the pass that found it" → `script` —
+  `outcome` refuses a file that is not decided or was not accepted, a `--held` other than yes or no, an empty or
+  multi-line `--evidence`, and a pass with no `proposals.md`; whether the evidence shows the same lesson is `prose`.
+- "A proposal is scoped to where its lesson holds" → `prose` — a judgment; the note's `Applies to` is the input.
 - "Evidence is copied from the record word for word" → `prose` — only a reading of the record can tell; the eval
   cases' question rows ask for the quote.
 - "At most three promotions to a mechanism per pass, each through the promotion gate" → `prose` — the gate is the
@@ -180,8 +203,10 @@ Every hard rule above, once, with what makes a violation fail rather than merely
 - **Dependencies:** the `task-list` skill (Step 5). Its input comes from the `writing-skill-suggestions` skill and
   from `/wrap-up` (llm-wiki's), which sends a suggestion here on Mark's word: it adds a `Sent (<date>, Mark): <owner>`
   line, leaves the file in the project's box and tags this library with its path. A note left in this library's own
-  notebook about one of its own skills is filed here by `/wrap-up` itself, with `receive`. `receive` reads the four labelled
-  lines and ignores any other, so the `Sent` line is not carried into the copy here.
-- **Script:** `scripts/suggestions.py` — `list`, `receive`, `decide`, `summary`; `--self-test` with a floor of 56.
+  notebook about one of its own skills is filed here by `/wrap-up` itself, with `receive`. `receive` reads the labelled
+  lines (`Applies to` included when present) and ignores any other, so the `Sent` line is not carried into the copy
+  here.
+- **Script:** `scripts/suggestions.py` — `list`, `receive`, `decide`, `outcome`, `summary`; `--self-test` with a floor
+  of 72.
 - **Template:** `templates/skill-suggestions-README.md`, the folder README `summary` creates when the notebook has none.
-- **Lifecycle:** encoded preference (Mark's loop, 2026-09-26); revisit when the box or its four lines change.
+- **Lifecycle:** encoded preference (Mark's loop, 2026-09-26); revisit when the box or its lines change.

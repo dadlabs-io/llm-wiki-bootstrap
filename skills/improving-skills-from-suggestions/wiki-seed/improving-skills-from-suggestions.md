@@ -12,7 +12,8 @@ date: 2026-09-29
 ## What it does
 
 When one of your installed skills, agents or workflows gets in the way, the session leaves a **skill
-suggestion**: four lines naming the skill, where it happened, the issue, and the fix that worked. At `/wrap-up` you
+suggestion**: five lines naming the skill, where it happened, the issue, the fix that worked, and where the lesson
+holds. At `/wrap-up` you
 decide where each suggestion goes (the llm-wiki framework's page for wrap-up describes that step); one you send to
 the library that owns the skill waits in your box, marked `Sent`, until that library collects it. This skill is the
 library's side: it collects what you sent and turns it into **proposals** for you:
@@ -20,11 +21,14 @@ library's side: it collects what you sent and turns it into **proposals** for yo
 - it checks each suggestion against the run's record and against the skill as it stands today;
 - it sets aside what the skill already covers, what belongs to another library, what you turned down before, and what
   the record does not bear out, each with its reason;
-- it writes one proposal per lesson: the file and place to change, the exact change, the evidence quoted from the
-  record, and whether it is a tactical patch or a strategic fix.
+- it writes one proposal per lesson: the file and place to change, the exact change, scoped to where the lesson
+  holds, the evidence quoted from the record, and whether it is a tactical patch or a strategic fix;
+- it checks every fix you accepted before: the same lesson coming back means it did not hold, a record of the skill
+  handling the same case cleanly means it held, and with neither nothing is recorded.
 
 It never edits a skill. You accept a proposal (it becomes a task, made with the skill's tests run before and after),
-turn it down, or leave it for later, and your answer is recorded on each suggestion.
+turn it down, or leave it for later, and your answer is recorded on each suggestion; each outcome it found is
+recorded on the earlier fix's note.
 
 ## Trigger phrases
 
@@ -42,8 +46,9 @@ None: it runs in the library's own session (the factory that builds and maintain
   records, and the library's skills, agents and workflows.
 - **Out:** a proposals file (`raw/skill-suggestions/<date>-<project>/proposals.md`); after your answers, a task for
   each proposal you accept, each suggestion moved into that same folder with your decision on it, and one wiki page
-  for the pass (`wiki/project/skill-suggestions/`) listing every suggestion, your decision and the task it became, so
-  a wiki search finds what projects have told the library. A suggestion lives in one place: when you send it, the
+  for the pass (`wiki/project/skill-suggestions/`) listing every suggestion, where it applies, your decision and the
+  task it became, and the earlier fixes it checked with their outcomes, so a wiki search finds what projects have told
+  the library and which fixes held. A suggestion lives in one place: when you send it, the
   library moves it out of your box into its own notebook (marked `From: <your project>`), and after the pass its bot
   tells yours what became of each suggestion and where the page is. A suggestion it already holds from the same run
   is not taken twice (your duplicate is removed from the box); the same problem seen in another run is kept as its

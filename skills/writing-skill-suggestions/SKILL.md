@@ -1,6 +1,6 @@
 ---
 name: writing-skill-suggestions
-description: "Writes a skill suggestion, one four-line note (the skill under the exact name the user or its folder gives, never a similar-sounding one; where it was seen; the issue; the fix) dropped into the project notebook's _inbox/skill-suggestions/ box, whenever a skill, agent, workflow or one of their scripts got in the way: it forced a workaround, a check it ran missed something, one of its rules did not fit the case, or the user corrected how it made the work go. Use in any session at that moment, and when asked to note, log or pass on a problem with a skill for whoever maintains it. Not for lessons about the project's own code or data (those belong in the project's wiki), not for fixing the skill itself, and not for going through suggestions already sent (improving-skills-from-suggestions)."
+description: "Writes a skill suggestion, one five-line note (the skill under the exact name the user or its folder gives, never a similar-sounding one; where it was seen; the issue; the fix; where the lesson holds) dropped into the project notebook's _inbox/skill-suggestions/ box, whenever a skill, agent, workflow or one of their scripts got in the way: it forced a workaround, a check it ran missed something, one of its rules did not fit the case, or the user corrected how it made the work go. Use in any session at that moment, and when asked to note, log or pass on a problem with a skill for whoever maintains it. Not for lessons about the project's own code or data (those belong in the project's wiki), not for fixing the skill itself, and not for going through suggestions already sent (improving-skills-from-suggestions)."
 last_reviewed: 2026-09-27
 review_after: 2026-12-27
 reviewed_for_model: claude-opus-5-5
@@ -10,8 +10,8 @@ reviewed_for_model: claude-opus-5-5
 
 ## What this does
 A lesson about a skill otherwise ends with the session that learned it. This skill writes it down as a **skill
-suggestion**: one small file in the project notebook's box, `_inbox/skill-suggestions/<skill>--<slug>.md`, four
-labelled lines (`Skill`, `Seen in`, `Issue`, `Fix`). `/wrap-up` later puts each one to the user, who sends it to the
+suggestion**: one small file in the project notebook's box, `_inbox/skill-suggestions/<skill>--<slug>.md`, five
+labelled lines (`Skill`, `Seen in`, `Issue`, `Fix`, `Applies to`). `/wrap-up` later puts each one to the user, who sends it to the
 skill's owner, keeps it or drops it. A sent one waits in the box, marked `Sent`, until the owner's `receive` moves it
 into the owner's notebook, where the owner's improver turns it into proposed changes.
 
@@ -34,15 +34,19 @@ goes in its wiki), for fixing the skill yourself, or for going through suggestio
    the project itself stops here: it goes in the project's wiki. Done when you have one name, copied, not composed.
 2. **Write it** with this skill's script, from the project's root:
    `uv run --project {{WIKI_SCRIPTS_DIR}} python <this skill's folder>/scripts/skill-suggestion.py add --skill <name> --seen-in "<run, task or session>"
-   --issue "<what happened>" --fix "<the fix>"`.
+   --issue "<what happened>" --fix "<the fix>" --applies-to "<where it holds>"`.
    - **Issue** — what happened and where you saw it, in one line: the surprise, with the file or step.
    - **Fix** — the fix that worked, or the one you would suggest; leave `--fix` out when there is none (`none yet`).
      Record the fix, never a count of failures.
+   - **Applies to** — where the lesson holds: the case it was learned in (the platform, the input, the kind of
+     project, the mode the skill ran in), as narrow as the evidence shows. `every run` only when nothing about the
+     case made it happen. A lesson reused outside the scope it was learned in did worse than none (task #100).
    Done when the script has answered.
 3. **Read its exit code.** 0: written; say so in one line with the path. 1: the box already holds the same skill and
-   issue; say so and write nothing else. 3: no wiki was found; give the user the four lines it printed (in a
+   issue; say so and write nothing else. 3: no wiki was found; give the user the lines it printed (in a
    do-code-change run they go in the run's `checkpoints.md` under `## Skill suggestions`). 2: the call was wrong (a
-   name that is not an artifact name, a line break in a field); fix the call. Done when one of the four is handled.
+   name that is not an artifact name, a line break in a field, no `--applies-to`); fix the call. Done when one of the
+   four is handled.
 4. **Carry on with the task.** The suggestion waits in the box; `/wrap-up` puts it to the user. A suggestion is never a
    question in the middle of the work.
 
@@ -54,7 +58,8 @@ number, so the entries were frozen at 4 and relabelled by hand.
 uv run --project {{WIKI_SCRIPTS_DIR}} python .claude/skills/writing-skill-suggestions/scripts/skill-suggestion.py add --skill verifying-before-done \
   --seen-in "committee-names-from-history" \
   --issue "check-freeze.py --step takes only an integer, so the fix round's freeze entries were relabelled by hand." \
-  --fix "let --step take a label (e.g. --step fix-1)"
+  --fix "let --step take a label (e.g. --step fix-1)" \
+  --applies-to "a fix round's freeze (a step that is not a number)"
 ```
 
 The file it writes, `_inbox/skill-suggestions/verifying-before-done--check-freeze-py-step-takes-only.md`:
@@ -64,13 +69,16 @@ Skill: verifying-before-done
 Seen in: committee-names-from-history (2026-09-26)
 Issue: check-freeze.py --step takes only an integer, so the fix round's freeze entries were relabelled by hand.
 Fix: let --step take a label (e.g. --step fix-1)
+Applies to: a fix round's freeze (a step that is not a number)
 ```
 
 ## Enforcement
 Every hard rule above, once, with what makes a violation fail rather than merely discouraged:
-- "Each field is one line; the skill is an artifact name; the same suggestion is never written twice" → `script` —
-  `skill-suggestion.py` refuses a line break (exit 2), a name that is not lowercase-hyphen (exit 2), and a duplicate
-  skill and issue already in the box (exit 1).
+- "Each field is one line; the skill is an artifact name; every note says where it holds; the same suggestion is never
+  written twice" → `script` — `skill-suggestion.py` refuses a line break (exit 2), a name that is not lowercase-hyphen
+  (exit 2), no or a blank `--applies-to` (exit 2), and a duplicate skill and issue already in the box (exit 1).
+- "Applies to is as narrow as the evidence shows" → `prose` — a judgment about the case; the improver reads it when it
+  scopes a proposal.
 - "The box's existing files and its `archive/` are never edited" → `script` — the script only creates new files at the
   box's top level (an exclusive create, `-2` on a name clash).
 - "A lesson about the project's own code or data is not a skill suggestion" → `prose` — a judgment about what got in
@@ -88,8 +96,8 @@ No gotchas logged yet.
 - **Readers:** `/wrap-up` Step 5.5 (llm-wiki) puts each suggestion to the user, finds its owner from the skill's
   usage page, and marks a sent one with a `Sent (<date>, Mark): <owner>` line, left in the box; the owner's `receive`
   (`improving-skills-from-suggestions`, run in the owning library) moves it out, and its improver proposes changes. All
-  three read the four labelled lines and the `<skill>--<slug>.md` name and ship together in llm-wiki's pack, so a
-  change to either is made in all three at once.
-- **Script:** `scripts/skill-suggestion.py` — `add`, `--self-test` with a floor of 34. The notebook is resolved from
+  three read the labelled lines (five since task #100; older notes have four, without `Applies to`) and the
+  `<skill>--<slug>.md` name and ship together in llm-wiki's pack, so a change to either is made in all three at once.
+- **Script:** `scripts/skill-suggestion.py` — `add`, `--self-test` with a floor of 38. The notebook is resolved from
   `.claude/wiki-config.json` (`llm_wiki_root`, else `notebook` + `registry`, else `llm-wiki/`); `--wiki` overrides.
-- **Lifecycle:** encoded preference (Mark's loop, 2026-09-26/27); revisit when the box or its four lines change.
+- **Lifecycle:** encoded preference (Mark's loop, 2026-09-26/27); revisit when the box or its lines change.

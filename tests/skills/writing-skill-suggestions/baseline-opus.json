@@ -23,12 +23,25 @@
     "absent: _inbox": true,
     "reply matches pattern 1: (?i)Skill:\\s*doubt-driven-development": true,
     "reply matches pattern 2: (?i)Issue:": true,
-    "reply matches pattern 3: (?i)\\b(no|not|without)\\b.{0,25}\\b(wiki|notebook)|wiki.{0,40}": true
+    "reply matches pattern 3: (?i)Applies to:": true,
+    "reply matches pattern 4: (?i)\\b(no|not|without)\\b.{0,25}\\b(wiki|notebook)|wiki.{0,40}": true
   },
   "duplicate-is-refused": {
     "session completed": true,
     "the skill is used (SKILL.md read or its script run)": true,
     "reply matches pattern 1: (?i)already": true,
     "command 1 exits 0": true
+  },
+  "applies-to-drawn-from-the-case-when-scope-unstated": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "command 1 exits 0": true,
+    "judge: Did the model ask the user a question (for example where the problem applies) before writi -> NO": true
+  },
+  "applies-to-names-the-narrow-situation": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "command 1 exits 0": true,
+    "judge: Did the model ask the user a question before writing the suggestion down? -> NO": true
   }
 }

@@ -8,12 +8,16 @@ the session. This script writes it down as one small file in the project noteboo
 
   <notebook>/_inbox/skill-suggestions/<skill>--<slug>.md
 
-four labelled lines:
+five labelled lines:
 
   Skill: <the exact name of the skill, agent or workflow; a script's own skill>
   Seen in: <the run, task or session where it happened> (<date>)
   Issue: <what happened>
   Fix: <the fix that worked or is suggested, or "none yet">
+  Applies to: <where the lesson holds: the case, project kind or condition it was learned in>
+
+`Applies to` came with task #100 (2026-10-12): three papers (DAEDALUS, AECG, SelfSuite) found a lesson reused outside
+the scope it was learned in did worse than no memory. Notes written before it have the first four lines only.
 
 `/wrap-up` empties the box: it puts each suggestion to the user, who decides whether it goes to the skill's owner or is
 dropped, and it moves the file to `archive/` with the decision (Mark's design, 2026-09-26, agent-builder task 31).
@@ -26,13 +30,13 @@ The notebook is resolved in promote-agent Step 5.5's order, as archive-change.py
 Exit codes (never let a 1, 2 or 3 read as a 0):
   0  written (the path is printed)
   1  refused: the box already holds a suggestion with the same skill and the same issue; nothing written
-  2  could not run: a bad skill name, an empty or multi-line field, a bad --date, a --wiki with no wiki/ folder, or a
-     write that failed
+  2  could not run: a bad skill name, an empty or multi-line field (--applies-to included), a bad --date, a --wiki
+     with no wiki/ folder, or a write that failed
   3  no wiki found: nothing written; the suggestion is printed so the caller can keep it elsewhere
 
 Usage:
   python scripts/skill-suggestion.py add --skill <name> --seen-in "<run, task or session>" --issue "<what happened>"
-                                         [--fix "<fix>"] [--date YYYY-MM-DD] [--slug <slug>] [--wiki <root>]
+                                         --applies-to "<where it holds>" [--fix "<fix>"] [--date YYYY-MM-DD] [--slug <slug>] [--wiki <root>]
                                          [--repo <path>] [--dry-run]
   python scripts/skill-suggestion.py --self-test
 
@@ -53,9 +57,9 @@ from typing import Dict, List, Optional, Tuple
 
 BOX = Path("_inbox") / "skill-suggestions"
 ARCHIVE = "archive"
-FIELDS = ("Skill", "Seen in", "Issue", "Fix")
+FIELDS = ("Skill", "Seen in", "Issue", "Fix", "Applies to")   # Applies to since task #100; older notes have four
 NO_FIX = "none yet"
-SELF_TEST_MINIMUM = 34
+SELF_TEST_MINIMUM = 38
 SLUG_WORDS = 6                # the issue's first words name the file: enough to tell two suggestions apart
 SLUG_MAX = 48                 # a file name stays short in a folder listing and far below any path limit
 _SKILL = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")   # the library's artifact names: lowercase-hyphen, at most 64
@@ -120,7 +124,7 @@ def slug_of(text: str) -> str:
 
 
 def render(values: Dict[str, str]) -> str:
-    return "".join(f"{f}: {values[f]}\n" for f in FIELDS)
+    return "".join(f"{f}: {values[f]}\n" for f in FIELDS if f in values)
 
 
 def parse(text: str) -> Dict[str, str]:
@@ -137,9 +141,11 @@ def same_suggestion(a: Dict[str, str], b: Dict[str, str]) -> bool:
 
 
 def add(repo_arg: str, skill: str, seen_in: str, issue: str, fix: Optional[str], date: Optional[str],
-        slug: Optional[str], wiki: Optional[str], dry_run: bool, today: Optional[dt.date] = None) -> int:
+        slug: Optional[str], wiki: Optional[str], dry_run: bool, today: Optional[dt.date] = None,
+        applies_to: Optional[str] = None) -> int:
     today = today or dt.date.today()
-    raw = {"--skill": skill, "--seen-in": seen_in, "--issue": issue, "--fix": fix or "", "--slug": slug or ""}
+    raw = {"--skill": skill, "--seen-in": seen_in, "--issue": issue, "--fix": fix or "", "--slug": slug or "",
+           "--applies-to": applies_to or ""}
     broken = [k for k, v in raw.items() if "\n" in v or "\r" in v]
     if broken:
         print(f"skill-suggestion: cannot run - {', '.join(broken)} holds a line break; each field is one line",
@@ -156,12 +162,18 @@ def add(repo_arg: str, skill: str, seen_in: str, issue: str, fix: Optional[str],
     if not seen_in or not issue:
         print("skill-suggestion: cannot run - --seen-in and --issue must both say something", file=sys.stderr)
         return 2
+    applies = one_line(applies_to or "")
+    if not applies:
+        print("skill-suggestion: cannot run - --applies-to must say where the lesson holds: the case, project kind or "
+              "condition it was learned in (e.g. \"projects on task cards\", \"Windows Git Bash\"; \"every run\" only "
+              "when it truly holds everywhere)", file=sys.stderr)
+        return 2
     if date is not None and not _DATE.match(date):
         print(f"skill-suggestion: cannot run - --date {date} is not YYYY-MM-DD", file=sys.stderr)
         return 2
     when = date or today.isoformat()
     values = {"Skill": skill, "Seen in": f"{seen_in} ({when})" if when not in seen_in else seen_in,
-              "Issue": issue, "Fix": fix_value}
+              "Issue": issue, "Fix": fix_value, "Applies to": applies}
     text = render(values)
 
     repo = Path(repo_arg).resolve()
@@ -221,6 +233,7 @@ def self_test() -> int:
             failed.append(f"{name}{(' - ' + detail) if detail else ''}")
 
     def quiet(*args, **kwargs) -> Tuple[int, str]:
+        kwargs.setdefault("applies_to", "projects on task cards")
         buf_out, buf_err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(buf_out), contextlib.redirect_stderr(buf_err):
             code = add(*args, **kwargs)
@@ -263,6 +276,15 @@ def self_test() -> int:
         check("a line break inside a field exits 2 (each field is one line)",
               quiet(str(repo), "reviewing-code", "x", "one\nIssue: two", None, None, None, None, False, day)[0] == 2)
         check("a bad --date exits 2", quiet(str(repo), "reviewing-code", "x", issue, None, "26-09-2026", None, None, False, day)[0] == 2)
+        # task #100 (DAEDALUS, AECG: a lesson reused outside the scope it was learned in did worse than no memory):
+        # every new suggestion says where it holds
+        check("no --applies-to exits 2 (where the lesson holds is required)",
+              quiet(str(repo), "reviewing-code", "x", issue, None, None, None, None, False, day, applies_to=None)[0] == 2)
+        check("a blank --applies-to exits 2",
+              quiet(str(repo), "reviewing-code", "x", issue, None, None, None, None, False, day, applies_to="  ")[0] == 2)
+        check("a line break inside --applies-to exits 2",
+              quiet(str(repo), "reviewing-code", "x", issue, None, None, None, None, False, day,
+                    applies_to="one\nFix: two")[0] == 2)
         check("a --wiki with no wiki/ folder exits 2 and never falls back to wiki-config",
               quiet(str(repo), "reviewing-code", "x", issue, None, None, None, str(base / "vault"), False, day)[0] == 2)
         check("no refusal wrote anything", not box.exists())
@@ -281,11 +303,12 @@ def self_test() -> int:
               bool(written) and written[0].name == "verifying-before-done--check-freeze-py-step-takes-only.md",
               str([p.name for p in written]))
         text = written[0].read_text(encoding="utf-8") if written else ""
-        check("the file is exactly four labelled lines",
+        check("the file is exactly five labelled lines, the four older ones first",
               text.splitlines() == ["Skill: verifying-before-done",
                                     "Seen in: committee-names-from-history (2026-09-26)",
                                     "Issue: " + issue,
-                                    "Fix: let --step take a label"], repr(text))
+                                    "Fix: let --step take a label",
+                                    "Applies to: projects on task cards"], repr(text))
         check("the file is written with LF line endings", "\r" not in (written[0].read_bytes().decode("utf-8") if written else ""))
         check("the report prints the path written", bool(written) and written[0].as_posix() in out, out)
         check("the file lands in the box's top level, never in archive/", not (box / ARCHIVE).exists())
@@ -313,7 +336,10 @@ def self_test() -> int:
         check("spacing inside a field is collapsed", "Issue: Spacing is collapsed.\n" in body2, body2)
         check("parse reads back what render wrote",
               parse(text) == {"Skill": "verifying-before-done", "Seen in": "committee-names-from-history (2026-09-26)",
-                              "Issue": issue, "Fix": "let --step take a label"})
+                              "Issue": issue, "Fix": "let --step take a label",
+                              "Applies to": "projects on task cards"})
+        check("parse reads an older four-line note (no Applies to) without inventing one",
+              parse("Skill: a\nSeen in: b\nIssue: c\nFix: d\n") == {"Skill": "a", "Seen in": "b", "Issue": "c", "Fix": "d"})
         check("an issue with no letters or digits still gets a file name",
               quiet(str(repo), "reviewing-code", "x", "?!", None, None, None, None, False, day)[0] == 0
               and (box / "reviewing-code--suggestion.md").is_file(), str([p.name for p in files()]))
@@ -362,6 +388,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     a.add_argument("--seen-in", required=True, help="the run, task or session where it happened")
     a.add_argument("--issue", required=True, help="what happened, one line")
     a.add_argument("--fix", default=None, help=f"the fix that worked or is suggested (default: '{NO_FIX}')")
+    a.add_argument("--applies-to", required=True,
+                   help="where the lesson holds: the case, project kind or condition it was learned in, one line")
     a.add_argument("--date", default=None, help="YYYY-MM-DD for the Seen in line (default: today)")
     a.add_argument("--slug", default=None, help="the file name after '<skill>--' (default: the issue's first words)")
     a.add_argument("--wiki", default=None, help="the notebook root (the folder holding wiki/); overrides the wiki-config lookup")
@@ -373,7 +401,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.cmd != "add":
         ap.print_usage()
         return 2
-    return add(args.repo, args.skill, args.seen_in, args.issue, args.fix, args.date, args.slug, args.wiki, args.dry_run)
+    return add(args.repo, args.skill, args.seen_in, args.issue, args.fix, args.date, args.slug, args.wiki, args.dry_run,
+               applies_to=args.applies_to)
 
 
 if __name__ == "__main__":

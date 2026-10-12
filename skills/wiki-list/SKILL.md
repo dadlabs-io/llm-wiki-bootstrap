@@ -16,7 +16,7 @@ Manage the wiki ingestion list. ONE command, behavior depends on the user's inte
 
 | User intent | Subcommand | What happens |
 |---|---|---|
-| Add a URL/file/text to the list for later | `add` | Drops a ticket, `<priority>-<timestamp>-<slug>.md`, in `_inbox/pending/`. Fast, no fetching; a URL already in pending/, proposed/, wiki/ or done/ is not queued again. |
+| Add a URL/file/text to the list for later | `add` | Drops a ticket, `<priority>-<timestamp>-<slug>.md`, in `_inbox/pending/`. Fast, no fetching; a URL already in pending/, an intake bucket, proposed/, wiki/ or done/ is not queued again. |
 | Process everything in the list | `process` | Drains the pending queue, runs wiki-update.py per item, moves to done/ or failed/, regens INDEX once at end. |
 | Show what's in the list | `show` (default) | Lists the tickets in `_inbox/pending/` with their source URL + target folder. |
 

@@ -402,7 +402,8 @@ def _hand_edits(run: dict) -> list[str]:
 
 
 def check_card_details(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
-    """card-details-keep: a note or addition on a card that already has details; nothing already there is lost."""
+    """The shared rows for a card whose details are added to or replaced (used by card-details-add and
+    card-details-replace, which drop and replace its line-based loss check and its Write/Edit-only check)."""
     res = []
 
     def add(name, ok, detail=""):
@@ -454,9 +455,102 @@ def check_card_details(case: dict, before: dict, after: dict, run: dict, ctx: di
     return res
 
 
+# ---- details checks v2 (task #108, 2026-10-12): nothing already there is lost; word tokens, not lines ----
+def _toks(s: str) -> list[str]:
+    """Words only: whitespace, line breaks, punctuation and markdown markers are ignored."""
+    return [t for t in (x.strip(".'-/_") for x in re.findall(r"[a-z0-9][a-z0-9'./_-]*", s.lower())) if t]
+
+
+def _find_seq(hay: list, needle: list) -> int:
+    """Index where `needle` occurs contiguously in `hay`, else -1 (an empty needle is at 0)."""
+    n = len(needle)
+    for i in range(len(hay) - n + 1):
+        if hay[i:i + n] == needle:
+            return i
+    return -1 if n else 0
+
+
+def _split_body(body: str):
+    """(details part, Steps/Log part): the split is at the first **Steps** or **Log** heading."""
+    m = re.search(r"^\*\*(Steps|Log)\*\*:?\s*$", body, re.M)
+    return (body[:m.start()], body[m.start():]) if m else (body, "")
+
+
+def _lost_lines(seed_text: str, now_text: str) -> list[str]:
+    """Seed lines whose words are no longer, in order, in the new text (a pure reflow loses none)."""
+    nt = _toks(now_text)
+    return [ln.strip() for ln in seed_text.splitlines() if _toks(ln) and _find_seq(nt, _toks(ln)) < 0]
+
+
+def _drop(res: list, *prefixes: str) -> list:
+    return [r for r in res if not r["name"].startswith(prefixes)]
+
+
+def check_card_details_add(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
+    """A note or addition on a card that already has details: nothing lost (reflow allowed), new text landed."""
+    target = case["task"]
+    res = _drop(check_card_details(case, before, after, run, ctx),
+                f"task {target}: every line of the existing details",
+                "the card file was edited only through the script")
+
+    def add(name, ok, detail=""):
+        res.append({"name": name, "ok": bool(ok), "detail": str(detail)[:300]})
+
+    s_cards = _card_state(HERE / "fixtures" / case["tasks_seed"])[0]
+    cards = _card_state(ctx["notebook"] / "wiki" / "tasks")[0]
+    tname = next(n for n in s_cards if int(n.split("-")[0]) == target)
+    s_body, body = s_cards[tname][1], cards.get(tname, ({}, ""))[1]
+    lost = _lost_lines(s_body, body)
+    add(f"task {target}: every line of the existing details, Steps and Log is still there (reflow allowed)", not lost, lost)
+    if case.get("lands_in") == "details":
+        s_det, det = _split_body(s_body)[0], _split_body(body)[0]
+        dt, st = _toks(det), _toks(s_det)
+        i = _find_seq(dt, st)
+        for w in case["new_words"]:
+            add(f"the new text ('{w}') is after the old details, before Steps and Log",
+                i >= 0 and _find_seq(dt[i + len(st):], _toks(w)) >= 0, det[-200:])
+    return res
+
+
+def check_card_details_replace(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
+    """The user asked to replace a card's details: old details gone, new in, Steps, Log and fields kept."""
+    target = case["task"]
+    res = _drop(check_card_details(dict(case, new_words=[]), before, after, run, ctx),
+                f"task {target}: every line of the existing details",
+                "the card file was edited only through the script")
+
+    def add(name, ok, detail=""):
+        res.append({"name": name, "ok": bool(ok), "detail": str(detail)[:300]})
+
+    s_cards = _card_state(HERE / "fixtures" / case["tasks_seed"])[0]
+    cards = _card_state(ctx["notebook"] / "wiki" / "tasks")[0]
+    tname = next(n for n in s_cards if int(n.split("-")[0]) == target)
+    s_f, s_body = s_cards[tname]
+    f, body = cards.get(tname, ({}, ""))
+    s_det, s_tail = _split_body(s_body)
+    det, tail = _split_body(body)
+    dt = _toks(det)
+    add(f"task {target} had details and a Steps/Log part to keep (seed)", bool(_toks(s_det)) and bool(_toks(s_tail)))
+    for w in case["old_words"]:
+        add(f"task {target}: old details text '{w}' is gone", _find_seq(dt, _toks(w)) < 0, det[:200])
+    for w in case["new_words"]:
+        add(f"task {target}: new details text '{w}' is in the details, before Steps and Log",
+            _find_seq(dt, _toks(w)) >= 0, det[:200])
+    lost = _lost_lines(s_tail, tail)
+    add(f"task {target}: Steps and Log kept", not lost, lost)
+    add(f"task {target}: every field except updated unchanged",
+        {k: v for k, v in f.items() if k != "updated"} == {k: v for k, v in s_f.items() if k != "updated"}, f)
+    return res
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
-    if case["kind"] == "card-details-keep":
-        return check_card_details(case, before, after, run, ctx)
+    if case["kind"] == "card-details-add":
+        return check_card_details_add(case, before, after, run, ctx)
+    if case["kind"] == "card-details-replace":
+        return check_card_details_replace(case, before, after, run, ctx)
+    if case["kind"] == "details-replace-guarded":  # the task.md case: the old checks minus the Write/Edit-only row; goes with task #90
+        return [r for r in check(dict(case, kind="details-replace"), before, after, run, ctx)
+                if not r["name"].startswith("the list was edited only through the script")]
     if case["kind"] in CARD_KINDS:
         return check_cards(case, before, after, run, ctx)
     if case["kind"] in CARD_KINDS_SELF:

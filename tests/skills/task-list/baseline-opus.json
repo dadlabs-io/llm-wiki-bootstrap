@@ -223,9 +223,8 @@
     "ORDER.md unchanged": true,
     "no other card changed at all": true,
     "task 2: id, title, owner, list and created unchanged": true,
-    "task 2: every line of the existing details (and Log) is still in the card": true,
     "task 2: the new text ('2026-q3.md') is in the card, in the details or the Log": true,
-    "the card file was edited only through the script (no Write/Edit on it)": true
+    "task 2: every line of the existing details, Steps and Log is still there (reflow allowed)": true
   },
   "details-replace-explicit": {
     "session completed": true,
@@ -240,7 +239,39 @@
     "the row of task 1 is unchanged": true,
     "other tasks untouched": true,
     "other tasks' details unchanged": true,
-    "numbering kept (next-id marker unchanged)": true,
-    "the list was edited only through the script (no Write/Edit on task.md)": true
+    "numbering kept (next-id marker unchanged)": true
+  },
+  "card-append-before-steps": {
+    "session completed": true,
+    "no permission denials": true,
+    "ORDER.md still there": true,
+    "same card files, none added, renamed or deleted": true,
+    "the six rules hold": true,
+    "task.md not recreated (a card project has none)": true,
+    "nothing else in the notebook touched": true,
+    "ORDER.md unchanged": true,
+    "no other card changed at all": true,
+    "task 3: id, title, owner, list and created unchanged": true,
+    "task 3: the new text ('python versions') is in the card, in the details or the Log": true,
+    "task 3: every line of the existing details, Steps and Log is still there (reflow allowed)": true
+  },
+  "card-details-replace-explicit": {
+    "session completed": true,
+    "no permission denials": true,
+    "ORDER.md still there": true,
+    "same card files, none added, renamed or deleted": true,
+    "the six rules hold": true,
+    "task.md not recreated (a card project has none)": true,
+    "nothing else in the notebook touched": true,
+    "ORDER.md unchanged": true,
+    "no other card changed at all": true,
+    "task 3: id, title, owner, list and created unchanged": true,
+    "task 3 had details and a Steps/Log part to keep (seed)": true,
+    "task 3: old details text 'sections 1 and 2 are written' is gone": true,
+    "task 3: old details text 'new contributors' is gone": true,
+    "task 3: new details text 'maintainers' is in the details, before Steps and Log": true,
+    "task 3: new details text 'changelog' is in the details, before Steps and Log": true,
+    "task 3: Steps and Log kept": true,
+    "task 3: every field except updated unchanged": true
   }
 }
