@@ -135,18 +135,25 @@ with tempfile.TemporaryDirectory() as td:
     raw("long.md", "youtube-transcript", 20 * 60)
     raw("short.md", "youtube-transcript", 10 * 60)
     raw("article.md", "article", 99 * 60)
+    raw("whisper.md", "media-transcript", 1802)  # wiki-transcribe.py's raw (task #105: cycle 2026-10-11-01 missed one)
+    (nb / "_inbox" / "proposed" / "whisper-i.md").write_text(entry("whisper-i", "2026-09-24", raw="raw/whisper.md"), encoding="utf-8")
     (nb / "_inbox" / "proposed" / "short-f.md").write_text(entry("short-f", "2026-09-24", raw="raw/short.md"), encoding="utf-8")
     (nb / "_inbox" / "proposed" / "article-g.md").write_text(entry("article-g", "2026-09-24", raw="raw/article.md"), encoding="utf-8")
     (nb / "_inbox" / "proposed" / "noraw-h.md").write_text(entry("noraw-h", "2026-09-24"), encoding="utf-8")
     p = run("checker", "--run-folder", str(run_folder), "--min-minutes", "15")
     k = scope("checker-scope.txt") or []
     check("checker: exit 0", p.returncode == 0, p.stderr[-300:])
-    check("checker: only the 20-minute transcript at 15", [l.split("\t")[0] for l in k] == ["_inbox/proposed/staged-e.md"], k)
-    check("checker: its raw and minutes recorded", k and k[0].split("\t")[1:] == ["raw/long.md", "20"], k)
+    check("checker: only the 20-minute YouTube and the 30-minute Whisper transcript at 15",
+          sorted(l.split("\t")[0] for l in k) == ["_inbox/proposed/staged-e.md", "_inbox/proposed/whisper-i.md"], k)
+    rows = {l.split("\t")[0]: l.split("\t")[1:] for l in k}
+    check("checker: its raw and minutes recorded", rows.get("_inbox/proposed/staged-e.md") == ["raw/long.md", "20"], k)
+    check("checker #105: a Whisper transcript's raw and minutes recorded",
+          rows.get("_inbox/proposed/whisper-i.md") == ["raw/whisper.md", "30"], k)
     p = run("checker", "--run-folder", str(run_folder), "--min-minutes", "5")
     k = scope("checker-scope.txt") or []
-    check("checker at 5 minutes: both transcripts, never the article or a raw-less entry",
-          sorted(l.split("\t")[0] for l in k) == ["_inbox/proposed/short-f.md", "_inbox/proposed/staged-e.md"], k)
+    check("checker at 5 minutes: every transcript, never the article (a page, Mark 2026-10-12) or a raw-less entry",
+          sorted(l.split("\t")[0] for l in k) == ["_inbox/proposed/short-f.md", "_inbox/proposed/staged-e.md",
+                                                   "_inbox/proposed/whisper-i.md"], k)
 
     p = run("checker", "--run-folder", str(run_folder), "--min-minutes", "999")
     f = run_folder / "checker-scope.txt"

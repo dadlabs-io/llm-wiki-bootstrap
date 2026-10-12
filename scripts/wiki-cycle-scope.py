@@ -23,9 +23,11 @@ day: it moves only when an entry is re-read and corrected. A plain "changed" was
 broad: on agentic-design it counted 237 entries a day after a lint, nearly all of them
 machine edits (backlink blocks, lint fixes, promotions).
 
-`checker`: the staged entries whose raw is a YouTube transcript at least --min-minutes
-long (default: wiki-checker-config.json's min_transcript_minutes, else 15), from the
-raw's `duration_seconds`. Writes <rf>/checker-scope.txt.
+`checker`: the staged entries whose raw is a transcript at least --min-minutes long
+(default: wiki-checker-config.json's min_transcript_minutes, else 15), from the raw's
+`duration_seconds`: YouTube captions (wiki-fetch-youtube.py) and Whisper transcripts
+(wiki-transcribe.py), the TRANSCRIPT_TYPES. A page that carries a transcript is not
+counted (Mark, 2026-10-12). Writes <rf>/checker-scope.txt.
 
 `checker-log`: appends one line to _inbox/reports/checker-log.jsonl from a checker's
 report (entry, source minutes, finding counts by kind, verdict, model), so the pass
@@ -60,6 +62,9 @@ if hasattr(sys.stdout, "reconfigure"):
 
 CHECKER_CONFIG = Path.home() / ".claude" / "agents" / "wiki-checker-config.json"
 DEFAULT_MIN_MINUTES = 15
+# raw types that are a transcript with a length (task #105: cycle 2026-10-11-01's 30-minute Whisper
+# transcript was missed, when only YouTube's counted)
+TRANSCRIPT_TYPES = {"youtube-transcript", "media-transcript"}
 
 
 def entries(nb: Path) -> list[str]:
@@ -220,7 +225,7 @@ def cmd_checker(nb: Path, args) -> int:
         meta = _front(raw.read_text(encoding="utf-8", errors="replace")) if raw and raw.is_file() else {}
         secs = meta.get("duration_seconds", "")
         minutes = float(secs) / 60 if secs.replace(".", "", 1).isdigit() else None
-        if meta.get("type") == "youtube-transcript" and minutes is not None and minutes >= floor:
+        if meta.get("type") in TRANSCRIPT_TYPES and minutes is not None and minutes >= floor:
             picked.append(f"{e}\t{rp}\t{minutes:.0f}")
         else:
             skipped.append(e)
