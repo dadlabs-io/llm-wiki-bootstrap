@@ -11,6 +11,13 @@
 
 ## 2026-10-12
 
+### `/wiki-cycle` spawns every helper on the model its setting file names (task #99)
+
+- **Why**: the new run checks (`tests/skills/_trajectory.py`, `score_trajectory.py`), scored over every saved suite run at no cost, found the cycle never opened `wiki-ingester-config.json` before spawning workers in 21 of 22 runs since 2026-10-07: it wrote "sonnet, the config's default" from the agent's own description. Right only because the default was Sonnet; a changed setting, or #87's `helper-models.json`, would have been ignored. From agentic-design's WN-S7: an agent told to read a rule often does not (SWE-CC: policy searches in 28.9% of runs).
+- **What**: `wiki-cycle-scope.py models` reads the ingester's, the checker's and the helpers' settings, prints each role's model, writes `<run-folder>/models.json`, and names a file it cannot read (its roles fall back: workers and helpers sonnet, the checker opus). Step 0 runs it; Steps 2, 2.6, 4, 5 and 6.5 spawn from its lines. The scratchpad template records them; usage page.
+- **Proven**: `tests/scripts/test_cycle_scope.py` 31/31 (+7). Two fresh cases by `eval-case-writer` (a worker model set to haiku; an unreadable setting file) and its `run_before` rule; Opus suite `20261012-142247` 9/11, 0 regressions, $22, every model check passed; the two failures are the older tier-rubric finding in Sonnet workers. Installed.
+- **Also**: the suites now check each skill's own read-first and never rules on the run (`trajectory_rules.py` for wiki-update, wiki-cycle and wrap-up; `tests/skills/README.md`, "Run checks").
+
 ### The full cycle's lint, fix and synthesis agents run on Sonnet (task #87, Mark's pick after a blind comparison)
 
 - **Why**: `/wiki-cycle` Steps 4 (semantic lint), 5 (fix agents) and 6.5 (synthesis) named no model, so their agents inherited the session's Opus. Anthropic's Hallie and two practitioners in agentic-design say to give helper agents their own model. Mark: yes, when a comparison shows it holds.
