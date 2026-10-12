@@ -18,6 +18,7 @@ Created at Step 0 as `<run-folder>/scratchpad.md` and updated after every phase;
 - Mode: <mode and flags>
 - Triggered by: user / cron / resume
 - This session reads as: <reader name from wiki-triage.py buckets>
+- Models (Step 0's `models` lines): ingest workers <m> · checker <m> · semantic lint <m> · lint fixes <m> · synthesis <m>
 
 ## Phase log
 

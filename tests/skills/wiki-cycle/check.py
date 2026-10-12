@@ -254,6 +254,25 @@ def _prepare_quick(case: dict, ctx: dict) -> None:
             raise RuntimeError(f"could not queue {url}: {p.stdout}{p.stderr}")
 
 
+def _prepare_models(case: dict, ctx: dict) -> None:
+    """Give the ingester's setting file this case's content. The pristine file is restored first,
+    on every case, so no case leaks its setting into the next."""
+    f = ctx["sandbox"] / "agents" / "wiki-ingester-config.json"
+    keep = f.with_name(f.name + ".orig")
+    if keep.is_file():
+        shutil.copy2(keep, f)
+    else:
+        shutil.copy2(f, keep)
+    if not case.get("ingester_config_set") and not case.get("ingester_config_broken"):
+        return
+    cfg = json.loads(f.read_text(encoding="utf-8"))
+    cfg.update(case.get("ingester_config_set") or {})
+    text = json.dumps(cfg, indent=2)
+    if case.get("ingester_config_broken"):  # a trailing comma: strict JSON refuses it
+        text = text.rstrip()[:-1].rstrip() + ",\n}\n"
+    f.write_text(text, encoding="utf-8")
+
+
 RESUME_ITEMS = [
     ("resume-one", "Handoff files between agent sessions", "agents,memory,handoff"),
     ("resume-two", "Trimming tool results before they re-enter the context", "context-engineering,tools"),
@@ -507,7 +526,7 @@ def prompt(case: dict, ctx: dict) -> str:
     ctx["started"] = now_stamp()
     cycle_id = f"{_today(ctx)}-01"
     ctx["cycle_id"] = cycle_id
-    if case["kind"] in ("ingest-only", "scratch"):
+    if case["kind"] in ("ingest-only", "scratch", "models"):
         _prepare_quick(case, ctx)
     elif case["kind"] == "triage":
         _prepare_triage(case, ctx)
@@ -522,6 +541,7 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_drive(ctx)
     ctx["drive_token_before"] = _mtime(DRIVE_TOKEN)
     ctx["gmail_token_before"] = (Path.home() / ".config" / "wiki-cycle" / "gmail-token.json").exists()
+    _prepare_models(case, ctx)
     _commit_fixture(ctx, case["id"])
     ctx["fixture_files"] = snapshot(ctx)
     return HEADER.format(skill=ctx["skill_dir"].as_posix(), skills=ctx["skill_dir"].parent.as_posix(),
@@ -699,7 +719,9 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
 
     # ---- the step contract ----
     # email-review.json is the session's judgment of the email candidates, input to a step, not a step
-    jsons = sorted(p for p in run_dir.glob("*.json") if p.name != "email-review.json") if run_dir.is_dir() else []
+    # email-review.json and models.json (Step 0's model list, task #99) are not step results
+    jsons = sorted(p for p in run_dir.glob("*.json")
+                   if p.name not in ("email-review.json", "models.json")) if run_dir.is_dir() else []
     mds = {p.stem for p in run_dir.glob("*.md")} if run_dir.is_dir() else set()
     lonely = [p.name for p in jsons if p.stem not in mds]
     add("every step JSON has its .md", jsons and not lonely, lonely)
@@ -1041,6 +1063,31 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("nothing ingested twice", len(proposed) == 2 and not [k for k in new if k in proposed], proposed)
         add("scratchpad: mechanical lint phase done",
             bool(re.search(r"Mechanical lint[^\n]*\n\s*-\s*\*\*Status\*\*:\s*done", stext, re.I)))
+    elif case["kind"] == "models":
+        mf = run_dir / "models.json"
+        mtext = mf.read_text(encoding="utf-8", errors="replace") if mf.is_file() else ""
+        try:
+            json.loads(mtext)
+            mjson = True
+        except json.JSONDecodeError:
+            mjson = False
+        add("models.json written in the run folder", bool(mtext.strip()), mf.name)
+        add("models.json is JSON", mjson, mtext[:120])
+        if case.get("models_json_has"):
+            add(f"models.json names {case['models_json_has']}", case["models_json_has"] in mtext.lower(), mtext[:200])
+        add("spawned wiki-ingester workers", bool(workers), [a.get("subagent_type") for a in _agent_calls(run)])
+        want = case["worker_model"]
+        add(f"every ingest worker spawned on {want}",
+            workers and all(want in str(a.get("model", "")).lower() for a in workers),
+            [a.get("model") for a in workers])
+        if case.get("report_names"):
+            rp = run_dir / f"{cycle_id}-run-cycle-report.md"
+            rt = rp.read_text(encoding="utf-8", errors="replace") if rp.is_file() else ""
+            add("the cycle report names the unreadable setting file",
+                bool(re.search(case["report_names"], rt, re.I)), rt[:200] or "no report")
+        urls = {_norm_url(_suite()["sources"][s]["url"]) for s in case["queue"]}
+        got = {_norm_url(split_frontmatter((nb / k).read_text(encoding="utf-8"))[0].get("source_url")) for k in proposed}
+        add("the queued source was still staged", got == urls, sorted(got))
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()

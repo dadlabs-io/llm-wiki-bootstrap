@@ -169,6 +169,41 @@ with tempfile.TemporaryDirectory() as td:
     rows = [json.loads(l) for l in log.read_text(encoding="utf-8").splitlines()]
     check("checker-log: a report with no findings is a pass, appended", len(rows) == 2 and rows[1]["verdict"] == "pass", rows)
 
+    # ── models (task #99: the cycle spawns from the setting files, not from a default it assumes) ──
+    cfg = tmp / "cfg"
+    cfg.mkdir()
+    (cfg / "ing.json").write_text(json.dumps({"model_default": "haiku", "confirm_model_each_run": True}), encoding="utf-8")
+    (cfg / "chk.json").write_text(json.dumps({"model_default": "fable"}), encoding="utf-8")
+    (cfg / "help.json").write_text(json.dumps({"semantic_lint": "opus", "lint_fixes": "sonnet"}), encoding="utf-8")
+
+    def models(**paths):
+        args = ["models", "--run-folder", str(run_folder)]
+        for k in ("ingester", "checker", "helpers"):
+            args += [f"--{k}", str(paths.get(k, cfg / "none.json"))]
+        p = run(*args)
+        f = run_folder / "models.json"
+        return p, (json.loads(f.read_text(encoding="utf-8")) if f.is_file() else {})
+
+    p, m = models(ingester=cfg / "ing.json", checker=cfg / "chk.json", helpers=cfg / "help.json")
+    r = m.get("roles", {})
+    check("models: exit 0", p.returncode == 0, p.stderr[-300:])
+    check("models: each role from its file, a non-default value kept",
+          [r.get(k, {}).get("model") for k in ("ingest_workers", "checker", "semantic_lint", "lint_fixes")]
+          == ["haiku", "fable", "opus", "sonnet"], r)
+    check("models: a role the helpers file leaves out falls back, and says so",
+          r.get("synthesis", {}).get("model") == "sonnet" and r.get("synthesis", {}).get("from") == "fallback", r)
+    check("models: the ask-each-run flag is printed", "ingest workers: haiku (ask the user" in p.stdout, p.stdout)
+    check("models: no problem with every file present", m.get("problems") == [], m.get("problems"))
+    p, m = models(ingester=cfg / "ing.json", checker=cfg / "chk.json")
+    check("models: a missing file is named as a warning, its roles on the fallback",
+          "warning:" in p.stdout and "none.json: missing" in p.stdout
+          and m["roles"]["semantic_lint"]["model"] == "sonnet" and len(m["problems"]) == 1, p.stdout)
+    (cfg / "bad.json").write_text('{"model_default": "opus",}', encoding="utf-8")
+    p, m = models(ingester=cfg / "bad.json", checker=cfg / "chk.json", helpers=cfg / "help.json")
+    check("models: an unreadable file is named, never a crash",
+          p.returncode == 0 and "bad.json: unreadable" in p.stdout and m["roles"]["ingest_workers"]["model"] == "sonnet",
+          p.stdout + p.stderr[-200:])
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

@@ -31,6 +31,13 @@ raw's `duration_seconds`. Writes <rf>/checker-scope.txt.
 report (entry, source minutes, finding counts by kind, verdict, model), so the pass
 rate by length can be read later.
 
+`models`: the model each kind of helper is spawned on, read from the setting files
+(--ingester, --checker, --helpers; default the installed paths), printed one line per
+role and written to <rf>/models.json. A cycle runs it at Step 0 and spawns from it,
+because a sentence asking it to read the files was skipped in 21 of 22 test runs
+(task #99, 2026-10-12): the workers got the agent description's default instead. A
+file that is missing or unreadable is named, with the fallback used.
+
 Entries are wiki/**/*.md except `_`-prefixed machine files, README.md and sessions/.
 (2026-09-24, task #42: C1 and C3; the 2026-09-23 cycle's findings 10 and 11.)
 """
@@ -241,6 +248,57 @@ def cmd_checker_log(nb: Path, args) -> int:
     return 0
 
 
+HOME_CLAUDE = Path.home() / ".claude"
+# what each role falls back to when its setting file cannot be read
+FALLBACK = {"ingest_workers": "sonnet", "checker": "opus",
+            "semantic_lint": "sonnet", "lint_fixes": "sonnet", "synthesis": "sonnet"}
+
+
+def _settings(path: str) -> tuple[dict | None, str]:
+    p = Path(path).expanduser()
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return (data, "") if isinstance(data, dict) else (None, f"{p}: not a JSON object")
+    except FileNotFoundError:
+        return None, f"{p}: missing"
+    except (OSError, json.JSONDecodeError) as e:
+        return None, f"{p}: unreadable ({e})"
+
+
+def cmd_models(nb: Path, args) -> int:
+    rf = Path(args.run_folder)
+    roles, problems = {}, []
+    ing, err = _settings(args.ingester)
+    if err:
+        problems.append(err)
+    roles["ingest_workers"] = {"model": (ing or {}).get("model_default") or FALLBACK["ingest_workers"],
+                               "ask_each_run": bool((ing or {}).get("confirm_model_each_run", False)),
+                               "from": str(Path(args.ingester).expanduser()) if ing else "fallback"}
+    chk, err = _settings(args.checker)
+    if err:
+        problems.append(err)
+    roles["checker"] = {"model": (chk or {}).get("model_default") or FALLBACK["checker"],
+                        "from": str(Path(args.checker).expanduser()) if chk else "fallback"}
+    hlp, err = _settings(args.helpers)
+    if err:
+        problems.append(err)
+    for role in ("semantic_lint", "lint_fixes", "synthesis"):
+        roles[role] = {"model": (hlp or {}).get(role) or FALLBACK[role],
+                       "from": str(Path(args.helpers).expanduser()) if hlp and hlp.get(role) else "fallback"}
+    rf.mkdir(parents=True, exist_ok=True)
+    out = rf / "models.json"
+    atomic_write_text(out, json.dumps({"timestamp": now_stamp(), "roles": roles, "problems": problems}, indent=2) + "\n")
+    w = roles["ingest_workers"]
+    print(f"ingest workers: {w['model']}" + (" (ask the user each run when the session can ask; this is the default)"
+                                              if w["ask_each_run"] else ""))
+    for role in ("checker", "semantic_lint", "lint_fixes", "synthesis"):
+        print(f"{role.replace('_', ' ')}: {roles[role]['model']}")
+    for p in problems:
+        print(f"warning: {p}; its roles use the fallback above")
+    print(f"-> {out}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[1].strip())
     ap.add_argument("--topic", default=None, help="notebook (default: this project's)")
@@ -256,6 +314,11 @@ def main() -> int:
     lg.add_argument("--run-folder", required=True)
     lg.add_argument("--entry", required=True)
     lg.add_argument("--report", required=True)
+    m = sub.add_parser("models")
+    m.add_argument("--run-folder", required=True)
+    m.add_argument("--ingester", default=str(HOME_CLAUDE / "agents" / "wiki-ingester-config.json"))
+    m.add_argument("--checker", default=str(HOME_CLAUDE / "agents" / "wiki-checker-config.json"))
+    m.add_argument("--helpers", default=str(HOME_CLAUDE / "skills" / "wiki-cycle" / "helper-models.json"))
     args = ap.parse_args()
     topic = args.topic or (load_config() or {}).get("notebook")
     if not topic:
@@ -266,7 +329,7 @@ def main() -> int:
         print(f"error: no wiki at {nb}", file=sys.stderr)
         return 2
     return {"semantic": cmd_semantic, "claims": cmd_claims, "checker": cmd_checker,
-            "checker-log": cmd_checker_log}[args.cmd](nb, args)
+            "checker-log": cmd_checker_log, "models": cmd_models}[args.cmd](nb, args)
 
 
 if __name__ == "__main__":

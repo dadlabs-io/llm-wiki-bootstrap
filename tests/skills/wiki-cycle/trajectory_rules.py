@@ -16,9 +16,12 @@ RULES = [
     {"id": "read reference.md before writing the scratchpad", "kind": "read_before",
      "rule": "Create ... `scratchpad.md` from the template in reference.md",
      "path": r"/wiki-cycle/reference\.md$", "action": r"file_path=\S*scratchpad\.md", "tool": "Write"},
-    {"id": "read the ingester config before spawning workers", "kind": "read_before",
-     "rule": "Before spawning, read `~/.claude/agents/wiki-ingester-config.json`",
-     "path": r"wiki-ingester-config\.json$", "action": r"wiki-ingester|ingest", "tool": ["Agent", "Task"]},
+    # replaced 2026-10-12 (task #99) by eval-case-writer's rule: before, "read the ingester config before
+    # spawning workers", which 21 of 22 runs since 2026-10-07 broke; Step 0 now prints the models instead
+    {"id": "print the models before spawning any helper", "kind": "run_before",
+     "rule": "At the start of every run the cycle runs one command that reads all three files and prints the model of each role ... it spawns from that list",
+     "before": r"wiki-cycle-scope\.py[^\n]*\bmodels\b", "before_tool": ["Bash", "PowerShell"],
+     "action": r".", "tool": ["Agent", "Task"]},
     {"id": "helpers are spawned unnamed", "kind": "never",
      "rule": "spawn every one unnamed",
      "pattern": r"\nname=\S", "tool": ["Agent", "Task"]},

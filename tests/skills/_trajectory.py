@@ -119,6 +119,8 @@ def check(run: dict, rules: list[dict]) -> list[dict]:
       after a read of a file matching `path` (a regex over the path). Applies only when an action
       ran. With `path_from_action` (a regex whose group 1 is a path in the action's own text), every
       such action needs an earlier read of the file it names; an action naming none is skipped.
+    - kind "run_before": the first step matching `action` comes after a step whose text matches
+      `before` (limited to `before_tool`): a command that must run first, where no file is read.
     - kind "never": no step matches `pattern`. Applies to every run, or only when `when` (a regex)
       matches some step.
     - scope: "main" (default), "workers" or "all"; `tool`: limit `action` / `pattern` to one tool.
@@ -167,6 +169,17 @@ def check(run: dict, rules: list[dict]) -> list[dict]:
             missed = [s for s, pat in wanted if not any(known(o, s, pat) for o in scoped)]
             res.append({"name": name, "ok": not missed,
                         "detail": "" if not missed else f"no read before: {missed[0].text[:2000]}"})
+        elif r["kind"] == "run_before":
+            # a command (not a file read) must come first: e.g. the one that prints the models
+            actions = [s for s in pool if re.search(r["action"], s.text, re.S)]
+            if not actions:
+                continue
+            bt = r.get("before_tool")
+            bt = [bt] if isinstance(bt, str) else bt
+            ok = any(o.i < actions[0].i and (not bt or o.name in bt) and re.search(r["before"], o.text, re.S)
+                     for o in scoped)
+            res.append({"name": name, "ok": ok,
+                        "detail": "" if ok else f"no /{r['before']}/ before: {actions[0].text[:2000]}"})
         elif r["kind"] == "never":
             if r.get("when") and not any(re.search(r["when"], s.text, re.S) for s in scoped):
                 continue
