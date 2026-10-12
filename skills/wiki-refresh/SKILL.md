@@ -30,7 +30,7 @@ Find entries that are past their review date, have low confidence, reference sou
 Read the frontmatter of every `.md` file in `wiki/` (not the full body — just YAML frontmatter). Extract:
 
 ```bash
-for f in $(find <notebook_root>/wiki -name "*.md" ! -name "_INDEX.md"); do
+for f in $(find <notebook_root>/wiki -name "*.md" ! -name "_INDEX.md" ! -path "*/sessions/*"); do
   echo "---FILE: $f"
   head -30 "$f" | grep -E "^(title|date|source_url|tier|confidence|last_reviewed|review_after|tags):"
 done
