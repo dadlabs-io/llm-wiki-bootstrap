@@ -1,0 +1,6 @@
+{
+  "_comment": "The model each helper agent of a --full run is spawned on, read by the /wiki-cycle orchestrator and passed as the Agent tool's spawn-time 'model' (without it a helper inherits the session's model). Any name the Agent tool accepts ('sonnet', 'opus', 'haiku', 'fable'). Sonnet since 2026-10-12 (task #87): on a 79-entry agentic-design lint slice and a 12-entry synthesis input, blind-judged, Sonnet found as much as Opus (lint: the same 7 core problems, 10 high-value findings to 9, though 10 wrong to 2; synthesis: 24 good proposals to 19) for 40-45% of the cost. The ingester and the checker keep their own config files in ~/.claude/agents/.",
+  "semantic_lint": "sonnet",
+  "lint_fixes": "sonnet",
+  "synthesis": "sonnet"
+}

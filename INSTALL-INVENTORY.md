@@ -29,7 +29,7 @@ Install target: `~/.claude/skills/<skill>/SKILL.md`
 | `wiki` | both | Show the wiki's INDEX (browse rather than search) |
 | `wiki-update` | research (primary), both | Ingests external URLs / files into wiki staging |
 | `wiki-search` | both | Hybrid BM25 + vector + LLM-rerank search via qmd; keyword-only on a machine set to keyword search (no GPU, 2026-10-02) |
-| `wiki-cycle` | research | Full research-cycle orchestrator (discover → ingest → lint → promote) |
+| `wiki-cycle` | research | Full research-cycle orchestrator (discover → ingest → lint → promote). Sidecar: `helper-models.json` (the model for the `--full` semantic lint, fix and synthesis agents; sonnet) |
 | `wiki-discover` | research | RSS / voices / repos discovery — internal to cycle |
 | `wiki-list` | research | Queue management — internal to cycle |
 | `wiki-claims` | both | Claim extraction + contradiction detection — internal to cycle |

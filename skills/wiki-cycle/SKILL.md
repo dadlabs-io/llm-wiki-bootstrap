@@ -119,9 +119,9 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mech
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-scope.py --topic <notebook> semantic --run-folder <run-folder> [--all when --lint-all]
 ```
 
-It writes `semantic-scope.txt`: the entries added or revised since the last semantic lint, plus this run's staged entries (read from `_inbox/proposed/`, since Step 5.5 has not promoted them yet). Spawn one agent per ~100 entries in scope, up to 4, unnamed, each given a slice of the scope balanced by file count and the `/wiki-lint --full` criteria; include the drift-watch deep-compares. Merge their findings into `lint-semantic.json` + `.md` (its `timestamp` is the next run's cut-off).
+It writes `semantic-scope.txt`: the entries added or revised since the last semantic lint, plus this run's staged entries (read from `_inbox/proposed/`, since Step 5.5 has not promoted them yet). Spawn one agent per ~100 entries in scope, up to 4, unnamed, on the model `semantic_lint` names in `helper-models.json` beside this file (pass it as the spawn-time `model`; Steps 5 and 6.5 read `lint_fixes` and `synthesis` the same way), each given a slice of the scope balanced by file count and the `/wiki-lint --full` criteria; include the drift-watch deep-compares. Merge their findings into `lint-semantic.json` + `.md` (its `timestamp` is the next run's cut-off).
 
-**Step 5 — Fix lint issues.** Show the findings; apply what the user approves (fix agents by category, up to 3). A finding that would edit a `framework-contract: true` doc goes to the user instead: the docs refresh overwrites such edits.
+**Step 5 — Fix lint issues.** Show the findings; apply what the user approves (fix agents by category, up to 3, on `lint_fixes`). A finding that would edit a `framework-contract: true` doc goes to the user instead: the docs refresh overwrites such edits.
 
 **Step 5.5 — Promote** (`--full`, before Steps 6 and 6.5, which read `wiki/`). Promote every staged entry not held by the checker, one slug at a time, then normalise links and confirm:
 
@@ -135,7 +135,7 @@ Then re-run Step 3.5 (promotion adds entries and backlinks at once). Each promot
 
 **Step 6 — Claims** (`--full`; `--claims-only`). Scope: `wiki-cycle-scope.py --topic <notebook> claims --run-folder <run-folder>` (`--all` with `--lint-all`): entries with no claims in the index, or revised since it was written. Follow `/wiki-claims` over that scope: append to the index, never rebuild it, and write `claims.json` + `.md`.
 
-**Step 6.5 — Best-practices synthesis** (`--full` — never skipped). Report-only agents review this cycle's new `research/` entries against the `project/best-practices/*` pages: confirm, a dated watch-note, or a doctrine change (be conservative; prefer watch-notes; contradictions keep both sides). Net-new areas go to `best-practices-candidate-concepts.md`. Each agent writes `synthesis-<area>.md` (section, proposed text in the page's voice, dated, source entry, rationale, confidence). **Human gate:** present the consolidated proposal (take all / pick / none), apply only what the user approves, and bump each touched page's `last_reviewed`. A run nobody can answer writes the proposal and changes no canon.
+**Step 6.5 — Best-practices synthesis** (`--full` — never skipped). Report-only agents (on `synthesis`) review this cycle's new `research/` entries against the `project/best-practices/*` pages: confirm, a dated watch-note, or a doctrine change (be conservative; prefer watch-notes; contradictions keep both sides). Net-new areas go to `best-practices-candidate-concepts.md`. Each agent writes `synthesis-<area>.md` (section, proposed text in the page's voice, dated, source entry, rationale, confidence). **Human gate:** present the consolidated proposal (take all / pick / none), apply only what the user approves, and bump each touched page's `last_reviewed`. A run nobody can answer writes the proposal and changes no canon.
 
 **Step 7 — Refresh scan** (`--full`; `--refresh-only`): follow `/wiki-refresh --overdue-only`.
 

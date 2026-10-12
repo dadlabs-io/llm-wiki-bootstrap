@@ -11,6 +11,13 @@
 
 ## 2026-10-12
 
+### The full cycle's lint, fix and synthesis agents run on Sonnet (task #87, Mark's pick after a blind comparison)
+
+- **Why**: `/wiki-cycle` Steps 4 (semantic lint), 5 (fix agents) and 6.5 (synthesis) named no model, so their agents inherited the session's Opus. Anthropic's Hallie and two practitioners in agentic-design say to give helper agents their own model. Mark: yes, when a comparison shows it holds.
+- **Measured** (medium effort, read-only headless sessions, the same brief on each model): a Step 4 slice of 79 real agentic-design entries (research skills and best practices, the doctrine pages; scope since the 2026-09-23 lint) cost Sonnet $4.27 and Opus $9.57. A Step 6.5 synthesis of the 12 entries of cycle 2026-10-12-01 cost Sonnet $1.58 and Opus $3.93. Both models read every entry. An Opus judge at high effort, with the reports blind (A/B shuffled, model names removed), verified every finding against the wiki. Lint: the same 7 core high-value problems found by both; Sonnet 10 high-value, 97 low, 19 trivial, 10 wrong; Opus 9, 85, 12, 2; the judge preferred Sonnet for its three extra high-value finds (a contradiction inside the memory canon page, two unreconciled benchmark results), with Opus the more precise. Synthesis: Sonnet 24 good proposals of 27, Opus 19 of 21, none wrong, no doctrine change from either; a narrow preference for Sonnet. One run each and one judge. The wiki-lint suite could not tell the models apart (both pass every check on its 6-entry fixture). About $34 in all.
+- **What**: `helper-models.json` beside the skill (`semantic_lint`, `lint_fixes`, `synthesis`, each `sonnet`); Steps 4, 5 and 6.5 pass the named model as the spawn-time `model`. The ingester's and the checker's own config files are unchanged (the checker stays on Opus). The usage page says so, and that the user's approval before any fix is where Sonnet's extra wrong findings are dropped. INSTALL-INVENTORY.
+- **Migration**: none. To switch a step back, set its value to `opus`.
+
 ### A task's details are never overwritten by accident (task #101, agent-builder's suggestion)
 
 - **Why**: on agent-builder's card 197, a progress note sent with `wiki-tasks.py set 197 --details "<note>"` replaced the card's details, which held its source and its steps written as prose; nothing warned, and the text was restored by hand. The help said "replace", but `add --details` reads "kept under Task details", and a session reaching for "add a note" took the replace.
