@@ -17,9 +17,13 @@ def rules(scope: str = "main") -> list[dict]:
     (wiki-cycle's suite, scope "workers")."""
     shell = ["Bash", "PowerShell"]
     return [
-        {"id": "opened the tier rubric before setting --tier", "kind": "read_before", "scope": scope,
-         "rule": "open its tier rubric before you set `--tier`",
-         "path": r"wiki-frontmatter-best-practices\.md$", "action": FILING, "tool": shell},
+        # eval-case-writer's rule (task #99, 2026-10-12), replacing "opened the tier rubric before setting
+        # --tier": the fetch and the duplicate check now print the rubric, so either one, or a read of the
+        # spec, puts it in front of the session. It sees commands, not their output (the writer's caveat)
+        {"id": "rubric in front of the session before the first --tier filing", "kind": "run_before", "scope": scope,
+         "rule": "the tier rubric and the confidence scale from the frontmatter spec are in front of the session before an entry's tier and confidence are chosen (printed by --fetch-only or --check-duplicate, or read from the spec)",
+         "action": FILING, "tool": shell,
+         "before": r"wiki-update\.py[^\n]*--(fetch-only|check-duplicate)|wiki-frontmatter-best-practices\.md"},
         {"id": "read fetchers.md before a special fetcher", "kind": "read_before", "scope": scope,
          "rule": "YouTube, PDFs, X, Medium, Instagram, pages rendered by JavaScript, and speech: fetchers.md",
          "path": r"/fetchers\.md$",

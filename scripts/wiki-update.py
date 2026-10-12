@@ -974,8 +974,11 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
             print(f"suggested_title={suggested_title}")
         # Content dedup before anyone reads it (task #81 P5): the same piece under another URL
         if raw_path:
-            for line in report(check_raw(Path(raw_path), topic_root), topic_root):
+            verdict = check_raw(Path(raw_path), topic_root)
+            for line in report(verdict, topic_root):
                 print(line)
+            if not verdict.duplicate:
+                print_tier_rubric()
         return 0
 
     final_title = title or suggested_title or Path(source).stem
@@ -1200,7 +1203,40 @@ def check_duplicate(vault_root, topic, target):
         print(line)
     if not verdict.duplicate:
         print("no duplicate found")
+        print_tier_rubric()
     return 3 if verdict.duplicate else 0
+
+
+SPEC_NAME = "wiki-frontmatter-best-practices.md"
+
+
+def tier_rubric_text() -> tuple[str | None, str]:
+    """The frontmatter spec's tier rubric and confidence scale, read verbatim from the spec (the only
+    place they are defined), with the path it came from: the global toolset's copy, else this repo's
+    framework-docs/ beside scripts/. (None, where it looked) when neither is there."""
+    from _wiki_config import toolset_location
+    places = [toolset_location()[0] / "wiki" / "project" / "best-practices" / "framework" / SPEC_NAME,
+              Path(__file__).resolve().parent.parent / "framework-docs" / SPEC_NAME]
+    for spec in places:
+        if spec.is_file():
+            text = spec.read_text(encoding="utf-8")
+            m = re.search(r"^### tier rubric\n.*?(?=^### review cadence)", text, re.M | re.S)
+            if m:
+                return m.group(0).rstrip(), spec.as_posix()
+    return None, " or ".join(p.as_posix() for p in places)
+
+
+def print_tier_rubric() -> None:
+    """Printed where the raw is about to be read and a tier chosen (after --fetch-only and
+    --check-duplicate), so the rubric is in front of the session whatever it opens: told to open
+    the spec, Sonnet set --tier without it in about 1 run in 5 (task #99, 2026-10-12)."""
+    text, where = tier_rubric_text()
+    if text is None:
+        print(f"tier rubric: not found ({where}); open the frontmatter spec before choosing --tier")
+        return
+    print(f"\n--- tier rubric and confidence scale, from {where} (choose --tier and --confidence by it) ---")
+    print(text)
+    print("--- end of tier rubric ---")
 
 
 def regate_entry(vault_root, topic, target):

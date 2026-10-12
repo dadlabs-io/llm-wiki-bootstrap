@@ -121,6 +121,20 @@ with tempfile.TemporaryDirectory() as td:
     check("a twin no entry cites: not a duplicate (exit 0), but said",
           code == 0 and "duplicate_of=" not in out and "orphan.md" in out, (code, out[-300:]))
 
+    # task #99: a raw that is not a duplicate is about to be read and tiered, so the tier rubric and the
+    # confidence scale, read from the spec, follow it; after a duplicate nothing is tiered, so they do not
+    code, out = run("--check-duplicate", "raw/e.md")
+    check("--check-duplicate, no duplicate: prints the tier rubric and the confidence scale from the spec",
+          "--- tier rubric and confidence scale, from " in out and "### tier rubric" in out
+          and "### confidence scale" in out and "wiki-frontmatter-best-practices.md" in out, out[-400:])
+    check("the printout stops before the review cadence", "### review cadence" not in out, out[-200:])
+    code, out = run("--check-duplicate", "raw/c.md")
+    check("--check-duplicate, a duplicate: no tier rubric", "### tier rubric" not in out, out[-300:])
+    src_new = Path(td) / "fresh.md"
+    src_new.write_text(raw("https://fresh.example/f", "\n\n".join(prose(60) for _ in range(7))), encoding="utf-8")
+    code, out = run("--fetch-only", "--source", str(src_new))
+    check("--fetch-only, no duplicate: prints the tier rubric", code == 0 and "### tier rubric" in out, out[-300:])
+
     code, out = run("--check-duplicate", "raw/nope.md")
     check("a raw that does not exist: exit 2, saying so", code == 2 and "unrecognized" not in out and "nope.md" in out, (code, out[-200:]))
 

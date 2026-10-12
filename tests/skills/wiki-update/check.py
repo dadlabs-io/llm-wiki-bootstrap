@@ -335,6 +335,17 @@ def prompt(case: dict, ctx: dict) -> str:
                 if re.search(r"^source:.*" + re.escape(case["status_id"]), t, re.M):
                     p.unlink()
         return head + f"The user's input: {case['url']}"
+    if kind == "rubric-ingest":
+        # seeded-raw: a raw already saved for a URL is handed over (the duplicate check is the first command on it).
+        # local-file: a handed-over file the session fetches with --fetch-only. Only this case's raw is (re)written.
+        if inp == "seeded-raw":
+            raw = ctx["notebook"] / "raw" / case["raw_file"]
+            raw.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(HERE / "fixtures" / "raws" / case["file"], raw)
+            return head + (f"The user handed over a source that was already fetched: its raw is "
+                           f"{raw.as_posix()}, the saved original of {case['url']}. "
+                           f"File it with --source-url {case['url']} --raw-path raw/{case['raw_file']}.{staged}")
+        return head + f"The user's input: the local file {(ctx['sandbox'] / 'inputs' / case['file']).as_posix()}{staged}"
     if inp == "cached":
         url = _suite()["sources"][case["source"]]["url"]
         raw = ctx["raw_names"].get(case["source"], "<missing fixture>")
@@ -675,6 +686,31 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             raw.name)
         add("reply says the raw holds only a preview", bool(PREVIEW_SAID.search(text)))
         add("reply names the page (title or link)", case["title"].lower() in text or case["url"].lower() in text)
+        return res
+    if kind == "rubric-ingest":
+        # Requirement (task #99): tier and confidence follow the tier rubric and confidence scale. Posts are
+        # tiered by author and evidence, not by platform; an arXiv paper is tier 1, reviewed or not.
+        # Checked on what the entry carries; the run rule checks that the rubric was in front of the session.
+        where = "_inbox/proposed/" if case.get("mode") == "staged" else "wiki/"
+        add(f"exactly one new entry, in {where}", len(entries) == 1 and entries[0].startswith(where), entries)
+        if len(entries) != 1:
+            return res
+        path = nb / entries[0]
+        entry_text = path.read_text(encoding="utf-8")
+        fm, _body = split_frontmatter(entry_text)
+        add("filed by wiki-update.py (its Source footer and frontmatter)",
+            bool(fm.get("ingested_by")) and "**Source**" in entry_text)
+        tier = str(fm.get("tier", "")).strip().strip('"').strip("'")
+        add(f"tier is {case['tier']}", tier in case["tier"], tier)
+        conf = str(fm.get("confidence", "")).strip().strip('"').strip("'").lower()
+        add(f"confidence is one of {case['confidence']}", conf in case["confidence"], conf)
+        if case.get("input") == "seeded-raw":
+            add("source_url is the handed-over source", _norm_url(fm.get("source_url")) == _norm_url(case["url"]),
+                fm.get("source_url"))
+            add("raw_path names the handed-over raw",
+                str(fm.get("raw_path", "")).strip().strip('"').strip("'").endswith(case["raw_file"]), fm.get("raw_path"))
+        g = check_entry_file(path)
+        add("gate: no errors", not g.get("errors"), g.get("errors"))
         return res
 
     # ---- an ingest ----

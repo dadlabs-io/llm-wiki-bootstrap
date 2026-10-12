@@ -11,6 +11,12 @@
 
 ## 2026-10-12
 
+### The tier rubric is printed where a tier is chosen; `/wiki-refresh`'s checks have a size (task #99)
+
+- **Why**: scored over saved runs, Sonnet set `--tier` without opening the frontmatter spec in about 1 run in 5, though the skill said to open its tier rubric first (Opus never skipped it). And of every check, verify, re-run and re-read line in the shipped skills, only `/wiki-refresh`'s Step 3 left a self-judged check open-ended; ParanoiaEval (agentic-design WN-S7) found that a stated size removes most excess checking.
+- **What**: `wiki-update.py --fetch-only` and `--check-duplicate` print the spec's "tier rubric" through "confidence scale" sections, read verbatim from the spec at run time (the global toolset's copy, else this repo's `framework-docs/`), after a raw that is not a duplicate; nothing is printed after a duplicate. The spec stays the only place the rubric is defined. `/wiki-update` says to set `--tier` and `--confidence` by that printout or the spec, never from memory. `/wiki-refresh` Step 3: a re-read is one read of the entry and its raw; a search for a second or better source is one wiki search and at most three web searches, then "none found"; a changed source is re-fetched once. Both usage pages.
+- **Proven**: `tests/scripts/test_dedup_content.py` 15/15 (13/15 on the old script). Two fresh cases by `eval-case-writer` and its replacement run rule; wiki-update Sonnet 6/6 and wiki-cycle Opus 2/2 (the cases the old rule failed). Installed.
+
 ### `/wiki-cycle` spawns every helper on the model its setting file names (task #99)
 
 - **Why**: the new run checks (`tests/skills/_trajectory.py`, `score_trajectory.py`), scored over every saved suite run at no cost, found the cycle never opened `wiki-ingester-config.json` before spawning workers in 21 of 22 runs since 2026-10-07: it wrote "sonnet, the config's default" from the agent's own description. Right only because the default was Sonnet; a changed setting, or #87's `helper-models.json`, would have been ignored. From agentic-design's WN-S7: an agent told to read a rule often does not (SWE-CC: policy searches in 28.9% of runs).

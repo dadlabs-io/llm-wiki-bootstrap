@@ -77,13 +77,15 @@ Apply these rules:
 
 ### Step 3 — For each flagged entry, suggest an action
 
+Each check has a stated size: a check with no bound grows into extra reads and searches the evidence does not call for (agentic-design WN-S7, 2026-10-12: ParanoiaEval found that stating a check's size removes most of that excess).
+
 | Category | Suggested action |
 |---|---|
-| Overdue | Re-read the entry. Is it still accurate? If yes, update `last_reviewed` and `review_after`. If no, update the content. |
-| Low confidence | Find a second source that corroborates or contradicts. Upgrade to medium/high or add a disclaimer. |
-| Tier 4 unverified | Search for a tier 1-2 source covering the same topic. If found, either corroborate (upgrade confidence) or supersede (replace with better source). |
-| High inbound + aging | Priority re-read — many entries depend on this one being correct. |
-| Source may have changed | Re-fetch `source_url`, compare against raw. If content changed substantially, flag for re-synthesis. |
+| Overdue | Re-read the entry against its raw: one read of each, no new searching. Still accurate: update `last_reviewed` and `review_after`. Not: list what is wrong for the user, then update the content. |
+| Low confidence | Look for a second source that corroborates or contradicts: one wiki search and at most three web searches. Found: upgrade to medium/high or add a disclaimer. None: say so and leave the confidence as it is. |
+| Tier 4 unverified | Look for a tier 1-2 source on the same topic, with the same bound (one wiki search, at most three web searches). Found: either corroborate (upgrade confidence) or supersede (replace with the better source). None: say so. |
+| High inbound + aging | As Overdue, done first: many entries depend on this one being correct. |
+| Source may have changed | Re-fetch `source_url` once, compare against the raw. If the content changed substantially, flag for re-synthesis. |
 
 ### Step 4 — Write the refresh report
 
