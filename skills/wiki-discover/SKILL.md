@@ -136,9 +136,9 @@ If a pairing looks wrong, re-examine the source search result. Do NOT queue mism
 
 ### Step 6 — Generate the discovery checklist
 
-Write one checklist, `_inbox/discovered/<date>-discovery.md`, carrying the run's stats (top) and the Decisions log (last section), as in the template below. **At most 20 candidates** (Mark, 2026-10-11; a notebook's feeds.md rule naming another number wins): take the HIGH ones first, then MEDIUM, and leave the rest off, saying `N more waiting for the next run` in the stats. Never put a held-back candidate in Skipped: it was not judged. **Every feed item you did judge goes in the Decisions log**: one dropped as LOW relevance, off-topic, a listicle or already covered goes in Skipped with its reason, one line each, or it comes back on every run (a feed shows it until a checklist lists it). A first read after weeks without a search can return a few hundred items: judge them from their titles, and list the dropped ones in Skipped.
+Write one checklist, `_inbox/discovered/<date>-discovery.md`, carrying the run's stats (top) and the Decisions log (last section), as in the template below. **Judge every item the run found, and list every one worth filing, however many that is** (Mark, 2026-10-11: "If we read a list of 331 entries and only three are good, let's just do three… if there are 33 that are good, there's no sense eliminating 13 of them"; a cap of 20 the same day left 62 items unjudged). Rank them best first, HIGH before MEDIUM, numbered across the whole checklist so the user can approve by number. **Every item goes in the Decisions log**: one dropped as LOW relevance, off-topic, a listicle or already covered goes in Skipped with its reason, one line each, or it comes back on every run (a feed shows it until a checklist lists it). A first read after weeks without a search can return a few hundred items: judge them from their titles, an arXiv paper from its abstract too (one arXiv API call with `id_list` returns them all), and list the dropped ones in Skipped.
 
-Then mark seen what the checklist lists, so the feeds show it no more, while every feed item it does not list comes back next run:
+Then mark seen what the checklist lists, so the feeds show it no more; an item it does not list (a run stopped part-way) comes back next run:
 
 ```bash
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-feeds.py --topic <topic> mark-seen --checklist <notebook_root>/_inbox/discovered/<date>-discovery.md
@@ -153,20 +153,20 @@ Run it once the Decisions log is filled: a link in Queued, Skipped or Deferred i
 **Read by feed**: <count> (<count> failed, searched instead: <names and reasons>)
 **Feeds searched**: <count>
 **Candidates found**: <count>
-**After dedup**: <count> (<N> more waiting for the next run, over the limit of 20)
+**After dedup**: <count> on the checklist, <count> skipped
 **Queries used**: <list the WebSearch queries run>
 
 ## Candidates
 
 ### HIGH relevance
 
-- [ ] [Title](url) — tier N — **Why**: fills the X slot
-- [ ] [Title](url) — tier N — **Why**: updates our understanding of Y
+- [ ] **1.** [Title](url) — tier N — **Why**: fills the X slot
+- [ ] **2.** [Title](url) — tier N — **Why**: updates our understanding of Y
 
 ### MEDIUM relevance
 
-- [ ] [Title](url) — tier N — **Why**: related to Z
-- [ ] [Title](url) — tier N — **Why**: new perspective on W
+- [ ] **3.** [Title](url) — tier N — **Why**: related to Z
+- [ ] **4.** [Title](url) — tier N — **Why**: new perspective on W
 
 ## Concept gaps searched (if --gaps flag)
 
@@ -268,7 +268,7 @@ This skill implements **Phase 1 (Discover) + Phase 2 (Filter)** of the research 
 
 - Don't ingest during discovery — discovery queues, ingestion is separate
 - Don't web-search more than 6 sources per run — rate limits + context budget (the sources read by feed don't count)
-- Don't put more than 20 candidates on a checklist, and don't mark seen what it does not list
+- Don't cap the checklist at a number or leave an item unjudged, and don't mark seen what it does not list
 - Don't include tier 4 candidates without explicit `(NEEDS HUMAN REVIEW)` label
 - Don't skip dedup — the #1 cause of duplicate wiki entries is "I thought this was new"
 - Don't search for topics outside the wiki's scope (check the topic README)

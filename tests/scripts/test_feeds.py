@@ -276,7 +276,7 @@ with tempfile.TemporaryDirectory() as td:
     code, out, err = run(*V, "check", "--json")
     by = {s["name"].split(" / ")[0]: s for s in json.loads(out)["sources"]}
     check("a marked item is not shown again", by["Example RDF"]["new"] == [], by["Example RDF"])
-    check("an item no checklist listed comes back (the 20-limit rule)",
+    check("an item no checklist listed comes back (a run stopped part-way)",
           [i["title"] for i in by["Hamel Husain"]["new"]] == ["Evals in practice"], by["Hamel Husain"])
 
     # ── a changed feed URL starts fresh ──

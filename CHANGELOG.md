@@ -11,6 +11,12 @@
 
 ## 2026-10-11
 
+### Discovery lists every good candidate, ranked: no cap of 20 (Mark)
+
+- **Why**: the first feed read on agentic-design found 331 items; the checklist stopped at 20 and left 62 unjudged. Mark: "If we read a list of 331 entries and only three are good, let's just do three… if there are 33 that are good, there's no sense eliminating 13 of them just because they don't fit our numbers."
+- **What**: `/wiki-discover` Step 6 judges every item a run finds (an arXiv paper from its abstract too) and lists every one worth filing, ranked best first and numbered across the checklist; every other item goes in Skipped. `mark-seen` is unchanged: an item a stopped run never listed comes back. The stats line, the Don't list, the usage page and the feeds template say so.
+- **Migration**: none. A notebook's `_config/feeds.md` that names a candidate limit in its own rules should drop it (agentic-design's did, the same day).
+
 ### Discovery reads trusted sources by their feeds (task #97, from the Chubby Skills read; plan approved by Mark)
 
 - **Why**: `/wiki-discover` found new posts by web search, six sources a run, and missed items: YouTube channel pages need a browser, results go stale, some sites refuse a search tool. Its duplicate check grepped the exact URL, so any other link form, and every ticket waiting in an intake bucket, passed as new.
