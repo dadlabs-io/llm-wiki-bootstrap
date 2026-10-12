@@ -42,9 +42,13 @@ Read `_config/feeds.md` at the notebook root (beside `wiki/`). This file defines
 - Vendor/platform blogs
 - Community sources (lower trust, human-approve only)
 
+A row whose **Feed** column holds a feed (an RSS, Atom or JSON Feed URL, or `youtube:<channel>`) is read by its feed in Step 3; a row with `—` there, or a page with no Feed column, is searched on the web as before (2026-10-11, task #97).
+
 If `_config/feeds.md` doesn't exist, tell the user and offer to create it from the template: `<bootstrap_source>/templates/feeds.md.tmpl` (`bootstrap_source` is in `~/.claude/wiki-config.json`), written to `_config/feeds.md` with `{{PROJECT_NAME}}` replaced by the notebook's name. `/new-wiki` creates it, empty, for every wiki with a `research/` folder (since 2026-09-26). If the page exists but has no rows yet, say so, ask which sources to add (a name and a URL each), add them as rows (`From` 2026-01-01, `To` `—`), and search nothing until there is at least one; `--query` needs no feeds.
 
 ### Step 2 — Determine which feeds to search
+
+**Sources with a feed are read every run**, all of them, outside the six-per-run cap: a feed read costs no search (Mark, 2026-10-11). Everything below (the order, the cap, the flags' sections) picks the web-search sources; `--feed "<name>"` narrows both kinds.
 
 **Default ordering: staleness-first.** Sort all eligible feeds by `To` ascending (oldest-queried first; `To = —` / never-queried sorts earliest). Take the top 6 per the per-run cap. Over ~6 runs every feed cycles through, with the feeds that have the longest coverage gap always getting priority.
 
@@ -62,9 +66,17 @@ Based on the flags:
 
 **`--feed` is the right flag for backfill runs**, since backfill is per-feed by design (low-cadence creators benefit; high-cadence vendor blogs don't). Pair `--feed <name> --backfill <YYYY-MM-DD>` for targeted historical coverage extension.
 
-### Step 3 — Search each feed with date-filtered queries
+### Step 3 — Read the feeds, then search the rest with date-filtered queries
 
-**Tool**: `WebSearch`. (Until 2026-09-24 this named the Exa MCP server as primary; no run since July had it, and every cycle recorded "no Exa". If an Exa search tool is available in the session, it may be used the same way, with its `publishedAfter` / `publishedBefore` set to the window below.)
+**3a. The sources with a feed**, first:
+
+```bash
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-feeds.py --topic <topic> check --json   # add --feed "<name>" with --feed
+```
+
+Each source comes back with its `new` items (title, link, date and author from the same feed item, so they never need pairing) and a `status`. New means not shown on an earlier checklist and not already in the wiki, staged, queued, done or in an intake bucket; the first read of a feed shows only what came out on or after its `To` date. A YouTube channel is read from its feed, or, where YouTube refuses that, from yt-dlp's list of its latest videos (no login; undated, so new means not seen before). Exit 1 means some sources `failed` (each with its reason): search each of those on the web this run (they count toward the six), and note the failure in the checklist. After a source is read, set its `To` to today, as for a search. `--backfill` applies to web search only: a feed holds what it holds.
+
+**3b. The web-search sources.** **Tool**: `WebSearch`. (Until 2026-09-24 this named the Exa MCP server as primary; no run since July had it, and every cycle recorded "no Exa". If an Exa search tool is available in the session, it may be used the same way, with its `publishedAfter` / `publishedBefore` set to the window below.)
 
 **Date window (mandatory)**: from the feed's `To` date if set in feeds.md, else its `From` date, else the global anchor `2026-03-14`, up to today. WebSearch has no date parameter, so put the window in the query where it helps (the month and year) and **drop every result published before the window**; a result whose date you cannot establish is deferred with that reason, not queued. Each feed tracks its own covered range via `From` (earliest covered) and `To` (last queried). Empty results mean "nothing new since last check", a legitimate outcome, not a failure.
 
@@ -86,23 +98,19 @@ Batch related queries for efficiency (not for an arbitrary cap). Example: don't 
 
 ### Step 4 — Dedup against existing wiki
 
-For each candidate URL/title found in search results:
+A feed's items arrive already checked by link (3a). For each candidate found by web search:
 
-1. **URL dedup**: check if the exact URL exists in any wiki entry's `source_url` frontmatter:
+1. **Link dedup**: is the source already held, in any link form (x.com or twitter.com, a YouTube Short or watch link, tracking tags dropped)? One call for every link:
    ```bash
-   grep -r "<url>" <notebook_root>/wiki/ --include="*.md" -l
+   uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-feeds.py --topic <topic> known "<url>" "<url>" …
    ```
+   `held <where> <url>` (wiki, staged, pending, done, or an intake bucket) is a duplicate; `new <url>` goes on. (A grep for the exact URL until 2026-10-11: it missed every other link form, and the intake buckets.)
 
-2. **Title/concept dedup**: search the wiki for the key concept:
+2. **Title/concept dedup**, for every candidate, feed or web: search the wiki for the key concept:
    ```bash
    uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --notebook <topic> "<key terms from the candidate>"   # THIS notebook only (a match elsewhere is not a duplicate here); needs the preflight from /wiki-search. Full machine: GPU slot + timeout, exit 75/124 is a stop-and-report, not a fallback. Keyword machine (no GPU): words only, so also try the words an existing entry would use
    ```
    If qmd returns a 80%+ match, the concept is already covered — skip unless the new source adds substantial new information.
-
-3. **Queue dedup**: check if the URL is already in `_inbox/pending/` or `_inbox/done/`:
-   ```bash
-   grep -r "<url>" <notebook_root>/_inbox/ --include="*.md" -l
-   ```
 
 ### Step 5 — Score and classify candidates
 
@@ -128,15 +136,24 @@ If a pairing looks wrong, re-examine the source search result. Do NOT queue mism
 
 ### Step 6 — Generate the discovery checklist
 
-Write one checklist, `_inbox/discovered/<date>-discovery.md`, carrying the run's stats (top) and the Decisions log (last section), as in the template below. **Discovery does not route candidates to owners** (2026-09-24): an approved candidate is queued into `_inbox/pending/`, and `/wiki-triage` gives it an owner by the buckets in `_inbox/intake/README.md`, the same way it does for Drive and queued URLs. (From 2026-09-01 to 2026-09-24 this step classified candidates into `_inbox/intake-<bucket>/` checklists itself, by a rule written here and nowhere else.)
+Write one checklist, `_inbox/discovered/<date>-discovery.md`, carrying the run's stats (top) and the Decisions log (last section), as in the template below. **At most 20 candidates** (Mark, 2026-10-11; a notebook's feeds.md rule naming another number wins): take the HIGH ones first, then MEDIUM, and leave the rest off, saying `N more waiting for the next run` in the stats. Never put a held-back candidate in Skipped: it was not judged. **Every feed item you did judge goes in the Decisions log**: one dropped as LOW relevance, off-topic, a listicle or already covered goes in Skipped with its reason, one line each, or it comes back on every run (a feed shows it until a checklist lists it). A first read after weeks without a search can return a few hundred items: judge them from their titles, and list the dropped ones in Skipped.
+
+Then mark seen what the checklist lists, so the feeds show it no more, while every feed item it does not list comes back next run:
+
+```bash
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-feeds.py --topic <topic> mark-seen --checklist <notebook_root>/_inbox/discovered/<date>-discovery.md
+```
+
+Run it once the Decisions log is filled: a link in Queued, Skipped or Deferred is marked alike. **Discovery does not route candidates to owners** (2026-09-24): an approved candidate is queued into `_inbox/pending/`, and `/wiki-triage` gives it an owner by the buckets in `_inbox/intake/README.md`, the same way it does for Drive and queued URLs. (From 2026-09-01 to 2026-09-24 this step classified candidates into `_inbox/intake-<bucket>/` checklists itself, by a rule written here and nowhere else.)
 
 ```markdown
 # Discovery Queue — <date>
 
 **Topic**: <topic>
+**Read by feed**: <count> (<count> failed, searched instead: <names and reasons>)
 **Feeds searched**: <count>
 **Candidates found**: <count>
-**After dedup**: <count>
+**After dedup**: <count> (<N> more waiting for the next run, over the limit of 20)
 **Queries used**: <list the WebSearch queries run>
 
 ## Candidates
@@ -208,6 +225,7 @@ Print a summary:
 
 ```
 Discovery complete for <topic>
+  Read by feed: N (M failed, searched instead)
   Feeds searched: N
   Candidates found: N (M after dedup)
   High relevance: N
@@ -228,6 +246,8 @@ Discovery complete for <topic>
 ## Key paths
 
 - Feeds config: `_config/feeds.md`
+- What the feeds have shown: `_config/feed-state.json` (written only by `wiki-feeds.py`; never edit it)
+- The feed reader: `{{WIKI_SCRIPTS_DIR}}/wiki-feeds.py` (`check`, `mark-seen`, `known`)
 - Discovery output: one checklist in `_inbox/discovered/` carrying its own stats + decisions log
 - Pending queue: `_inbox/pending/`
 - Done queue: `_inbox/done/`
@@ -247,7 +267,8 @@ This skill implements **Phase 1 (Discover) + Phase 2 (Filter)** of the research 
 ## Don't
 
 - Don't ingest during discovery — discovery queues, ingestion is separate
-- Don't search more than 6 times per run — rate limits + context budget
+- Don't web-search more than 6 sources per run — rate limits + context budget (the sources read by feed don't count)
+- Don't put more than 20 candidates on a checklist, and don't mark seen what it does not list
 - Don't include tier 4 candidates without explicit `(NEEDS HUMAN REVIEW)` label
 - Don't skip dedup — the #1 cause of duplicate wiki entries is "I thought this was new"
 - Don't search for topics outside the wiki's scope (check the topic README)

@@ -7,45 +7,46 @@
 Each row is one source:
 - **Name** — the author, channel, project or vendor (`/wiki-discover --feed "<name>"` searches just that row)
 - **URL / query** — what to search: a site (`simonwillison.net`), a channel, a repo, or search terms
+- **Feed** — the source's feed, read instead of a web search: an RSS, Atom or JSON Feed URL (a blog's `/feed` or `/rss.xml`, a repo's `https://github.com/<org>/<repo>/releases.atom`, an arXiv search as `https://export.arxiv.org/api/query?search_query=…&sortBy=submittedDate&sortOrder=descending`), or `youtube:<channel id or @handle>` for a YouTube channel. `—` when it has none: the source stays on web search
 - **Tier** — the source's default quality, per the tier rubric in `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md` (the only place tiers are defined). Each candidate is still tiered on its own: a post or repository by its author and evidence, not its platform.
 - **From** — the earliest date covered (hard floor: 2026-01-01)
 - **To** — the last date the source was searched; write `—` for a new row, and `/wiki-discover` fills it in
 - **Topics** — search terms
 - **Notes** — why you trust it, what to watch for
 
-A `/wiki-discover` run searches the sources not searched for longest first, six per run (`--all-feeds` searches every one), so over a few runs every source is covered. With no rows yet, it says so and asks what to add.
+A `/wiki-discover` run reads every source that has a feed (only what it has not shown before; the first read shows what came out since `To`), and web-searches the others not searched for longest first, six per run (`--all-feeds` searches every one), so over a few runs every source is covered. A checklist holds at most 20 candidates; the rest come back next run. With no rows yet, it says so and asks what to add.
 
 ---
 
 ### Blogs & Newsletters
 
-| Author | URL / Search Pattern | Tier | From | To | Topics | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
+| Author | URL / Search Pattern | Feed | Tier | From | To | Topics | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
 
 ### GitHub Repos & Projects
 
-| Project | URL | Tier | From | To | What to watch | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
+| Project | URL | Feed | Tier | From | To | What to watch | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
 
 ### Academic / ArXiv
 
-| Query | Frequency | Tier | From | To | Notes |
-| --- | --- | --- | --- | --- | --- |
+| Query | Frequency | Feed | Tier | From | To | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
 
 ### YouTube Channels
 
-| Creator | Channel | Tier | From | To | Topics | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
+| Creator | Channel | Feed | Tier | From | To | Topics | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
 
 ### Vendor / Platform Blogs
 
-| Vendor | URL | Tier | From | To | Topics | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
+| Vendor | URL | Feed | Tier | From | To | Topics | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
 
 ### Community / Aggregators (tier 4 — human-review-only)
 
-| Source | URL | Tier | From | To | Notes |
-| --- | --- | --- | --- | --- | --- |
+| Source | URL | Feed | Tier | From | To | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
 
 ---
 

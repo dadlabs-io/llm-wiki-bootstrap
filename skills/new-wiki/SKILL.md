@@ -203,7 +203,7 @@ Phase B in global mode checks the tooling itself: it refuses (exit 1, with the f
 
 ### Step 1.5 — Add the sources named at Q9 (only when Q9 named some)
 
-Phase B's JSON gives the page's path as `feeds_file`. Add one row per named source to the table that fits it (a blog or newsletter, a GitHub repo, an arXiv query, a YouTube channel, a vendor blog, or a community aggregator), in that table's columns: the name, the URL or search pattern, the tier by the rubric in the frontmatter spec (`{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`), `From` 2026-01-01, `To` `—`, topics from what the user said or the project description, and `named at /new-wiki` in Notes. Edit only the table rows. Don't search the sources now: that is `/wiki-discover`'s job.
+Phase B's JSON gives the page's path as `feeds_file`. Add one row per named source to the table that fits it (a blog or newsletter, a GitHub repo, an arXiv query, a YouTube channel, a vendor blog, or a community aggregator), in that table's columns: the name, the URL or search pattern, the Feed (`—` unless the user gave its feed address; `/wiki-discover` reads a source with one by its feed), the tier by the rubric in the frontmatter spec (`{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`), `From` 2026-01-01, `To` `—`, topics from what the user said or the project description, and `named at /new-wiki` in Notes. Edit only the table rows. Don't search the sources now: that is `/wiki-discover`'s job.
 
 ### Step 2 — Read back the summary + post-install reminders
 
