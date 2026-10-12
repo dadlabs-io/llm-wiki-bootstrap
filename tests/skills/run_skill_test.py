@@ -9,6 +9,7 @@ Usage (from the llm-wiki-bootstrap repo root):
   python tests/skills/run_skill_test.py wiki-update --save-baseline    # accept this run as the baseline
   python tests/skills/run_skill_test.py wiki-update --refresh-fixtures # re-fetch the cached sources (live)
   python tests/skills/run_skill_test.py wiki-update --tags complex     # only the cases carrying a tag
+  python tests/skills/run_skill_test.py wiki-cycle --effort medium     # every session at this effort level
 
 What a run does, per model (the models run side by side, each in its own sandbox):
   1. tests/skills/<skill>/check.py builds a fresh sandbox: a throwaway notebook,
@@ -182,6 +183,10 @@ def run_case(case: dict, model: str, ctx: dict, check, out_dir: Path, tools: lis
     cmd = [claude_exe(), "-p", "--model", model, "--output-format", "stream-json", "--verbose",
            "--permission-mode", "auto", "--add-dir", str(ctx["sandbox"]), *map(str, EXTRA_DIRS),
            "--allowedTools", *tools]
+    # Without --effort a session takes the user's effortLevel from settings.json, which the event
+    # stream does not record (task #83); a run that compares levels names one.
+    if ctx.get("effort"):
+        cmd += ["--effort", ctx["effort"]]
     # A suite whose skill calls other skills renders them into the sandbox and blocks
     # the Skill tool, so a /wiki-report or a worker's /wiki-update cannot fall through
     # to the installed copy (which a run must never test).
@@ -210,6 +215,7 @@ def run_model(model: str, cases: list[dict], args, check, stamp_dir: Path, tools
     out_dir = stamp_dir / model
     out_dir.mkdir(parents=True, exist_ok=True)
     ctx = check.setup(model, stamp_dir / f"sandbox-{model}", REPO)
+    ctx["effort"] = args.effort
     ctx["toolset"] = Path(ctx.get("toolset") or ctx["sandbox"] / "global-toolset")
     if ctx["toolset"].resolve().is_relative_to(Path(ctx["sandbox"]).resolve()):  # never write outside the sandbox
         build_toolset(ctx["toolset"])
@@ -249,8 +255,9 @@ def as_baseline(results: dict) -> dict:
 
 def write_report(stamp_dir: Path, args, models: list[str], cases: list[dict], results: dict, fixtures: list) -> Path:
     src = f"git {args.skill_ref}" if args.skill_ref else "the working tree"
+    effort = f"effort {args.effort}" if args.effort else "effort from settings.json"
     lines = [f"# Skill test — {args.skill}", "",
-             f"Run `{stamp_dir.name}`; skill from {src}; models: {', '.join(models)}.", "",
+             f"Run `{stamp_dir.name}`; skill from {src}; models: {', '.join(models)}; {effort}.", "",
              "| Case | " + " | ".join(models) + " |", "|---|" + "---|" * len(models)]
     for case in cases:
         cells = []
@@ -309,6 +316,8 @@ def main() -> int:
     ap.add_argument("--refresh-fixtures", action="store_true", help="re-fetch the cached sources")
     ap.add_argument("--keep", action="store_true", help="keep the sandboxes even after a clean run")
     ap.add_argument("--timeout", type=int, default=1200, help="seconds per case (default 1200)")
+    ap.add_argument("--effort", choices=["low", "medium", "high", "xhigh", "max"],
+                    help="each session's effort level (default: the user's settings.json)")
     args = ap.parse_args()
 
     check = load_check(args.skill)
@@ -324,7 +333,8 @@ def main() -> int:
     if not cases:
         sys.exit("no cases selected")
     models = [m.strip() for m in args.models.split(",") if m.strip()]
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S") + (f"-{args.skill_ref}" if args.skill_ref else "")
+    stamp = (datetime.now().strftime("%Y%m%d-%H%M%S") + (f"-{args.skill_ref}" if args.skill_ref else "")
+             + (f"-effort-{args.effort}" if args.effort else ""))
     stamp_dir = HERE / ".results" / args.skill / re.sub(r"[^\w.-]", "_", stamp)
     stamp_dir.mkdir(parents=True)
     print(f"skill test: {args.skill}, {len(cases)} cases x {len(models)} models -> {stamp_dir}", flush=True)
