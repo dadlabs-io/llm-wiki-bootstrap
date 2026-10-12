@@ -32,8 +32,8 @@ word): its last section is the checklist.
 ```bash
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show [<N>] [--details]
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py add "<short task>" --owner <section> [--status <s>] [--next "<short>"] [--details "<the rest>"] [--backlog]
-uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py set <N> [--status <s>] [--next "<short>"] [--owner <section>] [--task "<short>"] [--details "<the rest>"]
-uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> [--next "<short>"] [--details "<the rest>"]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py set <N> [--status <s>] [--next "<short>"] [--owner <section>] [--task "<short>"] [--append-details "<more>"]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> [--next "<short>"] [--append-details "<more>"]
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py backlog <N>
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py unbacklog <N> [--owner <section>]
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py remove <N> --confirmed
@@ -42,8 +42,11 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py 
 **Short rows, details apart** (Mark, 2026-10-04): the table is a checklist read at a glance, so a row's Task is at
 most 70 characters and its Next at most 60, and the script refuses a longer one (exit 2). Everything else about a
 task (the why, the steps, file names, the evidence) goes in `--details`, any length: the script keeps it under
-`## Task details`, right below the table, as `### #N: <task>`. `set --details` replaces a task's details
-(`--details ""` clears them); `remove` drops them with the task. `show` prints the table only; `show --details`
+`## Task details`, right below the table, as `### #N: <task>`. To add to a task's details later, `set <N>
+--append-details "<more>"` (or on `done`): it keeps what is there. `--details` on a task that already has details
+is refused (exit 2, nothing written; task #101, a progress note once wiped a card's steps); replace them only
+when the user asks, with `--details "<new>" --replace-details` (`--details "" --replace-details` clears them).
+`remove` drops them with the task. `show` prints the table only; `show --details`
 adds every task's details; `show <N>` prints one task with its details. A row written before the limits stays as
 it is until you edit that cell; when you do, shorten it and move the rest into `--details` on the same call.
 
@@ -96,6 +99,8 @@ editing the file.
 | "move 5 to the backlog", "backlog 5" | `backlog 5` |
 | "take 5 off the backlog", "bring 5 back" | `unbacklog 5` |
 | "add X to the backlog" | `add "<X>" --backlog`, owner as below |
+| "add to 25's details: …", "put that in task 25" | `set 25 --append-details "<…>"` |
+| "replace 25's details with …" | `set 25 --details "<…>" --replace-details` |
 
 - **Which task:** when the user names a task by its words, not its number, run `show`, find it, and use its
   number. If two tasks could match, or none does, ask. Never guess a number.

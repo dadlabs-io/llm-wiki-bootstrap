@@ -120,10 +120,28 @@ with tempfile.TemporaryDirectory() as td:
     p = run(f, "show", "99")
     check("show <unknown N>: exit 2", p.returncode == 2, p.returncode)
 
-    # --- set --details replaces; set --task renames the heading; done keeps the details
-    run(f, "set", "10", "--details", "Only this now.")
+    # --- task #101: set --details on a task with details is refused unless --replace-details;
+    # --append-details keeps them. Then set --task renames the heading; done keeps the details.
+    before = f.read_text(encoding="utf-8")
+    p = run(f, "set", "10", "--details", "Only this now.")
+    check("set --details on a task that has details is refused (exit 2), nothing written, the options named",
+          p.returncode == 2 and f.read_text(encoding="utf-8") == before and "--append-details" in p.stderr
+          and "--replace-details" in p.stderr and "Cover the toolset move." in p.stderr, (p.returncode, p.stderr))
+    p = run(f, "set", "10", "--status", "doing", "--details", "Only this now.")
+    check("the refusal also drops the other fields of that call (nothing half-written)",
+          p.returncode == 2 and f.read_text(encoding="utf-8") == before, p.returncode)
+    p = run(f, "set", "10", "--append-details", "Draft is in docs/release.md.")
     t = f.read_text(encoding="utf-8")
-    check("set --details replaces the details", "Only this now." in t and "Cover the toolset move." not in t)
+    check("--append-details adds a paragraph after the old details, keeping them",
+          p.returncode == 0 and "Cover the toolset move.\nName every changed command.\n\nDraft is in docs/release.md." in t, t[t.find("### #10"):][:300])
+    p = run(f, "set", "10", "--details", "x", "--append-details", "y")
+    check("--details with --append-details is refused", p.returncode == 2, p.returncode)
+    p = run(f, "set", "10", "--replace-details")
+    check("--replace-details without --details is refused", p.returncode == 2, p.returncode)
+    run(f, "set", "10", "--details", "Only this now.", "--replace-details")
+    t = f.read_text(encoding="utf-8")
+    check("set --details --replace-details replaces the details", "Only this now." in t and "Cover the toolset move." not in t
+          and "Draft is in docs/release.md." not in t)
     run(f, "set", "10", "--task", "Write the 2026-10 release notes")
     t = f.read_text(encoding="utf-8")
     check("set --task renames the details heading", "### #10: Write the 2026-10 release notes" in t

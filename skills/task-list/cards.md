@@ -32,7 +32,8 @@ Everything in SKILL.md's table works the same, with these differences:
 | "do 5 next", "put 5 first", "5 after 3" | `order 5 --top`, `order 5 --after 3` (`--before`, `--bottom`) |
 | "make 5 a P1", "tag 5 pilot" | `set 5 --priority P1`, `set 5 --tags "pilot"` (replaces the tags) |
 | "show me the pilot items" | `show --tag pilot` |
-| "note on 12: …" | `log 12 "<the note>"` (a dated line in the card's Log) |
+| "note on 12: …", progress on 12 | `log 12 "<the note>"` (a dated line in the card's Log) |
+| "add to 12's details: …" | `set 12 --append-details "<…>"`: a paragraph after the details, before **Steps** and **Log**. `--details` on a card that has details is refused; `--details "<new>" --replace-details` replaces them, only on the user's word |
 | "what's NOW", "what am I on" | `show`: its first line is NOW |
 
 `show` prints NOW, then the ORDER.md tasks in order, then the backlog by owner; `show <N>` prints the card in full.

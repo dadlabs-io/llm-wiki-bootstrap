@@ -150,6 +150,10 @@ class Card:
         cut = next((i for i, ln in enumerate(lines) if ln.strip() in SECTION_MARKS), len(lines))
         return lines[:cut], lines[cut:]
 
+    def details_lines(self) -> list[str]:
+        """The body's details: everything above **Steps** / **Log**."""
+        return self._split()[0]
+
     def set_details(self, text: str) -> None:
         _, rest = self._split()
         details = [ln.rstrip() for ln in str(text).replace("\r\n", "\n").strip("\n").split("\n")] if text else []

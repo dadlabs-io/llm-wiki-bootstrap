@@ -211,5 +211,36 @@
     "no other card changed at all": true,
     "task.md not recreated (a card project has none)": true,
     "the reply names the moved task by its words": true
+  },
+  "card-note-keeps-details": {
+    "session completed": true,
+    "no permission denials": true,
+    "ORDER.md still there": true,
+    "same card files, none added, renamed or deleted": true,
+    "the six rules hold": true,
+    "task.md not recreated (a card project has none)": true,
+    "nothing else in the notebook touched": true,
+    "ORDER.md unchanged": true,
+    "no other card changed at all": true,
+    "task 2: id, title, owner, list and created unchanged": true,
+    "task 2: every line of the existing details (and Log) is still in the card": true,
+    "task 2: the new text ('2026-q3.md') is in the card, in the details or the Log": true,
+    "the card file was edited only through the script (no Write/Edit on it)": true
+  },
+  "details-replace-explicit": {
+    "session completed": true,
+    "no permission denials": true,
+    "no other file in the notebook touched": true,
+    "task 1 had details to replace (seed)": true,
+    "task 1: old details word 'gandi' is gone": true,
+    "task 1: old details word 'porkbun' is gone": true,
+    "task 1: old details word 'dnssec' is gone": true,
+    "task 1: new details word 'namecheap' is under its #1 heading": true,
+    "task 1: new details word 'auto-renew' is under its #1 heading": true,
+    "the row of task 1 is unchanged": true,
+    "other tasks untouched": true,
+    "other tasks' details unchanged": true,
+    "numbering kept (next-id marker unchanged)": true,
+    "the list was edited only through the script (no Write/Edit on task.md)": true
   }
 }

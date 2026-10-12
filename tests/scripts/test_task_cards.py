@@ -248,10 +248,27 @@ with tempfile.TemporaryDirectory() as tmp:
     _, body, _ = card(tasks, 12)
     check("log: a **Log** section with dated lines, in order",
           re.search(r"\*\*Log\*\*\n\n- \d{4}-\d{2}-\d{2}: started labelling\n- \d{4}-\d{2}-\d{2}: half done", body), body)
-    run(f, tasks, "set", "12", "--details", "New details only.")
+    # task #101 (agent-builder's card 197, 2026-10-12: a progress note sent with set --details replaced the
+    # source and the steps written into the details)
+    _, _, p12 = card(tasks, 12)
+    before = p12.read_text(encoding="utf-8")
+    p = run(f, tasks, "set", "12", "--details", "Done so far: half labelled.")
+    check("set --details on a card with details is refused (exit 2), the card untouched, the options named",
+          p.returncode == 2 and p12.read_text(encoding="utf-8") == before and "--append-details" in p.stderr
+          and "log 12" in p.stderr, (p.returncode, p.stderr))
+    p = run(f, tasks, "done", "12", "--details", "Finished.")
+    check("done --details on a card with details is refused too, and the card is not marked done",
+          p.returncode == 2 and p12.read_text(encoding="utf-8") == before, p.returncode)
+    p = run(f, tasks, "set", "12", "--append-details", "Done so far: half labelled.")
     _, body, _ = card(tasks, 12)
-    check("set --details replaces the details and keeps the log", body.lstrip().startswith("New details only.")
-          and "Fifty questions" not in body and "half done" in body, body)
+    check("--append-details adds a paragraph after the details, before the Log, keeping both",
+          p.returncode == 0 and re.search(r"Fifty questions[^\n]*\n(?:[^\n]+\n)*\nDone so far: half labelled\.\n\n\*\*Log\*\*",
+                                          body) is not None and "half done" in body, body)
+    run(f, tasks, "set", "12", "--details", "New details only.", "--replace-details")
+    _, body, _ = card(tasks, 12)
+    check("set --details --replace-details replaces the details and keeps the log",
+          body.lstrip().startswith("New details only.") and "Fifty questions" not in body
+          and "Done so far" not in body and "half done" in body, body)
     _, _, p12 = card(tasks, 12)
     run(f, tasks, "set", "12", "--task", "Label the fifty search questions")
     _, _, p12b = card(tasks, 12)

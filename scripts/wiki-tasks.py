@@ -29,8 +29,11 @@ Usage:
   python wiki-tasks.py [show [<N>] [--details]]
   python wiki-tasks.py init [--owners "Mark,main,Unassigned"]
   python wiki-tasks.py add "<task>" [--owner <section>] [--status "to do"] [--next "<text>"] [--details "<text>"] [--backlog]
-  python wiki-tasks.py set <N> [--task ...] [--status ...] [--next ...] [--owner ...] [--details ...]
-  python wiki-tasks.py done <N> [--next "<text>"] [--details "<text>"]
+  python wiki-tasks.py set <N> [--task ...] [--status ...] [--next ...] [--owner ...] [--details ... | --append-details ...]
+  python wiki-tasks.py done <N> [--next "<text>"] [--details "<text>" | --append-details "<text>"]
+`set` / `done` --details writes a task's details only when it has none; on a task that has some it is
+refused (exit 2, nothing written) unless --replace-details is passed (task #101). --append-details adds
+a paragraph and keeps the rest.
   python wiki-tasks.py backlog <N>
   python wiki-tasks.py unbacklog <N> [--owner <section>]
   python wiki-tasks.py remove <N> --confirmed
@@ -127,6 +130,34 @@ def _detail_lines(text: str) -> list[str]:
     while lines and not lines[-1].strip():
         lines.pop()
     return lines
+
+
+def new_details(n: int, current: list[str], args) -> list[str] | None:
+    """The task's details after set / done, or None when they stay as they are. --details on a task that
+    already has details is refused without --replace-details (task #101: agent-builder's progress note
+    replaced a card's source and steps, 2026-10-12); --append-details adds a paragraph and keeps the rest."""
+    text = getattr(args, "details", None)
+    extra = getattr(args, "append_details", None)
+    replace = getattr(args, "replace_details", False)
+    if text is not None and extra is not None:
+        raise UserError("pass --details (with --replace-details) or --append-details, not both")
+    if replace and text is None:
+        raise UserError("--replace-details goes with --details \"<the new text>\" (\"\" clears them)")
+    current = _detail_lines("\n".join(current))
+    if text is not None:
+        if current and not replace:
+            first = " ".join(next(ln for ln in current if ln.strip()).split())
+            first = first if len(first) <= 80 else first[:77] + "..."
+            raise UserError(f"#{n} already has details ({len(current)} lines, starting \"{first}\"); nothing "
+                            f"written. --append-details \"<text>\" adds to them, --details \"<text>\" "
+                            f"--replace-details replaces them, `log {n} \"<text>\"` records a dated note (cards)")
+        return _detail_lines(text)
+    if extra is not None:
+        add = _detail_lines(extra)
+        if not add:
+            raise UserError("--append-details is empty")
+        return current + ([""] if current else []) + add
+    return None
 
 
 def is_backlog(s: dict) -> bool:
@@ -353,8 +384,9 @@ def _apply(c: "tc.Card", stack: "tc.Stack", args) -> None:
     if getattr(args, "link", None):
         links = list(c.get("links") or [])
         c.fields["links"] = links + [ln for ln in args.link if ln not in links]
-    if getattr(args, "details", None) is not None:
-        c.set_details(args.details)
+    details = new_details(c.id, c.details_lines(), args)
+    if details is not None:
+        c.set_details("\n".join(details))
 
 
 def cards_main(args, stack: "tc.Stack") -> int:
@@ -400,10 +432,11 @@ def cards_main(args, stack: "tc.Stack") -> int:
             _apply(c, stack, args)
             changed = "updated " + card_line(c)
         elif args.cmd == "done":
+            details = new_details(c.id, c.details_lines(), args)
             c.fields["status"], c.fields["waiting_on"] = "done", ""
             c.fields["next"] = _short(args.next, NEXT_MAX, "next") if args.next else DONE_NEXT
-            if args.details is not None:
-                c.set_details(args.details)
+            if details is not None:
+                c.set_details("\n".join(details))
             changed = "updated " + card_line(c)
         elif args.cmd == "backlog":
             if c.get("list") == "backlog":
@@ -613,17 +646,21 @@ def main(argv: list[str]) -> int:
     p.add_argument("--next", default="")
     p.add_argument("--details", help="the task's details (any length), kept under Task details")
     p.add_argument("--backlog", action="store_true", help="file it straight into the backlog, keeping --owner")
-    p = sub.add_parser("set", parents=[common, fields])
+    edits =argparse.ArgumentParser(add_help=False)  # set / done: a task's details
+    edits.add_argument("--details", help="the task's details, when it has none; replacing existing ones "
+                                         "needs --replace-details")
+    edits.add_argument("--append-details", help="add a paragraph to the task's details, keeping what is there")
+    edits.add_argument("--replace-details", action="store_true",
+                       help="with --details: replace the existing details (\"\" clears them)")
+    p = sub.add_parser("set", parents=[common, fields, edits])
     p.add_argument("n", type=int)
     p.add_argument("--task")
     p.add_argument("--status")
     p.add_argument("--next")
     p.add_argument("--owner")
-    p.add_argument("--details", help="replace the task's details (\"\" clears them)")
-    p = sub.add_parser("done", parents=[common])
+    p = sub.add_parser("done", parents=[common, edits])
     p.add_argument("n", type=int)
     p.add_argument("--next")
-    p.add_argument("--details", help="replace the task's details")
     p = sub.add_parser("backlog", parents=[common])
     p.add_argument("n", type=int)
     p = sub.add_parser("unbacklog", parents=[common])
@@ -726,8 +763,9 @@ def main(argv: list[str]) -> int:
                 changed = "back from the backlog " + row_line(s, r)
             elif args.cmd in ("set", "done"):
                 s, r = board.find(args.n)
-                if args.details is not None:
-                    board.details[args.n] = _detail_lines(args.details)
+                details = new_details(args.n, board.details.get(args.n, []), args)
+                if details is not None:
+                    board.details[args.n] = details
                 if args.cmd == "done":
                     r["status"] = "done"
                     r["next"] = _short(args.next, NEXT_MAX, "next") if args.next else DONE_NEXT

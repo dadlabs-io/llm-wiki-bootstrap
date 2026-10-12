@@ -23,6 +23,8 @@ The project's task list, kept where every session, every bot and you can see it:
 
 **Moving a task** to another owner changes only its owner: its status and next step stay as they were unless you say otherwise.
 
+**A task's details are added to, never overwritten by accident.** "Add to 25's details: …" appends a paragraph and keeps what is there. Writing new details over a task that already has some is refused, with nothing changed, unless you ask for them to be replaced ("replace 25's details with …"). On cards, a progress note goes in the card's dated log instead. (Since 2026-10-12: a progress note once replaced a card's source and steps.)
+
 Statuses are `to do`, `doing`, `waiting`, `parked` and `done`. "Waiting" keeps the task with its owner; the last column says what it is waiting on.
 
 **Works with:** [`wrap-up`](./wrap-up.md) keeps the list current at the end of a session: it marks the session's finished tasks done (and asks before removing any it finished itself), adds the tasks it took on or left for you, and moves statuses that changed. The SessionStart hook points each new session at the same `task.md`, so the list is in view from the first reply.

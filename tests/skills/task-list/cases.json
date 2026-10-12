@@ -211,6 +211,34 @@
       "names": "onboarding[\\s-]+guide",
       "say": "Do task 3 after task 1.",
       "author": "eval-case-writer"
+    },
+    {
+      "id": "card-note-keeps-details",
+      "kind": "card-details-keep",
+      "tasks_seed": "card-project-prose",
+      "task": 2,
+      "new_words": [
+        "2026-q3.md"
+      ],
+      "say": "Note on task 2: docs/releases/2026-q3.md is converted and builds cleanly; 4 pages are left.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "details-replace-explicit",
+      "kind": "details-replace",
+      "seed": "task-with-details.md",
+      "task": 1,
+      "old_words": [
+        "gandi",
+        "porkbun",
+        "dnssec"
+      ],
+      "new_words": [
+        "namecheap",
+        "auto-renew"
+      ],
+      "say": "Replace task 1's details with: Use Namecheap, keep renewal under 25 euros a year, and turn on auto-renew.",
+      "author": "eval-case-writer"
     }
   ]
 }

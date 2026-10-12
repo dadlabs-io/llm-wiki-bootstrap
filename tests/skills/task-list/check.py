@@ -388,7 +388,75 @@ def check_cards_self(case: dict, before: dict, after: dict, run: dict, ctx: dict
     raise ValueError(f"unknown card case kind: {case['id']}")
 
 
+# ---- details are never lost by accident (task #101, 2026-10-12) ----
+def _hand_edits(run: dict) -> list[str]:
+    """Write/Edit-style calls aimed at a card or task.md: the list is edited only through wiki-tasks.py."""
+    bad = []
+    for c in run.get("tool_calls", []):
+        if c.get("name") in ("Write", "Edit", "MultiEdit", "NotebookEdit"):
+            inp = c.get("input") or {}
+            p = str(inp.get("file_path") or inp.get("path") or inp.get("notebook_path") or "").replace("\\", "/")
+            if "/wiki/tasks/" in p or p.endswith("/task.md"):
+                bad.append(f"{c['name']} {p}")
+    return bad
+
+
+def check_card_details(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
+    """card-details-keep: a note or addition on a card that already has details; nothing already there is lost."""
+    res = []
+
+    def add(name, ok, detail=""):
+        res.append({"name": name, "ok": bool(ok), "detail": str(detail)[:300]})
+
+    def norm(s):
+        return " ".join(s.split())
+
+    r = run["result"]
+    add("session completed", r.get("subtype") == "success" and not r.get("is_error"),
+        r.get("subtype") or run.get("stderr_tail") or "no result event")
+    denials = r.get("permission_denials") or []
+    add("no permission denials", not denials, [d.get("tool_name") if isinstance(d, dict) else d for d in denials])
+
+    nb = ctx["notebook"]
+    tasks = nb / "wiki" / "tasks"
+    seed = HERE / "fixtures" / case["tasks_seed"]
+    s_cards, s_order, s_next, s_others, _ = _card_state(seed)
+    cards, order, next_id, others, has_order = _card_state(tasks)
+    target = case["task"]
+    tname = next(n for n in s_cards if int(n.split("-")[0]) == target)
+
+    rel_task_md = ctx["task_md"].relative_to(nb).as_posix()
+    touched = sorted(k for k in set(before) | set(after)
+                     if k != rel_task_md and not k.startswith("wiki/tasks/") and before.get(k) != after.get(k))
+    add("ORDER.md still there", has_order)
+    add("same card files, none added, renamed or deleted", sorted(cards) == sorted(s_cards) and others == s_others,
+        sorted(set(cards) ^ set(s_cards)) or others)
+    add("the six rules hold", not _card_rules(cards, order, next_id), _card_rules(cards, order, next_id))
+    add("task.md not recreated (a card project has none)", not ctx["task_md"].exists())
+    add("nothing else in the notebook touched", not touched, touched)
+    order_now = (tasks / "ORDER.md").read_text(encoding="utf-8") if has_order else ""
+    add("ORDER.md unchanged", order_now.replace("\r\n", "\n") == (seed / "ORDER.md").read_text(encoding="utf-8").replace("\r\n", "\n"),
+        order_now[:200])
+    changed = sorted(int(n.split("-")[0]) for n in s_cards if n != tname and n in cards and cards[n] != s_cards[n])
+    add("no other card changed at all", not changed, changed)
+
+    s_f, s_body = s_cards[tname]
+    f, body = cards.get(tname, ({}, ""))
+    add(f"task {target}: id, title, owner, list and created unchanged",
+        all(f.get(k) == s_f.get(k) for k in ("id", "title", "owner", "list", "created")), f)
+    nbody = norm(body)
+    lost = [ln for ln in (norm(x) for x in s_body.splitlines()) if ln and ln not in nbody]
+    add(f"task {target}: every line of the existing details (and Log) is still in the card", not lost, lost)
+    for w in case["new_words"]:
+        add(f"task {target}: the new text ('{w}') is in the card, in the details or the Log", w.lower() in body.lower(),
+            body[-200:])
+    add("the card file was edited only through the script (no Write/Edit on it)", not _hand_edits(run), _hand_edits(run))
+    return res
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
+    if case["kind"] == "card-details-keep":
+        return check_card_details(case, before, after, run, ctx)
     if case["kind"] in CARD_KINDS:
         return check_cards(case, before, after, run, ctx)
     if case["kind"] in CARD_KINDS_SELF:
@@ -414,7 +482,11 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
 
     task_md = ctx["task_md"]
     rel = task_md.relative_to(ctx["notebook"]).as_posix()
-    others = sorted(k for k in set(before) | set(after) if k != rel and before.get(k) != after.get(k))
+    def seeded_away(k):  # a leftover wiki/tasks/ file that prompt() deleted when it seeded this case, not the session
+        return k.startswith("wiki/tasks/") and k in before and k not in after
+
+    others = sorted(k for k in set(before) | set(after)
+                    if k != rel and not seeded_away(k) and before.get(k) != after.get(k))
     add("no other file in the notebook touched", not others, others)
 
     seed_text = (HERE / "fixtures" / case.get("seed", DEFAULT_SEED)).read_text(encoding="utf-8")
@@ -499,6 +571,23 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         moved = sorted(i for i in seed_rows if i != target and i in now_rows
                        and any(seed_rows[i].get(k) != now_rows[i].get(k) for k in ("status", "section", "owner")))
         add("other tasks keep their status, section and owner", not moved, moved)
+        return res
+
+    if kind == "details-replace":  # the user asked to REPLACE the details: old text gone, new text under the task's heading
+        old_d = " ".join(mod.Board(seed_text).details.get(target, [])).lower()
+        new_d = " ".join(mod.Board(now_text).details.get(target, [])).lower()
+        add(f"task {target} had details to replace (seed)", bool(old_d), old_d[:100])
+        for w in case["old_words"]:
+            add(f"task {target}: old details word '{w}' is gone", w.lower() not in new_d, new_d[:200])
+        for w in case["new_words"]:
+            add(f"task {target}: new details word '{w}' is under its #{target} heading", w.lower() in new_d, new_d[:200])
+        add(f"the row of task {target} is unchanged", now_rows.get(target) == seed_rows.get(target), now_rows.get(target))
+        add("other tasks untouched", not changed(set()), changed(set()))
+        other_ids = sorted(set(mod.Board(seed_text).details) - {target})
+        add("other tasks' details unchanged",
+            all(mod.Board(now_text).details.get(i) == mod.Board(seed_text).details.get(i) for i in other_ids), other_ids)
+        add("numbering kept (next-id marker unchanged)", now_marker == seed_marker, now_marker)
+        add("the list was edited only through the script (no Write/Edit on task.md)", not _hand_edits(run), _hand_edits(run))
         return res
 
     raise ValueError(f"unknown case kind: {case['id']}")

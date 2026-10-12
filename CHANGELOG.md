@@ -11,6 +11,12 @@
 
 ## 2026-10-12
 
+### A task's details are never overwritten by accident (task #101, agent-builder's suggestion)
+
+- **Why**: on agent-builder's card 197, a progress note sent with `wiki-tasks.py set 197 --details "<note>"` replaced the card's details, which held its source and its steps written as prose; nothing warned, and the text was restored by hand. The help said "replace", but `add --details` reads "kept under Task details", and a session reaching for "add a note" took the replace.
+- **What**: `set` and `done` refuse `--details` on a task that already has details (exit 2, nothing written, the current first line and the three ways out named) unless `--replace-details` is passed. New `--append-details "<text>"` adds a paragraph after the details (on a card, before **Steps** and **Log**). A task with no details takes `--details` as before, so `add --details` is unchanged. Both layouts, cards and task.md. The task-list skill, `cards.md` and the usage page say which to use: append to add, `log` for a dated progress note on a card, replace only on the user's word.
+- **Migration**: none. A session or script that relied on `set --details` replacing existing details adds `--replace-details`.
+
 ### The email step follows Towards Data Science's tracking links (task #76)
 
 - **Why**: cycle 2026-10-05-01 offered 139 of its 353 email candidates as raw HubSpot `/e3t/` tracking links from Towards Data Science. The tracker answers 200 with a JavaScript page instead of a redirect, so `wiki-fetch-gmail.py` never saw the article: the junk filter could not drop footers and profiles, the dedup could not match the wiki, and queued tickets carried tracking addresses.
