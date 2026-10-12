@@ -211,6 +211,21 @@ def run_case(case: dict, model: str, ctx: dict, check, out_dir: Path, tools: lis
     return run
 
 
+def trajectory_checks(skill: str, run: dict) -> list[dict]:
+    """The skill's own read-first and never rules, checked on the run (task #99): every case of a
+    suite with `<skill>/trajectory_rules.py` gets them, named `run: <rule>`. A rule marked
+    `"in_suite": False` is scored only by score_trajectory.py, until its false alarms are fixed."""
+    path = HERE / skill / "trajectory_rules.py"
+    if not path.is_file():
+        return []
+    sys.path.insert(0, str(HERE))
+    import _trajectory
+    spec = importlib.util.spec_from_file_location(f"rules_{skill.replace('-', '_')}", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return _trajectory.check(run, [r for r in mod.RULES if r.get("in_suite", True)])
+
+
 def run_model(model: str, cases: list[dict], args, check, stamp_dir: Path, tools: list[str]) -> dict:
     out_dir = stamp_dir / model
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -230,6 +245,7 @@ def run_model(model: str, cases: list[dict], args, check, stamp_dir: Path, tools
         run = run_case(case, model, ctx, check, out_dir, tools, case.get("timeout", args.timeout))
         after = check.snapshot(ctx)
         checks = check.check(case, before, after, run, ctx)
+        checks += trajectory_checks(args.skill, run)
         rec = {"case": case["id"], "model": model, "passed": all(c["ok"] for c in checks), "checks": checks,
                "turns": run["result"].get("num_turns"), "cost_usd": run["result"].get("total_cost_usd"),
                "wall_s": run["wall_s"], "tool_errors": run["tool_errors"],

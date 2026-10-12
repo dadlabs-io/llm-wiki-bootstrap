@@ -1,0 +1,47 @@
+"""wiki-update's own read-first and never rules, as run checks (task #99; tests/skills/_trajectory.py).
+
+Each rule quotes the SKILL.md line it tests. FILING is a call that files or stages an entry: not a
+fetch, a slug lookup, a duplicate check or a re-gate. A search is the helper, its flags, then a
+quoted term ("$t" in a loop counts): not --help, --preflight or another maintenance mode, not a
+variable that holds the command, and not the script's name inside prose.
+"""
+
+FILING = r"wiki-update\.py(?![^\n]*--(fetch-only|slug-for|check-duplicate|regate))[^\n]*--tier\s+['\"]?[1-4]\b"
+_FLAGS = r"(?:[ \t]+-[-\w]+(?:[ \t]+[^\s\"'|;&-][^\s\"'|;&]*)?)*[ \t]+[\"'$]"
+SEARCH_NO_NOTEBOOK = r"wiki-qmd-query\.py(?![^\n]*--(notebook|help))" + _FLAGS
+SEARCH_CUT = r"wiki-qmd-query\.py(?![^\n|;]*--(help|preflight|stats|reindex|depth-check|set-mode))[^\n|;]*(\|\s*(head|tail)\b|\s-k\s*['\"]?([0-9]|[12][0-9])\b)"
+
+
+def rules(scope: str = "main") -> list[dict]:
+    """The same rules for the session that files (wiki-update's suite) and for ingest workers
+    (wiki-cycle's suite, scope "workers")."""
+    shell = ["Bash", "PowerShell"]
+    return [
+        {"id": "opened the tier rubric before setting --tier", "kind": "read_before", "scope": scope,
+         "rule": "open its tier rubric before you set `--tier`",
+         "path": r"wiki-frontmatter-best-practices\.md$", "action": FILING, "tool": shell},
+        {"id": "read fetchers.md before a special fetcher", "kind": "read_before", "scope": scope,
+         "rule": "YouTube, PDFs, X, Medium, Instagram, pages rendered by JavaScript, and speech: fetchers.md",
+         "path": r"/fetchers\.md$",
+         "action": r"wiki-fetch-(youtube|pdf|page|tweet)|wiki-transcribe\.py", "tool": shell},
+        # scored only (in_suite False): pasted text still reads as a breach (2026-10-12, 6 of 143)
+        {"id": "read the raw before filing", "kind": "read_before", "scope": scope, "in_suite": False,
+         "rule": "Read the raw in full", "action": FILING, "tool": shell,
+         "path_from_action": r"--raw-path[ \t=]+['\"]?([^\s'\"]+)",
+         # a local file or pasted text: --fetch-only copies the session's source into raw/
+         "also_from": r"wiki-update\.py(?=[^\n]*--fetch-only)[^\n]*--source[ \t=]+['\"]?(?!https?:)([^\s'\"]+)"},
+        {"id": "every search names the notebook", "kind": "never", "scope": scope,
+         "rule": "Always pass `--notebook`", "pattern": SEARCH_NO_NOTEBOOK, "tool": shell},
+        {"id": "no search cut short (head, tail, -k under 30)", "kind": "never", "scope": scope,
+         "rule": "never pipe it through `head` ... A `-k` below 30 or a filter of your own on the output is the same breach",
+         "pattern": SEARCH_CUT, "tool": shell},
+        {"id": "never re-files with --force", "kind": "never", "scope": scope,
+         "rule": "never re-file it with `--force`, which makes a `-2` copy",
+         "pattern": r"wiki-update\.py(?![^\n]*--revises)[^\n]*--force", "tool": shell},
+        {"id": "never --partial-source on its own", "kind": "never", "scope": scope,
+         "rule": "`--partial-source '<why>'` only on the user's word",
+         "pattern": r"wiki-update\.py[^\n]*--partial-source", "tool": shell},
+    ]
+
+
+RULES = rules()

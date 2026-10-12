@@ -36,6 +36,10 @@ The report is `tests/skills/.results/<skill>/<stamp>/report.md` (not committed):
 3. Each case is a headless `claude -p` session in the sandbox, in `--permission-mode auto` (the mode real sessions use) with the common commands pre-approved (`--allowedTools`). The prompt goes on stdin and the runner starts `claude.exe` directly: on Windows the npm `claude.cmd` shim cuts a command line at its first newline. The session's event stream is kept for review.
 4. `check.py` checks each step by what it leaves behind, never by parsing commands (models batch commands in loops): files created, frontmatter, the real entry gate (`_entry_checks.py`), links that resolve, sidecars, searches counted from the search helper's own log (each case's searches carry its own `WIKI_QMD_CALLER`), the filing script's footer on the entry, and the model's printed `Scores:` line.
 
+## Run checks: what the session did on the way
+
+A pass on the output can hide a skipped step: a file the skill says to read, never opened, or a step it forbids, taken and undone (task #99, from agentic-design's WN-S7). A suite with `<skill>/trajectory_rules.py` lists the skill's own read-first and never rules, each quoting its line in the skill; `_trajectory.py` checks them on the run's tool calls (a refused call never counts), and the runner adds them to every case as `run: <rule>`. `score_trajectory.py <skill> [--since <stamp>]` scores the rules over every saved run in `.results/` at no model cost: use it on a new rule before it joins the suite, and keep a rule with false alarms at `"in_suite": False` until they are fixed. wiki-update, wiki-cycle and wrap-up have rules (2026-10-12).
+
 ## Adding a skill
 
 Create `tests/skills/<skill>/` with:
