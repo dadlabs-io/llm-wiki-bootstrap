@@ -11,6 +11,12 @@
 
 ## 2026-10-11
 
+### An arXiv paper is tier 1, reviewed or not (Mark)
+
+- **Why**: cycle 2026-10-11-01 filed 23 arXiv papers at tier 1 and one opinion paper at tier 2; the tier rubric said "papers" without saying whether an unreviewed preprint counts. Mark: arXiv preprints are tier 1, "we're talking about scientific documents".
+- **What**: the frontmatter spec (framework-version 15) says so under the tier rubric: a position or workshop paper is still a paper, and a preprint's weaknesses lower `confidence`, never the tier.
+- **Migration**: none; agentic-design's one tier-2 arXiv entry, still staged, was set to tier 1.
+
 ### Discovery lists every good candidate, ranked: no cap of 20 (Mark)
 
 - **Why**: the first feed read on agentic-design found 331 items; the checklist stopped at 20 and left 62 unjudged. Mark: "If we read a list of 331 entries and only three are good, let's just do three… if there are 33 that are good, there's no sense eliminating 13 of them just because they don't fit our numbers."

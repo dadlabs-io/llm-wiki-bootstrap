@@ -6,7 +6,7 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 14
+framework-version: 15
 last_reviewed: 2026-10-11
 review_after: 2027-01-11
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
@@ -104,13 +104,15 @@ From [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practi
 
 | Tier | Value | Source type |
 |---|---|---|
-| 1 | `1` | Peer-reviewed / primary — papers, official spec docs, source code |
+| 1 | `1` | Peer-reviewed / primary — papers, arXiv preprints included (see below), official spec docs, source code |
 | 2 | `2` | Established documentation — vendor/framework docs, official blog posts |
 | 3 | `3` | Reputable expert / first-hand — founder posts, expert blogs, conf talks, journalism (KDnuggets, VentureBeat, Karpathy gists, Simon Willison, Hamel Husain, Lance Martin); a named practitioner's first-hand post on any platform; a single-maintainer repository that works and is documented (see below) |
 | 4 | `4` | Community / unverified — Reddit and forum threads, anonymous gists, unsourced or SEO posts, vendor marketing, retellings of someone else's work, early or unverifiable repositories — **never auto-ingest**, human review only |
 | self | `self` | Self-authored synthesis, plans, specs, session notes |
 
 When unsure between two adjacent tiers, prefer the LOWER tier (more conservative). Tiers 1–3 are auto-ingestible; tier 4 always queues for human approval.
+
+**A research paper on arXiv is tier 1, reviewed or not** (Mark, 2026-10-11: "we're talking about scientific documents"). A position or workshop paper is still a paper. That a preprint is unreviewed, or rests on a small or synthetic study, lowers the entry's `confidence`, never its tier, and the entry says why. (Cycle 2026-10-11-01 filed 23 arXiv papers at tier 1 and one, an opinion paper, at tier 2: the rubric did not say.)
 
 #### Posts and individual repositories: tier the author and the evidence, not the platform (2026-09-23)
 
