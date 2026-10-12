@@ -9,6 +9,15 @@
 
 ---
 
+## 2026-10-12
+
+### The email step follows Towards Data Science's tracking links (task #76)
+
+- **Why**: cycle 2026-10-05-01 offered 139 of its 353 email candidates as raw HubSpot `/e3t/` tracking links from Towards Data Science. The tracker answers 200 with a JavaScript page instead of a redirect, so `wiki-fetch-gmail.py` never saw the article: the junk filter could not drop footers and profiles, the dedup could not match the wiki, and queued tickets carried tracking addresses.
+- **What**: `wiki-fetch-gmail.py` resolves an `/e3t/` link through the redirecting link its page carries (a second plain GET; no browser needed). It follows at most two trackers per host at once; a 429 is waited out twice, then the link is deferred as rate-limited, and a bot-check page is never worked around. towardsdatascience.com is no longer treated as a Medium host (its articles had been dropped as profile pages); Mastodon-style `/@name`, Threads and Bluesky profiles and author, tag and category pages are dropped; an image's file-name alt text is never a title; a trailing `//` is made single. reference.md's "What counts as a candidate" and the wiki-cycle usage page say so.
+- **Proof**: `tests/scripts/test_gmail_fetch.py` 42/42, with a local server playing the tracker (429s included); four sabotaged copies each caught. On cycle 2026-10-05-01's 139 real links: 42 candidates (39 Towards Data Science articles and projects, 3 webinars and roadmaps for the session to judge), 59 junk dropped, 12 deferred as rate-limited.
+- **Migration**: none.
+
 ## 2026-10-11
 
 ### An arXiv paper is tier 1, reviewed or not (Mark)

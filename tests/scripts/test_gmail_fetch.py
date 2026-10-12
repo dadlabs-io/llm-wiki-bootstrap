@@ -244,6 +244,129 @@ with tempfile.TemporaryDirectory() as td:
     p = run("fetch", "--topic", "t", "--run-folder", str(run2), "--from-dir", str(mail), cwd=proj)
     check("the next fetch sees no archived email", p.returncode == 0 and '"emails_seen": 0' in p.stdout, p.stdout + p.stderr)
 
+    # Task #76: HubSpot's /e3t/ tracker (Towards Data Science) answers 200 with a JavaScript page whose own
+    # link is the redirect. A local server plays the tracker, so the real resolver runs with no internet.
+    import http.server
+    import threading
+
+    class Tracker(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+
+        def do_GET(self):
+            base = f"http://127.0.0.1:{self.server.server_port}"
+            hop = f"{base}/events/public/v1/encoded/track/tc/L2/"
+            pages = {
+                "/e3t/Ctc/article": f'<script>var u="{hop}art?_ud=1&amp;_jss=-2";var v="{hop}art?_ud=1&amp;_jss=0";</script>',
+                "/e3t/Ctc/home": f'<script>var v="{hop}home?_jss=0";</script>',
+                "/e3t/Ctc/nohop": "<script>fingerprint()</script>",
+            }
+            moves = {"/events/public/v1/encoded/track/tc/L2/art": "/2026/text-watermarking-in-python/?utm_campaign=tds&_hsenc=p2A",
+                     "/events/public/v1/encoded/track/tc/L2/home": "/?utm_campaign=tds"}
+            path = self.path.split("?")[0]
+            hits[path] = hits.get(path, 0) + 1
+            if path == "/e3t/Ctc/blocked" or (path == "/e3t/Ctc/busy" and hits[path] == 1):
+                self.send_response(429)  # a rate limit: the first ask for /busy, every ask for /blocked
+                self.send_header("Retry-After", "0")
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Content-Length", "16")
+                self.end_headers()
+                self.wfile.write(b"Checking browser")
+                return
+            if path == "/e3t/Ctc/busy":
+                path = "/e3t/Ctc/article"
+            if path in pages:
+                body = pages[path].encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            elif path in moves:
+                self.send_response(307)
+                self.send_header("Location", base + moves[path])
+                self.end_headers()
+            else:
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Content-Length", "2")
+                self.end_headers()
+                self.wfile.write(b"ok")
+
+    hits: dict[str, int] = {}
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Tracker)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    t_base = f"http://127.0.0.1:{srv.server_port}"
+    tds_mail = tmp / "mail-tds"
+    tds_mail.mkdir()
+    (tds_mail / "tds.eml").write_bytes(eml("Jev put to the test against LLMs", "Towards Data Science <newsletter@towardsdatascience.com>", html=f"""
+<html><body>
+<a href="{t_base}/e3t/Ctc/home">Towards Data Science</a>
+<a href="{t_base}/e3t/Ctc/article">Text Watermarking in Python: Catch Whoever Copies Your Writing</a>
+<a href="{t_base}/e3t/Ctc/article">Read Article</a>
+<a href="{t_base}/e3t/Ctc/nohop">A link whose tracker page carries no hop</a>
+<a href="{t_base}/e3t/Ctc/busy">The same story, its tracker rate-limited once</a>
+<a href="{t_base}/e3t/Ctc/blocked">A story whose tracker stays rate-limited</a>
+</body></html>"""))
+    run3 = runf.parent / "2026-10-03-03"
+    env_net = {k: v for k, v in os.environ.items() if k not in ("WIKI_GMAIL_RESOLVE_MAP", "HTTP_PROXY", "HTTPS_PROXY",
+                                                                 "http_proxy", "https_proxy")}
+    p = subprocess.run([sys.executable, str(GMAIL), "fetch", "--topic", "t", "--run-folder", str(run3),
+                        "--from-dir", str(tds_mail)], cwd=proj, capture_output=True, text=True, encoding="utf-8",
+                       env={**env_net, "PYTHONIOENCODING": "utf-8", "NO_PROXY": "127.0.0.1"})
+    srv.shutdown()
+    check("the TDS fetch exits 0", p.returncode == 0, (p.stdout + p.stderr)[-400:])
+    step3 = json.loads((run3 / "email-fetch.json").read_text(encoding="utf-8")) if p.returncode == 0 else {}
+    c3 = step3.get("candidates", [])
+    check("an /e3t/ tracker resolves through its page's hop to the article, tracking stripped",
+          [c["url"] for c in c3] == [f"{t_base}/2026/text-watermarking-in-python/"], [c["url"] for c in c3])
+    check("its title is the headline; the 'Read Article' button and the once-rate-limited link are the same candidate",
+          len(c3) == 1 and c3[0]["title"] == "Text Watermarking in Python: Catch Whoever Copies Your Writing"
+          and hits.get("/e3t/Ctc/busy") == 2, (c3, hits))
+    check("the tracker that hops to the home page is dropped as junk", step3.get("summary", {}).get("junk_dropped") == 1,
+          step3.get("summary"))
+    d3 = {r["url"].rsplit("/", 1)[-1]: r["reason"] for r in step3.get("deferred", [])}
+    check("a tracker page with no hop is deferred with the reason, never offered",
+          "page, not a redirect" in d3.get("nohop", ""), d3)
+    check("a tracker that stays rate-limited is retried twice, then deferred as rate-limited",
+          d3.get("blocked") == "tracker rate-limited (429)" and hits.get("/e3t/Ctc/blocked") == 3 and len(d3) == 2,
+          (d3, hits))
+
+    # The hop picker on its own: HubSpot writes the link twice; the _jss=0 one is taken, &amp; unescaped.
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("wfg", GMAIL)
+    wfg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(wfg)
+    page = ('<script>a="https://n.example/events/public/v1/encoded/track/tc/X?_ud=1&amp;_jss=-2";'
+            'b="https://n.example/events/public/v1/encoded/track/tc/X?_ud=1&amp;_jss=0"</script>')
+    check("interstitial_hop takes the _jss=0 link, unescaped",
+          wfg.interstitial_hop(page) == "https://n.example/events/public/v1/encoded/track/tc/X?_ud=1&_jss=0",
+          wfg.interstitial_hop(page))
+    check("interstitial_hop finds nothing on an ordinary page", wfg.interstitial_hop("<p>hello</p>") is None)
+    check("an /e3t/ link on a newsletter host needs resolving",
+          wfg.needs_resolving("https://newsletter.towardsdatascience.com/e3t/Ctc/L2+113/abc"))
+    # Found resolving cycle 2026-10-05-01's 139 real TDS links: articles were dropped, profiles kept.
+    check("a Towards Data Science article (off Medium since 2025) is not dropped as a Medium page",
+          wfg.junk_reason("https://towardsdatascience.com/text-watermarking-in-python-catch-whoever-copies-your-writing/",
+                          "Text Watermarking") is None)
+    profiles = ["https://hachyderm.io/@towardsdatascience", "https://www.threads.com/@towardsdatascience",
+                "https://bsky.app/profile/towardsdatascience.com", "https://towardsdatascience.com/author/someone/",
+                "https://towardsdatascience.com/tag/llm/"]
+    check("Mastodon, Threads and Bluesky profiles, author and tag pages are dropped",
+          all(wfg.junk_reason(u, "") for u in profiles), {u: wfg.junk_reason(u, "") for u in profiles})
+    posts = ["https://bsky.app/profile/someone.bsky.social/post/3kabc", "https://www.threads.com/@someone/post/C0ffee",
+             "https://medium.com/@koshy/restarting-your-agent-is-not-repairing-it-0a1b2c3d4e5f"]
+    check("an image's file-name alt text is never the title; the URL's slug is",
+          wfg._title_from(["1788876230373_1b47e6 copy"], "https://towardsdatascience.com/software-design-in-the-age-of-ai/")
+          == "software design in the age of ai"
+          and wfg._title_from(["Screenshot-2026-08-22-at-8.21.59-PM", "Jev vs. LLMs"], "https://x.example/a/") == "Jev vs. LLMs"
+          and wfg._title_from(["FridgeFlow"], "https://x.example/a/") == "FridgeFlow")
+    check("a trailing double slash is made single",
+          wfg.clean_url("https://towardsdatascience.com/software-design-in-the-age-of-ai//")
+          == "https://towardsdatascience.com/software-design-in-the-age-of-ai/")
+    check("a Bluesky or Threads post, and a Medium story, are kept",
+          not any(wfg.junk_reason(u, "") for u in posts), {u: wfg.junk_reason(u, "") for u in posts})
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

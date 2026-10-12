@@ -29,7 +29,9 @@ fetches it again. `archive` refuses to run before `queue` has (even `--approve n
 a handled email leaves the label only once its links are decided.
 
 Links: tracking redirects are followed to the article (newsletter platforms wrap
-every link); tracking parameters are stripped; footer, account, social-profile,
+every link), including HubSpot's `/e3t/` tracker, which answers with a JavaScript page
+whose own link is the redirect; a tracker that cannot be followed is deferred with
+the reason, never offered; tracking parameters are stripped; footer, account, social-profile,
 app-store and home-page links are dropped; a link already in the wiki, staged, or in
 the queue is listed as known and not offered. The email's "view online" link is its
 own address, not a candidate.
@@ -61,6 +63,8 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from email import policy
 from email.parser import BytesParser
@@ -109,7 +113,18 @@ REDIRECT_HOST_RE = re.compile(
     r"mandrillapp\.com|cmail\d+\.com|createsend\d*\.com|awstrack\.me|"
     r"t\.co|bit\.ly|ow\.ly|tinyurl\.com|lnkd\.in|share\.google|goo\.gl|youtu\.be)$")
 REDIRECT_HOST_PREFIX_RE = re.compile(r"^(click|clicks|link|links|track|trk|email|e|go|r|url\d*)\.")
-REDIRECT_PATH_RE = re.compile(r"/(redirect|r|ss/c|c|click|track|l|ls/click)(/|$)")
+REDIRECT_PATH_RE = re.compile(r"/(redirect|r|ss/c|c|click|track|l|ls/click|e3t)(/|$)")
+# HubSpot's `/e3t/` tracker (Towards Data Science, on its own newsletter host) answers 200 with a JavaScript page,
+# not a redirect; the page carries the real hop, an `/events/public/v1/encoded/track/` link that redirects to the
+# article (task #76: 139 of 353 candidates in cycle 2026-10-05-01 were these). Followed with a second GET.
+HUBSPOT_HOP_RE = re.compile(r"""https?://[^\s"'<>]+/events/public/v1/encoded/track/[^\s"'<>]+""")
+
+
+def interstitial_hop(page: str) -> str | None:
+    """The redirecting link inside a tracker's JavaScript page, or None. HubSpot writes it twice, once per
+    script outcome (`_jss=-2`, `_jss=0`); both lead to the same article, and the `_jss=0` one is taken."""
+    hops = [html.unescape(h) for h in HUBSPOT_HOP_RE.findall(page or "")]
+    return next((h for h in hops if "_jss=0" in h), hops[0] if hops else None)
 
 # Dropped outright: not an article.
 JUNK_TEXT_RE = re.compile(
@@ -125,7 +140,9 @@ JUNK_URL_RE = re.compile(
 APP_HOSTS = {"apps.apple.com", "itunes.apple.com", "play.google.com"}
 IMAGE_EXT_RE = re.compile(r"\.(png|jpe?g|gif|webp|svg)$", re.I)
 MEDIUM_POST_RE = re.compile(r"-[0-9a-f]{8,12}$")
-MEDIUM_HOSTS_EXTRA = {"towardsdatascience.com", "levelup.gitconnected.com", "pub.towardsai.net",
+# Medium publications on their own domains. Not towardsdatascience.com: Towards Data Science left Medium, and its
+# article addresses (`/<slug>/`) carry no Medium post id, so the profile rule dropped every article (task #76).
+MEDIUM_HOSTS_EXTRA = {"levelup.gitconnected.com", "pub.towardsai.net",
                       "ai.plainenglish.io", "betterprogramming.pub", "uxdesign.cc"}
 GENERIC_TEXT = {"", "read more", "read", "here", "click here", "view", "open", "learn more",
                 "continue reading", "read the full story", "read story", "read the story",
@@ -244,16 +261,56 @@ def needs_resolving(url: str) -> bool:
                 or (REDIRECT_PATH_RE.search(p.path) and not host.endswith(("medium.com", "youtube.com", "github.com"))))
 
 
-def make_resolver(resolve_map: dict | None, network: bool):
+PER_HOST = 2          # trackers followed at once per host: 8 at once on one host drew 429s (task #76)
+RETRY_429 = (5, 15)   # seconds to wait before each retry of a 429, unless Retry-After says less
+
+
+def make_resolver(resolve_map: dict | None, network: bool, sleep=time.sleep):
+    gates: dict[str, threading.Semaphore] = {}
+    gates_lock = threading.Lock()
+
+    def _get(url: str):
+        """GET with redirects, at most PER_HOST at once per host. A 429 is waited out and retried, never
+        worked around (a "Checking browser" page is a bot check, and a bot check is not answered)."""
+        import requests
+        host = urlparse(url).netloc.lower()
+        with gates_lock:
+            gate = gates.setdefault(host, threading.Semaphore(PER_HOST))
+        with gate:
+            for wait in (*RETRY_429, None):
+                r = requests.get(url, headers={"User-Agent": BROWSER_UA}, allow_redirects=True, timeout=20, stream=True)
+                if r.status_code != 429 or wait is None:
+                    return r
+                r.close()
+                after = r.headers.get("Retry-After", "")
+                sleep(min(int(after), wait) if after.isdigit() else wait)
+
     def resolve(url: str) -> tuple[str, str | None]:
         if resolve_map is not None:
             return resolve_map.get(url, url), None
         if not network:
             return url, None
         try:
-            import requests
-            r = requests.get(url, headers={"User-Agent": BROWSER_UA}, allow_redirects=True, timeout=20, stream=True)
+            r = _get(url)
+            if r.status_code == 429:
+                r.close()
+                return url, "tracker rate-limited (429)"
             final = r.url
+            if needs_resolving(final) and "html" in r.headers.get("Content-Type", ""):
+                # Still on the tracker: a JavaScript page, not a redirect. Read it for the hop it carries.
+                page = r.raw.read(200_000, decode_content=True).decode("utf-8", errors="replace")
+                r.close()
+                hop = interstitial_hop(page)
+                if not hop:
+                    return url, "tracker answered with a page, not a redirect"
+                r = _get(hop)
+                if r.status_code == 429:
+                    r.close()
+                    return url, "tracker rate-limited (429)"
+                final = r.url
+                if final == hop:
+                    r.close()
+                    return url, "tracker's page link did not redirect"
             r.close()
             return final, None
         except Exception as exc:  # noqa: BLE001 — a dead tracker keeps its own address, with the reason
@@ -272,6 +329,9 @@ def clean_url(url: str) -> str:
     if (host.endswith("medium.com") or host in MEDIUM_HOSTS_EXTRA) and p.query:
         kept = [kv for kv in p.query.split("&") if kv.split("=", 1)[0] not in ("source", "sectionName")]
         url = urlunparse(p._replace(query="&".join(kept)))
+        p = urlparse(url)
+    if p.path.endswith("//"):  # Towards Data Science's tracker lands on `/<slug>//` (task #76)
+        url = urlunparse(p._replace(path=re.sub(r"/{2,}$", "/", p.path)))
     return url
 
 
@@ -294,8 +354,16 @@ def junk_reason(url: str, text: str) -> str | None:
         return "image"
     if not path:
         return "home page"
-    if bare in ("facebook.com", "tiktok.com", "threads.net"):
+    if bare in ("facebook.com", "tiktok.com"):
         return "social profile"
+    if bare in ("threads.net", "threads.com") and "/post/" not in path:
+        return "social profile"
+    if bare == "bsky.app" and "/post/" not in path:
+        return "social profile"
+    if re.match(r"^/@[^/]+$", path) and not bare.endswith("medium.com"):
+        return "social profile"  # a Mastodon-style profile (hachyderm.io/@name); Medium's @ pages are handled below
+    if re.match(r"^/(author|authors|tag|tags|category|categories)(/|$)", path):
+        return "author, tag or category page"
     if bare in ("twitter.com", "x.com") and "/status/" not in path:
         return "social profile"
     if bare == "instagram.com" and not re.match(r"^/(p|reel|tv)/", path):
@@ -313,8 +381,17 @@ def junk_reason(url: str, text: str) -> str | None:
     return None
 
 
+def _looks_like_file_name(text: str) -> bool:
+    """An image's alt text that is only its file name ("1788876230373_1b47e6 copy",
+    "Screenshot-2026-08-22-at-8.21.59-PM", "VespaAI_Webinar_13Oct26_Speaker_16x9"): one word with digits,
+    underscores or hyphens (task #76, Towards Data Science's newsletters)."""
+    word = re.sub(r"\s+(copy|\(\d+\))$", "", text.strip(), flags=re.I)
+    return " " not in word and len(word) > 12 and bool(re.search(r"[\d_-]", word))
+
+
 def _title_from(texts: list[str], url: str) -> str:
-    good = [t for t in texts if t.lower().strip(" .:!") not in GENERIC_TEXT and len(t) > 3]
+    good = [t for t in texts if t.lower().strip(" .:!") not in GENERIC_TEXT and len(t) > 3
+            and not _looks_like_file_name(t)]
     if good:
         return max(good, key=len)[:200]
     tail = urlparse(url).path.rstrip("/").split("/")[-1]
