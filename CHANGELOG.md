@@ -11,6 +11,18 @@
 
 ## 2026-10-12
 
+### The task list is kept on cards only; the old task.md list is retired (task #90)
+
+- **Why**: since 2026-10-10 every project's tasks are cards (`wiki/tasks/<id>-<slug>.md` plus `tasks/ORDER.md`); the old `sessions/<persona>/task.md` "At a glance" list was still read and written beside them, so every skill, hook and doc carried two layouts.
+- **What**: `wiki-tasks.py`, `_task_cards.py` and the startup hook work on cards only; `/task-list` is rewritten for cards and its `cards.md` reference is deleted (its content is the skill now). A project with no `tasks/ORDER.md` whose `task.md` still holds an old list is refused (exit 2, nothing written); the session shows the user its tasks and, on their word, adds each as a card. `/wrap-up` 0.5(b) updates the cards through the script and starts a list only when the user asked this session for a task to be added; a "remove this task?" question about a task finished this session does not make the wrap-up INCOMPLETE. Usage pages, the CLAUDE.md template, INSTALL-INVENTORY.
+- **Proven**: task-list 36/36 and wrap-up 30/30 on both models (the task.md cases deleted, card cases added by `eval-case-writer`); the script and hook checks green. $47.80.
+- **Migration**: a project still on `task.md` moves its tasks to cards (the session offers it when the list is refused); the old file is the user's to delete.
+
+### `/wiki-discover`, `/wiki-promote` and `/wiki-claims` get test suites (task #16)
+
+- **What**: first model suites, cases by `eval-case-writer` from Mark's scenarios, each check proven offline before any spend: wiki-discover 5 cases (on saved feeds through the new `$WIKI_FEEDS_FROM_DIR` in `wiki-feeds.py`, which reads feed files listed in a folder's `index.json` instead of the network), wiki-promote 5, wiki-claims 4. Every case passes on both models. Mark's ruling for a staged entry whose sidecar has a plain typo: the session may fix it and promote the entry if its reply says so; holding it back and saying why also passes. About $12.
+- **Migration**: none; the skills are unchanged.
+
 ### A skill suggestion says where its lesson holds; a pass records whether an earlier fix held (task #100)
 
 - **Why**: three papers from cycle 2026-10-11-01 (DAEDALUS, AECG, SelfSuite; agentic-design's memory details page, Principle 8 note of 2026-10-12) measured what makes a stored lesson safe to reuse: a lesson reused outside the scope it was learned in did worse than no memory (AECG: removing scope preservation cost up to 16.89 points), and a lesson store should keep an outcome record of whether each lesson held when used again (SelfSuite). Our skill suggestions recorded the lesson and its fix, but neither.
