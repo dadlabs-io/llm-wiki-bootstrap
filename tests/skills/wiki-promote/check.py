@@ -179,16 +179,26 @@ def _says_nothing_staged(text: str) -> bool:
                           r"|\b0\b[^.\n]{0,20}(staged|entr|items?)", text, re.I))
 
 
-def _claims_remains(text: str) -> bool:
-    """True when the reply says an entry is still in staging: a count of 1 / one beside remain|left|still and a
-    staging word, or the chunk entry named beside 'still staged' / 'remains in staging' / 'held back'."""
+def _claims_remains_v3(text: str) -> bool:
+    """True when the reply claims an entry is still in staging (replays of run 20261013-152147): a stretch
+    that claims an entry is still in staging does not count when it holds a negation (nothing, none, no, not, n't, never, nor,
+    nowhere, zero, empty) or a modal / conditional word (would, could, might, should, if, unless, whether).
+    'Nothing remains in _inbox/proposed/' and 'the chunk-size entry would be held back' are not claims;
+    'chunk-size-decision-for-notes was held back because ...' and 'is still staged in _inbox/proposed/' are."""
     stage = r"(?:staging|staged|proposed)"
     title = ENTRIES[CHUNK][0]
     ident = rf"(?:chunk|{re.escape(CHUNK)}|{re.escape(title)})"
-    return bool(re.search(
+    claim = re.compile(
         rf"\b(?:1|one)\b[^.\n]{{0,40}}\b(?:remain\w*|left|still)\b[^.\n]{{0,30}}{stage}"
         rf"|{ident}[^.\n]{{0,60}}(?:\bstill\b[^.\n]{{0,15}}{stage}|\bremains?\b[^.\n]{{0,15}}{stage}|held back)",
-        text, re.I))
+        re.I)
+    skip = re.compile(r"\b(?:nothing|none|no|not|never|nor|nowhere|zero|empty"
+                      r"|would|could|might|should|if|unless|whether)\b|n't\b", re.I)
+    for clause in re.split(r"[.;\n]+", text):
+        for m in claim.finditer(clause):
+            if not skip.search(m.group(0)):
+                return True
+    return False
 
 
 def _date_shown(win: str, date: str) -> bool:
@@ -288,9 +298,12 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             _says_what_remains(text), _final(run)[-200:])
         return res
 
-    if kind == "broken":
+    if kind == "broken-v3":
         # Either outcome is allowed: the session fixes the sidecar's plain typo and promotes the entry (and says so),
-        # or it holds the entry back and says why. The two others are promoted either way; nothing is lost.
+        # or it holds the entry back and says why; the others are promoted either way, nothing is lost. The
+        # "does not claim the promoted entry remains in staging" check uses _claims_remains_v3: a negated or
+        # hypothetical statement ("Nothing remains in _inbox/proposed/", "--check showed the entry would be held
+        # back") is not a claim.
         dest = nb / "wiki" / ENTRIES[CHUNK][4] / f"{CHUNK}.md"
         in_staging = (prop / f"{CHUNK}.md").exists() or (prop / f"{CHUNK}.proposed_metadata.json").exists()
         add("the broken-sidecar entry is either promoted (and out of staging) or held back (and still staged), not lost",
@@ -321,7 +334,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             add("reply tells the user the sidecar was fixed (what was wrong / that it was fixed)",
                 bool(re.search(r"fix|repair|correct|typo|trailing comma|stray comma|extra comma|removed", text, re.I))
                 and bool(re.search(r"sidecar|metadata|json|comma", text, re.I)), _final(run)[-200:])
-            add("reply does not claim the promoted entry remains in staging", not _claims_remains(text),
+            add("reply does not claim the promoted entry remains in staging", not _claims_remains_v3(text),
                 _final(run)[-200:])
         else:  # held back
             still_staged(CHUNK)
