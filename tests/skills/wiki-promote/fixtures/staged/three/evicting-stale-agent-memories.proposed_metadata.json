@@ -1,0 +1,10 @@
+{
+  "target_folder": "project/patterns",
+  "suggested_backlinks": [
+    {
+      "file": "project/patterns/small-entries-one-claim.md",
+      "link_text": "Evicting stale agent memories",
+      "link_target": "evicting-stale-agent-memories.md"
+    }
+  ]
+}

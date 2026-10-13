@@ -1,0 +1,20 @@
+{
+  "skill": "wiki-promote",
+  "cases": [
+    {"id": "pick-by-number-promotes-only-those", "kind": "pick", "staged": "three",
+     "say": "promote 1 and 3 from staging, that's the BM25 entry and the eviction entry",
+     "author": "eval-case-writer"},
+    {"id": "reject-moves-to-rejected-promotes-nothing", "kind": "reject", "staged": "three",
+     "say": "reject chunk-size-decision-for-notes, and don't promote anything else",
+     "author": "eval-case-writer"},
+    {"id": "broken-sidecar-held-back-others-promoted", "kind": "broken", "staged": "broken-sidecar",
+     "say": "promote all",
+     "author": "eval-case-writer"},
+    {"id": "no-choice-asks-and-moves-nothing", "kind": "nochoice", "staged": "three",
+     "say": "promote",
+     "author": "eval-case-writer"},
+    {"id": "empty-staging-says-nothing-staged", "kind": "empty",
+     "say": "promote everything that's staged",
+     "author": "eval-case-writer"}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "target_folder": "project/decisions",
+  "suggested_backlinks": [
+    {
+      "file": "project/decisions/use-markdown-notes-as-source-of-truth.md",
+      "link_text": "Chunk size decision for notes",
+      "link_target": "chunk-size-decision-for-notes.md"
+    }
+  ],
+}

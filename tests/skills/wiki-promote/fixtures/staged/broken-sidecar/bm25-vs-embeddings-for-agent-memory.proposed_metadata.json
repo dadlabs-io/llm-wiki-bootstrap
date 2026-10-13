@@ -1,0 +1,10 @@
+{
+  "target_folder": "research/tooling",
+  "suggested_backlinks": [
+    {
+      "file": "research/tooling/qmd-hybrid-search-notes.md",
+      "link_text": "BM25 versus embeddings for agent memory",
+      "link_target": "bm25-vs-embeddings-for-agent-memory.md"
+    }
+  ]
+}
