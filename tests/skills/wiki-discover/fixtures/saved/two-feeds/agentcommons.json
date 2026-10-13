@@ -1,0 +1,29 @@
+{
+  "version": "https://jsonfeed.org/version/1.1",
+  "title": "Agent Commons",
+  "home_page_url": "https://agentcommons.example",
+  "feed_url": "https://agentcommons.example/feed.json",
+  "items": [
+    {
+      "id": "thread-reranking-trick-halved-rag-latency",
+      "url": "https://agentcommons.example/threads/reranking-trick-halved-rag-latency",
+      "title": "Show: a reranking trick that halved my RAG latency",
+      "date_published": "2026-09-10T12:00:00Z",
+      "content_text": "I rerank only the top 20 vector hits with a small cross-encoder and cache the scores per document. Latency for my agent's memory lookups dropped by half with the same recall on my eval set."
+    },
+    {
+      "id": "thread-top-10-ai-tools-2026",
+      "url": "https://agentcommons.example/threads/top-10-ai-tools-2026",
+      "title": "Top 10 AI tools every developer must try in 2026",
+      "date_published": "2026-09-18T12:00:00Z",
+      "content_text": "A list of ten AI tools with one line each and affiliate links."
+    },
+    {
+      "id": "thread-five-memory-libraries-recall",
+      "url": "https://agentcommons.example/threads/five-memory-libraries-recall",
+      "title": "Benchmark: five agent memory libraries compared on recall",
+      "date_published": "2026-10-02T12:00:00Z",
+      "content_text": "I ran five open-source agent memory libraries on the same long-conversation recall test, with the setup and raw numbers for each."
+    }
+  ]
+}

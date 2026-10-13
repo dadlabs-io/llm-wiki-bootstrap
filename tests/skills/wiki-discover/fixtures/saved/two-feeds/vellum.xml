@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Vellum Engineering Blog</title>
+    <link>https://vellum-eng.example</link>
+    <description>Engineering notes from the Vellum team.</description>
+    <item>
+      <title>Designing a long-term memory store for coding agents</title>
+      <link>https://vellum-eng.example/posts/long-term-memory-store-for-coding-agents</link>
+      <guid>https://vellum-eng.example/posts/long-term-memory-store-for-coding-agents</guid>
+      <pubDate>Sat, 22 Aug 2026 09:00:00 GMT</pubDate>
+      <description>How we persist what a coding agent learns across sessions: schema, write policy, eviction and retrieval.</description>
+    </item>
+    <item>
+      <title>Chunking strategies that survive retrieval evals</title>
+      <link>https://vellum-eng.example/posts/chunking-strategies-retrieval-evals</link>
+      <guid>https://vellum-eng.example/posts/chunking-strategies-retrieval-evals</guid>
+      <pubDate>Thu, 03 Sep 2026 09:00:00 GMT</pubDate>
+      <description>Fixed, semantic and structure-aware chunking compared by recall on a retrieval benchmark.</description>
+    </item>
+    <item>
+      <title>Hybrid Search Is Back: BM25 Meets Embeddings in Agent Memory</title>
+      <link>http://www.vellum-eng.example/posts/2026/hybrid-retrieval-for-agents/?utm_source=rss</link>
+      <guid>vellum-hybrid-2026-09-08</guid>
+      <pubDate>Tue, 08 Sep 2026 09:00:00 GMT</pubDate>
+      <description>Fusing keyword and vector scores with reciprocal rank fusion for an agent memory store.</description>
+    </item>
+    <item>
+      <title>Summarising agent trajectories into episodic memory</title>
+      <link>https://vellum-eng.example/posts/episodic-memory-from-trajectories</link>
+      <guid>https://vellum-eng.example/posts/episodic-memory-from-trajectories</guid>
+      <pubDate>Mon, 14 Sep 2026 09:00:00 GMT</pubDate>
+      <description>Turning long agent runs into short episodes that can be retrieved later, with an evaluation of what gets lost.</description>
+    </item>
+    <item>
+      <title>Our office move to the new Lisbon campus</title>
+      <link>https://vellum-eng.example/posts/lisbon-campus-move</link>
+      <guid>https://vellum-eng.example/posts/lisbon-campus-move</guid>
+      <pubDate>Sun, 20 Sep 2026 09:00:00 GMT</pubDate>
+      <description>Photos and logistics from the team's move to a new office in Lisbon.</description>
+    </item>
+    <item>
+      <title>Vector index tuning: HNSW parameters measured on 2M documents</title>
+      <link>https://vellum-eng.example/posts/hnsw-parameters-measured</link>
+      <guid>https://vellum-eng.example/posts/hnsw-parameters-measured</guid>
+      <pubDate>Mon, 28 Sep 2026 09:00:00 GMT</pubDate>
+      <description>Recall, latency and memory for M, efConstruction and efSearch settings on a two-million-document corpus.</description>
+    </item>
+  </channel>
+</rss>

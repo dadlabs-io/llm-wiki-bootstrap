@@ -19,11 +19,16 @@ older and the undated ones are recorded as seen, so a new feed never floods the 
 State lives in `<notebook>/_config/feed-state.json`, written only by this script. Exit codes: 0 done; 1 `check`
 finished but at least one source failed (each failure is named; that source falls back to web search); 2 bad input
 (no feeds.md, no such --feed, no such notebook).
+
+$WIKI_FEEDS_FROM_DIR=<folder> reads every feed from a saved file instead of the network: `<folder>/index.json`
+maps a row's Feed value to a file in the folder, and an unmapped row fails like a dead feed (the wiki-discover
+test suite, task #16).
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -135,9 +140,20 @@ def save_state(root: Path, state: dict) -> None:
 
 # ---------- reading one source ----------
 
+def read_saved(value: str, folder: str):
+    """(items, how) from $WIKI_FEEDS_FROM_DIR: index.json maps a source's Feed value to a saved file (the
+    wiki-discover suite, task #16; never the network). A source it does not map fails, as a dead feed would."""
+    index = json.loads((Path(folder) / "index.json").read_text(encoding="utf-8"))
+    if value not in index:
+        raise feeds.FeedError("not_saved", f"{value} has no saved file in WIKI_FEEDS_FROM_DIR ({folder})")
+    return feeds.parse((Path(folder) / index[value]).read_bytes()), "feed (saved file)"
+
+
 def read_feed(source: dict, record: dict):
     """(items, how) for one source; raises feeds.FeedError."""
     value = source["feed"]
+    if os.environ.get("WIKI_FEEDS_FROM_DIR"):
+        return read_saved(value, os.environ["WIKI_FEEDS_FROM_DIR"])
     if value.lower().startswith("youtube:"):
         got, items, how = feeds.youtube_items(value.split(":", 1)[1].strip(), etag=record.get("etag", ""),
                                               last_modified=record.get("last_modified", ""))

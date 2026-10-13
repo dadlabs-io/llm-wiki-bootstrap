@@ -306,6 +306,44 @@ with tempfile.TemporaryDirectory() as td:
     code, out, err = run(*V, "check")
     check("no feeds.md: exit 2, said", code == 2 and "trusted-sources page" in err, (code, err))
 
+# ── $WIKI_FEEDS_FROM_DIR (task #16): the wiki-discover suite reads saved feeds from a folder, never the network ──
+import os  # noqa: E402
+
+with tempfile.TemporaryDirectory() as td:
+    vault, saved = Path(td), Path(td) / "saved"
+    nb = vault / "nb"
+    (nb / "_config").mkdir(parents=True)
+    (nb / "wiki").mkdir()
+    saved.mkdir()
+    (saved / "hamel.xml").write_bytes(RSS2)
+    (saved / "index.json").write_text(json.dumps({"https://hamel.dev/index.xml": "hamel.xml",
+                                                  "youtube:@colemedin": "hamel.xml"}), encoding="utf-8")
+    (nb / "_config" / "feeds.md").write_text(
+        "## Blogs\n\n| Author | URL | Feed | Tier | From | To | Topics | Notes |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n"
+        "| Hamel | `hamel.dev` | `https://hamel.dev/index.xml` | 2 | 2026-01-01 | 2026-09-14 | evals | x |\n"
+        "| Cole | `youtube.com/@colemedin` | `youtube:@colemedin` | 3 | 2026-01-01 | 2026-09-14 | agents | x |\n"
+        "| Gone | `gone.example` | `https://gone.example/feed` | 3 | 2026-01-01 | 2026-09-14 | x | x |\n",
+        encoding="utf-8")
+
+    def no_network(*a, **k):
+        raise AssertionError("the network was used")
+
+    feeds.fetch, feeds.youtube_items = no_network, no_network
+    os.environ["WIKI_FEEDS_FROM_DIR"] = str(saved)
+    try:
+        code, out, err = run("--vault", str(vault), "--topic", "nb", "check", "--json")
+    finally:
+        del os.environ["WIKI_FEEDS_FROM_DIR"]
+    data = json.loads(out) if out.strip().startswith("{") else {}
+    by = {s["name"]: s for s in data.get("sources", [])}
+    check("FROM_DIR: a mapped feed is read from its saved file, no network",
+          [i["title"] for i in by.get("Hamel", {}).get("new", [])] == ["Evals in practice"], (code, err[-300:], by.get("Hamel")))
+    check("FROM_DIR: a youtube: source mapped to a file is read as that file",
+          [i["title"] for i in by.get("Cole", {}).get("new", [])] == ["Evals in practice"], by.get("Cole"))
+    check("FROM_DIR: a feed not in index.json fails with its reason (exit 1)",
+          code == 1 and by.get("Gone", {}).get("status") == "failed" and "WIKI_FEEDS_FROM_DIR" in by["Gone"].get("error", ""),
+          (code, by.get("Gone")))
+
 feeds.fetch = real_fetch
 failed = [n for ok, n in results if not ok]
 for ok, n in results:

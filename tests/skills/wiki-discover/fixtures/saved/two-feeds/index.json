@@ -1,0 +1,4 @@
+{
+  "https://feeds.vellum-eng.example/agents.xml": "vellum.xml",
+  "https://agentcommons.example/feed.json": "agentcommons.json"
+}

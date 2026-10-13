@@ -1,0 +1,16 @@
+{
+  "skill": "wiki-discover",
+  "cases": [
+    {"id": "judge-every-feed-item", "kind": "judge", "feeds": "two-feeds.md", "saved": "two-feeds",
+     "say": "find new material for my notebook from my trusted sources", "author": "eval-case-writer"},
+    {"id": "approve-recommended-queues-only-the-list", "kind": "approve", "feeds": "two-trusted.md", "saved": "two-feeds",
+     "answers": "approve recommended",
+     "say": "find new material for my notebook from my trusted sources", "author": "eval-case-writer"},
+    {"id": "stalest-six-searched", "kind": "staleness", "feeds": "eight-web.md",
+     "say": "find new material for my notebook from my trusted sources", "author": "eval-case-writer"},
+    {"id": "no-feeds-page-offers-template", "kind": "missing",
+     "say": "find new material for my notebook from my trusted sources", "author": "eval-case-writer"},
+    {"id": "feeds-page-without-rows-asks-for-sources", "kind": "norows", "feeds": "no-rows.md",
+     "say": "find new material for my notebook from my trusted sources", "author": "eval-case-writer"}
+  ]
+}
