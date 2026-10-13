@@ -7,9 +7,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 5
-last_reviewed: 2026-09-13
-review_after: 2026-12-13
+framework-version: 6
+last_reviewed: 2026-10-13
+review_after: 2027-01-13
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
 ---
 
@@ -69,7 +69,7 @@ This is workflows-core's **signature policy** and goes beyond every external sou
 
 Rationale: the minority view today may be right tomorrow. Auto-resolving contradictions lossy-compresses the evidence. Better to flag, disclose, and let the reader (human or agent) weigh.
 
-**Duplicate carve-out (added 2026-08-05 in agentic-design; narrow, exact-identity only — user decision).** Both-sides-stay does not apply to true duplicates: the exact same URL ingested twice, or the exact same article republished verbatim (or near-verbatim) at a different URL/site (mirror, syndication, cross-post). Those get **moved out of the live wiki into `_inbox/archived-duplicates/`** (not destroyed — a safer default while this carve-out is new), with inbound links redirected to the surviving entry — "we don't need to ingest the same feed 25 times." This is an **identity** test, not a similarity test: **any** actual difference in content — a correction, an update, new details, or the same story reported with different framing — does NOT qualify. Differences get handled by editing the existing entry or adding a `revises:` pointer on the newer one, never by removal from the live wiki. The bar is deliberately narrow so a future agent can't extend it to "overlapping" or "merely similar" entries. Enforcement: `wiki-list-add.py` and the Drive fetcher dedup on canonical URL at queue time (mechanical); the verbatim-republish case is prose-only — a content-hash check is the missing control.
+**Duplicate carve-out (added 2026-08-05 in agentic-design; narrow, exact-identity only — user decision).** Both-sides-stay does not apply to true duplicates: the exact same URL ingested twice, or the exact same article republished verbatim (or near-verbatim) at a different URL/site (mirror, syndication, cross-post). Those are **retired in place**: the copy gets `superseded_by: <surviving entry>` and `status: superseded`, anything only it says is folded into the survivor first, and curated links are pointed at the survivor (the frontmatter spec's "On retirement" rule, the one mechanism for this). A retired entry stays on disk but leaves the INDEX, the MAP and search results — "we don't need to ingest the same feed 25 times." (Until 2026-10-13 this paragraph said to move the copy into `_inbox/archived-duplicates/`, a second mechanism nothing implemented; agentic-design's semantic lint, cycle 2026-10-12-02, found the two rules disagreeing.) This is an **identity** test, not a similarity test: **any** actual difference in content — a correction, an update, new details, or the same story reported with different framing — does NOT qualify. Differences get handled by editing the existing entry or adding a `revises:` pointer on the newer one, never by removal from the live wiki. The bar is deliberately narrow so a future agent can't extend it to "overlapping" or "merely similar" entries. Enforcement: `wiki-list-add.py` and the Drive fetcher dedup on canonical URL at queue time (mechanical); the verbatim-republish case is prose-only — a content-hash check is the missing control.
 
 ### 5. Claim-level extraction with 4-way classification
 

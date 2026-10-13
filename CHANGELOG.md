@@ -9,6 +9,14 @@
 
 ---
 
+## 2026-10-13
+
+### Two framework-contract docs brought in line with the frontmatter rules and the cycle
+
+- **Why**: agentic-design's semantic lint (cycle 2026-10-12-02) found the authoring doc's duplicate carve-out moving a duplicate into `_inbox/archived-duplicates/`, a second mechanism nothing implemented, while the frontmatter spec retires one with `superseded_by`; and the step-return contract had no section for three steps the cycle runs.
+- **What**: `wiki-authoring-best-practices` (v6): a true duplicate is retired in place (`superseded_by` + `status: superseded`, per the frontmatter spec's "On retirement"). `cycle-step-return-format` (v4): email-fetch (1.1), triage (1.7) and checker (2.6) sections, and the run folder's `models.json`, `email/`, `email-review.json`, `triage.json`, `checker-scope.txt`, `checker/`, `semantic-scope.txt` and `claims-scope.txt` in the file layout.
+- **Migration**: none; no duplicate was ever moved to `_inbox/archived-duplicates/`.
+
 ## 2026-10-12
 
 ### The task list is kept on cards only; the old task.md list is retired (task #90)

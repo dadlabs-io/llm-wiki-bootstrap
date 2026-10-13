@@ -6,15 +6,15 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 3
-last_reviewed: 2026-09-24
-review_after: 2026-12-24
+framework-version: 4
+last_reviewed: 2026-10-13
+review_after: 2027-01-13
 tags: [best-practice, architecture, orchestrator, wiki-cycle, schema, contract]
 ---
 
 # Cycle Step Return Format
 
-The contract between `/wiki-cycle` (orchestrator) and every step-skill it invokes — `/wiki-discover`, `/wiki-update`, `/wiki-lint`, `/wiki-refresh`, `/wiki-claims`, plus **drive-fetch** (Step 1.0), the **three integration scripts** (Step 3.5), **promote** (Step 5.5) and **synthesis** (Step 6.5). Any new step-skill joining the pipeline adheres to this format.
+The contract between `/wiki-cycle` (orchestrator) and every step-skill it invokes — `/wiki-discover`, `/wiki-update`, `/wiki-lint`, `/wiki-refresh`, `/wiki-claims`, plus **drive-fetch** (Step 1.0), **email-fetch** (Step 1.1), **triage** (Step 1.7), the **checker** (Step 2.6), the **three integration scripts** (Step 3.5), **promote** (Step 5.5) and **synthesis** (Step 6.5). Any new step-skill joining the pipeline adheres to this format.
 
 ## Why this contract exists
 
@@ -40,12 +40,21 @@ _inbox/reports/
 └── 2026-04-24/
     └── 2026-04-24-01/
         ├── scratchpad.md                          ← Step 0; rewritten after EVERY step, enables --resume
+        ├── models.json                            ← Step 0: the model each helper is spawned on
         ├── drive-fetch.json                       ← Step 1.0
         ├── drive-fetch.md
         ├── discover.json                          ← Step 1
         ├── discover.md
+        ├── email-fetch.json                       ← Step 1.1
+        ├── email-fetch.md
+        ├── email/                                 ← Step 1.1: each email's text
+        ├── email-review.json                      ← Step 1.1: the session's decision per candidate
+        ├── triage.json                            ← Step 1.7
+        ├── triage.md
         ├── update.json                            ← Step 2
         ├── update.md
+        ├── checker-scope.txt                      ← Step 2.6 (only when a staged raw is a long transcript)
+        ├── checker/<slug>.json                    ← Step 2.6: one checker report per entry
         ├── lint-mechanical.json                   ← Step 3
         ├── lint-mechanical.md
         ├── reciprocate-backlinks.json             ← Step 3.5 (integration scripts)
@@ -54,10 +63,12 @@ _inbox/reports/
         ├── index-per-folder.md
         ├── map-compile.json
         ├── map-compile.md
+        ├── semantic-scope.txt                     ← Step 4: the entries in scope
         ├── lint-semantic.json                     ← Step 4
         ├── lint-semantic.md
         ├── promote.json                           ← Step 5.5
         ├── promote.md
+        ├── claims-scope.txt                       ← Step 6: the entries in scope
         ├── claims.json                            ← Step 6
         ├── claims.md
         ├── synthesis-<topic>.md                   ← Step 6.5 (one or more)
@@ -122,6 +133,25 @@ The iteration number (`01`, `02`, ...) increments for same-day re-runs. The orch
 - `skipped[]` = dedup hits against the existing wiki or the pending queue
 - `deferred[]` = items that couldn't be resolved (auth failure, unresolvable shortener)
 - `summary` keys: `files_seen`, `urls_resolved`, `urls_queued`, `urls_deduped`
+
+### email-fetch (Step 1.1)
+
+- Written by `wiki-fetch-gmail.py fetch` (`skill: wiki-fetch-gmail`); nothing is queued until the session has judged every candidate in `email-review.json` and run `queue`, which updates the same file
+- `skipped[]` = links already in the wiki, staged, or in a queue or bucket ("known"); `deferred[]` = trackers that could not be followed, with the reason
+- Beyond the skeleton: `candidates[]` (numbered, `kind: link | email`), `emails[]`, `reviewed`, `archived_ids`, `label`, `done_label`
+- `summary` keys: `emails_seen`, `links_found`, `candidates`, `full_text_emails`, `known`, `junk_dropped`, `redirects_followed`, `queued`, `archived`
+
+### `/wiki-triage` (Step 1.7)
+
+- Written by the orchestrator from the routes `/wiki-triage` made (the routing log is `_inbox/intake/triage-log.md`)
+- `queued[]` = every ticket routed: `{ priority, url, folder, reason, timestamp }`, `folder` the intake bucket
+- `summary` keys: `routed`, `per_folder` (bucket → count), `raws_captured_for_other_readers`, `readers_told`
+
+### Checker (Step 2.6)
+
+- One `checker/<slug>.json` report per staged entry whose raw is a long transcript, written by the `wiki-checker` agent; the scope is `checker-scope.txt`
+- No step JSON of its own: each report is logged to `_inbox/reports/checker-log.jsonl` (`wiki-cycle-scope.py checker-log`), the scratchpad's Phase 2.6 line counts checked / pass / fix / held, and the report lists any entry held for an uncorrected `fix` verdict
+- A skipped step (no long transcript) is recorded in the scratchpad as `skipped (<why>)`
 
 ### `/wiki-update`
 
