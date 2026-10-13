@@ -23,8 +23,9 @@ library's side: it collects what you sent and turns it into **proposals** for yo
   the record does not bear out, each with its reason;
 - it writes one proposal per lesson: the file and place to change, the exact change, scoped to where the lesson
   holds, the evidence quoted from the record, and whether it is a tactical patch or a strategic fix;
-- it checks every fix you accepted before: the same lesson coming back means it did not hold, a record of the skill
-  handling the same case cleanly means it held, and with neither nothing is recorded.
+- it checks every fix you accepted before: the same lesson coming back (in a new suggestion, or in a later run's
+  record that shows the problem itself, quoted) means it did not hold, a record of the skill handling the same case
+  cleanly means it held, and with neither nothing is recorded. You see every outcome before it is recorded.
 
 It never edits a skill. You accept a proposal (it becomes a task, made with the skill's tests run before and after),
 turn it down, or leave it for later, and your answer is recorded on each suggestion; each outcome it found is

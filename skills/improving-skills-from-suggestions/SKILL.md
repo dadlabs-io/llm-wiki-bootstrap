@@ -62,7 +62,11 @@ Then put each suggestion in exactly one class:
 Then **check each earlier fix** in `fixes` (task #100: an outcome record on every lesson, after SelfSuite): did it
 hold when its skill was used again?
 - **Did not hold** — a suggestion in this pass shows the same lesson again after the fix was made. Quote it; the new
-  suggestion is proposed again, as a repeat whose earlier fix (name its task) did not hold.
+  suggestion is proposed again, as a repeat whose earlier fix (name its task) did not hold. Or a record dated after
+  the fix, inside its `applies_to`, shows the issue itself again (not only the same situation: a later round or
+  rerun the fix meant to happen is not a recurrence); quote the lines that show it, and propose the fix again as its
+  own proposal (task #115; agent-builder's pass 2026-10-12-mixed met two such records with no class, and read one
+  wrongly until Mark corrected it).
 - **Held** — a record dated after the fix shows the skill in the same situation, inside the fix's `applies_to`,
   without the issue. Quote it.
 - **No evidence yet** — neither. Record nothing: an outcome is never guessed (AECG counts a failure only when the
