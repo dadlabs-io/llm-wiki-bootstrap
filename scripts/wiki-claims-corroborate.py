@@ -64,6 +64,11 @@ def _front(path: Path) -> dict:
     return out
 
 
+def _tier_out(t: str):
+    """The tier as the frontmatter means it: a number for 1-4, the word for `self` (or what else is written)."""
+    return int(t) if t.isdigit() else t
+
+
 def _origin_key(origin: str) -> str:
     o = origin.strip()
     if re.match(r"https?://", o, re.I):
@@ -147,9 +152,9 @@ def score(index: dict, wiki: Path, today: str) -> dict:
             s["claims"].append(str(c.get("id")))
             w = WEIGHTS.get(e["tier"], 0.0)
             if w > s["weight"]:
-                s["weight"], s["tier"] = w, e["tier"]
+                s["weight"], s["tier"] = w, _tier_out(e["tier"])
             elif s["tier"] is None:
-                s["tier"] = e["tier"] or "unknown"
+                s["tier"] = _tier_out(e["tier"]) or "unknown"
         for s in sources.values():
             if len(s["claims"]) < 2:
                 s["merged_because"] = []
@@ -203,7 +208,7 @@ def report_section(index: dict, stats: dict) -> str:
     for r, c in groups:
         srcs = "; ".join(f"T{s['tier']} {', '.join(s['entries'])}" + (f" ({'; '.join(s['merged_because'])})" if s["merged_because"] else "")
                          for s in r["sources"])
-        out.append(f"| {r['score']} | {r['independent_sources']} | {cell(c.get('claim'))} | {cell(srcs)} |")
+        out.append(f"| {r['score']} | {r['independent_sources']} | {cell(c.get('claim'))} | {srcs.replace("|", "/")} |")
     out += ["", "### Confidence and corroboration disagree", ""]
     out += [f"- {f['claim']} in {f['entry']}: confidence {f['confidence']}, score {f['score']} ({f['why']})"
             for f in stats["flags"]] or ["None."]

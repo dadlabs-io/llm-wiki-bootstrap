@@ -112,7 +112,11 @@ For `--entry` or `--compare` mode, append to the existing index (don't rebuild t
 - `agrees_with: [<claim id>, ...]` — on a claim, the ids of other entries' claims that state the same fact (the same subject, a compatible object: "82.1% of bugs" and "about four in five bugs" agree). A claim in the same entry is not an agreement.
 - `origin: "<url or name>"` — on a claim that restates someone else's evidence (a paper, a benchmark, a vendor's dashboard, a person's post), the original: its URL when the entry gives one, else its name ("CRBugBench paper", "TypeSafe dashboard"). Leave it out when the entry is the original itself.
 
-Then run the arithmetic, which groups the agreeing claims, merges claims that share an origin or a source URL into one source, weighs each source by its entry's tier (1.0 / 0.6 / 0.3 / 0.1 for tiers 1-4; our own `self` synthesis weighs 0), and writes a `corroboration` record on every grouped claim (its sources, why claims were merged, `independent_sources`, `score`):
+Then run the arithmetic, which groups the agreeing claims, merges claims that share an origin or a source URL into one source, weighs each source by its entry's tier (1.0 / 0.6 / 0.3 / 0.1 for tiers 1-4; our own `self` synthesis weighs 0), and writes a `corroboration` record on every grouped claim. A merged source counts once, at the best tier among its entries: four tier-4 reposts of a tier-1 paper are one source weighing 1.0, and the reposts add nothing. Every claim in a group carries the same record, with these keys:
+
+- `group`: the ids of the claims in the group;
+- `sources`: one item per independent source, each with `key`, `entries`, `claims`, `tier`, `weight` and `merged_because` (why its claims were counted as one source: "same origin: <origin>" or "same source URL"; empty when it holds one claim);
+- `independent_sources`, `score`, `computed` (the date).
 
 ```bash
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-claims-corroborate.py --topic <notebook> --report _inbox/reports/corroboration-<date>.md
@@ -122,6 +126,8 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-claims-co
 It never changes an entry's `confidence`; it lists where the two disagree (a high-confidence entry with a score under 0.3; a low-confidence one scoring 1.0 or more from two or more independent sources). Deciding that two claims share an original is a best guess: the record shows each merge and its reason, so a wrong one can be seen and corrected by editing `origin` and running the script again.
 
 Its printed summary also counts the index (`index_claims`, `index_entries`): take the report's and Step 7's claim and entry totals from it rather than counting by hand. A relative `--report` path is the notebook's, whatever folder the command runs from.
+
+The section it writes has a fixed layout, which the report keeps unchanged: `## Corroboration`, one summary line, a table `| Score | Sources | Claim | Sources counted (merged because) |` with one row per group (highest score first), then `### Confidence and corroboration disagree` with one line per flag (`- <claim id> in <entry>: confidence <high|low>, score <n> (<why>)`, or `None.`).
 
 **Contradictions.** Scan two axes:
 

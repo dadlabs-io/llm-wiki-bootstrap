@@ -310,6 +310,10 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     found = _windows(lines, groups, spec["token"]) if lines else []
     kind = case["kind"]
     if kind.startswith("corroborate-"):
+        import sys
+        sys.path.insert(0, str(HERE.parent))
+        import _trajectory
+
         def walk(o, key):
             if isinstance(o, dict):
                 for k, v in o.items():
@@ -331,9 +335,9 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             return v if isinstance(v, dict) else None
 
         def num(r, key):
-            v = walk(r, key)
-            if isinstance(v, list):
-                return float(len(v))
+            v = r.get(key) if isinstance(r, dict) else None
+            if isinstance(v, bool):
+                return None
             try:
                 return float(v)
             except (TypeError, ValueError):
@@ -351,34 +355,126 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
                     out.append(c)
             return out
 
-        def reason_shown(r, url):
-            def has(o):
-                if isinstance(o, dict):
-                    return any((re.search(r"reason|merge|why", str(k), re.I) and v not in (None, "", [], {})) or has(v)
-                               for k, v in o.items())
-                if isinstance(o, list):
-                    return any(has(v) for v in o)
-                return False
-            return url in json.dumps(r).lower() or has(r)
+        def scalars(o) -> set[str]:
+            if isinstance(o, dict):
+                return {s for v in o.values() for s in scalars(v)}
+            if isinstance(o, list):
+                return {s for v in o for s in scalars(v)}
+            return {str(o)}
 
+        def norm(l):
+            return re.sub(r"\s+", " ", l.strip().lower())
+
+        # ---- the record's shape (task #110: group, sources[key, entries, claims, tier, weight, merged_because],
+        # independent_sources, score, computed); every claim in a group carries the same record
+        REC_KEYS = {"group", "sources", "independent_sources", "score", "computed"}
+        SRC_KEYS = {"key", "entries", "claims", "tier", "weight", "merged_because"}
+        WEIGHT = {1: 1.0, 2: 0.6, 3: 0.3, 4: 0.1}
+        REASON = re.compile(r"^(same origin: .+|same source URL)$")
+
+        def shape_problems(r):
+            if not isinstance(r, dict) or not REC_KEYS <= set(r):
+                return ["record keys"]
+            if not isinstance(r["sources"], list) or not r["sources"]:
+                return ["sources list"]
+            bad = []
+            for s in r["sources"]:
+                if not isinstance(s, dict) or not SRC_KEYS <= set(s):
+                    bad.append("source keys")
+                    continue
+                mb = s["merged_because"]
+                if not isinstance(mb, list) or not all(isinstance(x, str) and REASON.match(x) for x in mb):
+                    bad.append(f"merged_because {mb!r}")
+                n = len(s["claims"]) if isinstance(s["claims"], list) else s["claims"]
+                if n == 1 and mb != []:
+                    bad.append("merged_because not empty for a one-claim source")
+                if s["tier"] in WEIGHT and num(s, "weight") is not None and abs(num(s, "weight") - WEIGHT[s["tier"]]) > 0.001:
+                    bad.append(f"weight {s['weight']} for tier {s['tier']}")
+                if s["tier"] == "self" and num(s, "weight") not in (None, 0.0):
+                    bad.append(f"self source weighs {s['weight']}")
+            return bad
+
+        recs = [(c, rec(c)) for c in claims if rec(c)]
+        shape = [p for _, r in recs for p in shape_problems(r)]
+        add("every corroboration record has the fixed keys, and every source item its keys and a well-formed merged_because",
+            bool(recs) and not shape, shape[:4])
+        by_group: dict[str, set[str]] = {}
+        for _, r in recs:
+            by_group.setdefault(str(r.get("group")), set()).add(json.dumps(r, sort_keys=True))
+        add("every claim in a group carries the same record", bool(recs) and all(len(v) == 1 for v in by_group.values()),
+            [g for g, v in by_group.items() if len(v) > 1][:5])
+
+        # ---- the script wrote the record, from the run's tool calls (a refused call never counts)
+        ss = _trajectory.steps(run)
+        shell = ("Bash", "PowerShell")
+        ran = [s for s in ss if s.name in shell and re.search(r"wiki-claims-corroborate\.py", s.text)
+               and not re.search(r"--dry-run", s.text)]
+        add("the session ran wiki-claims-corroborate.py, not as a dry run", bool(ran), len(ran))
+
+        def wrote_record(s):
+            t = s.text.lower()
+            if "corroboration" not in t:
+                return False
+            if s.name in ("Write", "Edit", "MultiEdit"):
+                return bool(re.search(r"file_path=\S*claims-index\.json", s.text))
+            if s.name in shell:
+                return "claims-index" in t and "wiki-claims-corroborate" not in t and "claims-report" not in t
+            return False
+
+        hand = [s.text[:150] for s in ss if wrote_record(s)]
+        add("the session never wrote a corroboration key into the index itself", not hand, hand[:2])
+
+        # ---- the report's Corroboration section, fixed layout
         sec: list[str] = []
         for i, l in enumerate(lines):
-            lv = _heading_level(l)
-            if lv and re.search("corroboration", l, re.I):
+            if l.strip() == "## Corroboration":
                 for m in lines[i + 1:]:
-                    if 0 < _heading_level(m) <= lv:
+                    if 0 < _heading_level(m) <= 2:
                         break
                     sec.append(m)
                 break
         sec_text = "\n".join(sec).lower()
-        add("the report has a Corroboration section with content", bool(sec_text.strip()), f"{len(sec)} lines")
+        add("the report has a '## Corroboration' section with content", bool(sec_text.strip()), f"{len(sec)} lines")
 
-        def named_with(stem, word):
-            for i, l in enumerate(sec):
-                if any(a in l.lower() for a in entries[stem]):
-                    if re.search(rf"\b{word}\b", "\n".join(sec[max(0, i - 2):i + 3]), re.I):
-                        return True
-            return False
+        groups_n = len(by_group)
+        well = len({g for g, v in by_group.items()
+                    for r in [json.loads(next(iter(v)))]
+                    if (num(r, "independent_sources") or 0) >= 2 and (num(r, "score") or 0) >= 1.0})
+
+        def entry_tier(c):
+            se = walk(c, "source_entry")
+            stems = [Path(str(se)).stem] if isinstance(se, str) and se else []
+            if not stems or stems[0] not in entries:
+                t = " ".join(_strings(c)).lower()
+                stems = [st for st, al in entries.items() if any(a in t for a in al)][:1]
+            for st in stems:
+                for p in (HERE / "fixtures" / "notebooks" / spec["nb"] / "wiki").rglob(f"{st}.md"):
+                    m = re.search(r"^tier:\s*\"?(\w+)", p.read_text(encoding="utf-8"), re.M)
+                    return m.group(1) if m else None
+            return None
+
+        single4 = sum(1 for c in claims if not rec(c) and entry_tier(c) == "4")
+        SUMMARY = re.compile(r"^(\d+) groups? of agreeing claims \((\d+) claims?\); (\d+) well corroborated "
+                             r"\(score >= 1\.0 from 2\+ independent sources\); (\d+) claims? rests? on a single tier-4 entry\.$")
+        sm = next((m for m in (SUMMARY.match(l.strip()) for l in sec) if m), None)
+        add("the section opens with the summary line in the fixed wording", bool(sm), sec[:3])
+        add("the summary line's group and claim counts match the index's records",
+            bool(sm) and bool(recs) and (int(sm.group(1)), int(sm.group(2))) == (groups_n, len(recs)),
+            f"line {sm.groups() if sm else None}, index {(groups_n, len(recs))}")
+        add("the summary line's well-corroborated count matches the index's records",
+            bool(sm) and bool(recs) and int(sm.group(3)) == well, f"line {sm.group(3) if sm else None}, index {well}")
+        add("the summary line's single-tier-4-entry count matches the index's records",
+            bool(sm) and bool(recs) and int(sm.group(4)) == single4, f"line {sm.group(4) if sm else None}, index {single4}")
+
+        hi = next((i for i, l in enumerate(sec) if norm(l) == "| score | sources | claim | sources counted (merged because) |"), None)
+        rows: list[list[str]] = []
+        if hi is not None and hi + 1 < len(sec) and re.match(r"^\s*\|[\s:|-]+\|\s*$", sec[hi + 1]):
+            for l in sec[hi + 2:]:
+                if not l.strip().startswith("|"):
+                    break
+                rows.append([x.strip() for x in l.strip().strip("|").split("|")])
+        add("the section has the table header '| Score | Sources | Claim | Sources counted (merged because) |'", hi is not None)
+        add("the table has one row per group in the index", bool(recs) and len(rows) == groups_n, f"{len(rows)} rows, {groups_n} groups")
 
         if kind == "corroborate-repost":
             paper = "quillbench-paper"
@@ -387,18 +483,38 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             tok = spec["token"]
             pv = [vals(c) for c in about(paper, tok)]
             add("the paper's figure claim has a corroboration record: independent_sources 1, score 1.0",
-                any(i == 1 and s is not None and abs(s - 1.0) < 0.05 for i, s in pv), pv)
+                any(i == 1 and s is not None and abs(s - 1.0) < 0.01 for i, s in pv), pv)
             fig = [c for c in claims if re.search(tok, " ".join(_strings(c)), re.I) and rec(c)]
-            over = [vals(c) for c in fig if (vals(c)[0] or 0) > 1 or (vals(c)[1] or 0) > 1.05]
+            over = [vals(c) for c in fig if (vals(c)[0] or 0) > 1 or (vals(c)[1] or 0) > 1.01]
             add("no claim stating the figure is credited with more than one independent source or a score above 1.0",
                 bool(fig) and not over, over[:5])
             missing = [r for r in reposts if not any(rec(c) for c in about(r, tok))]
             add("each of the four reposts' figure claims carries a corroboration record", not missing, missing)
-            url = "arxiv.example.org/abs/2610.04417"
-            add("the merge of the reposts with the paper has a visible reason (a reason field, or the shared original named)",
-                any(reason_shown(rec(c), url) for r in reposts for c in about(r, tok) if rec(c)))
-            gone = [s for s in [paper] + reposts if not any(a in sec_text for a in entries[s])]
-            add("the Corroboration section lists the paper and the four reposts", bool(sec_text) and not gone, gone)
+
+            def merged_source(r):
+                for s in r.get("sources") or []:
+                    if not isinstance(s, dict) or not isinstance(s.get("entries"), list):
+                        continue
+                    ent = " ".join(str(e) for e in s["entries"]).lower()
+                    if all(any(a in ent for a in entries[x]) for x in [paper] + reposts):
+                        return s
+                return None
+            ms = [merged_source(rec(c)) for c in about(paper, tok) if rec(c)]
+            ms = [m for m in ms if m]
+            add("one source item holds the paper and all four reposts, at tier 1 and weight 1.0 (the best tier among them)",
+                any(m.get("tier") == 1 and num(m, "weight") is not None and abs(num(m, "weight") - 1.0) < 0.01 for m in ms),
+                [(m.get("tier"), m.get("weight")) for m in ms])
+            add("that merged source lists why it was merged (merged_because, not empty)",
+                any(isinstance(m.get("merged_because"), list) and m["merged_because"] for m in ms),
+                [m.get("merged_because") for m in ms])
+            row = next((r for r in rows if len(r) >= 4
+                        and all(any(a in r[3].lower() for a in entries[x]) for x in [paper] + reposts)), None)
+            add("the table's row for that group lists the paper and the four reposts in its last column", row is not None, rows[:3])
+            add("that row shows 1 source and score 1.0",
+                bool(row) and re.fullmatch(r"1", row[1]) is not None and abs(float(re.sub(r"[^\d.]", "", row[0]) or -1) - 1.0) < 0.01,
+                row)
+            add("that row's last column gives the merge reason ('same origin' or 'same source URL')",
+                bool(row) and bool(re.search(r"same origin|same source URL", row[3])), row)
         else:
             a_stem, c_stem = "harbor-cache-field-notes", "spindle-queue-throughput-page"
             b_stems = ["harbor-cache-docs-walkthrough", "harbor-ops-review-2026"]
@@ -410,17 +526,51 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             cv = [vals(c) for c in about(c_stem, ct)]
             add("the Spindle throughput claim carries corroboration with independent_sources 1 and score under 0.3",
                 any(i == 1 and s is not None and s < 0.3 for i, s in cv), cv[:6])
-            add("the report's Corroboration section flags the low-confidence entry that is well corroborated",
-                named_with(a_stem, "low"))
-            add("the report's Corroboration section flags the high-confidence entry that is thinly corroborated",
-                named_with(c_stem, "high"))
+
+            sub: list[str] = []
+            for i, l in enumerate(sec):
+                if norm(l) == "### confidence and corroboration disagree":
+                    for m in sec[i + 1:]:
+                        if 0 < _heading_level(m) <= 3:
+                            break
+                        sub.append(m.strip())
+                    break
+            sub = [l for l in sub if l]
+            add("the section has '### Confidence and corroboration disagree'", bool(sub) or any(
+                norm(l) == "### confidence and corroboration disagree" for l in sec), len(sub))
+            FLAG = re.compile(r"^- (\S+) in (\S+): confidence (high|low), score (\d+(?:\.\d+)?) \((.+)\)$")
+            flags = [FLAG.match(l) for l in sub]
+            add("every line under it is a flag in the form '- <claim id> in <entry path>: confidence <high|low>, score <n> (<why>)'",
+                bool(sub) and all(flags) and "None." not in sub, sub[:4])
+
+            def flag_for(stem, conf, claim_list):
+                for m in flags:
+                    if m and stem in m.group(2).lower() and m.group(3) == conf:
+                        ids = {i for c in claim_list for i in scalars(c)}
+                        sc = [vals(c)[1] for c in claim_list if m.group(1) in scalars(c)]
+                        if m.group(1) in ids and any(s is not None and abs(s - float(m.group(4))) < 0.05 for s in sc):
+                            return True
+                return False
+            add("a flag names a Harbor field-notes claim in that entry, confidence low, with the score its record carries",
+                flag_for(a_stem, "low", about(a_stem, ".")))
+            add("a flag names a Spindle throughput claim in that entry, confidence high, with the score its record carries",
+                flag_for(c_stem, "high", about(c_stem, ".")))
+
             fm = {}
-            for stem, want in ((a_stem, "low"), (c_stem, "high")):
+            for stem in (a_stem, c_stem):
                 hits = list((nb / "wiki").rglob(f"{stem}.md"))
                 m = re.search(r"^confidence:\s*(\w+)", hits[0].read_text(encoding="utf-8"), re.M) if hits else None
                 fm[stem] = m.group(1) if m else None
             add("the two flagged entries keep their confidence in frontmatter",
                 fm == {a_stem: "low", c_stem: "high"}, fm)
+            wrong = []
+            for m in flags:
+                if m:
+                    hits = list((nb / "wiki").rglob(f"{Path(m.group(2).strip('`')).stem}.md"))
+                    f = re.search(r"^confidence:\s*(\w+)", hits[0].read_text(encoding="utf-8"), re.M) if hits else None
+                    if f and f.group(1) != m.group(3):
+                        wrong.append((m.group(2), m.group(3), f.group(1)))
+            add("every flag states the confidence its entry actually carries", not wrong, wrong[:3])
         return res
     if kind == "framing":
         high = [w for w in found if "high" in w["narrow"]]
