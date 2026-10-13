@@ -2,170 +2,6 @@
   "skill": "task-list",
   "cases": [
     {
-      "id": "show-plain",
-      "kind": "show",
-      "say": "What's on my list?",
-      "mentions": [
-        "registrar",
-        "build scripts"
-      ],
-      "author": "legacy"
-    },
-    {
-      "id": "show-slash",
-      "kind": "show",
-      "say": "/task-list",
-      "mentions": [
-        "onboarding guide",
-        "dark theme"
-      ],
-      "author": "legacy"
-    },
-    {
-      "id": "add-plain",
-      "kind": "add",
-      "say": "Add a task: renew the docs domain before October.",
-      "words": [
-        "renew",
-        "domain"
-      ],
-      "author": "legacy"
-    },
-    {
-      "id": "add-no-block",
-      "kind": "add",
-      "seed": "task-no-block.md",
-      "say": "Add a task to back up the database before the upgrade.",
-      "words": [
-        "database",
-        "upgrade"
-      ],
-      "author": "legacy"
-    },
-    {
-      "id": "done-by-number",
-      "kind": "done",
-      "task": 2,
-      "words": [
-        "onboarding"
-      ],
-      "say": "I finished the onboarding guide draft, so task 2 is done.",
-      "author": "eval-case-writer"
-    },
-    {
-      "id": "delete-plain",
-      "kind": "delete",
-      "task": 3,
-      "say": "Delete task 3, we're not doing it.",
-      "author": "legacy"
-    },
-    {
-      "id": "waiting-plain",
-      "kind": "set",
-      "task": 1,
-      "say": "Task 1 is waiting on a quote from the registrar.",
-      "expect": {
-        "status": "waiting",
-        "next_has": "quote",
-        "owner": "Mark"
-      },
-      "author": "legacy"
-    },
-    {
-      "id": "backlog-plain",
-      "kind": "set",
-      "task": 3,
-      "say": "Move task 3 to the backlog, we won't get to it this month.",
-      "expect": {
-        "section": "Backlog",
-        "owner": "main",
-        "status": "to do"
-      },
-      "author": "legacy"
-    },
-    {
-      "id": "unbacklog-plain",
-      "kind": "set",
-      "task": 6,
-      "seed": "task-with-backlog.md",
-      "say": "Take task 6 off the backlog.",
-      "expect": {
-        "section": "main",
-        "owner": "main",
-        "status": "parked"
-      },
-      "author": "legacy"
-    },
-    {
-      "id": "add-long",
-      "kind": "add",
-      "say": "Add a task: migrate the docs site from the old static generator to the new one, which means moving the 40 markdown pages, rewriting the three custom templates, redirecting every old URL so search links keep working, and checking the build on the CI runner before we switch DNS.",
-      "words": [
-        "docs"
-      ],
-      "short": true,
-      "details_words": [
-        "redirect",
-        "templates"
-      ],
-      "author": "legacy"
-    },
-    {
-      "id": "show-overview",
-      "kind": "show",
-      "seed": "task-with-details.md",
-      "say": "What's on my list?",
-      "mentions": [
-        "registrar",
-        "build scripts"
-      ],
-      "absent": [
-        "porkbun",
-        "make-release"
-      ],
-      "author": "legacy"
-    },
-    {
-      "id": "show-details",
-      "kind": "show",
-      "seed": "task-with-details.md",
-      "say": "Show my tasks with the details.",
-      "mentions": [
-        "porkbun",
-        "make-release"
-      ],
-      "author": "legacy"
-    },
-    {
-      "id": "move-owner-plain",
-      "kind": "set",
-      "task": 5,
-      "say": "Move task 5 to main, I'd like it looked at.",
-      "expect": {
-        "section": "main",
-        "owner": "main"
-      },
-      "author": "eval-case-writer"
-    },
-    {
-      "id": "done-by-words",
-      "kind": "done-named",
-      "task": 3,
-      "words": [
-        "scripts"
-      ],
-      "say": "I've finished cleaning up the old build scripts.",
-      "author": "eval-case-writer"
-    },
-    {
-      "id": "done-self-asks",
-      "kind": "done-self",
-      "task": 2,
-      "names": "onboarding[\\s-]+guide",
-      "say": "Earlier in this session you finished writing the onboarding guide draft yourself: all three sections are written and the install steps are checked. I haven't said anything about it. Please record that on the task list.",
-      "author": "eval-case-writer"
-    },
-    {
       "id": "card-move-to-top",
       "kind": "card-top",
       "tasks_seed": "card-project",
@@ -224,23 +60,6 @@
       "author": "eval-case-writer"
     },
     {
-      "id": "details-replace-explicit",
-      "kind": "details-replace-guarded",
-      "seed": "task-with-details.md",
-      "task": 1,
-      "old_words": [
-        "gandi",
-        "porkbun",
-        "dnssec"
-      ],
-      "new_words": [
-        "namecheap",
-        "auto-renew"
-      ],
-      "say": "Replace task 1's details with: Use Namecheap, keep renewal under 25 euros a year, and turn on auto-renew.",
-      "author": "eval-case-writer"
-    },
-    {
       "id": "card-details-replace-explicit",
       "kind": "card-details-replace",
       "tasks_seed": "card-project",
@@ -265,6 +84,119 @@
         "python versions"
       ],
       "say": "Add to task 3's details: the guide must also list the supported Python versions.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-show-plain",
+      "kind": "card-show",
+      "tasks_seed": "card-project",
+      "order_words": [
+        "onboarding",
+        "registrar",
+        "screenshots",
+        "build[\\s-]+scripts",
+        "dark"
+      ],
+      "hidden": [
+        "renewal terms",
+        "predate the current release",
+        "asked for it twice",
+        "matches the current installer"
+      ],
+      "say": "What's on my list?",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-show-details",
+      "kind": "card-show",
+      "tasks_seed": "card-project",
+      "shown": [
+        "renewal terms",
+        "dns tooling"
+      ],
+      "say": "Show me the details on task 1.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-add-plain",
+      "kind": "card-add",
+      "tasks_seed": "card-project",
+      "new_id": 8,
+      "title_re": "changelog",
+      "say": "Add a task: write the changelog for the 1.4 release.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-add-long-request",
+      "kind": "card-add",
+      "tasks_seed": "card-project",
+      "new_id": 8,
+      "title_re": "link",
+      "body_words": [
+        "domain",
+        "checker"
+      ],
+      "say": "Add a task: audit every page of the docs site for broken internal links, fix the ones that still point at the old domain, and then add the link checker to CI so that the release build fails whenever a new broken link appears.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-first-add-no-list",
+      "kind": "card-first",
+      "title_re": "backup",
+      "say": "Add a task: set up the weekly backup job for the docs server.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-delete-by-number",
+      "kind": "card-delete",
+      "tasks_seed": "card-project",
+      "task": 7,
+      "say": "Delete task 7.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-waiting-names-what",
+      "kind": "card-waiting",
+      "tasks_seed": "card-project",
+      "task": 1,
+      "waiting_words": [
+        "legal"
+      ],
+      "say": "Task 1 is waiting on the legal team's reply about the registrar contract.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-backlog-keeps-owner",
+      "kind": "card-backlog",
+      "tasks_seed": "card-project",
+      "task": 7,
+      "to": "backlog",
+      "say": "Move task 7 to the backlog.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-unbacklog-returns-to-order",
+      "kind": "card-backlog",
+      "tasks_seed": "card-project",
+      "task": 6,
+      "to": "current",
+      "say": "Take task 6 off the backlog.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-move-owner-only",
+      "kind": "card-owner",
+      "tasks_seed": "card-project",
+      "task": 4,
+      "owner": "agent-builder",
+      "say": "Move task 4 to agent-builder.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "card-old-list-refused",
+      "kind": "card-old-list",
+      "pointer": "task-old-list.md",
+      "say": "Add a task: renew the TLS certificate for the docs site.",
       "author": "eval-case-writer"
     }
   ]

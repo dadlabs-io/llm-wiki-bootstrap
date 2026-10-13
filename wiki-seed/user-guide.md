@@ -30,7 +30,7 @@ It is plain Markdown under git. Every entry carries the same frontmatter (tier, 
 | `/wiki-cycle` | The research cycle: gather, triage, ingest, check, lint, report. `--full` adds the deeper passes. |
 | `/wiki-search "<query>"` | Hybrid search (keyword + meaning + reranking) across the wiki. |
 | `/wrap-up` | End of a session: the journal, the resume files, and the session's durable entries, staged and offered for promotion; any skill suggestions in the box are put to you. |
-| `/task-list` | The project's task list: one short row per task, one table per owner and a Backlog for tasks set aside (each keeps its owner); each task's longer details are kept apart and shown on request ("show my tasks with details", "details on 25"); plain speech works too ("add a task …", "mark 3 done", "move 5 to the backlog"). A project can keep its tasks as cards instead, one file per task, worked in a set order. |
+| `/task-list` | The project's task list: one card per task, worked in a set order (NOW is the first not done), and a Backlog for tasks set aside (each keeps its owner); a card holds the task's details, steps and a dated log, shown on request ("details on 25"); plain speech works too ("add a task …", "mark 3 done", "put 5 first", "move 5 to the backlog"). |
 | `/wiki-promote` | Review staged entries and move the ones you approve into `wiki/`. |
 | `/wiki-verify` | Mark an entry verified. Entries never certify themselves. |
 | `/wiki-rollback` | Walk an entry back to its last verified version. |
@@ -141,10 +141,10 @@ A notebook (in a notebooks vault, or `<project>/llm-wiki/` for a wiki kept insid
     ├── _MAP.md                   generated: the compressed map the agent always loads
     ├── project/                  what you build: decisions, patterns, bugs, architecture, …
     ├── research/<folder>/        what you read, one folder per subject
-    ├── tasks/                    task cards, one per task, and ORDER.md   (only in a project on cards)
+    ├── tasks/                    task cards, one per task, and ORDER.md   (from the first task added)
     └── sessions/                 the agent's working memory
         ├── active-context.md     the resume pointer
-        └── <persona>/            handoff.md, task.md, and <YYYY-MM>/ journals
+        └── <persona>/            handoff.md and <YYYY-MM>/ journals
 ```
 
 A notebook has only the halves it was created with (`project/`, `research/`, or neither); the other can be added any time.

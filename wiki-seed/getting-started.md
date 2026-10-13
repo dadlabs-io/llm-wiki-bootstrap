@@ -13,7 +13,7 @@ You just ran `/new-wiki` and have a fresh project. Here's the first hour.
 ## What you have
 
 - `<project>/CLAUDE.md` — agent's first-read document; imports the wiki README, the command reference ([`commands.md`](./commands.md), in the global toolset) and the wiki MAP
-- a startup hook (installed with the global tooling): at startup and after `/clear` it lists this project's resume files (`sessions/active-context.md`, `sessions/<persona>/handoff.md`, `task.md`) for the session to read; a project on task cards gets `tasks/ORDER.md` and the one card being worked on instead of `task.md`. A fresh project has none yet — the first `/wrap-up` writes them
+- a startup hook (installed with the global tooling): at startup and after `/clear` it lists this project's resume files (`sessions/active-context.md`, `sessions/<persona>/handoff.md`, `tasks/ORDER.md` and the one task card being worked on) for the session to read. A fresh project has none yet — the first `/wrap-up` writes the first two, and the first task you add starts `tasks/`
 - `<project>/.claude/wiki-config.json` — points at the global skills and scripts in `~/.claude/` (a bundled install has its own copy under `<project>/.claude/` instead)
 - the wiki root (`<project>/llm-wiki/` or a notebook in your vault) — `wiki/` with the folders you chose (`project/`, `research/`, always `sessions/`), and with `research/` the trusted-sources page `_config/feeds.md`
 - the global toolset — one notebook on this machine (`global-toolset`) holding these usage pages and the framework-contract docs once for every project; the global install keeps it current, and no project carries a copy

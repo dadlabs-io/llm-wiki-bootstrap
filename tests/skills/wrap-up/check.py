@@ -7,8 +7,8 @@ answer for it.
 
 What the cases cover, one of each input the skill handles: a first wrap-up with no
 dashboards and a repo with no commits (the git-128 path), an incremental one that must
-APPEND to this session's existing journal, a `none` answer at the proposal table, a
-`task.md` carrying the /task-list block, `confirm_before_create: false`,
+APPEND to this session's existing journal, a `none` answer at the proposal table,
+projects on task cards (kinds "cards", "cards-stack", "cards-full", "cards-first"), `confirm_before_create: false`,
 `confirm_before_promote: false`, a research-only session and a trivial one (the last
 three tagged `complex`), and `--auto-push` (task #51, 2026-09-24): the project repo and
 the notebooks repo each get a local bare remote, the session changed `beacon/retry.py`,
@@ -120,6 +120,13 @@ def _owner_after(text: str, name: str, span: int = 600) -> set[str]:
 
 def _near(text: str, name: str, pattern: re.Pattern, span: int = 600) -> bool:
     return any(pattern.search(text, m.end(), m.end() + span) for m in re.finditer(re.escape(name), text))
+
+
+def _near_or_same_line(text: str, name: str, pattern: re.Pattern, span: int = 600) -> bool:
+    """The pattern on a line that names the skill, or within `span` characters after any mention of it."""
+    if any(pattern.search(line) for line in text.splitlines() if name in line):
+        return True
+    return _near(text, name, pattern, span)
 
 
 def _rmtree(path) -> None:
@@ -351,20 +358,13 @@ The user cannot reply while this runs. Where the skill says to wait for the user
 
 def prompt(case: dict, ctx: dict) -> str:
     _reset_project(case, ctx)
+    _reset_cards(case, ctx)  # before the notebook reset: its git commit must not carry the last case's cards
     _reset_notebook(case, ctx)
-    _reset_cards(case, ctx)
     answers = []
     if case.get("answer"):
         answers.append(f"At the proposal table (Step 2), the user answers: `{case['answer']}`.")
     if case.get("promote_answer"):
         answers.append(f"At the promotion prompt (Step 6), the user answers: `{case['promote_answer']}`.")
-    if case.get("finished_task"):
-        n = case["finished_task"]
-        if case["finished_by"] == "user":
-            answers.append(f"For the task list: the user said during this session that task {n} is done.")
-        else:
-            answers.append(f"For the task list: you (the session) finished task {n} yourself; "
-                           f"the user has not said it is done or to remove it.")
     if case.get("suggestion_answer"):
         answers.append(f"Shown the skill suggestions, the user (Mark) answers: {case['suggestion_answer']}.")
     block = ("\n".join(answers) + "\n\n") if answers else ""
@@ -521,6 +521,17 @@ def _check_cards(case: dict, before: dict, after: dict, run: dict, ctx: dict, ad
         add(f"it keeps its earlier Log line ({cid})", bool(c) and SEED_LOG[cid] in c["body"])
         add(f"its updated date is today ({cid})", c is not None and _cval(c, "updated") == today,
             _cval(c, "updated") if c else "no such card")
+    # Mark's rule (2026-10-12): a card is rough notes; test for LOSS, never for how or where a thing was written
+    seed_by_id_keep = {int(_cval(c, "id")): c for c in _read_cards(HERE / "fixtures" / "cards" / case["cards"])[0].values()
+                       if _cval(c, "id").isdigit()}
+    for k, spec in (exp.get("keeps") or {}).items():
+        cid = int(k)
+        c = by_id.get(cid)
+        lost_fields = [f for f in spec.get("fields", [])
+                       if c is None or _cval(c, f) != _cval(seed_by_id_keep[cid], f)]
+        add(f"card {cid} lost none of its fields", not lost_fields, lost_fields or "")
+        lost_body = [s for s in spec.get("body", []) if c is None or s not in c["body"]]
+        add(f"card {cid} lost none of its details or Steps", not lost_body, lost_body or "")
     changed = []
     for cid, want in SEED_STATE.items():
         if cid in touched or cid in user_done:
@@ -598,29 +609,6 @@ def _closing_line(run: dict, add) -> None:
     final = str(run["result"].get("result") or "").strip().splitlines()
     last = final[-1].strip() if final else ""
     add("ends on the closing line", last == CLOSING[None], f"last line: {last[:120]!r}")
-
-
-def _check_tasks_plain(case: dict, before: dict, after: dict, run: dict, ctx: dict, add) -> None:
-    """kind "tasks-plain": a task.md list (the At a glance block); the session finished a task itself."""
-    exp, text = case["expect"], run["text"]
-    _preamble(run, add)
-    task_md = ctx["wiki"] / "sessions" / PERSONA / "task.md"
-    add("task.md still there", task_md.is_file())
-    ttext = task_md.read_text(encoding="utf-8") if task_md.is_file() else ""
-    board = _load(ctx["scripts"], "wiki-tasks.py", "wiki_tasks").Board(ttext)
-    rows = {r["id"]: r for s in board.sections for r in s["rows"]}
-    fin = exp["finished"]
-    add("At a glance block kept, NOW and QUEUE kept below it",
-        ttext.lstrip().startswith("## At a glance") and "## NOW" in ttext and "## QUEUE" in ttext, ttext[:60])
-    add("no task removed (the user did not call any task done)", {1, 2, 3, 4} <= set(rows), sorted(rows))
-    add(f"task {fin} (finished by the session) is marked done and still on the list",
-        rows.get(fin, {}).get("status") == "done", rows.get(fin))
-    add("the summary names the finished task by its words", bool(re.search(exp["names"], text, re.I)))
-    add("the summary asks whether to remove it", _asks_to_remove(text), text[-300:])
-    add("the other tasks keep their status",
-        {i: rows.get(i, {}).get("status") for i in (1, 2, 3)} == {1: "doing", 2: "to do", 3: "waiting"},
-        {i: rows.get(i, {}).get("status") for i in (1, 2, 3)})
-    _closing_line(run, add)
 
 
 def _check_cards_stack(case: dict, before: dict, after: dict, run: dict, ctx: dict, add) -> None:
@@ -731,6 +719,99 @@ def _check_cards_stack(case: dict, before: dict, after: dict, run: dict, ctx: di
     add("wrote nothing into wiki/ but sessions/ and tasks/", not stray, stray)
 
 
+def _check_staged_entries(case: dict, ctx: dict, add) -> None:
+    """Entries staged by a full wrap-up on a card project: the same gate, front matter and sidecar rules as kind "full"."""
+    gate = _load(ctx["scripts"], "_entry_checks.py", "entry_checks")
+    staged, promoted = _staged(ctx), _promoted(ctx)
+    add(f"at least {case['expect']['min_staged']} entries staged", len(staged) >= case["expect"]["min_staged"],
+        [p.name for p in staged])
+    add("nothing promoted without the user's yes", not promoted, [p.name for p in promoted])
+    bad_gate, bad_fm, bad_src, missing, bad_target = [], [], [], [], []
+    for p in staged:
+        etext = p.read_text(encoding="utf-8")
+        fm, _ = gate.split_frontmatter(etext)
+        errs = gate.check_entry_text(etext)["errors"]
+        if errs:
+            bad_gate.append(f"{p.stem}: {errs[:2]}")
+        if not (str(fm.get("tier")) == "self" and str(fm.get("origin")) == "wrap-up"
+                and str(fm.get("category")) in ("component", "decision", "architecture", "pattern", "troubleshooting")):
+            bad_fm.append(f"{p.stem}: tier={fm.get('tier')} origin={fm.get('origin')} category={fm.get('category')}")
+        if not str(fm.get("source_url", "")).startswith("internal://"):
+            bad_src.append(f"{p.stem}: {fm.get('source_url')}")
+        side = p.with_name(f"{p.stem}.proposed_metadata.json")
+        try:
+            tf = str(json.loads(side.read_text(encoding="utf-8")).get("target_folder", ""))
+        except (OSError, json.JSONDecodeError):
+            missing.append(p.stem)
+            continue
+        if not (tf.startswith("project/") and tf.split("/")[-1] in CATEGORIES):
+            bad_target.append(f"{p.stem}: {tf!r}")
+    add(f"all {len(staged)} entries pass the entry gate", staged and not bad_gate, bad_gate)
+    add("every entry: tier self, origin wrap-up, a real category", staged and not bad_fm, bad_fm)
+    add("every entry: source_url is internal://", staged and not bad_src, bad_src)
+    add("every entry has a readable sidecar", staged and not missing, missing)
+    add("every sidecar names project/<plural folder>", staged and not bad_target, bad_target)
+    proc = subprocess.run(
+        [sys.executable, str(ctx["scripts"] / "wiki-promote.py"), "--topic", NOTEBOOK, "--check"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180,
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"}, cwd=str(ctx["project"]))
+    add("every staged entry would promote (wiki-promote --check)", proc.returncode == 0,
+        (proc.stdout or "")[-260:] + (proc.stderr or "")[-120:])
+
+
+def _check_cards_full(case: dict, before: dict, after: dict, run: dict, ctx: dict, add) -> None:
+    """kind "cards-full": a full wrap-up (table go, promotion no) on a card project where the user said a task
+    is done: the entries are staged as in kind "full" AND the card checks of kind "cards" hold (task off the list
+    without a question, card kept whole, Log line today, no task.md written)."""
+    _check_cards(case, before, after, run, ctx, add)
+    _check_staged_entries(case, ctx, add)
+
+
+def _check_cards_first(case: dict, before: dict, after: dict, run: dict, ctx: dict, add) -> None:
+    """kind "cards-first": a project with NO wiki/tasks/ yet. The user asks for a task; the wrap-up starts the list
+    (tasks/ORDER.md with one current card), the six rules hold, and no task.md is written."""
+    from datetime import date
+    today = date.today().isoformat()
+    exp = case["expect"]
+    _preamble(run, add)
+    wiki = ctx["wiki"]
+    tasks = wiki / "tasks"
+    add("tasks/ORDER.md was created", (tasks / "ORDER.md").is_file())
+    cards, order = _read_cards(tasks) if tasks.is_dir() else ({}, "")
+    problems = _card_rule_problems(cards, order)
+    add("the six card rules hold", bool(cards) and not problems, problems or "no cards found")
+    add("exactly one card", len(cards) == 1, sorted(cards))
+    if len(cards) == 1:
+        c = next(iter(cards.values()))
+        cid = _cval(c, "id")
+        order_ids = [int(i) for i in re.findall(r"^-\s*(\d+)\b", order, re.M)]
+        add("the card is list current, not done, and the only line of ORDER.md",
+            _cval(c, "list") == "current" and _cval(c, "status") != "done"
+            and cid.isdigit() and order_ids == [int(cid)],
+            {"list": _cval(c, "list"), "status": _cval(c, "status"), "order": order_ids})
+        add("the card is about the manifest rotation",
+            exp["new_card"] in (_cval(c, "title") + c["body"]).lower(), _cval(c, "title"))
+        add("the card has created and updated = today",
+            _cval(c, "created") == today and _cval(c, "updated") == today,
+            (_cval(c, "created"), _cval(c, "updated")))
+    persona_dir = wiki / "sessions" / PERSONA
+    add("no task.md written", not (persona_dir / "task.md").exists())
+    handoff = persona_dir / "handoff.md"
+    add("handoff.md written with every section", handoff.is_file() and
+        not [s for s in HANDOFF_SECTIONS if s not in handoff.read_text(encoding="utf-8")])
+    journals = _journals(ctx)
+    add("exactly one journal for this session, named with the session id",
+        len(journals) == 1 and SID in journals[0].name, [p.name for p in journals])
+    active = wiki / "sessions" / "active-context.md"
+    add("active-context.md written with this persona's section",
+        active.is_file() and f"## {PERSONA}" in active.read_text(encoding="utf-8"))
+    add("nothing staged (the user answered none)", not _staged(ctx), [p.name for p in _staged(ctx)])
+    _closing_line(run, add)
+    wiki_rel = {k for k in set(before) | set(after) if before.get(k) != after.get(k) and k.startswith("wiki/")}
+    stray = sorted(k for k in wiki_rel if not k.startswith(("wiki/sessions/", "wiki/tasks/")))
+    add("wrote nothing into wiki/ but sessions/ and tasks/", not stray, stray)
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     gate = _load(ctx["scripts"], "_entry_checks.py", "entry_checks")
     cfgmod = _load(ctx["scripts"], "_wiki_config.py", "wiki_config")
@@ -745,11 +826,14 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     if case.get("kind") == "cards":
         _check_cards(case, before, after, run, ctx, add)
         return res
-    if case.get("kind") == "tasks-plain":
-        _check_tasks_plain(case, before, after, run, ctx, add)
-        return res
     if case.get("kind") == "cards-stack":
         _check_cards_stack(case, before, after, run, ctx, add)
+        return res
+    if case.get("kind") == "cards-full":
+        _check_cards_full(case, before, after, run, ctx, add)
+        return res
+    if case.get("kind") == "cards-first":
+        _check_cards_first(case, before, after, run, ctx, add)
         return res
 
     r = run["result"]
@@ -798,7 +882,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         else:
             add("seeded the first update block", len(updates) >= 1, updates)
 
-    # ---- Step 0.5: the three dashboards
+    # ---- Step 0.5: the dashboards (these cases have no task cards and no task to record)
     persona_dir = ctx["wiki"] / "sessions" / PERSONA
     handoff, task_md = persona_dir / "handoff.md", persona_dir / "task.md"
     active = ctx["wiki"] / "sessions" / "active-context.md"
@@ -814,35 +898,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             htext[wait_at:wait_at + 120] if wait_at >= 0 else "no WAITING ON YOU section")
         add("handoff.md reflects this session, not the seed",
             "RetryBudget" in htext or "retry" in htext.lower())
-    add("task.md written", task_md.is_file())
-    if task_md.is_file():
-        ttext = task_md.read_text(encoding="utf-8")
-        if exp.get("task_block"):
-            add("At a glance block kept", ttext.lstrip().startswith("## At a glance"), ttext[:60])
-            board = _load(ctx["scripts"], "wiki-tasks.py", "wiki_tasks").Board(ttext)
-            rows = {r["id"]: r for s in board.sections for r in s["rows"]}
-            fin, by = case.get("finished_task"), case.get("finished_by")
-            low = text.lower()
-            if by == "user":  # the user's word: marked done and removed, named in the summary, no question
-                add(f"task {fin} removed (the user said it is done)", fin not in rows, rows.get(fin))
-                add("no other task removed (adding one is allowed)", ({1, 2, 3, 4} - {fin}) <= set(rows), sorted(rows))
-                add("summary names the task and says it was removed",
-                    all(w in low for w in case["finished_words"]) and bool(REMOVED.search(text)), text[-300:])
-                add("summary does not ask whether to remove the user's done task",
-                    not _asks_about_removing(text, fin, "|".join(re.escape(w) for w in case["finished_words"])),
-                    text[-300:])
-            elif by == "session":  # the session's own finish: marked done, stays, the summary asks
-                add("no task removed", {1, 2, 3, 4} <= set(rows), sorted(rows))
-                add(f"task {fin} marked done", rows.get(fin, {}).get("status") == "done", rows.get(fin))
-                add("summary names the task", all(w in low for w in case["finished_words"]), text[-300:])
-                add("asks whether to remove it", bool(ASKS_REMOVE.search(text)))
-            else:
-                raise ValueError(f"{case['id']}: finished_by must be 'user' or 'session'")
-            if fin != 3:
-                add("other owner's task untouched", rows.get(3, {}).get("status") == "waiting", rows.get(3))
-            add("NOW and QUEUE kept below the block", "## NOW" in ttext and "## QUEUE" in ttext)
-        else:
-            add("task.md has NOW and QUEUE", "## NOW" in ttext and "## QUEUE" in ttext, ttext[:80])
+    add("no task.md written (the task list is the cards)", not task_md.exists())
     add("active-context.md written", active.is_file())
     if active.is_file():
         atext = active.read_text(encoding="utf-8")
@@ -930,8 +986,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     if exp.get("declines"):
         add("says nothing merits an entry", bool(DECLINES.search(text)))
     if exp.get("creates_dashboards"):
-        add("first run created all three dashboards",
-            handoff.is_file() and task_md.is_file() and active.is_file())
+        add("first run created both dashboards", handoff.is_file() and active.is_file())
 
     # ---- Step 5.5: the skill-suggestion box (2026-09-26)
     sug = case.get("suggestions") or {}
@@ -949,7 +1004,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("the already-sent suggestion left as it was",
             (box / pre_sent).is_file() and (box / pre_sent).read_text(encoding="utf-8") == sug["box"][pre_sent])
         add("the already-sent one listed as waiting for its owner, not asked about",
-            _near(text, "tdd-implementation", WAITING))
+            _near_or_same_line(text, "tdd-implementation", WAITING))
         if exp["suggestions"] == "ask":
             add("lists every suggestion in the box",
                 all(s in low for s in ("verifying-before-done", "wiki-lint", "frontend-design")))

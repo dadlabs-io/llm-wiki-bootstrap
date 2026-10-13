@@ -1,9 +1,9 @@
 """wrap-up's own never rules, as run checks (task #99; tests/skills/_trajectory.py).
 
-Each rule quotes the SKILL.md line it tests. "READ first" for task.md and active-context.md is not
-here: Claude Code's Write tool already refuses to overwrite a file the session has not read, and a
-first wrap-up creates both files, so a run check could only add false alarms (scored 2026-10-12:
-every hit was a first-run case that looked with ls or Glob).
+Each rule quotes the SKILL.md line it tests. Reading a dashboard before rewriting it is not here:
+Claude Code's Write tool already refuses to overwrite a file the session has not read, and a first
+wrap-up creates the files, so a run check could only add false alarms (scored 2026-10-12: every hit
+was a first-run case that looked with ls or Glob).
 """
 
 SHELL = ["Bash", "PowerShell"]

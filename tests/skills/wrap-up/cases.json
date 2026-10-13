@@ -27,7 +27,6 @@
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "commits",
@@ -51,7 +50,6 @@
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "commits",
@@ -67,42 +65,12 @@
       "author": "legacy"
     },
     {
-      "id": "at-a-glance",
-      "kind": "full",
-      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- I added `beacon/retry.py`, a `RetryBudget` dataclass. It measures a retry allowance in elapsed wall-clock time from the first attempt, exposes `start()`, `remaining()` and `exhausted()`, and never extends itself.\n- We chose to cap retries by total elapsed time rather than by attempt count. The alternative we rejected was exponential backoff with a maximum number of attempts: with a slow endpoint, 5 attempts at growing delays could keep one file alive for eleven minutes and stall the whole sync, and the number of attempts told us nothing about how long a user had been waiting. Elapsed time is the thing users actually notice.\n- We root-caused the duplicate-upload reports. The manifest entry was written before the remote confirmed the object, so a sync interrupted between the write and the confirmation resumed believing the object was already there; the next full pass uploaded it again. `beacon/manifest.py` now has `record_upload()`, called only after the remote returns an etag. Write-after-confirm.\n- We settled a rule while doing it: every remote call in beacon goes through the single `send()` seam in `beacon/transport.py`, with the sender injected. That is what let us exercise the retry paths with no network and no sleeps, and we want new code to follow it rather than reaching for an HTTP library directly.\n\nNothing else was touched.",
-      "seeds": {
-        "journal": "journal-existing.md",
-        "handoff": "handoff-existing.md",
-        "task": "task-at-a-glance.md",
-        "active": "active-context-existing.md"
-      },
-      "git": "commits",
-      "flags": {
-        "confirm_before_create": true,
-        "confirm_before_promote": true
-      },
-      "answer": "go",
-      "promote_answer": "no",
-      "finished_task": 1,
-      "finished_by": "user",
-      "finished_words": [
-        "retry cap"
-      ],
-      "expect": {
-        "min_staged": 3,
-        "journal": "append",
-        "task_block": true
-      },
-      "author": "eval-case-writer"
-    },
-    {
       "id": "auto-create",
       "kind": "full",
       "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- I added `beacon/retry.py`, a `RetryBudget` dataclass. It measures a retry allowance in elapsed wall-clock time from the first attempt, exposes `start()`, `remaining()` and `exhausted()`, and never extends itself.\n- We chose to cap retries by total elapsed time rather than by attempt count. The alternative we rejected was exponential backoff with a maximum number of attempts: with a slow endpoint, 5 attempts at growing delays could keep one file alive for eleven minutes and stall the whole sync, and the number of attempts told us nothing about how long a user had been waiting. Elapsed time is the thing users actually notice.\n- We root-caused the duplicate-upload reports. The manifest entry was written before the remote confirmed the object, so a sync interrupted between the write and the confirmation resumed believing the object was already there; the next full pass uploaded it again. `beacon/manifest.py` now has `record_upload()`, called only after the remote returns an etag. Write-after-confirm.\n- We settled a rule while doing it: every remote call in beacon goes through the single `send()` seam in `beacon/transport.py`, with the sender injected. That is what let us exercise the retry paths with no network and no sleeps, and we want new code to follow it rather than reaching for an HTTP library directly.\n\nNothing else was touched.",
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "commits",
@@ -128,7 +96,6 @@
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "commits",
@@ -153,7 +120,6 @@
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "commits",
@@ -178,7 +144,6 @@
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "commits",
@@ -200,7 +165,6 @@
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "session-changes",
@@ -225,7 +189,6 @@
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "session-changes",
@@ -251,7 +214,6 @@
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "session-changes",
@@ -277,7 +239,6 @@
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "commits",
@@ -312,7 +273,6 @@
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "commits",
@@ -347,7 +307,6 @@
       "seeds": {
         "journal": "journal-existing.md",
         "handoff": "handoff-existing.md",
-        "task": "task-plain.md",
         "active": "active-context-existing.md"
       },
       "git": "commits",
@@ -374,9 +333,143 @@
       },
       "author": "legacy"
     },
-    {"id": "cards-now-card-finished", "kind": "cards", "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user asked me to switch beacon's retry loop from an attempt count to the elapsed-time budget. I did: `beacon/transport.py` now stops retrying once `RetryBudget.exhausted()` (from `beacon/retry.py`) is true, and I ran the retry paths against the injected fake sender with no network and no sleeps; they behave as intended.\n- The user read the result and said that task, the switch to the elapsed-time budget, is finished.\n\nNothing else was touched: no other task moved, nothing new came up, and there was no decision or bug worth a wiki entry.", "seeds": {"journal": "journal-existing.md", "handoff": "handoff-existing.md", "task": "task-pointer.md", "active": "active-context-existing.md"}, "cards": "stack", "git": "commits", "flags": {"confirm_before_create": true, "confirm_before_promote": true}, "answer": "none", "expect": {"user_done": [2], "names": "elapsed[- ]time budget|retry[- ]loop|(?:task|card|#)\\s*0?2\\b"}, "author": "eval-case-writer"},
-    {"id": "cards-progress-and-new-task", "kind": "cards", "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user and I talked through the contributor doc on the network seam: it should cover the injected sender, the tests that run with no network and no sleeps, and the rule that every remote call goes through `send()` in `beacon/transport.py`. I wrote nothing yet; the outline is the progress, and the doc is still in progress.\n- The user then said: 'add a task to the task list for rotating the manifest file once it passes 1000 entries.' They did not mention a backlog.\n\nNo code was touched, no other task moved, and nothing here merits a wiki entry.", "seeds": {"journal": "journal-existing.md", "handoff": "handoff-existing.md", "task": "task-pointer.md", "active": "active-context-existing.md"}, "cards": "stack", "git": "commits", "flags": {"confirm_before_create": true, "confirm_before_promote": true}, "answer": "none", "expect": {"touched": {"1": "doing"}, "new_card": "manifest"}, "author": "eval-case-writer"},
-    {"id": "tasks-plain-finished-itself", "kind": "tasks-plain", "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user asked me to write the contributor doc on the network seam. I wrote it in full (`docs/network-seam.md`: the injected sender, running the retry paths with no network and no sleeps, and the rule that every remote call goes through `send()` in `beacon/transport.py`) and checked each claim against the code. The user has not said whether that task is done.\n\nNothing else was touched: no other task moved, nothing new came up, and there was no decision or bug worth a wiki entry.", "seeds": {"journal": "journal-existing.md", "handoff": "handoff-existing.md", "task": "task-at-a-glance.md", "active": "active-context-existing.md"}, "git": "commits", "flags": {"confirm_before_create": true, "confirm_before_promote": true}, "answer": "none", "expect": {"finished": 4, "names": "network[\\s-]+seam|contributor doc"}, "author": "eval-case-writer"},
-    {"id": "cards-finished-itself-and-new-cards", "kind": "cards-stack", "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user asked me to write the contributor doc on the network seam. I outlined it and wrote it in full (`docs/network-seam.md`: the injected sender, running the retry paths with no network and no sleeps, and the rule that every remote call goes through `send()` in `beacon/transport.py`) and checked each claim against the code. Both steps of that task are complete, so the task itself is finished by me. The user has not commented on it and has not said whether it is done.\n- The user also asked me to start on switching the retry loop to the elapsed-time budget. I got part way: `beacon/transport.py` now calls `RetryBudget.exhausted()`, but I have not yet exercised it against the injected fake sender, so that task is still in progress.\n- The user (Mark) then said: 'add a task to the task list for rotating the manifest file once it passes 1000 entries; I'd like you to take that one next session.' He did not mention a backlog.\n- Mark also said: 'put \"ask the vendor's account manager for the sandbox keys\" on the backlog; I'll do that one myself.'\n\nNothing else was touched: no other task moved, and there was no decision or bug worth a wiki entry.", "seeds": {"journal": "journal-existing.md", "handoff": "handoff-existing.md", "task": "task-pointer.md", "active": "active-context-existing.md"}, "cards": "stack-nolog", "git": "commits", "flags": {"confirm_before_create": true, "confirm_before_promote": true}, "answer": "none", "expect": {"finished": 1, "progressed": 2, "names": "network[\\s-]+seam|contributor doc"}, "author": "eval-case-writer"}
+    {
+      "id": "cards-now-card-finished",
+      "kind": "cards",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user asked me to switch beacon's retry loop from an attempt count to the elapsed-time budget. I did: `beacon/transport.py` now stops retrying once `RetryBudget.exhausted()` (from `beacon/retry.py`) is true, and I ran the retry paths against the injected fake sender with no network and no sleeps; they behave as intended.\n- The user read the result and said that task, the switch to the elapsed-time budget, is finished.\n\nNothing else was touched: no other task moved, nothing new came up, and there was no decision or bug worth a wiki entry.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-pointer.md",
+        "active": "active-context-existing.md"
+      },
+      "cards": "stack",
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "answer": "none",
+      "expect": {
+        "user_done": [
+          2
+        ],
+        "names": "elapsed[- ]time budget|retry[- ]loop|(?:task|card|#)\\s*0?2\\b"
+      },
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "cards-progress-and-new-task",
+      "kind": "cards",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user and I talked through the contributor doc on the network seam: it should cover the injected sender, the tests that run with no network and no sleeps, and the rule that every remote call goes through `send()` in `beacon/transport.py`. I wrote nothing yet; the outline is the progress, and the doc is still in progress.\n- The user then said: 'add a task to the task list for rotating the manifest file once it passes 1000 entries.' They did not mention a backlog.\n\nNo code was touched, no other task moved, and nothing here merits a wiki entry.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-pointer.md",
+        "active": "active-context-existing.md"
+      },
+      "cards": "stack",
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "answer": "none",
+      "expect": {
+        "touched": {
+          "1": "doing"
+        },
+        "new_card": "manifest"
+      },
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "cards-finished-itself-and-new-cards",
+      "kind": "cards-stack",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user asked me to write the contributor doc on the network seam. I outlined it and wrote it in full (`docs/network-seam.md`: the injected sender, running the retry paths with no network and no sleeps, and the rule that every remote call goes through `send()` in `beacon/transport.py`) and checked each claim against the code. Both steps of that task are complete, so the task itself is finished by me. The user has not commented on it and has not said whether it is done.\n- The user also asked me to start on switching the retry loop to the elapsed-time budget. I got part way: `beacon/transport.py` now calls `RetryBudget.exhausted()`, but I have not yet exercised it against the injected fake sender, so that task is still in progress.\n- The user (Mark) then said: 'add a task to the task list for rotating the manifest file once it passes 1000 entries; I'd like you to take that one next session.' He did not mention a backlog.\n- Mark also said: 'put \"ask the vendor's account manager for the sandbox keys\" on the backlog; I'll do that one myself.'\n\nNothing else was touched: no other task moved, and there was no decision or bug worth a wiki entry.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-pointer.md",
+        "active": "active-context-existing.md"
+      },
+      "cards": "stack-nolog",
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "answer": "none",
+      "expect": {
+        "finished": 1,
+        "progressed": 2,
+        "names": "network[\\s-]+seam|contributor doc"
+      },
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "cards-full-user-done",
+      "kind": "cards-full",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user asked me to switch beacon's retry loop from an attempt count to the elapsed-time budget. I did: `beacon/transport.py` now stops retrying once `RetryBudget.exhausted()` (from `beacon/retry.py`) is true, and I ran the retry paths against the injected fake sender with no network and no sleeps; they behave as intended.\n- We chose to cap retries by total elapsed time rather than by attempt count. The alternative we rejected was exponential backoff with a maximum number of attempts: with a slow endpoint, 5 attempts at growing delays could keep one file alive for eleven minutes and stall the whole sync, and the number of attempts told us nothing about how long a user had been waiting. Elapsed time is the thing users actually notice.\n- We root-caused the duplicate-upload reports. The manifest entry was written before the remote confirmed the object, so a sync interrupted between the write and the confirmation resumed believing the object was already there; the next full pass uploaded it again. `beacon/manifest.py` now has `record_upload()`, called only after the remote returns an etag. Write-after-confirm.\n- We settled a rule while doing it: every remote call in beacon goes through the single `send()` seam in `beacon/transport.py`, with the sender injected. That is what let us exercise the retry paths with no network and no sleeps, and we want new code to follow it rather than reaching for an HTTP library directly.\n- The user read the result and said that task, the switch to the elapsed-time budget, is finished.\n\nNothing else was touched: no other task moved and nothing new came up for the task list.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "task": "task-pointer.md",
+        "active": "active-context-existing.md"
+      },
+      "cards": "stack",
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "answer": "go",
+      "promote_answer": "no",
+      "expect": {
+        "min_staged": 3,
+        "user_done": [
+          2
+        ],
+        "names": "elapsed[- ]time budget|retry[- ]loop|(?:task|card|#)\\s*0?2\\b",
+        "keeps": {
+          "2": {
+            "fields": [
+              "title",
+              "owner",
+              "priority",
+              "tags",
+              "created"
+            ],
+            "body": [
+              "Replace the attempt-count limit in the upload retry loop",
+              "Draft `RetryBudget` in `beacon/retry.py`",
+              "Use it in the retry loop",
+              "Exercise it against the injected fake sender"
+            ]
+          }
+        }
+      },
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "cards-first-task-no-folder",
+      "kind": "cards-first",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user (Mark) said: 'add a task to the task list for rotating the manifest file once it passes 1000 entries; I'd like you to take that one next session.' The project has no task list yet. He did not mention a backlog.\n\nNo code was touched, no decision was settled, and nothing here merits a wiki entry.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "answer": "none",
+      "expect": {
+        "new_card": "manifest"
+      },
+      "author": "eval-case-writer"
+    }
   ]
 }

@@ -1,8 +1,8 @@
 ---
 name: wrap-up
-description: "Crystallize the current session's work into the project wiki AND refresh the working-memory dashboards. ALWAYS (1) upserts a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ so the \"what we did\" record builds as you go, (2) refreshes the mutable working-memory dashboards — sessions/<persona>/handoff.md + task.md + sessions/active-context.md (the resume pointer; the memory-bank replacement), and (3) extracts durable knowledge — components/decisions/patterns/bugs — staged to _inbox/proposed/ then promoted to wiki/project/<category>/ (gated by two per-notebook booleans: `confirm_before_create` for Step 2's filing decision, `confirm_before_promote` for Step 6's promotion decision). With --auto-commit it commits the session's work at the end, with --auto-push it also pushes (or the notebook's wrap_up_commit setting says which by default), and every wrap-up ends on one closing line (\"WRAP-UP COMPLETE: committed and pushed\" or what is left). This is the ONE session-close command — it absorbs the retired /upd-docs. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says \"wrap up\", \"wrap-up\", \"/wrap-up\", \"wrap this session\", \"document what we did\", \"crystallize this session\", \"save this work\", \"save progress\", \"save state\", \"update docs\", \"upd-docs\", \"wrap up and commit\", \"wrap up and push\"."
-last_reviewed: 2026-09-26
-review_after: 2026-12-26
+description: "Crystallize the current session's work into the project wiki AND refresh the working-memory dashboards. ALWAYS (1) upserts a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ so the \"what we did\" record builds as you go, (2) refreshes the mutable working-memory dashboards — sessions/<persona>/handoff.md + the task cards (wiki/tasks/) + sessions/active-context.md (the resume pointer; the memory-bank replacement), and (3) extracts durable knowledge — components/decisions/patterns/bugs — staged to _inbox/proposed/ then promoted to wiki/project/<category>/ (gated by two per-notebook booleans: `confirm_before_create` for Step 2's filing decision, `confirm_before_promote` for Step 6's promotion decision). With --auto-commit it commits the session's work at the end, with --auto-push it also pushes (or the notebook's wrap_up_commit setting says which by default), and every wrap-up ends on one closing line (\"WRAP-UP COMPLETE: committed and pushed\" or what is left). This is the ONE session-close command — it absorbs the retired /upd-docs. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says \"wrap up\", \"wrap-up\", \"/wrap-up\", \"wrap this session\", \"document what we did\", \"crystallize this session\", \"save this work\", \"save progress\", \"save state\", \"update docs\", \"upd-docs\", \"wrap up and commit\", \"wrap up and push\"."
+last_reviewed: 2026-10-12
+review_after: 2027-01-10
 reviewed_for_model: claude-opus-5-5
 ---
 
@@ -86,7 +86,7 @@ then do 1, 2, 3", so the next session continues with ZERO inference. Refreshed e
 
 ### Step 0.5 — Refresh the working-memory dashboards (ALWAYS)
 
-The three mutable dashboards that answer "where do I resume". All are written **directly** to `sessions/` (never staged) and are exempt from the curated pipeline — lint, map, index, reciprocate and refresh skip `sessions/` like `_inbox/`; qmd still indexes it. `mkdir -p <wiki>/sessions/<persona>` as needed.
+The three mutable dashboards that answer "where do I resume". All are written **directly** (never staged; the task cards through their script) and are exempt from the curated pipeline — lint, map, index, reciprocate and refresh skip `sessions/` like `_inbox/`; qmd still indexes it. `mkdir -p <wiki>/sessions/<persona>` as needed.
 
 A wrap-up must never leave the resume pointer stale: a fresh session reads these, not the dated journals, which it would have to glob for.
 
@@ -107,29 +107,14 @@ CONTEXT FOR CONTINUATION: [what the next session needs; gotchas; references]
 
 **`⚠️ WAITING ON YOU` is always the last section**, even when nothing is waiting: the user reads from the bottom up and looks there first. It holds only what needs the user. Work for the next session goes in PENDING.
 
-**(b) `sessions/<persona>/task.md` — READ first, then update in place.** Never blind-overwrite.
-
-```
-## NOW
-[Single thing being actively worked — or "Awaiting next task"]
-
-## QUEUE
-1. [Next priority]
-2. [After that]
-3. [Backlog]
-```
-
-Promote the next QUEUE item to NOW as work completes.
-
-**When `task.md` starts with `## At a glance`** (the `/task-list` block, above NOW), keep it current **through the script, never by hand**: `wiki-tasks.py done <N> --next "<what happened>"` for each task finished this session, `add "<task>" --owner <section>` for work taken on or left for the user, `set <N> --status <s> --next "<text>"` where one moved.
+**(b) The task cards (`wiki/tasks/`, the `/task-list` stack) — through the script, never by hand.** `done <N> --next "<what happened>"` for each task finished this session, `add "<task>" --owner <owner>` for work taken on or left for the user, `set <N> --status <s> --next "<text>"` where one moved, and log each card this session worked on, once: `log <N> "<what happened>"`. NOW is the first card in `ORDER.md` not done; when it is finished the next one becomes NOW, and `order <N> --top` changes that order. A project with no `tasks/ORDER.md` yet is left without one unless the user asked this session for a task to be added: then that `add` starts the list. Follow-up work nobody asked to list goes in the handoff's PENDING, not on a new list.
 
 ```bash
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> --next "<what happened>"
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py log <N> "<what happened>"
 ```
 
-**When the wiki has `tasks/ORDER.md`** (the project keeps one card per task; 2026-10-10), there is no NOW / QUEUE to write: `task.md` is only a pointer, so leave it. Use the same commands on the cards (`done`, `add`, `set`), and log each card this session worked on, once: `wiki-tasks.py log <N> "<what happened>"`. When the NOW card is finished, the next card in `ORDER.md` becomes NOW; to change that order, use `wiki-tasks.py order <N> --top`.
-
-**`remove` only on the user's word.** In Step 5's summary, name every task by its title as well as its number ("#4, Rotate the API keys"), never the number alone. A task the user said this session is done is done on their word: if it is still on the list, `done` it and `remove <N> --confirmed`, and name it in Step 5's summary as removed. A task you finished yourself is marked done (`done <N>`) though the user has not said so: never leave it at `doing` waiting for their word, which is needed only to remove it. Name each one in Step 5's summary and ask there whether to remove them (the user checks nothing was missed) — the ask belongs in the report you are already writing, not left to memory. A `task.md` without the block is left without one.
+**`remove` only on the user's word.** In Step 5's summary, name every task by its title as well as its number ("#4, Rotate the API keys"), never the number alone. A task the user said this session is done is done on their word: if it is still on the list, `done` it and `remove <N> --confirmed`, and name it in Step 5's summary as removed. A task you finished yourself is marked done (`done <N>`) though the user has not said so: never leave it at `doing` waiting for their word, which is needed only to remove it. Name each one in Step 5's summary and ask there whether to remove them (the user checks nothing was missed) — the ask belongs in the report you are already writing, not left to memory.
 
 **(c) `sessions/active-context.md` — update ONLY your persona's lines** (Status / Recent / Next) in this cross-persona dashboard. Do NOT touch another persona's section; do NOT rewrite the file. Skip only if your section already describes what you are doing.
 
@@ -228,7 +213,7 @@ If the session was light, skip it and **omit `raw_path`** — `tier: self` alrea
 ```
 Wrapped up:
   Session journal updated: wiki/sessions/main/2026-05/2026-05-12-<session-id>.md  (Update 3)
-  Working memory refreshed: sessions/main/{handoff,task}.md + active-context.md
+  Working memory refreshed: sessions/main/handoff.md + active-context.md + task cards
   Task list: #1 done, #4 added — remove the done one? (your call)
   3 entries staged to _inbox/proposed/ (→ wiki/project/<category>/ on promote):
   - troubleshooting/oauth-re-prompt-root-cause-2026-05-12.md
@@ -237,7 +222,7 @@ Wrapped up:
 Raw snapshot: raw/sessions/2026-05-12-drive-cleanup-session.md
 ```
 
-With `confirm_before_create: false`, Step 2's table goes above this report. Include the task-list line whenever the list has an At a glance block: it is where the "remove the done ones?" question gets asked. Then Step 5.5, then straight to Step 6 — never end on "run /wiki-promote later".
+With `confirm_before_create: false`, Step 2's table goes above this report. Include the task-list line whenever a card changed: it is where the "remove the done ones?" question gets asked. Then Step 5.5, then straight to Step 6 — never end on "run /wiki-promote later".
 
 ### Step 5.5 — The skill-suggestion box (only when it has files)
 
@@ -310,7 +295,7 @@ Items 1–4 run **only when asked**: a typed `--auto-commit` / `--auto-push`, or
    - `✅ WRAP-UP COMPLETE: committed and pushed ✅` (push asked for, every commit pushed)
    - `✅ WRAP-UP COMPLETE: committed, not pushed ✅` (commit asked for)
    - `✅ WRAP-UP COMPLETE: nothing committed ✅` (neither asked for; Step 6's promote commit, if any, is named above it)
-   - `⚠️ WRAP-UP INCOMPLETE: <what is left, e.g. "push rejected in <repo>"> ⚠️` (a commit or push failed, or the user still has to answer something; an open skill suggestion does not count, it waits in its box)
+   - `⚠️ WRAP-UP INCOMPLETE: <what is left, e.g. "push rejected in <repo>"> ⚠️` (a commit or push failed, or the user still has to answer something; an open skill suggestion does not count, it waits in its box; nor does Step 5's question whether to remove a task you finished yourself: its card stays marked done above NOW, and the next session asks again)
 
    Nothing follows it. A wrap-up that stops to wait for an answer (Step 2's table, Step 6's prompt) has not reached Step 7 and prints no closing line.
 

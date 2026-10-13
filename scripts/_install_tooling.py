@@ -74,7 +74,7 @@ TRAVEL_SCRIPTS = [
     "wiki-search-rerank.py",  # truth-status bucket sort over qmd JSON (search spec surface 1); shipped 2026-09-08
     "wiki-session-start.py",  # SessionStart hook: prints the project's resume files, silent elsewhere (2026-09-14)
     "wiki-transcribe.py",  # local Whisper speech-to-text for media without captions: reels, podcasts (2026-10-05)
-    "wiki-tasks.py",  # the At a glance task list in sessions/<persona>/task.md, behind /task-list (2026-09-15)
+    "wiki-tasks.py",  # the task cards in wiki/tasks/ (+ tasks/ORDER.md), behind /task-list (cards-only since 2026-10-12)
     "wiki-cycle-scope.py",  # what /wiki-cycle's semantic lint, claims and checker read (2026-09-24)
     "wiki-triage.py",  # intake buckets + routing pending tickets, behind /wiki-triage (2026-09-24)
     "wiki-update.py",

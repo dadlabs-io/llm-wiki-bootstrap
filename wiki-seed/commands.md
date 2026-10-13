@@ -21,7 +21,7 @@ Canonical reference for the LLM-wiki framework. Each command works inside Claude
 | `/wiki-cycle` | Batch ingest — discover, ingest (staged for your review), lint, backlinks and indexes, morning report, commit. `--full` adds semantic lint, claims, synthesis and refresh, and promotes. The daily/weekly command for `research/`. |
 | `/wiki-search "<query>"` | Hybrid BM25 + vector + LLM-reranked search across your wiki |
 | `/wrap-up` | End of session: updates the session journal and resume dashboards, proposes durable entries (you confirm), stages them, and offers to promote them. |
-| `/task-list` | The project's task list (top of `task.md`), one short row per task with its details kept apart: show it ("with details", or "details on 25", for the rest), add a task, mark one done, move one to the backlog (it keeps its owner) and back, remove one only on your word. Plain speech works as well: "add a task …", "move 5 to the backlog", "delete task 4", "what's on my list". A project on task cards (one file per task in `wiki/tasks/`, in the order `tasks/ORDER.md` sets) takes the same requests, plus reordering ("put 5 first") and a dated note on a card. |
+| `/task-list` | The project's task list: one card per task in `wiki/tasks/`, worked in the order `tasks/ORDER.md` sets (NOW is the first not done). Show it ("with details", or "details on 25", for a whole card), add a task, mark one done, reorder ("put 5 first"), add a dated note to a card, move one to the backlog (it keeps its owner) and back, remove one only on your word. Plain speech works as well: "add a task …", "move 5 to the backlog", "delete task 4", "what's on my list". |
 | `/wiki-promote` | Walk staged entries in `_inbox/proposed/` and accept/reject each one; promotion also brings the search index up to date |
 | `/wiki-verify` | Mark an entry verified — entries never self-certify |
 | `/wiki-rollback` | Roll an entry back to its verified ancestor |
@@ -44,7 +44,7 @@ These are listed for completeness. `/wiki-cycle` invokes them in order; you can 
 ## Daily rhythm
 
 **For the `project/` half (what you build):**
-1. Start a session — at startup and after `/clear` the SessionStart hook lists the resume files (`sessions/active-context.md`, then `sessions/<persona>/handoff.md` and `task.md`, each if present; a project on task cards gets `tasks/ORDER.md` and the NOW card instead of `task.md`) and the session reads them before its first reply; the Resuming section in CLAUDE.md is the fallback where no hook is installed; the `_MAP.md` is always-loaded via CLAUDE.md
+1. Start a session — at startup and after `/clear` the SessionStart hook lists the resume files (`sessions/active-context.md`, then `sessions/<persona>/handoff.md`, `tasks/ORDER.md` and the NOW card, each if present) and the session reads them before its first reply; the Resuming section in CLAUDE.md is the fallback where no hook is installed; the `_MAP.md` is always-loaded via CLAUDE.md
 2. Code + decide + investigate
 3. `/wrap-up` at end — distills the session
 4. Accept wrap-up's promote offer, or run `/wiki-promote --review` later for anything left staged
@@ -62,7 +62,7 @@ These are listed for completeness. `/wiki-cycle` invokes them in order; you can 
 - [`wiki-update`](./skills/wiki-update.md) — `/wiki-update` in depth (direct vs staged, the gate, dedup)
 - [`wiki-cycle`](./skills/wiki-cycle.md) — `/wiki-cycle` orchestrator + mode flags
 - [`wrap-up`](./skills/wrap-up.md) — `/wrap-up` categories + safety
-- [`task-list`](./skills/task-list.md) — `/task-list`: the owner tables, the backlog, the two rules, what it runs for each phrase
+- [`task-list`](./skills/task-list.md) — `/task-list`: the cards, the order and NOW, the backlog, the two rules, what it runs for each phrase
 - [`wiki-search`](./skills/wiki-search.md) — `/wiki-search` ranking model
 - [`drive-setup`](./drive-setup.md) — Google Drive OAuth one-time setup
 - [`install`](./install.md) — installing the framework on a fresh machine

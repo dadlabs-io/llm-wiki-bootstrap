@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
 _task_cards.py — the task stack: one card per task, an order file (task #89, agent-builder's
-design 2026-10-10, agreed with Mark; agent-builder-bootstrap is the pilot).
+design 2026-10-10, agreed with Mark; agent-builder-bootstrap was the pilot). Every project's
+task list since 2026-10-12 (task #90 removed the older sessions/<persona>/task.md list).
 
-A project is on cards when its wiki has `tasks/ORDER.md` (detection, never a setting): the
-migration creates it, and every other project stays on sessions/<persona>/task.md.
+A project has a list when its wiki has `tasks/ORDER.md` (detection, never a setting): the first
+`wiki-tasks.py add` creates it.
 
   wiki/tasks/<id>-<slug>.md   one card: YAML fields, then the body (details, a **Steps**
                               checklist, a dated **Log**), any length. Found by its `<id>-`
@@ -12,7 +13,8 @@ migration creates it, and every other project stays on sessions/<persona>/task.m
   wiki/tasks/ORDER.md         `<!-- next-id: N -->`, then one `- <id> <title>` line per
                               `list: current` card, in working order. The id is the key; the
                               title is refreshed from the card whenever the script writes.
-  wiki/tasks/archive/         the old task.md's history, which no startup reads.
+  wiki/tasks/archive/         (in projects that moved from task.md) that list's history, which
+                              nothing reads.
 
 NOW is the first card in ORDER.md whose status is not done. A card is never deleted, so a
 number is never reused: `list: done` is the user's word that it is finished with.
@@ -38,7 +40,6 @@ import yaml
 from _atomic_io import atomic_write_text
 
 ORDER_NAME = "ORDER.md"
-ARCHIVE_DIR = "archive"
 FIELDS = ("id", "title", "owner", "list", "status", "next", "waiting_on", "priority", "tags", "created",
           "updated", "links")
 REQUIRED = ("id", "title", "owner", "list", "status", "created", "updated")
@@ -74,7 +75,7 @@ def slugify(title: str) -> str:
 
 
 def card_status(s: str) -> str:
-    """A status word, with task.md's words mapped: `to do` -> ready. `parked` is not a status on cards."""
+    """A status word, `to do` read as ready. `parked` is not a status: the backlog is."""
     s = " ".join(str(s).lower().split())
     s = {"to do": "ready", "todo": "ready", "to-do": "ready"}.get(s, s)
     if s == "parked":
@@ -202,7 +203,6 @@ class Stack:
                 if m:
                     self.order.append(int(m.group(1)))
         self.dirty: set[int] = set()
-        self.virtual = False  # a stack built in memory (the migration): ORDER.md is not written yet
 
     # --- lookups
     def by_id(self) -> dict[int, Card]:
@@ -280,7 +280,7 @@ class Stack:
         ids = [c.id for c in self.cards if c.id is not None]
         if ids and self.next_id <= max(ids):
             errs.append(f"rule 6: next-id {self.next_id} is not above the highest card id {max(ids)}")
-        if not self.virtual and not self.order_path.is_file():
+        if not self.order_path.is_file():
             errs.append(f"rule 1: {self.order_path} does not exist")
         return errs
 

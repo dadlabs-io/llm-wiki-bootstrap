@@ -1,32 +1,22 @@
 """task-list test suite: sandbox, prompts and checks for run_skill_test.py.
 
-Every case starts from a fresh copy of its seed task.md (prompt() writes it just
-before the session starts), so no case depends on another's leftovers or order.
-The seeds under fixtures/ are written for the tests. Each check reads the list
-with the script's own parser and compares it with the seed.
+Every case starts from a fresh copy of its seed cards folder (prompt() writes it
+just before the session starts), so no case depends on another's leftovers or order.
+The seeds under fixtures/ are written for the tests. Each check reads the cards and
+ORDER.md with its own small parser and compares them with the seed. The task.md
+list and its cases went with task #90 (2026-10-12): every project is on cards.
 """
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import re
 import shutil
-import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 NOTEBOOK = "skilltest-tasks"
 PERSONA = "main"
-DEFAULT_SEED = "task-with-block.md"
-
-
-def _tasks(scripts: Path):
-    sys.path.insert(0, str(scripts))
-    spec = importlib.util.spec_from_file_location("wiki_tasks", scripts / "wiki-tasks.py")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
 
 
 def prepare_fixtures(repo: Path, refresh: bool = False) -> list[dict]:
@@ -75,16 +65,14 @@ The user said: """
 
 def prompt(case: dict, ctx: dict) -> str:
     tasks_dir = ctx["notebook"] / "wiki" / "tasks"
-    if tasks_dir.exists():  # a project is on cards exactly when wiki/tasks/ORDER.md exists: never leave one behind
+    if tasks_dir.exists():  # a project has a list exactly when wiki/tasks/ORDER.md exists: never leave one behind
         shutil.rmtree(tasks_dir)
-    if case.get("tasks_seed"):  # a card project: the seed folder becomes wiki/tasks/, and there is no task.md
+    if ctx["task_md"].exists():
+        ctx["task_md"].unlink()
+    if case.get("tasks_seed"):  # the seed folder becomes wiki/tasks/; with no seed the project has no list yet
         shutil.copytree(HERE / "fixtures" / case["tasks_seed"], tasks_dir)
-        if ctx["task_md"].exists():
-            ctx["task_md"].unlink()
-        if case.get("pointer"):  # a leftover pointer beside the cards (card projects only)
-            shutil.copy2(HERE / "fixtures" / case["pointer"], ctx["task_md"])
-    else:
-        shutil.copy2(HERE / "fixtures" / case.get("seed", DEFAULT_SEED), ctx["task_md"])  # a fresh list per case
+    if case.get("pointer"):  # a leftover task.md beside the cards: a pointer
+        shutil.copy2(HERE / "fixtures" / case["pointer"], ctx["task_md"])
     return HEADER.format(skill=ctx["skill_dir"].as_posix(), notebook=NOTEBOOK, nb=ctx["notebook"].as_posix(),
                          sandbox=ctx["sandbox"].as_posix()) + case["say"]
 
@@ -543,145 +531,163 @@ def check_card_details_replace(case: dict, before: dict, after: dict, run: dict,
     return res
 
 
-def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
-    if case["kind"] == "card-details-add":
-        return check_card_details_add(case, before, after, run, ctx)
-    if case["kind"] == "card-details-replace":
-        return check_card_details_replace(case, before, after, run, ctx)
-    if case["kind"] == "details-replace-guarded":  # the task.md case: the old checks minus the Write/Edit-only row; goes with task #90
-        return [r for r in check(dict(case, kind="details-replace"), before, after, run, ctx)
-                if not r["name"].startswith("the list was edited only through the script")]
-    if case["kind"] in CARD_KINDS:
-        return check_cards(case, before, after, run, ctx)
-    if case["kind"] in CARD_KINDS_SELF:
-        return check_cards_self(case, before, after, run, ctx)
-    mod = _tasks(ctx["scripts"])
+# ---- gaps on cards (show, add, first add, delete, waiting, backlog, owner, old list); reads files and the reply ----
+CARD_KINDS_MORE = ("card-show", "card-add", "card-first", "card-delete", "card-waiting",
+                   "card-backlog", "card-owner", "card-old-list")
+OLD_LIST_WORDS = re.compile(r"at a glance|task\.md|\b(old|existing|legacy|previous|leftover|earlier)\b[^.\n]{0,30}\blist\b", re.I)
+
+
+def check_cards_more(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     res = []
 
     def add(name, ok, detail=""):
         res.append({"name": name, "ok": bool(ok), "detail": str(detail)[:300]})
 
-    def board(text):
-        b = mod.Board(text)
-        m = mod.MARKER_RE.search(text)
-        # a Backlog row carries its own owner; any other row's owner is its section
-        return b, {r["id"]: {**r, "section": s["name"], "owner": r.get("owner", s["name"])}
-                   for s in b.sections for r in s["rows"]}, (int(m.group(1)) if m else None)
-
-    r = run["result"]
+    r, reply, kind = run["result"], run["text"], case["kind"]
     add("session completed", r.get("subtype") == "success" and not r.get("is_error"),
         r.get("subtype") or run.get("stderr_tail") or "no result event")
     denials = r.get("permission_denials") or []
     add("no permission denials", not denials, [d.get("tool_name") if isinstance(d, dict) else d for d in denials])
 
-    task_md = ctx["task_md"]
-    rel = task_md.relative_to(ctx["notebook"]).as_posix()
-    def seeded_away(k):  # a leftover wiki/tasks/ file that prompt() deleted when it seeded this case, not the session
-        return k.startswith("wiki/tasks/") and k in before and k not in after
+    nb = ctx["notebook"]
+    tasks = nb / "wiki" / "tasks"
+    rel_task_md = ctx["task_md"].relative_to(nb).as_posix()
+    touched = sorted(k for k in set(before) | set(after)
+                     if k != rel_task_md and not k.startswith("wiki/tasks/") and before.get(k) != after.get(k))
+    add("nothing else in the notebook touched", not touched, touched)
 
-    others = sorted(k for k in set(before) | set(after)
-                    if k != rel and not seeded_away(k) and before.get(k) != after.get(k))
-    add("no other file in the notebook touched", not others, others)
-
-    seed_text = (HERE / "fixtures" / case.get("seed", DEFAULT_SEED)).read_text(encoding="utf-8")
-    now_text = task_md.read_text(encoding="utf-8") if task_md.is_file() else ""
-    seed_b, seed_rows, seed_marker = board(seed_text)
-    _, now_rows, now_marker = board(now_text)
-    text = run["text"].lower()
-    kind, target = case["kind"], case.get("task")
-
-    def changed(except_ids):
-        return sorted(i for i in set(seed_rows) | set(now_rows)
-                      if i not in except_ids and seed_rows.get(i) != now_rows.get(i))
-
-    if kind == "show":
-        add("task.md unchanged", now_text == seed_text)
-        for w in case["mentions"]:
-            add(f"reply shows '{w}'", w.lower() in text)
-        for w in case.get("absent", []):  # the overview only: details stay out unless asked for
-            add(f"reply leaves out the detail '{w}'", w.lower() not in text)
+    if kind == "card-old-list":  # an old "At a glance" task.md and no cards: refused, nothing written, the user told
+        seed_text = (HERE / "fixtures" / case["pointer"]).read_text(encoding="utf-8").replace("\r\n", "\n")
+        tm = ctx["task_md"]
+        now_text = tm.read_text(encoding="utf-8").replace("\r\n", "\n") if tm.is_file() else None
+        made = sorted(p.relative_to(tasks).as_posix() for p in tasks.rglob("*") if p.is_file()) if tasks.exists() else []
+        add("nothing created under wiki/tasks/ (no ORDER.md, no card)", not made, made)
+        add("the old task.md is unchanged", now_text == seed_text, (now_text or "missing")[:200])
+        add("the reply tells the user an old list is in the way", bool(OLD_LIST_WORDS.search(reply)), reply[-300:])
         return res
 
-    if kind == "add":
-        new = sorted(set(now_rows) - set(seed_rows))
-        add("exactly one new task", len(new) == 1, new)
-        if len(new) == 1:
-            row = now_rows[new[0]]
-            add(f"numbered {seed_b.next_id}, the next free number", new[0] == seed_b.next_id, new[0])
-            for w in case["words"]:
-                add(f"task text has '{w}'", w in row["task"].lower(), row["task"])
-            add("status is 'to do'", row["status"] == "to do", row["status"])
-            if case.get("short"):  # a long request: a short row, the rest in its details
-                add(f"task cell at most {mod.TASK_MAX} characters", len(row["task"]) <= mod.TASK_MAX, row["task"])
-                details = " ".join(mod.Board(now_text).details.get(new[0], [])).lower()
-                for w in case.get("details_words", []):
-                    add(f"details have '{w}'", w in details, details[:200])
-        add("the script wrote it (next-id marker advanced)", now_marker == seed_b.next_id + 1, now_marker)
-        add("other tasks untouched", not changed(set(new)), changed(set(new)))
-        if case.get("seed") == "task-no-block.md":
-            add("block created above NOW", now_text.lstrip().startswith(mod.HEADING), now_text[:80])
-            add("NOW and QUEUE kept word for word", seed_text.strip() in now_text)
+    seed = case.get("tasks_seed")
+    if seed:
+        s_cards, s_order, s_next, s_others, _ = _card_state(HERE / "fixtures" / seed)
+        s_order_text = (HERE / "fixtures" / seed / "ORDER.md").read_text(encoding="utf-8").replace("\r\n", "\n")
+    else:
+        s_cards, s_order, s_next, s_others, s_order_text = {}, [], None, [], ""
+    cards, order, next_id, others, has_order = _card_state(tasks)
+    order_text = (tasks / "ORDER.md").read_text(encoding="utf-8").replace("\r\n", "\n") if has_order else ""
+    add("ORDER.md there", has_order)
+    add("the six rules hold", not _card_rules(cards, order, next_id), _card_rules(cards, order, next_id))
+    add("task.md not created (a card project has none)", not ctx["task_md"].exists())
+
+    def file_of(cs, i):
+        return next((n for n in cs if int(n.split("-")[0]) == i), None)
+
+    def others_same(skip):  # every seed card except `skip` is exactly as seeded, fields and body
+        return sorted(int(n.split("-")[0]) for n in s_cards
+                      if int(n.split("-")[0]) != skip and cards.get(n) != s_cards[n])
+
+    if kind == "card-show":  # read-only: cards and ORDER.md as seeded; details only when asked
+        add("nothing written: cards, ORDER.md and counter as seeded",
+            cards == s_cards and others == s_others and order_text == s_order_text and next_id == s_next)
+        rt = _toks(reply)
+        low = reply.lower()
+        if case.get("order_words"):
+            pos = [(m.start() if (m := re.search(w, low)) else -1) for w in case["order_words"]]
+            add("the reply mentions every current task", all(p >= 0 for p in pos), pos)
+            add("the current tasks come in ORDER.md order", all(p >= 0 for p in pos) and pos == sorted(pos), pos)
+        for w in case.get("backlog_words", []):
+            add("the reply mentions the backlog task", bool(re.search(w, low)), reply[-300:])
+        for ph in case.get("hidden", []):
+            add(f"details not shown ('{ph}')", _find_seq(rt, _toks(ph)) < 0, reply[:200])
+        for ph in case.get("shown", []):
+            add(f"details shown ('{ph}')", _find_seq(rt, _toks(ph)) >= 0, reply[:200])
         return res
 
-    if kind == "done":  # the user said "task N is done": marked done and removed, without asking
-        add(f"task {target} removed from the list", target not in now_rows, now_rows.get(target))
-        add("reply does not ask whether to remove it", not _asks_removal(run["text"]), run["text"][-300:])
-        add("reply names the task, not just its number", all(w in text for w in case["words"]), case["words"])
-        add("other tasks untouched", not changed({target}), changed({target}))
+    if kind in ("card-add", "card-first"):
+        new_id = case.get("new_id", 1)
+        new = [n for n in cards if n not in s_cards]
+        nname = file_of(cards, new_id)
+        add("exactly one new card file, with the next id", len(new) == 1 and nname in new, sorted(new))
+        add("every earlier card is exactly as seeded", not others_same(None), others_same(None))
+        f, body = cards.get(nname, ({}, "")) if nname else ({}, "")
+        add("the new card is on the current list, status ready", f.get("list") == "current" and f.get("status") == "ready", f)
+        add(f"ORDER.md is the old order with {new_id} last", order == s_order + [new_id], order)
+        add(f"next-id advanced to {new_id + 1}", next_id == new_id + 1, next_id)
+        add("title is at most 70 characters and not empty", 0 < len(f.get("title", "")) <= 70, f.get("title"))
+        add("next is at most 60 characters", len(f.get("next", "")) <= 60, f.get("next"))
+        add("the title carries the task's subject", bool(re.search(case["title_re"], f.get("title", ""), re.I)), f.get("title"))
+        bt = _toks(body)
+        for w in case.get("body_words", []):
+            add(f"the long remainder's word '{w}' landed in the card's details", w in bt, body[:200])
         return res
 
-    if kind == "delete":
-        add(f"task {target} removed", target not in now_rows)
-        add("no other task removed or changed", not changed({target}), changed({target}))
-        add("numbering kept (next-id marker unchanged)", now_marker == seed_marker, now_marker)
+    target = case["task"]
+    tname = file_of(s_cards, target)
+    s_f, s_body = s_cards[tname]
+    f, body = cards.get(tname, ({}, ""))
+    add(f"task {target}: its card file is kept", tname in cards, sorted(cards))
+    add("no card added or removed", sorted(cards) == sorted(s_cards) and others == s_others, sorted(set(cards) ^ set(s_cards)))
+    add("no other card changed at all", not others_same(target), others_same(target))
+    add(f"task {target}: nothing in its details, Steps or Log lost", not _lost_lines(s_body, body), _lost_lines(s_body, body))
+
+    def same_but(*skip):
+        keys = set(s_f) | set(f)
+        return all(f.get(k) == s_f.get(k) for k in keys if k not in skip + ("updated",))
+
+    if kind == "card-delete":  # the user's word: done, off ORDER.md, card kept, no removal question
+        add(f"task {target}: list is done", f.get("list") == "done", f)
+        add(f"task {target} no longer in ORDER.md, the rest in their old order",
+            order == [i for i in s_order if i != target], order)
+        add("the counter did not go back", next_id is not None and s_next is not None and next_id >= s_next, next_id)
+        add(f"task {target}: id, title, owner and created unchanged",
+            all(f.get(k) == s_f.get(k) for k in ("id", "title", "owner", "created")), f)
+        add("reply does not ask whether to remove it", not _asks_removal(reply), reply[-300:])
         return res
 
-    if kind == "set":
-        row = now_rows.get(target)
-        for field, val in case["expect"].items():
-            if field == "next_has":
-                add(f"next step mentions '{val}'", bool(row) and val in row["next"].lower(), row)
-            else:
-                add(f"{field} is '{val}'", bool(row) and row[field] == val, row)
-        add("other tasks untouched", not changed({target}), changed({target}))
+    if kind == "card-waiting":
+        wt = _toks(f.get("waiting_on", ""))
+        add(f"task {target}: status waiting", f.get("status") == "waiting", f)
+        for w in case["waiting_words"]:
+            add(f"task {target}: waiting_on names what it waits on ('{w}')", w in wt, f.get("waiting_on"))
+        add(f"task {target}: owner and list unchanged", f.get("owner") == s_f.get("owner") and f.get("list") == s_f.get("list"), f)
+        add(f"task {target} is still in ORDER.md, once, and the others in their old order",
+            order.count(target) == 1 and [i for i in order if i != target] == [i for i in s_order if i != target], order)
+        add(f"task {target}: id, title, priority, tags, created unchanged",
+            all(f.get(k) == s_f.get(k) for k in ("id", "title", "priority", "tags", "created")), f)
         return res
 
-    if kind == "done-named":  # the user said it is done, in words rather than a number: removed, without asking
-        add(f"task {target} removed from the list", target not in now_rows, now_rows.get(target))
-        add("reply does not ask whether to remove it", not _asks_removal(run["text"]), run["text"][-300:])
-        add("reply names the task, not just its number", all(w in text for w in case["words"]), case["words"])
-        add("other tasks untouched", not changed({target}), changed({target}))
+    if kind == "card-backlog":
+        to = case["to"]
+        add(f"task {target}: list is {to}", f.get("list") == to, f)
+        add(f"task {target}: owner kept ({s_f.get('owner')})", f.get("owner") == s_f.get("owner"), f)
+        add(f"task {target}: id, title, created unchanged", all(f.get(k) == s_f.get(k) for k in ("id", "title", "created")), f)
+        rest = [i for i in order if i != target]
+        add("the other tasks keep their old order", rest == [i for i in s_order if i != target], order)
+        if to == "backlog":
+            add(f"task {target} is out of ORDER.md", target not in order, order)
+        else:
+            add(f"task {target} is back in ORDER.md exactly once", order.count(target) == 1, order)
         return res
 
-    if kind == "done-self":  # the session finished it; the user has not said it is done
-        row = now_rows.get(target)
-        add(f"task {target} still on the list", row is not None)
-        add(f"task {target} marked done", bool(row) and row["status"] == "done", row)
-        add("no task removed", set(seed_rows) <= set(now_rows), sorted(set(seed_rows) - set(now_rows)))
-        add("the reply says what was done, naming the task by its words",
-            _reply_names_self(run["text"], case["names"]), run["text"][-300:])
-        add("the reply asks whether to remove it", _offers_removal_self(run["text"]), run["text"][-300:])
-        # a task that depends on this one may get a new next-step line; its status, section and owner stay
-        moved = sorted(i for i in seed_rows if i != target and i in now_rows
-                       and any(seed_rows[i].get(k) != now_rows[i].get(k) for k in ("status", "section", "owner")))
-        add("other tasks keep their status, section and owner", not moved, moved)
+    if kind == "card-owner":  # only the owner changes
+        add(f"task {target}: owner is {case['owner']}", f.get("owner", "").lower() == case["owner"].lower(), f)
+        add(f"task {target}: every field except owner (and updated) as seeded: status, next, waiting_on, list",
+            same_but("owner"), f)
+        add("ORDER.md unchanged: the position is kept", order_text == s_order_text, order)
+        add(f"task {target}: details unchanged", body == s_body, body[:200])
         return res
 
-    if kind == "details-replace":  # the user asked to REPLACE the details: old text gone, new text under the task's heading
-        old_d = " ".join(mod.Board(seed_text).details.get(target, [])).lower()
-        new_d = " ".join(mod.Board(now_text).details.get(target, [])).lower()
-        add(f"task {target} had details to replace (seed)", bool(old_d), old_d[:100])
-        for w in case["old_words"]:
-            add(f"task {target}: old details word '{w}' is gone", w.lower() not in new_d, new_d[:200])
-        for w in case["new_words"]:
-            add(f"task {target}: new details word '{w}' is under its #{target} heading", w.lower() in new_d, new_d[:200])
-        add(f"the row of task {target} is unchanged", now_rows.get(target) == seed_rows.get(target), now_rows.get(target))
-        add("other tasks untouched", not changed(set()), changed(set()))
-        other_ids = sorted(set(mod.Board(seed_text).details) - {target})
-        add("other tasks' details unchanged",
-            all(mod.Board(now_text).details.get(i) == mod.Board(seed_text).details.get(i) for i in other_ids), other_ids)
-        add("numbering kept (next-id marker unchanged)", now_marker == seed_marker, now_marker)
-        add("the list was edited only through the script (no Write/Edit on task.md)", not _hand_edits(run), _hand_edits(run))
-        return res
+    raise ValueError(f"unknown card case kind: {case['id']}")
 
-    raise ValueError(f"unknown case kind: {case['id']}")
+
+def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
+    if case["kind"] == "card-details-add":
+        return check_card_details_add(case, before, after, run, ctx)
+    if case["kind"] == "card-details-replace":
+        return check_card_details_replace(case, before, after, run, ctx)
+    if case["kind"] in CARD_KINDS:
+        return check_cards(case, before, after, run, ctx)
+    if case["kind"] in CARD_KINDS_SELF:
+        return check_cards_self(case, before, after, run, ctx)
+    if case["kind"] in CARD_KINDS_MORE:
+        return check_cards_more(case, before, after, run, ctx)
+    raise ValueError(f"unknown case kind: {case['id']} ({case['kind']})")
