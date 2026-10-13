@@ -141,6 +141,22 @@ with tempfile.TemporaryDirectory() as td:
     check("an untriaged ticket in pending/ is never a candidate (a save-as-PDF ticket waits in an intake bucket)",
           all("pending" not in str(t["path"]) for t in pm.waiting_tickets(nb)), [str(t["path"]) for t in pm.waiting_tickets(nb)])
 
+# ── an X handle with an underscore (task #113; cycle 2026-10-12-02: x.com/dr_cintas/... never matched, the ticket's
+# title being the bare URL, so the PDF was renamed by hand). Only a social post's handle is split, and only on _:
+# splitting article slugs too would bring back the 'agent' false match above. ──
+with tempfile.TemporaryDirectory() as td:
+    nb = Path(td) / "nb"
+    (nb / "_inbox" / "intake" / "main").mkdir(parents=True)
+    x_url = "https://x.com/dr_cintas/status/2106482844025376965"
+    (nb / "_inbox" / "intake" / "main" / "cintas.md").write_text(ticket(x_url, x_url), encoding="utf-8")
+    (nb / "_inbox" / "intake" / "main" / "notes.md").write_text(
+        ticket("https://example.org/notes_on_agent_design", "Notes"), encoding="utf-8")
+    found, missed, _ = pm.match([Path("(1) Alvaro Cintas on X_ DESIGN.md via AGENTS.md.pdf")], pm.waiting_tickets(nb))
+    check("an X handle with _ matches on its part (cintas), the ticket titled by its bare URL",
+          [t["source"] for _, t in found] == [x_url], (found, missed))
+    found, missed, _ = pm.match([Path("Agent memory survey.pdf")], pm.waiting_tickets(nb))
+    check("an article slug with _ is not split: one shared word still matches nothing", not found and missed, found)
+
 # ── route 2: a PDF saved to Drive attaches to the waiting ticket, not a second ticket ──
 with tempfile.TemporaryDirectory() as td:
     tmp = Path(td)

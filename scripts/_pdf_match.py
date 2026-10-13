@@ -9,7 +9,8 @@ PDF saved into an intake folder, `wiki-fetch-drive-folder.py` for one saved to D
 Each PDF goes to its best waiting ticket (one with a source URL and no raw_path yet, in an intake bucket:
 a page left as "save as PDF" was triaged, so an untriaged ticket in `_inbox/pending/` is never one) by the
 words it shares with the ticket's title and URL path: three shared words, or one that is a whole segment of
-the ticket's URL path (an X handle, `x.com/beamnxw/...`) and no other ticket's. Two tickets equally good:
+the ticket's URL path (an X handle, `x.com/beamnxw/...`; a handle with `_` counts by its parts, so
+`dr_cintas` matches on `cintas`, task #113) and no other ticket's. Two tickets equally good:
 ambiguous, left to the user. (2026-10-06, the wiki-cycle suite: a looser "any word no other ticket has"
 attached "Agent memory survey.pdf" to "Handoff files between agent sessions" on the one word "agent".)
 """
@@ -59,8 +60,21 @@ def waiting_tickets(nb: Path) -> list[dict]:
             path = urlsplit(src).path
             out.append({"path": f, "source": src, "title": fm.get("title", ""),
                         "words": words(fm.get("title", "")) | words(path),
-                        "segments": {s.lower() for s in path.split("/") if s}})
+                        "segments": {s.lower() for s in path.split("/") if s} | _handle_parts(src)})
     return out
+
+
+SOCIAL_HOSTS = {"x.com", "twitter.com", "instagram.com", "threads.net", "threads.com"}
+
+
+def _handle_parts(url: str) -> set[str]:
+    """A social post's handle split on _ (x.com/dr_cintas/... -> {'dr', 'cintas'}), so the author's name in
+    Chrome's PDF name can match it (task #113). Only the handle: an article slug split the same way would make
+    a common word such as 'agent' a segment of its own, the 2026-10-06 false match."""
+    u = urlsplit(url)
+    host = (u.hostname or "").lower().removeprefix("www.")
+    first = next((s for s in u.path.split("/") if s), "").lstrip("@").lower()
+    return set(first.split("_")) - {""} if host in SOCIAL_HOSTS and "_" in first else set()
 
 
 def match(pdfs: list[Path], tickets: list[dict]):
