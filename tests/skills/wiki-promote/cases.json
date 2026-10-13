@@ -7,7 +7,7 @@
     {"id": "reject-moves-to-rejected-promotes-nothing", "kind": "reject", "staged": "three",
      "say": "reject chunk-size-decision-for-notes, and don't promote anything else",
      "author": "eval-case-writer"},
-    {"id": "broken-sidecar-held-back-others-promoted", "kind": "broken", "staged": "broken-sidecar",
+    {"id": "broken-sidecar-fixed-or-held-others-promoted", "kind": "broken", "staged": "broken-sidecar",
      "say": "promote all",
      "author": "eval-case-writer"},
     {"id": "no-choice-asks-and-moves-nothing", "kind": "nochoice", "staged": "three",

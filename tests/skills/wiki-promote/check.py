@@ -179,6 +179,18 @@ def _says_nothing_staged(text: str) -> bool:
                           r"|\b0\b[^.\n]{0,20}(staged|entr|items?)", text, re.I))
 
 
+def _claims_remains(text: str) -> bool:
+    """True when the reply says an entry is still in staging: a count of 1 / one beside remain|left|still and a
+    staging word, or the chunk entry named beside 'still staged' / 'remains in staging' / 'held back'."""
+    stage = r"(?:staging|staged|proposed)"
+    title = ENTRIES[CHUNK][0]
+    ident = rf"(?:chunk|{re.escape(CHUNK)}|{re.escape(title)})"
+    return bool(re.search(
+        rf"\b(?:1|one)\b[^.\n]{{0,40}}\b(?:remain\w*|left|still)\b[^.\n]{{0,30}}{stage}"
+        rf"|{ident}[^.\n]{{0,60}}(?:\bstill\b[^.\n]{{0,15}}{stage}|\bremains?\b[^.\n]{{0,15}}{stage}|held back)",
+        text, re.I))
+
+
 def _date_shown(win: str, date: str) -> bool:
     day = int(date[-2:])
     return date in win or bool(re.search(rf"{MONTHS}[a-z]*\.?\s+0?{day}\b|\b0?{day}\s+{MONTHS}", win, re.I))
@@ -224,7 +236,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             add(f"{slug}: sidecar unchanged", side.read_bytes() == orig_side.read_bytes())
         add(f"{slug}: not in the wiki", not wiki_copies(slug), wiki_copies(slug))
 
-    def promoted(slug):
+    def promoted(slug, side_data=None):
         title, date, tier, key, target = ENTRIES[slug]
         dest = nb / "wiki" / target / f"{slug}.md"
         add(f"{slug}: at wiki/{target}/{slug}.md", dest.is_file())
@@ -238,7 +250,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add(f"{slug}: frontmatter otherwise kept", all(l in got_fm for l in o_fm if not _status(l)))
         add(f"{slug}: body unchanged (anything the script appends after it is allowed)",
             got_body[:len(o_body)] == o_body)
-        side = json.loads(_staged_file(case, f"{slug}.proposed_metadata.json").read_bytes())
+        side = side_data if side_data is not None else json.loads(
+            _staged_file(case, f"{slug}.proposed_metadata.json").read_bytes())
         for b in side.get("suggested_backlinks", []):
             p = nb / "wiki" / b["file"]
             if not p.is_file():
@@ -261,7 +274,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         target = ENTRIES[slug][4]
         add(f"report names {slug} and where it went ({target})", _named(text, slug) and target in text)
 
-    if kind in ("pick", "broken"):
+    if kind == "pick":
         promoted(BM25)
         promoted(EVICT)
         still_staged(CHUNK)
@@ -273,7 +286,50 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         reported(EVICT)
         add("report says what remains in staging (the count 1, or the one entry left named as still staged)",
             _says_what_remains(text), _final(run)[-200:])
-        if kind == "broken":
+        return res
+
+    if kind == "broken":
+        # Either outcome is allowed: the session fixes the sidecar's plain typo and promotes the entry (and says so),
+        # or it holds the entry back and says why. The two others are promoted either way; nothing is lost.
+        dest = nb / "wiki" / ENTRIES[CHUNK][4] / f"{CHUNK}.md"
+        in_staging = (prop / f"{CHUNK}.md").exists() or (prop / f"{CHUNK}.proposed_metadata.json").exists()
+        add("the broken-sidecar entry is either promoted (and out of staging) or held back (and still staged), not lost",
+            dest.is_file() != in_staging, {"in wiki": dest.is_file(), "in staging": in_staging})
+        promoted(BM25)
+        promoted(EVICT)
+        files = [p.relative_to(nb).as_posix() for p in rej.rglob("*") if p.is_file()] if rej.is_dir() else []
+        add("nothing in _inbox/rejected/", not files, files)
+        reported(BM25)
+        reported(EVICT)
+        if dest.is_file():  # fixed and promoted
+            raw = _staged_file(case, f"{CHUNK}.proposed_metadata.json").read_text(encoding="utf-8")
+            expected = json.loads(re.sub(r",(\s*[}\]])", r"\1", raw))  # the fixture with only the typo removed
+            add("fixed entry: sidecar's target_folder used", dest.parent.relative_to(nb / "wiki").as_posix()
+                == expected["target_folder"], expected["target_folder"])
+            promoted(CHUNK, expected)
+            add(f"{CHUNK}: exactly one copy in the wiki", wiki_copies(CHUNK) == [dest.relative_to(nb).as_posix()],
+                wiki_copies(CHUNK))
+            allowed = {"wiki/" + b["file"] for b in expected.get("suggested_backlinks", [])}
+            # the promotion script lists every promoted entry in the notebook map and the folder index (files named _*.md);
+            # those are not backlinks, so only content entries count here
+            linked = [p.relative_to(nb).as_posix() for p in (nb / "wiki").rglob("*.md")
+                      if p != dest and not p.name.startswith("_")
+                      and CHUNK in p.read_text(encoding="utf-8", errors="replace")]
+            add("fixed entry: linked (outside the map and index files) only from the file(s) its sidecar names",
+                bool(linked) and set(linked) <= allowed, linked)
+            add("reply names the fixed entry and where it went", _named(text, CHUNK) and ENTRIES[CHUNK][4] in text)
+            add("reply tells the user the sidecar was fixed (what was wrong / that it was fixed)",
+                bool(re.search(r"fix|repair|correct|typo|trailing comma|stray comma|extra comma|removed", text, re.I))
+                and bool(re.search(r"sidecar|metadata|json|comma", text, re.I)), _final(run)[-200:])
+            add("reply does not claim the promoted entry remains in staging", not _claims_remains(text),
+                _final(run)[-200:])
+        else:  # held back
+            still_staged(CHUNK)
+            add("the held-back entry's slug is not linked from any wiki entry",
+                not [p for p in (nb / "wiki").rglob("*.md")
+                     if CHUNK in p.read_text(encoding="utf-8", errors="replace")])
+            add("report says what remains in staging (the count 1, or the one entry left named as still staged)",
+                _says_what_remains(text), _final(run)[-200:])
             add("reply names the held-back entry", _named(text, CHUNK))
             add("reply says why (the sidecar / its JSON)",
                 bool(re.search(r"sidecar|metadata|json|invalid|malformed|parse|comma", text, re.I)))
