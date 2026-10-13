@@ -138,19 +138,27 @@ def _judge(question: str, reply: str) -> tuple[bool | None, str]:
 
 
 def _judge_once(question: str, reply: str) -> tuple[bool | None, str]:
-    """YES/NO from a small model reading only the session's reply; None when it gave neither."""
-    ask =("Below is the final reply an AI assistant gave in a session, then a question about it. "
-           "Answer with exactly one word, YES or NO.\n\n<reply>\n" + reply[-12000:] +
-           "\n</reply>\n\nQuestion: " + question)
+    """YES/NO from a model reading only the session's reply; None when it gave neither.
+
+    The judge reasons first and puts its answer alone on the last line, and only that line is read. Told to
+    answer in one word, it twice wrote "NO" and then a sentence meaning yes, and the first YES/NO in its text
+    was taken (2026-10-13, improver runs 20261013-151050 and -153626: replies that did what the question asked
+    graded NO; the same reply graded YES when replayed)."""
+    ask = ("Below is the final reply an AI assistant gave in a session, then a question about it. "
+           "Answer from the reply's text only.\n\n<reply>\n" + reply[-12000:] +
+           "\n</reply>\n\nQuestion: " + question +
+           "\n\nFirst say in one or two sentences what in the reply settles the question. "
+           "Then give your answer alone on the last line: YES or NO.")
     env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
     try:
         p = subprocess.run([_claude_exe(), "-p", "--model", JUDGE_MODEL, "--output-format", "text"], input=ask,
                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180, env=env)
     except subprocess.TimeoutExpired:
         return None, "judge timed out"
-    out = (p.stdout or "").strip().upper()
-    m = re.search(r"\b(YES|NO)\b", out)
-    return (m.group(1) == "YES") if m else None, out[:80]
+    lines = [l.strip().strip("*`.").upper() for l in (p.stdout or "").splitlines() if l.strip()]
+    last = lines[-1] if lines else ""
+    m = re.fullmatch(r"(?:ANSWER:\s*)?(YES|NO)", last)
+    return (m.group(1) == "YES") if m else None, last[:80]
 
 
 def _used_skill(run: dict, ctx: dict) -> list[str]:

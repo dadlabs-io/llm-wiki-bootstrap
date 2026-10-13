@@ -82,5 +82,31 @@
     "judge: Did the model propose a change to csv-exporter for the failure on a long output path under -> YES": true,
     "judge: The reply is a proposal, so no code is written or run in this session. Does the proposed c -> YES": true,
     "judge: The reply is a proposal, so no code is written or run in this session. Does the proposal s -> YES": true
+  },
+  "later-record-shows-issue-again-no-new-suggestion": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md": true,
+    "exists: notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--output-folder-missing.md": true,
+    "absent: notebook/_inbox/skill-suggestions/received/archive": true,
+    "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--output-folder-missing.md contains 1 expected text(s)": true,
+    "command 1 exits 0": true,
+    "command 2 exits 0": true,
+    "command 3 exits 0": true,
+    "judge: The reply is a set of proposals and findings; nothing is meant to be edited or recorded in -> YES": true,
+    "judge: Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it -> YES": true
+  },
+  "later-focused-rounds-are-not-a-recurrence": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md": true,
+    "exists: notebook/raw/skill-suggestions/2026-10-02-demo-notebook/report-reviewer--rounds-reread-everything.md": true,
+    "absent: notebook/_inbox/skill-suggestions/received/archive": true,
+    "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/report-reviewer--rounds-reread-everything.md contains 1 expected text(s)": true,
+    "command 1 exits 0": true,
+    "command 2 exits 0": true,
+    "command 3 exits 0": true,
+    "judge: The reply is a set of proposals and findings; nothing is meant to be edited or recorded in -> NO": true,
+    "judge: The reply is a set of proposals and findings; nothing is meant to be edited or recorded in -> YES": true
   }
 }
