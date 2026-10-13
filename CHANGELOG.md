@@ -11,6 +11,13 @@
 
 ## 2026-10-13
 
+### `/wiki-claims` scores how many independent sources back each claim (task #110)
+
+- **Why**: claims were compared only for conflicts; seven entries agreeing earned a claim nothing (Mark: three different people saying it outweigh one person saying it seven times, and Karpathy outweighs an unknown author).
+- **What**: the model records `agrees_with` (other entries' claims stating the same fact) and `origin` (the original evidence a claim restates) on each claim; the new `wiki-claims-corroborate.py` groups agreeing claims, merges those that share an origin or a source URL into one source, weighs each source by its entry's tier (1.0 / 0.6 / 0.3 / 0.1, `self` 0) and writes a `corroboration` record (sources, each merge and why, `independent_sources`, `score`). It never changes an entry's `confidence`; the report gains a Corroboration section listing the groups, the claims resting on a single tier-4 entry, and where confidence and score disagree. Parallel extraction gives each agent a block of claim ids (wiki-cycle reference, Parallel work). Step contract: four claims summary keys and `corroboration.md`. Usage page, inventory, install manifest.
+- **Proven**: `tests/scripts/test_claims_corroborate.py` 28/28; the wiki-claims suite with two new `eval-case-writer` cases (reposts of one paper count once; confidence and corroboration disagree), every case passing on both models after two fixes the runs found (report totals taken from the script, not counted by hand; one Corroboration heading). $13.00.
+- **Migration**: forward only: claims already in an index have no agreement links until a later run records them (a backfill is a separate pass).
+
 ### Two framework-contract docs brought in line with the frontmatter rules and the cycle
 
 - **Why**: agentic-design's semantic lint (cycle 2026-10-12-02) found the authoring doc's duplicate carve-out moving a duplicate into `_inbox/archived-duplicates/`, a second mechanism nothing implemented, while the frontmatter spec retires one with `superseded_by`; and the step-return contract had no section for three steps the cycle runs.

@@ -76,6 +76,7 @@ TRAVEL_SCRIPTS = [
     "wiki-transcribe.py",  # local Whisper speech-to-text for media without captions: reels, podcasts (2026-10-05)
     "wiki-tasks.py",  # the task cards in wiki/tasks/ (+ tasks/ORDER.md), behind /task-list (cards-only since 2026-10-12)
     "wiki-cycle-scope.py",  # what /wiki-cycle's semantic lint, claims and checker read (2026-09-24)
+    "wiki-claims-corroborate.py",  # /wiki-claims: score claims by independent agreeing sources, tier-weighted (2026-10-13, task #110)
     "wiki-triage.py",  # intake buckets + routing pending tickets, behind /wiki-triage (2026-09-24)
     "wiki-update.py",
     "wiki-upgrade.py",

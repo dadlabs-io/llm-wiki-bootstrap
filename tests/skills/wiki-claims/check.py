@@ -107,6 +107,12 @@ CASES = {  # kind: the fixture notebook, the entries a finding must name, and a 
               "token": r"eliminat|\b31\b|reduc|hallucinat|18\.2|12\.6"},
     "framing": {"nb": "claims-framing", "entries": ["loomdb-failover-results", "loomdb-operations-notes"],
                 "token": r"write-ahead|replay|\b2 s|two seconds|2-second|about 2"},
+    "corroborate-repost": {"nb": "claims-corroborate-repost",
+                           "entries": ["quillbench-paper", "reel-marlin-quillbench"],
+                           "token": r"quillbench|63\.8"},
+    "corroborate-disagree": {"nb": "claims-corroborate-disagree",
+                             "entries": ["harbor-cache-field-notes", "spindle-queue-throughput-page"],
+                             "token": r"15 minutes|120"},
 }
 STALE_WORDS = re.compile(r"stale|outdat|out[\s-]of[\s-]date|supersed|obsolete|no longer|\bolder?\b", re.I)
 DRIFT_WORDS = re.compile(r"intra[\s_-]*entry|drift|overstat|exaggerat|overclaim|inconsisten|does not match|doesn't match", re.I)
@@ -303,6 +309,119 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     groups = [_aliases(spec["nb"], stem) for stem in spec["entries"]]
     found = _windows(lines, groups, spec["token"]) if lines else []
     kind = case["kind"]
+    if kind.startswith("corroborate-"):
+        def walk(o, key):
+            if isinstance(o, dict):
+                for k, v in o.items():
+                    if str(k).lower() == key:
+                        return v
+                for v in o.values():
+                    r2 = walk(v, key)
+                    if r2 is not None:
+                        return r2
+            elif isinstance(o, list):
+                for v in o:
+                    r2 = walk(v, key)
+                    if r2 is not None:
+                        return r2
+            return None
+
+        def rec(c):
+            v = walk(c, "corroboration")
+            return v if isinstance(v, dict) else None
+
+        def num(r, key):
+            v = walk(r, key)
+            if isinstance(v, list):
+                return float(len(v))
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                return None
+
+        def vals(c):
+            r = rec(c)
+            return (num(r, "independent_sources"), num(r, "score")) if r else (None, None)
+
+        def about(stem, token):
+            out = []
+            for c in claims:
+                t = " ".join(_strings(c))
+                if any(a in t.lower() for a in entries[stem]) and re.search(token, t, re.I):
+                    out.append(c)
+            return out
+
+        def reason_shown(r, url):
+            def has(o):
+                if isinstance(o, dict):
+                    return any((re.search(r"reason|merge|why", str(k), re.I) and v not in (None, "", [], {})) or has(v)
+                               for k, v in o.items())
+                if isinstance(o, list):
+                    return any(has(v) for v in o)
+                return False
+            return url in json.dumps(r).lower() or has(r)
+
+        sec: list[str] = []
+        for i, l in enumerate(lines):
+            lv = _heading_level(l)
+            if lv and re.search("corroboration", l, re.I):
+                for m in lines[i + 1:]:
+                    if 0 < _heading_level(m) <= lv:
+                        break
+                    sec.append(m)
+                break
+        sec_text = "\n".join(sec).lower()
+        add("the report has a Corroboration section with content", bool(sec_text.strip()), f"{len(sec)} lines")
+
+        def named_with(stem, word):
+            for i, l in enumerate(sec):
+                if any(a in l.lower() for a in entries[stem]):
+                    if re.search(rf"\b{word}\b", "\n".join(sec[max(0, i - 2):i + 3]), re.I):
+                        return True
+            return False
+
+        if kind == "corroborate-repost":
+            paper = "quillbench-paper"
+            reposts = ["reel-marlin-quillbench", "carousel-marlin-quillbench",
+                       "story-marlin-quillbench", "repost-marlin-quillbench"]
+            tok = spec["token"]
+            pv = [vals(c) for c in about(paper, tok)]
+            add("the paper's figure claim has a corroboration record: independent_sources 1, score 1.0",
+                any(i == 1 and s is not None and abs(s - 1.0) < 0.05 for i, s in pv), pv)
+            fig = [c for c in claims if re.search(tok, " ".join(_strings(c)), re.I) and rec(c)]
+            over = [vals(c) for c in fig if (vals(c)[0] or 0) > 1 or (vals(c)[1] or 0) > 1.05]
+            add("no claim stating the figure is credited with more than one independent source or a score above 1.0",
+                bool(fig) and not over, over[:5])
+            missing = [r for r in reposts if not any(rec(c) for c in about(r, tok))]
+            add("each of the four reposts' figure claims carries a corroboration record", not missing, missing)
+            url = "arxiv.example.org/abs/2610.04417"
+            add("the merge of the reposts with the paper has a visible reason (a reason field, or the shared original named)",
+                any(reason_shown(rec(c), url) for r in reposts for c in about(r, tok) if rec(c)))
+            gone = [s for s in [paper] + reposts if not any(a in sec_text for a in entries[s])]
+            add("the Corroboration section lists the paper and the four reposts", bool(sec_text) and not gone, gone)
+        else:
+            a_stem, c_stem = "harbor-cache-field-notes", "spindle-queue-throughput-page"
+            b_stems = ["harbor-cache-docs-walkthrough", "harbor-ops-review-2026"]
+            ht = r"15 minutes|fifteen|\b15\b|idle|expire|evict"
+            ct = r"120,?000|120k|messages per second|msgs/sec|throughput"
+            hv = [vals(c) for s in [a_stem] + b_stems for c in about(s, ht)]
+            add("the Harbor idle-timeout claims carry corroboration with 2 or more independent sources and score 1.0 or more",
+                any(i is not None and i >= 2 and s is not None and s >= 1.0 for i, s in hv), hv[:6])
+            cv = [vals(c) for c in about(c_stem, ct)]
+            add("the Spindle throughput claim carries corroboration with independent_sources 1 and score under 0.3",
+                any(i == 1 and s is not None and s < 0.3 for i, s in cv), cv[:6])
+            add("the report's Corroboration section flags the low-confidence entry that is well corroborated",
+                named_with(a_stem, "low"))
+            add("the report's Corroboration section flags the high-confidence entry that is thinly corroborated",
+                named_with(c_stem, "high"))
+            fm = {}
+            for stem, want in ((a_stem, "low"), (c_stem, "high")):
+                hits = list((nb / "wiki").rglob(f"{stem}.md"))
+                m = re.search(r"^confidence:\s*(\w+)", hits[0].read_text(encoding="utf-8"), re.M) if hits else None
+                fm[stem] = m.group(1) if m else None
+            add("the two flagged entries keep their confidence in frontmatter",
+                fm == {a_stem: "low", c_stem: "high"}, fm)
+        return res
     if kind == "framing":
         high = [w for w in found if "high" in w["narrow"]]
         add("same fact, different emphasis is not reported as a high-severity contradiction", not high,

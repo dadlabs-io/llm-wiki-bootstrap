@@ -1,9 +1,9 @@
 ---
 name: wiki-claims
-description: Extract factual claims from wiki entries, classify them (direct-quote/sourced/synthesis/inference), compare across entries, and flag contradictions at the sentence level. Use when the user says "extract claims", "find contradictions", "wiki-claims", "claim analysis", "what contradicts what".
-last_reviewed: 2026-09-08
-review_after: 2026-12-08
-reviewed_for_model: claude-fable-5-1
+description: Extract factual claims from wiki entries, classify them (direct-quote/sourced/synthesis/inference), compare across entries, flag contradictions at the sentence level, and score how many independent sources back each claim. Use when the user says "extract claims", "find contradictions", "wiki-claims", "claim analysis", "what contradicts what".
+last_reviewed: 2026-10-13
+review_after: 2027-01-13
+reviewed_for_model: claude-opus-5-5
 ---
 
 > **⚙️ Internal skill.** This is invoked by `/wiki-cycle` (the orchestrator) — users normally don't call it directly. Public-facing commands are `/wiki-cycle`, `/wiki-update`, `/wiki-search`, `/wrap-up`, `/wiki-verify`, `/wiki-rollback` and `/new-wiki`. This skill is documented + callable for programmatic use.
@@ -103,11 +103,27 @@ Write extracted claims to `_inbox/claims-index.json`:
 }
 ```
 
-For `--entry` or `--compare` mode, append to the existing index (don't rebuild the whole thing).
+For `--entry` or `--compare` mode, append to the existing index (don't rebuild the whole thing). New claims take ids after the index's highest; when several agents extract in parallel, give each a block of ids up front (agent 1 from `max+1`, agent 2 from `max+2001`, ...), so the `agrees_with` links of Step 5 hold when their claims are merged.
 
-### Step 5 — Find contradictions
+### Step 5 — Record agreements, then find contradictions
 
-Scan two axes:
+**Agreements (since 2026-10-13, task #110).** Claims that agree make each other stronger, but only when they come from independent sources: seven reposts of one benchmark are one source, three different authors are three. While comparing claims by subject, record each agreement on the claims themselves:
+
+- `agrees_with: [<claim id>, ...]` — on a claim, the ids of other entries' claims that state the same fact (the same subject, a compatible object: "82.1% of bugs" and "about four in five bugs" agree). A claim in the same entry is not an agreement.
+- `origin: "<url or name>"` — on a claim that restates someone else's evidence (a paper, a benchmark, a vendor's dashboard, a person's post), the original: its URL when the entry gives one, else its name ("CRBugBench paper", "TypeSafe dashboard"). Leave it out when the entry is the original itself.
+
+Then run the arithmetic, which groups the agreeing claims, merges claims that share an origin or a source URL into one source, weighs each source by its entry's tier (1.0 / 0.6 / 0.3 / 0.1 for tiers 1-4; our own `self` synthesis weighs 0), and writes a `corroboration` record on every grouped claim (its sources, why claims were merged, `independent_sources`, `score`):
+
+```bash
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-claims-corroborate.py --topic <notebook> --report _inbox/reports/corroboration-<date>.md
+# inside /wiki-cycle: --report <run-folder>/corroboration.md
+```
+
+It never changes an entry's `confidence`; it lists where the two disagree (a high-confidence entry with a score under 0.3; a low-confidence one scoring 1.0 or more from two or more independent sources). Deciding that two claims share an original is a best guess: the record shows each merge and its reason, so a wrong one can be seen and corrected by editing `origin` and running the script again.
+
+Its printed summary also counts the index (`index_claims`, `index_entries`): take the report's and Step 7's claim and entry totals from it rather than counting by hand. A relative `--report` path is the notebook's, whatever folder the command runs from.
+
+**Contradictions.** Scan two axes:
 
 **Cross-entry contradictions** — every claim pair across different entries where:
 - Same `subject` (same entity/project/concept being discussed)
@@ -179,6 +195,11 @@ Save to `_inbox/reports/claims-report-<date>.md`:
 These are our own assertions not backed by a cited source. Review periodically:
 - <claim> in <entry> — confidence <score>
 - ...
+
+<the section wiki-claims-corroborate.py wrote to its --report file, pasted unchanged — it starts with its own
+`## Corroboration` heading, so add none above it: the groups of agreeing
+claims by score, the sources each counted and why claims were merged, the claims resting on a single tier-4
+entry, and where an entry's confidence and its claims' corroboration disagree>
 ```
 
 ### Step 7 — Report to user
@@ -189,6 +210,7 @@ Claims extraction complete
   Entries: N
   Claims: N (quote: N, sourced: N, synthesis: N, inference: N)
   Contradictions: N (high: N, medium: N, low: N)
+  Corroboration: N groups, N well corroborated, N single tier-4 claims, N confidence disagreements
   Report: _inbox/reports/claims-report-<date>.md
   Index: _inbox/claims-index.json
 ```
@@ -217,6 +239,7 @@ This is more precise than the agent reading entries and guessing at contradictio
 
 - Claims index: `_inbox/claims-index.json`
 - Claims report: `_inbox/reports/claims-report-<date>.md`
+- Corroboration section (the script's `--report`): `_inbox/reports/corroboration-<date>.md`, or in the cycle's run folder
 - Wiki entries: `wiki/`
 - All relative to the notebook root: `_inbox/` sits beside `wiki/`, not inside it
 
@@ -227,6 +250,8 @@ This is more precise than the agent reading entries and guessing at contradictio
 - Don't delete the claims index between runs — append to it, let it grow
 - Don't run full extraction during ingestion — use `--compare` mode (one entry against existing index)
 - Don't treat `framing_difference` as a real contradiction — note it and move on
+- Don't count agreement by hand or write a `corroboration` record yourself — record `agrees_with` and `origin`, and let `wiki-claims-corroborate.py` do the counting and weighting
+- Don't change an entry's `confidence` from a corroboration score — the report lists the disagreements for a human
 
 
 ## Cycle contract

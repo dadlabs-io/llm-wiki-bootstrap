@@ -6,7 +6,7 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 4
+framework-version: 5
 last_reviewed: 2026-10-13
 review_after: 2027-01-13
 tags: [best-practice, architecture, orchestrator, wiki-cycle, schema, contract]
@@ -71,6 +71,7 @@ _inbox/reports/
         ├── claims-scope.txt                       ← Step 6: the entries in scope
         ├── claims.json                            ← Step 6
         ├── claims.md
+        ├── corroboration.md                       ← Step 6: wiki-claims-corroborate.py --report
         ├── synthesis-<topic>.md                   ← Step 6.5 (one or more)
         ├── refresh.json                           ← Step 7
         ├── refresh.md
@@ -219,7 +220,8 @@ Writes `synthesis-<topic>.md` (one or more; report-only, no JSON mutation of the
 - `deferred[]` = entries not yet in the claims index
 - Each `queued[]` item for **cross-entry** contradictions: `{ priority, slug_a, slug_b, claim_a, claim_b, severity, confidence, reason, timestamp }` — this is a relational record, not a URL, so `slug_a`/`slug_b` replace the single `url` field from the common skeleton
 - Each `queued[]` item for **intra-entry** drift (TL;DR overstates body, stale counts, frontmatter vs content): `{ priority, slug, claim_a, claim_b, severity, confidence, reason, timestamp }` — same entry, two conflicting statements inside it. Validated 2026-04-24: intra-entry drift is the highest-yield category on first run.
-- `summary` keys: `claims_extracted`, `contradictions_found`, `severity_high`, `severity_med`, `severity_low`, `intra_entry_drift`, `cross_entry_contradictions`
+- `summary` keys: `claims_extracted`, `contradictions_found`, `severity_high`, `severity_med`, `severity_low`, `intra_entry_drift`, `cross_entry_contradictions`, and since 2026-10-13 (`wiki-claims-corroborate.py`) `corroboration_groups`, `well_corroborated_groups`, `single_tier4_claims`, `confidence_disagreements`
+- `corroboration.md` beside it: the script's Corroboration section, pasted into `claims.md` too
 - **Scope includes both cross-entry AND intra-entry** — don't just compare across files. A TL;DR that overstates the body is a real contradiction worth flagging.
 
 ## Markdown sidecar format

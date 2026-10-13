@@ -8,6 +8,10 @@
     {"id": "tldr-overstates-its-own-body", "kind": "drift", "notebook": "claims-drift",
      "say": "check the claims in all my wiki entries and flag any contradictions", "author": "eval-case-writer"},
     {"id": "framing-difference-is-not-a-high-contradiction", "kind": "framing", "notebook": "claims-framing",
-     "say": "extract and classify the claims across my wiki and flag contradictions for me to review", "author": "eval-case-writer"}
+     "say": "extract and classify the claims across my wiki and flag contradictions for me to review", "author": "eval-case-writer"},
+    {"id": "reposts-of-one-paper-count-once", "kind": "corroborate-repost", "notebook": "claims-corroborate-repost",
+     "say": "run a claims check over my whole wiki", "author": "eval-case-writer"},
+    {"id": "confidence-and-corroboration-disagree", "kind": "corroborate-disagree", "notebook": "claims-corroborate-disagree",
+     "say": "extract the claims from all my wiki entries and flag anything I should look at", "author": "eval-case-writer"}
   ]
 }
