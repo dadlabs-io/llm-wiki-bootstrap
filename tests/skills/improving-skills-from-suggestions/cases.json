@@ -426,6 +426,149 @@
       ],
       "judge": "One proposal (csv-exporter, the long output path on Windows, a failing test first, evidence quoted from demo-notebook's report-archive checkpoints.md). Its change is scoped to the note's Applies to line: Windows and output paths over 260 characters, not a rule for every platform or every path. The proposals file lists it; nothing is decided or archived and csv-exporter is not edited.",
       "author": "eval-case-writer"
+    },
+    {
+      "id": "later-record-shows-issue-again-no-new-suggestion",
+      "should_trigger": true,
+      "tier": "gate",
+      "timeout": 600,
+      "prompt": "Run the improver over the skill suggestions we've received.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n\n## Gotchas\n- **A UTF-8 BOM in the input corrupts the first header** (2026-09-01): export.py opens the input with\n  `encoding=\"utf-8-sig\"`, which strips the BOM, so the first column reads `id`, not `\\ufeffid`.\n- **The output's parent folder** (2026-10-02, task 61): export.py creates the output file's parent folder before opening it, so a missing folder no longer raises FileNotFoundError.\n",
+          "skills/csv-exporter/scripts/export.py": "import csv\nimport os\nimport sys\n\n\ndef export(path, out):\n    parent = os.path.dirname(out)\n    if parent and not os.path.isdir(parent):\n        os.mkdir(parent)\n    with open(path, encoding=\"utf-8-sig\", newline=\"\") as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        body = list(rows)\n    with open(out, \"w\", encoding=\"utf-8\", newline=\"\") as fh:\n        w = csv.writer(fh)\n        w.writerow(header)\n        w.writerows(body)\n\n\nif __name__ == \"__main__\":\n    export(sys.argv[1], sys.argv[2])\n",
+          "skills/report-mailer/SKILL.md": "---\nname: report-mailer\ndescription: \"Mails a finished report to a list of recipients with scripts/send.py. Use when asked to mail a report.\"\n---\n\n# Report mailer\n\nRun `python scripts/send.py <report.md> <recipients.txt>` to mail the report, subject taken from its first heading.\n",
+          "demo-notebook/raw/code-changes/2026-10-09-quarterly-export/checkpoints.md": "# Checkpoints — quarterly-export\n\n## Implement — 2026-10-09\nStep 4 exported the quarter to build/reports/2026/q3.csv with `export.py`. Only `build/` existed, so `export.py` raised FileNotFoundError at the open of the output file: the parent folder it creates is one level deep and `build/reports/2026` needs two. The same failure as before the parent-folder fix. Worked around in our code by calling os.makedirs on the folder first. The exporter itself was left as it is.\n\n## Finishing decision — 2026-10-09\nMark: \"merge it\".\n",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--output-folder-missing.md": "Skill: csv-exporter\nSeen in: csv-export (2026-09-20)\nIssue: export.py raises FileNotFoundError at the open of the output file when the output's parent folder does not exist; the run worked around it by creating the folder first.\nFix: create the output's parent folder before opening the output file\nApplies to: any output path whose parent folder does not exist\nDecision (2026-10-02, Mark): accepted as task 61\n",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/proposals.md": "# Proposals, 2026-10-02\n\n(the earlier pass that decided this suggestion)\n",
+          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md": "Skill: report-mailer\nSeen in: weekly-digest (2026-10-08)\nIssue: send.py cuts the subject line at 40 characters, so long report titles arrive truncated.\nFix: allow subjects up to 78 characters\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/report-mailer--subject-cut-short.md\n"
+        }
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--output-folder-missing.md"
+        ],
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/received/archive"
+        ],
+        "file_contains": {
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--output-folder-missing.md": [
+            "accepted as task 61"
+          ]
+        },
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,os,sys; h=[p for p in glob.glob('notebook/**/*.md', recursive=True) if os.path.basename(p)!='proposals.md' and 'Outcome (' in open(p,encoding='utf-8').read()]; print(h); sys.exit(1 if h else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,re,sys; f=[p for p in glob.glob('notebook/raw/skill-suggestions/*/proposals.md') if '2026-10-02-demo-notebook' not in p]; t=' '.join(open(p,encoding='utf-8').read() for p in f); print(f); sys.exit(0 if ('csv-exporter' in t and 'checkpoints.md' in t and re.search(r'\\b61\\b', t)) else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Did the model tell the user that the earlier accepted fix for the missing output folder (task 61) did not hold?",
+          "expect": true,
+          "quote_from": "user"
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Did the model support that finding by quoting lines from the later run's record (the quarterly-export checkpoints, dated after the fix) that show the FileNotFoundError on a missing output folder again?",
+          "expect": true,
+          "quote_from": "user"
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply propose the fix for the missing output folder again, as a proposal of its own that names task 61 as the earlier fix?",
+          "expect": true,
+          "quote_from": "user"
+        },
+        {
+          "q": "Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it for later)?",
+          "expect": true,
+          "quote_from": "user"
+        }
+      ],
+      "judge": "No received suggestion repeats the missing-folder lesson (the only received note is report-mailer's). A run record dated 2026-10-09, after task 61's fix (2026-10-02) and inside its Applies to line, shows the FileNotFoundError on a missing output folder again. The pass lists task 61's fix as did not hold, quotes the record's lines, and proposes the fix again as its own proposal. It writes no Outcome line (Mark has not seen the proposals), archives nothing and edits nothing under skills/.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "later-focused-rounds-are-not-a-recurrence",
+      "should_trigger": true,
+      "tier": "gate",
+      "timeout": 600,
+      "prompt": "Run the improver over the skill suggestions we've received.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/report-reviewer/SKILL.md": "---\nname: report-reviewer\ndescription: \"Reviews a written report section by section and lists the defects found. Use when asked to review a report.\"\n---\n\n# Report reviewer\n\nRound 1 reads every section of the report and lists the defects. After a fix, each later round re-checks only the sections that changed since the previous round, and says which sections it left out.\n\n## Gotchas\n- **A later round must not re-read the whole report** (2026-10-02, task 62): re-reading every section on each round made a third round take as long as the first.\n",
+          "skills/report-mailer/SKILL.md": "---\nname: report-mailer\ndescription: \"Mails a finished report to a list of recipients with scripts/send.py. Use when asked to mail a report.\"\n---\n\n# Report mailer\n\nRun `python scripts/send.py <report.md> <recipients.txt>` to mail the report, subject taken from its first heading.\n",
+          "demo-notebook/raw/code-changes/2026-10-09-quarterly-report/checkpoints.md": "# Checkpoints — quarterly-report\n\n## Review round 1 — 2026-10-09\nreport-reviewer read all eight sections and listed five defects, four of them in section 3.\n\n## Review round 2 — 2026-10-09\nFixes landed in sections 3 and 5. The round re-checked sections 3 and 5 only and said sections 1, 2, 4 and 6 to 8 were left out as unchanged. Two defects remained in section 3. About four minutes.\n\n## Review round 3 — 2026-10-09\nSection 3 changed again. The round re-checked section 3 only; no defects. About two minutes.\n\n## Finishing decision — 2026-10-09\nMark: \"merge it\".\n",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/report-reviewer--rounds-reread-everything.md": "Skill: report-reviewer\nSeen in: annual-report (2026-09-28)\nIssue: every review round re-read the whole report, so a third round took as long as the first.\nFix: after round 1, re-check only the sections that changed and say which were left out\nApplies to: review rounds after the first\nDecision (2026-10-02, Mark): accepted as task 62\n",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/proposals.md": "# Proposals, 2026-10-02\n\n(the earlier pass that decided this suggestion)\n",
+          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md": "Skill: report-mailer\nSeen in: weekly-digest (2026-10-08)\nIssue: send.py cuts the subject line at 40 characters, so long report titles arrive truncated.\nFix: allow subjects up to 78 characters\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/report-mailer--subject-cut-short.md\n"
+        }
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/report-reviewer--rounds-reread-everything.md"
+        ],
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/received/archive"
+        ],
+        "file_contains": {
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/report-reviewer--rounds-reread-everything.md": [
+            "accepted as task 62"
+          ]
+        },
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,os,sys; h=[p for p in glob.glob('notebook/**/*.md', recursive=True) if os.path.basename(p)!='proposals.md' and 'Outcome (' in open(p,encoding='utf-8').read()]; print(h); sys.exit(1 if h else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,sys; f=[p for p in glob.glob('notebook/raw/skill-suggestions/*/proposals.md') if '2026-10-02-demo-notebook' not in p]; t=' '.join(open(p,encoding='utf-8').read() for p in f); print(f); sys.exit(0 if 'report-mailer' in t else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Did the model say that the earlier accepted fix for report-reviewer (task 62, re-check only the changed sections in later rounds) did not hold?",
+          "expect": false
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply propose again a change to report-reviewer about later review rounds re-reading the whole report?",
+          "expect": false
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Did the model propose a change to report-mailer for the subject line cut at 40 characters, or set that suggestion aside with a reason?",
+          "expect": true
+        }
+      ],
+      "judge": "The only received note is report-mailer's. The 2026-10-09 record, dated after task 62's fix and inside its Applies to line, shows later rounds that re-checked only the changed sections: the situation the fix intended, with no sign of the original issue. The pass does not call task 62's fix did not hold and does not propose it again (held with the record quoted, or no evidence yet, are both fine). It writes no Outcome line, archives nothing and edits nothing under skills/.",
+      "author": "eval-case-writer"
     }
   ]
 }
