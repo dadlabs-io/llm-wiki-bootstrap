@@ -55,6 +55,9 @@ afterwards what ran. Turn the flag off to stop being asked in interactive sessio
 - A receipt: per source, staged / skipped / failed with the reason for anything not staged, and a
   line reconciling the counts (assigned = staged + failed + skipped). Queue items it processed move
   from `_inbox/pending/` to `_inbox/done/`, which is what lets an interrupted batch resume.
+- A "Raws to delete" line: any raw its fetches wrote that holds no article (a paywall preview or a
+  site's block page). The worker never deletes in `raw/`, since a raw it was handed may be an older
+  one another entry cites; `wiki-cycle` deletes each listed raw after checking nothing cites it.
 
 Promotion into `wiki/` stays with you, through `wiki-promote`.
 

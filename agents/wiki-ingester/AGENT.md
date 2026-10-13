@@ -166,7 +166,8 @@ with TodoWrite. For each item:
   watching), and only then do backlink edits to existing entries happen.
 - **`rm`** → only your own temp synthesis file, by literal filename (`_inbox/temp/<slug>.md`), only
   on success, and your own scratch folder at the end of the batch. **Never delete anything in `raw/`** — even a failed fetch's artifact may be another
-  entry's `raw_path` (see wiki-update's raw-file-safety rule); leave cleanup to the cycle.
+  entry's `raw_path` (see wiki-update's raw-file-safety rule; `--fetch-only` may hand you an earlier raw it
+  reused); leave cleanup to the cycle, and list a preview or block-page raw under **Raws to delete** in the receipt.
 - **`mv`** → only queue tickets, only `_inbox/pending/` or `_inbox/intake/<folder>/` → `_inbox/done/`,
   by literal filename.
 - **git write commands** (`commit`, `push`, `reset`, `checkout`, `clean`) → never; the orchestrator
@@ -197,6 +198,12 @@ context). One line per item + a reconciliation summary:
 | 3 | deadblog.example/post | FAILED | — | — | — | — | 404 on both fetchers |
 
 **Reconciliation: 3 assigned = 2 staged + 1 failed + 0 skipped. Queue: 3 moved pending→done.**
+
+**Raws to delete:** one line per raw your fetch wrote that the fetcher flagged `completeness=preview`
+or as a block page (`paywall=suspected`, a Cloudflare "Attention Required" page) and no entry of yours
+cites: `raw/<file> (preview|blocked)`. `fetchers.md` says such a raw is deleted; you never delete in
+`raw/`, so you list it and the orchestrator deletes it after checking nothing cites it (task #114;
+cycle 2026-10-12-02 left three). "Raws to delete: none" when there are none.
 
 Inside `/wiki-cycle`, **do not write `update.json` or `update.md`**: several workers run at once and
 would overwrite each other. The orchestrator writes the step's pair from every worker's receipt, so
