@@ -359,7 +359,7 @@
           "quote_from": "user"
         },
         {
-          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply put the lesson forward again as a proposal marked as a repeat, and name the earlier accepted task (task 57) as the one that did not hold?",
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply present the new empty-input suggestion (export.py still raising StopIteration on a BOM-only input) as the earlier lesson coming back after an accepted fix (task 57) that did not hold, and propose a change for it? Any wording counts for coming back: 'repeat', 'recurring', 'again', 'the earlier fix did not hold'. Answer YES only if task 57 is named.",
           "expect": true,
           "quote_from": "user"
         },
@@ -485,12 +485,12 @@
           "quote_from": "user"
         },
         {
-          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Did the model support that finding by quoting lines from the later run's record (the quarterly-export checkpoints, dated after the fix) that show the FileNotFoundError on a missing output folder again?",
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply back its finding about the earlier missing-output-folder fix (task 61) with text taken from a later run's record (the quarterly-export checkpoints), for example that export.py raised FileNotFoundError at the open of the output file because build/reports/2026 did not exist? Answer YES if it quotes or closely repeats such lines from the record; NO if it only states the conclusion.",
           "expect": true,
           "quote_from": "user"
         },
         {
-          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply propose the fix for the missing output folder again, as a proposal of its own that names task 61 as the earlier fix?",
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply propose, as a proposal of its own, that export.py create the output's missing parent folder or folders (for example with os.makedirs), and does it name task 61 as the earlier fix that did not hold? Answer YES if both are present, in any wording.",
           "expect": true,
           "quote_from": "user"
         },
@@ -555,15 +555,15 @@
       },
       "questions": [
         {
-          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Did the model say that the earlier accepted fix for report-reviewer (task 62, re-check only the changed sections in later rounds) did not hold?",
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply conclude that the earlier accepted fix for report-reviewer (task 62) FAILED, meaning that the problem it fixed (review rounds re-reading the whole report) came back? Answer NO if the reply says that fix held, says there is no evidence yet, or does not mention it.",
           "expect": false
         },
         {
-          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply propose again a change to report-reviewer about later review rounds re-reading the whole report?",
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply propose again a change to report-reviewer so that later review rounds stop re-reading the whole report? Answer NO if it only reports on how the earlier fix (task 62) fared.",
           "expect": false
         },
         {
-          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Did the model propose a change to report-mailer for the subject line cut at 40 characters, or set that suggestion aside with a reason?",
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. The received suggestion for report-mailer says send.py cuts the subject line at 40 characters. Does the reply say what it makes of that suggestion: either a proposal to change report-mailer, or a statement that the suggestion is not borne out, not supported, set aside or left alone, with a reason? Answer YES if the reply reaches any such conclusion about the report-mailer suggestion.",
           "expect": true
         }
       ],
