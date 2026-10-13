@@ -65,8 +65,10 @@ with TodoWrite. For each item:
    flight at once). Those two run headless on this machine, so they need no browser session. **You have no browser.**
    A page no fetcher can get (a paywall or member wall such as a Medium member-only story, a login,
    or a site that blocks the fetcher) is never captured another way: mark it **failed: save as PDF**
-   (with paywall, login or blocked) and move on; the cycle report lists it for the user to save into
-   the Drive folder (`fetchers.md`, "Pages no fetcher can get"; 2026-10-05). So is a source whose
+   (with paywall, login or blocked), mark its ticket where it sits with
+   `wiki-triage.py --topic <topic> route <ticket file name> --to <the bucket it is in> --save-as-pdf <why> --reason "<what blocked it>"`
+   (never a hand edit of the ticket; task #111), and move on; the cycle report lists it for the user to save
+   (`fetchers.md`, "Pages no fetcher can get"; 2026-10-05). So is a source whose
    fetcher printed `completeness=preview` (an X Article or long post, a paywalled page): `wiki-update.py`
    refuses to file from that raw, and `--partial-source` is never yours to pass (2026-10-11).
    **A ticket whose frontmatter has `raw_path:`** was captured at triage: file from that raw

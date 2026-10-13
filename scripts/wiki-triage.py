@@ -34,7 +34,11 @@ the catch-all: an item that fits no bucket clearly, or two equally, goes there.
 `route` refuses a folder that is not a bucket (exit 2), moves the ticket, records
 `raw_path` in it when --raw names a captured raw, and appends a row to
 `_inbox/intake/triage-log.md`. Nothing is ever deleted.
-(2026-09-24, task #42 section T.)
+(2026-09-24, task #42 section T.) A bare ticket name is found in `_inbox/pending/` or in any
+bucket, so a wrong call is fixed by routing again; a ticket routed to the bucket it already sits
+in is rewritten in place (a page found blocked at ingest gets `--save-as-pdf` that way). Until
+task #111 (2026-10-13) only pending/ was searched, and a full path routed to its own bucket
+deleted the ticket.
 
 A page no fetcher can get (a paywall, a login, a site that blocks the fetcher) is routed with
 `--save-as-pdf <why>`: the ticket carries `save_as_pdf: <why>` and waits for the user's PDF.
@@ -184,7 +188,15 @@ def cmd_route(nb: Path, args) -> int:
         return 2
     src = Path(args.ticket)
     if not src.is_absolute():
-        src = nb / "_inbox" / "pending" / src.name
+        # a bare name: untriaged in pending/, or already in a bucket (a re-route, or a page found blocked
+        # at ingest; task #111)
+        found = [p for p in [nb / "_inbox" / "pending" / src.name,
+                             *((d / src.name) for d in sorted((nb / "_inbox" / "intake").glob("*/")))] if p.is_file()]
+        if len(found) > 1:
+            print(f"error: {src.name} is in more than one place: {', '.join(str(p.parent) for p in found)}",
+                  file=sys.stderr)
+            return 2
+        src = found[0] if found else nb / "_inbox" / "pending" / src.name
     if not src.is_file():
         print(f"error: no ticket {src}", file=sys.stderr)
         return 2
@@ -207,7 +219,8 @@ def cmd_route(nb: Path, args) -> int:
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / src.name
     atomic_write_text(dest, text)
-    src.unlink()
+    if src.resolve() != dest.resolve():  # routed to the bucket it sits in: rewritten in place, never deleted
+        src.unlink()
     log = nb / "_inbox" / "intake" / "triage-log.md"
     body = log.read_text(encoding="utf-8") if log.is_file() else LOG_HEADER
     item = _front(text).get("source", src.name)

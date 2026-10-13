@@ -151,16 +151,21 @@ with tempfile.TemporaryDirectory() as td:
     lg = intake / "triage-log.md"
     check("route to main with --by: logged as mark", p.returncode == 0 and lg.is_file()
           and "| main | fits two | mark |" in lg.read_text(encoding="utf-8"), p.stdout)
+    # a wrong call is fixed by routing again: a bare name is found in its bucket (task #111)
     p = run("--topic", "research", "route", "3-2026-09-24-100001-t1.md", "--to", "main", "--reason", "again")
-    check("route of a ticket no longer pending: exit 2", p.returncode == 2, p.returncode)
+    check("re-route of a bucket ticket by its bare name: exit 0, moved other -> main",
+          p.returncode == 0 and (intake / "main" / "3-2026-09-24-100001-t1.md").is_file()
+          and not moved.exists(), (p.returncode, p.stderr[-200:]))
+    p = run("--topic", "research", "route", "3-2026-09-24-100009-none.md", "--to", "main", "--reason", "x")
+    check("route of a ticket that is nowhere: exit 2", p.returncode == 2, p.returncode)
     check("pending holds only the view file now", [x.name for x in pend.iterdir()] == ["_pending.md"],
           [x.name for x in pend.iterdir()])
 
     # ── log ──
     p = run("--topic", "research", "log", "--last", "2")
-    check("log: three calls, the last two shown",
-          p.stdout.startswith("3 call(s); the last 2:") and "example.com/a" not in p.stdout and "example.com/c" in p.stdout,
-          p.stdout)
+    check("log: four calls (the re-route is one), the last two shown",
+          p.stdout.startswith("4 call(s); the last 2:") and "example.com/b" not in p.stdout
+          and "example.com/c" in p.stdout and "| main | again |" in p.stdout, p.stdout)
 
     # ── save as PDF: route marks the ticket, save-list lists what the user must save (task #96, Mark) ──
     p = run("--topic", "research", "save-list")
@@ -206,6 +211,25 @@ with tempfile.TemporaryDirectory() as td:
     p = run("--topic", "research", "save-list")
     check("save-list: a page whose PDF is attached leaves the list",
           p.stdout.startswith("1 page(s)") and "AndrewYNg" not in p.stdout, p.stdout[:200])
+
+    # ── a page found blocked at ingest: its ticket is already in a bucket, marked in place (task #111) ──
+    (pend / "3-2026-10-13-100007-t7.md").write_text(ticket("https://medium.com/@b/blocked-story"), encoding="utf-8")
+    run("--topic", "research", "route", "3-2026-10-13-100007-t7.md", "--to", "proj", "--reason", "memory")
+    t7 = intake / "proj" / "3-2026-10-13-100007-t7.md"
+    p = run("--topic", "research", "route", "3-2026-10-13-100007-t7.md", "--to", "proj", "--reason", "Cloudflare at ingest",
+            "--save-as-pdf", "blocked")
+    t7_text = t7.read_text(encoding="utf-8") if t7.is_file() else ""
+    check("same-bucket route by bare name: exit 0", p.returncode == 0, (p.returncode, p.stderr[-200:]))
+    check("same-bucket route: the ticket is kept, marked save_as_pdf: blocked",
+          "\nsave_as_pdf: blocked\n" in t7_text and "source: https://medium.com/@b/blocked-story" in t7_text, t7_text[:200])
+    check("same-bucket route: logged",
+          "| https://medium.com/@b/blocked-story | proj | save as PDF: blocked (Cloudflare at ingest) |"
+          in (intake / "triage-log.md").read_text(encoding="utf-8"))
+    p = run("--topic", "research", "route", str(t7), "--to", "proj", "--reason", "again, by full path")
+    check("same-bucket route by full path: exit 0 and the ticket still exists (it used to be deleted)",
+          p.returncode == 0 and t7.is_file(), (p.returncode, t7.is_file()))
+    p = run("--topic", "research", "save-list")
+    check("save-list: the page marked at ingest is listed", "medium.com/@b/blocked-story" in p.stdout, p.stdout[-300:])
 
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
