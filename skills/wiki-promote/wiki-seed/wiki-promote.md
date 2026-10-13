@@ -22,6 +22,8 @@ Moves staged entries out of the holding area and into the live wiki. Staged inge
 - the folder indexes and the wiki MAP regenerated
 - the search index brought up to date, so the promoted entries show up in [`wiki-search`](./wiki-search.md) straight away: only new and changed entries are processed, a few seconds for a handful (on a machine set to keyword search, the keyword index alone). A failure here is a warning; the promotion stands
 
+These rebuilds run once per promotion run, however many entries it moves. Several entries picked by name are promoted in one run (the script takes `--slug` once per entry), so a batch of 32 costs one rebuild, not 32.
+
 A bare or singular folder name is mapped to its full taxonomy folder. A notebook's own folder (one the framework doesn't list, such as `research/agents` or `research/vendors`) counts as known when it has a `README.md` saying what it is for. Any other folder is used as given, with a warning to check the spelling or add the README: a mistyped folder the script creates never gets one, so it keeps warning. Rejected entries move to `_inbox/rejected/` — kept for the audit trail, never deleted.
 
 **Works with:** [`wiki-update`](./wiki-update.md) stages the entries this skill later approves, and [`wiki-cycle`](./wiki-cycle.md) invokes it as a step in a full run. [`wiki-lint`](./wiki-lint.md) is re-run afterwards to confirm the promotion left zero broken links, and [`wiki-report`](./wiki-report.md) counts what is still sitting in `_inbox/proposed/`. The optional `--verify` flag hands each promoted entry to [`wiki-verify`](./wiki-verify.md); a failed verification leaves the entry promoted and unverified.

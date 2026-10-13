@@ -131,10 +131,10 @@ It writes `semantic-scope.txt`: the entries added or revised since the last sema
 
 **Step 5 — Fix lint issues.** Show the findings; apply what the user approves (fix agents by category, up to 3, on Step 0's `lint fixes` model). A finding that would edit a `framework-contract: true` doc goes to the user instead: the docs refresh overwrites such edits.
 
-**Step 5.5 — Promote** (`--full`, before Steps 6 and 6.5, which read `wiki/`). Promote every staged entry not held by the checker, one slug at a time, then normalise links and confirm:
+**Step 5.5 — Promote** (`--full`, before Steps 6 and 6.5, which read `wiki/`). Promote every staged entry not held by the checker in **one** run, naming each with its own `--slug` (the run rebuilds links, indexes, MAP and the search index once; one run per slug rebuilt the whole notebook each time), then normalise links and confirm:
 
 ```bash
-uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --auto --slug <slug>     # per entry not held
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --auto --slug <a> --slug <b> ...   # every entry not held
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <notebook>
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook>                   # 0 broken links before going on
 ```

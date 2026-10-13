@@ -20,7 +20,9 @@ Modes:
                 needs a sidecar that parses and names a target_folder.
 
 Optional filters:
-  --slug <slug>      Only consider this one entry.
+  --slug <slug>      Only consider this entry; repeat it for several, promoted in one
+                     run with one rebuild of links, indexes, MAP and search (task #112;
+                     a 32-entry cycle promoted one slug per run rebuilt 32 times).
   --max <n>          Stop after N promotions.
 
 An entry whose sidecar is missing, is not valid JSON, or names no
@@ -567,7 +569,8 @@ def main():
     mode.add_argument("--check", action="store_true",
                       help="Validate staged entries (sidecar present, valid JSON, target_folder) "
                            "without moving anything; exit 1 if any would be held back")
-    parser.add_argument("--slug", default=None, help="Only operate on this slug")
+    parser.add_argument("--slug", action="append", default=None,
+                        help="Only operate on this slug; repeat for several (one rebuild for all)")
     parser.add_argument("--max", type=int, default=None, help="Stop after N promotions")
     parser.add_argument("--dry-run", action="store_true", help="Print actions without writing")
     parser.add_argument(
@@ -607,7 +610,10 @@ def main():
 
     items = list_proposed(vault)
     if args.slug:
-        items = [(m, s) for m, s in items if m.stem == args.slug]
+        missing = sorted(set(args.slug) - {m.stem for m, _ in items})
+        if missing:
+            _warn(f"not staged, skipped: {', '.join(missing)}")
+        items = [(m, s) for m, s in items if m.stem in args.slug]
     if not items:
         _info("nothing in _inbox/proposed/ to promote")
         if not args.check:

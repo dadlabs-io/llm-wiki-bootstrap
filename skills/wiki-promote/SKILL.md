@@ -61,6 +61,8 @@ If `all`: promote everything, go to Step 3 for each.
 If `<filename>`: promote just that one.
 If no arg: ask "Promote all, or pick by number?"
 
+Several picked: promote them in one `wiki-promote.py --topic <topic> --auto --slug <a> --slug <b> ...` run, so links, indexes, MAP and the search index are rebuilt once, not once per entry (task #112).
+
 If `--review`: for each entry, show the full TL;DR + Related section before asking approve/reject/skip.
 
 ### Step 3 — Promote each approved entry

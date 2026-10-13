@@ -117,6 +117,21 @@ with tempfile.TemporaryDirectory() as td:
     after = [l for l in qmd_log.read_text(encoding="utf-8").splitlines() if l.strip()] if qmd_log.exists() else []
     check("--dry-run does not re-index", len(after) == len(qmd_calls), after)
 
+    # several --slug in one run: exactly those promoted, the rest stay staged, one rebuild (task #112;
+    # cycle 2026-10-12-02 promoted 32 one slug at a time and rebuilt the notebook 32 times)
+    for s in ("new-e", "new-f"):
+        (prop / f"{s}.md").write_text(entry(s, ["old-a.md"]), encoding="utf-8")
+        (prop / f"{s}.proposed_metadata.json").write_text(json.dumps(
+            {"target_folder": "project/decisions", "title": s, "tier": "self"}), encoding="utf-8")
+    p = run(["--topic", "t", "--auto", "--slug", "new-d", "--slug", "new-e"], proj)
+    out = p.stdout + p.stderr
+    check("two --slug: exit 0", p.returncode == 0, out[-300:])
+    check("two --slug: both named entries promoted",
+          (dec / "new-d.md").exists() and (dec / "new-e.md").exists(), out[-300:])
+    check("two --slug: the entry not named stays staged", (prop / "new-f.md").exists(), out[-300:])
+    now = [l.split()[0] for l in qmd_log.read_text(encoding="utf-8").splitlines() if l.strip()]
+    check("two --slug: one rebuild (one qmd update + embed)", now[len(after):] == ["update", "embed"], now[len(after):])
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)
