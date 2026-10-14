@@ -1,0 +1,6 @@
+# Private words: one per line, any case. A line being committed that contains one is blocked (task #135).
+# Only lines a commit ADDS are checked. A repo allows a word with a .private-words-allow file at its root.
+# Mark fills this list; examples of what belongs here (uncomment or add):
+# a client's name
+# a personal email address
+# a home address or phone number

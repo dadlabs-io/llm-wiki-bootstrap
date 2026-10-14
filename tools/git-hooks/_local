@@ -1,0 +1,9 @@
+#!/bin/sh
+# Runs the repo's own hook of this name, if it has one: with core.hooksPath set globally, git no longer
+# looks in .git/hooks, so every hook name here hands over to it. stdin passes through (pre-push reads it).
+name="$1"; shift
+hook="$(git rev-parse --git-common-dir)/hooks/$name"
+if [ -f "$hook" ]; then
+    exec "$hook" "$@"
+fi
+exit 0

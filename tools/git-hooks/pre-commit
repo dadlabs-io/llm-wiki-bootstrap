@@ -1,0 +1,30 @@
+#!/bin/sh
+# Machine-wide pre-commit hook (git config --global core.hooksPath ~/.git-hooks; source:
+# llm-wiki-bootstrap tools/git-hooks, task #135). Runs on every commit in every repo, for every bot and for Mark:
+#   1. gitleaks on the staged changes (API keys, tokens, private keys);
+#   2. the private-words list on the lines being added (private-words.txt beside this hook);
+#   3. the repo's own .git/hooks/pre-commit, if it has one (a global hooks path replaces it otherwise).
+# A block names the file and line. To commit anyway, deliberately: git commit --no-verify
+here="$(cd "$(dirname "$0")" && pwd)"
+. "$here/hooks.conf"
+status=0
+
+if [ -x "$GITLEAKS" ] || command -v "$GITLEAKS" >/dev/null 2>&1; then
+    if ! "$GITLEAKS" git --pre-commit --staged --redact --no-banner --verbose --config "$here/gitleaks.toml"; then
+        echo "pre-commit: BLOCKED — gitleaks found a secret in the staged changes (file and line above)." >&2
+        status=1
+    fi
+else
+    echo "pre-commit: BLOCKED — NOT checked: gitleaks not found at $GITLEAKS (re-run tools/git-hooks/install.sh)." >&2
+    status=1
+fi
+
+if ! sh "$here/private-words.sh"; then
+    status=1
+fi
+
+if [ $status -ne 0 ]; then
+    echo "pre-commit: fix the lines above, or commit anyway on purpose with: git commit --no-verify" >&2
+    exit $status
+fi
+exec sh "$here/_local" pre-commit "$@"

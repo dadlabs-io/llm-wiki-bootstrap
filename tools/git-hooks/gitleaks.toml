@@ -1,0 +1,20 @@
+# gitleaks settings for the machine-wide pre-commit hook (task #135): gitleaks' own rules, plus two allowances,
+# measured 2026-10-14 on the last 300 commits of llm-wiki-bootstrap, project-notebooks, agent-builder-bootstrap
+# and investment-agent (45 findings, none a secret of ours):
+#  - 34: generic-api-key on a file's SHA hash (40 or 64 hex characters) under a name containing "key" (review
+#    ledgers, test results); 8: sourcegraph-access-token on commit hashes in a repo page. Pure lowercase hex of
+#    exactly those lengths is let through for those two rules.
+#  - 3: example keys (sk_live_..., AKIA...) in a security paper saved under a notebook's raw/: a raw is a source's
+#    own words, kept verbatim, so notebook raws are not scanned.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "content and commit hashes (SHA-1, SHA-256) read as keys"
+targetRules = ["generic-api-key", "sourcegraph-access-token"]
+regexTarget = "secret"
+regexes = ['''^[0-9a-f]{40}$''', '''^[0-9a-f]{64}$''']
+
+[[allowlists]]
+description = "a notebook's raw sources, kept verbatim"
+paths = ['''(^|/)notebooks/[^/]+/raw/''']
