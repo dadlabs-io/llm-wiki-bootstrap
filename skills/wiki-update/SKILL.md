@@ -55,6 +55,7 @@ Direct mode, the default: use it unless you were asked for `--staged`. Other ski
    - `## TL;DR` that says something the title does not
    - body sections on what matters in the source, and why it is in the wiki
    - Sources, external (the material) apart from internal (our synthesis)
+   - what comes from another wiki entry rather than the source (an earlier part of a series, a vendor's name, an event) is a cross-reference with that entry linked, never in the TL;DR and never as the source's own words (2026-10-14: the checker flagged it in 9 of 10 drafts)
    - for a tool or repository whose source makes headline claims (speed, accuracy, scale), a `## Claims checked` table: `| Claim | Status | Evidence |`, one row per headline figure with the figure itself in the Claim cell (`40x faster indexing`, not a paraphrase), status measured / claimed / unknown
    - `## Related in this wiki`: at least two links, each saying where the source agrees with, extends or contradicts that entry. Link by bare file name (`[Title](<slug>.md)`) and look slugs up with `wiki-update.py --topic <topic> --slug-for --title "<title>" --folder <folder>`; never guess them. It exits 2 and lists near matches when no entry has that title or file name.
 

@@ -11,6 +11,12 @@
 
 ## 2026-10-14
 
+### Ingest model by source: Opus for long transcripts (task #143)
+
+- **What**: `/wiki-cycle` Step 2 sends a ticket whose raw is a transcript of `min_transcript_minutes`+ (15, the checker's line) to an Opus worker, the rest to the ingest-workers model (Sonnet); the per-run ask names both. `/wiki-update` step 4: content from another wiki entry is a linked cross-reference, never in the TL;DR or as the source's own words. Usage pages for both.
+- **Why**: cycle 2026-10-14-03 (task #142) drafted five AI Engineer talks with both models and scored all ten drafts blind with `wiki-checker`: Opus 13 findings, 1 clean pass, 0 sections skipped; Sonnet 22, 0, 4; Opus better on 4 of 5; worker tokens about equal (506k and 492k). Codex GPT-6-Astra passed both talks it drafted but wrote thin entries and used up the ChatGPT plan after four runs. 9 of 10 Sonnet/Opus drafts carried background from other entries as the talk's own words, hence the labelling line.
+- **Proof**: no suite run, on Mark's word (a model choice and one line of wording); two PENDING rows. Evidence: the cycle's report and checker reports in agentic-design `_inbox/reports/2026-10-14/2026-10-14-03/`.
+
 ### `/wrap-up` checks the docs a session's changes touch (task #130)
 
 - **Why**: we don't cut releases, so no step ever checked that a README or usage page was still true after a change (Mark: "maybe it belongs in wrap-up"; agreed it does).
