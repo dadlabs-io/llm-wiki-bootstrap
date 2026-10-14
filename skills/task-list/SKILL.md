@@ -1,6 +1,6 @@
 ---
 name: task-list
-description: "Keeps the project's task list, a stack of task cards in the wiki: one card per task in wiki/tasks/ (its fields: owner, status ready / doing / waiting / done, the next step or what it waits on, priority, tags; then its details, an optional Steps checklist and a dated Log), and tasks/ORDER.md, the current tasks in working order, where NOW is the first card not done. A set-aside task goes to the backlog and keeps its owner; a number is never reused. Shows the list (NOW, the order, the backlog; one card in full on request), adds a task, changes a task's status, owner or next step, reorders ('put 5 first', 'do 5 after 3'), adds a dated note to a card ('note on 12: …'), moves one to the backlog and back, marks one done, and removes one only when the user says so. Use when the user types /task-list, or says 'add a task', 'new task', 'put X on the list', 'delete task 4', 'remove task 4', 'mark 2 done', 'task 3 is done', 'task 3 is waiting on Y', 'move task 5 to <owner>', 'move 5 to the backlog', 'take 5 off the backlog', 'put 5 first', 'note on 12: …', 'what's NOW', 'what's on my list', 'show my tasks', 'what's left', 'show my tasks with details', 'details on 25'. Not Claude Code's /tasks (background jobs), and not a session's own scratch to-do list."
+description: "Keeps the project's task list, a stack of task cards in the wiki: one card per task in wiki/tasks/ (its fields: owner, status ready / doing / waiting / done, the next step or what it waits on, priority, tags; then its details, an optional Steps checklist and a dated Log), and tasks/ORDER.md, the current tasks in working order, where NOW is the first card not done. A set-aside task goes to the backlog and keeps its owner; a number is never reused. Shows the list (NOW, the order, the backlog; one card in full on request), adds a task, changes a task's status, owner or next step, reorders ('put 5 first', 'do 5 after 3'), adds a dated note to a card ('note on 12: …'), moves one to the backlog and back, marks one done, and removes one only when the user says so. Use when the user types /task-list, or says 'add a task', 'new task', 'put X on the list', 'delete task 4', 'remove task 4', 'mark 2 done', 'task 3 is done', 'task 3 is waiting on Y', 'move task 5 to <owner>', 'move 5 to the backlog', 'take 5 off the backlog', 'put 5 first', 'note on 12: …', 'what's NOW', 'what's on my list', 'show my tasks', 'what's left', 'show my tasks with details', 'details on 25', 'what's waiting', 'what's waiting on me'. Not Claude Code's /tasks (background jobs), and not a session's own scratch to-do list."
 last_reviewed: 2026-10-12
 review_after: 2027-01-10
 reviewed_for_model: claude-opus-5-5
@@ -27,7 +27,7 @@ break one of the six rules (exit 2, the rule named). The body may be edited by h
 adding one); after a hand edit run `check`, and fix what it lists (exit 1) until it passes (exit 3 means it found no cards to check).
 
 ```bash
-uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show [<N>] [--details] [--tag <tag>]
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show [<N>] [--details] [--tag <tag>] [--waiting [<who>]]
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py add "<short task>" --owner <owner> [--status <s>] [--next "<short>"] [--details "<the rest>"] [--backlog]
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py set <N> [--status <s>] [--next "<short>"] [--owner <owner>] [--task "<short>"] [--append-details "<more>"]
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py done <N> [--next "<short>"] [--append-details "<more>"]
@@ -51,6 +51,8 @@ details is refused (exit 2, nothing written; task #101, a progress note once wip
 only when the user asks, with `--details "<new>" --replace-details`. Progress goes in the Log: `log <N> "<note>"`.
 
 `show` prints NOW, then the ORDER.md tasks in order, then the backlog by owner; `show <N>` prints the card in full;
+`show --waiting` lists every waiting card (current and backlog) with what it waits on, and `show --waiting <who>` only
+those whose `waiting_on` names them;
 `show --details` adds every current card's body.
 
 Exit 2 means bad input, an unknown number, no wiki found, or `remove` without `--confirmed`; exit 3 means `show`
@@ -83,6 +85,7 @@ is refused).
 |---|---|
 | "/task-list", "what's on my list", "show my tasks", "what's left", "what's NOW" | `show`, then give them the list as printed (its first line is NOW) |
 | "show my tasks with details", "details on 25", "what's behind task 25" | `show --details`, or `show 25` for one card |
+| "what's waiting", "what's waiting on me", "what's waiting on agent-builder" | `show --waiting`, or `show --waiting <name>` |
 | "add a task …", "put X on the list", "remind me to …" | `add "<X>"`, owner as below |
 | "task 3 is done", "mark 3 done", "I finished …" | `done 3 --next "<what happened>"`, `log 3 "<what happened>"`, then `remove 3 --confirmed` (their word) |
 | "delete task 4", "remove task 4", "drop 4" | `remove 4 --confirmed`: `list: done`, out of ORDER.md; the card stays |

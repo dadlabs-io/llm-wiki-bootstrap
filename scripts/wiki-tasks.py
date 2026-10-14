@@ -26,7 +26,7 @@ would leave it behind unseen (Mark, 2026-10-12: nothing gets lost). Its tasks ar
 llm-wiki release before task #90, which still had `migrate`.
 
 Usage:
-  python wiki-tasks.py [show [<N>] [--details] [--tag <tag>]]
+  python wiki-tasks.py [show [<N>] [--details] [--tag <tag>] [--waiting [<who>]]]
   python wiki-tasks.py add "<task>" [--owner <owner>] [--status ready] [--next "<text>"] [--details "<text>"] [--backlog]
   python wiki-tasks.py set <N> [--task ...] [--status ...] [--next ...] [--owner ...] [--details ... | --append-details ...]
   python wiki-tasks.py done <N> [--next "<text>"] [--details "<text>" | --append-details "<text>"]
@@ -141,6 +141,25 @@ def old_lists(tasks_dir: Path) -> list[Path]:
     return out
 
 
+def render_waiting(stack: "tc.Stack", who: str) -> list[str]:
+    """Every card waiting on something, the current ones in working order, then the backlog; `who` keeps only
+    those whose waiting_on names it (task #124, Mark 2026-10-14: one view of what waits, not a Mark-only tag)."""
+    cards = stack.by_id()
+    current = [cards[n] for n in stack.order if n in cards]
+    backlog = sorted((c for c in stack.cards if c.get("list") == "backlog" and c.id is not None),
+                     key=lambda c: c.id)
+    rows = [c for c in current + backlog if c.get("status") == "waiting"
+            and (not who or who.lower() in str(c.get("waiting_on") or "").lower())]
+    head = f"Waiting on {who!r}" if who else "Waiting"
+    if not rows:
+        return [f"{head}: no card is waiting" + (" on that" if who else "")]
+    out = [f"{head}: {len(rows)} card{'s' if len(rows) != 1 else ''}", "",
+           "| # | Task | Owner | List | Waiting on |", "|---|---|---|---|---|"]
+    out += [f"| {c.id} | {tc._cell(c.get('title'))} | {tc._cell(c.get('owner'))} | {c.get('list')} | "
+            f"{tc._cell(c.get('waiting_on'))} |" for c in rows]
+    return out
+
+
 def card_line(c: "tc.Card") -> str:
     nxt = f"waiting on: {c.get('waiting_on')}" if c.get("status") == "waiting" else c.get("next")
     return f"#{c.id} | {c.get('title')} | {c.get('status')} | {nxt} | owner: {c.get('owner')}, list: {c.get('list')}"
@@ -198,6 +217,8 @@ def run_command(args, stack: "tc.Stack") -> int:
     if args.cmd == "show":
         if args.n is not None:
             print(stack.find(args.n).path.read_text(encoding="utf-8").rstrip())
+        elif args.waiting is not None:
+            print("\n".join(render_waiting(stack, args.waiting.strip())))
         else:
             lines = tc.render(stack, args.tag)
             if args.details:
@@ -299,6 +320,8 @@ def main(argv: list[str]) -> int:
     p.add_argument("n", type=int, nargs="?", help="one task, with its details")
     p.add_argument("--details", action="store_true", help="the overview, then every task's details")
     p.add_argument("--tag", help="just the tasks with this tag")
+    p.add_argument("--waiting", nargs="?", const="", metavar="WHO",
+                   help="every waiting card and what it waits on; WHO keeps those whose waiting_on names it")
     sub.add_parser("check", parents=[common])
     p = sub.add_parser("order", parents=[common])
     p.add_argument("n", type=int)

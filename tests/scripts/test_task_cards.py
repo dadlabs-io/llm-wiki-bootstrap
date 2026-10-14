@@ -170,6 +170,18 @@ with tempfile.TemporaryDirectory() as tmp:
     p = run(tasks, "set", "12", "--status", "waiting", "--next", "Mark's labels")
     fm, _, _ = card(tasks, 12)
     check("set --status waiting --next Y: waiting_on Y", p.returncode == 0 and fm["waiting_on"] == "Mark's labels", fm)
+    run(tasks, "set", "5", "--status", "waiting", "--waiting-on", "agent-builder's reply")
+    p = run(tasks, "show", "--waiting")
+    check("show --waiting: every waiting card with what it waits on, the backlog's too, and no other card",
+          p.returncode == 0 and "| 12 |" in p.stdout and "Mark's labels" in p.stdout and "| 5 |" in p.stdout
+          and "| backlog |" in p.stdout and "| 20 |" not in p.stdout, p.stdout)
+    p = run(tasks, "show", "--waiting", "mark")
+    check("show --waiting <who>: only the cards whose waiting_on names them (any case)",
+          "| 12 |" in p.stdout and "| 5 |" not in p.stdout, p.stdout)
+    run(tasks, "set", "5", "--status", "ready")
+    p = run(tasks, "show", "--waiting", "the printer")
+    check("show --waiting <who>, none: says so, exit 0", p.returncode == 0 and "no card is waiting on that" in p.stdout,
+          p.stdout)
     p = run(tasks, "set", "12", "--status", "doing")
     fm, _, _ = card(tasks, 12)
     check("leaving waiting clears waiting_on", fm["status"] == "doing" and not fm.get("waiting_on"), fm)
