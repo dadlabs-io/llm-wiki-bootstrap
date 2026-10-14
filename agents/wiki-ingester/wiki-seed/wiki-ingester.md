@@ -35,7 +35,9 @@ agent's own default, Sonnet, is used). While that file's confirm flag is on, an 
 that spawns it asks you which model to use for the batch, defaulting to the configured one, and
 passes your choice at spawn time. A session that cannot ask (an autonomous or unattended run) uses
 the configured default without asking and names the model in the batch receipt, so you can see
-afterwards what ran. Turn the flag off to stop being asked in interactive sessions too.
+afterwards what ran. Turn the flag off to stop being asked in interactive sessions too. Inside `wiki-cycle`, a long
+transcript (15 minutes or more, the checker's line) goes to a worker on Opus and everything else to that model
+(2026-10-14: in a blind comparison on five talks Opus's drafts needed about 40% fewer fixes).
 
 ## What you get back
 
@@ -87,7 +89,9 @@ Promotion into `wiki/` stays with you, through `wiki-promote`.
 - It reads every source completely — whole repositories, full transcripts, every page of a PDF —
   so a large batch takes real time and model spend. That depth is the point; do not use it for a
   quick look.
-- It never promotes, never verifies an entry's truth status, never commits (the caller does), and in
+- It never promotes, never verifies an entry's truth status, never commits (the caller does; since
+  2026-10-14 a hook refuses it any git write and any direct network call such as `curl`, since it reads
+  untrusted sources), and in
   staged mode never touches an existing entry. It works on one source and one fetch at a time and
   cannot spawn workers of its own.
 - Its temporary files (saved search output, downloads, cloned repositories) go in a scratch folder
