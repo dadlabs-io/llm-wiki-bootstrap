@@ -659,22 +659,27 @@
           "demo-notebook/wiki/README.md": "# demo-app wiki\n",
           "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n",
           "skills/csv-exporter/scripts/export.py": "import csv\nimport sys\n\n\ndef export(path, out):\n    with open(path, encoding=\"utf-8-sig\", newline=\"\") as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        body = list(rows)\n    with open(out, \"w\", encoding=\"utf-8\", newline=\"\") as fh:\n        w = csv.writer(fh)\n        w.writerow(header)\n        w.writerows(body)\n\n\nif __name__ == \"__main__\":\n    export(sys.argv[1], sys.argv[2])\n",
-          "skills/report-mailer/SKILL.md": "---\nname: report-mailer\ndescription: \"Mails a finished report to a list of recipients with scripts/send.py. Use when asked to mail a report.\"\n---\n\n# Report mailer\n\nRun `python scripts/send.py <report.md> <recipients.txt>` to mail the report, subject taken from its first heading.\n",
+          "skills/archive-rotator/SKILL.md": "---\nname: archive-rotator\ndescription: \"Rotates backup archives in a folder with scripts/rotate.py, keeping the newest seven. Use when asked to rotate backups.\"\n---\n\n# Archive rotator\n\nRun `python scripts/rotate.py <backups-folder>` to delete all but the newest seven archives.\n",
           "demo-notebook/raw/code-changes/2026-01-03-csv-export/checkpoints.md": "# Checkpoints — csv-export\n\n## Implement — 2026-01-03\nStep 2's red test fed tests/data/empty.csv to the exporter: `export.py` raised StopIteration at `header = next(rows)` on the empty input file instead of writing a CSV. Worked around in our code by checking the file size before calling export.py and writing the header ourselves. The exporter itself was left as it is.\n\n## Finishing decision — 2026-01-03\nMark: \"merge it\".\n",
-          "demo-notebook/raw/code-changes/2026-10-10-weekly-digest/checkpoints.md": "# Checkpoints — weekly-digest\n\n## Implement — 2026-10-10\nStep 3's test tests/test_subject.py::test_long_title FAILED: expected the subject 'Quarterly revenue report for the Northern region' but the mail arrived with 'Quarterly revenue report for the Norther' (40 characters). Worked around in our code by shortening the report title. The mailer itself was left as it is.\n\n## Finishing decision — 2026-10-10\nMark: \"merge it\".\n",
-          "notebook/raw/skill-suggestions/2026-01-05-demo-notebook/proposals.md": "# Proposals, 2026-01-05\n\n## P1 csv-exporter: write just the header row when the input is empty\nSuggestions: csv-exporter--empty-input-crashes.md\n\nShown to Mark; no answer was recorded.\n",
-          "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": "Skill: csv-exporter\nSeen in: csv-export (2026-01-03)\nIssue: export.py raises StopIteration on an empty input file; the run worked around it by checking the file size first.\nFix: write just the header row when the input is empty\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/csv-exporter--empty-input-crashes.md\n",
-          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md": "Skill: report-mailer\nSeen in: weekly-digest (2026-10-10)\nIssue: send.py cuts the subject line at 40 characters, so long report titles arrive truncated.\nFix: allow subjects up to 78 characters\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/report-mailer--subject-cut-short.md\n"
+          "demo-notebook/raw/code-changes/2026-10-12-nightly-backup/checkpoints.md": "# Checkpoints — nightly-backup\n\n## Implement — 2026-10-12\nStep 2's test tests/test_rotate.py::test_keeps_seven FAILED: expected 7 files in backups/ but found 1 after the third run of `rotate.py`. Mark: \"no, it has to keep seven backups, not one; the rotator is deleting the rest\". Worked around in our code by copying the archives aside before each rotation. The rotator itself was left as it is.\n\n## Finishing decision — 2026-10-12\nMark: \"merge it\".\n",
+          "notebook/raw/skill-suggestions/2026-01-05-demo-notebook/proposals.md": "# Proposals, 2026-01-05\n\n## P1 report-mailer: retry once on a timeout\nSuggestions: report-mailer--timeout-no-retry.md\n\n## P2 csv-exporter: keep the header on a filtered export\nSuggestions: csv-exporter--filter-drops-header.md\n\n## P3 csv-exporter: write just the header row when the input is empty\nSuggestions: csv-exporter--empty-input-crashes.md\n\nP1 and P2 were answered. P3 was shown and no answer was recorded.\n",
+          "notebook/raw/skill-suggestions/2026-01-05-demo-notebook/report-mailer--timeout-no-retry.md": "Skill: report-mailer\nSeen in: weekly-digest (2025-12-20)\nIssue: send.py gives up on the first timeout.\nFix: retry once\nDecision (2026-01-05, Mark): accepted as task 12\n",
+          "notebook/raw/skill-suggestions/2026-01-05-demo-notebook/csv-exporter--filter-drops-header.md": "Skill: csv-exporter\nSeen in: csv-export (2025-12-22)\nIssue: a filtered export loses the header row.\nFix: always write the header first\nDecision (2026-01-05, Mark): turned down: the filter step is meant to drop it\n",
+          "notebook/_inbox/skill-suggestions/received/archive-rotator--keeps-only-one-backup.md": "Skill: archive-rotator\nSeen in: nightly-backup (2026-10-12)\nIssue: rotate.py deletes every archive but the newest one instead of keeping seven.\nFix: keep the newest seven archives\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/archive-rotator--keeps-only-one-backup.md\n",
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": "Skill: csv-exporter\nSeen in: csv-export (2026-01-03)\nIssue: export.py raises StopIteration on an empty input file; the run worked around it by checking the file size first.\nFix: write just the header row when the input is empty\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/csv-exporter--empty-input-crashes.md\n"
         }
       },
       "expect": {
         "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/archive-rotator--keeps-only-one-backup.md",
           "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md",
-          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md",
           "notebook/raw/skill-suggestions/2026-01-05-demo-notebook/proposals.md"
         ],
         "files_absent": [
           "notebook/_inbox/skill-suggestions/received/archive"
+        ],
+        "regex": [
+          "(?i)\\b(\\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\\s+(days?|weeks?|months?)\\b"
         ],
         "commands": [
           {
@@ -682,34 +687,30 @@
             "exit": 0
           },
           {
-            "cmd": "python -c \"import glob,os,sys; h=[p for p in glob.glob('notebook/**/*.md', recursive=True) if os.path.basename(p)!='proposals.md' and ('Decision (' in open(p,encoding='utf-8').read() or 'Outcome (' in open(p,encoding='utf-8').read())]; print(h); sys.exit(1 if h else 0)\"",
+            "cmd": "python -c \"import glob,os,sys; h=[p for p in glob.glob('notebook/**/*.md', recursive=True) if '2026-01-05-demo-notebook' not in p.replace(chr(92),'/') and os.path.basename(p)!='proposals.md' and ('Decision (' in open(p,encoding='utf-8').read() or 'Outcome (' in open(p,encoding='utf-8').read())]; print(h); sys.exit(1 if h else 0)\"",
             "exit": 0
           },
           {
-            "cmd": "python -c \"import glob,sys; f=[p for p in glob.glob('notebook/raw/skill-suggestions/*/proposals.md') if '2026-01-05-demo-notebook' not in p]; t=' '.join(open(p,encoding='utf-8').read() for p in f); print(f); sys.exit(0 if ('csv-exporter--empty-input-crashes.md' in t and 'report-mailer--subject-cut-short.md' in t and 'checkpoints.md' in t) else 1)\"",
+            "cmd": "python -c \"import glob,sys; f=[p for p in glob.glob('notebook/raw/skill-suggestions/*/proposals.md') if '2026-01-05-demo-notebook' not in p.replace(chr(92),'/')]; t=' '.join(open(p,encoding='utf-8').read() for p in f); print(f); sys.exit(0 if ('csv-exporter--empty-input-crashes.md' in t and 'archive-rotator--keeps-only-one-backup.md' in t and 'checkpoints.md' in t) else 1)\"",
             "exit": 0
           }
         ]
       },
       "questions": [
         {
-          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply propose a change to csv-exporter for the crash on an empty input file, and a change to report-mailer for the subject cut at 40 characters?",
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply propose a change to csv-exporter for the crash on an empty input file, and a change to archive-rotator so it keeps the newest seven archives?",
           "expect": true
         },
         {
-          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply present the csv-exporter empty-input proposal before the report-mailer subject proposal?",
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply present the csv-exporter empty-input proposal before the archive-rotator proposal?",
           "expect": true
         },
         {
-          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply say the csv-exporter empty-input proposal is stale or has been waiting since an earlier pass (any wording: stale, waiting since January, shown on 2026-01-05 and never decided, a number of days or months)?",
-          "expect": true
-        },
-        {
-          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply ask the user a decision question for each of the two proposals (accept it, turn it down and say why, or leave it for later), rather than one question for both together?",
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply state how long the csv-exporter empty-input suggestion has waited as a length of time (a number of days, weeks or months, or a similar span), and not only the date of the earlier pass?",
           "expect": true
         }
       ],
-      "judge": "Two proposals. The csv-exporter one was listed in the 2026-01-05 pass and never decided, so the reply puts it first and says how long it has waited (or that it is stale); the report-mailer one is new and comes second. One decision question per proposal. The new proposals file names both suggestion files. Nothing is decided, archived or edited under skills/, and the old pass's proposals.md is left in place.",
+      "judge": "Two proposals. The archive-rotator suggestion is the newer, with a failing test and Mark's correction, and its file name sorts first in received/. The csv-exporter one was listed as P3 (buried, after two answered items) in the 2026-01-05 pass and never decided, so it is stale. The reply puts it first anyway and gives how long it has waited as a duration. The new proposals file names both suggestion files. Nothing is decided, archived or edited under skills/.",
       "tags": [
         "task-121"
       ],
