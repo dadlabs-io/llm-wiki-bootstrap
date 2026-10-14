@@ -10,7 +10,7 @@ here="$(cd "$(dirname "$0")" && pwd)"
 status=0
 
 if [ -x "$GITLEAKS" ] || command -v "$GITLEAKS" >/dev/null 2>&1; then
-    if ! "$GITLEAKS" git --pre-commit --staged --redact --no-banner --verbose --config "$here/gitleaks.toml"; then
+    if ! "$GITLEAKS" git --pre-commit --staged --redact --no-banner --verbose --log-level warn --config "$here/gitleaks.toml"; then
         echo "pre-commit: BLOCKED — gitleaks found a secret in the staged changes (file and line above)." >&2
         status=1
     fi
