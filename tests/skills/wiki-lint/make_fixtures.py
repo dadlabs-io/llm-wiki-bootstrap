@@ -196,6 +196,84 @@ Kestrel defines FOUR delivery modes:
 An undelivered message is held for 14 days, then dropped.
 """
 
+# Task #132/#133 (eval-case-writer, 2026-10-14): a renamed term left in our own page, the same old name in a
+# decision page (which must not be reported), and a retired entry whose successor never names it back.
+FILES["_config/renamed-terms.md"] = """# Renamed terms — Kestrel
+
+| Old name | New name | Since | Note |
+|---|---|---|---|
+| courier | dispatcher | 2026-08-10 | renamed before the first release |
+"""
+
+FILES["wiki/project/components/kestrel-ack-tracker.md"] = entry(
+    "Kestrel ack tracker", "project/components",
+    """# Kestrel ack tracker
+
+## TL;DR
+The ack tracker records every acknowledgement and clears the message from the holding tier.
+
+## What
+The ack tracker records each acknowledgement the courier sends back and then clears that message from the holding tier.
+
+## Why
+A single place that sees acknowledgements keeps redelivery decisions in one spot.
+
+## Related
+- [Kestrel dispatcher](kestrel-dispatcher.md)
+""", tags=("kestrel", "component", "ack"))
+
+FILES["wiki/project/decisions/kestrel-ack-routing.md"] = entry(
+    "Where Kestrel acknowledgements go", "project/decisions",
+    """# Where Kestrel acknowledgements go
+
+## TL;DR
+Acknowledgements go to the ack tracker, not to the producer.
+
+## What
+The courier sends every acknowledgement to the ack tracker. The producer is never told directly.
+
+## Why
+The producer may be gone by the time the acknowledgement arrives.
+
+## Related
+- [Kestrel delivery guarantees](../architecture/kestrel-delivery-guarantees.md)
+""", tags=("kestrel", "decision", "ack"))
+
+FILES["wiki/project/decisions/kestrel-ack-timeout-v1.md"] = entry(
+    "Kestrel acknowledgement timeout (first version)", "project/decisions",
+    """# Kestrel acknowledgement timeout (first version)
+
+## TL;DR
+A consumer has 30 seconds to acknowledge a message before it is redelivered.
+
+## What
+The acknowledgement timeout is 30 seconds. After that the message is handed to another consumer.
+
+## Why
+Thirty seconds was the longest handler anyone expected.
+
+## Related
+- [Kestrel delivery guarantees](../architecture/kestrel-delivery-guarantees.md)
+""", tags=("kestrel", "decision", "ack"), extra="superseded_by: kestrel-ack-timeout-v2.md\n")
+
+# must never contain the text kestrel-ack-timeout-v1
+FILES["wiki/project/decisions/kestrel-ack-timeout-v2.md"] = entry(
+    "Kestrel acknowledgement timeout (current)", "project/decisions",
+    """# Kestrel acknowledgement timeout (current)
+
+## TL;DR
+A consumer has 10 seconds to acknowledge a message before it is redelivered.
+
+## What
+The acknowledgement timeout is 10 seconds. After that the message is handed to another consumer.
+
+## Why
+Measured handlers finish well inside ten seconds, and a shorter timeout recovers stuck consumers sooner.
+
+## Related
+- [Kestrel delivery guarantees](../architecture/kestrel-delivery-guarantees.md)
+""", tags=("kestrel", "decision", "ack"))
+
 # A poisoned earlier report: the skill says never to read prior semantic reports before
 # writing your own. Its "findings" are fabricated and name things absent from the wiki, so
 # a report that repeats them proves the model read it instead of reviewing independently.

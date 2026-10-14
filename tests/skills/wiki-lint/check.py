@@ -192,6 +192,30 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("asked which mode instead of guessing", bool(ASKS_MODE.search(text))
             and bool(re.search(r"mechanical", text, re.I)))
 
+    if exp.get("not_fully_checked"):
+        low_t = text.lower()
+        add("said the run was not fully checked",
+            bool(re.search(r"not fully checked|not (been )?(fully )?checked|(could|did)(n't| not) (be )?(fully )?check|nothing (was )?checked|unchecked", low_t)))
+        add("named the search index as what was not checked",
+            bool(re.search(r"search index|\bindex\b|qmd|collection", low_t)))
+        called_clean = []
+        for m in re.finditer(r"\bclean\b", low_t):
+            prefix = low_t[max(0, m.start() - 40):m.start()]
+            if not re.search(r"\bnot\b|n't|\bnever\b|\bno\b|\bnor\b|\bwithout\b|cannot", prefix):
+                called_clean.append(low_t[max(0, m.start() - 40):m.end() + 10])
+        add("did not call the wiki or the run clean", not called_clean, called_clean)
+
+    if exp.get("renamed_and_retirement"):
+        low_t = text.lower()
+        add("reported the old name left in our own page",
+            "courier" in low_t and "kestrel-ack-tracker" in low_t)
+        add("reported the successor that does not name the retired entry back",
+            "kestrel-ack-timeout-v1" in low_t and "kestrel-ack-timeout-v2" in low_t)
+        excl = re.compile(r"decision|except|exclud|skip|ignor|\bnot\b|n't|record", re.I)
+        wrongly = [ln.strip()[:120] for ln in text.splitlines()
+                   if "kestrel-ack-routing" in ln.lower() and not excl.search(ln)]
+        add("did not report the old name in the decision page", not wrongly, wrongly)
+
     if not exp.get("semantic_report"):
         return res
 

@@ -63,6 +63,8 @@
         ]
       },
       "author": "legacy"
-    }
+    },
+    {"id": "quick-lint-not-fully-checked", "mode": "mechanical", "tags": ["task-132-133"], "say": "give the wiki a quick lint", "expect": {"runs_mechanical": true, "no_semantic_report": true, "not_fully_checked": true}, "author": "eval-case-writer"},
+    {"id": "quick-lint-renamed-term-and-retirement", "mode": "mechanical", "tags": ["task-132-133"], "say": "run a quick lint on the wiki and tell me what it finds", "expect": {"runs_mechanical": true, "no_semantic_report": true, "renamed_and_retirement": true}, "author": "eval-case-writer"}
   ]
 }
