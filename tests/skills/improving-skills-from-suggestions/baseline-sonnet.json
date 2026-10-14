@@ -1,64 +1,4 @@
 {
-  "mixed-box-proposes-one": {
-    "session completed": true,
-    "the skill is used (SKILL.md read or its script run)": true,
-    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": true,
-    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--bom-in-header.md": true,
-    "exists: notebook/_inbox/skill-suggestions/received/wiki-update--quote-reworded.md": true,
-    "absent: notebook/_inbox/skill-suggestions/received/archive": true,
-    "command 1 exits 0": true,
-    "command 2 exits 0": true,
-    "judge: Did the model propose a change to csv-exporter for the crash on an empty input file? -> YES": true,
-    "judge: Did the model tell the user the UTF-8 BOM suggestion is already covered by csv-exporter (i -> YES": true,
-    "judge: Did the model tell the user that wiki-update is not part of this library (not this library -> YES": true,
-    "judge: Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it -> YES": true
-  },
-  "sent-suggestion-is-filed": {
-    "session completed": true,
-    "the skill is used (SKILL.md read or its script run)": true,
-    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": true,
-    "absent: notebook/_inbox/skill-suggestions/proposals": true,
-    "absent: notebook/raw/skill-suggestions": true,
-    "absent: demo-notebook/_inbox/skill-suggestions/csv-exporter--empty-input-crashes.md": true,
-    "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md contains 3 expected text(s)": true,
-    "command 1 exits 0": true
-  },
-  "empty-box-writes-nothing": {
-    "session completed": true,
-    "the skill is used (SKILL.md read or its script run)": true,
-    "exists: notebook/raw/skill-suggestions/2026-09-21-demo-notebook/csv-exporter--bom-in-header.md": true,
-    "absent: notebook/_inbox/skill-suggestions/proposals": true,
-    "command 1 exits 0": true,
-    "command 2 exits 0": true,
-    "judge: Did the model tell the user that no new skill suggestions are waiting in received (nothing -> YES": true,
-    "judge: Did the model propose a change to any skill? -> NO": true
-  },
-  "turned-down-before-not-reproposed": {
-    "session completed": true,
-    "the skill is used (SKILL.md read or its script run)": true,
-    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--quote-every-field.md": true,
-    "command 1 exits 0": true,
-    "judge: Did the model propose again that export.py quote every field? -> NO": true,
-    "judge: Did the model tell the user this suggestion was turned down before, with the earlier reaso -> YES": true
-  },
-  "replay-freeze-step-label": {
-    "session completed": true,
-    "the skill is used (SKILL.md read or its script run)": true,
-    "exists: notebook/_inbox/skill-suggestions/received/verifying-before-done--check-freeze-py-step-takes-only.md": true,
-    "command 1 exits 0": true,
-    "command 2 exits 0": true,
-    "judge: Did the model point at check-freeze.py's --step argument being declared as an integer? -> YES": true,
-    "judge: Did the model say whether the proposed change is tactical or strategic? -> YES": true,
-    "judge: The reply is a set of proposals; nothing is meant to be written or run in this session. Do -> YES": true
-  },
-  "should-not-trigger-direct-gotcha-edit": {
-    "session completed": true,
-    "the skill is not used (SKILL.md not opened, no script run)": true,
-    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--bom-in-header.md": true,
-    "absent: notebook/_inbox/skill-suggestions/proposals": true,
-    "absent: notebook/raw/skill-suggestions": true,
-    "skills/csv-exporter/SKILL.md contains 1 expected text(s)": true
-  },
   "accepted-fix-came-back-did-not-hold": {
     "session completed": true,
     "the skill is used (SKILL.md read or its script run)": true,
@@ -83,18 +23,15 @@
     "judge: The reply is a proposal, so no code is written or run in this session. Does the proposed c -> YES": true,
     "judge: The reply is a proposal, so no code is written or run in this session. Does the proposal s -> YES": true
   },
-  "later-record-shows-issue-again-no-new-suggestion": {
+  "empty-box-writes-nothing": {
     "session completed": true,
     "the skill is used (SKILL.md read or its script run)": true,
-    "exists: notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md": true,
-    "exists: notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--output-folder-missing.md": true,
-    "absent: notebook/_inbox/skill-suggestions/received/archive": true,
-    "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--output-folder-missing.md contains 1 expected text(s)": true,
+    "exists: notebook/raw/skill-suggestions/2026-09-21-demo-notebook/csv-exporter--bom-in-header.md": true,
+    "absent: notebook/_inbox/skill-suggestions/proposals": true,
     "command 1 exits 0": true,
     "command 2 exits 0": true,
-    "command 3 exits 0": true,
-    "judge: The reply is a set of proposals and findings; nothing is meant to be edited or recorded in -> YES": true,
-    "judge: Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it -> YES": true
+    "judge: Did the model tell the user that no new skill suggestions are waiting in received (nothing -> YES": true,
+    "judge: Did the model propose a change to any skill? -> NO": true
   },
   "later-focused-rounds-are-not-a-recurrence": {
     "session completed": true,
@@ -108,5 +45,94 @@
     "command 3 exits 0": true,
     "judge: The reply is a set of proposals and findings; nothing is meant to be edited or recorded in -> NO": true,
     "judge: The reply is a set of proposals and findings; nothing is meant to be edited or recorded in -> YES": true
+  },
+  "later-record-shows-issue-again-no-new-suggestion": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md": true,
+    "exists: notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--output-folder-missing.md": true,
+    "absent: notebook/_inbox/skill-suggestions/received/archive": true,
+    "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--output-folder-missing.md contains 1 expected text(s)": true,
+    "command 1 exits 0": true,
+    "command 2 exits 0": true,
+    "command 3 exits 0": true,
+    "judge: The reply is a set of proposals and findings; nothing is meant to be edited or recorded in -> YES": true,
+    "judge: Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it -> YES": true
+  },
+  "mixed-box-proposes-one": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--bom-in-header.md": true,
+    "exists: notebook/_inbox/skill-suggestions/received/wiki-update--quote-reworded.md": true,
+    "absent: notebook/_inbox/skill-suggestions/received/archive": true,
+    "command 1 exits 0": true,
+    "command 2 exits 0": true,
+    "judge: Did the model propose a change to csv-exporter for the crash on an empty input file? -> YES": true,
+    "judge: Did the model tell the user the UTF-8 BOM suggestion is already covered by csv-exporter (i -> YES": true,
+    "judge: Did the model tell the user that wiki-update is not part of this library (not this library -> YES": true,
+    "judge: Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it -> YES": true
+  },
+  "replay-freeze-step-label": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/verifying-before-done--check-freeze-py-step-takes-only.md": true,
+    "command 1 exits 0": true,
+    "command 2 exits 0": true,
+    "judge: Did the model point at check-freeze.py's --step argument being declared as an integer? -> YES": true,
+    "judge: Did the model say whether the proposed change is tactical or strategic? -> YES": true,
+    "judge: The reply is a set of proposals; nothing is meant to be written or run in this session. Do -> YES": true
+  },
+  "sent-suggestion-is-filed": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": true,
+    "absent: notebook/_inbox/skill-suggestions/proposals": true,
+    "absent: notebook/raw/skill-suggestions": true,
+    "absent: demo-notebook/_inbox/skill-suggestions/csv-exporter--empty-input-crashes.md": true,
+    "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md contains 3 expected text(s)": true,
+    "command 1 exits 0": true
+  },
+  "should-not-trigger-direct-gotcha-edit": {
+    "session completed": true,
+    "the skill is not used (SKILL.md not opened, no script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--bom-in-header.md": true,
+    "absent: notebook/_inbox/skill-suggestions/proposals": true,
+    "absent: notebook/raw/skill-suggestions": true,
+    "skills/csv-exporter/SKILL.md contains 1 expected text(s)": true
+  },
+  "stale-suggestion-put-first": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/archive-rotator--keeps-only-one-backup.md": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": true,
+    "exists: notebook/raw/skill-suggestions/2026-01-05-demo-notebook/proposals.md": true,
+    "absent: notebook/_inbox/skill-suggestions/received/archive": true,
+    "reply matches pattern 1: (?i)\\b(\\d+|one|two|three|four|five|six|seven|eight|nine|ten|": true,
+    "command 1 exits 0": true,
+    "command 2 exits 0": true,
+    "command 3 exits 0": true,
+    "judge: The reply is a set of proposals; nothing is meant to be written or run in this session. Do -> YES": true
+  },
+  "turned-down-before-not-reproposed": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--quote-every-field.md": true,
+    "command 1 exits 0": true,
+    "judge: Did the model propose again that export.py quote every field? -> NO": true,
+    "judge: Did the model tell the user this suggestion was turned down before, with the earlier reaso -> YES": true
+  },
+  "weak-evidence-not-proposed": {
+    "session completed": true,
+    "the skill is used (SKILL.md read or its script run)": true,
+    "exists: notebook/_inbox/skill-suggestions/received/csv-exporter--last-row-dropped.md": true,
+    "exists: notebook/_inbox/skill-suggestions/received/report-mailer--non-ascii-subject.md": true,
+    "absent: notebook/_inbox/skill-suggestions/received/archive": true,
+    "command 1 exits 0": true,
+    "command 2 exits 0": true,
+    "judge: The reply is a set of proposals; nothing is meant to be written or run in this session. Do -> YES": true,
+    "judge: The reply is a set of proposals; nothing is meant to be written or run in this session. Do -> NO": true,
+    "judge: The reply is a set of proposals; nothing is meant to be written or run in this session. Fo -> YES": true,
+    "judge: Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it -> YES": true
   }
 }
