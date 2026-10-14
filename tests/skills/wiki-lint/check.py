@@ -229,9 +229,14 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             "courier" in low_t and "kestrel-ack-tracker" in low_t)
         add("reported the successor that does not name the retired entry back",
             "kestrel-ack-timeout-v1" in low_t and "kestrel-ack-timeout-v2" in low_t)
+        # Only a sentence that ties the decision page to the old name is a wrong report.
+        # Listing it among the orphans, or saying the decisions are excepted, is not.
         excl = re.compile(r"decision|except|exclud|skip|ignor|\bnot\b|n't|record", re.I)
-        wrongly = [ln.strip()[:120] for ln in text.splitlines()
-                   if "kestrel-ack-routing" in ln.lower() and not excl.search(ln)]
+        old_name = re.compile(r"courier|old name|renamed", re.I)
+        wrongly = []
+        for seg in re.split(r"[.!?\n]+", text):
+            if "kestrel-ack-routing" in seg.lower() and old_name.search(seg) and not excl.search(seg):
+                wrongly.append(seg.strip()[:120])
         add("did not report the old name in the decision page", not wrongly, wrongly)
 
     if not exp.get("semantic_report"):

@@ -41,5 +41,27 @@
     "no wiki entry modified": true,
     "no semantic report written": true,
     "asked which mode instead of guessing": true
+  },
+  "quick-lint-not-fully-checked": {
+    "session completed": true,
+    "no permission denials": true,
+    "no wiki entry modified": true,
+    "no semantic report written": true,
+    "ran the mechanical script": true,
+    "reported counts to the user": true,
+    "said the run was not fully checked": true,
+    "named the search index as what was not checked": true,
+    "did not call the wiki or the run clean": true
+  },
+  "quick-lint-renamed-term-and-retirement": {
+    "session completed": true,
+    "no permission denials": true,
+    "no wiki entry modified": true,
+    "no semantic report written": true,
+    "ran the mechanical script": true,
+    "reported counts to the user": true,
+    "reported the old name left in our own page": true,
+    "reported the successor that does not name the retired entry back": true,
+    "did not report the old name in the decision page": true
   }
 }

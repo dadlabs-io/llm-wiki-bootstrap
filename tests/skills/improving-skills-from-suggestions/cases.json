@@ -569,6 +569,151 @@
       ],
       "judge": "The only received note is report-mailer's. The 2026-10-09 record, dated after task 62's fix and inside its Applies to line, shows later rounds that re-checked only the changed sections: the situation the fix intended, with no sign of the original issue. The pass does not call task 62's fix did not hold and does not propose it again (held with the record quoted, or no evidence yet, are both fine). It writes no Outcome line, archives nothing and edits nothing under skills/.",
       "author": "eval-case-writer"
+    },
+    {
+      "id": "weak-evidence-not-proposed",
+      "should_trigger": true,
+      "tier": "gate",
+      "timeout": 600,
+      "prompt": "Run the improver over the skill suggestions we've received.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n",
+          "skills/report-mailer/SKILL.md": "---\nname: report-mailer\ndescription: \"Mails a finished report to a list of recipients with scripts/send.py. Use when asked to mail a report.\"\n---\n\n# Report mailer\n\nRun `python scripts/send.py <report.md> <recipients.txt>` to mail the report, subject taken from its first heading.\n",
+          "demo-notebook/raw/code-changes/2026-10-12-nightly-export/checkpoints.md": "# Checkpoints — nightly-export\n\n## Implement — 2026-10-12\nStep 2 ran csv-exporter on the nightly table. The agent reported that the step was fixed and moved on; its own score for the step was 9/10. No test result or output was kept for the step.\n\n## Finishing decision — 2026-10-12\nMark: \"merge it\".\n",
+          "demo-notebook/raw/code-changes/2026-10-11-weekly-digest/checkpoints.md": "# Checkpoints — weekly-digest\n\n## Implement — 2026-10-11\nStep 3 mailed the digest titled \"Q3 — Weekly digest\" with `send.py`. The command exited 1 and printed:\n`UnicodeEncodeError: 'ascii' codec can't encode character '\\u2014' in position 3`\nWorked around in our code by replacing the dash in the title before calling send.py. The mailer itself was left as it is.\n\n## Finishing decision — 2026-10-11\nMark: \"merge it\".\n",
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--last-row-dropped.md": "Skill: csv-exporter\nSeen in: nightly-export (2026-10-12)\nIssue: export.py drops the last row of the table; the run reported the step fixed.\nFix: flush and close the output file before returning\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/csv-exporter--last-row-dropped.md\n",
+          "notebook/_inbox/skill-suggestions/received/report-mailer--non-ascii-subject.md": "Skill: report-mailer\nSeen in: weekly-digest (2026-10-11)\nIssue: send.py crashes with UnicodeEncodeError when the report's first heading holds a non-ASCII character such as an em dash.\nFix: encode the subject as UTF-8 (MIME header encoding) before sending\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/report-mailer--non-ascii-subject.md\n"
+        }
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--last-row-dropped.md",
+          "notebook/_inbox/skill-suggestions/received/report-mailer--non-ascii-subject.md"
+        ],
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/received/archive"
+        ],
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,re,sys; f=sorted(glob.glob('notebook/raw/skill-suggestions/*/proposals.md')); t=open(f[-1],encoding='utf-8').read() if f else ''; print(f); sys.exit(0 if ('report-mailer--non-ascii-subject.md' in t and 'csv-exporter--last-row-dropped.md' in t and 'checkpoints.md' in t and re.search(r'(?i)weak', t)) else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply propose a change to report-mailer for send.py failing on a non-ASCII character in the subject?",
+          "expect": true
+        },
+        {
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply propose a change to csv-exporter for export.py dropping the last row? Answer NO if it only reports that suggestion as not borne out, set aside or needing more evidence.",
+          "expect": false
+        },
+        {
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply say the csv-exporter suggestion (last row dropped) is not borne out because its only evidence is the run's own report that the step was fixed (weak evidence, nothing showing the failure)?",
+          "expect": true
+        },
+        {
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. For the csv-exporter suggestion, does the reply say what would make the evidence strong (for example a test result, a correction from Mark, or a record line showing the failure)?",
+          "expect": true
+        },
+        {
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply mark the evidence for the report-mailer proposal (the UnicodeEncodeError line from the weekly-digest record) as strong?",
+          "expect": true
+        },
+        {
+          "q": "Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it for later)?",
+          "expect": true
+        }
+      ],
+      "judge": "One proposal (report-mailer, non-ASCII subject, evidence quoted from weekly-digest's checkpoints.md and marked strong). The csv-exporter suggestion rests only on the run saying it fixed the step and a self-score: it goes under not borne out, labelled weak, with what would make it strong. It is neither proposed nor held. The proposals file lists both file names; nothing is decided or archived and nothing under skills/ is edited.",
+      "tags": [
+        "task-121"
+      ],
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "stale-suggestion-put-first",
+      "should_trigger": true,
+      "tier": "gate",
+      "timeout": 600,
+      "prompt": "Run the improver over the skill suggestions we've received.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n",
+          "skills/csv-exporter/scripts/export.py": "import csv\nimport sys\n\n\ndef export(path, out):\n    with open(path, encoding=\"utf-8-sig\", newline=\"\") as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        body = list(rows)\n    with open(out, \"w\", encoding=\"utf-8\", newline=\"\") as fh:\n        w = csv.writer(fh)\n        w.writerow(header)\n        w.writerows(body)\n\n\nif __name__ == \"__main__\":\n    export(sys.argv[1], sys.argv[2])\n",
+          "skills/report-mailer/SKILL.md": "---\nname: report-mailer\ndescription: \"Mails a finished report to a list of recipients with scripts/send.py. Use when asked to mail a report.\"\n---\n\n# Report mailer\n\nRun `python scripts/send.py <report.md> <recipients.txt>` to mail the report, subject taken from its first heading.\n",
+          "demo-notebook/raw/code-changes/2026-01-03-csv-export/checkpoints.md": "# Checkpoints — csv-export\n\n## Implement — 2026-01-03\nStep 2's red test fed tests/data/empty.csv to the exporter: `export.py` raised StopIteration at `header = next(rows)` on the empty input file instead of writing a CSV. Worked around in our code by checking the file size before calling export.py and writing the header ourselves. The exporter itself was left as it is.\n\n## Finishing decision — 2026-01-03\nMark: \"merge it\".\n",
+          "demo-notebook/raw/code-changes/2026-10-10-weekly-digest/checkpoints.md": "# Checkpoints — weekly-digest\n\n## Implement — 2026-10-10\nStep 3's test tests/test_subject.py::test_long_title FAILED: expected the subject 'Quarterly revenue report for the Northern region' but the mail arrived with 'Quarterly revenue report for the Norther' (40 characters). Worked around in our code by shortening the report title. The mailer itself was left as it is.\n\n## Finishing decision — 2026-10-10\nMark: \"merge it\".\n",
+          "notebook/raw/skill-suggestions/2026-01-05-demo-notebook/proposals.md": "# Proposals, 2026-01-05\n\n## P1 csv-exporter: write just the header row when the input is empty\nSuggestions: csv-exporter--empty-input-crashes.md\n\nShown to Mark; no answer was recorded.\n",
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md": "Skill: csv-exporter\nSeen in: csv-export (2026-01-03)\nIssue: export.py raises StopIteration on an empty input file; the run worked around it by checking the file size first.\nFix: write just the header row when the input is empty\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/csv-exporter--empty-input-crashes.md\n",
+          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md": "Skill: report-mailer\nSeen in: weekly-digest (2026-10-10)\nIssue: send.py cuts the subject line at 40 characters, so long report titles arrive truncated.\nFix: allow subjects up to 78 characters\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/report-mailer--subject-cut-short.md\n"
+        }
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/csv-exporter--empty-input-crashes.md",
+          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md",
+          "notebook/raw/skill-suggestions/2026-01-05-demo-notebook/proposals.md"
+        ],
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/received/archive"
+        ],
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,os,sys; h=[p for p in glob.glob('notebook/**/*.md', recursive=True) if os.path.basename(p)!='proposals.md' and ('Decision (' in open(p,encoding='utf-8').read() or 'Outcome (' in open(p,encoding='utf-8').read())]; print(h); sys.exit(1 if h else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,sys; f=[p for p in glob.glob('notebook/raw/skill-suggestions/*/proposals.md') if '2026-01-05-demo-notebook' not in p]; t=' '.join(open(p,encoding='utf-8').read() for p in f); print(f); sys.exit(0 if ('csv-exporter--empty-input-crashes.md' in t and 'report-mailer--subject-cut-short.md' in t and 'checkpoints.md' in t) else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply propose a change to csv-exporter for the crash on an empty input file, and a change to report-mailer for the subject cut at 40 characters?",
+          "expect": true
+        },
+        {
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply present the csv-exporter empty-input proposal before the report-mailer subject proposal?",
+          "expect": true
+        },
+        {
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply say the csv-exporter empty-input proposal is stale or has been waiting since an earlier pass (any wording: stale, waiting since January, shown on 2026-01-05 and never decided, a number of days or months)?",
+          "expect": true
+        },
+        {
+          "q": "The reply is a set of proposals; nothing is meant to be written or run in this session. Does the reply ask the user a decision question for each of the two proposals (accept it, turn it down and say why, or leave it for later), rather than one question for both together?",
+          "expect": true
+        }
+      ],
+      "judge": "Two proposals. The csv-exporter one was listed in the 2026-01-05 pass and never decided, so the reply puts it first and says how long it has waited (or that it is stale); the report-mailer one is new and comes second. One decision question per proposal. The new proposals file names both suggestion files. Nothing is decided, archived or edited under skills/, and the old pass's proposals.md is left in place.",
+      "tags": [
+        "task-121"
+      ],
+      "author": "eval-case-writer"
     }
   ]
 }
