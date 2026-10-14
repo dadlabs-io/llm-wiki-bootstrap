@@ -26,7 +26,9 @@ Subcommands:
   list     JSON on stdout: every received suggestion with its library artifact (skills/<n>/SKILL.md,
            agents/<n>/AGENT.md or workflows/<n>/WORKFLOW.md, else null: not this library), the run records its
            `Seen in` names (raw/code-changes/<date>-<slug>/ in any notebook the registry lists), and the earlier
-           decisions on the same skill (each with its Applies to, whether it was accepted, and its outcome so far);
+           decisions on the same skill (each with its Applies to, whether it was accepted, and its outcome so far),
+           its fate (new / later / stale: shown in a pass's proposals.md 14+ days ago and still undecided; task
+           #121) and how many other suggestions carry the same lesson (repeats);
            malformed files are listed apart; `fixes`, every accepted fix with no outcome yet or on a skill a received
            suggestion names; the `pass` name and the `proposals_file` Step 3 writes. Exit 0; 3 when the folder holds no suggestion (nothing to do; never a result); 2 when it
            cannot run.
@@ -90,7 +92,8 @@ APPLIES = "Applies to"          # where the lesson holds (task #100); notes writ
 FROM = "Received from"          # the path the file was taken from
 SENDER = "From"                 # the project it came from: the file's first line (Mark, 2026-09-29)
 MAIN_FILES = (("skills", "SKILL.md", "skill"), ("agents", "AGENT.md", "agent"), ("workflows", "WORKFLOW.md", "workflow"))
-SELF_TEST_MINIMUM = 72       # the exact number of assertions the fixtures run: a dropped block fails
+SELF_TEST_MINIMUM = 78       # the exact number of assertions the fixtures run: a dropped block fails
+STALE_DAYS = 14              # a suggestion shown in a pass and still undecided this long is stale (task #121)
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _SLUG = re.compile(r"[a-z0-9][a-z0-9-]*[a-z0-9]")
 _RECORD = re.compile(r"^\d{4}-\d{2}-\d{2}-(.+)$")
@@ -284,7 +287,24 @@ def _free(folder: Path, name: str) -> Path:
 
 # ── the subcommands ──────────────────────────────────────────────────────────────────────────────
 
-def cmd_list(repo_arg: str, notebook: Optional[str], library: Optional[str]) -> int:
+def fate_of(name: str, root: Path, today: dt.date) -> Dict[str, object]:
+    """Where a waiting suggestion stands (task #121, after ruflo's dream-cycle ledger, where 94% of 80 proposals were
+    never touched): `new` when no earlier pass's proposals.md names its file, else `later` (shown, not yet decided),
+    `stale` once that first pass is STALE_DAYS old. A stale one is put to Mark again, never left to sit."""
+    shown = []
+    for prop in sorted((root / RAW).glob(f"*/{PROPOSALS_FILE}")):
+        with contextlib.suppress(OSError, ValueError):
+            if name in prop.read_text(encoding="utf-8"):
+                shown.append((dt.date.fromisoformat(prop.parent.name[:10]), prop.parent.name))
+    if not shown:
+        return {"state": "new", "first_shown": None, "days_waiting": 0}
+    first_date, first_pass = min(shown)
+    days = (today - first_date).days
+    return {"state": "stale" if days >= STALE_DAYS else "later", "first_shown": first_pass, "days_waiting": days}
+
+
+def cmd_list(repo_arg: str, notebook: Optional[str], library: Optional[str], today: Optional[dt.date] = None) -> int:
+    today = today or dt.date.today()
     repo = Path(repo_arg).resolve()
     root, how = resolve_notebook(repo, notebook)
     if root is None:
@@ -338,7 +358,14 @@ def cmd_list(repo_arg: str, notebook: Optional[str], library: Optional[str]) -> 
             out["malformed"].append({"file": p.as_posix(), "missing": gone})
             continue
         artifact, kind = artifact_of(lib, fields["Skill"])
+        others = []
+        for q in files:
+            if q != p:
+                with contextlib.suppress(OSError):
+                    others.append(parse(q.read_text(encoding="utf-8")))
+        repeats = sum(same_lesson(f, fields) for f in others + [f for _a, f in earlier_all])
         out["suggestions"].append({
+            "fate": fate_of(p.name, root, today), "repeats": repeats,
             "file": p.as_posix(), "skill": fields["Skill"], "seen_in": fields["Seen in"], "issue": fields["Issue"],
             "fix": fields["Fix"], "applies_to": fields.get(APPLIES), "received_from": fields.get(FROM),
             "artifact": artifact, "kind": kind,
@@ -918,6 +945,32 @@ def self_test() -> int:
               code == 1 and out.strip().splitlines()[-1]
               == "suggestions.py: exit 1 - refused: already here; the sender's duplicate removed",
               out[-200:])
+
+        # task #121: each waiting suggestion's fate (new / later / stale after STALE_DAYS) and how many other
+        # suggestions, waiting or decided, carry the same lesson
+        w(received / "code-reviewer--fresh.md", sug("code-reviewer", "task 30", "A fresh lesson."))
+        w(received / "code-reviewer--shown.md", sug("code-reviewer", "task 31", "Shown once."))
+        w(received / "code-reviewer--shown-long-ago.md", sug("code-reviewer", "task 32", "A lens wrote a file."))
+        w(own / RAW / "2026-10-01-other" / PROPOSALS_FILE, "## P1\nEvidence: code-reviewer--shown.md\n")
+        w(own / RAW / "2026-09-10-other" / PROPOSALS_FILE, "## P1\nEvidence: code-reviewer--shown-long-ago.md\n")
+        code, out = quiet(cmd_list, str(repo), None, str(repo), dt.date(2026, 10, 5))
+        data6 = json.loads(out) if code == 0 else {}
+        fate = {Path(s["file"]).name: s for s in data6.get("suggestions", [])}
+        check("a suggestion no pass has shown is new",
+              fate.get("code-reviewer--fresh.md", {}).get("fate", {}).get("state") == "new", str(fate.get("code-reviewer--fresh.md")))
+        check("one shown 4 days ago and still undecided is later, naming the pass",
+              fate.get("code-reviewer--shown.md", {}).get("fate") == {"state": "later", "first_shown": "2026-10-01-other",
+                                                                       "days_waiting": 4}, str(fate.get("code-reviewer--shown.md")))
+        check("one first shown 14 or more days ago is stale",
+              fate.get("code-reviewer--shown-long-ago.md", {}).get("fate", {}).get("state") == "stale",
+              str(fate.get("code-reviewer--shown-long-ago.md")))
+        check("repeats counts the other suggestions, waiting or decided, with the same lesson",
+              fate.get("code-reviewer--shown-long-ago.md", {}).get("repeats") == 2,
+              str(fate.get("code-reviewer--shown-long-ago.md", {}).get("repeats")))
+        check("a lesson seen once has no repeats", fate.get("code-reviewer--fresh.md", {}).get("repeats") == 0)
+        check("list still writes nothing", len(list((own / RAW / "2026-10-01-other").glob("*"))) == 1)
+        for n in ("code-reviewer--fresh.md", "code-reviewer--shown.md", "code-reviewer--shown-long-ago.md"):
+            (received / n).unlink()
 
         # --notebook overrides; a --notebook with no wiki/ is refused
         check("--notebook with no wiki/ folder exits 2", quiet(cmd_list, str(repo), str(base / "vault"), str(repo))[0] == 2)

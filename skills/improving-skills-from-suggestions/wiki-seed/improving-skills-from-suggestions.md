@@ -65,3 +65,5 @@ word. The whole path is on the [skill-suggestions page](../skill-suggestions.md)
 
 With nothing received, it says so and writes nothing. A request to change a skill directly ("add this line to the
 Gotchas") is an ordinary edit, not an improver pass.
+
+**Evidence strength and fate (2026-10-14):** each piece of evidence is weighed strong (a test or check result, a correction from Mark, a record line that shows the failure) or weak (a run's own report); weak evidence alone never makes a proposal or a "held". The list gives each waiting suggestion its fate (new, later, or stale once a pass first showed it 14 or more days ago) and how many others carry the same lesson; stale ones are put to Mark first.

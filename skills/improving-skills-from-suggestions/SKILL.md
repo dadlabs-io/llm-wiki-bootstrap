@@ -45,11 +45,17 @@ on exit 1, that it was already here). Done when the file is in `received/` or th
 **Step 1 — Gather.** `uv run --project {{WIKI_SCRIPTS_DIR}} python <this skill's folder>/scripts/suggestions.py list`. Exit 3 means nothing has been
 received: tell Mark so, write nothing, and stop. Exit 0 prints JSON: each suggestion with its `artifact` (`null` when
 the name is not in this library), its `applies_to`, the run `records` its `Seen in` names, and `earlier` decisions on
-the same skill; `malformed` lists files missing a line, which you name to Mark and leave; `fixes` lists the earlier
+the same skill, its `fate` (`new`; `later`, shown in an earlier pass and not decided; `stale`, first shown 14 or more
+days ago) and `repeats` (other suggestions, waiting or decided, with the same lesson); `malformed` lists files missing a line, which you name to Mark and leave; `fixes` lists the earlier
 accepted fixes to check (Step 2). Done when every received file is in one of the two lists.
 
 **Step 2 — Check each suggestion against the evidence.** Read in full the suggestion, the artifact's main file and any
 script or reference the Issue names, and in each record folder `checkpoints.md` plus any file the Issue points to.
+Weigh each piece of evidence first (task #121): **strong** is a test or check result, Mark's correction, or a record
+line that shows the failure itself; **weak** is a model's own report (a run said it did or fixed something, a
+self-score) with nothing that shows it. Weak evidence alone never makes a proposal, and never makes a "held": such a
+suggestion is not borne out, with what would make it strong.
+
 Then put each suggestion in exactly one class:
 - **not this library** — `artifact` is `null`. Say whose it looks like, from the pack its usage page sits in, in the global
   toolset (`{{TOOLSET_DIR}}/how-to/<pack>/`): `llm-wiki/` is llm-wiki's, any other pack agent-builder's; a plugin's skill is that plugin's, otherwise unknown.
@@ -85,7 +91,9 @@ one proposal, with the number of runs that showed it (two or more is recurring).
 - **Tactical or strategic** — tactical patches the case at hand; strategic fixes what produced it. Lead with the
   strategic one where both exist, and pair a tactical one with its strategic follow-up.
 - **Evidence** — each record's path and a quote of at most two lines, copied from the record file word for word (or
-  the artifact's file and line, where the artifact is the evidence).
+  the artifact's file and line, where the artifact is the evidence), each marked strong or weak.
+- **Suggestions** — the file name of each suggestion behind it (`list` finds a suggestion's fate by its file name in a
+  pass's proposals), with its `repeats` count.
 - **Route** — how it will be made: the artifact's eval set run before and after the edit, then a re-install.
 
 A proposal that moves a rule into a mechanism (a lint check, a hook, a script check, an eval case) passes the
@@ -100,8 +108,9 @@ file exactly once.
 
 **Step 4 — Put them to Mark.** Never an edit here: the library stays exactly as it was, and an accepted proposal is
 made later as its own task. Show the proposals in your reply, with the file's path, and the earlier fixes' outcomes,
-and ask one question per proposal: accept (it becomes a task), turn it down (and why), or later. Then stop and wait
-for his answer.
+and ask one question per proposal: accept (it becomes a task), turn it down (and why), or later. Put the `stale` ones
+first, saying how long each has waited: a proposal nobody decides is the failure this ledger exists to catch. Then stop
+and wait for his answer.
 
 **Step 5 — Record his answers (only once he has answered).**
 Every `decide` names the pass (`--pass <pass>`, the folder Step 3 wrote into) and moves the file there, under
@@ -210,7 +219,7 @@ Every hard rule above, once, with what makes a violation fail rather than merely
   notebook about one of its own skills is filed here by `/wrap-up` itself, with `receive`. `receive` reads the labelled
   lines (`Applies to` included when present) and ignores any other, so the `Sent` line is not carried into the copy
   here.
-- **Script:** `scripts/suggestions.py` — `list`, `receive`, `decide`, `outcome`, `summary`; `--self-test` with a floor
-  of 72.
+- **Script:** `scripts/suggestions.py` — `list` (with each suggestion's `fate` and `repeats`, task #121), `receive`, `decide`, `outcome`, `summary`; `--self-test` with a floor
+  of 78.
 - **Template:** `templates/skill-suggestions-README.md`, the folder README `summary` creates when the notebook has none.
 - **Lifecycle:** encoded preference (Mark's loop, 2026-09-26); revisit when the box or its lines change.
