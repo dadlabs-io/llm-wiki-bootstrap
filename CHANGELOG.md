@@ -11,6 +11,12 @@
 
 ## 2026-10-14
 
+### A cycle reports what it cost (task #138)
+
+- **Why**: Mark asked what a cycle costs; ccusage and Claude Code's OpenTelemetry give cost per day or session, never per cycle (a cycle is part of a session plus its subagents). Researched and rejected as too heavy: an OpenTelemetry collector and dashboard, and a script pricing every token from the transcripts.
+- **What**: the status line (Mark's `~/.claude/statusline.js`, not shipped) also writes the session's running `total_cost_usd` to `~/.claude/session-cost/<session_id>.json`. `wiki-cycle-scope.py cost --mark start` (Step 0) and `--mark end` (Step 8) read it and record the difference; the report's header gives it. No file: exit 3, "not checked", never a zero. Usage page and INSTALL-INVENTORY.
+- **Proof**: the status line's total includes subagents: this session read $110.27 against ccusage's $100.83 for the same session (Opus and Sonnet), so it cannot be missing the Sonnet subagents. `tests/scripts/test_cycle_scope.py` 36/36 (four new checks; the old script fails them). No suite run (a step that reads a number); PENDING row.
+
 ### Ingest model by source: Opus for long transcripts (task #143)
 
 - **What**: `/wiki-cycle` Step 2 sends a ticket whose raw is a transcript of `min_transcript_minutes`+ (15, the checker's line) to an Opus worker, the rest to the ingest-workers model (Sonnet); the per-run ask names both. `/wiki-update` step 4: content from another wiki entry is a linked cross-reference, never in the TL;DR or as the source's own words. Usage pages for both.

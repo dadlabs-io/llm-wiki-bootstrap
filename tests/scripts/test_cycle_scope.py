@@ -211,7 +211,41 @@ with tempfile.TemporaryDirectory() as td:
           p.returncode == 0 and "bad.json: unreadable" in p.stdout and m["roles"]["ingest_workers"]["model"] == "sonnet",
           p.stdout + p.stderr[-200:])
 
-failed = [n for ok, n in results if not ok]
+    # ── cost (task #138: the status line's session total at the start and end of a run) ──
+    sc = tmp / "session-cost"
+    sc.mkdir()
+
+    def cost(mark, folder=run_folder):
+        return subprocess.run([sys.executable, str(SCRIPT), "--topic", "t", "cost", "--run-folder", str(folder),
+                               "--mark", mark], cwd=proj, capture_output=True, text=True, encoding="utf-8",
+                              env={**os.environ, "PYTHONIOENCODING": "utf-8", "WIKI_SESSION_COST_DIR": str(sc)})
+
+    def session(sid, cwd, usd, updated):
+        (sc / f"{sid}.json").write_text(json.dumps({"session_id": sid, "cwd": str(cwd), "total_cost_usd": usd,
+                                                    "updated": updated}), encoding="utf-8")
+
+    p = cost("start")
+    check("cost: no session file is NOT checked (exit 3), never a zero",
+          p.returncode == 3 and "NOT checked" in p.stdout
+          and json.loads((run_folder / "cost.json").read_text(encoding="utf-8"))["status"] == "not_checked", p.stdout)
+    session("other", tmp / "elsewhere", 50.0, "2026-10-14T23:00:00Z")
+    session("old", proj, 10.0, "2026-10-14T20:00:00Z")
+    session("this", proj, 12.5, "2026-10-14T22:00:00Z")
+    p = cost("start")
+    rec = json.loads((run_folder / "cost.json").read_text(encoding="utf-8"))
+    check("cost start: the newest session in this folder, not another folder's",
+          p.returncode == 0 and rec.get("session_id") == "this" and rec.get("start_usd") == 12.5, (p.stdout, rec))
+    session("this", proj, 20.25, "2026-10-14T23:30:00Z")
+    session("newer", proj, 99.0, "2026-10-14T23:31:00Z")
+    p = cost("end")
+    rec = json.loads((run_folder / "cost.json").read_text(encoding="utf-8"))
+    check("cost end: the start's session is read again (not a newer one), the difference recorded",
+          p.returncode == 0 and rec.get("run_usd") == 7.75 and rec.get("status") == "completed"
+          and "$7.75" in (run_folder / "cost.md").read_text(encoding="utf-8"), (p.stdout, rec))
+    p = cost("end", folder=tmp / "fresh-run")
+    check("cost end with no start mark: NOT checked", p.returncode == 3 and "no start mark" in p.stdout, p.stdout)
+
+failed =[n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)
 print(f"\n{len(results) - len(failed)}/{len(results)} passed")

@@ -55,6 +55,8 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-sco
   --helpers ~/.claude/skills/wiki-cycle/helper-models.json
 ```
 
+Then record the session's cost so far: `wiki-cycle-scope.py --topic <notebook> cost --run-folder <run-folder> --mark start` (it reads the running total the status line saves; exit 3 means no total is available: carry on, and the report says the cost was not checked).
+
 `--resume <cycle_id>`: read that run's scratchpad and continue from the phase after the last `done`; never repeat a done phase (its outputs are on disk).
 
 **Every step writes `<step>.json` + `<step>.md` in the run folder** ([cycle step return format]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md); the JSON is authoritative): the scripts do it when given `--cycle-id <cycle_id> --run-folder <run-folder>` (or `--out` for Drive); for a model step, the orchestrator writes the pair. A step whose JSON says `status != completed` or has `errors` is flagged in the scratchpad; most failures do not block the steps after it. Update the scratchpad after every step.
@@ -150,7 +152,7 @@ Then re-run Step 3.5 (promotion adds entries and backlinks at once). Each promot
 
 **Step 7 — Refresh scan** (`--full`; `--refresh-only`): follow `/wiki-refresh --overdue-only`.
 
-**Step 8 — Report.** Follow `/wiki-report`, from the run folder's step JSONs: `<cycle_id>-run-cycle-report.md` + `.json`. It lists what each source brought in (Drive, discovery, email) and the Drive files left unread, what was triaged to whom, what was ingested, what the checker found and held, and the search stats. Its last section is **⚠️ Needs you**: the entries to promote, the ones the checker held, the **Save as PDF** list (every page no fetcher could get, with its link and the full path of the folder to save it into), the PDFs `attach-pdfs` could not match, the Drive files left, emails not yet approved, and fixes or synthesis awaiting approval.
+**Step 8 — Report.** First `wiki-cycle-scope.py --topic <notebook> cost --run-folder <run-folder> --mark end`; the report's header gives this run's cost from `cost.md` ("Cost: $N, Claude Code's estimate", or "Cost: not checked"). Then follow `/wiki-report`, from the run folder's step JSONs: `<cycle_id>-run-cycle-report.md` + `.json`. It lists what each source brought in (Drive, discovery, email) and the Drive files left unread, what was triaged to whom, what was ingested, what the checker found and held, and the search stats. Its last section is **⚠️ Needs you**: the entries to promote, the ones the checker held, the **Save as PDF** list (every page no fetcher could get, with its link and the full path of the folder to save it into), the PDFs `attach-pdfs` could not match, the Drive files left, emails not yet approved, and fixes or synthesis awaiting approval.
 
 **Step 9 — Commit.** First delete zero-byte or junk files left by shell redirects (own or a sub-agent's: `output`, `#`, `${...}`, a stray word). Then add **only the notebook's path** (other sessions may have work in the same repository) and commit once, at the end: `Wiki cycle <date> — N ingested, N fixes, N contradictions, N synthesis changes, wiki at N entries`. Set the scratchpad to `completed`, then show the report and offer to act on its recommendations.
 

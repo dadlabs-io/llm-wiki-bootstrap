@@ -6,6 +6,7 @@ What a /wiki-cycle step reads, decided by a script instead of by the model.
     wiki-cycle-scope.py --topic N claims   --run-folder <rf> [--all]
     wiki-cycle-scope.py --topic N checker  --run-folder <rf> [--min-minutes 15]
     wiki-cycle-scope.py --topic N checker-log --run-folder <rf> --entry <slug> --report <file.json>
+    wiki-cycle-scope.py --topic N cost --run-folder <rf> --mark start|end [--session-id <id>]
 
 `semantic`: the entries added or revised since the last semantic lint (the newest
 earlier run folder holding lint-semantic.json; its `timestamp` is the cut-off), plus
@@ -40,6 +41,14 @@ because a sentence asking it to read the files was skipped in 21 of 22 test runs
 (task #99, 2026-10-12): the workers got the agent description's default instead. A
 file that is missing or unreadable is named, with the fallback used.
 
+`cost`: what the run cost, from the session's running total that the user's status line
+saves to ~/.claude/session-cost/<session_id>.json (`total_cost_usd`, Claude Code's own
+API-price estimate, subagents included; on a subscription plan it is a comparison figure,
+not a bill). `--mark start` records the session's total in <rf>/cost.json; `--mark end`
+reads it again and writes the difference to cost.json and cost.md. The session is the
+newest file whose `cwd` is this folder (or --session-id); with no such file the step is
+NOT checked (exit 3), never a zero (task #138, 2026-10-14).
+
 Entries are wiki/**/*.md except `_`-prefixed machine files, README.md and sessions/.
 (2026-09-24, task #42: C1 and C3; the 2026-09-23 cycle's findings 10 and 11.)
 """
@@ -47,6 +56,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -304,6 +314,75 @@ def cmd_models(nb: Path, args) -> int:
     return 0
 
 
+SESSION_COST_DIR = HOME_CLAUDE / "session-cost"
+
+
+def _norm(p: str) -> str:
+    return str(Path(p)).replace("\\", "/").rstrip("/").lower()
+
+
+def _session_cost(sid):
+    folder = Path(os.environ.get("WIKI_SESSION_COST_DIR") or SESSION_COST_DIR)
+    if sid:
+        f = folder / f"{sid}.json"
+        if not f.is_file():
+            return None, f"no session-cost file for session {sid} in {folder}"
+        try:
+            return json.loads(f.read_text(encoding="utf-8")), ""
+        except (OSError, ValueError) as e:
+            return None, f"{f}: unreadable ({e})"
+    here, best = _norm(os.getcwd()), None
+    for f in (folder.glob("*.json") if folder.is_dir() else []):
+        try:
+            d = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if _norm(d.get("cwd") or "") == here and isinstance(d.get("total_cost_usd"), (int, float)):
+            if best is None or str(d.get("updated", "")) > str(best.get("updated", "")):
+                best = d
+    if best is None:
+        return None, (f"no session-cost file for {os.getcwd()} in {folder} "
+                      "(the status line writes one; see the wiki-cycle usage page)")
+    return best, ""
+
+
+def _write_json(path: Path, rec: dict) -> None:
+    atomic_write_text(path, json.dumps(rec, indent=2) + "\n")
+
+
+def cmd_cost(nb: Path, args) -> int:
+    rf = Path(args.run_folder)
+    rf.mkdir(parents=True, exist_ok=True)
+    out = rf / "cost.json"
+    rec = json.loads(out.read_text(encoding="utf-8")) if out.is_file() else {}
+    sid = args.session_id or (rec.get("session_id") if args.mark == "end" else None)
+    cur, err = _session_cost(sid)
+    if cur is None:
+        rec.update({"step": "cost", "status": "not_checked", "not_checked": [err]})
+        _write_json(out, rec)
+        print(f"cost: NOT checked: {err}")
+        return 3
+    if args.mark == "start":
+        _write_json(out, {"step": "cost", "status": "in_progress", "session_id": cur["session_id"],
+                          "start_usd": cur["total_cost_usd"], "start_at": now_stamp()})
+        print(f"cost: start ${cur['total_cost_usd']:.2f} (session {cur['session_id']})")
+        return 0
+    if "start_usd" not in rec:
+        rec.update({"step": "cost", "status": "not_checked", "not_checked": ["no start mark in cost.json"]})
+        _write_json(out, rec)
+        print("cost: NOT checked: no start mark (run `cost --mark start` at Step 0)")
+        return 3
+    delta = round(cur["total_cost_usd"] - rec["start_usd"], 2)
+    rec.update({"status": "completed", "end_usd": cur["total_cost_usd"], "end_at": now_stamp(), "run_usd": delta})
+    _write_json(out, rec)
+    atomic_write_text(rf / "cost.md", (
+        f"# Cost\n\nThis run: ${delta:.2f} (session {rec['session_id']}: ${rec['start_usd']:.2f} at the start, "
+        f"${cur['total_cost_usd']:.2f} at the end; Claude Code's API-price estimate, subagents included; "
+        "on a subscription plan a comparison figure, not a bill)\n"))
+    print(f"cost: this run ${delta:.2f}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[1].strip())
     ap.add_argument("--topic", default=None, help="notebook (default: this project's)")
@@ -324,6 +403,10 @@ def main() -> int:
     m.add_argument("--ingester", default=str(HOME_CLAUDE / "agents" / "wiki-ingester-config.json"))
     m.add_argument("--checker", default=str(HOME_CLAUDE / "agents" / "wiki-checker-config.json"))
     m.add_argument("--helpers", default=str(HOME_CLAUDE / "skills" / "wiki-cycle" / "helper-models.json"))
+    co = sub.add_parser("cost")
+    co.add_argument("--run-folder", required=True)
+    co.add_argument("--mark", choices=("start", "end"), required=True)
+    co.add_argument("--session-id", default=None)
     args = ap.parse_args()
     topic = args.topic or (load_config() or {}).get("notebook")
     if not topic:
@@ -334,7 +417,7 @@ def main() -> int:
         print(f"error: no wiki at {nb}", file=sys.stderr)
         return 2
     return {"semantic": cmd_semantic, "claims": cmd_claims, "checker": cmd_checker,
-            "checker-log": cmd_checker_log, "models": cmd_models}[args.cmd](nb, args)
+            "checker-log": cmd_checker_log, "models": cmd_models, "cost": cmd_cost}[args.cmd](nb, args)
 
 
 if __name__ == "__main__":
