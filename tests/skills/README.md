@@ -66,6 +66,16 @@ What was not run (cases not selected, switched off, complex), what one run per c
 
 A suite may list its known gaps once in `cases.json` as `"not_covered": ["...", "..."]`; the runner copies them under the last heading of every report.
 
+## Switching a model: shadow it first, against a bar set before
+
+Before a `model_default` changes (`wiki-ingester-config.json`, `wiki-checker-config.json`, `skills/wiki-cycle/helper-models.json`, or a suite's model list), the new model runs beside the old on the same real work, and it is switched only if a bar written down **before** the run is met (task #128, from the Ruflo deep dive: metaharness switches only through a fixed gate, quality not more than 2% lower, cost and latency lower). The default bar, unless the decision names another:
+
+- **quality not lower**: on the same cases or entries, every check the old model passes the new one passes too (one flip is rerun before it counts), and a blind judgment of the output, where there is one, rates it no worse;
+- **cost lower**: dollars per accepted result (per passing case, per entry promoted), not per session;
+- **nothing new breaks**: no new kind of failure in the event streams (a refused call, a skipped step).
+
+Write the bar, the work it runs on and n in the decision before the run, run both, and report under the four headings above. The 2026-10-12 helper-model comparison (#87: Sonnet matched Opus on lint, fixes and synthesis at 40-45% of the cost) is the pattern. Planned first use: ingest workers on Sonnet with any entry the wiki-checker fails redone on Opus, against all-Opus, measured per accepted entry (task #128, folded in from #127); it needs the checker run on every entry, not only long transcripts.
+
 ## What a run does
 
 1. The suite's `check.py` builds a sandbox per model: a copy of its seed notebook, its own registry, and its own qmd index (`WIKI_QMD_INDEX`), so real notebooks and the real search index are never touched.
