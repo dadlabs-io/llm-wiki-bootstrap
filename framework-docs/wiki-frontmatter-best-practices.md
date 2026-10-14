@@ -6,8 +6,8 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 15
-last_reviewed: 2026-10-11
+framework-version: 16
+last_reviewed: 2026-10-14
 review_after: 2027-01-11
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
@@ -56,7 +56,7 @@ Path is relative to the topic root (the folder containing `_INDEX.md`), **not** 
 |---|---|---|
 | `aliases` | list | Alternate titles for search — include when the entry covers something known by multiple names. |
 | `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |
-| `superseded_by` | relative path | When an entry is retired in favor of another, point to the successor, with `status: superseded` alongside. Keep both entries per both-sides-stay (principle 4). A retired entry stays on disk but leaves the INDEX, the MAP and search results, and the lint exempts it from the body checks and the orphan list (`is_superseded()` in `_entry_checks.py`, 2026-09-14). |
+| `superseded_by` | relative path | When an entry is retired in favor of another, point to the successor, with `status: superseded` alongside. Keep both entries per both-sides-stay (principle 4). A retired entry stays on disk but leaves the INDEX, the MAP and search results, and the lint exempts it from the body checks and the orphan list (`is_superseded()` in `_entry_checks.py`, 2026-09-14). The value is a path (or a bare slug), never a note: any value retires the entry, so "(none yet)" hides a live entry. The successor names the retired entry back, a link or its slug, so each leads to the other (lint, 2026-10-14). |
 | `describes` | relative path, optionally `<path>@<commit>` | The code this entry describes — a file or folder in the project's repo, optionally pinned to the commit it was read at (`bootstrap/scripts/wiki-promote.py@1f90bf4`). Only for a `project/` entry about code: a component, a script's behaviour, an architecture rule enforced in code. It gives staleness a **content trigger**: when that file moves on, the entry is flagged for re-reading without waiting for `review_after`. Calendar review still applies — the two signals catch different failures, see [review cadence](#review-cadence-default-review_after-offset). The path is relative to the project's repo: the notebook's `project_root` in the registry (`linked-notebooks.json`), or the folder above `llm-wiki/` for a wiki inside its project. Omit it on every entry that does not describe code; a missing `describes` is never a lint error. (added 2026-09-16; checked by the lint since 2026-09-17) |
 | `standalone` | quoted string: the reason | A page that no other page is meant to link to — the wiki's `HOME.md`, a hub — says so in its own frontmatter: `standalone: "the landing page: reading starts here"`. The lint then leaves it off the orphan list and lists it apart with the reason, and the cycle counts a run clean only at zero orphans. The reason is required: a blank value, `true` or `yes` is not honoured, and the page stays an orphan with a note. It is the one way to exempt a page; there is no built-in list. (added 2026-09-24) |
 | `source_completeness` | `preview` \| `summary` | The entry was filed from a raw that holds only part of its source: the raw's own frontmatter says `completeness: preview` (the opening only: an X Article or long post, a paywalled page) or `summary` (a description in place of the source). A raw with no `completeness:`, or `full`, is the whole source. `wiki-update.py` refuses to file from a partial raw and writes this field only when the user said to file it anyway (`--partial-source '<why>'`), so the entry never reads as covering the whole source. Never written by hand. (added 2026-10-11, task #96) |
@@ -246,7 +246,7 @@ tags: [implementation, agentmemory, session-memory, mcp, self-authored]
 - **On re-read / verification**: bump `last_reviewed` to today's date; push `review_after` forward by the default offset for that content type.
 - **On content edit**: bump `last_reviewed` if the edit reflects new verification; leave untouched if it's a typo fix or cross-ref update.
 - **On raw source re-fetch**: update `raw_path` to point at the new file; preserve the old raw under `.poisoned-<date>` suffix per principle 3 (immutability).
-- **On retirement**: add `superseded_by: <path>` and `status: superseded`; do not delete the entry (principle 4 both-sides-stay + memory principle "no deletion, only forgetting"). Fold anything only the retired copy says into the successor first, and point curated links elsewhere in the wiki at the successor. A duplicate (the same source filed twice) is retired this way; a later snapshot of an evolving source is not a duplicate — link the two with `revises:` and keep both.
+- **On retirement**: add `superseded_by: <path>` and `status: superseded`; do not delete the entry (principle 4 both-sides-stay + memory principle "no deletion, only forgetting"). Fold anything only the retired copy says into the successor first, point curated links elsewhere in the wiki at the successor, and give the successor one link back to the retired entry (for example "Replaces [old title](old-slug.md)"). A duplicate (the same source filed twice) is retired this way; a later snapshot of an evolving source is not a duplicate — link the two with `revises:` and keep both.
 
 ## Lint enforcement
 
@@ -288,6 +288,11 @@ Exempt: wiki-root hub pages, `_`-prefixed system files, `framework-contract: tru
 - `type: rollback` requires `revises:` field present
 - `type: review` requires `review_of:` field present
 - `revises`, `review_of`, `contradicted_by`, and every entry in `synthesis_of` (when present) point at existing files under `wiki/`
+
+**Retirement links and renamed terms (2026-10-14, warn-only even with `--strict`):**
+- every `superseded_by` resolves to an entry (a path relative to the entry, or a bare slug anywhere in the wiki); a parenthetical note is flagged as not a path
+- that successor names the retired entry back (its file name appears in the successor, as a link or the slug)
+- a renamed term is not left in our own pages. The notebook keeps `_config/renamed-terms.md` (beside `wiki/`), a table with one row per old name, so several old names can map to one new name: `| Old name | New name | Since | Note |`. The lint looks for each old name as a whole word in any case, in pages with `tier: self` or under `project/`, decision entries excepted (they record the names in use at the time); frontmatter, fenced code, `>` quotes and link targets are not read, inline code is (a backticked file or command name is where an old name usually lingers). Whoever renames a term adds its row. No table, no check (the report says so).
 
 Entries failing any check get listed in the next lint report for manual fix.
 

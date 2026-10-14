@@ -121,7 +121,7 @@ check("the cycle contract drops the `orphans <= 1` allowance", "orphans <= 1" no
 check("the cycle contract: a clean run has no orphans",
       "summary.orphans == 0" in ctext, [l for l in ctext.splitlines() if "clean run" in l])
 check("the cycle contract names the standalone array", "standalone: [{file, reason}]" in ctext)
-check("cycle-step-return-format framework-version bumped to 3", version(csf) == 3, version(csf))
+check("cycle-step-return-format framework-version bumped to 3 or later", version(csf) >= 3, version(csf))
 
 fm = FRAMEWORK / "wiki-frontmatter-best-practices.md"
 ftext = fm.read_text(encoding="utf-8")

@@ -9,6 +9,15 @@
 
 ---
 
+## 2026-10-14
+
+### The lint checks retirement links and renamed terms (task #132)
+
+- **Why**: from the Ruflo deep dive (task #116): its own ADR lint found 22 supersede breaks in 366 records, and nothing here checked ours; a renamed term lingers in old pages unless something names it.
+- **What**: `wiki-lint-mechanical.py` gains two warn-only sections. Retirement links: a `superseded_by` must name a real entry (a path relative to the entry, or a bare slug anywhere in the wiki; a parenthetical note is flagged, since any value retires the entry) and that successor must name the retired entry back. Renamed terms: a notebook may keep `_config/renamed-terms.md`, a table with one row per old name (`| Old name | New name | Since | Note |`); the lint lists each old name left in our own pages (tier `self` or `project/`, decision entries excepted), as a whole word in any case, inline code included, fenced code, quotes, link targets and frontmatter not. Frontmatter spec v16 (the successor links back; the table), cycle contract v6 (`renamed_terms_left`, `supersede_bad_target`, `supersede_no_backlink`). Skill and usage page.
+- **Proven**: `tests/scripts/test_renamed_terms.py` 18/18; the other lint tests unchanged (`test_standalone.py`'s version check now `>= 3`, the stale check the handoff carried). Real runs: llm-wiki-bootstrap 15 old names left (mostly history lines), agentic-design two retirement findings.
+- **Migration**: none; a notebook without the table gets "not checked".
+
 ## 2026-10-13
 
 ### `/wiki-claims` scores how many independent sources back each claim (task #110)

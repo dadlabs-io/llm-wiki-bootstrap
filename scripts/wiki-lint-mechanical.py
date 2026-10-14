@@ -63,13 +63,14 @@ WORKFLOW_PENDING_RE = re.compile(
 OWN_PENDING_RE = re.compile(r"(?i:not yet built)|\bTODO\s*:")   # the marker, not prose about TODO lists
 
 
-def stale_pending_lines(content, own):
-    """(line_no, text) for each body line carrying a stale-pending phrase.
-    ``own`` = the entry is ours (tier self), so build phrases count too."""
+def prose_lines(content, keep_code=False):
+    """(line_no, line, text) for each body line that is our own prose: frontmatter,
+    fenced code and `>` quotes are skipped; ``text`` has link targets removed, and
+    inline code too unless ``keep_code`` (``line`` is the line as written)."""
     lines = content.splitlines()
     m = FRONTMATTER_RE.match(content)
     start = content[:m.end()].count("\n") if m else 0
-    out, in_fence = [], False
+    in_fence = False
     for i in range(start, len(lines)):
         line = lines[i]
         if line.lstrip().startswith("```"):
@@ -77,11 +78,76 @@ def stale_pending_lines(content, own):
             continue
         if in_fence or line.lstrip().startswith(">"):
             continue
-        text = re.sub(r"`[^`\n]*`", "", line)           # inline code
+        text = line if keep_code else re.sub(r"`[^`\n]*`", "", line)   # inline code
         text = re.sub(r"\]\([^)]*\)", "]", text)          # link targets
-        if WORKFLOW_PENDING_RE.search(text) or (own and OWN_PENDING_RE.search(text)):
-            out.append((i + 1, line.strip()[:120]))
-    return out
+        yield i + 1, line, text
+
+
+def stale_pending_lines(content, own):
+    """(line_no, text) for each body line carrying a stale-pending phrase.
+    ``own`` = the entry is ours (tier self), so build phrases count too."""
+    return [(n, line.strip()[:120]) for n, line, text in prose_lines(content)
+            if WORKFLOW_PENDING_RE.search(text) or (own and OWN_PENDING_RE.search(text))]
+
+
+# Renamed terms (task #132): `<notebook>/_config/renamed-terms.md` is a table, one row
+# per old name (| Old name | New name | Since | Note |), so several old names can map
+# to one new one. The lint flags an old name left in our own pages.
+RENAMED_TERMS_FILE = Path("_config") / "renamed-terms.md"
+
+
+def load_renamed_terms(topic_root):
+    """[(old, new)] from the notebook's renamed-terms table; None when there is no table."""
+    path = Path(topic_root) / RENAMED_TERMS_FILE
+    if not path.is_file():
+        return None
+    pairs = []
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if not line.lstrip().startswith("|"):
+            continue
+        cells = [c.strip().strip("`").strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 2 or not cells[0] or not cells[1]:
+            continue
+        if re.fullmatch(r":?-{3,}:?", cells[0]) or cells[0].lower() == "old name":
+            continue                                       # separator / header row
+        pairs.append((cells[0], cells[1]))
+    return pairs
+
+
+def renamed_term_hits(content, terms):
+    """(line_no, old, new, line) for each old name left in our own prose. Whole word,
+    any case; a hyphen or word character on either side means a longer name. Inline
+    code is read: a backticked file or command name is the usual place an old name lingers."""
+    out = []
+    for old, new in terms:
+        pat = re.compile(r"(?<![\w-])" + re.escape(old) + r"(?![\w-])", re.IGNORECASE)
+        for n, line, text in prose_lines(content, keep_code=True):
+            if pat.search(text):
+                out.append((n, old, new, line.strip()[:120]))
+    return sorted(out)
+
+
+def renamed_terms_in_scope(rel, tier_value):
+    """Our own pages (tier self, or anything under project/), except decision
+    entries, which record the names in use when they were made."""
+    if rel.parts[:2] == ("project", "decisions"):
+        return False
+    return rel.parts[0] == "project" or tier_value.strip("\"'") == "self"
+
+
+def resolve_successor(f, value, wiki_root):
+    """The file a `superseded_by` names: a path relative to the entry, or a bare
+    slug (with or without `.md`) found anywhere in the wiki. None when nothing matches."""
+    value = value.strip().strip("\"'")
+    cand = value if value.endswith(".md") else value + ".md"
+    hit = resolve_link(f, cand)
+    if hit is not None and hit.is_file():
+        return hit
+    if "/" not in cand:
+        found = sorted(Path(wiki_root).rglob(cand))
+        if found:
+            return found[0].resolve()
+    return None
 
 
 def parse_frontmatter(content):
@@ -403,6 +469,12 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     # frontmatter keeps it off the orphan list (HOME, a hub). No built-in list.
     standalone_decl = {}      # resolved path -> declared value
 
+    # Renamed terms and retirement links (2026-10-14, task #132). Warn-only.
+    renamed_terms = load_renamed_terms(topic_root)
+    renamed_hits = []         # (file, line_no, old, new, line)
+    supersede_bad_target = []  # (file, value, detail) — superseded_by names no entry
+    supersede_no_backlink = []  # (file, successor) — the successor never names the retired entry
+
     for f in files:
         try:
             content = f.read_text(encoding="utf-8")
@@ -429,6 +501,24 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
 
         # Check tier (separate from required FM because we want to track it explicitly)
         tier_value = fm.get("tier", "").strip()
+
+        # Retirement links: a superseded_by names a real entry, and that entry names this one back
+        sup = fm.get("superseded_by", "").strip()
+        if sup:
+            succ = None if sup.startswith("(") else resolve_successor(f, sup, wiki_root)
+            if sup.startswith("("):
+                supersede_bad_target.append((f, sup, "not a path: name the successor, or drop the field "
+                                                      "(it retires the entry)"))
+            elif succ is None:
+                supersede_bad_target.append((f, sup, "no such entry"))
+            elif f.stem not in succ.read_text(encoding="utf-8", errors="replace"):
+                supersede_no_backlink.append((f, succ))
+
+        rel_f = f.relative_to(wiki_root)
+        if renamed_terms and renamed_terms_in_scope(rel_f, tier_value) \
+                and not is_superseded(split_frontmatter(content)[0]):
+            for n, old, new, line in renamed_term_hits(content, renamed_terms):
+                renamed_hits.append((f, n, old, new, line))
         if not tier_value:
             missing_tier.append(f)
         elif tier_value not in VALID_TIERS:
@@ -659,6 +749,11 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                f"entries failing a hard rule={body_err_files}, warnings-only={body_warn_files}")
     out.append(f"**Code drift (`describes`)**: changed={len(describes_changed)}, "
                f"invalid={len(describes_invalid)}, not checked={len(describes_unchecked)}")
+    out.append(f"**Renamed terms left**: {len(renamed_hits)}"
+               + ("" if renamed_terms else " (no renamed-terms table)" if renamed_terms is None
+                  else " (the renamed-terms table has no rows)"))
+    out.append(f"**Retirement links (`superseded_by`)**: no such entry={len(supersede_bad_target)}, "
+               f"successor does not name it back={len(supersede_no_backlink)}")
     if on_cards:
         out.append(f"**Task cards (`tasks/`)**: {len(task_problems)} rule breach(es)")
     out.append("")
@@ -1039,6 +1134,41 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
         out.append("")
     out.append("")
 
+    # Section: renamed terms (2026-10-14, task #132)
+    out.append("## 🏷️ Renamed Terms Left")
+    out.append("")
+    out.append(f"Old names from the notebook's `{RENAMED_TERMS_FILE.as_posix()}` table (one row per old name: "
+               "`| Old name | New name | Since | Note |`) still used in our own pages (`tier: self` or under "
+               "`project/`, decision entries excepted); fenced code, `>` quotes, link targets and frontmatter are not read (inline code is). "
+               "Use the new name. Warn-only.")
+    out.append("")
+    if renamed_terms is None:
+        out.append(f"_Not checked: this notebook has no `{RENAMED_TERMS_FILE.as_posix()}`._")
+    elif not renamed_terms:
+        out.append(f"_Not checked: `{RENAMED_TERMS_FILE.as_posix()}` has no rows._")
+    elif not renamed_hits:
+        out.append(f"_None: no page uses any of the {len(renamed_terms)} old name(s)._")
+    else:
+        for f, n, old, new, line in renamed_hits:
+            out.append(f"- `{f.relative_to(wiki_root).as_posix()}:{n}` — \"{old}\" → use \"{new}\": {line}")
+    out.append("")
+
+    # Section: retirement links (2026-10-14, task #132)
+    out.append("## 🪦 Retirement Links (`superseded_by`)")
+    out.append("")
+    out.append("A retired entry's `superseded_by` must name a real entry, and that successor must name the retired one "
+               "back (a link or its slug), so either page leads to the other (the frontmatter spec, \"On retirement\"). "
+               "Warn-only.")
+    out.append("")
+    if not (supersede_bad_target or supersede_no_backlink):
+        out.append("_None: every `superseded_by` names a real entry that names it back (or no entry is retired)._")
+    for f, value, detail in supersede_bad_target:
+        out.append(f"- `{f.relative_to(wiki_root).as_posix()}` — `superseded_by: {value}`: {detail}")
+    for f, succ in supersede_no_backlink:
+        out.append(f"- `{f.relative_to(wiki_root).as_posix()}` — its successor "
+                   f"`{succ.relative_to(wiki_root.resolve()).as_posix()}` does not name it back: add a link to it")
+    out.append("")
+
     # Save report
     report_path = topic_root / "_inbox" / "reports" / "lint-report.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1063,6 +1193,9 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             "invalid_confidence": len(invalid_confidence),
             "unquoted_yaml": len(unquoted_yaml),
             "task_problems": len(task_problems),
+            "renamed_terms_left": len(renamed_hits),
+            "supersede_bad_target": len(supersede_bad_target),
+            "supersede_no_backlink": len(supersede_no_backlink),
         }, broken_links, orphans, standalone, wiki_root, report_path)
         print(f"Cycle step files: {Path(run_folder) / 'lint-mechanical.json'} (+ .md)")
 
