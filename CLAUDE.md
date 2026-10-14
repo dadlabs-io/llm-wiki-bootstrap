@@ -155,8 +155,6 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 
 ## Conventions (when editing the scripts)
 
-- **Commit messages** (the user, 2026-10-06): write every commit message with the `writing-commit-messages` skill, then add the attribution lines.
-
 - **After any change to a usage page, a framework-contract doc, the how-to marker, a skill or a script**, the
   standing procedure (SOP, since 2026-10-04) is one refresh: `.\install-wiki.ps1 -RefreshOnly` (run it plain, or
   `uv run python scripts/new-wiki.py --mode tooling --tool claude-code --bootstrap-source <this repo>`), then
@@ -196,20 +194,5 @@ install manifests in `_install_tooling.py` are the live lists; `README.md` and
 Bot `llm-wiki`; plugin state `~/.claude/channels/discord-llm-wiki/` (set by `DISCORD_STATE_DIR` in
 `.claude/settings.local.json` — not the plugin default `~/.claude/channels/discord/`, which is agent-builder's, so
 when running `/discord:access` here read and write `access.json` and `approved/` under this folder); launch
-`claude --channels plugin:discord@claude-plugins-official` from this folder; the shared channel is `#agent-chat`
-(id 1548480711298777199). Setup, bot ids and traps: the `add-project-to-discord` skill (installed globally) and
-its seed page. Rules, identical for every project bot:
-- Answer messages that @mention this bot. A message from Mark (`<@286611097820069890>`) that isn't plainly aimed at
-  another bot is also answered in Discord, where he wrote, even untagged: he works across several windows, and a
-  reply that lands only in the terminal can miss him (the user, 2026-09-23, adopting agent-builder's change of the
-  same day). Other bots' traffic not addressed to this bot is ignored silently, in the channel and the terminal.
-- **Always @mention the bot you address**, as the raw `<@user_id>` (the `discord` block per notebook in
-  `C:\github.com\project-notebooks\linked-notebooks.json`), never `@name`: an untagged post reaches nobody. End an
-  exchange by tagging it and saying "no reply needed"; the plugin's rate cap (10 bot deliveries per channel per
-  10 min) guards against loops.
-- Reply with the verdict and where the detail lives (terminal, wiki path); post an interim line on anything over
-  a few minutes; say in the channel when a permission prompt is waiting at the keyboard. The full write-up goes
-  to the terminal and the wiki as usual.
-- After the Resuming read, fetch the recent `#agent-chat` messages and act on any unanswered mention of this bot
-  (the plugin does not replay history). When an intake handoff is resolved (Resolution section appended, note
-  moved to `_inbox/done/`), post one tagged line back to the sending bot.
+`claude --channels plugin:discord@claude-plugins-official` from this folder. The rules every bot follows are in the
+global `~/.claude/CLAUDE.md` (# Discord).
