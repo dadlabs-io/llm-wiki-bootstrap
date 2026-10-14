@@ -10,6 +10,7 @@ Usage (from the llm-wiki-bootstrap repo root):
   python tests/skills/run_skill_test.py wiki-update --refresh-fixtures # re-fetch the cached sources (live)
   python tests/skills/run_skill_test.py wiki-update --tags complex     # only the cases carrying a tag
   python tests/skills/run_skill_test.py wiki-cycle --effort medium     # every session at this effort level
+  python tests/skills/run_skill_test.py wiki-update --cases new-case --red-green HEAD   # red on the old, green on the new
 
 What a run does, per model (the models run side by side, each in its own sandbox):
   1. tests/skills/<skill>/check.py builds a fresh sandbox: a throwaway notebook,
@@ -25,7 +26,21 @@ What a run does, per model (the models run side by side, each in its own sandbox
   4. check.py checks what the session built; the report compares every check with
      the stored baseline (baseline-<model>.json beside cases.json).
 
-Cases tagged "complex" run only when asked for (--tags complex).
+Cases tagged "complex" run only when asked for (--tags complex). A case or a run rule
+switched off carries "off_until": "YYYY-MM-DD" (and "off_reason"): it is back on from
+that day, and the report lists it either way, so nothing is switched off for good
+unseen (task #134). A case that produced no checks fails: a run never says clean when
+it checked nothing.
+
+--red-green <ref> (task #134): every selected case runs twice per model, first on an
+export of <ref> (its skill AND its scripts, so a change in a script counts), then on
+the working tree. A case proves the change only when it fails on the old copy and
+passes on the new one; the report says per case and model, and the exit code is 0
+only when every case did. Use it on the new or changed cases of a behavioural change.
+
+Every report opens with the same four headings: compared with what, n, cost, and
+what the run does not show.
+
 Results: tests/skills/.results/<skill>/<stamp>/ (not committed): report.md,
 summary.json, and per model and case the event stream and the checks. A model's
 sandbox is removed after a clean run and kept after a failure (or with --keep).
@@ -75,10 +90,12 @@ def load_check(skill: str):
     return mod
 
 
-def render_skill(skill: str, ref: str | None, dest: Path, replacements: dict | None = None) -> Path:
-    """Copy the skill folder into dest, {{WIKI_SCRIPTS_DIR}} -> this repo's scripts, then
-    each of the suite's replacements (e.g. an install path -> its sandbox copy)."""
-    scripts = (REPO / "scripts").as_posix()
+def render_skill(skill: str, ref: str | None, dest: Path, replacements: dict | None = None,
+                 repo: Path = REPO) -> Path:
+    """Copy the skill folder into dest, {{WIKI_SCRIPTS_DIR}} -> the repo's scripts, then
+    each of the suite's replacements (e.g. an install path -> its sandbox copy). ``repo``
+    is this repo, or an exported old tree for --red-green."""
+    scripts = (repo / "scripts").as_posix()
     src_rel = f"skills/{skill}"
     if ref:
         names = subprocess.run(["git", "-C", str(REPO), "ls-tree", "-r", "--name-only", ref, src_rel],
@@ -86,7 +103,7 @@ def render_skill(skill: str, ref: str | None, dest: Path, replacements: dict | N
         files = {n[len(src_rel) + 1:]: subprocess.run(["git", "-C", str(REPO), "show", f"{ref}:{n}"],
                                                       capture_output=True, check=True).stdout for n in names}
     else:
-        root = REPO / src_rel
+        root = repo / src_rel
         files = {p.relative_to(root).as_posix(): p.read_bytes() for p in root.rglob("*") if p.is_file()}
     if "SKILL.md" not in files:
         sys.exit(f"{src_rel}/SKILL.md not found" + (f" at {ref}" if ref else ""))
@@ -105,15 +122,71 @@ def render_skill(skill: str, ref: str | None, dest: Path, replacements: dict | N
     return dest
 
 
-def build_toolset(root: Path) -> Path:
-    """The sandbox's global toolset: this repo's files as an install lays them out (toolset_files()),
+def build_toolset(root: Path, repo: Path = REPO) -> Path:
+    """The sandbox's global toolset: the repo's files as an install lays them out (toolset_files()),
     added beside whatever the suite already put there (e.g. another pack's usage pages)."""
     sys.path.insert(0, str(REPO / "scripts"))
     from _install_tooling import toolset_files
-    for rel, src in toolset_files(REPO).items():
+    for rel, src in toolset_files(repo).items():
         (root / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, root / rel)
     return root
+
+
+def export_tree(ref: str, dest: Path) -> Path:
+    """The repo as committed at ``ref``, unpacked into dest (--red-green's old copy)."""
+    import io
+    import tarfile
+    data = subprocess.run(["git", "-C", str(REPO), "archive", "--format=tar", ref],
+                          capture_output=True, check=True).stdout
+    dest.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(fileobj=io.BytesIO(data)) as tar:
+        tar.extractall(dest, filter="data")
+    return dest
+
+
+def is_off(item: dict, today: str) -> bool:
+    """A case or run rule is switched off while ``off_until`` (YYYY-MM-DD) is after today. A
+    rule's older ``"in_suite": False`` with no date stays off, and the report lists it as undated."""
+    until = str(item.get("off_until") or "")
+    if until:
+        return until > today
+    return item.get("in_suite", True) is False
+
+
+def select_cases(cases: list[dict], wanted: list[str] | None, tags: set[str] | None, today: str):
+    """(selected, switched_off, not_selected). Cases tagged complex run only when asked for; a
+    switched-off case runs only when named in --cases."""
+    selected, off, skipped = [], [], []
+    for c in cases:
+        if wanted is not None:
+            (selected if c["id"] in wanted else skipped).append(c)
+        elif is_off(c, today):
+            off.append(c)
+        elif tags is not None:
+            (selected if tags & set(c.get("tags", [])) else skipped).append(c)
+        else:
+            (skipped if "complex" in c.get("tags", []) else selected).append(c)
+    return selected, off, skipped
+
+
+def red_green(old: dict, new: dict) -> dict:
+    """Per case and model: "red-green" (failed on the old copy, passed on the new), "green-green"
+    (passed on the old too: the case does not test the change), "new-fails", or "missing"."""
+    out = {}
+    for m, rs in new.items():
+        for cid, r in rs.items():
+            o = (old.get(m) or {}).get(cid)
+            if o is None:
+                verdict = "missing"
+            elif not r["passed"]:
+                verdict = "new-fails"
+            elif o["passed"]:
+                verdict = "green-green"
+            else:
+                verdict = "red-green"
+            out[(cid, m)] = verdict
+    return out
 
 
 def parse_events(lines: list[str]) -> dict:
@@ -181,7 +254,8 @@ def run_case(case: dict, model: str, ctx: dict, check, out_dir: Path, tools: lis
     # not the skill; auto sends anything the list does not pre-approve to the same
     # safety classifier a real session uses.
     cmd = [claude_exe(), "-p", "--model", model, "--output-format", "stream-json", "--verbose",
-           "--permission-mode", "auto", "--add-dir", str(ctx["sandbox"]), *map(str, EXTRA_DIRS),
+           "--permission-mode", "auto", "--add-dir", str(ctx["sandbox"]),
+           *map(str, EXTRA_DIRS + [Path(ctx["repo_root"]) / "scripts"]),
            "--allowedTools", *tools]
     # Without --effort a session takes the user's effortLevel from settings.json, which the event
     # stream does not record (task #83); a run that compares levels names one.
@@ -211,48 +285,64 @@ def run_case(case: dict, model: str, ctx: dict, check, out_dir: Path, tools: lis
     return run
 
 
-def trajectory_checks(skill: str, run: dict) -> list[dict]:
-    """The skill's own read-first and never rules, checked on the run (task #99): every case of a
-    suite with `<skill>/trajectory_rules.py` gets them, named `run: <rule>`. A rule marked
-    `"in_suite": False` is scored only by score_trajectory.py, until its false alarms are fixed."""
+def load_rules(skill: str) -> list[dict]:
     path = HERE / skill / "trajectory_rules.py"
     if not path.is_file():
         return []
-    sys.path.insert(0, str(HERE))
-    import _trajectory
     spec = importlib.util.spec_from_file_location(f"rules_{skill.replace('-', '_')}", path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    return _trajectory.check(run, [r for r in mod.RULES if r.get("in_suite", True)])
+    return list(mod.RULES)
 
 
-def run_model(model: str, cases: list[dict], args, check, stamp_dir: Path, tools: list[str]) -> dict:
-    out_dir = stamp_dir / model
+def trajectory_checks(skill: str, run: dict, today: str) -> list[dict]:
+    """The skill's own read-first and never rules, checked on the run (task #99): every case of a
+    suite with `<skill>/trajectory_rules.py` gets them, named `run: <rule>`. A rule switched off
+    (`off_until` after today, or the older `"in_suite": False`) is scored only by score_trajectory.py,
+    until its false alarms are fixed."""
+    rules = [r for r in load_rules(skill) if not is_off(r, today)]
+    if not rules:
+        return []
+    sys.path.insert(0, str(HERE))
+    import _trajectory
+    return _trajectory.check(run, rules)
+
+
+def run_model(model: str, cases: list[dict], args, check, stamp_dir: Path, tools: list[str],
+              repo: Path = REPO, label: str = "") -> dict:
+    """Every case on one model. ``repo`` is this repo, or --red-green's export of the old ref
+    (``label`` "-old"), whose skill, scripts, agents and docs the sandbox then uses."""
+    ref = None if repo != REPO else args.skill_ref
+    out_dir = stamp_dir / f"{model}{label}"
     out_dir.mkdir(parents=True, exist_ok=True)
-    ctx = check.setup(model, stamp_dir / f"sandbox-{model}", REPO)
+    ctx = check.setup(model, stamp_dir / f"sandbox-{model}{label}", repo)
     ctx["effort"] = args.effort
+    ctx["repo_root"] = repo
     ctx["toolset"] = Path(ctx.get("toolset") or ctx["sandbox"] / "global-toolset")
     if ctx["toolset"].resolve().is_relative_to(Path(ctx["sandbox"]).resolve()):  # never write outside the sandbox
-        build_toolset(ctx["toolset"])
+        build_toolset(ctx["toolset"], repo)
     repl = {TOOLSET_PLACEHOLDER: ctx["toolset"].as_posix(),
             **(check.render_replacements(ctx) if hasattr(check, "render_replacements") else {})}
-    render_skill(args.skill, args.skill_ref, ctx["skill_dir"], repl)
+    render_skill(args.skill, ref, ctx["skill_dir"], repl, repo)
     for extra in getattr(check, "EXTRA_SKILLS", []):  # the skills this one calls, beside it
-        render_skill(extra, args.skill_ref, ctx["skill_dir"].parent / extra, repl)
+        render_skill(extra, ref, ctx["skill_dir"].parent / extra, repl, repo)
     results = {}
     for case in cases:
         before = check.snapshot(ctx)
         run = run_case(case, model, ctx, check, out_dir, tools, case.get("timeout", args.timeout))
         after = check.snapshot(ctx)
         checks = check.check(case, before, after, run, ctx)
-        checks += trajectory_checks(args.skill, run)
+        checks += trajectory_checks(args.skill, run, args.today)
+        if not checks:  # a run never says clean when it checked nothing (task #134)
+            checks = [{"name": "the case produced checks", "ok": False,
+                       "detail": "check() returned no checks for this case: nothing was checked"}]
         rec = {"case": case["id"], "model": model, "passed": all(c["ok"] for c in checks), "checks": checks,
                "turns": run["result"].get("num_turns"), "cost_usd": run["result"].get("total_cost_usd"),
                "wall_s": run["wall_s"], "tool_errors": run["tool_errors"],
                "permission_denials": run["result"].get("permission_denials") or [],
                "stderr_tail": run["stderr_tail"]}
         (out_dir / f"{case['id']}.json").write_text(json.dumps(rec, indent=2), encoding="utf-8")
-        print(f"[{model}] {case['id']}: {'PASS' if rec['passed'] else 'FAIL'} "
+        print(f"[{model}{label}] {case['id']}: {'PASS' if rec['passed'] else 'FAIL'} "
               f"({rec['wall_s']:.0f}s, {rec['turns']} turns, ${rec['cost_usd'] or 0:.2f})", flush=True)
         results[case["id"]] = rec
     if all(r["passed"] for r in results.values()) and not args.keep:
@@ -269,12 +359,75 @@ def as_baseline(results: dict) -> dict:
     return {cid: {c["name"]: c["ok"] for c in r["checks"]} for cid, r in results.items()}
 
 
-def write_report(stamp_dir: Path, args, models: list[str], cases: list[dict], results: dict, fixtures: list) -> Path:
+def report_header(args, models: list[str], cases: list[dict], results: dict, info: dict) -> list[str]:
+    """The four headings every report opens with (task #134, from the Ruflo deep dive: write-ups that
+    can be compared): what the run was compared with, n, cost, and what it does not show. The same
+    headings are the template for a measurement written by hand (README, Reporting a measurement)."""
+    rg = info.get("red_green") or {}
+    old = info.get("old") or {}
+    if args.red_green:
+        compared = (f"Red then green: each case ran on an export of `{args.red_green}` (its skill and scripts), "
+                    f"then on {'git ' + args.skill_ref if args.skill_ref else 'the working tree'}.")
+    else:
+        bases = [m for m in models if load_baseline(args.skill, m)]
+        compared = (f"The stored baseline (`baseline-<model>.json`) for {', '.join(bases)}." if bases
+                    else "Nothing: no baseline exists for these models yet.")
+        missing = [m for m in models if m not in bases]
+        if bases and missing:
+            compared += f" No baseline for {', '.join(missing)}."
+    n_runs = sum(len(rs) for rs in results.values()) + sum(len(rs) for rs in old.values())
+    cost = (sum(r["cost_usd"] or 0 for rs in results.values() for r in rs.values())
+            + sum(r["cost_usd"] or 0 for rs in old.values() for r in rs.values()))
+    minutes = (sum(r["wall_s"] for rs in results.values() for r in rs.values())
+               + sum(r["wall_s"] for rs in old.values() for r in rs.values())) / 60
+    lines = ["## Compared with", "", compared, "",
+             "## n", "",
+             f"{len(cases)} case(s) x {len(models)} model(s), one session each"
+             + (", on the old copy and on the new" if args.red_green else "") + f": {n_runs} session(s).", "",
+             "## Cost", "", f"${cost:.2f} in all, {minutes:.0f} min of sessions.", "",
+             "## What this does not show", "",
+             "- One session per case and model: a single pass or fail can be noise; a flip needs a rerun before it counts."]
+    if info.get("not_selected"):
+        lines.append(f"- Cases not run: {', '.join(c['id'] for c in info['not_selected'])}.")
+    for c in info.get("off", []):
+        lines.append(f"- Case switched off: {c['id']}, until {c.get('off_until') or '(no date: give it one)'}"
+                     + (f" ({c['off_reason']})" if c.get("off_reason") else "") + ".")
+    for r in info.get("off_rules", []):
+        lines.append(f"- Run rule switched off: \"{r['id']}\", until {r.get('off_until') or '(no date: give it one)'}.")
+    for c in info.get("back_on", []):
+        lines.append(f"- Back on since {c['off_until']} (its switch-off date passed): {c['id']}.")
+    for note in info.get("not_covered", []):
+        lines.append(f"- {note}")
+    if args.red_green and rg:
+        weak = sorted({f"{cid} ({m})" for (cid, m), v in rg.items() if v == "green-green"})
+        if weak:
+            lines.append(f"- Passed on the old copy too, so they do not test this change: {', '.join(weak)}.")
+    return lines + [""]
+
+
+def write_report(stamp_dir: Path, args, models: list[str], cases: list[dict], results: dict, fixtures: list,
+                 info: dict | None = None) -> Path:
+    info = info or {}
     src = f"git {args.skill_ref}" if args.skill_ref else "the working tree"
     effort = f"effort {args.effort}" if args.effort else "effort from settings.json"
     lines = [f"# Skill test — {args.skill}", "",
-             f"Run `{stamp_dir.name}`; skill from {src}; models: {', '.join(models)}; {effort}.", "",
-             "| Case | " + " | ".join(models) + " |", "|---|" + "---|" * len(models)]
+             f"Run `{stamp_dir.name}`; skill from {src}; models: {', '.join(models)}; {effort}.", ""]
+    lines += report_header(args, models, cases, results, info)
+    if info.get("red_green"):
+        names = {"red-green": "red then green: proves the change", "green-green": "**passes on the old copy too**",
+                 "new-fails": "**fails on the new copy**", "missing": "**no old run**"}
+        lines += ["## Red then green", "", "| Case | " + " | ".join(models) + " |", "|---|" + "---|" * len(models)]
+        for case in cases:
+            cells = []
+            for m in models:
+                v = info["red_green"].get((case["id"], m), "missing")
+                o = (info["old"].get(m) or {}).get(case["id"])
+                why = (" (old failed: " + "; ".join(c["name"] for c in o["checks"] if not c["ok"])[:200] + ")"
+                       if o and not o["passed"] else "")
+                cells.append(names[v] + why)
+            lines.append(f"| {case['id']} | " + " | ".join(cells) + " |")
+        lines.append("")
+    lines += ["## Results", "", "| Case | " + " | ".join(models) + " |", "|---|" + "---|" * len(models)]
     for case in cases:
         cells = []
         for m in models:
@@ -334,36 +487,52 @@ def main() -> int:
     ap.add_argument("--timeout", type=int, default=1200, help="seconds per case (default 1200)")
     ap.add_argument("--effort", choices=["low", "medium", "high", "xhigh", "max"],
                     help="each session's effort level (default: the user's settings.json)")
+    ap.add_argument("--red-green", metavar="REF",
+                    help="run each selected case on an export of REF (skill and scripts) first, then on the "
+                         "working tree; exit 0 only when every case fails on the old copy and passes on the new")
     args = ap.parse_args()
+    args.today = datetime.now().strftime("%Y-%m-%d")
 
     check = load_check(args.skill)
-    cases = json.loads((HERE / args.skill / "cases.json").read_text(encoding="utf-8"))["cases"]
-    if args.cases:
-        wanted = [c.strip() for c in args.cases.split(",")]
-        cases = [c for c in cases if c["id"] in wanted]
-    elif args.tags:
-        tags = {t.strip() for t in args.tags.split(",")}
-        cases = [c for c in cases if tags & set(c.get("tags", []))]
-    else:
-        cases = [c for c in cases if "complex" not in c.get("tags", [])]
+    suite = json.loads((HERE / args.skill / "cases.json").read_text(encoding="utf-8"))
+    wanted = [c.strip() for c in args.cases.split(",")] if args.cases else None
+    tags = {t.strip() for t in args.tags.split(",")} if args.tags and not wanted else None
+    cases, off, not_selected = select_cases(suite["cases"], wanted, tags, args.today)
     if not cases:
-        sys.exit("no cases selected")
+        sys.exit("no cases selected: a run with zero cases checks nothing")  # exit 1, never a clean run
+    rules = load_rules(args.skill)
+    info = {"off": off, "not_selected": not_selected, "not_covered": suite.get("not_covered", []),
+            "off_rules": [r for r in rules if is_off(r, args.today)],
+            "back_on": [c for c in suite["cases"] + rules
+                        if c.get("off_until") and not is_off(c, args.today)]}
     models = [m.strip() for m in args.models.split(",") if m.strip()]
     stamp = (datetime.now().strftime("%Y%m%d-%H%M%S") + (f"-{args.skill_ref}" if args.skill_ref else "")
+             + (f"-red-green-{args.red_green}" if args.red_green else "")
              + (f"-effort-{args.effort}" if args.effort else ""))
     stamp_dir = HERE / ".results" / args.skill / re.sub(r"[^\w.-]", "_", stamp)
     stamp_dir.mkdir(parents=True)
-    print(f"skill test: {args.skill}, {len(cases)} cases x {len(models)} models -> {stamp_dir}", flush=True)
+    print(f"skill test: {args.skill}, {len(cases)} cases x {len(models)} models"
+          + (f", red then green against {args.red_green}" if args.red_green else "") + f" -> {stamp_dir}", flush=True)
 
     fixtures = check.prepare_fixtures(REPO, refresh=args.refresh_fixtures)
     for f in fixtures:
         print(f"fixture {f['source']}: {f['status']}", flush=True)
     tools = getattr(check, "ALLOWED_TOOLS", DEFAULT_TOOLS)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(models)) as ex:
-        futures = {m: ex.submit(run_model, m, cases, args, check, stamp_dir, tools) for m in models}
-        results = {m: f.result() for m, f in futures.items()}
+    old_repo = export_tree(args.red_green, stamp_dir / "old-tree") if args.red_green else None
 
-    report = write_report(stamp_dir, args, models, cases, results, fixtures)
+    def both(m):  # the old copy first, then the new, each in its own sandbox
+        old = run_model(m, cases, args, check, stamp_dir, tools, old_repo, "-old") if old_repo else None
+        return old, run_model(m, cases, args, check, stamp_dir, tools)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(models)) as ex:
+        futures = {m: ex.submit(both, m) for m in models}
+        pairs = {m: f.result() for m, f in futures.items()}
+    results = {m: new for m, (_old, new) in pairs.items()}
+    if old_repo:
+        info["old"] = {m: old for m, (old, _new) in pairs.items()}
+        info["red_green"] = red_green(info["old"], results)
+
+    report = write_report(stamp_dir, args, models, cases, results, fixtures, info)
     (stamp_dir / "summary.json").write_text(json.dumps(
         {m: {cid: {"passed": r["passed"], "failed": [c["name"] for c in r["checks"] if not c["ok"]],
                    "turns": r["turns"], "cost_usd": r["cost_usd"], "wall_s": r["wall_s"]}
@@ -374,6 +543,10 @@ def main() -> int:
                 json.dumps(as_baseline(results[m]), indent=2) + "\n", encoding="utf-8")
         print("baseline saved for: " + ", ".join(models))
     ok = all(r["passed"] for rs in results.values() for r in rs.values())
+    if old_repo:
+        ok = all(v == "red-green" for v in info["red_green"].values())
+        print(f"{'RED THEN GREEN' if ok else 'NOT RED THEN GREEN'} — report: {report}")
+        return 0 if ok else 1
     print(f"{'ALL PASSED' if ok else 'FAILURES'} — report: {report}")
     return 0 if ok else 1
 

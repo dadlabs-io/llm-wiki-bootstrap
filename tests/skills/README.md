@@ -9,7 +9,7 @@ A **small** change — wording, a clarified flag, a typo — does not earn a run
 The session that changes a skill never writes or edits the cases that grade its change (task #86, 2026-10-06; the same rule as agent-builder's skill contract §6). They come from the `eval-case-writer` agent, installed globally by agent-builder: it can only read, it writes from the skill's stated requirement and each scenario, never from the skill, its scripts or its diff, and it hands the cases back as text for the session to save unchanged.
 
 - **Brief:** the skill and its path; its requirement, quoted in full; the scenarios; the mode (`new-set`, `fresh`, `replay` or `legacy-review`); the case format, "llm-wiki's test suite in the folder `tests/skills/<skill>/`"; and, for every mode but `new-set`, the case file `tests/skills/<skill>/cases.json`. Spawn it in the foreground (`subagent_type: eval-case-writer`).
-- **After each behavioural change:** two `fresh` cases, scenarios that did not exist while the change was made. A failure seen in real use gets a `replay` case.
+- **After each behavioural change:** two `fresh` cases, scenarios that did not exist while the change was made. A failure seen in real use gets a `replay` case. Each new or changed case then runs red then green (below) before the change is installed.
 - **What comes back** is saved unchanged: cases in the suite's existing kinds; a new kind's check as a `kind == "<new>"` branch of `check()` (an existing kind is never changed); any new seed file in full. Its questions go to the user, never answered by the editing session from the skill's own text unless the quoted requirement already settles them.
 - **Author key:** every case ends in `"author": "eval-case-writer" | "human" | "legacy"`. The 80 cases written before this rule are `legacy`; the next time their skill changes, the writer reviews them (`legacy-review`: keep, rewrite or flag each).
 - **Honour rule:** the editing session does not read the suite's cases while it edits the skill. Nothing enforces it; the independence comes from who writes the checks.
@@ -25,9 +25,46 @@ uv run python tests/skills/run_skill_test.py wiki-update --cases pdf-cached-stag
 uv run python tests/skills/run_skill_test.py wiki-update --skill-ref HEAD    # the committed skill, to compare old with new
 uv run python tests/skills/run_skill_test.py wiki-update --save-baseline     # accept this run as the baseline
 uv run python tests/skills/run_skill_test.py wiki-update --tags complex      # the harder cases, run only on request
+uv run python tests/skills/run_skill_test.py wiki-update --cases new-case --red-green HEAD   # fails on the committed skill, passes on yours
 ```
 
 The report is `tests/skills/.results/<skill>/<stamp>/report.md` (not committed): each case per model, pass or fail with turns, cost and minutes, what regressed against the baseline, every failed check, and the live fetch status of the fixture sources. A full wiki-update run is about a dozen sessions per model.
+
+## A new case must fail on the old skill (red, then green)
+
+A case written for a behavioural change proves the change only if it **fails on the skill before the change and passes after it** (task #134, from the Ruflo deep dive). A case that passes on the old skill too tests something else, however well it reads. So before a behavioural change is installed, its new or changed cases run red then green:
+
+```bash
+uv run python tests/skills/run_skill_test.py wiki-update --cases <new-case>,<changed-case> --red-green <ref before the change>
+```
+
+Each case runs on an export of that ref (its skill **and** its scripts, agents and docs, so a change made in a script counts), then on the working tree. The report's Red then green table gives each case and model one verdict: red then green (proves the change, with the checks that failed on the old copy, so you can see it failed for the right reason), passes on the old copy too, fails on the new copy. The exit code is 0 only when every case is red then green. A case that passes on the old copy goes back to `eval-case-writer` (mode `replay`) with the old run's reply; it is not counted as proof. The old copy's sessions cost the same as the new ones: run only the new and changed cases this way, then the suite as usual.
+
+## Nothing reads clean that checked nothing
+
+- A run that selects zero cases stops with an error (exit 1), never a clean report.
+- A case whose checks came back empty fails, with the check "the case produced checks".
+- A case can be switched off only with a date: `"off_until": "YYYY-MM-DD"` and `"off_reason": "..."` in `cases.json`. Until that day it does not run (unless named in `--cases`); from that day it runs again by itself. A run rule (`trajectory_rules.py`) takes the same `off_until`; the older `"in_suite": False` with no date still switches a rule off, and the report lists it as undated until it gets one. Every report names each switched-off case and rule with its date, so nothing is off for good without anyone seeing it.
+
+## Reporting a measurement
+
+Every report opens with the same four headings, and a measurement written by hand (a PENDING.md row worth more than a line, a model or effort comparison, the search-question set of task #82) uses them too, so two results can be compared without rereading how each was made:
+
+```markdown
+## Compared with
+What the result is measured against: the stored baseline, the old ref, the other model, a control arm. "Nothing" is an answer.
+
+## n
+How many cases, models, sessions or questions, and how many runs of each.
+
+## Cost
+Dollars and minutes, in all.
+
+## What this does not show
+What was not run (cases not selected, switched off, complex), what one run per case cannot tell (a single flip is noise until rerun), and what no case covers.
+```
+
+A suite may list its known gaps once in `cases.json` as `"not_covered": ["...", "..."]`; the runner copies them under the last heading of every report.
 
 ## What a run does
 

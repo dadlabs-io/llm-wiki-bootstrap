@@ -11,6 +11,13 @@
 
 ## 2026-10-14
 
+### Skill tests: red then green, nothing clean on nothing, one report shape (task #134)
+
+- **Why**: from the Ruflo deep dive (task #116): a new case proves a change only if it fails before it; their write-ups were comparable because each stated its control, n, cost and limits; and a check that ran nothing must never read clean (#38/#39 met that here).
+- **What**: `run_skill_test.py --red-green <ref>` runs each selected case on an export of the ref (skill, scripts, agents and docs) and then on the working tree; the report's Red then green table gives a verdict per case and model, and the exit code is 0 only when every case failed on the old copy and passed on the new. A run with zero cases exits 1; a case with no checks fails. A case switched off carries `off_until` (back on by itself from that day); run rules take it too, and wiki-update's three scored-only rules now end 2026-11-14. Every report opens with Compared with / n / Cost / What this does not show, also the README's template for a measurement written by hand; a suite may list `not_covered` gaps. README: the red-then-green rule.
+- **Proven**: `tests/scripts/test_skill_runner.py` 30/30 (a stand-in session; no model called). The first real `--red-green` run is #136's.
+- **Migration**: none; tests are never shipped.
+
 ### The lint checks retirement links and renamed terms (task #132)
 
 - **Why**: from the Ruflo deep dive (task #116): its own ADR lint found 22 supersede breaks in 366 records, and nothing here checked ours; a renamed term lingers in old pages unless something names it.
