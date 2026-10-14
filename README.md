@@ -111,7 +111,8 @@ After the global install, open any project folder in Claude Code and run:
 It checks the global tooling first (uses it as is; installs it once if missing; never
 re-copies an installed set), then asks two rounds of questions — name and review gate; description,
 a `project/` folder (with stubs, empty, or none), a `research/` folder (the same three), and where
-the wiki lives — and scaffolds:
+the wiki lives; when the git commit hook is not on, it also asks whether to block secrets in commits (default
+no) — and scaffolds:
 
 ```
 <project>/
@@ -189,6 +190,7 @@ available in Cursor without a separate install step.
 | `-VaultRoot <dir>`, `-Registry <linked-notebooks.json>` | Put the wiki in a notebooks vault and register it there, instead of `<project>/llm-wiki/` |
 | `-SkillsInstall bundled` | Copy skills + scripts into the project instead of using the global ones |
 | `-DriveEnabled yes` | Enable Google Drive sync for wiki content |
+| `-GitHooks yes` | With a project: install gitleaks if missing and turn on the machine-wide pre-commit hook that blocks secrets and private words (`--git-hooks yes` on Mac/Linux) |
 
 ## Updating
 
