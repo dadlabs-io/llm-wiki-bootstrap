@@ -198,11 +198,29 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             bool(re.search(r"not fully checked|not (been )?(fully )?checked|(could|did)(n't| not) (be )?(fully )?check|nothing (was )?checked|unchecked", low_t)))
         add("named the search index as what was not checked",
             bool(re.search(r"search index|\bindex\b|qmd|collection", low_t)))
+        # Naming a section clean ("frontmatter ... all clean", "- Clean: tier") is allowed;
+        # calling the run, lint, report or wiki clean overall is not (never call such a run clean).
+        _verb = r"(?:is|was|are|were|came back|came out|comes back|looks|looked|ran|returned|reads|passed)"
+        _adv = r"(?:all |completely |totally |fully |entirely )?"
+        overall = [
+            r"\b(?:the |this |your )?(?:wiki|lint|lint run|run|report|result|results|notebook|checks?|everything|overall)\s+(?:also |otherwise )?" + _verb + r"\s+" + _adv + r"clean\b",
+            r"\bclean (?:bill of health|result|run|lint|pass|report)\b",
+        ]
+        negation = re.compile(r"\bnot\b|n't|\bnever\b|\bno\b|\bnor\b|\bwithout\b|cannot")
         called_clean = []
-        for m in re.finditer(r"\bclean\b", low_t):
-            prefix = low_t[max(0, m.start() - 40):m.start()]
-            if not re.search(r"\bnot\b|n't|\bnever\b|\bno\b|\bnor\b|\bwithout\b|cannot", prefix):
-                called_clean.append(low_t[max(0, m.start() - 40):m.end() + 10])
+        low_t = text.lower()
+        for pat in overall:
+            for m in re.finditer(pat, low_t):
+                # the current sentence up to and including the match
+                start = max(low_t.rfind(c, 0, m.start()) for c in ".!?\n:") + 1
+                if not negation.search(low_t[start:m.end()]):
+                    called_clean.append(low_t[start:m.end()].strip()[:100])
+        # a bare "all clean" / "it's all clean" counts only when the sentence says nothing else
+        for m in re.finditer(r"\ball clean\b", low_t):
+            start = max(low_t.rfind(c, 0, m.start()) for c in ".!?\n:") + 1
+            before = low_t[start:m.start()]
+            if len(before.split()) <= 3 and not negation.search(before):
+                called_clean.append(low_t[start:m.end()].strip()[:100])
         add("did not call the wiki or the run clean", not called_clean, called_clean)
 
     if exp.get("renamed_and_retirement"):
