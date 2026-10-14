@@ -79,6 +79,8 @@ For each claim, record:
 | `synthesis` | Our conclusion drawn from multiple sources | "This validates our three-layer architecture" | Medium — our interpretation |
 | `inference` | Our own assertion not directly supported by any cited source | "The bottleneck is metacognition, not embeddings" | Lowest — may be wrong |
 
+**A figure's evidence (since 2026-10-14, task #136).** On a claim that carries a figure (a score, a speed-up, an accuracy, a count, a cost), also record `evidence`: `measured`, `claimed` or `unknown`, as the entry marks it in the figure's attribution (authoring doctrine, principle 5, "Measured or claimed"); an entry that does not mark it is `unknown`. A contradiction between a `claimed` figure and a `measured` one is reported with both statuses: the measured one is the better evidence, and both sides stay.
+
 ### Step 4 — Build the claims index
 
 Write extracted claims to `_inbox/claims-index.json`:
@@ -180,6 +182,7 @@ Save to `_inbox/reports/claims-report-<date>.md`:
 **Entries scanned**: N
 **Claims extracted**: N
 **By classification**: direct-quote N, sourced N, synthesis N, inference N
+**Figures by evidence**: measured N, claimed N, unknown N
 **Contradictions found**: N (high: N, medium: N, low: N)
 
 ## High-severity contradictions

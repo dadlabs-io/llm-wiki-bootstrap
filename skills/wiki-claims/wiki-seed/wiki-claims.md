@@ -15,6 +15,8 @@ Pulls every factual assertion out of your wiki entries, labels each one by how w
 
 **Input / Output:** Reads the entries under `wiki/`. Writes a structured claims index to `_inbox/claims-index.json` and a report to `_inbox/reports/claims-report-<date>.md` (the `_inbox/` beside `wiki/`); inside a cycle it also writes `claims.json` / `claims.md` to the run's report folder. The index grows: single-entry modes append to it rather than rebuilding it. The report groups contradictions by severity and lists every inference claim for periodic review. The model reads, extracts and compares, so those results depend on the model running it; one script, `wiki-claims-corroborate.py`, does the counting below.
 
+A claim carrying a figure also records how the entry marks its evidence (`evidence`: measured, claimed or unknown; since 2026-10-14), and the report counts figures by evidence, so a headline number nobody measured is easy to find.
+
 **Corroboration (since 2026-10-13):** when two entries state the same fact, the model links their claims (`agrees_with`) and notes the original evidence a claim restates (`origin`: a paper, a benchmark, a person). The script then counts the independent sources behind each group of agreeing claims — seven reposts of one benchmark count once, three different authors count three times — weighs each by its tier (tier 1 = 1.0, 2 = 0.6, 3 = 0.3, 4 = 0.1; your own synthesis 0), and records the score and every merge with its reason on the claims. The report lists the groups by score, the claims resting on a single tier-4 entry, and where an entry's own `confidence` and its claims' score disagree. It never changes an entry's confidence; merging two sources is a best guess, shown so you can correct it.
 
 **What it looks for:**
