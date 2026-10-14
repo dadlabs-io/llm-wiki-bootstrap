@@ -729,6 +729,7 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
                 (agents_dest / dst_name).write_text(
                     fill_placeholders(src_file.read_text(encoding="utf-8"), scripts_dest_value, toolset_value),
                     encoding="utf-8", newline="")
+                progress.setdefault("agent_files", []).append(agents_dest / dst_name)
         agents_installed += 1
         progress["agents"].append(agent)
 
@@ -755,7 +756,20 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
         search_mode = "skipped: not the global scripts folder"
         toolset = None
 
+    # 8) The install manifest (task #123): every file this install wrote, so an uninstall removes exactly those
+    progress["step"] = "the install manifest"
+    manifest = None
+    if not dry_run:
+        written = [scripts_dest / n for n in progress["scripts"]] + [scripts_dest / n for n in ENV_FILES]
+        for skill in progress["skills"]:
+            written += sorted(p for p in (skills_dest / skill).rglob("*") if p.is_file())
+        written += progress.get("agent_files", [])
+        hooks = ([{"settings": CC_GLOBAL_SETTINGS_PATH.as_posix(), "scripts": [SESSION_HOOK_SCRIPT, READ_GUARD_SCRIPT]}]
+                 if toolset is not None else [])
+        manifest = write_manifest(scripts_dest, written, [scripts_dest / ".venv"], hooks, bootstrap)
+
     return {
+        "manifest": manifest,
         "tooling_env": tooling_env,
         "page_browser": page_browser,
         "session_hook": session_hook,
@@ -779,6 +793,124 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
         "scripts_dest_value": scripts_dest_value,
         "dry_run": dry_run,
     }
+
+
+# ---------- The install manifest and the uninstall (task #123, 2026-10-14) ----------
+# claude-flow's leftovers sat in ~/.claude for five months because nothing knew what it had installed (removed
+# 2026-10-13). An install records every file it wrote, with a hash of the content it wrote; an uninstall removes
+# exactly those, leaves a file someone edited since (and says so), and never touches a notebook, the global
+# toolset, or the shared settings beyond the hook entries the install added.
+MANIFEST_NAME = "install-manifest.json"
+LEFT_ON_UNINSTALL = ["the global toolset notebook (notebook content, kept in its own git repository)",
+                     f"{CC_GLOBAL_CONFIG_PATH.as_posix()} (shared settings: registry, bootstrap_source, search_mode)",
+                     "Playwright's Chromium in the user's ms-playwright cache (other tools may use it)"]
+
+
+def _sha256(path: Path) -> str:
+    import hashlib
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def write_manifest(scripts_dest: Path, written, dirs, hooks, bootstrap) -> Path:
+    """Record what this install wrote, beside the scripts. A file the previous manifest listed that this install
+    did not write again (a skill since retired) stays listed while it is unchanged, so it is still removed later."""
+    scripts_dest = Path(scripts_dest)
+    path = scripts_dest / MANIFEST_NAME
+    files = {}
+    for f in written:
+        f = Path(f)
+        if f.is_file():
+            files[f.resolve().as_posix()] = _sha256(f)
+    try:
+        old = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    except (OSError, ValueError):
+        old = {}
+    for entry in old.get("files", []):
+        p = Path(entry.get("path", ""))
+        if entry.get("path") not in files and p.is_file() and _sha256(p) == entry.get("sha256"):
+            files[entry["path"]] = entry["sha256"]
+    data = {"written": datetime.now().astimezone().isoformat(timespec="seconds"), "bootstrap": str(bootstrap),
+            "files": [{"path": p, "sha256": h} for p, h in sorted(files.items())],
+            "dirs": [Path(d).resolve().as_posix() for d in dirs],
+            "hooks": hooks, "left_on_uninstall": LEFT_ON_UNINSTALL}
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def remove_hooks(settings_path: Path, scripts: list, dry_run: bool = False) -> int:
+    """Take out of settings.json every hook entry that runs one of ``scripts`` (and any event group left empty);
+    every other hook and setting stays. Backs the file up first. Returns the number of entries removed."""
+    path = Path(settings_path)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    except (OSError, ValueError):
+        return 0
+    hooks = data.get("hooks") if isinstance(data, dict) else None
+    if not isinstance(hooks, dict):
+        return 0
+    removed = 0
+    for event in list(hooks):
+        groups = hooks[event] if isinstance(hooks[event], list) else []
+        for group in list(groups):
+            if not isinstance(group, dict):
+                continue
+            keep = [h for h in group.get("hooks") or [] if not any(_runs_script(h, s) for s in scripts)]
+            removed += len(group.get("hooks") or []) - len(keep)
+            if keep:
+                group["hooks"] = keep
+            else:
+                groups.remove(group)
+        if not groups:
+            del hooks[event]
+    if removed and not dry_run:
+        shutil.copy2(path, path.with_name(path.name + ".bak-wiki"))
+        tmp = path.with_name(path.name + ".tmp-wiki")
+        tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        tmp.replace(path)
+    return removed
+
+
+def uninstall_tooling(scripts_dest: Path = None, dry_run: bool = False) -> dict:
+    """Remove what the manifest beside the scripts lists, and nothing else. Returns what was removed, what was left
+    because it changed since install, what was already gone, and what an uninstall never touches. Raises
+    FileNotFoundError when there is no manifest: without one, nothing is known to be ours."""
+    scripts_dest = Path(scripts_dest) if scripts_dest else CC_GLOBAL_WIKI_SCRIPTS_DIR
+    path = scripts_dest / MANIFEST_NAME
+    if not path.is_file():
+        raise FileNotFoundError(f"no {MANIFEST_NAME} in {scripts_dest}: nothing is known to be this install's, so "
+                                "nothing is removed (an install from before 2026-10-14 writes one when refreshed)")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    out = {"removed": [], "edited_left": [], "gone": [], "dirs_removed": [], "hooks_removed": 0,
+           "left": data.get("left_on_uninstall", []), "dry_run": dry_run}
+    parents = set()
+    for entry in data.get("files", []):
+        p = Path(entry["path"])
+        if not p.is_file():
+            out["gone"].append(p.as_posix())
+        elif _sha256(p) != entry.get("sha256"):
+            out["edited_left"].append(p.as_posix())
+        else:
+            out["removed"].append(p.as_posix())
+            parents.add(p.parent)
+            if not dry_run:
+                p.unlink()
+    for d in data.get("dirs", []):
+        d = Path(d)
+        if d.is_dir():
+            out["dirs_removed"].append(d.as_posix())
+            if not dry_run:
+                shutil.rmtree(d, ignore_errors=True)
+    for h in data.get("hooks", []):
+        out["hooks_removed"] += remove_hooks(Path(h["settings"]), h.get("scripts", []), dry_run)
+    if not dry_run:
+        path.unlink()
+        # only the folders the removed files were in (a skill's folder and its subfolders, the scripts folder), when
+        # now empty, deepest first; never a folder above them and never a shared root
+        keep = {CC_GLOBAL_DIR.resolve(), CC_GLOBAL_SKILLS_DIR.resolve(), CC_GLOBAL_AGENTS_DIR.resolve()}
+        for folder in sorted(parents | {scripts_dest}, key=lambda q: len(q.parts), reverse=True):
+            if folder.resolve() not in keep and folder.is_dir() and not any(folder.iterdir()):
+                folder.rmdir()
+    return out
 
 
 def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,

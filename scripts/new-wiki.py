@@ -43,7 +43,7 @@ from _install_tooling import (  # noqa: E402
     install_tooling as _install_tooling,
     print_summary as _print_tooling_summary,
     global_tooling_status, format_tooling_status, is_bootstrap_source,
-    InstallIncomplete, report_incomplete,
+    InstallIncomplete, report_incomplete, uninstall_tooling,
     build_tooling_env, find_uv,
     seed_toolset, toolset_status, undocumented_artifacts, load_install_skill_fn,
 )
@@ -533,6 +533,30 @@ def phase_status(args):
         return 3
     print(json.dumps({"status": "ok", **status}, indent=2))
     return 0
+
+
+# ---------- --mode uninstall (task #123) ----------
+
+def phase_uninstall(args):
+    """Remove exactly what the global install wrote, from its install-manifest.json: scripts, skills, agents,
+    the scripts' environment and the hook entries in settings.json. A file edited since install is left and
+    named; notebooks, the global toolset and wiki-config.json are never touched. --dry-run lists, removes
+    nothing. Exit 0 done; 1 something was left because it was edited; 2 no manifest (nothing known to remove)."""
+    try:
+        out = uninstall_tooling(dry_run=args.dry_run)
+    except FileNotFoundError as e:
+        _err(str(e))
+        return 2
+    verb = "would remove" if args.dry_run else "removed"
+    print(f"{verb}: {len(out['removed'])} file(s), {len(out['dirs_removed'])} folder(s) "
+          f"({', '.join(out['dirs_removed']) or 'none'}), {out['hooks_removed']} hook entr(y/ies) in settings.json")
+    for p in out["edited_left"]:
+        print(f"  LEFT (changed since install): {p}")
+    if out["gone"]:
+        print(f"  already gone: {len(out['gone'])} file(s)")
+    for what in out["left"]:
+        print(f"  never touched: {what}")
+    return 1 if out["edited_left"] else 0
 
 
 # ---------- Phase A (global) ----------
@@ -1330,11 +1354,13 @@ def main():
                              "docs = refresh only the global toolset's docs (the pack usage pages and the "
                              "framework-contract docs; created and registered if missing). Mutually exclusive "
                              "with --mode.")
-    parser.add_argument("--mode", choices=["tooling", "status"], default=None,
+    parser.add_argument("--mode", choices=["tooling", "status", "uninstall"], default=None,
                         help="tooling = GLOBAL tooling-only install (all skills + scripts into "
                              "~/.claude/, no project scaffold). status = report the global tooling "
                              "state as JSON (installed / stale / partial / missing per manifest), "
-                             "writes nothing. Mutually exclusive with --phase.")
+                             "writes nothing. uninstall = remove exactly what the global install "
+                             "wrote, from its install-manifest.json (--dry-run lists it). "
+                             "Mutually exclusive with --phase.")
     parser.add_argument("--tool", choices=["claude-code", "cursor"], default="claude-code",
                         help="Which AI tool to install for (default: claude-code)")
     parser.add_argument("--project-name")
@@ -1416,6 +1442,8 @@ def main():
 
     if args.mode == "tooling":
         return phase_tooling(args)
+    if args.mode == "uninstall":
+        return phase_uninstall(args)
     if args.mode == "status":
         return phase_status(args)
     if args.phase == "A":

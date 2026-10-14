@@ -110,6 +110,17 @@ uv run python scripts/new-wiki.py --phase docs           # refresh
 A bundled install (skills copied into the project) refreshes them by re-running the scaffold
 against the same folder with `--force`.
 
+## Uninstalling
+
+Every global install records what it wrote in `~/.claude/wiki-scripts/install-manifest.json`: each script, skill and agent file with a fingerprint of its content, the scripts' environment, and the hook entries it added to `~/.claude/settings.json` (since 2026-10-14; an older install writes one at its next refresh). To take the tooling off the machine:
+
+```
+uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/new-wiki.py --mode uninstall --dry-run   # list what would go
+uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/new-wiki.py --mode uninstall             # remove it
+```
+
+It removes exactly what the manifest lists. A file you edited after it was installed is left where it is and named, and so is anything the install did not write (a skill of your own). Your notebooks, the global toolset notebook, `~/.claude/wiki-config.json` and Playwright's Chromium are never touched; every other hook and setting in `settings.json` stays. A skill retired since an earlier install is still on the list, so it goes too. Without a manifest it removes nothing. A bundled install (skills copied into one project) has no manifest yet.
+
 ## Troubleshooting
 
 - **`gh` / `git clone` fails with auth** — repo is public now, no auth needed; check your network
