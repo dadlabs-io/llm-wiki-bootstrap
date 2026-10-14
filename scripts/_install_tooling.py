@@ -45,10 +45,17 @@ READ_GUARD_SCRIPT = "read-guard.py"
 READ_GUARD_EVENTS = {"PreToolUse": "Read|Bash|PowerShell", "Stop": None, "SubagentStop": None}
 READ_GUARD_TIMEOUT = 30  # seconds
 
+# The agent guard (2026-10-14, task #145): holds a named subagent (wiki-ingester) to the commands
+# its job needs, by the `agent_type` Claude Code sends with a subagent's tool calls.
+AGENT_GUARD_SCRIPT = "agent-guard.py"
+AGENT_GUARD_EVENTS = {"PreToolUse": "Bash|PowerShell"}
+AGENT_GUARD_TIMEOUT = 15  # seconds
+
 # ---------- Manifests (single source of truth) ----------
 # User-invokable scripts that travel to every install.
 TRAVEL_SCRIPTS = [
     "new-wiki.py",
+    "agent-guard.py",  # PreToolUse hook: an ingest worker may not write to git or reach the network on its own (task #145, 2026-10-14)
     "read-guard.py",  # PreToolUse/Stop/SubagentStop hook: documents are read whole (2026-09-18)
     "wiki-feeds.py",  # /wiki-discover reads trusted sources by feed: new items only, seen state per notebook (task #97, 2026-10-11)
     "wiki-fetch-drive-folder.py",
@@ -736,7 +743,7 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
     # 4) The SessionStart resume hook → ~/.claude/settings.json. Global installs
     #    only: the hook runs for every session on the machine, so it must point
     #    at the global scripts, never at one project's bundled copy.
-    session_hook = read_guard = "skipped: not the global scripts folder"
+    session_hook = read_guard = agent_guard = "skipped: not the global scripts folder"
     if os.path.normcase(str(scripts_dest.expanduser().resolve())) == \
             os.path.normcase(str(CC_GLOBAL_WIKI_SCRIPTS_DIR.expanduser().resolve())):
         progress["step"] = "the SessionStart hook"
@@ -746,6 +753,10 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
         read_guard = install_hooks(READ_GUARD_EVENTS,
                                    hook_entry(scripts_dest_value, READ_GUARD_SCRIPT, READ_GUARD_TIMEOUT),
                                    READ_GUARD_SCRIPT, dry_run=dry_run)
+        progress["step"] = "the agent-guard hook"
+        agent_guard = install_hooks(AGENT_GUARD_EVENTS,
+                                    hook_entry(scripts_dest_value, AGENT_GUARD_SCRIPT, AGENT_GUARD_TIMEOUT),
+                                    AGENT_GUARD_SCRIPT, dry_run=dry_run)
         # 6) This machine's search mode (task #63), from the package's own GPU check
         progress["step"] = "the search mode"
         search_mode = configure_search_mode(_load_gpu_check(scripts_src), dry_run=dry_run)
@@ -764,7 +775,7 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
         for skill in progress["skills"]:
             written += sorted(p for p in (skills_dest / skill).rglob("*") if p.is_file())
         written += progress.get("agent_files", [])
-        hooks = ([{"settings": CC_GLOBAL_SETTINGS_PATH.as_posix(), "scripts": [SESSION_HOOK_SCRIPT, READ_GUARD_SCRIPT]}]
+        hooks = ([{"settings": CC_GLOBAL_SETTINGS_PATH.as_posix(), "scripts": [SESSION_HOOK_SCRIPT, READ_GUARD_SCRIPT, AGENT_GUARD_SCRIPT]}]
                  if toolset is not None else [])
         manifest = write_manifest(scripts_dest, written, [scripts_dest / ".venv"], hooks, bootstrap)
 
@@ -774,6 +785,7 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
         "page_browser": page_browser,
         "session_hook": session_hook,
         "read_guard": read_guard,
+        "agent_guard": agent_guard,
         "search_mode": search_mode,
         "toolset": toolset,
         "toolset_value": toolset_value,
@@ -1289,6 +1301,7 @@ def print_summary(summary: dict):
         print(f"  page browser:     {summary['page_browser']}")
     print(f"  session hook:     {summary.get('session_hook', '')}  → {CC_GLOBAL_SETTINGS_PATH} (SessionStart)")
     print(f"  read guard:       {summary.get('read_guard', '')}  → {CC_GLOBAL_SETTINGS_PATH} (PreToolUse, Stop, SubagentStop)")
+    print(f"  agent guard:      {summary.get('agent_guard', '')}  → {CC_GLOBAL_SETTINGS_PATH} (PreToolUse, Bash|PowerShell)")
     print(f"  search mode:      {summary.get('search_mode', '')}  → {CC_GLOBAL_CONFIG_PATH}")
     ts = summary.get("toolset")
     if ts:

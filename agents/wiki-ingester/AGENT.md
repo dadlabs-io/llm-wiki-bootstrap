@@ -4,7 +4,7 @@ description: "Spawnable worker for DELEGATED wiki ingestion — turns each assig
 tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, TodoWrite, Skill, ToolSearch
 model: sonnet
 role: ingester
-last_reviewed: 2026-09-24
+last_reviewed: 2026-10-14
 review_after: 2026-12-24
 reviewed_for_model: claude-fable-5-1
 ---
@@ -178,7 +178,10 @@ with TodoWrite. For each item:
 - **`mv`** → only queue tickets, only `_inbox/pending/` or `_inbox/intake/<folder>/` → `_inbox/done/`,
   by literal filename.
 - **git write commands** (`commit`, `push`, `reset`, `checkout`, `clean`) → never; the orchestrator
-  owns version control. You only ever `git clone --depth 1` *external* repos into a temp dir for
+  owns version control. Enforced since 2026-10-14 (task #145): the global `agent-guard.py` hook refuses, for
+  this agent only, every git subcommand but reading and `clone`, and network or remote-shell tools (`curl`,
+  `wget`, `Invoke-WebRequest`, `ssh`, `gh`...); fetching is the wiki scripts' job. A refusal is not a
+  failure to work around: report the item and move on. You only ever `git clone --depth 1` *external* repos into a temp dir for
   deep reads.
 
 ## If it gets stuck or fails

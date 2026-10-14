@@ -11,6 +11,12 @@
 
 ## 2026-10-14
 
+### The ingest worker may not write to git or reach the network on its own (task #145)
+
+- **Why**: an ingest worker reads untrusted pages, transcripts and repositories and runs in sessions that can push to git and post to Discord: private data, untrusted content and a way out, the "lethal trifecta" (Kim Maida's talk, ingested in cycle 2026-10-14-03). Its tool list already has no MCP tools (no Discord); its Bash, needed for the wiki scripts, could still `git push` or `curl` data out, and the rule against that was prose only (Mark: "make sure it has just the permissions it needs").
+- **What**: `scripts/agent-guard.py`, a global PreToolUse hook on Bash and PowerShell, reads the `agent_type` Claude Code sends with a subagent's calls and, for `wiki-ingester` only, refuses git subcommands other than reading and `clone`, and network or remote-shell programs. Registered and recorded in the install manifest like the read guard; the agent's guardrail line, INSTALL-INVENTORY and the install page say so. The wiki-checker needed nothing: Read, Grep, Glob, Write only.
+- **Proof**: `tests/hooks/test_agent_guard.py` 28/28 (15 refused, 7 allowed including the wiki scripts and `git clone --depth 1`, the main session and other agents untouched, unreadable input allowed); installer checks unchanged (manifest 21/21, tooling env 20/20, git-hooks opt-in 17/17, standalone 21/21); a live wiki-ingester run after install shows the refusal.
+
 ### A cycle reports what it cost (task #138)
 
 - **Why**: Mark asked what a cycle costs; ccusage and Claude Code's OpenTelemetry give cost per day or session, never per cycle (a cycle is part of a session plus its subagents). Researched and rejected as too heavy: an OpenTelemetry collector and dashboard, and a script pricing every token from the transcripts.
