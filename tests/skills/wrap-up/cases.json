@@ -470,6 +470,48 @@
         "new_card": "manifest"
       },
       "author": "eval-case-writer"
+    },
+    {
+      "id": "docs-check-stale-usage-page",
+      "kind": "docs-check",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user asked me to make `beacon sync` resume interrupted uploads by default. I changed `beacon/cli.py`: resuming is now on by default, the old `--resume` flag is gone, and a new `--no-resume` flag starts every upload from scratch. I ran `beacon sync` against the injected fake sender and it behaves as intended.\n- I did not touch any documentation, README or usage page.\n\nNothing else was touched: no other task moved, and there was no decision or bug worth a wiki entry.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "answer": "none",
+      "expect": {
+        "docs": "fixed"
+      },
+      "author": "eval-case-writer",
+      "project_overlay": "docs-resume"
+    },
+    {
+      "id": "docs-check-nothing-a-doc-describes",
+      "kind": "docs-check",
+      "work": "Here is what happened in this session, as the conversation would have shown it:\n\n- The user asked me to reword two paragraphs of a wiki note about the sync design, a note in the notebook's `wiki/` folder and not in the beacon repo. I reworded them and the user read the result and was happy with it.\n- No code, script, flag or command in beacon was touched, and no README or usage page was opened.\n\nNothing else was touched: no other task moved, and there was no decision or bug worth a new wiki entry.",
+      "seeds": {
+        "journal": "journal-existing.md",
+        "handoff": "handoff-existing.md",
+        "active": "active-context-existing.md"
+      },
+      "git": "commits",
+      "flags": {
+        "confirm_before_create": true,
+        "confirm_before_promote": true
+      },
+      "answer": "none",
+      "expect": {
+        "docs": "nothing"
+      },
+      "author": "eval-case-writer",
+      "project_overlay": "docs-resume"
     }
   ]
 }

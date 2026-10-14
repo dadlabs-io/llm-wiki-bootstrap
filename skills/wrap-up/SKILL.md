@@ -37,7 +37,7 @@ To change any of them: edit the notebook's registry entry (or the project's `wik
 
 ## The flow
 
-Steps 0 and 0.5 run on **every** wrap-up, and Step 7's closing line ends every one. Steps 1–6 depend on what the session produced; Step 7's commit and push depend on the flag, else the `wrap_up_commit` setting.
+Steps 0 and 0.5 run on **every** wrap-up, and Step 7's closing line ends every one. Step 1.5 runs whenever the session changed something a doc describes. Steps 1–6 depend on what the session produced; Step 7's commit and push depend on the flag, else the `wrap_up_commit` setting.
 
 ### Step 0 — Update the session journal (ALWAYS)
 
@@ -140,6 +140,28 @@ One row per candidate, by category:
 | **Pattern** | A reusable approach the project will follow elsewhere |
 | **Troubleshooting** | A bug + root cause + fix, so future-you doesn't re-debug it |
 
+### Step 1.5 — Check the docs the session's changes touch
+
+A change can make a doc untrue without anyone touching the doc (the user, 2026-10-14: we don't cut releases, so this
+check runs here). The docs are the project's README and its usage pages: any page that tells a reader what a command,
+skill, script, flag or setting does. Wiki entries and session files are not docs here.
+
+1. **What changed:** the commands, skills, scripts, flags, settings and file names this session added, renamed, removed
+   or changed in behaviour, from the conversation and the session's commits and uncommitted changes; only these are
+   checked, never a doc's claim about something the session did not touch. A session that
+   changed none (only wiki notes, or nothing) skips the rest: say so in Step 5 ("Docs check: nothing a doc describes
+   changed").
+2. **Which docs:** search the project's docs for each changed name (Grep over `README.md` and the usage pages, such as a
+   `docs/` folder or the pages shipped beside each skill). Read every passage that names one, in full.
+3. **Check each claim** in those passages against the change: still true, or now untrue (with why). A passage you could
+   not settle is untrue until shown otherwise; never count it as checked.
+4. **Fix** each untrue claim in a doc this project owns (the edit joins the session's changes, and Step 7 commits it);
+   one you cannot fix (another project's doc, a question only the user can answer) goes in the handoff's
+   `⚠️ WAITING ON YOU`, quoted, with its path.
+
+Report it in Step 5 as one line: `Docs check: <n> passages read in <m> docs; <k> fixed, <j> left for you`, naming
+each fixed or left claim's doc. A wrap-up that skipped this step says why; it never reports a clean check it did not run.
+
 ### Step 2 — Present the proposal table
 
 ```
@@ -215,6 +237,7 @@ Wrapped up:
   Session journal updated: wiki/sessions/main/2026-05/2026-05-12-<session-id>.md  (Update 3)
   Working memory refreshed: sessions/main/handoff.md + active-context.md + task cards
   Task list: #1 done, #4 added — remove the done one? (your call)
+  Docs check: 3 passages read in 2 docs; 1 fixed (README.md, the --move-handled default), 0 left for you
   3 entries staged to _inbox/proposed/ (→ wiki/project/<category>/ on promote):
   - troubleshooting/oauth-re-prompt-root-cause-2026-05-12.md
   - decisions/move-handled-default-on-2026-05-12.md
@@ -295,7 +318,7 @@ Items 1–4 run **only when asked**: a typed `--auto-commit` / `--auto-push`, or
    - `✅ WRAP-UP COMPLETE: committed and pushed ✅` (push asked for, every commit pushed)
    - `✅ WRAP-UP COMPLETE: committed, not pushed ✅` (commit asked for)
    - `✅ WRAP-UP COMPLETE: nothing committed ✅` (neither asked for; Step 6's promote commit, if any, is named above it)
-   - `⚠️ WRAP-UP INCOMPLETE: <what is left, e.g. "push rejected in <repo>"> ⚠️` (a commit or push failed, or the user still has to answer something; an open skill suggestion does not count, it waits in its box; nor does Step 5's question whether to remove a task you finished yourself: its card stays marked done above NOW, and the next session asks again)
+   - `⚠️ WRAP-UP INCOMPLETE: <what is left, e.g. "push rejected in <repo>"> ⚠️` (a commit or push failed, or the user still has to answer something; an open skill suggestion does not count, it waits in its box; nor does Step 5's question whether to remove a task you finished yourself: its card stays marked done above NOW, and the next session asks again; nor does a docs claim Step 1.5 left in `⚠️ WAITING ON YOU`)
 
    Nothing follows it. A wrap-up that stops to wait for an answer (Step 2's table, Step 6's prompt) has not reached Step 7 and prints no closing line.
 

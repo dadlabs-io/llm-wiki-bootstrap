@@ -228,6 +228,14 @@ def _reset_project(case: dict, ctx: dict) -> None:
             dest = project / src.relative_to(HERE / "fixtures" / "project-files")
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dest)
+    overlay = case.get("project_overlay")  # files only some cases get (task #130: a doc and the code it describes)
+    if overlay:
+        base = HERE / "fixtures" / "project-overlays" / overlay
+        for src in base.rglob("*"):
+            if src.is_file():
+                dest = project / src.relative_to(base)
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dest)
     _git(project, "init", "-q")
     _git(project, "config", "user.email", "test@example.invalid")
     _git(project, "config", "user.name", "Skill Test")
@@ -834,6 +842,63 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         return res
     if case.get("kind") == "cards-first":
         _check_cards_first(case, before, after, run, ctx, add)
+        return res
+    if case.get("kind") == "docs-check":
+        # task #130: a docs check in wrap-up. Reads the project's docs/usage.md and the report, never the commands.
+        _preamble(run, add)
+        proj_files = HERE / "fixtures" / "project-files"
+
+        def _norm(s):
+            return s.replace("\r\n", "\n").strip()
+
+        usage_p = ctx["project"] / "docs" / "usage.md"
+        usage = usage_p.read_text(encoding="utf-8") if usage_p.is_file() else ""
+        overlay = HERE / "fixtures" / "project-overlays" / case.get("project_overlay", "docs-resume")
+        seed_usage = (overlay / "docs" / "usage.md").read_text(encoding="utf-8")
+        cli_p = ctx["project"] / "beacon" / "cli.py"
+        seed_cli = (overlay / "beacon" / "cli.py").read_text(encoding="utf-8")
+        add("beacon/cli.py left as the session made it",
+            cli_p.is_file() and _norm(cli_p.read_text(encoding="utf-8")) == _norm(seed_cli))
+        doc_word = re.compile(r"read\s*me|usage|\bdocs?\b|documentation", re.I)
+        sents = [s.strip() for s in re.split(r"(?<=[.!?;])\s+|\n+", text) if s.strip() and doc_word.search(s)]
+        neg = re.compile(r"\b(nothing|none|no|not|never|without|didn'?t|wasn'?t|weren'?t|isn'?t|n/a)\b|n't", re.I)
+        clean = re.compile(r"\b(clean|up[- ]to[- ]date|still (true|accurate|correct|current)|all accurate|"
+                           r"all correct|no stale|verified|checked|audited)\b", re.I)
+        if exp.get("docs") == "fixed":
+            add("usage page now describes the new default: names --no-resume",
+                "--no-resume" in usage, usage[:200])
+            add("usage page no longer says resuming is off by default or tells the reader to pass --resume",
+                not re.search(r"off by default|pass\s+`?--resume", usage, re.I), usage[:200])
+            add("usage page was edited (differs from the stale seed)", _norm(usage) != _norm(seed_usage))
+            doc_lines = [ln.strip() for ln in text.splitlines() if ln.strip() and doc_word.search(ln)]
+            add("the report says the docs check found and fixed the stale claim",
+                any(re.search(r"fix|updat|correct|chang|stale|out[- ]of[- ]date|untrue|no longer true|rewr", ln, re.I)
+                    for ln in doc_lines), doc_lines[:3])
+        else:
+            add("usage page unchanged", _norm(usage) == _norm(seed_usage), usage[:200])
+            readme_p = ctx["project"] / "README.md"
+            add("README unchanged",
+                readme_p.is_file() and _norm(readme_p.read_text(encoding="utf-8"))
+                == _norm((proj_files / "README.md").read_text(encoding="utf-8")))
+            add("the report says there was nothing for the docs check to check",
+                any(re.search(r"nothing\b[^.;\n]{0,60}\b(to check|to audit|to verify|for the (docs? )?check|chang|describ|touch|affect|appl)|"
+                              r"no (code|script|command|flag|behaviou?r|doc)[^.;\n]{0,40}(chang|touch|affect|describ)|"
+                              r"none of|not (needed|applicable|run)|n/a|skipp|did not (check|run|audit)|"
+                              r"didn'?t (check|run|audit)|not checked|no docs? check", s, re.I)
+                    for s in sents), sents[:3])
+            claims = [s for s in sents if clean.search(s) and not neg.search(s)]
+            add("the report does not claim a clean docs check it did not make", not claims, claims[:2])
+        persona_dir = ctx["wiki"] / "sessions" / PERSONA
+        journals = _journals(ctx)
+        add("exactly one journal for this session, named with the session id",
+            len(journals) == 1 and SID in journals[0].name, [p.name for p in journals])
+        handoff = persona_dir / "handoff.md"
+        add("handoff.md written with every section", handoff.is_file() and
+            not [s for s in HANDOFF_SECTIONS if s not in handoff.read_text(encoding="utf-8")])
+        _closing_line(run, add)
+        wiki_rel = {k for k in set(before) | set(after) if before.get(k) != after.get(k) and k.startswith("wiki/")}
+        stray = sorted(k for k in wiki_rel if not k.startswith(("wiki/sessions/", "wiki/tasks/")))
+        add("wrote nothing into wiki/ but sessions/ and tasks/", not stray, stray)
         return res
 
     r = run["result"]
