@@ -913,6 +913,152 @@ def uninstall_tooling(scripts_dest: Path = None, dry_run: bool = False) -> dict:
     return out
 
 
+# --- The opt-in git pre-commit hook (task #141, Mark 2026-10-14) ---
+# tools/git-hooks/install.sh is the one implementation (task #135): it copies the hooks to ~/.git-hooks and sets the
+# global core.hooksPath, so every commit on the machine is checked for secrets (gitleaks) and the user's private words.
+# /new-wiki offers it when it is not on; these helpers find what it needs, run it, and report its state.
+GIT_HOOKS_DIR = Path.home() / ".git-hooks"
+GITLEAKS_CANDIDATES = [
+    Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "WinGet" / "Packages"
+    / "Gitleaks.Gitleaks_Microsoft.Winget.Source_8wekyb3d8bbwe" / "gitleaks.exe",
+    Path("/opt/homebrew/bin/gitleaks"), Path("/usr/local/bin/gitleaks"),
+]
+
+
+def find_gitleaks():
+    """gitleaks on PATH, else where winget or brew put it; None when it is not installed."""
+    found = shutil.which("gitleaks")
+    if found:
+        return found
+    return next((str(c) for c in GITLEAKS_CANDIDATES if c.is_file()), None)
+
+
+def gitleaks_install_command():
+    """The package-manager command that installs gitleaks here, or None when there is none to run."""
+    if sys.platform == "win32" and shutil.which("winget"):
+        return ["winget", "install", "--id", "Gitleaks.Gitleaks", "-e", "--silent",
+                "--accept-source-agreements", "--accept-package-agreements"]
+    if sys.platform == "darwin" and shutil.which("brew"):
+        return ["brew", "install", "gitleaks"]
+    return None
+
+
+def find_sh():
+    """A POSIX sh to run install.sh: on PATH, else the one beside Git for Windows' git."""
+    found = shutil.which("sh")
+    if found:
+        return found
+    try:
+        exec_path = subprocess.run(["git", "--exec-path"], capture_output=True, text=True).stdout.strip()
+    except OSError:
+        return None
+    if exec_path:
+        for root in Path(exec_path).parents:
+            if (root / "bin" / "sh.exe").is_file():
+                return str(root / "bin" / "sh.exe")
+    return None
+
+
+def _global_hooks_path() -> str:
+    try:
+        return subprocess.run(["git", "config", "--global", "core.hooksPath"], capture_output=True,
+                              text=True).stdout.strip()
+    except OSError:
+        return ""
+
+
+def _runnable(recorded: str) -> bool:
+    """install.sh records gitleaks as its sh sees it: on Windows that can be /c/Users/.../gitleaks, no .exe."""
+    import re
+    m = re.match(r"^/([a-zA-Z])/(.*)$", recorded) if sys.platform == "win32" else None
+    p = Path(f"{m.group(1)}:/{m.group(2)}") if m else Path(recorded)
+    return p.is_file() or (sys.platform == "win32" and p.with_name(p.name + ".exe").is_file())
+
+
+def git_hooks_status(hooks_dir: Path = None) -> dict:
+    """on: git's global core.hooksPath is the hooks folder and its pre-commit is there, with gitleaks found;
+    on-no-gitleaks: on, but the gitleaks it recorded is gone, so the hook blocks every commit as NOT checked;
+    off: anything else (another hooksPath is named in `hooks_path`)."""
+    forced = os.environ.get("WIKI_GIT_HOOKS_STATE")  # tests: pin the state, never read the machine's
+    if forced in ("on", "off", "on-no-gitleaks"):
+        return {"state": forced, "hooks_path": None, "gitleaks": None, "pinned": True}
+    hooks_dir = Path(hooks_dir) if hooks_dir else GIT_HOOKS_DIR
+    configured = _global_hooks_path()
+    expanded = Path(os.path.expanduser(configured)) if configured else None
+    on = bool(expanded) and (hooks_dir / "pre-commit").is_file() and expanded.resolve() == hooks_dir.resolve()
+    state = "off"
+    if on:
+        conf = hooks_dir / "hooks.conf"
+        recorded = ""
+        if conf.is_file():
+            for line in conf.read_text(encoding="utf-8").splitlines():
+                if line.startswith("GITLEAKS="):
+                    recorded = line.split("=", 1)[1].strip().strip('"')
+        state = "on" if recorded and _runnable(recorded) else "on-no-gitleaks"
+    return {"state": state, "hooks_path": configured or None, "gitleaks": find_gitleaks()}
+
+
+def install_git_hooks(pkg: Path, dry_run: bool = False) -> dict:
+    """Install the git hooks from <pkg>/tools/git-hooks: gitleaks first (installed with winget or brew when
+    missing), then install.sh. Nothing is installed when gitleaks cannot be had: a hook that cannot check
+    secrets would read as protection it does not give. Returns installed, what happened, and the fix if not."""
+    script = Path(pkg) / "tools" / "git-hooks" / "install.sh"
+    if not script.is_file():
+        return {"installed": False, "reason": f"{script} not found", "fix": None}
+    if os.environ.get("WIKI_GIT_HOOKS_DRY_RUN") == "1":  # tests: never touch the machine's git config
+        dry_run = True
+    gitleaks = find_gitleaks()
+    note = ""
+    if not gitleaks:
+        cmd = gitleaks_install_command()
+        if cmd is None:
+            return {"installed": False, "reason": "gitleaks is not installed and no winget or brew to install it",
+                    "fix": "install gitleaks (https://github.com/gitleaks/gitleaks#installing), then "
+                           f"sh {script.as_posix()}"}
+        if dry_run:
+            return {"installed": False, "reason": "dry run", "fix": None,
+                    "would_run": [" ".join(cmd), f"sh {script.as_posix()}"]}
+        p = subprocess.run(cmd, capture_output=True, text=True)
+        gitleaks = find_gitleaks()
+        if not gitleaks:
+            return {"installed": False, "reason": f"`{' '.join(cmd[:3])} ...` did not install gitleaks "
+                                                  f"(exit {p.returncode}): {(p.stderr or p.stdout).strip()[-300:]}",
+                    "fix": f"{' '.join(cmd)}, then sh {script.as_posix()}"}
+        note = f"gitleaks installed with {cmd[0]}; "
+    sh = find_sh()
+    if not sh:
+        return {"installed": False, "reason": "no sh found to run install.sh (Git for Windows ships one)",
+                "fix": f"sh {script.as_posix()}"}
+    if dry_run:
+        return {"installed": False, "reason": "dry run", "fix": None, "would_run": [f"sh {script.as_posix()}"]}
+    env = {**os.environ}
+    if gitleaks and shutil.which("gitleaks") is None:  # let install.sh find the one we found
+        env["PATH"] = str(Path(gitleaks).parent) + os.pathsep + env.get("PATH", "")
+    p = subprocess.run([sh, str(script)], capture_output=True, text=True, env=env)
+    if p.returncode != 0:
+        return {"installed": False, "reason": f"install.sh exit {p.returncode}: {(p.stderr or p.stdout).strip()[-300:]}",
+                "fix": f"sh {script.as_posix()}"}
+    return {"installed": True, "reason": note + p.stdout.strip().splitlines()[-1] if p.stdout.strip() else note,
+            "fix": None}
+
+
+def remove_git_hooks(pkg: Path, dry_run: bool = False) -> str:
+    """Turn the git hooks off (install.sh --remove: unset core.hooksPath; ~/.git-hooks and the private-words
+    list stay). Returns what happened."""
+    if git_hooks_status()["state"] == "off":
+        return "git hooks: not on, nothing to remove"
+    if os.environ.get("WIKI_GIT_HOOKS_DRY_RUN") == "1":  # tests: never touch the machine's git config
+        dry_run = True
+    script = Path(pkg) / "tools" / "git-hooks" / "install.sh"
+    sh = find_sh()
+    if dry_run:
+        return f"git hooks: would run sh {script.as_posix()} --remove"
+    if not (script.is_file() and sh):
+        return f"git hooks: LEFT ON (no install.sh or sh); run git config --global --unset core.hooksPath"
+    p = subprocess.run([sh, str(script), "--remove"], capture_output=True, text=True)
+    return "git hooks: " + ((p.stdout or p.stderr).strip() or f"exit {p.returncode}")
+
+
 def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
                           scripts_dest: Path = None, agents_dest: Path = None) -> dict:
     """What the global claude-code tooling looks like right now, against the

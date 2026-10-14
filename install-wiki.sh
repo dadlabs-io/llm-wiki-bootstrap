@@ -41,6 +41,8 @@
 #   --research-folder     stubs (default) | empty | none — wiki/research/ (what we ingest)
 #   --drive-enabled       yes | no (default no)
 #   --drive-parent-folder Google Drive parent folder name (default "__FOR CLAUDE")
+#   --git-hooks           yes | no (default no): turn on the machine-wide git pre-commit hook
+#                         (gitleaks + private words, every repo here; installs gitleaks if missing)
 #   --force / --refresh-only  retained for back-compat (no longer gate a prompt)
 
 set -euo pipefail
@@ -59,6 +61,7 @@ PROJECT_FOLDER="stubs"
 RESEARCH_FOLDER="stubs"
 DRIVE_ENABLED="no"
 DRIVE_PARENT_FOLDER="__FOR CLAUDE"
+GIT_HOOKS="no"
 FORCE="no"
 REFRESH_ONLY="no"
 
@@ -77,6 +80,7 @@ while [[ $# -gt 0 ]]; do
         --research-folder) RESEARCH_FOLDER="$2"; shift 2;;
         --drive-enabled) DRIVE_ENABLED="$2"; shift 2;;
         --drive-parent-folder) DRIVE_PARENT_FOLDER="$2"; shift 2;;
+        --git-hooks) GIT_HOOKS="$2"; shift 2;;
         --force) FORCE="yes"; shift;;
         --refresh-only) REFRESH_ONLY="yes"; shift;;
         -h|--help)
@@ -245,6 +249,7 @@ echo "  Skills:         $SKILLS_INSTALL"
 echo "  wiki/project:   $PROJECT_FOLDER"
 echo "  wiki/research:  $RESEARCH_FOLDER"
 echo "  Drive ingest:   $DRIVE_ENABLED"
+echo "  Git hooks:      $GIT_HOOKS"
 echo
 
 VAULT_ARGS=()
@@ -268,7 +273,8 @@ if [[ "$SKILLS_INSTALL" == "global" ]]; then GLOBAL_ARGS=(--install-global-if-mi
     "${GLOBAL_ARGS[@]}" \
     --bootstrap-source "$HERE" \
     --drive-enabled "$DRIVE_ENABLED" \
-    --drive-parent-folder "$DRIVE_PARENT_FOLDER"
+    --drive-parent-folder "$DRIVE_PARENT_FOLDER" \
+    --git-hooks "$GIT_HOOKS"
 
 PHASE_B_EXIT=$?
 

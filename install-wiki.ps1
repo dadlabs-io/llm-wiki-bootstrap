@@ -51,6 +51,8 @@ Flags:
   -ResearchFolder    : stubs (default) | empty | none -- wiki/research/ (what we ingest)
   -DriveEnabled      : yes | no (default no)
   -DriveParentFolder : Google Drive parent folder name (default "__FOR CLAUDE")
+  -GitHooks          : yes | no (default no) -- turn on the machine-wide git pre-commit hook
+                       (gitleaks + private words, every repo on this machine; installs gitleaks if missing)
   -Force / -RefreshOnly : retained for back-compat (no longer gate a prompt)
 #>
 
@@ -101,6 +103,9 @@ param(
     [string]$DriveEnabled = "no",
 
     [string]$DriveParentFolder = "__FOR CLAUDE",
+
+    [ValidateSet("yes", "no")]
+    [string]$GitHooks = "no",
 
     # Bypass the already-installed prompt -- always refresh from current
     # bootstrap source without asking. Useful for scripted / unattended runs.
@@ -278,6 +283,7 @@ Write-Host "  Skills:         $SkillsInstall"
 Write-Host "  wiki/project:   $ProjectFolder"
 Write-Host "  wiki/research:  $ResearchFolder"
 Write-Host "  Drive ingest:   $DriveEnabled"
+Write-Host "  Git hooks:      $GitHooks"
 Write-Host ""
 
 $phaseBArgs = @(
@@ -292,7 +298,8 @@ $phaseBArgs = @(
     "--research-folder", $ResearchFolder,
     "--bootstrap-source", $Bootstrap,
     "--drive-enabled", $DriveEnabled,
-    "--drive-parent-folder", $DriveParentFolder
+    "--drive-parent-folder", $DriveParentFolder,
+    "--git-hooks", $GitHooks
 )
 if ($VaultRoot) { $phaseBArgs += @("--vault-root", $VaultRoot) }
 if ($Registry) { $phaseBArgs += @("--registry", $Registry) }

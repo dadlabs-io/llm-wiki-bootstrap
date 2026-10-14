@@ -11,6 +11,24 @@
 
 ## 2026-10-14
 
+### `/wrap-up` checks the docs a session's changes touch (task #130)
+
+- **Why**: we don't cut releases, so no step ever checked that a README or usage page was still true after a change (Mark: "maybe it belongs in wrap-up"; agreed it does).
+- **What**: new Step 1.5. From the conversation and the session's commits and uncommitted changes, list what changed (commands, skills, scripts, flags, settings, file names); search the README and usage pages for each name, read every passage that names one, and check each claim against the change. An untrue claim in a doc this project owns is fixed (Step 7 commits it); one it cannot fix goes in the handoff's `⚠️ WAITING ON YOU`, which does not make the wrap-up INCOMPLETE. Only what the session changed is checked. Step 5 reports one line, `Docs check: <n> passages read in <m> docs; <k> fixed, <j> left for you`, or says nothing a doc describes changed; it never reports a check it did not run. Usage page.
+- **Proven**: two fresh cases by `eval-case-writer`, saved unchanged (a flipped flag default left in `docs/usage.md`; a session that changed only wiki notes), with their fixtures in a per-case overlay (`fixtures/project-overlays/docs-resume/`, loaded by `"project_overlay"`): copied into every case, the stale page made Opus end an older case INCOMPLETE. Red then green against `HEAD` on both models (`20261014-122911`, Sonnet's second case after a check fault the writer fixed, `123429`). Full suite `20261014-125047`: 0 regressions on both models; the stale-page case failed only on two check faults (a sentence split at `;`, and task cards left by an earlier case), fixed by the writer; rerun `132127` 4/4. Baselines merged per case (17 per model). About $25.
+
+### `/task-list` shows what is waiting: `show --waiting [<who>]` (task #124)
+
+- **Why**: one view of what waits on whom across the list (Mark: generic, not a Mark-only tag; "waiting on" already says who).
+- **What**: `wiki-tasks.py show --waiting` lists every waiting card, current and backlog, with what it waits on; `show --waiting <who>` keeps those whose `waiting_on` names them. Skill (command, a phrase-table row, triggers) and usage page.
+- **Proven**: `tests/scripts/test_task_cards.py` 71/71 (three new checks). No model run: a read-only view (PENDING row).
+
+### `/new-wiki` asks whether to block secrets in commits (task #141)
+
+- **Why**: Mark: the machine-wide pre-commit hook (#135) should be offered when a wiki is created, gitleaks with it. Wikis are where the risk is: journals, transcripts and sources are all committed.
+- **What**: `--mode status` reports `git_hooks` (`on`, `off`, `on-no-gitleaks`) beside the tooling state, never part of it. `/new-wiki` asks Q10, "Block secrets in commits?" (machine-wide, default No), only when the hook is not on; the plan summary has a Git hooks line. Phase B's `--git-hooks yes` installs gitleaks with winget or brew when missing, then runs `tools/git-hooks/install.sh`; when gitleaks cannot be had nothing is turned on and the fix is named in the summary JSON (`git_hooks`). `--mode uninstall` turns the hook off (`~/.git-hooks` and the private-words list stay). `install-wiki.ps1 -GitHooks yes` / `install-wiki.sh --git-hooks yes` pass it through. Test-only switches: `WIKI_GIT_HOOKS_STATE` pins the reported state, `WIKI_GIT_HOOKS_DRY_RUN=1` makes installs and removals dry runs. Install page ("Blocking secrets in commits"), the new-wiki usage page, the hook's README, this repo's CLAUDE.md.
+- **Proven**: `tests/scripts/test_git_hooks_optin.py` 17/17 under a temporary home (status off/on/on-no-gitleaks, a refused install changes nothing, dry runs, removal; the machine's real `core.hooksPath` untouched). Two cases by `eval-case-writer` (replayed three times: pinning the state, the sandbox rule the sessions obeyed, a note that leaked the flag): `hooks-on-no-question` red then green on both models; `hooks-off-yes-scaffold-command` green on both, red on Opus only (the old-skill run still calls the working tree's `new-wiki.py` through `bootstrap_source`, where Sonnet found the flag). Full suite `20261014-125051`: all pass except `go-inproject-auto` on both models, Claude Code's auto-mode classifier refusing Phase B ("Self-Modification", as on 2026-09-26 and 2026-10-04), after which both handed over the command as the skill says. Baselines merged per case (9 per model). About $8.
+
 ### No check reports clean when it checked nothing (task #133)
 
 - **Why**: from the Ruflo deep dive (task #116): their index kept answering for deleted documents for months; here, #38/#39's depth check was a green that could not fail. Mark: a rule for all our checks, not one.

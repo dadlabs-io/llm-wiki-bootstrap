@@ -104,6 +104,42 @@
         "plan": "go"
       },
       "author": "legacy"
+    },
+    {
+      "id": "hooks-off-yes-scaffold-command",
+      "kind": "githooks-yes",
+      "say": "/new-wiki harbor log   [Test machine note: on this machine the git-hooks install is a dry run. Whatever the scaffold does for git hooks, it writes nothing outside the sandbox (no ~/.git-hooks, no change to git's global config).]",
+      "env": {
+        "WIKI_GIT_HOOKS_STATE": "off",
+        "WIKI_GIT_HOOKS_DRY_RUN": "1"
+      },
+      "answers": {
+        "round1": "name `harbor-log`; review gate: `Yes — show me candidates and confirm before publishing`; block secrets in commits: `Yes`",
+        "round2": "description `Wiki for harbor-log`; project folder: `Yes, with the default stubs`; research folder: `No`; where the wiki lives: `Notebook in the vault`",
+        "plan": "go"
+      },
+      "expect": {
+        "where": "vault",
+        "project": "stubs",
+        "research": "none",
+        "gate": true,
+        "description": "Wiki for harbor-log"
+      },
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "hooks-on-no-question",
+      "kind": "githooks-on",
+      "say": "/new-wiki harbor log",
+      "env": {
+        "WIKI_GIT_HOOKS_STATE": "on",
+        "WIKI_GIT_HOOKS_DRY_RUN": "1"
+      },
+      "answers": {
+        "round1": "name `harbor-log`; review gate: `Yes — show me candidates and confirm before publishing`",
+        "round2": "description `Wiki for harbor-log`; project folder: `Yes, with the default stubs`; research folder: `No`; where the wiki lives: `Notebook in the vault`"
+      },
+      "author": "eval-case-writer"
     }
   ]
 }

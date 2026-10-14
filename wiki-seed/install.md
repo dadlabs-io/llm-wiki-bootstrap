@@ -31,6 +31,7 @@ That single command:
 2. Installs the rest of the global tooling (every wiki skill, script and agent) **only if it is missing or partial** — an installed set is left alone, never re-copied
 3. Asks for anything not passed (name, description) and scaffolds the project (`llm-wiki/`, `CLAUDE.md`, config); `-ProjectFolder` / `-ResearchFolder` (`stubs` | `empty` | `none`, default `stubs`) choose the wiki's two halves. The wiki goes inside the project as `llm-wiki/` unless you pass `-VaultRoot` (and `-Registry`) to make it a notebook in your notebooks vault, which is what `/new-wiki` recommends
 4. (Optional) Walks through Google Drive OAuth if `-DriveEnabled yes`
+5. (Optional) Turns on the git commit hook if `-GitHooks yes` (`--git-hooks yes`): see [Blocking secrets in commits](#blocking-secrets-in-commits)
 
 ## Two-step alternative
 
@@ -44,7 +45,7 @@ If you want the global install first, then create projects separately:
 > /new-wiki
 ```
 
-`/new-wiki` is a conversational skill. It checks the global tooling first (use it as is; install it once if missing; never re-copy), then asks two rounds of questions — name and review gate; description, a `project/` folder (with stubs, empty, or none), a `research/` folder (the same three), and where the wiki lives; with a `research/` folder it offers to note trusted sources for discovery now (or you add them later) — shows the plan, and scaffolds on your go.
+`/new-wiki` is a conversational skill. It checks the global tooling first (use it as is; install it once if missing; never re-copy), then asks two rounds of questions — name and review gate; description, a `project/` folder (with stubs, empty, or none), a `research/` folder (the same three), and where the wiki lives; with a `research/` folder it offers to note trusted sources for discovery now (or you add them later); when the commit hook is not on, it asks whether to block secrets in commits (default no) — shows the plan, and scaffolds on your go.
 
 ## What gets installed where
 
@@ -110,6 +111,17 @@ uv run python scripts/new-wiki.py --phase docs           # refresh
 A bundled install (skills copied into the project) refreshes them by re-running the scaffold
 against the same folder with `--force`.
 
+## Blocking secrets in commits
+
+An optional git pre-commit hook stops a commit that adds a secret (an API key, a token: [gitleaks](https://github.com/gitleaks/gitleaks) finds them) or a word on your private list (names, places, anything that must never leave the machine). It matters for a wiki because session journals, transcripts and ingested sources are all committed, and a pasted key rides along unseen.
+
+- **Turning it on:** answer yes to `/new-wiki`'s "Block secrets in commits?", or pass `-GitHooks yes` (`--git-hooks yes`) to the installer with a project. gitleaks is installed first if missing (`winget install Gitleaks.Gitleaks` on Windows, `brew install gitleaks` on a Mac); when it cannot be installed, nothing is turned on and the command to run is shown.
+- **It is machine-wide:** it sets git's global `core.hooksPath` to `~/.git-hooks`, so every commit in every repo on the machine is checked. A repo's own `.git/hooks` still run after it. A repo with its own `core.hooksPath` (husky and the like) keeps it and is not checked.
+- **Your private words:** one per line in `~/.git-hooks/private-words.txt`; an install never overwrites the list.
+- **When it blocks:** fix the line it names. `git commit --no-verify` skips it, for a hit you are sure is a false alarm.
+- **Its state:** `--mode status` reports `git_hooks`: `on`, `off`, or `on-no-gitleaks` (on, but gitleaks is gone: every commit is blocked as NOT checked until gitleaks is back or the hook is turned off).
+- **Turning it off:** `--mode uninstall` turns it off with the rest of the tooling; on its own, `sh <clone>/tools/git-hooks/install.sh --remove`. Either way `~/.git-hooks` and your list stay.
+
 ## Uninstalling
 
 Every global install records what it wrote in `~/.claude/wiki-scripts/install-manifest.json`: each script, skill and agent file with a fingerprint of its content, the scripts' environment, and the hook entries it added to `~/.claude/settings.json` (since 2026-10-14; an older install writes one at its next refresh). To take the tooling off the machine:
@@ -119,7 +131,7 @@ uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/new-wiki.p
 uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/new-wiki.py --mode uninstall             # remove it
 ```
 
-It removes exactly what the manifest lists. A file you edited after it was installed is left where it is and named, and so is anything the install did not write (a skill of your own). Your notebooks, the global toolset notebook, `~/.claude/wiki-config.json` and Playwright's Chromium are never touched; every other hook and setting in `settings.json` stays. A skill retired since an earlier install is still on the list, so it goes too. Without a manifest it removes nothing. A bundled install (skills copied into one project) has no manifest yet.
+It removes exactly what the manifest lists. A file you edited after it was installed is left where it is and named, and so is anything the install did not write (a skill of your own). Your notebooks, the global toolset notebook, `~/.claude/wiki-config.json` and Playwright's Chromium are never touched; every other hook and setting in `settings.json` stays. A skill retired since an earlier install is still on the list, so it goes too. Without a manifest it removes nothing. A bundled install (skills copied into one project) has no manifest yet. If the commit hook is on, the uninstall also turns it off (`~/.git-hooks` and your private-words list stay).
 
 ## Troubleshooting
 

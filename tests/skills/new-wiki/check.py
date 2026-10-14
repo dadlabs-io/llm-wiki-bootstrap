@@ -142,7 +142,11 @@ def _reset(case: dict, ctx: dict) -> None:
     (ctx["vault"] / "notebooks").mkdir(parents=True)
     ctx["registry"].write_text(json.dumps(
         {"notebooks": {OTHER: {"root": f"notebooks/{OTHER}"}}}, indent=2), encoding="utf-8")
-    ctx["project"].mkdir(parents=True)
+    # Windows can leave the emptied folder behind for a moment (still some process's cwd): an empty
+    # leftover is the same as none; anything left inside it is not
+    if ctx["project"].exists() and any(ctx["project"].iterdir()):
+        raise RuntimeError(f"could not clear {ctx['project']}")
+    ctx["project"].mkdir(parents=True, exist_ok=True)
     if case.get("seed_claude_md"):
         (ctx["project"] / "CLAUDE.md").write_text(CLAUDE_MD_SEED, encoding="utf-8")
     # The runner snapshots BEFORE it builds the prompt, and building the prompt is what
@@ -270,6 +274,39 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         # a question, a "let me know" or yes/no options: sonnet asked with none of them a "?" (2026-09-18)
         add("asks about --force", "force" in norm and bool(ASKS.search(text)))
         return res
+
+    if kind in ("githooks-yes", "githooks-on"):
+        # WIKI_GIT_HOOKS_STATE pins the state check and WIKI_GIT_HOOKS_DRY_RUN=1 stops a real
+        # --git-hooks yes from touching the machine's git config; both come from the case's "env".
+        yes_flag = re.compile(r"--git-hooks[\s=]+['\"]?yes\b", re.I)
+        dry_off = re.compile(r"WIKI_GIT_HOOKS_DRY_RUN[=\s'\"]*(0|false|no)\b|unset\s+WIKI_GIT_HOOKS|env\s+-u", re.I)
+        calls = [json.dumps(c.get("input") or {}) for c in run["tool_calls"]]
+        add("no call turned the git-hooks dry run off", not any(dry_off.search(c) for c in calls),
+            [c[:120] for c in calls if dry_off.search(c)][:2])
+        if kind == "githooks-yes":
+            # with "go" given, the reply reports the result and need not reprint the plan, so only the call is read;
+            # a call the tool rejected (the old script's argparse exit 2 on an unknown flag) does not count
+            errors = run.get("error_texts") or {}
+            ok_yes = [c for c in run["tool_calls"]
+                      if yes_flag.search(json.dumps(c.get("input") or {})) and c.get("id") not in errors]
+            add("scaffold call carries --git-hooks yes and succeeded", bool(ok_yes),
+                [json.dumps(c.get("input"))[:160] for c in run["tool_calls"]
+                 if "--phase" in json.dumps(c.get("input") or {})][:2])
+            # fall through to the scaffold checks below (files, config, registry), read from the case's expect
+        else:
+            found = [lbl for lbl in PLAN_LABELS if lbl in norm]
+            add("shows the plan summary (at least 5 of its 7 lines)", len(found) >= 5, found)
+            hooks_line = re.compile(r"git[- ]hooks?|secrets?", re.I)
+            add("plan summary has a git-hooks line", bool(hooks_line.search(text)),
+                (hooks_line.search(text) or [""])[0])
+            skip_words = re.compile(r"didn't|did not|not asked|not ask|skip|already|no need|isn't|won't|n't ", re.I)
+            asked = [ln for ln in text.splitlines()
+                     if re.search(r"block secrets", ln, re.I) and "?" in ln and not skip_words.search(ln)]
+            add("no block-secrets question (hook already on)", not asked, asked[:2])
+            add("no --git-hooks yes in any call", not any(yes_flag.search(c) for c in calls),
+                [c[:160] for c in calls if yes_flag.search(c)][:2])
+            add("waits for the go: nothing scaffolded", not created, created[:8])
+            return res
 
     # ---- scaffold cases
     exp = case["expect"]

@@ -64,7 +64,8 @@ fully-resolved options only (never `<slug>` placeholders); `(Recommended)` on th
   C:\github.com\<slug>\llm-wiki`).
 - **Round 3 (only when needed)**: skills — only when the state is partial or missing (`Install the global
   tooling now and use it (Recommended)` / `Bundle into this project`); Drive — only when
-  `~/.claude/wiki-config.json` has `drive.enabled: true`.
+  `~/.claude/wiki-config.json` has `drive.enabled: true`; block secrets in commits — only when the status JSON's
+  `git_hooks.state` is not `on` (`No (Recommended)` / `Yes`, → `-GitHooks yes`).
 
 Not asked, shown in the plan summary for override: the tool (`cursor` if a `.cursor/` folder is present,
 else `claude-code`), the target folder (`C:\github.com\<slug>`, or the cwd when its leaf name equals

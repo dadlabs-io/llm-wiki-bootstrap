@@ -18,6 +18,11 @@ If gitleaks cannot be found, the commit is blocked as NOT checked, never let thr
 
 ## Install, refresh, remove
 
+The framework offers it: `/new-wiki` asks "Block secrets in commits?" when it is not on (default no), and the
+installer takes `-GitHooks yes` / `--git-hooks yes` with a project; both install gitleaks first when missing
+(winget or brew) and turn nothing on when they cannot. `new-wiki.py --mode status` reports `git_hooks` (`on`,
+`off`, `on-no-gitleaks`), and `--mode uninstall` turns it off (task #141). By hand:
+
 ```bash
 sh tools/git-hooks/install.sh            # copy to ~/.git-hooks, record gitleaks, set the global core.hooksPath
 sh tools/git-hooks/install.sh --remove   # unset core.hooksPath (each repo's .git/hooks runs again)

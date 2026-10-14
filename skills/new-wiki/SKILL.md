@@ -1,6 +1,6 @@
 ---
 name: new-wiki
-description: "Scaffold a new project with the LLM-wiki framework. Checks the global tooling first (use it, install it once, or bundle — never re-copies an installed set), then a two-round interview: name + review gate; description, project folder (stubs / empty / none), research folder (stubs / empty / none), where the wiki lives; with a research folder, an optional question for trusted sources. Every project gets one merged wiki; each half is opt-in. Sets up llm-wiki/ (or a notebook in the vault), the wiki folders, the empty trusted-sources page /wiki-discover reads (with research/), CLAUDE.md and the project config. Use when the user says \"new project\", \"create a new wiki\", \"install a new wiki\", \"set up a new wiki\", \"bootstrap a project\", \"start a new project\", or types \"/new-wiki\"."
+description: "Scaffold a new project with the LLM-wiki framework. Checks the global tooling first (use it, install it once, or bundle — never re-copies an installed set), then a two-round interview: name + review gate; description, project folder (stubs / empty / none), research folder (stubs / empty / none), where the wiki lives; with a research folder, an optional question for trusted sources; when the git hooks are not on, whether to block secrets in commits (gitleaks + a machine-wide pre-commit hook). Every project gets one merged wiki; each half is opt-in. Sets up llm-wiki/ (or a notebook in the vault), the wiki folders, the empty trusted-sources page /wiki-discover reads (with research/), CLAUDE.md and the project config. Use when the user says \"new project\", \"create a new wiki\", \"install a new wiki\", \"set up a new wiki\", \"bootstrap a project\", \"start a new project\", or types \"/new-wiki\"."
 last_reviewed: 2026-09-26
 review_after: 2026-12-26
 reviewed_for_model: claude-fable-5-1
@@ -60,10 +60,11 @@ Round 2 (AskUserQuestion, 4 questions — built from the slug)
    Q4  project folder?   stubs (Recommended) | empty | none
    Q5  research folder?  stubs (Recommended) | empty | none
    Q6  where the wiki lives: notebook in the vault (Recommended) | inside the project
-Round 3 (only when needed, ≤3 questions)
+Round 3 (only when needed, ≤4 questions)
    Q7  skills — ONLY when the state check says partial or missing: install globally now + use it (Recommended) | bundle into the project
    Q8  Drive — ONLY when ~/.claude/wiki-config.json has drive.enabled true: use Drive for this project? + subfolder
    Q9  trusted sources — ONLY when Q5 is not "No": name some now | add them later (Recommended)
+   Q10 block secrets in commits — ONLY when the state check's git_hooks is not "on": no (Recommended) | yes
    ↓
 Plan summary (tool, target folder, folder tree, skills line, Drive line, feeds line) → wait for "yes" / "go" / "create"
    ↓
@@ -76,6 +77,7 @@ Phase B — new-wiki.py --phase B ...   (Phase A already done by install-wiki.ps
    B7.6 Create the empty trusted-sources page _config/feeds.md (when research/ exists; never overwrites)
    B8.  Write .claude/wiki-config.json (+ the registry entry for a vault notebook, with project_root = the project folder unless the target is the notebook itself)
    B9.  Drive OAuth walkthrough (only if Drive is on)
+   B10. The git hooks (only on a yes at Q10): gitleaks, installed if missing, then the pre-commit hook
    B11. JSON summary + next steps
    ↓
 Step 1.5  add the sources named at Q9 to _config/feeds.md (only when Q9 named some)
@@ -100,6 +102,8 @@ Writes nothing. Prints JSON with `state` — one of:
 | `partial` | some pieces missing (`missing_*` list them, `env` says `missing` when the scripts' uv environment is not built, `runs` gives the error when the installed scripts do not run) | ask Q7 |
 | `missing` | none of the wiki skills are installed (only `/new-wiki` from Phase A, or nothing) | ask Q7 |
 | `not-checked` (exit 3) | the bootstrap clone has nothing to compare against (`not_checked` names what: skills, scripts, toolset docs), so the machine's state is unknown | stop and tell the user the `bootstrap_source` path looks wrong; ask nothing else |
+
+The same JSON carries `git_hooks.state` (`on`, `off`, or `on-no-gitleaks`: the hook is on but cannot find gitleaks, so it blocks every commit as NOT checked); it decides only whether Q10 is asked.
 
 Also note whether the current folder has a `.cursor/` directory (→ tool `cursor`; otherwise `claude-code`). The tool is stated in the plan summary, not asked.
 
@@ -152,6 +156,12 @@ This one answer sets two independent booleans (`confirm_before_create` for `/wra
 - `Yes, I'll list some` → ask for them in plain text (a name and a URL each) before the plan summary; a list typed into `Other` is the same answer
 The page is created either way; this question only decides whether it starts with rows. Nothing is searched at scaffold time.
 
+**Q10 — Block secrets in commits** (only when `git_hooks.state` is not `on`): "Block secrets in commits? This installs gitleaks and a git pre-commit hook that checks every commit on this machine, in any repo, for secrets (API keys, tokens) and for words on your private list. Commits with a hit are stopped until you fix the line."
+- `No (Recommended)` → `--git-hooks no`
+- `Yes — install gitleaks and the hook` → `--git-hooks yes`
+
+It is machine-wide (git's global `core.hooksPath`): say so in the question, and on `on-no-gitleaks` say the hook is on but cannot find gitleaks, so commits are blocked until a yes reinstalls it.
+
 ### Step 0.5 — Plan summary, then wait
 
 Show one block and wait for "yes" / "go" / "create":
@@ -170,6 +180,7 @@ Skills:          global — installed and current (16 skills, 26 scripts, 1 agen
 Drive:           off
 Feeds:           _config/feeds.md, empty — add your trusted sources later   [or: 2 sources you named; or: none — no research/ folder]
 Review gate:     manual (confirm before filing and before publishing)
+Git hooks:       off   [or: will be installed — gitleaks + the pre-commit hook, every repo on this machine; or: already on]
 ```
 
 Every line is overridable by saying so; a changed line is re-shown before running.
@@ -195,7 +206,8 @@ uv run --project "<bootstrap_source>" python "<bootstrap_source>/scripts/new-wik
   --confirm-before-promote <true|false> \
   [--vault-root <vault>/notebooks --registry <vault>/linked-notebooks.json]   `# Q6 notebook; omit both for in-project` \
   --drive-enabled <yes|no> \
-  [--drive-subfolder <slug>]
+  [--drive-subfolder <slug>] \
+  --git-hooks <yes|no>                     `# Q10; no when not asked`
 ```
 
 **If Phase B stops with "unexpected entries"** (the target folder already has files), stop and ask the user: name the files, say that `--force` keeps an existing `CLAUDE.md` / `README.md` / `.gitignore` and writes everything else into that folder, and re-run with `--force` only on their yes. The "go" on the plan summary is not that yes — the plan did not mention the existing files. Never add `--force` on your own.
@@ -207,6 +219,8 @@ Phase B in global mode checks the tooling itself: it refuses (exit 1, with the f
 Phase B's JSON gives the page's path as `feeds_file`. Add one row per named source to the table that fits it (a blog or newsletter, a GitHub repo, an arXiv query, a YouTube channel, a vendor blog, or a community aggregator), in that table's columns: the name, the URL or search pattern, the Feed (`—` unless the user gave its feed address; `/wiki-discover` reads a source with one by its feed), the tier by the rubric in the frontmatter spec (`{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`), `From` 2026-01-01, `To` `—`, topics from what the user said or the project description, and `named at /new-wiki` in Notes. Edit only the table rows. Don't search the sources now: that is `/wiki-discover`'s job.
 
 ### Step 2 — Read back the summary + post-install reminders
+
+`git_hooks` in the summary (only after a yes at Q10): `installed: true` → say the hook is on for every repo on this machine and that the words never to commit go in `~/.git-hooks/private-words.txt`, one per line. `installed: false` → say plainly it is NOT on, give `reason`, and give `fix` as the command to run; the scaffold itself is done.
 
 `needs_restart: true` means the global tooling was installed during this run — tell the user to restart Claude Code before the other `/wiki-*` skills will appear.
 
@@ -263,4 +277,4 @@ After that one-time setup, `/new-wiki` works in any project folder.
 
 ## Source
 
-Authored 2026-05-12, restructured 2026-05-13 for the per-project model, 2026-09-09 for the state check and the six-question interview (the folder halves opt-in; the nine-question interview and the fixed research taxonomy retired), 2026-09-26 for the trusted-sources page and its optional question. Companion skills: `/wrap-up` (end-of-session distillation), `/wiki-cycle` (research orchestrator), `/wiki-search`, `/wiki-update`.
+Authored 2026-05-12, restructured 2026-05-13 for the per-project model, 2026-09-09 for the state check and the six-question interview (the folder halves opt-in; the nine-question interview and the fixed research taxonomy retired), 2026-09-26 for the trusted-sources page and its optional question, 2026-10-14 for the opt-in git hooks (Q10). Companion skills: `/wrap-up` (end-of-session distillation), `/wiki-cycle` (research orchestrator), `/wiki-search`, `/wiki-update`.

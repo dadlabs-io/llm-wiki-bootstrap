@@ -46,6 +46,7 @@ from _install_tooling import (  # noqa: E402
     InstallIncomplete, report_incomplete, uninstall_tooling,
     build_tooling_env, find_uv,
     seed_toolset, toolset_status, undocumented_artifacts, load_install_skill_fn,
+    git_hooks_status, install_git_hooks, remove_git_hooks,
 )
 from _wiki_config import toolset_location  # noqa: E402
 from urllib.parse import urlparse
@@ -527,7 +528,10 @@ def phase_status(args):
                           "message": "could not find bootstrap source — run install-wiki.ps1 / install-wiki.sh once"}, indent=2))
         return 1
     status = global_tooling_status(bootstrap)
+    # the opt-in git hooks (task #141): reported beside the tooling, never part of its state
+    status["git_hooks"] = git_hooks_status()
     print(format_tooling_status(status), file=sys.stderr)
+    print(f"  git hooks: {status['git_hooks']['state']}", file=sys.stderr)
     if status["not_checked"]:  # nothing to compare against never reads as installed (task #133)
         print(json.dumps({"status": "not-checked", **status}, indent=2))
         return 3
@@ -550,6 +554,9 @@ def phase_uninstall(args):
     verb = "would remove" if args.dry_run else "removed"
     print(f"{verb}: {len(out['removed'])} file(s), {len(out['dirs_removed'])} folder(s) "
           f"({', '.join(out['dirs_removed']) or 'none'}), {out['hooks_removed']} hook entr(y/ies) in settings.json")
+    bootstrap = _derive_bootstrap_source(args)
+    if bootstrap:  # the opt-in git hooks /new-wiki may have turned on (task #141)
+        print(remove_git_hooks(bootstrap, dry_run=args.dry_run))
     for p in out["edited_left"]:
         print(f"  LEFT (changed since install): {p}")
     if out["gone"]:
@@ -1248,6 +1255,18 @@ def phase_b(args):
                 _warn("Drive auth did not complete. Project scaffold is still ready,")
                 _warn("but Drive ingest won't work until you fix the OAuth setup.")
 
+    # B10 — the opt-in git hooks (task #141): only on a yes at /new-wiki's question. A failure leaves the
+    # scaffold as it is and names the fix; nothing is half-installed.
+    git_hooks = None
+    if args.git_hooks == "yes":
+        git_hooks = install_git_hooks(bootstrap, dry_run=args.dry_run)
+        if git_hooks["installed"]:
+            _ok(f"git hooks on: {git_hooks['reason']}")
+        else:
+            _warn(f"git hooks NOT installed: {git_hooks['reason']}" +
+                  (f" — to install them: {git_hooks['fix']}" if git_hooks.get("fix") else ""))
+        git_hooks["state"] = git_hooks_status()["state"]
+
     # Claude Code only discovers ~/.claude/skills at startup: if the global tooling was
     # installed during this run, the new skills are not visible until a restart.
     # (agentmemory, the earlier reason for this flag, was removed 2026-05-14.)
@@ -1299,6 +1318,7 @@ def phase_b(args):
         "global_tooling_installed_now": global_tooling_installed_now,
         "drive_enabled": bool(drive_enabled_global),
         "drive_subfolder": drive_subfolder if drive_enabled_global else None,
+        "git_hooks": git_hooks,
         "needs_restart": needs_restart,
         "next_steps": next_steps,
         "help_anytime": f"Ask in plain English. CLAUDE.md loads the command reference ({toolset_dir}/how-to/llm-wiki/commands.md, in the global toolset) and the wiki README; the agent reads the other how-to pages there when a question needs them.",
@@ -1419,6 +1439,10 @@ def main():
                         help=f"Parent Drive folder for ingest (default: {DEFAULT_DRIVE_PARENT})")
     parser.add_argument("--drive-subfolder", default=None,
                         help="Per-project Drive subfolder (default: project slug)")
+    parser.add_argument("--git-hooks", choices=["yes", "no"], default="no",
+                        help="With --phase B: turn on the machine-wide git pre-commit hook (tools/git-hooks: "
+                             "gitleaks + the private-words list, every repo on this machine), installing "
+                             "gitleaks with winget or brew when missing. Default no. --mode uninstall turns it off.")
     parser.add_argument("--force", action="store_true",
                         help="Continue even if target folder has unexpected entries")
     parser.add_argument("--no-agentmemory", action="store_true",
