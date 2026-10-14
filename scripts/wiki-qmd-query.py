@@ -688,13 +688,39 @@ def preflight() -> int:
     if mode == "keyword":
         print("[wiki-qmd-query] preflight: search mode keyword — this machine runs qmd's keyword search "
               "only (no model, so no GPU check); switch with --set-mode full once it has a GPU", file=sys.stderr)
-        return 0
+        return probe_search()
     backend, detail = gpu_backend()
     print(f"[wiki-qmd-query] preflight: search mode full; GPU check: {detail}", file=sys.stderr)
     if not backend:
         print("[wiki-qmd-query] preflight: no CUDA or Metal GPU — stop and report. On a machine with no GPU, "
               "`--set-mode keyword` makes search keyword-only", file=sys.stderr)
         return EXIT_USAGE
+    return probe_search()
+
+
+PROBE_QUERY = "the"
+
+
+def probe_search(timeout: float = 60) -> int:
+    """One real search (task #133): the GPU check loads no model and reads no index, so a preflight that
+    stopped there passed on an empty or broken index. A keyword search for a word every page has must
+    come back with a row; it loads no model, so it costs a second, and the full search that follows the
+    preflight proves the models."""
+    rc, out, err = run_qmd(["search", PROBE_QUERY, "-n", "1", "--json"], timeout)
+    if rc is None:
+        print(f"[wiki-qmd-query] preflight: NOT checked — the probe search did not answer in {timeout:.0f}s",
+              file=sys.stderr)
+        return EXIT_TIMEOUT
+    try:
+        rows = json.loads(out) if rc == 0 else None
+    except ValueError:
+        rows = None
+    if not rows:
+        why = (err or out).strip().splitlines()[-1:] or [f"exit {rc}"] if rc != 0 else ["no rows"]
+        print(f"[wiki-qmd-query] preflight: the probe search found nothing ({why[0][:160]}) — the index is "
+              "empty or broken: run `qmd update` and try again, or stop and report", file=sys.stderr)
+        return EXIT_USAGE
+    print("[wiki-qmd-query] preflight: probe search ok (the index answers)", file=sys.stderr)
     return 0
 
 

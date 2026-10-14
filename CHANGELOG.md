@@ -11,6 +11,13 @@
 
 ## 2026-10-14
 
+### No check reports clean when it checked nothing (task #133)
+
+- **Why**: from the Ruflo deep dive (task #116): their index kept answering for deleted documents for months; here, #38/#39's depth check was a green that could not fail. Mark: a rule for all our checks, not one.
+- **What**: exit 3 and a NOT checked line, never "none" or "ok", when a check inspected nothing: `wiki-lint-mechanical.py` (no entries; the search index missing, not a collection, or empty; no installed skills; the report opens with `⚠️ NOT FULLY CHECKED`, the cycle JSON is `status: partial` with `not_checked`; it now reads `WIKI_QMD_INDEX` as the search helper does), `wiki-tasks.py check` (no cards; an ok names the count), `wiki-claims-corroborate.py` (no claims), `wiki-feeds.py check` (a page with no sources). A status check runs one real use: `wiki-qmd-query.py --preflight` ends with a keyword probe search that must return a row; `new-wiki.py --mode status` runs the installed scripts once (`runs`) and reports `not-checked` (exit 3) when the clone has nothing to compare against. The rule is a corollary of principle 11 in `wiki-authoring-best-practices` (v7). Skills: wiki-lint, wiki-search, wiki-cycle Step 3, new-wiki's state table, task-list; usage pages; cycle contract.
+- **Proven**: `tests/scripts/test_not_checked.py` 23/23; four lint tests now give their temporary wiki a stand-in `qmd` (`_fake_qmd.py`); every script, hook and backlink test green. On this machine: preflight probe ok, status `runs: ok`.
+- **Migration**: a caller that treated the lint's exit code as 0-or-1 now also sees 3; the cycle carries on.
+
 ### Skill tests: red then green, nothing clean on nothing, one report shape (task #134)
 
 - **Why**: from the Ruflo deep dive (task #116): a new case proves a change only if it fails before it; their write-ups were comparable because each stated its control, n, cost and limits; and a check that ran nothing must never read clean (#38/#39 met that here).

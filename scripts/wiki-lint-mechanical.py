@@ -217,11 +217,15 @@ def qmd_index_coverage(wiki_root):
     # Launchers, in order. On Windows `which` returns npm's qmd.cmd, and qmd's
     # .cmd shim execs /bin/sh — which cmd.exe cannot find — so fall back to the
     # extension-less sh script beside it, run through bash/sh (Git Bash).
-    launchers = [[qmd, "ls"]]
+    # $WIKI_QMD_INDEX names the qmd index in use (the skill tests keep a sandbox notebook in its own), as
+    # wiki-qmd-query.py reads it; without it the lint looked in the default index and never found the notebook.
+    index = os.environ.get("WIKI_QMD_INDEX")
+    ls = ["--index", index, "ls"] if index else ["ls"]
+    launchers = [[qmd, *ls]]
     stem = re.sub(r"\.(cmd|bat|ps1|exe)$", "", qmd, flags=re.IGNORECASE)
     sh = shutil.which("bash") or shutil.which("sh")
     if sh and stem != qmd and Path(stem).is_file():
-        launchers.append([sh, stem, "ls"])
+        launchers.append([sh, stem, *ls])
     proc, last_err = None, ""
     for cmd in launchers:
         try:
@@ -342,7 +346,8 @@ def check_describes(value, rel, fm, repo):
                        f"{' plus uncommitted edits' if uncommitted else ''}")
 
 
-def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, standalone, wiki_root, report_path):
+def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, standalone, wiki_root, report_path,
+                         not_checked=()):
     """/wiki-cycle Step 3's pair, lint-mechanical.json + .md (cycle-step-return-format):
     the contract's counters in `summary`, the findings in sibling arrays. Until
     2026-09-24 the script had no --cycle-id / --run-folder and the orchestrator wrote
@@ -355,7 +360,8 @@ def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, s
         "cycle_id": cycle_id,
         "step": "lint-mechanical",
         "timestamp": now_stamp(),
-        "status": "completed",
+        "status": "partial" if not_checked else "completed",
+        "not_checked": list(not_checked),
         "summary": summary,
         "queued": [],
         "skipped": [],
@@ -370,7 +376,7 @@ def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, s
     atomic_write_text(run_folder / "lint-mechanical.json", json.dumps(payload, indent=2, ensure_ascii=False))
     counts = ", ".join(f"{k.replace('_', ' ')} {v}" for k, v in summary.items())
     md = [f"# lint-mechanical — {cycle_id}", "",
-          "**Status**: completed  ",
+          f"**Status**: {payload['status']}  ",
           f"**Timestamp**: {payload['timestamp']}  ",
           f"**Summary**: {counts}", "",
           "## Queued", "", "_(none — the mechanical lint reports, it produces no items)_", "",
@@ -709,9 +715,33 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             standalone.append((f, declared))
 
     # Render report
+    installed_fm_issues, installed_fm_scanned = scan_installed_frontmatter()
+    qmd_status = qmd_index_coverage(wiki_root)
+
+    # A check that inspected nothing never reads clean (task #133, from the Ruflo deep dive): each part of
+    # the run that checked zero items is named at the top, and the run exits 3.
+    not_checked = []
+    if not files:
+        not_checked.append(f"0 entries scanned under {wiki_root}: every section below is empty because nothing "
+                           "was read, not because the wiki is clean")
+    if qmd_status["state"] == "missing":
+        not_checked.append("search index: `qmd` is not on PATH")
+    elif qmd_status["state"] == "not-a-collection":
+        not_checked.append("search index: this wiki is not a qmd collection, so search finds nothing here")
+    elif qmd_status["state"] == "error":
+        not_checked.append(f"search index: qmd could not be asked ({qmd_status['detail']})")
+    elif qmd_status["indexed"] == 0:
+        not_checked.append("search index: EMPTY, 0 files indexed")
+    if not installed_fm_scanned:
+        not_checked.append("installed skills: none found under ~/.claude, so their frontmatter was not checked")
+
     out = []
     out.append(f"# Wiki Lint Report — {topic}")
     out.append("")
+    if not_checked:
+        out.append("**⚠️ NOT FULLY CHECKED** (exit 3):")
+        out += [f"- {reason}" for reason in not_checked]
+        out.append("")
     out.append(f"**Generated**: {datetime.now().astimezone().isoformat(timespec='minutes')}")
     out.append(f"**Files scanned**: {len(files)}")
     out.append(f"**Broken links**: {len(broken_links)}")
@@ -877,9 +907,6 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                 out.append(f"- `{rel.as_posix()}` — got `{value}`")
             out.append("")
     out.append("")
-
-    installed_fm_issues, installed_fm_scanned = scan_installed_frontmatter()
-    qmd_status = qmd_index_coverage(wiki_root)
 
     # Section: frontmatter loadability (formerly "unquoted YAML values")
     out.append("## ⚠️ Frontmatter Loadability (unquoted YAML)")
@@ -1196,17 +1223,22 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             "renamed_terms_left": len(renamed_hits),
             "supersede_bad_target": len(supersede_bad_target),
             "supersede_no_backlink": len(supersede_no_backlink),
-        }, broken_links, orphans, standalone, wiki_root, report_path)
+        }, broken_links, orphans, standalone, wiki_root, report_path, not_checked)
         print(f"Cycle step files: {Path(run_folder) / 'lint-mechanical.json'} (+ .md)")
 
     # Exit code: strict mode fails on broken links, any icarus invariant
     # violation, or an out-of-enum ingested_by (2026-08-13). The presence checks
     # (tags/lifecycle/wikilinks) stay warn-only in strict mode until their
     # backlogs are backfilled — flipping them is a one-line change here.
-    # Non-strict (default) always returns 0 — report is informational.
+    # Non-strict (default) returns 0 — report is informational — unless part of the run checked
+    # nothing: then 3 (task #133), in either mode, after a strict failure's 1.
     if strict:
         if broken_links or icarus_total > 0 or invalid_ingested_by or task_problems:
             return 1
+    if not_checked:
+        print(f"NOT FULLY CHECKED: {len(not_checked)} part(s) checked nothing (see the top of the report)",
+              file=sys.stderr)
+        return 3
     return 0
 
 

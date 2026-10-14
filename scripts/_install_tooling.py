@@ -167,7 +167,7 @@ def toolset_status(pkg: Path, root: Path) -> dict:
     """What a refresh of the toolset at ``root`` would do: files to add, to replace (content differs),
     and pages of this pack's skills or agents that no longer ship (to remove). Read-only."""
     root = Path(root)
-    files = toolset_files(pkg)
+    files = {rel: src for rel, src in toolset_files(pkg).items() if src.is_file()}  # what the package has
     add, replace = [], []
     for rel, src in files.items():
         dst = root / rel
@@ -181,6 +181,8 @@ def toolset_status(pkg: Path, root: Path) -> dict:
         remove += [(TOOLSET_PACK / sub / p.name).as_posix() for p in sorted(folder.glob("*.md"))
                    if TOOLSET_PACK / sub / p.name not in files] if folder.is_dir() else []
     state = "missing" if not root.is_dir() else ("stale" if add or replace or remove else "current")
+    if not files:  # nothing to compare against is not "current" (task #133)
+        state = "not-checked"
     return {"root": root.as_posix(), "state": state, "add": add, "replace": replace, "remove": remove}
 
 
@@ -333,6 +335,20 @@ def tooling_env_status(pkg: Path, scripts_dest: Path, extras=None) -> str:
                             "--project", str(scripts_dest)],
                            capture_output=True, text=True, encoding="utf-8", errors="replace")
     return "current" if check.returncode == 0 else "stale"
+
+
+def scripts_run(scripts_dest: Path) -> str:
+    """"ok", or why not: the installed scripts' own python imports the two modules every script uses, from
+    the scripts folder. A file compare says the copies match; only a run says they work (task #133)."""
+    py = env_python(scripts_dest)
+    if not py.is_file():
+        return f"no python at {py}"
+    try:
+        p = subprocess.run([str(py), "-c", "import _wiki_config, _entry_checks"], cwd=str(scripts_dest),
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return f"could not run: {e}"
+    return "ok" if p.returncode == 0 else (p.stderr.strip().splitlines() or ["exit %d" % p.returncode])[-1][:200]
 
 
 def run_command(scripts_dir, script_name: str) -> str:
@@ -830,11 +846,21 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
     # The scripts' uv environment (task #71): missing or uv-missing counts as missing, stale as stale.
     env = tooling_env_status(pkg, scripts_dest)
     toolset = toolset_status(pkg, Path(toolset_value))
+    # One real run, not only a file compare (task #133): the installed scripts import in their environment.
+    runs = scripts_run(scripts_dest) if env == "current" else None
+    # Nothing to compare against never reads as installed (task #133): a package with no skills, no
+    # scripts or no toolset pages means the source is wrong, not that the machine is current.
+    not_checked = [what for what, n in (
+        ("skills", sum((skills_src / s / "SKILL.md").is_file() for s in TRAVEL_SKILLS)),
+        ("scripts", len(script_names)),
+        ("toolset docs", sum(src.is_file() for src in toolset_files(pkg).values()))) if not n]
 
     missing = (bool(missing_skills or missing_scripts or missing_agents) or env in ("missing", "uv-missing")
-               or toolset["state"] == "missing")
+               or toolset["state"] == "missing" or (runs is not None and runs != "ok"))
     stale = bool(stale_skills or stale_scripts or stale_agents) or env == "stale" or toolset["state"] == "stale"
-    if len(missing_skills) == len(TRAVEL_SKILLS):
+    if not_checked:
+        state = "not-checked"
+    elif len(missing_skills) == len(TRAVEL_SKILLS):
         state = "missing"
     elif missing:
         state = "partial"
@@ -857,9 +883,11 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
         "missing_agents": missing_agents,
         "stale_agents": stale_agents,
         "env": env,
+        "runs": runs,
         "toolset": toolset,
-        "complete": not missing,
-        "current": not missing and not stale,
+        "not_checked": not_checked,
+        "complete": not missing and not not_checked,
+        "current": not missing and not stale and not not_checked,
         # one word for the skill's question: installed | stale | partial | missing
         "state": state,
     }
@@ -876,6 +904,10 @@ def format_tooling_status(status: dict) -> str:
     if ts and ts["state"] != "current":
         lines.append(f"  global toolset docs: {ts['state']} at {ts['root']} ({len(ts['add'])} to add, "
                      f"{len(ts['replace'])} to replace, {len(ts['remove'])} to remove)")
+    if status.get("not_checked"):
+        lines.append(f"  NOT checked: the package at {status['bootstrap']} has no {', '.join(status['not_checked'])}")
+    if status.get("runs") not in (None, "ok"):
+        lines.append(f"  the installed scripts do not run: {status['runs']}")
     if status.get("env") and status["env"] != "current":
         lines.append(f"  environment: {status['env']}" + (f" (install uv: {uv_install_command()})"
                                                            if status["env"] == "uv-missing" else ""))

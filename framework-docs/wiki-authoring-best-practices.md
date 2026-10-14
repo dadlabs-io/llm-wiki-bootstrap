@@ -7,8 +7,8 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 6
-last_reviewed: 2026-10-13
+framework-version: 7
+last_reviewed: 2026-10-14
 review_after: 2027-01-13
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
 ---
@@ -155,6 +155,7 @@ A rule that exists only as prose in a SKILL.md or a best-practices doc is enforc
 - **When adding a rule**: state its enforcement mechanism next to it. `prose` is allowed, with a reason. A doc that says "the lint should catch this" describes a gap, not a control.
 - **Corollary — governance artifacts are code**: skill and agent definitions carry `last_reviewed` / `review_after` / `reviewed_for_model` and are scanned by `/wiki-refresh`. A stale rule enforced strictly is context debt.
 - **Corollary — a governance artifact must load before it can govern (2026-09-08)**: a `SKILL.md` whose YAML frontmatter does not parse is dropped whole by the loader — it appears under its H1 and never triggers by description. Four shipped skills were in that state for weeks with no prose rule able to catch it. The installer now refuses to install an artifact whose frontmatter fails `check_frontmatter_loadable()`, and the lint runs the same check over entries and the installed copies. The rule "quote any value containing `: ` or ` #`" is therefore a hybrid artifact; before that date it was prose only, and it failed.
+- **Corollary — a check that inspected nothing never reads clean (2026-10-14, task #133)**: a check that found zero items to look at, or stopped at a cap, says `NOT checked` (or `NOT FULLY CHECKED`) and what it skipped, and exits 3, never "none found" or "ok". A status or preflight check runs one real use (a search that must return a row, the installed scripts importing in their environment), not only a load or a file compare. Here: the mechanical lint (no entries; the search index missing, not a collection or empty), `wiki-tasks.py check` (no cards), `wiki-claims-corroborate.py` (no claims), `wiki-feeds.py check` (a page with no sources), `wiki-qmd-query.py --preflight` (a probe search), `new-wiki.py --mode status` (nothing to compare against; `runs`), `--depth-check` (exit 2 when nothing was measured, since 2026-09-23) and the skill test runner (zero cases, a case with no checks). Why: the 2026-09-23 depth check was a green that could not fail, and the Ruflo deep dive (2026-10-13) found an index that kept answering for deleted documents for months. A new check is written this way from the start.
 
 ## Implementation status — what we do now vs what the principles say
 

@@ -24,7 +24,7 @@ The list is a folder of cards in the wiki, plain Markdown, so the user, every se
 
 **Fields and ORDER.md change only through the script**: it keeps the numbering and refuses any write that would
 break one of the six rules (exit 2, the rule named). The body may be edited by hand (the details, ticking a step,
-adding one); after a hand edit run `check`, and fix what it lists (exit 1) until it passes.
+adding one); after a hand edit run `check`, and fix what it lists (exit 1) until it passes (exit 3 means it found no cards to check).
 
 ```bash
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-tasks.py show [<N>] [--details] [--tag <tag>]

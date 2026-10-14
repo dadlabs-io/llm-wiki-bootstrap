@@ -25,6 +25,9 @@ import sys
 import tempfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _fake_qmd import fake_qmd_env  # noqa: E402  the lint needs an indexed wiki (task #133)
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "scripts"
 
@@ -74,7 +77,8 @@ with tempfile.TemporaryDirectory() as td:
     (proj / ".claude" / "wiki-config.json").write_text(json.dumps(
         {"notebook": "t", "registry": (tmp / "linked-notebooks.json").as_posix()}), encoding="utf-8")
     p = subprocess.run([sys.executable, str(SCRIPTS / "wiki-lint-mechanical.py"), "--topic", "t"], cwd=proj,
-                       capture_output=True, text=True, encoding="utf-8", env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+                       capture_output=True, text=True, encoding="utf-8",
+                       env=fake_qmd_env(tmp / "bin", w, env={**os.environ, "PYTHONIOENCODING": "utf-8"}))
     check("lint exits 0", p.returncode == 0, p.stderr[-300:])
     text = (nb / "_inbox" / "reports" / "lint-report.md").read_text(encoding="utf-8")
     m = re.search(r"^## [^\n]*Stale 'Pending'[^\n]*$(.*?)(?=^## )", text, re.MULTILINE | re.DOTALL)

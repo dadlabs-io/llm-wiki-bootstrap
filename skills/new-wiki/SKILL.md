@@ -97,8 +97,9 @@ Writes nothing. Prints JSON with `state` — one of:
 |---|---|---|
 | `installed` | every skill, script and agent in the manifests is in `~/.claude/` and matches the bootstrap clone | use it; no question, no reinstall |
 | `stale` | all present, but some installed copies differ from the clone (`stale_skills` / `stale_scripts` / `stale_agents` list them) | use it; no question; the plan summary names the differing files and says `install-wiki.ps1 -RefreshOnly` refreshes them when the user wants |
-| `partial` | some pieces missing (`missing_*` list them, `env` says `missing` when the scripts' uv environment is not built) | ask Q7 |
+| `partial` | some pieces missing (`missing_*` list them, `env` says `missing` when the scripts' uv environment is not built, `runs` gives the error when the installed scripts do not run) | ask Q7 |
 | `missing` | none of the wiki skills are installed (only `/new-wiki` from Phase A, or nothing) | ask Q7 |
+| `not-checked` (exit 3) | the bootstrap clone has nothing to compare against (`not_checked` names what: skills, scripts, toolset docs), so the machine's state is unknown | stop and tell the user the `bootstrap_source` path looks wrong; ask nothing else |
 
 Also note whether the current folder has a `.cursor/` directory (→ tool `cursor`; otherwise `claude-code`). The tool is stated in the plan summary, not asked.
 

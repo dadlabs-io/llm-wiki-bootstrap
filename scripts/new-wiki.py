@@ -528,6 +528,9 @@ def phase_status(args):
         return 1
     status = global_tooling_status(bootstrap)
     print(format_tooling_status(status), file=sys.stderr)
+    if status["not_checked"]:  # nothing to compare against never reads as installed (task #133)
+        print(json.dumps({"status": "not-checked", **status}, indent=2))
+        return 3
     print(json.dumps({"status": "ok", **status}, indent=2))
     return 0
 

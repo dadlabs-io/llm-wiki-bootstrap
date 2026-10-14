@@ -20,6 +20,9 @@ import sys
 import tempfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _fake_qmd import fake_qmd_env  # noqa: E402  the lint needs an indexed wiki (task #133)
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "scripts"
 
@@ -93,7 +96,7 @@ def run_lint(table: str | None):
                                                    encoding="utf-8")
 
     run = nb / "_inbox" / "reports" / "r"
-    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    env = fake_qmd_env(tmp / "bin", w, env={**os.environ, "PYTHONIOENCODING": "utf-8"})
     p = subprocess.run([sys.executable, str(SCRIPTS / "wiki-lint-mechanical.py"), "--topic", "t",
                         "--cycle-id", "c1", "--run-folder", str(run)],
                        cwd=proj, capture_output=True, text=True, encoding="utf-8", env=env)

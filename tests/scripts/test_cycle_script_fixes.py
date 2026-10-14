@@ -25,6 +25,9 @@ import tempfile
 from contextlib import redirect_stdout
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _fake_qmd import fake_qmd_env  # noqa: E402  the lint needs an indexed wiki (task #133)
+
 SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
@@ -72,7 +75,7 @@ with tempfile.TemporaryDirectory() as td:
     tmp = Path(td)
     proj = notebook(tmp)
     run = tmp / "notebooks" / "t" / "_inbox" / "reports" / "2026-09-24" / "2026-09-24-01"
-    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    env = fake_qmd_env(tmp / "bin", tmp / "notebooks" / "t" / "wiki", env={**os.environ, "PYTHONIOENCODING": "utf-8"})
     p = subprocess.run([sys.executable, str(SCRIPTS / "wiki-lint-mechanical.py"), "--topic", "t"],
                        cwd=proj, capture_output=True, text=True, encoding="utf-8", env=env)
     check("lint without the flags: exit 0, no run folder written", p.returncode == 0 and not run.exists(),

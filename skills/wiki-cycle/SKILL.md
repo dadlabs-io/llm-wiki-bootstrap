@@ -120,6 +120,8 @@ For each line it prints (entry, raw, minutes), spawn a `wiki-checker` agent, unn
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook> --cycle-id <cycle_id> --run-folder <run-folder>
 ```
 
+Exit 3 means part of the lint checked nothing (its JSON says `status: partial` and lists `not_checked`): carry on, and name each part in the cycle report; never call the lint clean.
+
 **Step 3.5 — Integration scripts** (always, in the modes that run Step 3, staged run or not; cheap and idempotent), each with `--topic <notebook> --cycle-id <cycle_id> --run-folder <run-folder>`: `wiki-reciprocate-backlinks.py`, `wiki-index-per-folder.py`, `wiki-map-compile.py`. Treat a large unexplained `backlinks_added` as a signal to look, not a success.
 
 **Step 4 — Semantic lint** (`--full`; `--lint-only --semantic`). Not if one ran in the last 24 hours. Scope first:

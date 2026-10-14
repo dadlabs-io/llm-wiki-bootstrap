@@ -223,6 +223,9 @@ def cmd_check(root: Path, args) -> int:
         return 2
     sources = [s for s in read_sources(feeds_md) if s["feed"]]
     web = [s["name"] for s in read_sources(feeds_md) if not s["feed"]]
+    if not sources and not web:  # an empty page is not a run that found nothing new (task #133)
+        print(f"NOT checked: {feeds_md} lists no sources; add the blogs, channels and repos to read", file=sys.stderr)
+        return 3
     if args.feed:
         sources = [s for s in sources if args.feed.lower() in s["name"].lower()]
         if not sources:

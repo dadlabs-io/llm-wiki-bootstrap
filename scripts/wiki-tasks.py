@@ -210,7 +210,11 @@ def run_command(args, stack: "tc.Stack") -> int:
         return 0
     if args.cmd == "check":
         errs = stack.check()
-        print("\n".join(errs) if errs else "ok: the six task rules hold")
+        if not errs and not stack.cards:  # nothing checked never reads as ok (task #133)
+            print(f"NOT checked: ORDER.md is there but {stack.dir} holds no cards")
+            print(where)
+            return 3
+        print("\n".join(errs) if errs else f"ok: the six task rules hold ({len(stack.cards)} cards checked)")
         print(where)
         return 1 if errs else 0
 

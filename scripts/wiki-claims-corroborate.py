@@ -232,6 +232,9 @@ def main() -> int:
     except ValueError as e:
         print(f"error: {idx_path} is not JSON: {e}", file=sys.stderr)
         return 2
+    if not (index.get("claims") or []):  # nothing to score never reads as a clean result (task #133)
+        print(f"NOT checked: {idx_path} holds no claims, so nothing was corroborated", file=sys.stderr)
+        return 3
     stats = score(index, root / "wiki", _wiki_config.today_label())
     if not a.dry_run:
         index["corroboration_computed"] = _wiki_config.now_stamp()
