@@ -65,7 +65,7 @@ version of this list, see [`user-guide.md`](./user-guide.md) (the whole system o
 | Agent | One line |
 |---|---|
 | [`wiki-ingester`](./agents/wiki-ingester.md) | Spawnable worker for **delegated batch ingestion**: `/wiki-cycle` (or any session) hands it a queue slice or URL list; it runs the full `wiki-update` flow per source — one at a time, each read in FULL (whole repos, full transcripts, all PDF pages) — stages results to `_inbox/proposed/`, and returns a compressed receipt. Its model is set in `~/.claude/agents/wiki-ingester-config.json` (`model_default` + `confirm_model_each_run`). For a single source you're watching live, just run `/wiki-update` inline instead. |
-| [`wiki-checker`](./agents/wiki-checker.md) | A second reader for a staged entry: checks it against its raw source and reports unsupported claims, skipped sections and misquotes; it never edits anything. `/wiki-cycle` runs it on long transcripts (15 minutes or more by default) before promotion and holds back an entry it flags. Settings in `~/.claude/agents/wiki-checker-config.json`. |
+| [`wiki-checker`](./agents/wiki-checker.md) | A second reader for a staged entry: checks it against its raw source and reports unsupported claims, skipped sections, misquotes and passages vaguer than the source; it never edits anything. `/wiki-cycle` runs it on long transcripts (15 minutes or more by default) before promotion and holds back an entry it flags. Settings in `~/.claude/agents/wiki-checker-config.json`. |
 
 ## Setup & lifecycle
 
