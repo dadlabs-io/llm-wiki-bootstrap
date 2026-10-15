@@ -12,7 +12,6 @@ import re
 import shutil
 import stat
 import sys
-from difflib import SequenceMatcher
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -185,42 +184,102 @@ def _segments(span: str) -> list[str]:
     return [s for s in segs if len(s) >= 12]
 
 
-def _coverage(seg: str, sent: str) -> float:
-    a, b = seg.split(), sent.split()
-    sm = SequenceMatcher(None, a, b, autojunk=False)
-    return sum(m.size for m in sm.get_matching_blocks()) / max(1, len(a))
-
-
-def _quoted_from(text: str, corpus: dict[str, str], ignore: str = ""):
-    """Journals a quoted span of the report really comes from (a span found in exactly one journal), and the
-    double-quoted spans cited as evidence that are NOT in any journal: 40+ characters, in a block that cites a journal
-    (its stem or date), and a near-copy (75%+ of 6+ words in order) of a journal sentence, i.e. an altered quote.
-    Frontmatter and quoted proposal text (a suggested rule) are not evidence and are never flagged."""
+def _quoted_from(text: str, corpus: dict[str, str]) -> set[str]:
+    """Journals a quoted span of the report really comes from (a span found in exactly one journal). Used for the
+    'verbatim quotes from 2+ of its journals' check. Fabrication is judged by _evidence_quotes, not here."""
     lines = _qnorm(_strip_frontmatter(text)).splitlines()
-    refs = [r for stem in corpus for r in (stem, stem[:10])]
-    sentences = [s.strip() for body in corpus.values() for s in re.split(r"[.;]", body) if len(s.strip()) >= 12]
-    where, bad = set(), []
-    for i, line in enumerate(lines):
-        spans = [(s, True) for s in _dq_spans(line) if len(_norm(s)) >= 20]
+    where = set()
+    for line in lines:
+        spans = [s for s in _dq_spans(line) if len(_norm(s)) >= 20]
         m = re.match(r"^\s*>\s*(.+)$", line)
         if m and len(m.group(1).strip().strip('"')) >= 20:
-            spans.append((m.group(1).strip().strip('"'), False))
-        for span, is_dq in spans:
+            spans.append(m.group(1).strip().strip('"'))
+        for span in spans:
             segs = _segments(span)
             if not segs:
                 continue
             homes = [j for j, body in corpus.items() if all(s in body for s in segs)]
             if len(homes) == 1:
                 where.add(homes[0])
+    return where
+
+
+EVID = re.compile(r"^(\s*)(?:[-*+]\s+)?evidence\s*[.:]", re.I)
+
+
+def _indent(line: str) -> int:
+    t = line.expandtabs(4)
+    return len(t) - len(t.lstrip())
+
+
+def _evidence_entries(text: str) -> list[str]:
+    """The text of every Evidence bullet: the remainder of the `- **Evidence.**` line (inline form) plus each deeper
+    sub-bullet under it (nested form), a wrapped continuation line joined to its bullet. The bullet ends at the first
+    line that is not indented deeper than the Evidence line (a sibling bullet, a heading, a paragraph)."""
+    lines = _qnorm(_strip_frontmatter(text)).splitlines()
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        m = EVID.match(lines[i])
+        if not m:
+            i += 1
+            continue
+        base = _indent(lines[i])
+        entries = [lines[i][m.end():].strip()]
+        j = i + 1
+        while j < len(lines):
+            l = lines[j]
+            if not l.strip():
+                k = j + 1
+                while k < len(lines) and not lines[k].strip():
+                    k += 1
+                if k < len(lines) and _indent(lines[k]) > base:
+                    j = k
+                    continue
+                break
+            if _indent(l) <= base:
+                break
+            if re.match(r"\s*([-*+]|\d+[.)])\s", l):
+                entries.append(l.strip())
+            else:
+                entries[-1] += " " + l.strip()
+            j += 1
+        out.extend(e for e in entries if e)
+        i = max(j, i + 1)
+    return out
+
+
+def _ev_spans(entry: str) -> list[str]:
+    """Double-quoted spans of one Evidence entry, paired in order; an odd count of quote marks reads first-to-last
+    as one span (a quote that itself contains a quote mark), a lone mark reads to the end of the entry."""
+    pos = [m.start() for m in re.finditer(r'"', entry)]
+    if not pos:
+        return []
+    if len(pos) % 2:
+        return [entry[pos[0] + 1:pos[-1]]] if len(pos) > 1 else [entry[pos[0] + 1:]]
+    return [entry[a + 1:b] for a, b in zip(pos[0::2], pos[1::2])]
+
+
+def _ev_segments(span: str) -> list[str]:
+    parts = re.split(r"\.\.\.|…|\[[^\]]*\]", _norm(span))
+    segs = [p.strip(" ,.;:-\"'") for p in parts]
+    return [s for s in segs if len(s) >= 8]
+
+
+def _evidence_quotes(text: str, corpus: dict[str, str]) -> tuple[int, list[str]]:
+    """(number of gradable quotations on Evidence bullets, those NOT found in any journal). A quotation is gradable when
+    it has a segment of 8+ characters; segments are the parts between '...' / '…' / [bracketed] elisions, and all
+    segments of one quotation must sit in the same journal. An invented quote fails as surely as an altered one."""
+    n, bad = 0, []
+    for entry in _evidence_entries(text):
+        for span in _ev_spans(entry):
+            segs = _ev_segments(span)
+            if not segs:
                 continue
-            if homes or not is_dq or len(_norm(span)) < 40 or all(s in ignore for s in segs):
-                continue
-            blk = _norm(_block(lines, i))
-            cites = any(r in blk for r in refs)
-            near = any(len(s.split()) >= 6 and _coverage(s, sent) >= 0.75 for s in segs for sent in sentences)
-            if cites and near:
-                bad.append(span[:80])
-    return where, bad
+            n += 1
+            if not any(all(g in body for g in segs) for body in corpus.values()):
+                bad.append(span.strip()[:80])
+    return n, bad
 
 
 def _heads(lines: list[str]):
@@ -402,8 +461,11 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             missing.append(stem)
     add("every journal in the window was read, whole", not missing, missing)
 
-    where, fabricated = _quoted_from(rtext, corpus, _norm(case.get("say", "")))
-    add("no long quotation in the report is absent from every journal", not fabricated, fabricated[:3])
+    where = _quoted_from(rtext, corpus)
+    n_q, fabricated = _evidence_quotes(rtext, corpus)
+    add("Evidence-bullet quotations are all in a journal, and there is at least one",
+        n_q > 0 and not fabricated,
+        fabricated[:3] if n_q else "no quotation on any Evidence bullet (the check would have checked nothing)")
 
     for name, p in spec["patterns"].items():
         occ = [i for i, l in enumerate(lines) if re.search(p["token"], l, re.I)]
