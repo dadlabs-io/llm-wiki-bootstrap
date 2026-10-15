@@ -58,6 +58,7 @@ version of this list, see [`user-guide.md`](./user-guide.md) (the whole system o
 | [`wiki-claims`](./skills/wiki-claims.md) | Extract + classify factual claims, flag contradictions between entries |
 | [`wiki-verify`](./skills/wiki-verify.md) | Flip an entry unverified → verified (entries can never self-certify) |
 | [`wiki-rollback`](./skills/wiki-rollback.md) | Roll an entry back to its verified ancestor along the `revises:` chain |
+| [`dream`](./skills/dream.md) | Reread the project's own sessions for what they teach: a sweep for problems that keep coming back, or a topic dream on one question; every finding seen in 2+ sessions and quoted, report in `_inbox/reports/dreams/` |
 
 ## Agents
 

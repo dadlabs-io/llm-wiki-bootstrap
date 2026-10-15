@@ -93,7 +93,10 @@ with TodoWrite. For each item:
    - **PDF** — all pages, not the abstract.
    - **Docs sites** — follow the content-bearing pages, not just the landing page.
    Slower is accepted; depth is the point. The deep read burns *your* context, and the caller only
-   sees your receipt.
+   sees your receipt. A raw is read to its last line before you draft from it, page by page with the
+   Read tool when it is large (you cannot spawn helpers): the read guard refuses the filing call
+   otherwise, naming the unread lines (2026-10-15). A raw too big to read whole fails the item
+   ("raw too large for one worker") rather than being filed from part of it.
 3. **Search the wiki** for related entries — integrate, don't isolate. 3–5 key terms, each with
    the shared search helper:
    `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester --notebook <target notebook> --compact "<term>"`

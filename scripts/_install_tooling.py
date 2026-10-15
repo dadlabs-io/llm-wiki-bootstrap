@@ -97,6 +97,7 @@ TRAVEL_SKILLS = [
     "wiki-discover", "wiki-list", "wiki-triage", "wiki-claims", "wiki-refresh",
     "wiki-report", "wiki-lint", "wiki-promote",
     "wiki-rollback", "wiki-verify",
+    "dream",  # rereads the project's journals for what they teach, a sweep or a topic (2026-10-15, task #148)
     # the skill-suggestions loop, moved from agent-builder's library 2026-09-30 (each carries its own scripts/)
     "writing-skill-suggestions", "improving-skills-from-suggestions",
 ]

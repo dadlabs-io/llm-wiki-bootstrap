@@ -175,6 +175,13 @@ with tempfile.TemporaryDirectory() as td:
     run("checker-log", "--run-folder", str(run_folder), "--entry", "clean", "--report", str(rep))
     rows = [json.loads(l) for l in log.read_text(encoding="utf-8").splitlines()]
     check("checker-log: a report with no findings is a pass, appended", len(rows) == 2 and rows[1]["verdict"] == "pass", rows)
+    # 2026-10-15, task #151: the fourth list, vague passages, is counted and alone makes a fix
+    rep.write_text(json.dumps({"source_minutes": 25, "model": "opus", "vague_passages": [{"x": 1}, {"x": 2}, {"x": 3}]}),
+                   encoding="utf-8")
+    run("checker-log", "--run-folder", str(run_folder), "--entry", "vague", "--report", str(rep))
+    rows = [json.loads(l) for l in log.read_text(encoding="utf-8").splitlines()]
+    check("checker-log: vague passages counted, and with no other finding the verdict is fix",
+          len(rows) == 3 and rows[2].get("vague_passages") == 3 and rows[2]["verdict"] == "fix", rows[-1:])
 
     # ── models (task #99: the cycle spawns from the setting files, not from a default it assumes) ──
     cfg = tmp / "cfg"

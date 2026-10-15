@@ -180,6 +180,159 @@ def main() -> int:
                            "transcript_path": str(tmp / "none.jsonl"), "stop_hook_active": False})))
         check("Garbage input -> no output, exit 0", run({"hook_event_name": "Stop", "transcript_path": 5}) is None)
 
+        # ---- 2026-10-15, task #150: reads done by the session's helper agents count ----
+        # Claude Code keeps a session's subagent transcripts in <session>/subagents/agent-*.jsonl
+        # beside <session>.jsonl. The REA ingest (2026-10-14): helpers read the ranges the main
+        # session had not, and the Stop hook blocked over them six times.
+        fam = tmp / "fam"
+        fam.mkdir()
+
+        def family(main_entries: list[dict], agents: dict[str, list[dict]]) -> Path:
+            sid = f"s{len(results)}"
+            main_t = fam / f"{sid}.jsonl"
+            main_t.write_text("\n".join(json.dumps(e) for e in main_entries) + "\n", encoding="utf-8")
+            sub = fam / sid / "subagents"
+            sub.mkdir(parents=True)
+            for name, entries in agents.items():
+                (sub / f"agent-{name}.jsonl").write_text(
+                    "\n".join(json.dumps(e) for e in entries) + "\n", encoding="utf-8")
+            return main_t
+
+        def stop_t(t: Path, **extra) -> dict | None:
+            data = {"hook_event_name": "Stop", "transcript_path": str(t), "stop_hook_active": False}
+            data.update(extra)
+            return run(data)
+
+        t = family([prompt(), read_entry(big, 1, 100, 300)],
+                   {"a1": [prompt("brief"), read_entry(big, 101, 200, 300)]})
+        check("Stop: main read 1-100, a helper read 101-300 -> allow", not blocked(stop_t(t)))
+        t = family([prompt(), read_entry(big, 1, 100, 300)],
+                   {"a1": [prompt("brief"), read_entry(big, 101, 100, 300)],
+                    "a2": [prompt("brief"), read_entry(big, 251, 50, 300)]})
+        o = stop_t(t)
+        check("Stop: helpers leave 201-250 unread -> block naming only 201-250",
+              blocked(o) and "201-250" in o["reason"] and "101" not in o["reason"])
+        t = family([prompt(), read_entry(big, 1, 100, 300)],
+                   {"a1": [prompt("brief"), read_entry(small, 1, 300, 300)]})
+        check("Stop: a helper read a different doc -> still block", blocked(stop_t(t)))
+        t = family([prompt(), read_entry(big, 1, 100, 300)], {})
+        check("Stop: an empty subagents folder -> block as before", blocked(stop_t(t)))
+        # a helper stopping: its siblings' and the main session's reads count too
+        t = family([prompt(), read_entry(big, 1, 150, 300)],
+                   {"a1": [prompt("brief"), read_entry(big, 151, 150, 300)]})
+        check("SubagentStop: helper read 151-300, main read 1-150 -> allow",
+              not blocked(run({"hook_event_name": "SubagentStop", "stop_hook_active": False,
+                               "transcript_path": str(t),
+                               "agent_transcript_path": str(t.with_suffix("") / "subagents" / "agent-a1.jsonl")})))
+
+        # ---- 2026-10-15, task #149: never file an entry from a raw not read to its last line ----
+        # The REA entry was filed from a 29,095-line raw read in part; the full read found 6 wrong claims.
+        nb = tmp / "nb"
+        (nb / "raw").mkdir(parents=True)
+        raw = nb / "raw" / "2026-10-15-some-repo.md"
+        raw.write_text(("r" * 60 + "\n") * 300, encoding="utf-8")
+        file_cmd = ("uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-update.py "
+                    "--topic nb --folder research/x --source nb/_inbox/temp/s.md --source-url https://x.y "
+                    "--raw-path raw/2026-10-15-some-repo.md --ingested-by claude-code --tier 3 "
+                    "--confidence medium --title \"T\" --tags \"a,b,c\"")
+
+        def file_with(t: Path, command: str = file_cmd) -> dict | None:
+            return run({"hook_event_name": "PreToolUse", "tool_name": "Bash", "tool_input": {"command": command},
+                        "cwd": str(tmp), "transcript_path": str(t)})
+
+        def bash_entry(command: str) -> dict:
+            return {"type": "assistant", "message": {"role": "assistant", "content": [
+                {"type": "tool_use", "id": "b", "name": "Bash", "input": {"command": command}}]}}
+
+        t = family([prompt(), read_entry(raw, 1, 300, 300)], {})
+        check("File: raw read whole -> allow", not denied(file_with(t)))
+        t = family([prompt(), read_entry(raw, 1, 120, 300)], {})
+        o = file_with(t)
+        check("File: raw read 1-120 of 300 -> deny", denied(o))
+        check("File: the refusal names the unread lines 121-300",
+              denied(o) and "121-300" in o["hookSpecificOutput"]["permissionDecisionReason"])
+        t = family([prompt(), read_entry(raw, 1, 120, 300)],
+                   {"a1": [prompt("brief"), read_entry(raw, 121, 180, 300)]})
+        check("File: main read 1-120, a helper read 121-300 -> allow", not denied(file_with(t)))
+        t = family([prompt(), read_entry(raw, 1, 299, 300)], {})
+        check("File: all but a lone last line read -> allow (a trailing blank line)", not denied(file_with(t)))
+        t = family([prompt(), read_entry(raw, 1, 298, 300)], {})
+        check("File: the last two lines unread -> deny", denied(file_with(t)))
+        t = family([prompt(), {"type": "assistant", "message": {"role": "assistant", "content": [
+            {"type": "tool_use", "id": "r", "name": "Read", "input": {"file_path": str(raw)}}]}}], {})
+        check("File: Read called but no result recorded (old transcripts) -> allow (can't tell)",
+              not denied(file_with(t)))
+        # the live suite run (2026-10-15, wiki-update 20261015-011332): a headless session's helper transcripts
+        # carry the Read call and its numbered text, but no toolUseResult line counts
+        def bare_read(path: Path, first: int, last: int, rid: str) -> list[dict]:
+            return [{"type": "assistant", "message": {"role": "assistant", "content": [
+                        {"type": "tool_use", "id": rid, "name": "Read",
+                         "input": {"file_path": str(path), "offset": first, "limit": last - first + 1}}]}},
+                    {"type": "user", "message": {"role": "user", "content": [
+                        {"type": "tool_result", "tool_use_id": rid,
+                         "content": "\n".join(f"{n}\tr" for n in range(first, last + 1))}]}}]
+        t = family([prompt(), read_entry(raw, 1, 120, 300)],
+                   {"a1": [prompt("brief")] + bare_read(raw, 121, 210, "r1") + bare_read(raw, 211, 300, "r2")})
+        check("File: helpers' reads with no toolUseResult (headless) counted from their numbered text -> allow",
+              not denied(file_with(t)))
+        t = family([prompt(), read_entry(raw, 1, 120, 300)],
+                   {"a1": [prompt("brief")] + bare_read(raw, 121, 210, "r1")})
+        o = file_with(t)
+        check("File: those helpers leave 211-300 unread -> deny naming 211-300",
+              denied(o) and "211-300" in o["hookSpecificOutput"]["permissionDecisionReason"])
+        t = family([prompt()], {})
+        check("File: raw never read -> deny", denied(file_with(t)))
+        t = family([prompt(), bash_entry(f"cat {raw}")], {})
+        check("File: raw printed whole with cat -> allow", not denied(file_with(t)))
+        # the backtest over saved transcripts (2026-10-15): ingest workers print raws in a loop
+        t = family([prompt(), bash_entry("cd nb/raw && for f in some-repo other; do cat 2026-10-15-$f.md; done")], {})
+        check("File: raw printed by a cat loop over a variable -> allow", not denied(file_with(t)))
+        t = family([prompt(), bash_entry("cd nb/raw && cat 2026-10-15-some-repo.md | head -50")], {})
+        check("File: raw cat piped into head -> deny", denied(file_with(t)))
+        t = family([prompt(), bash_entry('OUT=nb/raw/2026-10-15-some-repo.md; for p in a b; do cat "$p"; done > "$OUT"')], {})
+        check("File: raw built by the session through a shell redirect -> allow", not denied(file_with(t)))
+        t = family([prompt(), bash_entry("cd nb/raw && mv 2026-10-15-untitled.md 2026-10-15-some-repo.md")], {})
+        check("File: raw renamed by the session (mv) -> allow", not denied(file_with(t)))
+        t = family([prompt(), {"type": "assistant", "message": {"role": "assistant", "content": [
+            {"type": "tool_use", "id": "g", "name": "Grep", "input": {"pattern": "x", "path": str(raw)}}]}}], {})
+        check("File: raw only grepped -> deny", denied(file_with(t)))
+        # a local file read whole, then copied into raw/ under a dated name by --fetch-only (suite runs)
+        src = tmp / "inputs" / "field-report.md"
+        src.parent.mkdir()
+        src.write_text("s\n" * 40, encoding="utf-8")
+        local_cmd = file_cmd.replace("--source-url https://x.y", f'--source-url "file://{src}"')
+        t = family([prompt(), read_entry(src, 1, 40, 40)], {})
+        check("File: the local source file read whole -> allow", not denied(file_with(t, local_cmd)))
+        t = family([prompt(), read_entry(src, 1, 10, 40)], {})
+        check("File: the local source file read in part -> deny", denied(file_with(t, local_cmd)))
+        t = family([prompt()], {})
+        check("File: pasted text (internal:// source) -> allow (the session wrote it)",
+              not denied(file_with(t, file_cmd.replace("https://x.y", "internal://paste/2026-10-15-notes"))))
+        undated = tmp / "inputs" / "some-repo.md"  # --fetch-only saved it as raw/2026-10-15-some-repo.md
+        undated.write_text("u\n" * 30, encoding="utf-8")
+        t = family([prompt(), bash_entry(f"cat inputs/some-repo.md")], {})
+        check("File: the undated original of a dated raw printed whole -> allow", not denied(file_with(t)))
+        t = family([prompt(), read_entry(undated, 1, 5, 30)], {})
+        check("File: the undated original read in part -> deny", denied(file_with(t)))
+        t = family([prompt(), read_entry(raw, 1, 120, 300)], {})
+        check("File: --regate re-checks a filed entry -> allow",
+              not denied(file_with(t, "uv run python wiki-update.py --topic nb --regate some-slug")))
+        check("File: --fetch-only -> allow",
+              not denied(file_with(t, "uv run python wiki-update.py --topic nb --source https://x.y --fetch-only")))
+        check("File: --partial-source on the user's word -> allow",
+              not denied(file_with(t, file_cmd + " --partial-source 'Mark: file the preview'")))
+        check("File: a different raw than the one read -> deny",
+              denied(file_with(family([prompt(), read_entry(raw, 1, 300, 300)], {}),
+                               file_cmd.replace("some-repo", "other-repo"))))
+        check("File: raw path given with = -> deny when unread",
+              denied(file_with(family([prompt()], {}),
+                               file_cmd.replace("--raw-path raw/", "--raw-path=raw/"))))
+        check("File: a .txt raw (not a document) -> allow",
+              not denied(file_with(family([prompt()], {}), file_cmd.replace(".md", ".txt"))))
+        check("File: no transcript -> allow (never stops work)",
+              not denied(run({"hook_event_name": "PreToolUse", "tool_name": "Bash",
+                              "tool_input": {"command": file_cmd}, "cwd": str(tmp)})))
+
     for ok, name in results:
         print(("PASS  " if ok else "FAIL  ") + name)
     failed = sum(not ok for ok, _ in results)

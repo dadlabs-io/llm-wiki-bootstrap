@@ -249,7 +249,7 @@ def cmd_checker(nb: Path, args) -> int:
 
 def cmd_checker_log(nb: Path, args) -> int:
     rep = json.loads(Path(args.report).read_text(encoding="utf-8"))
-    kinds = ("unsupported_claims", "skipped_sections", "misquotes")
+    kinds = ("unsupported_claims", "skipped_sections", "misquotes", "vague_passages")  # the last since 2026-10-15
     row = {"ts": now_stamp(), "cycle": Path(args.run_folder).name, "entry": args.entry,
            "source_minutes": rep.get("source_minutes"), "model": rep.get("model"),
            **{k: len(rep.get(k) or []) for k in kinds},

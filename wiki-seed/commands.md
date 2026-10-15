@@ -25,6 +25,7 @@ Canonical reference for the LLM-wiki framework. Each command works inside Claude
 | `/wiki-promote` | Walk staged entries in `_inbox/proposed/` and accept/reject each one; promotion also brings the search index up to date |
 | `/wiki-verify` | Mark an entry verified — entries never self-certify |
 | `/wiki-rollback` | Roll an entry back to its verified ancestor |
+| `/dream` | Reread this project's sessions for what keeps going wrong (`/dream`) or what they teach about one question (`/dream "<topic>"`); a cited report in `_inbox/reports/dreams/`, nothing changed without you |
 
 ## The internal commands (invoked by other commands, you usually don't type these)
 
