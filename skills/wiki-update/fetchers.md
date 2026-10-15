@@ -33,6 +33,8 @@ Runs on the host; its `yt_dlp` package comes with the scripts' uv environment.
 
 **No captions** (the fetcher stops with "no subtitle file produced"): transcribe the speech instead, `wiki-transcribe.py --url <url>` ([Speech](#speech-reels-podcasts-video-without-captions)).
 
+**Subtitles rate-limited** (HTTP 429): the fetcher transcribes the audio itself and prints `Fallback: transcribed (subtitles HTTP 429)`; the raw is then a Whisper transcript, and the exit code is the transcriber's (4 on a machine with no GPU and a talk over 20 minutes: run it where there is a GPU). Don't retry the subtitles: the 429 held for days in October 2026, while the audio download was never limited.
+
 A video's entry is as long as its content deserves: one good idea makes a short entry, a dense talk a full breakdown. Useful sections: key insights, notable quotes, when to watch it.
 
 ## PDF

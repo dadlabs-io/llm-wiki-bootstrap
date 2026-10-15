@@ -15,9 +15,15 @@ at /usr/local/bin/yt-dlp). Can also run on host if yt-dlp is installed.
 Usage:
     python3 wiki-fetch-youtube.py --topic <topic> \\
         --url https://www.youtube.com/watch?v=LCEmiRjPEtQ
+
+When the subtitle endpoint answers HTTP 429 (task #156, 2026-10-15), the audio is transcribed with
+wiki-transcribe.py instead: its download is not rate-limited, and a GPU does about 2 s per minute of talk
+(cycle 2026-10-14-02). The raw is then a Whisper transcript (`type: media-transcript`), and the exit code is
+the transcriber's (4: too long for the CPU on a machine with no GPU; 5: no GPU slot free in time).
 """
 
 import argparse
+import importlib.util
 import json
 import os
 import re
@@ -85,11 +91,19 @@ def unique_path(target):
 # ── yt-dlp transcript fetch (lifted from ingest-youtube.py) ──────────────────
 
 
+RATE_LIMITED = "rate-limited"
+
+
+def is_rate_limited(error):
+    return "HTTP Error 429" in str(error)
+
+
 def download_transcript(url, max_retries=5, initial_delay=5):
     """Download YouTube transcript using yt-dlp with retries.
 
     Returns dict with: video_id, title, url, duration, upload_date, channel,
-    segment_count, word_count, segments. Or None on failure.
+    segment_count, word_count, segments. Or None on failure, or RATE_LIMITED
+    on HTTP 429, which is not retried: it held for days, IP-wide.
     """
     print(f"Downloading transcript from: {url}")
 
@@ -164,6 +178,9 @@ def download_transcript(url, max_retries=5, initial_delay=5):
             }
 
         except DownloadError as e:
+            if is_rate_limited(e):
+                print(f"Subtitles rate-limited (HTTP 429): {e}", file=sys.stderr)
+                return RATE_LIMITED
             if retry_num < max_retries - 1:
                 delay = initial_delay * (2 ** retry_num)
                 print(f"Download failed, retry in {delay}s: {e}", file=sys.stderr)
@@ -227,6 +244,15 @@ def render_raw_markdown(td, ingested_by):
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 
+def load_transcriber():
+    """wiki-transcribe.py, beside this script, as a module."""
+    spec = importlib.util.spec_from_file_location(
+        "wiki_transcribe", Path(__file__).resolve().parent / "wiki-transcribe.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def fetch_to_raw(vault_root, topic, url, ingested_by, slug_override=None):
     topic_root = Path(vault_root) / topic
     if not topic_root.exists():
@@ -237,6 +263,12 @@ def fetch_to_raw(vault_root, topic, url, ingested_by, slug_override=None):
     raw_dir.mkdir(parents=True, exist_ok=True)
 
     td = download_transcript(url)
+    if td == RATE_LIMITED:
+        print("Fallback: transcribed (subtitles HTTP 429)")
+        argv = ["--url", url, "--topic", topic, "--vault", str(vault_root), "--ingested-by", ingested_by]
+        if slug_override:
+            argv += ["--slug", slug_override]
+        return load_transcriber().main(argv)
     if td is None:
         return 1
 

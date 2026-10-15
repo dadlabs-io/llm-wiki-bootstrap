@@ -11,6 +11,12 @@
 
 ## 2026-10-15
 
+### A YouTube subtitle 429 is transcribed, not retried (task #156)
+
+- **Why**: improver pass 2026-10-15-llm-wiki-bootstrap P2. YouTube's subtitle endpoint answered HTTP 429 in cycles 2026-10-12-02, 2026-10-14-01 and -02, IP-wide and for days; the fetcher retried five times with backoff and failed, and the talks sat in their buckets. The audio download was never limited, and the GPU transcribed 2 h 12 min of talks in 4.4 minutes (cycle 2026-10-14-02, measured).
+- **What**: `wiki-fetch-youtube.py` stops at the first 429 and runs `wiki-transcribe.py` on the URL itself, printing `Fallback: transcribed (subtitles HTTP 429)`; the raw is a Whisper transcript (`type: media-transcript`, which the checker scope counts), and the exit code is the transcriber's (4 on a machine with no GPU and a talk over 20 minutes; 5 when no GPU slot frees). Other download errors are retried as before. wiki-cycle Step 2's YouTube bullet, fetchers.md, two usage pages.
+- **Proof**: `tests/scripts/test_fetch_youtube_429.py` 8/8 (2/8 on the old script: the six 429 checks failed, the two guarding the old paths passed); `test_transcribe.py` 29/29. PENDING row: no suite case can produce a 429.
+
 ### The wiki-checker reports where an entry goes vague (task #151)
 
 - **Why**: lesson 4 of the REA and Feynman reads (Mark's go, 2026-10-15): the Feynman method's rule that an explanation goes vague where its understanding stops. The checker found claims the raw does not make, skipped sections and misquotes, but not a point made in vaguer terms than the source: a figure turned into "much faster", a named list into "several techniques".
