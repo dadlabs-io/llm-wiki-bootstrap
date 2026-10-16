@@ -231,6 +231,51 @@ with tempfile.TemporaryDirectory() as td:
     p = run("--topic", "research", "save-list")
     check("save-list: the page marked at ingest is listed", "medium.com/@b/blocked-story" in p.stdout, p.stdout[-300:])
 
+    # ── a ticket a cycle leaves for retry: marked in place, listed with its owner's task list (task #155) ──
+    p = run("--topic", "research", "retry-list")
+    check("retry-list with nothing marked: exit 0, says so", p.returncode == 0 and "nothing" in p.stdout.lower(),
+          (p.returncode, p.stdout, p.stderr[-200:]))
+    for i, (url, folder) in enumerate((("https://www.youtube.com/watch?v=aaa", "proj"),
+                                       ("https://www.youtube.com/watch?v=bbb", "proj"),
+                                       ("https://www.instagram.com/reel/ccc", "other")), 8):
+        (pend / f"3-2026-10-15-1000{i:02d}-t{i}.md").write_text(ticket(url), encoding="utf-8")
+        run("--topic", "research", "route", f"3-2026-10-15-1000{i:02d}-t{i}.md", "--to", folder, "--reason", "triaged")
+    t8 = intake / "proj" / "3-2026-10-15-100008-t8.md"
+    p = run("--topic", "research", "route", t8.name, "--to", "proj", "--reason", "deferred at ingest",
+            "--retry", "HTTP 429 on subtitles", "--cycle", "2026-10-15-01")
+    t8_text = t8.read_text(encoding="utf-8") if t8.is_file() else ""
+    check("route --retry: exit 0", p.returncode == 0, (p.returncode, p.stderr[-200:]))
+    check("route --retry: the ticket stays in its bucket", t8.is_file(), sorted(x.name for x in (intake / "proj").iterdir()))
+    check("route --retry: marked with the reason, the date and the cycle",
+          "\nretry: HTTP 429 on subtitles (" in t8_text and "cycle 2026-10-15-01)" in t8_text, t8_text[:200])
+    check("route --retry: logged as a retry",
+          "| https://www.youtube.com/watch?v=aaa | proj | retry: HTTP 429 on subtitles (deferred at ingest) |"
+          in (intake / "triage-log.md").read_text(encoding="utf-8"))
+    run("--topic", "research", "route", "3-2026-10-15-100009-t9.md", "--to", "proj", "--reason", "deferred",
+        "--retry", "HTTP 429 on subtitles", "--cycle", "2026-10-15-01")
+    run("--topic", "research", "route", "3-2026-10-15-100010-t10.md", "--to", "other", "--reason", "deferred",
+        "--retry", "empty media response", "--cycle", "2026-10-14-02")
+    p = run("--topic", "research", "route", "3-2026-10-15-100009-t9.md", "--to", "proj", "--reason", "x",
+            "--retry", "429", "--save-as-pdf", "blocked")
+    check("route --retry with --save-as-pdf: exit 2 (a retry may clear, a save-as-PDF page will not)",
+          p.returncode == 2, p.returncode)
+    p = run("--topic", "research", "retry-list")
+    out = p.stdout
+    check("retry-list: exit 0", p.returncode == 0, p.stderr[-200:])
+    check("retry-list: counts the three items", out.startswith("3 item(s) left for retry"), out[:120])
+    check("retry-list: each item's link and reason",
+          "watch?v=aaa" in out and "watch?v=bbb" in out and "instagram.com/reel/ccc" in out
+          and "empty media response" in out, out)
+    check("retry-list: the owner's task list per bucket (the reader's notebook)",
+          str(tmp / "notebooks" / "proj" / "wiki" / "tasks") in out
+          and str(tmp / "notebooks" / "other" / "wiki" / "tasks") in out, out)
+    check("retry-list: names each bucket's reader", "proj-bot" in out and "other-bot" in out, out)
+    p = run("--topic", "research", "retry-list", "--cycle", "2026-10-15-01")
+    check("retry-list --cycle: only that cycle's items",
+          p.stdout.startswith("2 item(s)") and "reel/ccc" not in p.stdout, p.stdout[:300])
+    p = run("--topic", "research", "save-list")
+    check("save-list: a retry is not a page to save", "watch?v=aaa" not in p.stdout, p.stdout[-300:])
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

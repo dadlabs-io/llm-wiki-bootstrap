@@ -20,7 +20,10 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-triage.py
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-triage.py --topic <notebook> route <ticket> --to <folder> --reason "<one line>" [--raw raw/<file>] [--save-as-pdf paywall|login|blocked]
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-triage.py --topic <notebook> attach-pdfs [--dry-run]   # PDFs the user saved: each to its waiting ticket
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-triage.py --topic <notebook> save-list   # the pages waiting for the user to save as PDF
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-triage.py --topic <notebook> retry-list [--cycle <id>]   # tickets a cycle left for retry, with each reader's task list
 ```
+
+`/wiki-cycle` marks a ticket it could not fetch for a reason that may clear in place, `route <ticket> --to <its bucket> --reason "<what failed>" --retry "<why>" --cycle <id>`, and puts one card per reader on that reader's task list (its Step 2).
 
 `<notebook>` is the notebook the sources are for: this project's own by default, or the one the user names (agentic-design for the shared research feed).
 

@@ -26,8 +26,9 @@ the catch-all: an item that fits no bucket clearly, or two equally, goes there.
     wiki-triage.py buckets  [--topic N]          the buckets, their readers, who is "me"
     wiki-triage.py pending  [--topic N]          tickets waiting in _inbox/pending/
     wiki-triage.py route <ticket> --to <folder> --reason "<why>" [--raw raw/<file>]
-                         [--save-as-pdf paywall|login|blocked] [--topic N]
+                         [--save-as-pdf paywall|login|blocked] [--retry "<why>" --cycle <id>] [--topic N]
     wiki-triage.py save-list [--topic N]       the pages waiting for the user to save as PDF
+    wiki-triage.py retry-list [--cycle <id>] [--topic N]   the tickets left for retry, with each reader's task list
     wiki-triage.py log      [--last 30] [--topic N]   past calls, the precedents
     wiki-triage.py check    [--topic N]          validate the config (exit 1 on a problem)
 
@@ -46,6 +47,13 @@ A page no fetcher can get (a paywall, a login, a site that blocks the fetcher) i
 folder to save it into, older tickets marked only by a "save as PDF" log reason included; a page
 leaves it when `attach-pdfs` gives its ticket a raw (task #96, Mark 2026-10-11: "you need to create
 the list of what I need to get and you need to tell me").
+
+A ticket a cycle could not fetch for a reason that may clear (a 429, an empty media response) stays
+in its bucket, routed in place with `--retry "<why>" --cycle <id>`: it carries `retry: <why> (<date>,
+cycle <id>)`. `retry-list` groups those tickets by bucket with the reader's task list (its notebook's
+`wiki/tasks/`), so the cycle can put one card on it (task #155, 2026-10-15: six items a cycle left
+"retry next cycle" in llm-wiki's buckets sat two days, because the next two cycles were agent-builder's
+and only listed them).
 """
 from __future__ import annotations
 
@@ -211,10 +219,20 @@ def cmd_route(nb: Path, args) -> int:
         text = re.sub(r"^raw_path:.*\n", "", text, flags=re.M)
         text = re.sub(r"\A---\s*\n", f"---\nraw_path: {args.raw}\n", text, count=1)
     reason = args.reason
+    if args.retry and args.save_as_pdf:
+        print("error: --retry and --save-as-pdf exclude each other: a retry may clear, a page no fetcher can get "
+              "will not", file=sys.stderr)
+        return 2
     if args.save_as_pdf:
         text = re.sub(r"^save_as_pdf:.*\n", "", text, flags=re.M)
         text = re.sub(r"\A---\s*\n", f"---\nsave_as_pdf: {args.save_as_pdf}\n", text, count=1)
         reason = f"save as PDF: {args.save_as_pdf} ({args.reason.strip()})"
+    if args.retry:
+        why = " ".join(args.retry.split())
+        mark = f"{why} ({today_label()}" + (f", cycle {args.cycle})" if args.cycle else ")")
+        text = re.sub(r"^retry:.*\n", "", text, flags=re.M)
+        text = re.sub(r"\A---\s*\n", f"---\nretry: {mark}\n", text, count=1)
+        reason = f"retry: {why} ({args.reason.strip()})"
     dest_dir = nb / "_inbox" / "intake" / args.to
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / src.name
@@ -287,6 +305,41 @@ def cmd_save_list(nb: Path, args) -> int:
     return 0
 
 
+def tasks_dir(reader: str) -> Path | None:
+    """The task list of a bucket's reader: its notebook's wiki/tasks/ (None for the user or an unknown reader)."""
+    info = reader_info(reader)
+    return Path(topic_root(info["notebook"])) / "wiki" / "tasks" if info["kind"] == "project" else None
+
+
+def cmd_retry_list(nb: Path, args) -> int:
+    """Every bucket ticket a cycle left for retry, grouped by bucket, with the reader's task list (task #155)."""
+    groups = []
+    for b in buckets(nb)[0]:
+        d = nb / "_inbox" / "intake" / str(b.get("folder"))
+        items = []
+        for t in sorted(d.glob("*.md")) if d.is_dir() else []:
+            fm = _front(t.read_text(encoding="utf-8", errors="replace"))
+            why = fm.get("retry", "")
+            if why and (not args.cycle or f"cycle {args.cycle})" in why):
+                items.append((t, fm.get("source", t.name), why))
+        if items:
+            groups.append((b, items))
+    n = sum(len(items) for _, items in groups)
+    if not n:
+        print("Nothing left for retry.")
+        return 0
+    print(f"{n} item(s) left for retry" + (f" by cycle {args.cycle}" if args.cycle else "")
+          + ": one card per reader's task list names them (wiki-tasks.py add --tasks-dir <it>).")
+    for b, items in groups:
+        reader = str(b.get("reader"))
+        td = tasks_dir(reader)
+        print(f"\n- {b.get('folder')} [reader: {reader}] task list: "
+              + (str(td) if td else "none (the user's bucket or an unknown reader: name it in the report)"))
+        for t, source, why in items:
+            print(f"  - {source}  retry: {why}  ({t.name})")
+    return 0
+
+
 def cmd_attach_pdfs(nb: Path, args) -> int:
     """PDFs the user saved into an intake folder (or --from <folder>): each converted and attached to the
     ticket waiting for it as its raw_path, the source URL kept (task #81 P7)."""
@@ -345,7 +398,12 @@ def main() -> int:
     r.add_argument("--by", default=None, help="who decided (default: this session's reader name)")
     r.add_argument("--save-as-pdf", choices=SAVE_REASONS, default=None,
                    help="a page no fetcher can get: mark the ticket as waiting for the user's PDF")
+    r.add_argument("--retry", default=None, metavar="WHY",
+                   help="a fetch that may clear (a 429, an empty media response): mark the ticket for the next cycle")
+    r.add_argument("--cycle", default=None, help="the cycle that left it for retry (with --retry)")
     sub.add_parser("save-list")
+    rl = sub.add_parser("retry-list")
+    rl.add_argument("--cycle", default=None, help="only the items this cycle left for retry")
     lg = sub.add_parser("log")
     lg.add_argument("--last", type=int, default=30)
     sub.add_parser("check")
@@ -364,7 +422,7 @@ def main() -> int:
     args.topic_name = topic
     return {"buckets": cmd_buckets, "pending": cmd_pending, "route": cmd_route,
             "log": cmd_log, "check": cmd_check, "attach-pdfs": cmd_attach_pdfs,
-            "save-list": cmd_save_list}[args.cmd](nb, args)
+            "save-list": cmd_save_list, "retry-list": cmd_retry_list}[args.cmd](nb, args)
 
 
 if __name__ == "__main__":

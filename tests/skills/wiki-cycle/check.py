@@ -534,6 +534,8 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_resume(ctx, cycle_id)
     elif case["kind"] == "checker":
         _prepare_checker(ctx, cycle_id)
+    elif case["kind"] == "retry":
+        _prepare_retry(case, ctx)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -688,6 +690,141 @@ def _check_drive(add, ctx: dict, run_dir: Path, text: str, workers: list) -> Non
         [n for n in DRIVE_LEFT if n.split(".")[0] not in text])
 
 
+import http.server
+import threading
+
+RETRY_OWNER = {"main": NOTEBOOK, "other": "other"}  # intake bucket folder -> the notebook of its reader
+
+
+def _serve_stub(status: int, body: str, retry_after=None):
+    """A loopback page that answers every request with one status. srv.hits counts requests."""
+    class H(http.server.BaseHTTPRequestHandler):
+        def _send(self):
+            srv.hits.append(self.path)
+            data = body.encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            if retry_after:
+                self.send_header("Retry-After", str(retry_after))
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            if self.command != "HEAD":
+                self.wfile.write(data)
+        do_GET = do_HEAD = _send
+
+        def log_message(self, *a):
+            pass
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H)
+    srv.hits = []
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv
+
+
+def _task_dir(ctx: dict, nb_name: str) -> Path:
+    base = ctx["notebook"] if nb_name == NOTEBOOK else ctx["sandbox"] / "notebooks" / nb_name
+    return base / "wiki" / "tasks"
+
+
+def _cards(ctx: dict, nb_name: str) -> set:
+    d = _task_dir(ctx, nb_name)
+    return {p.name for p in d.glob("*.md") if p.name.upper() not in ("ORDER.MD", "README.MD")
+            and not p.name.startswith("_")} if d.is_dir() else set()
+
+
+def _prepare_retry(case: dict, ctx: dict) -> None:
+    """The intake buckets (main: cycletest, other: other-bot), other-bot's project folder, empty task lists, one
+    live queued source, and one queued source that is a loopback page answering with the case's status."""
+    st = case["stub"]
+    srv = _serve_stub(st["status"], st["body"], st.get("retry_after"))
+    ctx["stub_srv"] = srv
+    ctx["stub_url"] = f"http://127.0.0.1:{srv.server_address[1]}{st['path']}"
+    ctx["stub_tail"] = st["path"].rsplit("/", 1)[-1]
+    _prepare_triage(case, ctx)  # intake README with both buckets + the live source(s)
+    p = _script(ctx, "wiki-list-add.py", "--topic", NOTEBOOK, "--source", ctx["stub_url"], "--added-by", "skilltest")
+    if p.returncode != 0:
+        raise RuntimeError(f"could not queue {ctx['stub_url']}: {p.stdout}{p.stderr}")
+    op = ctx["sandbox"] / "other-project"
+    (op / ".claude").mkdir(parents=True, exist_ok=True)
+    (op / ".claude" / "wiki-config.json").write_text(json.dumps({
+        "tool": "claude-code", "project_name": "other", "notebook": "other", "persona": "main",
+        "registry": ctx["registry"].as_posix()}, indent=2), encoding="utf-8")
+    gi = ctx["sandbox"] / ".gitignore"
+    if "other-project/" not in gi.read_text(encoding="utf-8"):
+        gi.write_text(gi.read_text(encoding="utf-8") + "other-project/\n", encoding="utf-8")
+    _rmtree(_task_dir(ctx, "other"))
+    for name in (NOTEBOOK, "other"):
+        d = _task_dir(ctx, name)
+        d.mkdir(parents=True, exist_ok=True)
+        if not (d / "ORDER.md").exists():
+            (d / "ORDER.md").write_text("# Task order\n", encoding="utf-8")
+    ctx["cards_before"] = {n: _cards(ctx, n) for n in (NOTEBOOK, "other")}
+
+
+def _check_retry(case: dict, add, ctx: dict, run_dir: Path, text: str) -> None:
+    nb = ctx["notebook"]
+    tail, cid, today = ctx["stub_tail"], ctx["cycle_id"], _today(ctx)
+    srv = ctx["stub_srv"]
+    add("the cycle tried to fetch the stubbed page", bool(srv.hits), "no request reached the stub")
+
+    def fm_text(t: str) -> str:
+        m = re.match(r"^---\n(.*?)\n---", t.replace("\r\n", "\n"), re.S)
+        return m.group(1) if m else ""
+
+    def retry_value(t: str):
+        m = re.search(r"^retry:[ \t]*(.*(?:\n[ \t]+.*)*)", fm_text(t), re.M)
+        return m.group(1).strip() if m else None
+
+    tickets = []  # (folder, name, text) for every queue ticket in the notebook
+    for folder in ("pending", "done", *[f"intake/{b}" for b in RETRY_OWNER]):
+        d = nb / "_inbox" / folder
+        for p in sorted(d.glob("*.md")) if d.is_dir() else []:
+            t = p.read_text(encoding="utf-8", errors="replace")
+            if re.search(r"^source:", t, re.M):
+                tickets.append((folder, p.name, t))
+    stub_t = [x for x in tickets if tail in x[2] or ctx["stub_url"] in x[2]]
+    other_cards = {n: _cards(ctx, n) - ctx["cards_before"][n] for n in (NOTEBOOK, "other")}
+    report = run_dir / f"{cid}-run-cycle-report.md"
+    rtext = report.read_text(encoding="utf-8", errors="replace") if report.is_file() else ""
+
+    if case.get("no_retry"):
+        marked = [f"{f}/{n}" for f, n, t in tickets if retry_value(t) is not None]
+        add("no ticket carries a retry: field (a page no fetcher can get is not a retry)", not marked, marked)
+        add("no task card added to either reader's list", not any(other_cards.values()), other_cards)
+        low = (rtext + "\n" + text).lower()
+        add("the report or reply names the save-as-PDF path", "pdf" in low, "no 'pdf' in the report or the reply")
+        add("the report or reply names the blocked item", tail.lower() in low or "127.0.0.1" in low,
+            "the blocked page is not named")
+        return
+
+    add("the failed ticket is still in an intake bucket (not pending, not done)",
+        bool(stub_t) and all(f.startswith("intake/") for f, _, _ in stub_t), [(f, n) for f, n, _ in stub_t])
+    if not stub_t or not stub_t[0][0].startswith("intake/"):  # failed above; no bucket to find an owner by
+        return
+    folder, _, ttext = stub_t[0]
+    val = retry_value(ttext)
+    add("the ticket carries a retry: field", bool(val), val)
+    val = val or ""
+    add("retry: names the cycle", cid in val, val[:200])
+    add("retry: names the date", today in val, val[:200])
+    rest = val.replace(cid, "").replace(today, "")
+    add("retry: names a reason (words beyond the date and cycle)", len(re.findall(r"[A-Za-z]", rest)) >= 6, val[:200])
+    others = [(f, n) for f, n, t in tickets if t is not ttext and retry_value(t) is not None]
+    add("no other ticket is marked for retry (the ingested one is not)", not others, others)
+
+    owner = RETRY_OWNER[folder.split("/", 1)[1]]
+    other_owner = ({NOTEBOOK, "other"} - {owner}).pop()
+    mine = sorted(other_cards[owner])
+    add(f"exactly one new task card, in the owner's ({owner}) list", len(mine) == 1, other_cards)
+    add("no new card in the other reader's list", not other_cards[other_owner], other_cards[other_owner])
+    ctext = (_task_dir(ctx, owner) / mine[0]).read_text(encoding="utf-8", errors="replace") if len(mine) == 1 else ""
+    add("the card says retry and names the cycle", bool(re.search(r"retry", ctext, re.I)) and cid in ctext,
+        ctext[:200])
+    add("the card names the bucket", folder.split("/", 1)[1] in ctext.lower(), ctext[:200])
+    add("the card lists the failed item", tail in ctext or ctx["stub_url"] in ctext, ctext[:200])
+    add("the card does not list the ingested source",
+        "simonwillison.net/2025/jun/27" not in ctext.lower(), ctext[:200])
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     sys.path.insert(0, str(ctx["scripts"]))
     from _entry_checks import check_entry_file, split_frontmatter
@@ -719,9 +856,9 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
 
     # ---- the step contract ----
     # email-review.json is the session's judgment of the email candidates, input to a step, not a step
-    # email-review.json and models.json (Step 0's model list, task #99) are not step results
+    # email-review.json, models.json (Step 0's model list, task #99) and cost.json (the cost marks) are not step results
     jsons = sorted(p for p in run_dir.glob("*.json")
-                   if p.name not in ("email-review.json", "models.json")) if run_dir.is_dir() else []
+                   if p.name not in ("email-review.json", "models.json", "cost.json")) if run_dir.is_dir() else []
     mds = {p.stem for p in run_dir.glob("*.md")} if run_dir.is_dir() else set()
     lonely = [p.name for p in jsons if p.stem not in mds]
     add("every step JSON has its .md", jsons and not lonely, lonely)
@@ -1088,6 +1225,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         urls = {_norm_url(_suite()["sources"][s]["url"]) for s in case["queue"]}
         got = {_norm_url(split_frontmatter((nb / k).read_text(encoding="utf-8"))[0].get("source_url")) for k in proposed}
         add("the queued source was still staged", got == urls, sorted(got))
+    elif case["kind"] == "retry":
+        _check_retry(case, add, ctx, run_dir, text)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()

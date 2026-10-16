@@ -11,6 +11,12 @@
 
 ## 2026-10-15
 
+### Items a cycle leaves for retry go on the owner's task list (task #155)
+
+- **Why**: improver pass 2026-10-15-llm-wiki-bootstrap P1. Cycle 2026-10-12-02 left six items "retry next cycle" in llm-wiki's agentic-design buckets (five YouTube 429s, an empty Instagram reel); the next two cycles were agent-builder's, scoped to its own bucket, and only listed them. They sat two days, because nothing outside a report remembered them.
+- **What**: `wiki-triage.py route --retry "<why>" --cycle <id>` marks a bucket ticket in place (`retry: <why> (<date>, cycle <id>)`; refused with `--save-as-pdf`), and `retry-list [--cycle <id>]` lists the marked tickets by bucket with the reader's task list (its notebook's `wiki/tasks/`; none for the user's bucket). wiki-cycle Step 2 marks each item left for retry and puts one card per reader on that list with `wiki-tasks.py add --tasks-dir`; Step 8's Needs you names the items and their cards. wiki-triage's SKILL.md and both usage pages.
+- **Proof**: `tests/scripts/test_wiki_triage.py` 64/64 (54/64 on the old script: the ten retry checks failed). Two wiki-cycle cases by `eval-case-writer`: `fetch-429-ticket-marked-retry-and-one-card` red then green on Sonnet and Opus (the old skill left the ticket unmarked, Opus in `pending/`), and the near miss `paywalled-item-keeps-pdf-path-no-retry-no-card` passing on both copies. Full suite `20261015-191205` ($38.77): Opus 12/13, no regressions; its 429 failure (the other notebook's card committed with the cycle's) led to the sentence that the owner commits it, and passed on rerun. Sonnet 10/13: its two regressions (a BOM in step JSON, worker temp files) passed on rerun; `quick-staged` fails as in the baseline. Harness: `cost.json` is not a step result.
+
 ### A YouTube subtitle 429 is transcribed, not retried (task #156)
 
 - **Why**: improver pass 2026-10-15-llm-wiki-bootstrap P2. YouTube's subtitle endpoint answered HTTP 429 in cycles 2026-10-12-02, 2026-10-14-01 and -02, IP-wide and for days; the fetcher retried five times with backoff and failed, and the talks sat in their buckets. The audio download was never limited, and the GPU transcribed 2 h 12 min of talks in 4.4 minutes (cycle 2026-10-14-02, measured).
