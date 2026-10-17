@@ -1,10 +1,10 @@
 # Skill test baselines
 
-A standing test for each shipped skill: one of each kind of input the skill handles, run by a real Claude session into a throwaway sandbox, then checked by a script. A **behavioural** change to a skill (or to a script it calls) is installed once its new cases run red then green (below), on both models, **and** the full suite of each changed skill is at least as good as its baseline.
+A standing test for each shipped skill: one of each kind of input the skill handles, run by a real Claude session into a throwaway sandbox, then checked by a script. A **behavioural** change to a skill (or to a script it calls) is installed once its new cases run red then green (below), on both models. **Red then green always; anything more is asked first** (Mark, 2026-10-17: "red/green always, ask before doing more, recommend if it makes sense"). When a full suite looks worth its cost (a change that rewrites several steps, or a script many steps call, where a targeted case cannot see the side effects), say so with the cost and wait for Mark's yes; never run it by default. Log the change in [PENDING.md](PENDING.md) so the next full run of that skill checks it.
 
-A **small** change — wording, a clarified flag, a typo — needs no run of its own: install it and log it in [PENDING.md](PENDING.md); the next full run of that skill checks it.
+A **small** change — wording, a clarified flag, a typo — needs no run of its own: install it and log it in PENDING.md.
 
-**A sweep of every suite runs only on a named trigger, with Mark's yes** (Mark, 2026-10-17; the same rule as agent-builder's), never on a calendar:
+**A full suite runs only on Mark's yes**, recommended on one of these triggers (the same list as agent-builder's), never on a calendar:
 - a model change: a suite's model list, or a `model_default` in `wiki-ingester-config.json`, `wiki-checker-config.json` or `skills/wiki-cycle/helper-models.json`;
 - a change to the runner's grading (`run_skill_test.py`, `_trajectory.py`, `_jsonl_cases.py`) or to a script many skills call (`_entry_checks.py`, `_wiki_config.py`, the search helper); a purely additive check does not count;
 - a suite not run in a long while, before a change that depends on it ships;

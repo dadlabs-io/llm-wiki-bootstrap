@@ -151,8 +151,8 @@ Idempotent re-copy of the `/new-wiki` skill from this repo to `~/.claude/skills/
 - `templates/` — `CLAUDE.md`, `README.md`, `.gitignore` templates
 - `tests/skills/` — the standing test baseline per skill (never shipped): `run_skill_test.py <skill>` runs one of
   each input through headless Sonnet and Opus sessions in a sandbox and checks the result against
-  `baseline-<model>.json`. A behavioural change is installed once its new cases run red then green and its
-  skill's full suite matches the baseline; a sweep of every suite runs only on a named trigger (Mark, 2026-10-17). `tests/skills/README.md` says how to run it and
+  `baseline-<model>.json`. A behavioural change is installed once its new cases run red then green; anything
+  more (a full suite) is recommended when it makes sense and runs only on Mark's yes (Mark, 2026-10-17). `tests/skills/README.md` says how to run it and
   how to add a skill.
 
 ## Conventions (when editing the scripts)
