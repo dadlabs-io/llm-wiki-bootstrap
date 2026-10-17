@@ -519,8 +519,8 @@ def filing_verdict(raw: str, reads: Reads, source_url: str = "") -> str | None:
     if not read:
         return (f"read-guard: wiki-update.py would file an entry from {name}, which this session and its "
                 "helper agents have not read. Read the raw to its last line first (Read with no `limit`, every "
-                "page; a raw too big for one context is split by line range across helper agents, each reading "
-                "its range whole), then file.")
+                "page; a raw too big for one context is split with wiki-raw-parts.py across helper agents, one per "
+                "part, each reading its range whole), then file.")
     gaps = min((reads.gaps(k) for k in read), key=lambda g: sum(b - a + 1 for a, b in g))
     # a lone last line (a trailing blank line the pages stopped short of) is not an unread passage:
     # two of the eleven refusals in the backtest over saved sessions were that alone

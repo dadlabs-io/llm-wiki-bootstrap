@@ -279,6 +279,195 @@ RESUME_ITEMS = [
 ]
 
 
+import random
+
+BIG_SLUG = "ledger-handoff-field-guide"
+BIG_URL = f"https://example.com/skilltest/{BIG_SLUG}"
+SMALL_SLUG = "retry-budgets-for-agent-tools"
+SMALL_URL = f"https://example.com/skilltest/{SMALL_SLUG}"
+BIG_FACT = r"\b417\b"  # only in section 25 of 26
+
+# One row per section: title, concept, purpose (an infinitive), 3 failures, 3 remedies, 2 artifacts, a metric.
+# Written for the test: themed prose about AI agents (in the seed notebook's scope), built from per-section vocabularies.
+_BIG_SECTIONS = [
+    ("intake and framing", "the intake brief", "tell the receiving agent what the work is and what done looks like",
+     ["a goal restated differently by each agent", "scope that grows during the handoff", "a missing definition of done"],
+     ["writing the goal as one testable sentence", "listing explicit out-of-scope items", "attaching an acceptance check to every brief"],
+     ["the intake brief", "the acceptance checklist"], "the share of briefs accepted without a clarifying question"),
+    ("ledger structure", "the ledger schema", "fix which fields every entry must carry",
+     ["free-text entries nobody can query", "fields added by one agent and ignored by the rest", "entries that mix decisions with chatter"],
+     ["a versioned schema with required fields", "rejecting entries that fail validation", "separating decisions from working notes"],
+     ["the schema file", "the validation report"], "the rejection rate at write time"),
+    ("entry identifiers", "entry identifiers", "let any agent point at exactly one prior decision",
+     ["two entries sharing an identifier", "identifiers reused after compaction", "references that name a topic instead of an entry"],
+     ["content-derived identifiers", "monotonic counters per ledger", "reference checks at write time"],
+     ["the identifier index", "the reference graph"], "the count of dangling references"),
+    ("ownership transfer", "ownership transfer", "make it clear which agent is responsible for a task at any moment",
+     ["two agents working one task", "a task nobody owns after a crash", "a transfer announced but never accepted"],
+     ["an explicit accept step", "a single owner field with an expiry", "a transfer log with timestamps"],
+     ["the ownership table", "the transfer log"], "the average time a task spends unowned"),
+    ("acknowledgement rules", "acknowledgement rules", "confirm that the receiver has understood the handoff",
+     ["silent drops", "acknowledgements sent before the receiver read the brief", "duplicate acknowledgements that hide a lost message"],
+     ["acknowledging only after a read-back of the goal", "a bounded wait with escalation", "idempotent acknowledgement tokens"],
+     ["the acknowledgement record", "the pending-ack list"], "the median time to acknowledge"),
+    ("stale handoffs", "stale-handoff detection", "find work that was handed off and then forgotten",
+     ["tasks that age quietly for weeks", "alerts so noisy that nobody reads them", "a sweep that reassigns work still in progress"],
+     ["an age threshold per task class", "a sweep that only flags and never reassigns", "a weekly review of the oldest items"],
+     ["the aging report", "the sweep log"], "the number of items older than the review window"),
+    ("partial handoffs", "partial handoff", "cover work passed on before it is finished",
+     ["half-written files treated as complete", "lost intermediate results", "a receiver that redoes finished steps"],
+     ["recording completed steps beside the remaining ones", "checkpointing before every transfer", "marking unfinished outputs as drafts"],
+     ["the checkpoint file", "the step list"], "the share of repeated steps after a handoff"),
+    ("retries and idempotence", "idempotent operations", "let an agent repeat a step without doing harm",
+     ["a payment sent twice", "duplicate tickets after a timeout", "a counter incremented on every replay"],
+     ["idempotency keys on every write", "checking for the effect before repeating it", "separating planning from applying"],
+     ["the operation journal", "the key store"], "the number of duplicate side effects per thousand operations"),
+    ("ordering guarantees", "ordering", "decide which entry wins when two agents write at once",
+     ["a later decision overwritten by an earlier one", "readers seeing entries out of order", "merge conflicts resolved by whichever agent wrote last"],
+     ["per-task sequence numbers", "a single writer per task", "explicit supersedes links"],
+     ["the sequence index", "the conflict log"], "the count of conflicting writes per week"),
+    ("clock handling", "time handling", "keep timestamps comparable across agents and machines",
+     ["clock skew that reorders events", "local times stored without a zone", "a date written into a prompt that invalidates cached context"],
+     ["storing UTC instants with an explicit offset", "taking times from one service", "placing the current time late in the context"],
+     ["the time source", "the timestamp convention"], "the largest observed skew between agents"),
+    ("storage layout", "storage layout", "decide where durable state lives and how it is found",
+     ["state scattered across temporary folders", "a single file that every agent rewrites", "paths that only one machine can resolve"],
+     ["one folder per task with a fixed shape", "append-only files for the ledger", "relative paths from a documented root"],
+     ["the folder map", "the layout note"], "the time a new engineer needs to find a task's state"),
+    ("compaction", "compaction", "shrink old entries so the ledger stays readable",
+     ["summaries that drop the reason for a decision", "compaction that deletes entries still referenced", "a ledger so long that agents skip it"],
+     ["keeping the decision and its reason while dropping the chatter", "never compacting an entry with open references", "compacting on a schedule, not on demand"],
+     ["the compaction log", "the archive folder"], "the ratio of compacted to original size"),
+    ("audit trails", "the audit trail", "let a person reconstruct why the agents did what they did",
+     ["actions with no recorded cause", "logs that omit the tool results", "an audit trail edited after the fact"],
+     ["recording the cause beside every action", "storing tool results by reference", "making the trail append-only"],
+     ["the audit log", "the evidence index"], "the share of actions with a recorded cause"),
+    ("access scopes", "access scopes", "limit which agent may read or change which part of the ledger",
+     ["a helper agent able to edit decisions", "secrets written into shared notes", "read access granted by default"],
+     ["least-privilege roles per agent", "a separate store for secrets", "review of every scope change"],
+     ["the role table", "the scope review"], "the number of agents holding write access to decisions"),
+    ("failure drills", "failure drills", "test the handoff path before a real outage does",
+     ["a ledger that cannot be restored", "recovery steps known to one person", "drills run once and never repeated"],
+     ["restoring from a backup each quarter", "writing recovery steps as a checklist", "stopping an agent mid-handoff on purpose"],
+     ["the drill checklist", "the restore report"], "the time to resume work after a simulated crash"),
+    ("metrics", "handoff metrics", "show whether handoffs are getting better or worse",
+     ["dashboards nobody owns", "averages that hide a long tail", "counts with no baseline"],
+     ["reporting percentiles beside averages", "naming an owner for each metric", "recording a baseline before any change"],
+     ["the metrics dashboard", "the weekly summary"], "the ninety-fifth percentile handoff duration"),
+    ("alert thresholds", "alert thresholds", "decide when a person is paged about the ledger",
+     ["pages for events that fix themselves", "thresholds copied from another system", "a silent failure with no alert at all"],
+     ["paging only on sustained breaches", "tuning thresholds from a month of data", "adding one alert for the absence of events"],
+     ["the alert rules", "the on-call notes"], "the share of alerts that needed action"),
+    ("migration from notes files", "migration from notes files", "move an older agent from free-form notes to the ledger",
+     ["notes imported without review", "two sources of truth during the switch", "history lost in the conversion"],
+     ["converting one task at a time", "running the old and new paths side by side", "keeping the original notes as a read-only archive"],
+     ["the migration plan", "the conversion report"], "the number of tasks still on the old notes"),
+    ("multi-agent fan-out", "fan-out", "cover one task split across several parallel agents",
+     ["workers repeating each other's searches", "results merged without checking for conflicts", "a coordinator that becomes the bottleneck"],
+     ["giving each worker a distinct slice", "merging through a reviewer step", "capping the number of parallel workers"],
+     ["the work split", "the merge report"], "the overlap between workers' outputs"),
+    ("review cadence", "the review cadence", "set how often people read the ledger and the rules around it",
+     ["reviews skipped when the team is busy", "review comments that never reach the schema", "rules that outlive the problem they solved"],
+     ["a fixed monthly review", "turning review findings into schema changes", "retiring a rule when its trigger disappears"],
+     ["the review notes", "the rule register"], "the number of rules retired each quarter"),
+    ("naming conventions", "naming conventions", "keep tasks, agents and files easy to recognise",
+     ["two tasks with the same name", "agent names that describe the model instead of the job", "file names that change on every edit"],
+     ["names built from the job and a short date", "one name per agent role", "stable names with the version inside the file"],
+     ["the naming guide", "the name registry"], "the count of ambiguous names found in review"),
+    ("testing the ledger", "ledger tests", "check that the ledger behaves under concurrent and partial writes",
+     ["tests that only cover the happy path", "fixtures copied from production data", "a test suite too slow to run often"],
+     ["property tests on ordering and identifiers", "small synthetic fixtures", "a fast subset that runs on every change"],
+     ["the test suite", "the fixture set"], "the share of ledger code covered by concurrent tests"),
+    ("capacity planning", "capacity planning", "estimate how much state the agents will produce",
+     ["growth discovered only when disks fill", "entries far larger than planned", "a read path that slows as the ledger grows"],
+     ["projecting from the last quarter's growth", "setting a size limit per entry", "indexing the fields agents query most"],
+     ["the growth forecast", "the size report"], "the daily growth of the ledger in entries"),
+    ("operator checklists", "operator checklists", "give the person on duty a short list of steps for known problems",
+     ["checklists too long to follow under stress", "steps that assume knowledge nobody wrote down", "checklists never updated after an incident"],
+     ["keeping each checklist to one screen", "stating the expected result of every step", "updating the list in the incident review"],
+     ["the runbook", "the incident notes"], "the time an operator needs to complete a checklist"),
+    ("backpressure limits", "backpressure", "slow intake when the receivers cannot keep up",
+     ["queues that grow without bound", "new work accepted while old work waits", "producers that cannot tell the queue is full"],
+     ["a hard limit on pending handoffs", "telling producers to wait when the limit is reached", "draining the oldest items first"],
+     ["the queue limit setting", "the backlog report"], "the length of the pending queue at peak"),
+    ("closing guidance", "the set of habits that hold the rest together", "turn the earlier sections into daily practice",
+     ["rules written down but not followed", "a ledger treated as paperwork", "improvements that stop after launch"],
+     ["reviewing a few real handoffs each week", "treating every incident as a schema question", "keeping the guide short enough to reread"],
+     ["this guide", "the team's own checklist"], "the number of incidents traced to a missing ledger entry"),
+]
+
+_BIG_TEMPLATES = [
+    "{Cc} exists to {P}. Teams that neglect it usually find the gap through {F}, not through a design review.",
+    "In one internal review of {N} agent sessions, {X} percent of the incidents traced back to {F}. The sessions that avoided it shared one habit in common: {R}.",
+    "A practical rule for {C}: {R}. It costs little to adopt and it removes the ambiguity that otherwise shows up as {F}.",
+    "Keep {A} next to the agent's other durable state and review it as often as the code. When it is neglected, the usual result is {F}.",
+    "Measure {C} with {M}. A healthy deployment holds it steady across {N} consecutive days; a sudden change usually means {F} or a recent edit to {A}.",
+    "Consider a support agent handing a case to a billing agent. Without a clear approach to {C}, the receiving agent repeats work and the customer sees {F}. With {R}, the same handoff finishes in {N} fewer turns.",
+    "There is a trade-off. The fix is {R}, which reduces {F} but adds a step to every handoff and makes {A} larger. Most teams accept that cost once they have seen {F2} in production.",
+    "Do not rely on the model to remember anything about {C}. The model's context is rebuilt each session, so whatever is not written to {A} is gone, and the usual result is {F}.",
+    "When migrating an existing agent, start with {A}. Run the old and new paths side by side for {N} days, compare {M}, and only then switch over with {R}.",
+    "Reviewers should ask three questions about {C}: what {A} says, who may change it, and what happens after {F}. An answer of 'the agent will work it out' counts as a finding.",
+    "A reasonable share of design time for {C} is about {X} percent, because {F} is expensive to debug after launch and cheap to prevent with {R}.",
+    "First versions of {C} usually fail through {F}. The second version fixes that with {R}, then fails differently, through {F2}; plan for at least two iterations.",
+    "One team tracked {M} for {N} weeks before and after adopting {R}. The figure improved by roughly {X} percent, and the on-call engineers reported fewer incidents involving {F}.",
+    "If {A} is out of date, new agents inherit the wrong assumptions about {C}. The cheapest defence is {R}, applied before the next release rather than after the next incident.",
+    "Write down what {C} guarantees and what it does not. Readers of {A} should never have to guess whether {F} is possible, and the answer should be checked against {M}.",
+    "A common objection is that {C} slows the team down. In practice the slowdown is a few minutes per task, while {F} can cost a full day of rework; the team that chose {R} came out ahead within {N} weeks.",
+]
+
+
+def _big_raw() -> str:
+    """About 345 KB of written-for-the-test prose about handoffs and durable state in AI agents, in 26 headed
+    sections; the fact the case looks for is only in section 25. Numbers filled in are 3 to 71, never 417."""
+    rng = random.Random(7)
+    out = ["# Field Guide to Handoffs and Durable State in Long-Running AI Agents", "",
+           "A written-for-the-test guide to passing work between agent sessions through a shared ledger of decisions.", ""]
+    for i, (title, c, purpose, fails, remedies, arts, metric) in enumerate(_BIG_SECTIONS, 1):
+        out += [f"## Section {i}: {title}", ""]
+        size = 0
+        while size < 13200:
+            sents = []
+            for t in rng.sample(_BIG_TEMPLATES, 3):
+                f, f2 = rng.sample(fails, 2)
+                sents.append(t.format(C=c, Cc=c[0].upper() + c[1:], P=purpose, F=f, F2=f2, R=rng.choice(remedies),
+                                      A=rng.choice(arts), M=metric, N=rng.randint(3, 60), X=rng.randint(4, 71)))
+            para = " ".join(sents)
+            out += [para, ""]
+            size += len(para) + 1
+        if i == 25:
+            out += ["The Harrowgate ledger applies backpressure when a handoff queue holds 417 pending items; below that it accepts every handoff.", ""]
+    text = "\n".join(out)
+    if len(text) < 330_000 or re.search(BIG_FACT, text.replace("holds 417 pending items", "")):
+        raise RuntimeError(f"big raw fixture is wrong: {len(text)} chars")
+    return text
+
+
+_SMALL_RAW = """# Retry budgets for agent tools
+
+Give every tool call a retry budget instead of an open-ended loop. A budget of three attempts with doubling waits
+(1 s, 2 s, 4 s) stops a flaky tool from stalling a whole session.
+
+Count the budget per tool, not per task, so one failing search tool cannot consume the attempts another tool needs.
+
+When the budget is spent, return the error to the model with the attempt count, and let it choose another route or stop.
+Log each exhausted budget so a pattern of failures is visible across sessions.
+"""
+
+
+def _prepare_bigraw(case: dict, ctx: dict) -> None:
+    """Two tickets in pending/, each with a raw_path to a raw written into raw/: one oversized, one ordinary."""
+    nb = ctx["notebook"]
+    for slug, url, text in ((BIG_SLUG, BIG_URL, _big_raw()), (SMALL_SLUG, SMALL_URL, _SMALL_RAW)):
+        (nb / "raw" / f"{slug}.md").write_text(text, encoding="utf-8")
+        p = _script(ctx, "wiki-list-add.py", "--topic", NOTEBOOK, "--source", url, "--added-by", "skilltest")
+        if p.returncode != 0:
+            raise RuntimeError(f"could not queue {url}: {p.stdout}{p.stderr}")
+        for t in (nb / "_inbox" / "pending").glob("*.md"):
+            body = t.read_text(encoding="utf-8")
+            if url in body and "raw_path:" not in body:
+                t.write_text(re.sub(r"\A---\r?\n", f"---\nraw_path: raw/{slug}.md\n", body, count=1), encoding="utf-8")
+
+
 def _prepare_resume(ctx: dict, cycle_id: str) -> None:
     """An --ingest-only cycle interrupted after its ingest phase: both items staged,
     both tickets in done/, update.json written, the scratchpad saying so."""
@@ -536,6 +725,8 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_checker(ctx, cycle_id)
     elif case["kind"] == "retry":
         _prepare_retry(case, ctx)
+    elif case["kind"] == "bigraw":
+        _prepare_bigraw(case, ctx)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -823,6 +1014,58 @@ def _check_retry(case: dict, add, ctx: dict, run_dir: Path, text: str) -> None:
     add("the card lists the failed item", tail in ctext or ctx["stub_url"] in ctext, ctext[:200])
     add("the card does not list the ingested source",
         "simonwillison.net/2025/jun/27" not in ctext.lower(), ctext[:200])
+
+
+def _check_bigraw(case: dict, add, ctx: dict, run: dict, run_dir: Path, proposed: list) -> None:
+    nb = ctx["notebook"]
+    sys.path.insert(0, str(ctx["scripts"]))
+    from _entry_checks import check_entry_file, split_frontmatter
+    # premise guard: the fixture really is too big for one worker; N is the script's own parts= line
+    p = _script(ctx, "wiki-raw-parts.py", str(nb / "raw" / f"{BIG_SLUG}.md"))
+    m = re.search(r"parts=(\d+)", p.stdout)
+    n_parts = int(m.group(1)) if m else 0
+    add("fixture: the oversized raw is reported fits_one_worker=no", "fits_one_worker=no" in p.stdout, p.stdout[:200])
+
+    calls = _agent_calls(run)
+
+    def says(a, slug):
+        return slug in str(a.get("prompt", "")).lower()
+
+    readers = [a for a in calls if says(a, BIG_SLUG)
+               and str(a.get("subagent_type", "")) not in ("wiki-ingester", "wiki-checker")]
+    add("one reader per printed part (readers other than the ingest workers, each told the raw)",
+        n_parts >= 2 and len(readers) >= n_parts, f"{len(readers)} readers, {n_parts} parts")
+    filers = [a for a in calls if str(a.get("subagent_type", "")) == "wiki-ingester" and says(a, BIG_SLUG)
+              and str(a.get("model", "")).lower().startswith("opus")]
+    add("one wiki-ingester worker on opus files the oversized item", bool(filers),
+        [(a.get("subagent_type"), a.get("model")) for a in calls if says(a, BIG_SLUG)])
+    small = [a for a in calls if str(a.get("subagent_type", "")) == "wiki-ingester" and says(a, SMALL_SLUG)]
+    add("the ordinary item went through a wiki-ingester worker", bool(small), len(calls))
+
+    by_url, gate_errs = {}, []
+    for k in proposed:
+        path = nb / k
+        fm, body = split_frontmatter(path.read_text(encoding="utf-8"))
+        by_url[_norm_url(fm.get("source_url"))] = body
+        g = check_entry_file(path)
+        if g.get("errors"):
+            gate_errs.append(f"{k}: {g['errors']}")
+    add("both sources staged once, the oversized one included",
+        set(by_url) == {_norm_url(BIG_URL), _norm_url(SMALL_URL)} and len(proposed) == 2, sorted(by_url))
+    add("staged entries pass the gate", proposed and not gate_errs, gate_errs)
+    add("the oversized entry carries the fact only the late section holds",
+        bool(re.search(BIG_FACT, by_url.get(_norm_url(BIG_URL), ""))), "no 417 in the staged entry")
+
+    upd = run_dir / "update.json"
+    try:
+        u = json.loads(upd.read_text(encoding="utf-8")) if upd.is_file() else {}
+    except json.JSONDecodeError:
+        u = {}
+    queued = u.get("queued") or []
+    add("update.json covers both items, the oversized one named", len(queued) == 2
+        and BIG_SLUG in json.dumps(queued).lower(), json.dumps(queued)[:200])
+    add("update.json: nothing skipped or deferred (the oversized item neither failed nor stalled the batch)",
+        not (u.get("skipped") or u.get("deferred")), json.dumps([u.get("skipped"), u.get("deferred")])[:200])
 
 
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
@@ -1227,6 +1470,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("the queued source was still staged", got == urls, sorted(got))
     elif case["kind"] == "retry":
         _check_retry(case, add, ctx, run_dir, text)
+    elif case["kind"] == "bigraw":
+        _check_bigraw(case, add, ctx, run, run_dir, proposed)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()

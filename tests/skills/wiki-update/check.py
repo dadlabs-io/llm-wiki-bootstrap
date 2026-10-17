@@ -179,6 +179,126 @@ def _norm_ws(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+# ---------- raw-size: generated Markdown of a chosen size (written for the test; nothing big is committed) ----------
+# Each theme has its own slot words and sentence templates, so two generated files share no filler text with each
+# other (wiki-update's duplicate check skips a raw that is 85% or more the same as one already saved), and no filler
+# number is above 98, so a filler paragraph can never carry a case's fact.
+RAWSIZE_MARK = "\x00FACT\x00"
+RAWSIZE_THEMES = {
+    "agent-handbook": {
+        "titles": ["Scope and ownership", "Planning and tool use", "Context and memory", "Retry policy",
+                   "Evaluation and replay sets", "Handoff files", "The reviewer agent", "Cost and token budgets",
+                   "Access and permissions", "Release process", "Postmortem addendum", "Closing notes"],
+        "slots": {
+            "subj": ["the planner agent", "the tool router", "the memory writer", "the reviewer agent",
+                     "the context trimmer", "the dispatcher", "the retrieval step", "the summariser agent"],
+            "verb": ["rereads its scratchpad", "calls the search tool", "drops stale messages",
+                     "asks the reviewer for a second look", "rewrites the plan", "checks the ticket history"],
+            "unit": ["times", "tool calls", "messages", "turns"],
+            "metric": ["first-answer accuracy", "tokens per ticket", "repeat-call rate", "time to resolution"],
+            "cond": ["a tool call times out", "the retrieved passages disagree", "the context window passes "
+                     "most of its budget", "two agents claim the same ticket", "the model returns malformed JSON",
+                     "a user edits the ticket mid-run"],
+            "fallback": ["falls back to the cheaper model and flags the run", "re-queues the ticket with a short note",
+                         "asks the reviewer agent to arbitrate", "stops and writes the partial plan to the handoff file",
+                         "replays the last good checkpoint"],
+            "artifact": ["the run transcript", "the handoff file", "the tool-call log", "the checkpoint folder",
+                         "the prompt template", "the routing table"],
+            "corpus": ["a replay set of old tickets", "a hand-labelled sample of resolved cases",
+                       "last quarter's escalations"],
+            "gain": ["a modest gain", "a clear drop in repeated work", "fewer wrong-tool calls"],
+            "cost": ["a longer first response", "more tokens on hard tickets", "one extra model call"],
+            "mistake": ["rewrite the whole plan after a single failed step", "keep every tool result in context",
+                        "call the reviewer on trivial edits", "retry without changing the prompt"],
+            "reason": ["the extra context hides the original goal", "each retry repeats the same error",
+                       "the cost grows faster than the quality", "small plans are easier to audit"],
+            "setting": ["a low temperature and a short system prompt", "structured output with a fixed schema",
+                        "two retrieval passes instead of one", "a hard cap on tool calls per ticket"],
+            "cadence": ["Monday", "two weeks", "release", "month"],
+            "owner": ["The platform team", "The support lead", "The evaluation group", "The on-call engineer"],
+            "approval": ["a second reviewer", "a passing replay run", "sign-off from the support lead"],
+            "log": ["the change log", "the weekly notes", "the runbook"],
+        },
+        "templates": [
+            "{Subj} {verb} roughly {n} {unit} per task, and the team keeps {metric} within {m} percent of target on a typical day.",
+            "When {cond}, {subj} {fallback}; operators then check {artifact} before the next run.",
+            "{Subj} was tuned over {n} weeks against {corpus}, which gave {gain} in {metric} but cost {cost}.",
+            "A common mistake is to let {subj} {mistake}, because {reason}.",
+            "In practice {subj} works best with {setting}, and the team reviews {artifact} every {cadence}.",
+            "{owner} owns {artifact}; a change to it needs {approval} and a line in {log}.",
+        ],
+    },
+    "cache-pilot": {
+        "titles": ["Why reuse answers", "How prompts are hashed", "When an entry expires", "Reading the miss rate",
+                   "Postmortem addendum"],
+        "slots": {
+            "subj": ["the cache layer", "the prompt builder", "the embedding lookup", "the answer store",
+                     "the invalidation job", "the token counter"],
+            "verb": ["compares each new question with", "expires entries older than", "stores a hash of",
+                     "skips the model call when it finds", "logs a miss for"],
+            "thing": ["a stored system prompt", "a near-duplicate question", "a long document header",
+                      "a repeated tool result"],
+            "cond": ["a policy document changes overnight", "two phrasings of one question get different answers",
+                     "the embedding model is swapped", "a cached answer cites a withdrawn page"],
+            "outcome": ["serves an out-of-date answer", "calls the model again at full price",
+                        "returns a hit it should have rejected", "adds a warning line to the reply"],
+            "artifact": ["the weekly miss report", "the hit-and-miss dashboard", "the invalidation log"],
+            "worry": ["answers that look right but quote last month's policy", "cache keys that ignore the user's role",
+                      "a similarity threshold set too loose"],
+            "remedy": ["a shorter expiry on policy questions", "adding the role to the key",
+                       "raising the threshold and re-testing on a sample"],
+            "owner": ["The assistant's product owner", "The data lead", "The on-call analyst"],
+            "cadence": ["Tuesday", "fortnight", "sprint"],
+        },
+        "templates": [
+            "{Subj} {verb} {thing}, which happens in about {n} of every hundred requests.",
+            "If {cond}, the assistant {outcome}, and the owners see it in {artifact}.",
+            "The main worry is {worry}; the remedy so far is {remedy}.",
+            "{owner} reads {artifact} every {cadence} and wants the miss rate under {m} percent.",
+            "A typical session of {n} questions costs about {m} cents less than before, mostly because {subj} {verb} {thing}.",
+        ],
+    },
+}
+
+
+def _write_sized_markdown(path: Path, case: dict) -> None:
+    """Headed Markdown of a chosen size: paragraphs of four sentences drawn from the case's theme (seeded by the
+    case id, so a run reproduces its own file), and one fact paragraph in one section, in the middle of it."""
+    import random
+
+    th = RAWSIZE_THEMES[case["theme"]]
+    rng = random.Random(case["id"])
+
+    def vals() -> dict:
+        v = {k: rng.choice(opts) for k, opts in th["slots"].items()}
+        v["Subj"] = v["subj"][0].upper() + v["subj"][1:]
+        v["n"], v["m"] = rng.randint(2, 98), rng.randint(2, 98)
+        return v
+
+    def paragraph() -> str:
+        picks, last = [], None
+        for _ in range(4):
+            t = rng.choice([x for x in th["templates"] if x != last])
+            last = t
+            picks.append(t.format_map(vals()))
+        return " ".join(picks)
+
+    out = [f"# {case['title']}", "", case["intro"], ""]
+    for s in range(1, case["sections"] + 1):
+        title = "Postmortem addendum" if s == case["fact_section"] else th["titles"][(s - 1) % len(th["titles"])]
+        out += [f"## {s}. {title}", ""]
+        for j in range(case["paras_per_section"]):
+            out += [paragraph(), ""]
+            if s == case["fact_section"] and j == case["paras_per_section"] // 2:
+                out += [RAWSIZE_MARK, ""]
+    text = "\n".join(out) + "\n"
+    filler = text.replace(RAWSIZE_MARK, "")
+    assert not re.search(case["fact_pattern"], filler.lower()), "filler must not carry the case's fact"
+    assert len(filler) >= case["min_chars"], f"generated raw too small: {len(filler)} chars"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text.replace(RAWSIZE_MARK, case["fact_text"]), encoding="utf-8")
+
+
 def _pdf_text(s: str) -> str:
     return s.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
 
@@ -261,6 +381,10 @@ def prompt(case: dict, ctx: dict) -> str:
                          nb=ctx["notebook"].as_posix(), sandbox=ctx["sandbox"].as_posix())
     staged = " Use staged mode (--staged)." if case.get("mode") == "staged" else ""
     kind, inp = case["kind"], case.get("input")
+    if kind == "raw-size":
+        f = ctx["sandbox"] / "inputs" / case["file"]
+        _write_sized_markdown(f, case)
+        return head + f"The user's input: the local file {f.as_posix()}{staged}"
     if kind == "redirect":
         return head + "The user typed /wiki-update with nothing after it."
     if kind == "queue":
@@ -951,6 +1075,45 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             all(re.match(r"measured\b", status_of(r)) for r in mrows), mrows[:1])
         g = check_entry_file(path)
         add("gate: no errors", not g.get("errors"), g.get("errors"))
+        return res
+
+    if kind == "raw-size":
+        # Step 2 (reading a raw whole): a raw too big for one context is split with wiki-raw-parts.py and read by
+        # one helper per part; a small one is read whole by the session itself. Either way the entry must carry
+        # the fact that sits only in a late section, so nothing was filed from part of the raw.
+        bash = [str(c["input"].get("command", "")) for c in run["tool_calls"] if c["name"] == "Bash"]
+        helpers = [c for c in run["tool_calls"] if c["name"] in ("Agent", "Task")]
+        if case["expect_split"]:
+            # the raw is over 80,000 estimated tokens and a part holds at most 40,000, so at least 3 parts
+            add("step 2: split the raw with wiki-raw-parts.py before drafting",
+                any("wiki-raw-parts.py" in b for b in bash), len(bash))
+            add(f"step 2: one helper agent per part (at least {case['min_helpers']} helpers)",
+                len(helpers) >= case["min_helpers"], len(helpers))
+        else:
+            add("step 2: no helper agent spawned for a raw that fits one reader", not helpers, len(helpers))
+        add("exactly one new entry, in _inbox/proposed/",
+            len(entries) == 1 and entries[0].startswith("_inbox/proposed/"), entries)
+        if len(entries) != 1:
+            return res
+        path = nb / entries[0]
+        entry_text = path.read_text(encoding="utf-8")
+        fm, _body = split_frontmatter(entry_text)
+        add("filed by wiki-update.py (its Source footer and frontmatter)",
+            bool(fm.get("ingested_by")) and "**Source**" in entry_text)
+        add("entry is about the document's subject", case["subject"] in entry_text.lower(), case["subject"])
+        add(f"entry carries the late-section fact: {case['fact_label']}",
+            bool(re.search(case["fact_pattern"], _norm_ws(entry_text).lower())), case["fact_pattern"])
+        rp = str(fm.get("raw_path", "")).strip().strip('"').strip("'")
+        raw_ok = bool(rp) and (nb / rp).is_file()
+        add("raw captured and named in raw_path", raw_ok, rp)
+        if raw_ok:
+            raw_n = _norm_ws((nb / rp).read_text(encoding="utf-8", errors="replace")).lower()
+            add("premise: the raw holds the whole file (the late-section fact is in it)",
+                bool(re.search(case["fact_pattern"], raw_n)), rp)
+        g = check_entry_file(path)
+        add("gate: no errors", not g.get("errors"), g.get("errors"))
+        side = path.with_suffix(".proposed_metadata.json")
+        add("sidecar written", side.is_file(), side.name)
         return res
 
     # ---- an ingest ----
