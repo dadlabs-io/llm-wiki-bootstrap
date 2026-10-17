@@ -89,7 +89,7 @@ Promotion into `wiki/` stays with you, through `wiki-promote`.
 - It reads every source completely — whole repositories, full transcripts, every page of a PDF —
   so a large batch takes real time and model spend. That depth is the point; do not use it for a
   quick look. Since 2026-10-15 the read guard refuses to file an entry from a raw the worker has not
-  read to its last line; a raw too big for one worker fails its item rather than being filed from part.
+  read to its last line; a raw too big for one worker (it sizes each raw first with `wiki-raw-parts.py`) fails its item unread, naming how many parts it needs, rather than being filed from part; `/wiki-cycle` then reads it in parts.
 - It never promotes, never verifies an entry's truth status, never commits (the caller does; since
   2026-10-14 a hook refuses it any git write and any direct network call such as `curl`, since it reads
   untrusted sources), and in
