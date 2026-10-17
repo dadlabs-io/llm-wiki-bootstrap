@@ -1,6 +1,6 @@
 ---
 name: wiki-refresh
-description: Scan wiki entries for stale content based on review_after dates, confidence decay, and source freshness. Flags entries that need re-checking, re-fetching, or updating. Use when the user says "refresh the wiki", "check for stale entries", "wiki-refresh", "what needs updating", "decay scan", "stale check".
+description: Scan wiki entries for stale content based on review_after dates, confidence decay, and source freshness. Flags entries that need re-checking, re-fetching, or updating. Use when the user says "refresh the wiki", "check for stale entries", "wiki-refresh", "what needs updating", "decay scan", "stale check". Not for broken links or orphans (/wiki-lint) or for contradictions between entries (/wiki-claims).
 last_reviewed: 2026-09-08
 review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1

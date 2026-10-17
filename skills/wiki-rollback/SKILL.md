@@ -1,6 +1,6 @@
 ---
 name: wiki-rollback
-description: "Roll back a wiki entry to its verified ancestor. Walks the `revises:` chain backward, marks intermediates `verified: rolled_back` in their sidecars (no frontmatter mutation, no content deletion), then writes a new `type: rollback` entry documenting what was rolled back and why. Use when the user says \"rollback the X entry\", \"wiki-rollback\", \"this entry is wrong, restore the previous version\", \"/wiki-rollback\"."
+description: "Roll back a wiki entry to its verified ancestor. Walks the `revises:` chain backward, marks intermediates `verified: rolled_back` in their sidecars (no frontmatter mutation, no content deletion), then writes a new `type: rollback` entry documenting what was rolled back and why. Use when the user says \"rollback the X entry\", \"wiki-rollback\", \"this entry is wrong, restore the previous version\", \"/wiki-rollback\". Not for correcting the current entry in place (edit it and re-gate with wiki-update.py --regate) or for undoing a git commit."
 last_reviewed: 2026-09-08
 review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1

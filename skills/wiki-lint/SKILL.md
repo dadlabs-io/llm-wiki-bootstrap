@@ -1,6 +1,6 @@
 ---
 name: wiki-lint
-description: Run a health check on a topic wiki. Two modes — default is the fast mechanical pass (broken links, orphans, stale phrases, missing frontmatter, missing tiers). --full mode adds a semantic pass where the agent reads every entry, finds contradictions, missing cross-references, thin coverage, concept gaps, and tier accuracy, then writes a report. Use when the user says "lint the wiki", "wiki-lint", "wiki health check", "full wiki lint", "wiki-lint --full", "find missing connections in the wiki", "check the wiki for issues", "semantic lint".
+description: Run a health check on a topic wiki. Two modes — default is the fast mechanical pass (broken links, orphans, stale phrases, missing frontmatter, missing tiers). --full mode adds a semantic pass where the agent reads every entry, finds contradictions, missing cross-references, thin coverage, concept gaps, and tier accuracy, then writes a report. Use when the user says "lint the wiki", "wiki-lint", "wiki health check", "full wiki lint", "wiki-lint --full", "find missing connections in the wiki", "check the wiki for issues", "semantic lint". Not for entries past their review date (/wiki-refresh) or for claim-level contradictions scored by source (/wiki-claims).
 last_reviewed: 2026-09-08
 review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1

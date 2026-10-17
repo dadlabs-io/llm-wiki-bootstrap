@@ -1,6 +1,6 @@
 ---
 name: wiki-cycle
-description: Run the full research cycle — discover, triage, ingest, check, lint, fix, report. Maintains a scratchpad so the run can be resumed if interrupted. This is the "update the wiki" command. Use when the user says "update the database", "run the cycle", "wiki-cycle", "update the wiki", "full wiki update".
+description: Run the full research cycle — discover, triage, ingest, check, lint, fix, report. Maintains a scratchpad so the run can be resumed if interrupted. This is the "update the wiki" command. Use when the user says "update the database", "run the cycle", "wiki-cycle", "update the wiki", "full wiki update". Not for one source the user hands over (/wiki-update) or for promoting entries already staged (/wiki-promote).
 last_reviewed: 2026-10-03
 review_after: 2027-01-01
 reviewed_for_model: claude-opus-5-5

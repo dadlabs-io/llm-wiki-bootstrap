@@ -1,6 +1,6 @@
 ---
 name: wiki
-description: Show this project's wiki INDEX (folder tree + curated file list with summaries). Use when the user says "show me the wiki", "what's in the wiki", "list wiki topics", or wants to browse what's been captured.
+description: Show this project's wiki INDEX (folder tree + curated file list with summaries). Use when the user says "show me the wiki", "what's in the wiki", "list wiki topics", or wants to browse what's been captured. Not for answering a question from the wiki (/wiki-search).
 last_reviewed: 2026-09-15
 review_after: 2026-12-15
 reviewed_for_model: claude-opus-5

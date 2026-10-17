@@ -1,6 +1,6 @@
 ---
 name: wiki-promote
-description: Promote staged wiki entries from _inbox/proposed/ to wiki/. Reviews what's pending, lets the user approve/reject, then moves approved entries to their target folder, adds backlinks, rebuilds the backlink blocks so no new entry is an orphan, regenerates the indexes and map, and re-indexes the search. Use when the user says "promote", "approve wiki entries", "what's in proposed", "wiki-promote", "move proposed to wiki".
+description: Promote staged wiki entries from _inbox/proposed/ to wiki/. Reviews what's pending, lets the user approve/reject, then moves approved entries to their target folder, adds backlinks, rebuilds the backlink blocks so no new entry is an orphan, regenerates the indexes and map, and re-indexes the search. Use when the user says "promote", "approve wiki entries", "what's in proposed", "wiki-promote", "move proposed to wiki". Not for filing a new source (/wiki-update) or for marking an entry as checked (/wiki-verify).
 last_reviewed: 2026-09-25
 review_after: 2026-12-24
 reviewed_for_model: claude-fable-5-1

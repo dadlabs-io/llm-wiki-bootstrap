@@ -1,6 +1,6 @@
 ---
 name: wiki-discover
-description: Discover new content for a topic wiki by searching trusted feeds, deduping against existing entries, and queuing candidates for human review.
+description: Discover new content for a topic wiki by searching trusted feeds, deduping against existing entries, and queuing candidates for human review. Not for ingesting what is already queued (/wiki-cycle --ingest-only) or a source the user hands over (/wiki-update).
 last_reviewed: 2026-10-03
 review_after: 2027-01-01
 reviewed_for_model: claude-opus-5-5

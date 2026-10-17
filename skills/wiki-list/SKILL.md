@@ -1,6 +1,6 @@
 ---
 name: wiki-list
-description: Manage the pending ingestion list for a topic wiki — add items, process the list, or show what's queued. Use when the user says "add to the wiki list", "queue this for the wiki", "process the wiki list", "drain the queue", "what's in the wiki list", "show wiki list", "wiki list add", "wiki list process". Producer/consumer split for low-friction capture (drop URLs throughout the day, batch process later).
+description: Manage the pending ingestion list for a topic wiki — add items, process the list, or show what's queued. Use when the user says "add to the wiki list", "queue this for the wiki", "process the wiki list", "drain the queue", "what's in the wiki list", "show wiki list", "wiki list add", "wiki list process". Producer/consumer split for low-friction capture (drop URLs throughout the day, batch process later). Not for one source to file now (/wiki-update) or for sorting queued tickets among readers (/wiki-triage).
 last_reviewed: 2026-09-08
 review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1

@@ -1,6 +1,6 @@
 ---
 name: wiki-claims
-description: Extract factual claims from wiki entries, classify them (direct-quote/sourced/synthesis/inference), compare across entries, flag contradictions at the sentence level, and score how many independent sources back each claim. Use when the user says "extract claims", "find contradictions", "wiki-claims", "claim analysis", "what contradicts what".
+description: Extract factual claims from wiki entries, classify them (direct-quote/sourced/synthesis/inference), compare across entries, flag contradictions at the sentence level, and score how many independent sources back each claim. Use when the user says "extract claims", "find contradictions", "wiki-claims", "claim analysis", "what contradicts what". Not for checking one staged entry against its own raw (the wiki-checker, in /wiki-cycle) or for finding stale entries (/wiki-refresh).
 last_reviewed: 2026-10-13
 review_after: 2027-01-13
 reviewed_for_model: claude-opus-5-5

@@ -1,6 +1,6 @@
 ---
 name: wiki-report
-description: "Generate a morning report summarizing wiki health, recent changes, pending items, contradictions, stale entries, and promotion candidates. The batch summary for human review checkpoint #2. Use when the user says \"morning report\", \"wiki report\", \"wiki status\", \"what changed in the wiki\", \"wiki-report\", \"show me the wiki health\"."
+description: "Generate a morning report summarizing wiki health, recent changes, pending items, contradictions, stale entries, and promotion candidates. The batch summary for human review checkpoint #2. Use when the user says \"morning report\", \"wiki report\", \"wiki status\", \"what changed in the wiki\", \"wiki-report\", \"show me the wiki health\". Not for finding or fixing problems itself (/wiki-lint) or for running the cycle (/wiki-cycle)."
 last_reviewed: 2026-09-08
 review_after: 2026-12-08
 reviewed_for_model: claude-fable-5-1
