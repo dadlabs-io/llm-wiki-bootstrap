@@ -1,10 +1,16 @@
 # Skill test baselines
 
-A standing test for each shipped skill: one of each kind of input the skill handles, run by a real Claude session into a throwaway sandbox, then checked by a script. A **behavioural** change to a skill (or to a script it calls) is installed once its new cases run red then green (below), on both models; it is then logged in [PENDING.md](PENDING.md) for the week's full run.
+A standing test for each shipped skill: one of each kind of input the skill handles, run by a real Claude session into a throwaway sandbox, then checked by a script. A **behavioural** change to a skill (or to a script it calls) is installed once its new cases run red then green (below), on both models, **and** the full suite of each changed skill is at least as good as its baseline.
 
-A **small** change — wording, a clarified flag, a typo — needs no run of its own: install it and log it in PENDING.md too.
+A **small** change — wording, a clarified flag, a typo — needs no run of its own: install it and log it in [PENDING.md](PENDING.md); the next full run of that skill checks it.
 
-**The full suites run weekly**, over every skill with a PENDING row, and also when something looks wrong in real use (Mark, 2026-10-17). Why: the targeted red-then-green cases found every real defect so far (Sonnet forcing past a duplicate, a step read as optional, a wording gap a large context slipped through), while full runs before each change cost $40-90 and came back "0 regressions" run after run. A skill with no baseline at all is never installed on a pending row — there the first run is the baseline.
+**A sweep of every suite runs only on a named trigger, with Mark's yes** (Mark, 2026-10-17; the same rule as agent-builder's), never on a calendar:
+- a model change: a suite's model list, or a `model_default` in `wiki-ingester-config.json`, `wiki-checker-config.json` or `skills/wiki-cycle/helper-models.json`;
+- a change to the runner's grading (`run_skill_test.py`, `_trajectory.py`, `_jsonl_cases.py`) or to a script many skills call (`_entry_checks.py`, `_wiki_config.py`, the search helper); a purely additive check does not count;
+- a suite not run in a long while, before a change that depends on it ships;
+- something looks wrong in real use.
+
+Why: the targeted red-then-green cases found every real defect so far (Sonnet forcing past a duplicate, a step read as optional, a wording gap a large context slipped through), while full runs cost $40-90 a skill and came back "0 regressions" run after run. A skill with no baseline at all is never installed on a pending row — there the first run is the baseline.
 
 ## Who writes the cases
 
