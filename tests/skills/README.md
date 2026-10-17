@@ -1,8 +1,10 @@
 # Skill test baselines
 
-A standing test for each shipped skill: one of each kind of input the skill handles, run by a real Claude session into a throwaway sandbox, then checked by a script. A **behavioural** change to a skill (or to a script it calls) is not installed until its run is at least as good as the baseline.
+A standing test for each shipped skill: one of each kind of input the skill handles, run by a real Claude session into a throwaway sandbox, then checked by a script. A **behavioural** change to a skill (or to a script it calls) is installed once its new cases run red then green (below), on both models; it is then logged in [PENDING.md](PENDING.md) for the week's full run.
 
-A **small** change — wording, a clarified flag, a typo — does not earn a run of its own: install it and log it in [PENDING.md](PENDING.md), and the next run for that skill checks it (the user, 2026-09-17; a full run costs real money, and the suite exists to catch behavioural regressions). Run the suite when a skill's pending list is worth a run, when a behavioural change lands on top of it, or when something looks wrong in real use. A skill with no baseline at all is never installed on a pending row — there the first run is the baseline.
+A **small** change — wording, a clarified flag, a typo — needs no run of its own: install it and log it in PENDING.md too.
+
+**The full suites run weekly**, over every skill with a PENDING row, and also when something looks wrong in real use (Mark, 2026-10-17). Why: the targeted red-then-green cases found every real defect so far (Sonnet forcing past a duplicate, a step read as optional, a wording gap a large context slipped through), while full runs before each change cost $40-90 and came back "0 regressions" run after run. A skill with no baseline at all is never installed on a pending row — there the first run is the baseline.
 
 ## Who writes the cases
 
