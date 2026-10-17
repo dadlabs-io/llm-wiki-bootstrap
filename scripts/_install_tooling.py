@@ -75,6 +75,7 @@ TRAVEL_SCRIPTS = [
     "wiki-list-render.py",
     "wiki-map-compile.py",
     "wiki-promote.py",
+    "wiki-raw-parts.py",  # splits a raw too big for one reader into heading-aligned parts with a coverage-checked index (task #163 A, 2026-10-17)
     "wiki-qmd-query.py",  # full qmd search behind three GPU slots (two before qmd 2.8.3), no keyword fallback, per-call wait/run log (2026-09-13); keyword-only on a machine with no GPU (search_mode, 2026-10-02)
     "wiki-reciprocate-backlinks.py",
     "wiki-rollback.py",
