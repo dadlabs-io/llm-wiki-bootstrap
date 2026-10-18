@@ -150,6 +150,28 @@ def resolve_successor(f, value, wiki_root):
     return None
 
 
+# Design pages behind their notes (task #171, 2026-10-18): investment-agent filed a month of
+# decisions and change records while its architecture pages were never revised, because every
+# step only added notes and promote only appended backlinks. A design page is one under these
+# folders, or any page marked `keep_current: true`; a note is one under the note folders.
+DESIGN_FOLDERS = {("project", "architecture"), ("project", "components")}
+NOTE_FOLDERS = {("project", "decisions"), ("project", "changes"), ("project", "troubleshooting")}
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
+
+
+def is_design_page(rel, fm):
+    return tuple(rel.parts[:2]) in DESIGN_FOLDERS or fm.get("keep_current", "").strip().lower() == "true"
+
+
+def is_note(rel):
+    return tuple(rel.parts[:2]) in NOTE_FOLDERS
+
+
+def day(value):
+    m = DATE_RE.match((value or "").strip())
+    return m.group(0) if m else None
+
+
 def parse_frontmatter(content):
     """Return (frontmatter_dict, body) from a markdown file."""
     m = FRONTMATTER_RE.match(content)
@@ -481,6 +503,10 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     supersede_bad_target = []  # (file, value, detail) — superseded_by names no entry
     supersede_no_backlink = []  # (file, successor) — the successor never names the retired entry
 
+    # Design pages behind their notes (task #171). Warn-only.
+    design_since = {}         # resolved design page -> the day it was last revised (last_reviewed, else date)
+    note_day = {}             # resolved note -> its date
+
     for f in files:
         try:
             content = f.read_text(encoding="utf-8")
@@ -521,6 +547,13 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                 supersede_no_backlink.append((f, succ))
 
         rel_f = f.relative_to(wiki_root)
+        if not is_superseded(split_frontmatter(content)[0]):
+            if is_design_page(rel_f, fm):
+                since = day(fm.get("last_reviewed")) or day(fm.get("date"))
+                if since:
+                    design_since[f.resolve()] = since
+            elif is_note(rel_f) and day(fm.get("date")):
+                note_day[f.resolve()] = day(fm.get("date"))
         if renamed_terms and renamed_terms_in_scope(rel_f, tier_value) \
                 and not is_superseded(split_frontmatter(content)[0]):
             for n, old, new, line in renamed_term_hits(content, renamed_terms):
@@ -714,6 +747,16 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
         else:
             standalone.append((f, declared))
 
+    # Pass 4: design pages behind their notes — a note linked either way, dated after the page's last revision
+    design_behind = []        # (file, since, [(note_file, note_day)] newest first)
+    for d_res, since in design_since.items():
+        linked = set(outgoing_links[d_res]) | {n for n in note_day if d_res in outgoing_links.get(n, ())}
+        newer = sorted(((file_map[n], note_day[n]) for n in linked if n in note_day and note_day[n] > since),
+                       key=lambda t: (t[1], t[0].name), reverse=True)
+        if newer:
+            design_behind.append((file_map[d_res], since, newer))
+    design_behind.sort(key=lambda t: (-len(t[2]), t[0].relative_to(wiki_root).as_posix()))
+
     # Render report
     installed_fm_issues, installed_fm_scanned = scan_installed_frontmatter()
     qmd_status = qmd_index_coverage(wiki_root)
@@ -779,6 +822,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                f"entries failing a hard rule={body_err_files}, warnings-only={body_warn_files}")
     out.append(f"**Code drift (`describes`)**: changed={len(describes_changed)}, "
                f"invalid={len(describes_invalid)}, not checked={len(describes_unchecked)}")
+    out.append(f"**Design pages behind their notes**: {len(design_behind)}")
     out.append(f"**Renamed terms left**: {len(renamed_hits)}"
                + ("" if renamed_terms else " (no renamed-terms table)" if renamed_terms is None
                   else " (the renamed-terms table has no rows)"))
@@ -1161,6 +1205,24 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
         out.append("")
     out.append("")
 
+    # Section: design pages behind their notes (2026-10-18, task #171)
+    out.append("## 🧭 Design Pages Behind Their Notes")
+    out.append("")
+    out.append("A design page (under `project/architecture/` or `project/components/`, or any page marked "
+               "`keep_current: true`) that a decision, change or troubleshooting note links to, or that links to one, "
+               "where the note is dated after the page's `last_reviewed` (else its `date`). The note may have changed "
+               "what the page describes: read each note, rewrite the parts of the page it makes untrue, then set the "
+               "page's `last_reviewed` to today. A backlink line is not a revision. Warn-only.")
+    out.append("")
+    if not design_behind:
+        out.append("_None: every design page is as new as the notes linked to it._")
+    for f, since, newer in design_behind:
+        n = len(newer)
+        out.append(f"- `{f.relative_to(wiki_root).as_posix()}` — {n} newer note{'s' if n != 1 else ''} since {since}: "
+                   + ", ".join(f"`{nf.relative_to(wiki_root).as_posix()}` ({nd})" for nf, nd in newer[:5])
+                   + (f", and {n - 5} more" if n > 5 else ""))
+    out.append("")
+
     # Section: renamed terms (2026-10-14, task #132)
     out.append("## 🏷️ Renamed Terms Left")
     out.append("")
@@ -1220,6 +1282,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             "invalid_confidence": len(invalid_confidence),
             "unquoted_yaml": len(unquoted_yaml),
             "task_problems": len(task_problems),
+            "design_behind": len(design_behind),
             "renamed_terms_left": len(renamed_hits),
             "supersede_bad_target": len(supersede_bad_target),
             "supersede_no_backlink": len(supersede_no_backlink),
