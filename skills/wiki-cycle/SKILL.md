@@ -139,15 +139,14 @@ It writes `semantic-scope.txt`: the entries added or revised since the last sema
 
 **Step 5 — Fix lint issues.** Show the findings; apply what the user approves (fix agents by category, up to 3, on Step 0's `lint fixes` model). A finding that would edit a `framework-contract: true` doc goes to the user instead: the docs refresh overwrites such edits.
 
-**Step 5.5 — Promote** (`--full`, before Steps 6 and 6.5, which read `wiki/`; in the other modes Step 6.5 takes only what is already in `wiki/`). Promote every staged entry not held by the checker in **one** run, naming each with its own `--slug` (the run rebuilds links, indexes, MAP and the search index once; one run per slug rebuilt the whole notebook each time), then normalise links and confirm:
+**Step 5.5 — Promote** (`--full`, before Steps 6 and 6.5, which read `wiki/`; in the other modes Step 6.5 takes only what is already in `wiki/`). Promote every staged entry not held by the checker in **one** run, naming each with its own `--slug` (the run fixes the moved entries' links, rebuilds backlinks, indexes, MAP and the search index once; one run per slug rebuilt the whole notebook each time), then confirm:
 
 ```bash
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --auto --slug <a> --slug <b> ...   # every entry not held
-uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <notebook>
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook>                   # 0 broken links before going on
 ```
 
-Then re-run Step 3.5 (promotion adds entries and backlinks at once). Each promotion also re-indexes the search itself, so Steps 6 and 6.5 search the promoted entries. If the user wants staged entries held even in a `--full` run, skip this and tell Steps 6 and 6.5 to treat `_inbox/proposed/` as out of scope.
+Never run `wiki-fix-links.py` across the notebook here: the promote script already ran it, scoped to the moved entries, and an unscoped run rewrites links in entries nobody promoted. Re-run Step 3.5's three scripts with `--cycle-id` only so the run folder's step files describe the notebook after promotion (they are idempotent; the promote script already did the work). Each promotion also re-indexes the search itself, so Steps 6 and 6.5 search the promoted entries. If the user wants staged entries held even in a `--full` run, skip this and tell Steps 6 and 6.5 to treat `_inbox/proposed/` as out of scope.
 
 **Step 6 — Claims** (`--full`; `--claims-only`). Scope: `wiki-cycle-scope.py --topic <notebook> claims --run-folder <run-folder>` (`--all` with `--lint-all`): entries with no claims in the index, or revised since it was written. Follow `/wiki-claims` over that scope: append to the index, never rebuild it, and write `claims.json` + `.md`.
 

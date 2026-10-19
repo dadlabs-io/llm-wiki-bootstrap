@@ -101,7 +101,7 @@ Flag three categories:
 - `cycle_id` = `<date>-<NN>` (e.g. `2026-04-24-01`). If invoked standalone (not inside a `/wiki-cycle` run), determine `NN` by scanning the day's existing folders.
 - Also write `<cycle_id>-run-cycle-report.json` alongside it — the aggregated JSON union of per-step JSONs (see [cycle-step-return-format best practice]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md)).
 
-**Data source — when running inside `/wiki-cycle`**: read the per-step JSONs from `<run-folder>/` (`discover.json`, `update.json`, `lint-mechanical.json`, `lint-semantic.json`, `refresh.json`, `claims.json`). The report is assembled from those — don't re-run steps.
+**Data source — when running inside `/wiki-cycle`**: read the per-step JSONs from `<run-folder>/` (`discover.json`, `update.json`, `lint-mechanical.json`, `lint-semantic.json`, `refresh.json`, `claims.json`, `synthesis.json`), `cost.md`, and the triage step's retry list and unmatched PDFs (`wiki-triage.py retry-list --cycle <cycle_id>`, `attach-pdfs`'s output). The report is assembled from those — don't re-run steps.
 
 **Data source — when running standalone**: fall back to the Step 1 data-gathering commands (git log, filesystem scans). No per-step JSONs to read.
 
@@ -114,6 +114,7 @@ The MD report template:
 **Cycle**: <cycle_id> (<date> iteration <NN>)
 **Entries**: N (±N since last report)
 **Health**: <lint summary — broken/orphans/missing>
+**Cost**: $N, Claude Code's estimate, from `<run-folder>/cost.md` (or "not checked" when cost.json says so; standalone: omit the line)
 
 ---
 
@@ -269,9 +270,12 @@ Everything waiting on the user, one line each, with what to do and where:
 - <N> entries to promote — `/wiki-promote --review`
 - <N> held by the checker — each with its report path
 - **Save as PDF**: each page no fetcher could get, its link, and the folder to save it into, written out as a full path the user can paste into Chrome's Save dialog: the intake folder its ticket waits in (e.g. `C:\github.com\project-notebooks\notebooks\agentic-design\_inbox\intake\llm-wiki\`). Open it in Chrome, Print → Save as PDF into that folder (any intake folder, or the Drive folder, works); the next cycle attaches each PDF to its ticket
+- <N> PDFs `attach-pdfs` could not match — each file and the tickets it might belong to
+- <N> items left for retry — each link and why, and the task card each reader got
 - <N> files left in Drive — each name and why
 - <N> email candidates not yet approved (an unattended run) — the next reviewed run asks
-- lint fixes or a synthesis proposal awaiting approval — where they are
+- lint fixes awaiting approval — where they are
+- Best-practices synthesis awaiting your approval (when `synthesis.json` says `awaiting_approval`): N entries, `<run-folder>/synthesis.md`
 
 (If nothing waits: "Nothing.")
 ```

@@ -35,15 +35,13 @@ If a holistic question arrives here anyway, say which tool it wants and offer to
 
 If it fails on a full machine, **stop and report it** — do not fall back to `qmd search`, a cloud model, or CPU mode and carry on, and do not switch the machine to keyword to get past it (that is the user's call, for a machine with no GPU). The known fix is the CUDA 13.2 runtime (`winget install --id Nvidia.CUDA --version 13.2 --exact --override "-s cudart_13.2 cublas_13.2"`; node-llama-cpp's prebuilt binary needs 13.1+), and a shell opened before that install lacks the CUDA PATH until restarted. Run the full search through `wiki-qmd-query.py` (below): it applies the 120-second timeout (killing the whole process tree, so no orphaned search holds the GPU), and it holds one of three GPU slots: qmd 2.8.3 sizes its model pools from the weight files, and three concurrent searches fit the 8 GB GPU (peak 7.7 of 8.2 GB, tested 2026-09-14; on qmd 2.1.0 a third failed with "Failed to create any rerank context", so the limit was two) — a fourth caller waits for a slot. `wiki-qmd-query.py --preflight` runs this same GPU check and warns when qmd is older than 2.8.3 (upgrade with `npm i -g @tobilu/qmd@latest`, or set `WIKI_QMD_SLOTS=2`). Everyone — the session and parallel ingest workers alike — uses the full search; there is no keyword fallback (user decision 2026-09-13). If batches get slow, `wiki-qmd-query.py --stats` shows how long searches waited for a slot; the remedy is fewer parallel workers.
 
-## Three search modes
+## The search
 
-On a keyword machine only the first command runs, and it runs keyword search; the semantic row is not available there.
+Every search goes through the helper: it scopes to the notebook, drops machine files and task cards, holds a GPU slot and logs the search (2026-10-19: the raw `qmd search` and `qmd vsearch` rows searched every notebook unfiltered, against the 2026-09-13 decision that everyone uses the full search). On a keyword machine the same command runs keyword search.
 
 | Mode | Command | When to use |
 |---|---|---|
 | **Hybrid + rerank** (recommended) | `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<query>"` | Best quality. Combines keyword + semantic + reranking with qmd's bundled models on the GPU (on a keyword machine: keyword only, no model). Use by default — after the preflight above; the helper adds the timeout and the GPU slot. It searches the current project's notebook by default; `--notebook <name>` picks another, `--all-notebooks` searches every one — use that when the user asks for everything or the question is plainly about another notebook, and say which was searched. `-k` results (default 30); `-C` the most candidates the reranker may score (default 120 — qmd's pool tops out near 100, so it never cuts; the helper's status line shows how many were reranked). `_MAP`/`_INDEX` and task cards (`wiki/tasks/`) are dropped from results. Other `qmd query` options pass through (`--json`, `--min-score`). On a full machine it then lists up to 20 entries only the word-pair keyword search found, under `## Also found by keyword search` (in `--json`, rows marked `"found_by": "keyword"`; the ranked rows are `"full"`): not reranked, so weigh them below the ranked results and open one before relying on it; `--keyword-extra 0` leaves them out. |
-| **Keyword only** | `qmd search "<query>"` | Fast, no LLM. Good for exact terms, file names, specific phrases. |
-| **Semantic only** | `qmd vsearch "<query>"` | When you're searching by concept, not specific words ("how do agents handle stale knowledge"). Full machines only: it loads the embedding model. |
 
 ## What to ask the user (only if not provided)
 
@@ -62,12 +60,6 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query
 # Did C ever cut the reranker's pool? (sampled titles; exit 1 = C reached, raise it; /wiki-cycle --full runs it)
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py --depth-check --notebook <name>
 
-# Keyword search (fast, no LLM)
-qmd search "silent poisoning mem0"
-
-# Semantic search (meaning-based)
-qmd vsearch "how should we handle stale knowledge"
-
 # Get a specific file
 qmd get "qmd://wiki/path/to/file.md"
 
@@ -80,18 +72,18 @@ qmd ls
 1. Show the results to the user (file paths + scores + snippets)
 2. If results look promising, **offer to read one of the matched files** with the Read tool for full context
 2a. **Cite only what you opened (added 2026-09-16).** A hit proves an entry exists, not what it says: the snippet is a fragment picked for similarity to the *query*, and the entry may qualify it, attribute it to a source it rejects, or be superseded by the entry below it. Rely on or quote an entry only after reading it; otherwise offer it as an unread pointer ("there's an entry on X I haven't opened"). Contract: `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/tiered-context-loading.md`.
-3. If zero results on `qmd search`, try the full search (`wiki-qmd-query.py`, adds semantic matching on a full machine) or rephrase the query
+3. If zero results, rephrase with the words an entry would use, or widen with `--all-notebooks` and say so
 4. For browsing what exists, use `/wiki` slash command to show the INDEX
 5. **File the answer, or let it go (added 2026-09-08).** Once the question is answered, decide whether the answer is worth keeping. File-worthy: a comparison the user is likely to revisit; a connection between entries the wiki did not already state; a synthesis across three or more entries; an answer to a gap the wiki could not fill (that one is a `concept-gaps` candidate). Not file-worthy: a plain lookup, a question about wiki structure, a one-off. If file-worthy, ask **once**: "This looks worth keeping — file it as a `project/` entry?" On yes, write the answer to `<topic>/_inbox/temp/<slug>.md` in the entry shape (TL;DR, body, a `## Related` section linking the entries you read) and file it with `wiki-update.py --tier self --no-raw --folder project/<category> --ingested-by claude-code`; if the session will end with `/wrap-up` anyway, hand the answer to that instead. Why: a good answer that stays in the chat is knowledge the wiki paid to derive and then lost (Karpathy's gist names this; the nanzhipro bootstrap skill makes it a step — agentic-design `research/long-term/`).
 
 ## Truth-status rerank (optional; the search spec's surface 1)
 
-When entries carry `verified:` (frontmatter or `_signals/<slug>.json` sidecar), sort qmd's results by truth-status bucket before showing them — `verified` above `unverified`, `temporal` and `contradicted` below, `rolled_back` excluded unless asked for:
+When entries carry `verified:` (frontmatter or `_signals/<slug>.json` sidecar), sort the helper's results by truth-status bucket before showing them — `verified` above `unverified`, `temporal` and `contradicted` below, `rolled_back` excluded unless asked for. Pipe the helper's `--json`, never a raw `qmd search` (unscoped, unfiltered):
 
 ```bash
-qmd search "<query>" --json | uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-search-rerank.py
-qmd search "<query>" --json | uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-search-rerank.py --surface-contradicted   # audit the disagreements
-qmd search "<query>" --json | uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-search-rerank.py --include-rolled-back    # "what did we used to believe"
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<query>" --json | uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-search-rerank.py
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<query>" --json | uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-search-rerank.py --surface-contradicted   # audit the disagreements
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-qmd-query.py "<query>" --json | uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-search-rerank.py --include-rolled-back    # "what did we used to believe"
 ```
 
 Contract: `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-search-bucket-rerank-spec.md`. Entries with no `verified` field all land in the same bucket, so on a wiki that has not started verifying the order is unchanged.
@@ -111,3 +103,4 @@ The collection is configured at: `<vault>/<topic>/wiki/` — the path that was u
 - Don't read every matched file unprompted — show snippets first, ask which to drill into
 - Don't answer from snippets — an unopened entry is a pointer, never a source
 - Don't run `qmd query`, `qmd vsearch` or `qmd embed` on a keyword machine, even to compare: they load a model and hang it on the CPU
+- Don't search with raw `qmd search` or `qmd vsearch`: they search every notebook and return machine files and task cards; the helper is the one search path

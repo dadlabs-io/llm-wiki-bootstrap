@@ -194,6 +194,28 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             unflagged.append(f"{slug}: {answer[spots[0]:spots[0] + 40]!r}")
     add("states facts only from opened entries (others marked as not read)", not unflagged, unflagged)
 
+    if kind == "helper-only":
+        # every search goes through wiki-qmd-query.py; never raw `qmd search` / `qmd vsearch`;
+        # the truth-status rerank is fed the helper's --json output, never raw qmd output
+        cmds = [str(c["input"].get("command", "")) for c in run["tool_calls"] if c["name"] in ("Bash", "PowerShell")]
+        raw_qmd = re.compile(r"(?<![\w-])qmd(?:\.js)?(?![\w-])(?:\s+--index[ =]\S+)?\s+(?:search|vsearch)\b")
+        raw = [seg.strip() for c in cmds for seg in re.split(r"\||;|&&|\n", c) if raw_qmd.search(seg)]
+        add("runs no raw qmd search / vsearch", not raw, raw[:2])
+        if case.get("rerank"):
+            rerank_cmds = [c for c in cmds if "wiki-search-rerank.py" in c]
+            add("ran the truth-status rerank", rerank_cmds, f"{len(rerank_cmds)} rerank calls")
+            helper_json = [c for c in helper_calls if re.search(r"--json\b", c)]
+            piped_wrong = [c for c in rerank_cmds
+                           if "|" in c.split("wiki-search-rerank.py")[0]
+                           and "wiki-qmd-query.py" not in c.split("wiki-search-rerank.py")[0]]
+            add("rerank is fed from the helper's --json output",
+                rerank_cmds and helper_json and not piped_wrong, [helper_json[:1], piped_wrong[:1]])
+        for slug in case.get("must_open", []):
+            add(f"opened {slug}", slug in opened, sorted(opened))
+        for fact in case.get("answer_has", []):
+            add(f"answer states {fact}", re.search(rf"(?<![\d.]){re.escape(fact)}(?!\d|\.\d)", answer), answer[:200])
+        return res
+
     if kind == "gap":
         add("says the wiki does not answer it", SAYS_NO_ANSWER.search(answer), answer[:200])
         add("invents no RPO figure",

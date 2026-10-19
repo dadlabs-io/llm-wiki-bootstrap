@@ -18,6 +18,12 @@
     {"id": "keyword-machine-lookup", "kind": "lookup", "mode": "keyword",
      "env": {"WIKI_SEARCH_MODE": "keyword"},
      "question": "How many documents does Lantern ingest in one batch?",
-     "must_open": ["lantern-ingest-batch-size"], "answer_has": ["250"], "author": "legacy"}
+     "must_open": ["lantern-ingest-batch-size"], "answer_has": ["250"], "author": "legacy"},
+    {"id": "rerank-fed-from-helper-json", "kind": "helper-only", "rerank": true,
+     "question": "List the wiki's entries about Lantern's reranker and Lantern's query latency budget, sorted by truth status with the verified ones first.",
+     "answer_has": [], "author": "eval-case-writer"},
+    {"id": "exact-phrase-via-helper", "kind": "helper-only",
+     "question": "I just want a fast keyword-only lookup, no models or embeddings: which wiki entry contains the exact phrase \"weekly on-call rotation of four engineers\"? Just match the words and tell me which entry it is.",
+     "must_open": ["lantern-on-call"], "answer_has": ["on-call"], "author": "eval-case-writer"}
   ]
 }

@@ -65,11 +65,17 @@ Several picked: promote them in one `wiki-promote.py --topic <topic> --auto --sl
 
 If `--review`: for each entry, show the full TL;DR + Related section before asking approve/reject/skip.
 
-### Step 3 — Promote each approved entry
+### Step 3 — Promote the approved entries with the script
 
-For each entry to promote:
+Promotion is the script's job, never a hand procedure (2026-10-19: the old hand steps here, `mv`, `rm` and `wiki-index.py`, skipped the backlink rebuild, the folder indexes, the map and the re-index the script does):
 
-1. **Read the metadata file** (`<slug>.proposed_metadata.json` — DOT form — next to the entry):
+```bash
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <topic> --auto --slug <a> [--slug <b> ...]   # or --auto alone for all
+```
+
+For each entry it reads the sidecar, moves the entry to `wiki/<target_folder>/`, removes `status: proposed`, adds the suggested backlinks to the Related sections of older entries, deletes the sidecar, then once for the run: fixes the moved entries' links, rebuilds the backlink blocks, regenerates the indexes and map, and re-indexes the search. What it reads:
+
+1. **The metadata file** (`<slug>.proposed_metadata.json` — DOT form — next to the entry):
    ```json
    {
      "target_folder": "research/tooling",
@@ -79,41 +85,11 @@ For each entry to promote:
    ```
    `target_folder` is the FULL taxonomy path (`research/<sub>` or `project/<sub>`). A notebook's own folder outside the framework's list (agentic-design's `research/agents`) is known when it carries a `README.md` saying what it is for; a folder without one is still promoted, with a warning to check the spelling or add the README (2026-09-24). `suggested_backlinks[]` items are objects (see the staged-ingest sidecar contract in `wiki-update/SKILL.md`). `wiki-promote.py` tolerates legacy/hand-authored variants (underscore filename, bare-string backlinks, bare-leaf `target_folder`) by normalizing them, but new sidecars should conform.
 
-2. **Move the entry** from `_inbox/proposed/` to `wiki/<target_folder>/`:
-   ```bash
-   mv <topic>/_inbox/proposed/<slug>.md <topic>/wiki/<target_folder>/<slug>.md
-   ```
+2. **The backlinks** it adds go in each older entry's Related section, above the Source/Raw footer (entry layout: body → footer → auto backlinks block), never as a `## See also` at the end (`add_related_link()` in `_entry_checks.py`). This is the deferred Step 5-6 from `/wiki-update --staged`.
 
-3. **Remove `status: proposed`** from frontmatter (edit the moved file).
+### Step 3.5 — Links after promotion: the script does it, scoped
 
-4. **Add backlinks** to existing entries — use the `suggested_backlinks` from metadata. For each:
-   - Read the target file
-   - Find the Related section — it sits above the Source/Raw footer (entry layout: body → footer → auto backlinks block)
-   - Add the backlink there, never as a `## See also` at the end of the file (`wiki-promote.py` does this through `add_related_link()` in `_entry_checks.py`; until 2026-09-14 it appended See also after the backlinks block)
-   - This is the deferred Step 5-6 from `/wiki-update --staged`
-
-5. **Delete the metadata file**:
-   ```bash
-   rm <topic>/_inbox/proposed/<slug>.proposed_metadata.json
-   ```
-
-6. **Regenerate INDEX**:
-   ```bash
-   uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-index.py \
-     --topic <topic>
-   ```
-
-### Step 3.5 — Normalize links on promoted entries (ALWAYS)
-
-After moving entries into `wiki/`, run the link normalizer:
-
-```bash
-uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-fix-links.py --topic <topic>
-```
-
-Ingest agents author cross-links by BARE slug (`[Title](other-slug.md)`) per the staged-ingest contract. `wiki-promote.py` recomputes the entry's own relative links (raw_path footer + `./`/`../` links) robustly on move, but BARE-slug body links to entries in OTHER folders only become valid once resolved to `../folder/slug.md`. `wiki-fix-links.py` does that resolution deterministically (idempotent; 0-ambiguous/0-missing on a clean run). Skipping it is the recurring "~50 broken links after promote" bug. Then re-run `wiki-lint-mechanical.py` to confirm 0 broken links before reciprocate/index/map.
-
-`wiki-promote.py` runs all of this itself after a promotion, in order: `wiki-fix-links.py` (scoped to the entries it moved), then `wiki-reciprocate-backlinks.py`, then the folder indexes and the map. The backlink rebuild is what keeps a promoted entry from being an orphan: the entry links out to older ones, and until their `BACKLINKS-AUTO` blocks name it, nothing links to it (until 2026-09-25 only `/wiki-cycle` ran it, so every `/wrap-up` left its new entries orphaned). It rebuilds every block in the notebook and is idempotent, so a notebook whose blocks were behind catches up on its next promotion.
+Ingest agents author cross-links by bare slug (`[Title](other-slug.md)`); they become valid once resolved to `../folder/slug.md`. `wiki-promote.py` runs `wiki-fix-links.py` itself, **scoped to the entries it moved**, then `wiki-reciprocate-backlinks.py`, then the folder indexes and the map. Do not run `wiki-fix-links.py` across the whole notebook after a promotion: unscoped, it rewrites links in entries nobody promoted (2026-09-17, the normaliser finding). To confirm, run `wiki-lint-mechanical.py --topic <topic>`: 0 broken links. The backlink rebuild is what keeps a promoted entry from being an orphan: the entry links out to older ones, and until their `BACKLINKS-AUTO` blocks name it, nothing links to it (until 2026-09-25 only `/wiki-cycle` ran it, so every `/wrap-up` left its new entries orphaned). It rebuilds every block in the notebook and is idempotent, so a notebook whose blocks were behind catches up on its next promotion.
 
 ### Step 4 — Report
 
@@ -149,7 +125,7 @@ To release a held entry:
 - Proposed entries: `_inbox/proposed/`
 - Rejected entries: `_inbox/rejected/`
 - Metadata files: `<slug>.proposed_metadata.json` (DOT form, adjacent to the entry)
-- INDEX script: `{{WIKI_SCRIPTS_DIR}}/wiki-index.py`
+- Promote script: `{{WIKI_SCRIPTS_DIR}}/wiki-promote.py` (moves, backlinks, links, indexes, map, re-index)
 
 ## Don't
 

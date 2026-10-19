@@ -15,6 +15,12 @@
      "author": "eval-case-writer"},
     {"id": "empty-staging-says-nothing-staged", "kind": "empty",
      "say": "promote everything that's staged",
+     "author": "eval-case-writer"},
+    {"id": "promote-all-leaves-unrelated-entry-untouched", "kind": "promote-all-scoped", "staged": "two",
+     "say": "promote all",
+     "author": "eval-case-writer"},
+    {"id": "pick-one-by-number-one-script-run-no-hand-steps", "kind": "pick-one-script", "staged": "three",
+     "say": "promote number 2 from staging, that's the chunk size decision entry, and leave the other two where they are",
      "author": "eval-case-writer"}
   ]
 }

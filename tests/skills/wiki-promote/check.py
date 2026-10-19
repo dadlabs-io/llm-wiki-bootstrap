@@ -206,6 +206,46 @@ def _date_shown(win: str, date: str) -> bool:
     return date in win or bool(re.search(rf"{MONTHS}[a-z]*\.?\s+0?{day}\b|\b0?{day}\s+{MONTHS}", win, re.I))
 
 
+UNRELATED = "research/tooling/older-retrieval-survey.md"  # live entry with bare-slug links; nobody promotes it
+
+
+def _cmds(run: dict) -> list[str]:
+    """Shell commands the session ran that were not refused."""
+    errs = run.get("error_texts") or {}
+    return [str((c.get("input") or {}).get("command") or "") for c in (run.get("tool_calls") or [])
+            if c.get("name") in ("Bash", "PowerShell") and c.get("id") not in errs]
+
+
+def _promote_script_checks(add, run: dict, slugs: list[str], others: list[str], auto_ok: bool) -> None:
+    """One wiki-promote.py run, no hand steps. Picking is judged by the slugs the run names, not by whether
+    --auto is present: --auto (aliases --auto-promote, --all) is the non-interactive mode flag every
+    non-review run needs, and --slug narrows it to the named entries; with no --slug, --auto promotes
+    everything staged. So a pick passes when the run names each picked entry with --slug (with --auto or not)
+    and names no entry that was not picked; an 'all' request (auto_ok) passes on a mode flag alone, or on
+    --slug naming every staged entry."""
+    cmds = _cmds(run)
+    runs = [c for c in cmds if re.search(r"wiki-promote\.py", c) and "--check" not in c]
+    add("promotion ran through wiki-promote.py in one run", len(runs) == 1, [c[:200] for c in runs])
+    if len(runs) == 1:
+        c = runs[0]
+        names_all = "--slug" in c and all(s in c for s in slugs)
+        has_mode = bool(re.search(r"--(?:auto|auto-promote|all)\b", c))
+        if auto_ok:
+            ok = has_mode or names_all
+            label = "the run promotes everything staged: --auto (or alias), or --slug naming every staged entry"
+        else:
+            ok = names_all
+            label = "the run names each picked entry with --slug (with --auto or not)"
+        add(label, ok, c[:200])
+        add("the run names none of the entries that were not picked", not any(s in c for s in others), c[:200])
+    hand_mv = [c[:200] for c in cmds if re.search(r"(?:^|[;&|(\s])(?:git\s+)?mv\s", c)]
+    hand_rm = [c[:200] for c in cmds if re.search(r"(?:^|[;&|(\s])rm\s[^;&|]*proposed_metadata", c)]
+    hand_idx = [c[:200] for c in cmds if re.search(r"wiki-index\.py", c)]
+    add("no hand mv of entries", not hand_mv, hand_mv)
+    add("no hand rm of sidecars", not hand_rm, hand_rm)
+    add("session did not run wiki-index.py itself", not hand_idx, hand_idx)
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     res: list[dict] = []
 
@@ -395,6 +435,30 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         bad = [k for k in new + changed + gone if k.startswith(("wiki/", "raw/", "_inbox/"))]
         add("nothing under wiki/, raw/ or _inbox/ added, changed or removed", not bad, bad)
         add("says there is nothing in staging", _says_nothing_staged(text), _final(run)[-200:])
+        return res
+
+    if kind == "promote-all-scoped":
+        promoted(BM25)
+        promoted(EVICT)
+        left = sorted(p.name for p in prop.iterdir()) if prop.is_dir() else []
+        add("nothing left in _inbox/proposed/", not left, left)
+        live = nb / "wiki" / UNRELATED
+        orig = HERE / "fixtures" / "seed-notebook" / "wiki" / UNRELATED
+        add("the unrelated older entry is byte-for-byte unchanged (no unscoped link rewrite)",
+            live.is_file() and live.read_bytes() == orig.read_bytes())
+        _promote_script_checks(add, run, [BM25, EVICT], [CHUNK], auto_ok=True)
+        reported(BM25)
+        reported(EVICT)
+        return res
+
+    if kind == "pick-one-script":
+        promoted(CHUNK)
+        still_staged(BM25)
+        still_staged(EVICT)
+        files = [p.relative_to(nb).as_posix() for p in rej.rglob("*") if p.is_file()] if rej.is_dir() else []
+        add("nothing in _inbox/rejected/", not files, files)
+        _promote_script_checks(add, run, [CHUNK], [BM25, EVICT], auto_ok=False)
+        reported(CHUNK)
         return res
 
     raise ValueError(f"unknown case kind: {case['id']} ({kind})")
