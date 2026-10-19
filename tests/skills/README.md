@@ -46,7 +46,7 @@ A case written for a behavioural change proves the change only if it **fails on 
 uv run python tests/skills/run_skill_test.py wiki-update --cases <new-case>,<changed-case> --red-green <ref before the change>
 ```
 
-Each case runs on an export of that ref (its skill **and** its scripts, agents and docs, so a change made in a script counts), then on the working tree. The report's Red then green table gives each case and model one verdict: red then green (proves the change, with the checks that failed on the old copy, so you can see it failed for the right reason), passes on the old copy too, fails on the new copy. The exit code is 0 only when every case is red then green. A case that passes on the old copy goes back to `eval-case-writer` (mode `replay`) with the old run's reply; it is not counted as proof. The old copy's sessions cost the same as the new ones: run only the new and changed cases this way, then the suite as usual.
+Each case runs on an export of that ref (its skill **and** its scripts, agents and docs, so a change made in a script counts), then on the working tree. The report's Red then green table gives each case and model one verdict: red then green (proves the change, with the checks that failed on the old copy, so you can see it failed for the right reason), passes on the old copy too, fails on the new copy. The exit code is 0 only when every case is red then green. A case that passes on the old copy goes back to `eval-case-writer` (mode `replay`) with the old run's reply; it is not counted as proof. The old copy's sessions cost the same as the new ones: run only the new and changed cases this way. Nothing more runs by default; a full suite waits for Mark's yes (above).
 
 ## Nothing reads clean that checked nothing
 

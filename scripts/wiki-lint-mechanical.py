@@ -155,7 +155,7 @@ def resolve_successor(f, value, wiki_root):
 # step only added notes and promote only appended backlinks. A design page is one under these
 # folders, or any page marked `keep_current: true`; a note is one under the note folders.
 DESIGN_FOLDERS = {("project", "architecture"), ("project", "components")}
-NOTE_FOLDERS = {("project", "decisions"), ("project", "changes"), ("project", "troubleshooting")}
+NOTE_FOLDERS = {("project", "decisions"), ("project", "code-changes"), ("project", "troubleshooting")}
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
 

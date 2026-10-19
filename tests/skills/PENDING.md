@@ -8,9 +8,11 @@ then we can run it").
 
 ## The rule
 
-- **A behavioural change runs the suite before it is installed.** Anything that changes what the skill
-  does or decides: a new or removed step, a different command, a changed rule or gate, a new input it
-  must handle. This is the original standing rule and it has not moved.
+- **A behavioural change runs its new cases red then green before it is installed** (Mark, 2026-10-17).
+  Anything that changes what the skill does or decides: a new or removed step, a different command, a
+  changed rule or gate, a new input it must handle. A full suite runs only on Mark's yes, recommended when
+  it looks worth its cost (tests/skills/README.md lists the triggers); the change is logged here so that
+  run checks it.
 - **A small change may be installed and logged here instead.** Wording, a clarified flag, a fixed
   typo, a reference the skill always should have named — something that cannot change an outcome.
 - **Run the suite when** the pending list for a skill is long enough to be worth a run, a behavioural
@@ -22,8 +24,8 @@ then we can run it").
 ## Pending
 
 | Skill | Date | Change | Why it was not run |
-| wiki-cycle | 2026-10-19 | Task #176: best-practices synthesis (Step 6.5) runs in every mode that ingests, scoped by `wiki-cycle-scope.py synthesis`; skipped and awaiting runs still write `synthesis.json`. Red then green on the two new `synthesis` cases, both models (runs `20261019-134246-red-green-HEAD`, then `20261019-141050`). `synthesis` taken out of the common check's `FULL_ONLY` on Mark's yes (2026-10-19), so the other `--ingest-only` cases do not fail on it; first checked by the next full run | the rest of the suite not run (red/green rule) |
 |---|---|---|---|
+| wiki-cycle | 2026-10-19 | Task #176: best-practices synthesis (Step 6.5) runs in every mode that ingests, scoped by `wiki-cycle-scope.py synthesis`; skipped and awaiting runs still write `synthesis.json`. Red then green on the two new `synthesis` cases, both models (runs `20261019-134246-red-green-HEAD`, then `20261019-141050`). `synthesis` taken out of the common check's `FULL_ONLY` on Mark's yes (2026-10-19), so the other `--ingest-only` cases do not fail on it; first checked by the next full run | the rest of the suite not run (red/green rule) |
 | wiki-claims | 2026-10-13 | Task #110 follow-up (Mark: yes to the writer's four questions): Step 5 names the corroboration record's keys (`merged_because` among them), says a merged source counts once at its best tier, and gives the Corroboration section's fixed layout; the script writes a source's `tier` as a number (1-4, or `self`) and no longer cuts the sources cell at 160 characters | the two corroboration cases, with the writer's tightened checks (exact record shape, the script ran and no hand-written record, the summary line's counts, the table, the flag lines), ran on both models (`20261013-124057`, 4/4, $1.85; offline proof 35/35 each, a hand-written record failing only its own check). The four older cases were not rerun on this wording; their next run checks nothing else moved |
 | wiki-promote | 2026-09-24 | Task #44: one sentence on folders known by their README (skill + pack page). Script proven by `tests/scripts/test_folder_readme.py` (11/11) | wording only; wiki-promote has no model suite (script-heavy, its harnesses are free) |
 | wiki-promote | 2026-09-25 | `wiki-promote.py` runs `wiki-reciprocate-backlinks.py` after the link fixer, so a promoted entry is never left an orphan; the skill's description, Step 3.5 and the pack page say so. Script proven by `tests/scripts/test_promote_backlinks.py` (8/8; 5 failed before the fix) | wording only in the skill; the behaviour is the script's, tested by its free harness; wiki-promote has no model suite |

@@ -44,7 +44,7 @@ def run_lint():
     tmp = Path(td.name)
     nb = tmp / "notebooks" / "t"
     w = nb / "wiki"
-    for d in ("project/architecture", "project/components", "project/decisions", "project/changes",
+    for d in ("project/architecture", "project/components", "project/decisions", "project/code-changes",
               "project/troubleshooting", "project/patterns"):
         (w / d).mkdir(parents=True)
     (nb / "_inbox" / "reports").mkdir(parents=True)
@@ -66,7 +66,7 @@ def run_lint():
     # A note linking TO a design page (no link back) counts too
     (c / "store.md").write_text(page("Store", "Opens the store.", "2026-09-01", reviewed="2026-09-20"),
                                 encoding="utf-8")
-    (w / "project" / "changes" / "ch.md").write_text(page("Change", "Changed [store](../components/store.md).",
+    (w / "project" / "code-changes" / "ch.md").write_text(page("Change", "Changed [store](../components/store.md).",
                                                           "2026-10-01"), encoding="utf-8")
     # A design page reviewed after its newest note is current
     (c / "fresh.md").write_text(page("Fresh", "See [t](../troubleshooting/tr.md).", "2026-09-01",
