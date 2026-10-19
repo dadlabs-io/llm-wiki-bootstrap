@@ -166,6 +166,33 @@ proc = subprocess.run(["node", str(SCRIPT)], capture_output=True, text=True, enc
 check("run with no arguments it still exits 2 with the usage error",
       proc.returncode == 2 and "--topic" in proc.stderr, (proc.returncode, proc.stderr[-200:]))
 
+# --- No --vault: the notebook is found through the registry, like every other fetcher (row 12, 2026-10-19) ---
+import tempfile  # noqa: E402
+
+with tempfile.TemporaryDirectory() as td:
+    tmp = Path(td)
+    (tmp / "notebooks" / "t" / "wiki").mkdir(parents=True)
+    (tmp / "linked-notebooks.json").write_text(json.dumps({"notebooks": {"t": {"root": "notebooks/t"}}}),
+                                               encoding="utf-8")
+    proj = tmp / "project"
+    (proj / ".claude").mkdir(parents=True)
+    (proj / ".claude" / "wiki-config.json").write_text(json.dumps(
+        {"notebook": "t", "registry": (tmp / "linked-notebooks.json").as_posix()}), encoding="utf-8")
+
+    def cli(*a):
+        return subprocess.run(["node", str(SCRIPT), *a], cwd=proj, capture_output=True, text=True, encoding="utf-8")
+
+    p = cli("--topic", "t", "--url", "https://x.com/someone/no-status-here")
+    check("without --vault a registry notebook resolves (the run gets past the arguments to the URL check)",
+          p.returncode == 1 and "could not extract" in p.stderr and "--vault" not in p.stderr,
+          (p.returncode, p.stderr[-300:]))
+    p = cli("--topic", "nope", "--url", "https://x.com/someone/status/1")
+    check("without --vault an unknown notebook stops before any fetch, naming it",
+          p.returncode == 1 and "nope" in p.stderr and "syndication" not in p.stderr,
+          (p.returncode, p.stderr[-300:]))
+    p = cli("--url", "https://x.com/someone/status/1")
+    check("--topic is still required", p.returncode == 2 and "--topic" in p.stderr, (p.returncode, p.stderr[-200:]))
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

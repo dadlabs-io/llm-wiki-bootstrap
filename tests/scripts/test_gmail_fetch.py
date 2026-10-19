@@ -222,11 +222,17 @@ with tempfile.TemporaryDirectory() as td:
     raws = list((nb / "raw").glob("*.md"))
     check("the full-text email is saved to raw/ and its ticket carries raw_path",
           len(raws) == 1 and f"raw_path: raw/{raws[0].name}" in bbg and "added_by: email-fetch" in bbg, bbg[:300])
-    check("the raw has the capture header and the article text",
-          raws and raws[0].read_text(encoding="utf-8").startswith("# Why State is the Hardest Thing")
-          and "source_url: https://bytebytego.substack.com/p/why-state-is-the-hardest-thing" in raws[0].read_text(encoding="utf-8")
-          and "State is the hardest part" in raws[0].read_text(encoding="utf-8")
-          and "[the Raft paper](" in raws[0].read_text(encoding="utf-8"))
+    rawtext = raws[0].read_text(encoding="utf-8") if raws else ""
+    import yaml  # noqa: E402
+    rawfm = yaml.safe_load(rawtext.split("\n---\n", 1)[0][4:]) if rawtext.startswith("---\n") else {}
+    check("the raw opens with YAML frontmatter a frontmatter reader can see (row 13, 2026-10-19)",
+          isinstance(rawfm, dict)
+          and rawfm.get("source_url") == "https://bytebytego.substack.com/p/why-state-is-the-hardest-thing"
+          and str(rawfm.get("title", "")).startswith("Why State is the Hardest Thing")
+          and rawfm.get("converted") == "markdown", rawtext[:400])
+    check("the raw has the article text and its links, under the subject as heading",
+          "\n# Why State is the Hardest Thing" in rawtext and "State is the hardest part" in rawtext
+          and "[the Raft paper](" in rawtext)
     step = json.loads((runf / "email-fetch.json").read_text(encoding="utf-8"))
     check("the step records 3 queued and the rest skipped as not approved",
           step["summary"]["queued"] == 3 and step["reviewed"] is True

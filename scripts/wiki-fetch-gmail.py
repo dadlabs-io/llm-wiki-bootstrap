@@ -723,7 +723,9 @@ def _parse_approve(value: str, review: dict, candidates: list[dict]) -> set[int]
 
 def _raw_for(nb: Path, run: Path, email: dict, cand: dict) -> str:
     """Copy an approved full-text email into the notebook's raw/; return raw/<file>."""
-    body = (run / email["file"]).read_text(encoding="utf-8").split("\n---\n", 1)[-1].strip()
+    head, _, body = (run / email["file"]).read_text(encoding="utf-8").partition("\n---\n")
+    body = body.strip()
+    converted = next((l.split(":", 1)[1].strip() for l in head.splitlines() if l.startswith("converted:")), "text")
     name = f"{email['date']}-{slugify(email['subject'])}.md"
     dest = nb / "raw" / name
     k = 2
@@ -731,9 +733,13 @@ def _raw_for(nb: Path, run: Path, email: dict, cand: dict) -> str:
         dest = nb / "raw" / f"{email['date']}-{slugify(email['subject'])}-{k}.md"
         k += 1
     dest.parent.mkdir(parents=True, exist_ok=True)
-    atomic_write_text(dest, f"# {email['subject']}\nsource_url: {cand['url']}\nauthor: {email['sender']}\n"
-                            f"published: {email['date']}\nfetched: {today_label()} via Gmail "
-                            f"(full-text newsletter; images omitted)\n---\n{body}\n")
+    # YAML frontmatter like every other raw, so the dedup and raw-reuse readers see its source_url (row 13,
+    # 2026-10-19: the old `# subject` header first hid it from every frontmatter reader).
+    q = lambda s: json.dumps(str(s), ensure_ascii=False)  # noqa: E731  a JSON string is a valid YAML scalar
+    atomic_write_text(dest, f"---\ntitle: {q(email['subject'])}\nsource_url: {q(cand['url'])}\n"
+                            f"author: {q(email['sender'])}\npublished: {q(email['date'])}\nfetched: {today_label()}\n"
+                            f"fetched_via: gmail (full-text newsletter; images omitted)\ntype: email-newsletter\n"
+                            f"converted: {converted}\n---\n\n# {email['subject']}\n\n{body}\n")
     return f"raw/{dest.name}"
 
 

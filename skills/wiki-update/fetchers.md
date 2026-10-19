@@ -58,7 +58,7 @@ A shallow clone at the current commit: the README first, then every Markdown or 
 ## X / Twitter
 
 ```bash
-node {{WIKI_SCRIPTS_DIR}}/wiki-fetch-tweet.js --topic <topic> --url <url> --vault <vault_root> --ingested-by claude-code
+node {{WIKI_SCRIPTS_DIR}}/wiki-fetch-tweet.js --topic <topic> --url <url> --ingested-by claude-code
 ```
 
 One HTTPS request to the public syndication API, on the host: no login, no browser. `--vault` is the vault root, the folder that holds the notebook's folder. When it fails (a deleted or protected post, a block), fetch that one URL with the [page fetcher](#pages-that-need-javascript) instead of retrying. A post whose substance is a video: `wiki-transcribe.py --url <url>`. Photos are linked at their original size.

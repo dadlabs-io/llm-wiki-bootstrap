@@ -15,15 +15,15 @@
  *
  * Runs on the HOST directly (Node is available natively — no docker exec
  * needed). Matches the wiki-scripts family's CLI + raw-file conventions
- * (see wiki-fetch-youtube.py / wiki-update.py): --topic, --url, --vault
- * (vault_root; topic_root = vault/topic), writes to
+ * (see wiki-fetch-youtube.py / wiki-update.py): --topic (a notebook, found
+ * through the registry like every other fetcher), --url, and --vault only to
+ * force the legacy <vault>/<topic> join; writes to
  * <topic_root>/raw/<date>-<slug>.md, prints `raw_path=<path>` for the
  * caller to pick up.
  *
  * Usage:
  *   node wiki-fetch-tweet.js --topic agentic-design \
  *     --url https://x.com/AndrewYNg/status/2071988145667928442 \
- *     --vault "C:/github.com/project-notebooks/notebooks" \
  *     --ingested-by claude-code
  *
  * Exit code 0 + raw_path=... on success. Non-zero + a clear stderr reason
@@ -47,11 +47,34 @@ function parseArgs(argv) {
     else if (a === '--ingested-by') args.ingestedBy = argv[++i];
     else if (a === '--slug') args.slugOverride = argv[++i];
   }
-  if (!args.topic || !args.url || !args.vault) {
-    console.error('ERROR: --topic, --url, and --vault are required');
+  if (!args.topic || !args.url) {
+    console.error('ERROR: --topic and --url are required (--vault only to force the legacy <vault>/<topic> join)');
     process.exit(2);
   }
   return args;
+}
+
+function resolveTopicRoot(args) {
+  // Like every other fetcher: the notebook's root through the registry (_wiki_config.topic_root), so a
+  // registry notebook needs no --vault (2026-10-19; this was the last fetcher on the old join). An
+  // explicit --vault still forces <vault>/<topic>. Returns null when the notebook cannot be found.
+  if (args.vault) return path.join(args.vault, args.topic);
+  const { spawnSync } = require('child_process');
+  const code = 'import sys; sys.path.insert(0, sys.argv[1]); from _wiki_config import topic_root; '
+             + 'print(topic_root(sys.argv[2]))';
+  const project = fs.existsSync(path.join(__dirname, 'pyproject.toml'));
+  const tries = project
+    ? [['uv', ['run', '--project', __dirname, 'python', '-c', code, __dirname, args.topic]]]
+    : [];
+  tries.push(['python', ['-c', code, __dirname, args.topic]], ['python3', ['-c', code, __dirname, args.topic]]);
+  for (const [cmd, argv] of tries) {
+    const p = spawnSync(cmd, argv, { encoding: 'utf-8' });
+    if (p.error) continue;
+    const out = (p.stdout || '').trim().split(/\r?\n/).pop();
+    if (p.status === 0 && out) return out;
+    return null;
+  }
+  return null;
 }
 
 function extractTweetId(url) {
@@ -219,6 +242,13 @@ function buildRaw(tweet, opts) {
 async function main() {
   const args = parseArgs(process.argv);
 
+  // The notebook first, so an unknown one stops before any fetch.
+  const topicRoot = resolveTopicRoot(args);
+  if (!topicRoot || !fs.existsSync(topicRoot)) {
+    console.error(`ERROR: notebook '${args.topic}' not found${topicRoot ? ` at ${topicRoot}` : ' in the registry'}`);
+    process.exit(1);
+  }
+
   const tweetId = extractTweetId(args.url);
   if (!tweetId) {
     console.error(`ERROR: could not extract a numeric tweet id from URL: ${args.url}`);
@@ -247,11 +277,6 @@ async function main() {
 
   const raw = buildRaw(tweet, { url: args.url, ingestedBy: args.ingestedBy });
 
-  const topicRoot = path.join(args.vault, args.topic);
-  if (!fs.existsSync(topicRoot)) {
-    console.error(`ERROR: topic '${args.topic}' not found at ${topicRoot}`);
-    process.exit(1);
-  }
   const rawDir = path.join(topicRoot, 'raw');
   fs.mkdirSync(rawDir, { recursive: true });
 
