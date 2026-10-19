@@ -70,7 +70,7 @@ STEP_FIELDS = ("skill", "cycle_id", "step", "timestamp", "status", "summary",
 # The step pairs a quick --ingest-only run must leave (cycle-step-return-format.md)
 QUICK_STEPS = ("update", "lint-mechanical", "reciprocate-backlinks", "index-per-folder", "map-compile")
 # only a --full run writes these
-FULL_ONLY = ("lint-semantic", "claims", "synthesis", "promote")
+FULL_ONLY = ("lint-semantic", "claims", "promote")  # synthesis runs in every ingesting mode since 2026-10-19 (Mark's yes)
 
 
 def _suite() -> dict:
