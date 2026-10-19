@@ -153,14 +153,19 @@ def resolve_successor(f, value, wiki_root):
 # Design pages behind their notes (task #171, 2026-10-18): investment-agent filed a month of
 # decisions and change records while its architecture pages were never revised, because every
 # step only added notes and promote only appended backlinks. A design page is one under these
-# folders, or any page marked `keep_current: true`; a note is one under the note folders.
+# folders not marked another kind, or any page marked `kind: living`; a note is one under the note folders.
 DESIGN_FOLDERS = {("project", "architecture"), ("project", "components")}
 NOTE_FOLDERS = {("project", "decisions"), ("project", "code-changes"), ("project", "troubleshooting")}
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
 
 def is_design_page(rel, fm):
-    return tuple(rel.parts[:2]) in DESIGN_FOLDERS or fm.get("keep_current", "").strip().lower() == "true"
+    """A living page: `kind: living` anywhere, or a page in a design folder not marked another kind
+    (authoring principle 13, 2026-10-19)."""
+    kind = fm.get("kind", "").strip().lower()
+    if kind:
+        return kind == "living"
+    return tuple(rel.parts[:2]) in DESIGN_FOLDERS
 
 
 def is_note(rel):
@@ -1209,7 +1214,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     out.append("## 🧭 Design Pages Behind Their Notes")
     out.append("")
     out.append("A design page (under `project/architecture/` or `project/components/`, or any page marked "
-               "`keep_current: true`) that a decision, change or troubleshooting note links to, or that links to one, "
+               "`kind: living`; a design-folder page marked another kind is skipped) that a decision, change or troubleshooting note links to, or that links to one, "
                "where the note is dated after the page's `last_reviewed` (else its `date`). The note may have changed "
                "what the page describes: read each note, rewrite the parts of the page it makes untrue, then set the "
                "page's `last_reviewed` to today. A backlink line is not a revision. Warn-only.")

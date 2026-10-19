@@ -6,7 +6,7 @@
 investment-agent, 2026-10-18: a month of decisions, change records and troubleshooting notes
 was filed while its architecture pages and data map were never revised; promote only appended
 backlinks to them. The lint now lists every design page (under project/architecture/ or
-project/components/, or any page marked `keep_current: true`) that a newer decision, change or
+project/components/, or any page marked `kind: living`; a design-folder page marked another kind is not) that a newer decision, change or
 troubleshooting note links to, or that links to one, newer meaning the note's `date` is after
 the design page's `last_reviewed` (else its `date`).
 """
@@ -76,9 +76,12 @@ def run_lint():
     (c / "sameday.md").write_text(page("Same day", "See [d](../decisions/d-same.md).", "2026-10-02"),
                                   encoding="utf-8")
     (d / "d-same.md").write_text(page("D same", "x", "2026-10-02"), encoding="utf-8")
-    # A page outside the design folders, marked keep_current, is checked
+    # A page outside the design folders, marked kind: living, is checked
     (w / "data-map.md").write_text(page("Data map", "See [d](project/decisions/d-newer.md).", "2026-10-09",
-                                        extra="keep_current: true\n"), encoding="utf-8")
+                                        extra="kind: living\n"), encoding="utf-8")
+    # A design-folder page marked another kind (retired to history) is not checked
+    (a / "old-history.md").write_text(page("Old", "See [d](../decisions/d-newer.md).", "2026-09-01",
+                                           extra="kind: history\n"), encoding="utf-8")
     # A pattern page (not design, not marked) is not checked
     (w / "project" / "patterns" / "pat.md").write_text(page("Pat", "See [d](../decisions/d-newer.md).",
                                                             "2026-09-01"), encoding="utf-8")
@@ -122,8 +125,9 @@ check("a note that links to the design page counts, measured from last_reviewed"
       re.search(r"store\.md` — 1 newer note since 2026-09-20", sec), sec)
 check("a page reviewed after its newest note is not listed", "fresh.md" not in sec, sec)
 check("a note dated the same day as the review is not newer", "sameday.md" not in sec, sec)
-check("keep_current marks a page outside the design folders", "data-map.md` — 1 newer note since 2026-10-09" in sec, sec)
+check("kind: living marks a page outside the design folders", "data-map.md` — 1 newer note since 2026-10-09" in sec, sec)
 check("a pattern page is not checked", "pat.md" not in sec, sec)
+check("a design-folder page marked kind: history is not checked", "old-history.md" not in sec, sec)
 check("a retired design page is not checked", "retired.md" not in sec, sec)
 check("a retired note does not count", "solo.md" not in sec, sec)
 check("the header counts them", "**Design pages behind their notes**: 3" in text, text[:1500])
