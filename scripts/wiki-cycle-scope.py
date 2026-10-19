@@ -4,6 +4,7 @@ What a /wiki-cycle step reads, decided by a script instead of by the model.
 
     wiki-cycle-scope.py --topic N semantic --run-folder <rf> [--all]
     wiki-cycle-scope.py --topic N claims   --run-folder <rf> [--all]
+    wiki-cycle-scope.py --topic N synthesis --run-folder <rf> [--all]
     wiki-cycle-scope.py --topic N checker  --run-folder <rf> [--min-minutes 15]
     wiki-cycle-scope.py --topic N checker-log --run-folder <rf> --entry <slug> --report <file.json>
     wiki-cycle-scope.py --topic N cost --run-folder <rf> --mark start|end [--session-id <id>]
@@ -17,6 +18,12 @@ to the notebook under a `#` header line, and prints the count and the cut-off.
 `claims`: the entries no claim in _inbox/claims-index.json comes from, plus those
 revised since the index was last written, plus the staged ones. With --all, or no
 index, every entry. Writes <rf>/claims-scope.txt.
+
+`synthesis`: the live research/ entries added since the last synthesis the user answered
+(the newest earlier synthesis.json with status completed; its `timestamp` is the cut-off).
+Staged entries are never in it: synthesis reads wiki/. No best-practices pages: an empty
+scope. With --all, or no earlier synthesis, every live research entry. Writes
+<rf>/synthesis-scope.txt (task #176, 2026-10-19).
 
 "Added" is a file created after the cut-off (git when the notebook is in a repository,
 else its frontmatter `date`). "Revised" is `last_reviewed` on or after the cut-off's
@@ -206,6 +213,43 @@ def cmd_claims(nb: Path, args) -> int:
     return 0
 
 
+def last_synthesis(nb: Path, run_folder: Path) -> datetime | None:
+    """The timestamp of the newest earlier synthesis the user answered (status completed). One nobody
+    could answer (awaiting_approval) leaves the cut-off where it was, so its entries come round again."""
+    best = None
+    for p in (nb / "_inbox" / "reports").glob("*/*/synthesis.json"):
+        if p.parent.resolve() == run_folder.resolve():
+            continue
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        t = _parse_time(d.get("timestamp", "")) if d.get("status") == "completed" else None
+        if t and (best is None or t > best):
+            best = t
+    return best
+
+
+def cmd_synthesis(nb: Path, args) -> int:
+    """Research entries promoted since the last answered synthesis (task #176, 2026-10-19): synthesis runs in
+    every cycle that ingests, so it covers what the user promoted between cycles, never only this run's batch."""
+    rf = Path(args.run_folder)
+    canon = [p for p in (nb / "wiki" / "project" / "best-practices").glob("*.md")
+             if not p.name.startswith("_") and p.name.lower() != "readme.md"]
+    research = [e for e in entries(nb) if e.startswith("wiki/research/")
+                and not _front((nb / e).read_text(encoding="utf-8", errors="replace")).get("superseded_by")]
+    cutoff = None if args.all else last_synthesis(nb, rf)
+    if not canon:
+        scope, why = [], "no best-practices pages: nothing to synthesise into"
+    elif cutoff is None:
+        scope, why = research, ("--all" if args.all else "no earlier synthesis: every research entry")
+    else:
+        scope, why = added_since(nb, cutoff, research), f"research entries added since {cutoff.isoformat()}"
+    out = write_scope(rf, "synthesis-scope.txt", scope, why)
+    print(f"synthesis scope: {len(scope)} of {len(research)} research entries ({why}) -> {out}")
+    return 0
+
+
 def _front(text: str) -> dict:
     m = re.match(r"\A---\s*\n(.*?)\n---", text, re.S)
     out = {}
@@ -387,7 +431,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[1].strip())
     ap.add_argument("--topic", default=None, help="notebook (default: this project's)")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("semantic", "claims"):
+    for name in ("semantic", "claims", "synthesis"):
         s = sub.add_parser(name)
         s.add_argument("--run-folder", required=True)
         s.add_argument("--all", action="store_true", help="every entry (the user's --lint-all)")
@@ -416,7 +460,7 @@ def main() -> int:
     if not (nb / "wiki").is_dir():
         print(f"error: no wiki at {nb}", file=sys.stderr)
         return 2
-    return {"semantic": cmd_semantic, "claims": cmd_claims, "checker": cmd_checker,
+    return {"semantic": cmd_semantic, "claims": cmd_claims, "synthesis": cmd_synthesis, "checker": cmd_checker,
             "checker-log": cmd_checker_log, "models": cmd_models, "cost": cmd_cost}[args.cmd](nb, args)
 
 

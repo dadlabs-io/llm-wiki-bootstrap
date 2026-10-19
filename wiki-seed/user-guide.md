@@ -59,14 +59,16 @@ gather ──► your review ──► triage ──► ingest ──► checker
                                         staged)
 ```
 
-`--full` adds a semantic lint of what is new, fixes, promotion of the staged entries, contradiction hunting across claims, a synthesis of the new research against your best-practices pages, and a scan for stale entries. Run it weekly, or after a big batch.
+Every run that ingests also synthesises: the research entries promoted since the last synthesis you answered are read against your best-practices pages, and the changes it proposes wait for your approval.
+
+`--full` adds a semantic lint of what is new, fixes, promotion of the staged entries, contradiction hunting across claims, and a scan for stale entries. Run it weekly, or after a big batch.
 
 You have **two checkpoints**: after discovery and email, the session marks every find *recommend* or *skip* with a reason, and the run pauses for you to say "approve recommended" or adjust (a tier-4 source is never approved for you); and the next morning, `/wiki-report` summarises the run and `/wiki-promote --review` walks what it staged. Changes to your best-practices pages are applied only with your approval.
 
 | Mode | Runs |
 |---|---|
 | _(none)_ / `--quick` | The quick run above. |
-| `--full` | Everything, including synthesis. "Full means full." |
+| `--full` | Everything. |
 | `--ingest-only` | Triage and ingest what is already queued; no gathering. |
 | `--discover-only` | Gather and write the checklist, then stop. |
 | `--prompt-for-urls` | You paste URLs; they are ingested. |

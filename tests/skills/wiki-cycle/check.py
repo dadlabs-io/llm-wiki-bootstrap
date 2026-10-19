@@ -727,6 +727,8 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_retry(case, ctx)
     elif case["kind"] == "bigraw":
         _prepare_bigraw(case, ctx)
+    elif case["kind"] == "synthesis":
+        _prepare_synthesis(case, ctx)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -1014,6 +1016,108 @@ def _check_retry(case: dict, add, ctx: dict, run_dir: Path, text: str) -> None:
     add("the card lists the failed item", tail in ctext or ctx["stub_url"] in ctext, ctext[:200])
     add("the card does not list the ingested source",
         "simonwillison.net/2025/jun/27" not in ctext.lower(), ctext[:200])
+
+
+SYNTH_FX = HERE / "fixtures" / "synthesis"
+SYNTH_SLUG = "trimming-tool-results-before-reuse"
+SYNTH_CANON = "wiki/project/best-practices"
+
+
+def _prior_synthesis(ctx: dict, cycle_id: str, timestamp: str, status: str) -> None:
+    """An earlier run folder holding only a synthesis pair, as the scope script reads it."""
+    run = ctx["notebook"] / "_inbox" / "reports" / cycle_id[:10] / cycle_id
+    run.mkdir(parents=True, exist_ok=True)
+    step = {"skill": "wiki-cycle", "cycle_id": cycle_id, "step": "synthesis", "timestamp": timestamp,
+            "status": status, "summary": {"entries_in_scope": 0}, "queued": [], "skipped": [], "deferred": [],
+            "notes": "test fixture: an earlier synthesis", "errors": []}
+    (run / "synthesis.json").write_text(json.dumps(step, indent=2), encoding="utf-8")
+    (run / "synthesis.md").write_text(
+        f"# Synthesis - {cycle_id}\n\n**Status**: {status}\n**Timestamp**: {timestamp}\n", encoding="utf-8")
+
+
+def _canon_pages(cdir: Path) -> dict:
+    """The best-practices pages by name and bytes. Machine files (names starting with '_', such as the
+    _INDEX.md the cycle's index step writes into every wiki folder) and README.md are not pages."""
+    if not cdir.is_dir():
+        return {}
+    return {p.name: p.read_bytes() for p in cdir.glob("*")
+            if p.is_file() and not p.name.startswith("_") and p.name.lower() != "readme.md"}
+
+
+def _prepare_synthesis(case: dict, ctx: dict) -> None:
+    """Best-practices pages, an earlier synthesis, and one queued source. 'new': a research entry dated after
+    the last completed synthesis (and a newer awaiting_approval one that must not be the cut-off). 'none': the
+    last completed synthesis is later than every entry in wiki/, so only the staged entry will be new."""
+    nb = ctx["notebook"]
+    shutil.copytree(SYNTH_FX / "project", nb / "wiki" / "project", dirs_exist_ok=True)
+    if case["synthesis"] == "new":
+        shutil.copy2(SYNTH_FX / "research" / f"{SYNTH_SLUG}.md",
+                     nb / "wiki" / "research" / "best-practices" / f"{SYNTH_SLUG}.md")
+        _prior_synthesis(ctx, "2026-02-01-01", "2026-02-01T09:00:00+00:00", "completed")
+        _prior_synthesis(ctx, "2026-09-20-01", "2026-09-20T09:00:00+00:00", "awaiting_approval")
+    else:
+        from datetime import datetime, timedelta
+        later = (datetime.fromisoformat(ctx["started"]) + timedelta(days=1)).isoformat()
+        _prior_synthesis(ctx, "2026-02-01-01", later, "completed")
+    ctx["canon_before"] = _canon_pages(nb / SYNTH_CANON)
+    _prepare_quick(case, ctx)
+
+
+def _check_synthesis(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path, proposed: list,
+                     workers: list) -> None:
+    nb, cid = ctx["notebook"], ctx["cycle_id"]
+    # The common "no --full-only step ran" contradicts the requirement for this kind: synthesis now runs in
+    # --ingest-only. Replace it with the same check minus synthesis.
+    res[:] = [x for x in res if x["name"] != "no --full-only step ran"]
+    others = [p.stem for p in run_dir.glob("*.json") if p.stem.startswith(("lint-semantic", "claims", "promote"))]
+    add("no --full-only step ran except synthesis", not others, others)
+    add("spawned a wiki-ingester worker for the queued source", bool(workers),
+        [a.get("subagent_type") for a in _agent_calls(run)])
+
+    sj, sm, scope_f = run_dir / "synthesis.json", run_dir / "synthesis.md", run_dir / "synthesis-scope.txt"
+    try:
+        step = json.loads(sj.read_text(encoding="utf-8")) if sj.is_file() else {}
+    except json.JSONDecodeError:
+        step = {}
+    add("synthesis.json and synthesis.md written in the run folder", bool(step) and sm.is_file(),
+        [p.name for p in run_dir.glob("synthesis*")])
+    add("synthesis-scope.txt written by the scope script", scope_f.is_file(), scope_f.name)
+    scope = scope_f.read_text(encoding="utf-8", errors="replace").lower() if scope_f.is_file() else ""
+    mtext = sm.read_text(encoding="utf-8", errors="replace").lower() if sm.is_file() else ""
+    status = str(step.get("status") or "")
+
+    cdir = nb / SYNTH_CANON
+    now_canon = _canon_pages(cdir)
+    before = ctx.get("canon_before") or {}
+    changed = sorted(set(now_canon) ^ set(before)) or [k for k in before if now_canon.get(k) != before[k]]
+    add("no best-practices page changed, added or removed (nothing applied without approval)",
+        bool(before) and not changed, changed)
+
+    synth_agents = [a for a in _agent_calls(run)
+                    if str(a.get("subagent_type", "")) not in ("wiki-ingester", "wiki-checker")
+                    and re.search(r"synthes|best.practices", str(a.get("prompt", "")) + str(a.get("description", "")), re.I)]
+
+    if case["synthesis"] == "new":
+        add("synthesis.json status is awaiting_approval (the session cannot be asked)",
+            status == "awaiting_approval", status or "no status")
+        add("the scope names the research entry promoted after the last completed synthesis",
+            SYNTH_SLUG in scope or "trimming tool results" in scope, scope[:300])
+        add("the staged entry is not in the scope", not any(Path(k).stem.lower() in scope for k in proposed),
+            [Path(k).stem for k in proposed])
+        add("the proposal in synthesis.md covers the scoped entry",
+            SYNTH_SLUG in mtext or "trimming tool results" in mtext, mtext[:300])
+        rep = run_dir / f"{cid}-run-cycle-report.md"
+        sections = re.split(r"(?m)^## ", rep.read_text(encoding="utf-8", errors="replace")) if rep.is_file() else []
+        needs = sections[-1].lower() if sections else ""
+        add("the report's Needs you section lists the awaiting synthesis",
+            bool(re.match(r"[\W_]*needs you\b", needs)) and bool(re.search(r"synthesis|best.practice", needs)), needs[:1200])
+    else:
+        add("synthesis.json status is skipped", bool(re.match(r"skipped", status, re.I)), status or "no status")
+        reason = json.dumps([step.get("summary"), step.get("notes"), step.get("skipped")])
+        add("the skip carries a reason (summary, notes or skipped hold words)",
+            len(re.findall(r"[A-Za-z]", reason)) >= 8 and reason.count("null") < 3, reason[:300])
+        add("no synthesis agent spawned", not synth_agents,
+            [str(a.get("description", ""))[:60] for a in synth_agents])
 
 
 def _check_bigraw(case: dict, add, ctx: dict, run: dict, run_dir: Path, proposed: list) -> None:
@@ -1472,6 +1576,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_retry(case, add, ctx, run_dir, text)
     elif case["kind"] == "bigraw":
         _check_bigraw(case, add, ctx, run, run_dir, proposed)
+    elif case["kind"] == "synthesis":
+        _check_synthesis(case, add, res, ctx, run, run_dir, proposed, workers)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()
