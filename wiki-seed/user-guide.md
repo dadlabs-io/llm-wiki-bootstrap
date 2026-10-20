@@ -16,7 +16,7 @@ The one page to read to know how this system works: what it is, the commands you
 
 A knowledge wiki that an AI agent maintains for a project, built from two kinds of material:
 
-- **What you build** (`wiki/project/`): decisions, patterns, bugs and architecture from your own working sessions, written by `/wrap-up` at the end of each one.
+- **What you build** (`wiki/project/`): decisions, patterns and bugs from your own working sessions, written by `/wrap-up` at the end of each one, which also keeps the living design pages in `project/architecture/` current.
 - **What you read** (`wiki/research/`): articles, papers, videos, repositories and posts, ingested from their full text by `/wiki-update` and `/wiki-cycle`, with a raw copy of every source kept beside the wiki.
 
 It is plain Markdown under git. Every entry carries the same frontmatter (tier, confidence, dates, source), a mechanical gate refuses an entry that is missing its structure, nothing an agent writes counts as verified until a person says so, and a hybrid search reads the whole thing back when a question comes up.
