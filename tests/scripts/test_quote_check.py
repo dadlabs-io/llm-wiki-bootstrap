@@ -153,7 +153,8 @@ with tempfile.TemporaryDirectory() as td:
                         "--topic", "nb", "--folder", "research/tooling", "--source", str(entry),
                         "--source-url", "https://example.com/article", "--raw-path", "raw/article.md",
                         "--title", "Quote check test entry", "--tags", "a,b,c", "--tier", "3",
-                        "--confidence", "medium", "--no-index", "--skip-integration"],
+                        "--confidence", "medium", "--no-index", "--skip-integration",
+                        "--direct"],  # task #184: without a flag the notebook's confirm_before_promote decides
                        capture_output=True, text=True, encoding="utf-8", timeout=120)
     out = p.stdout + p.stderr
     check("gate: a misquote files anyway (exit 0)", p.returncode == 0)

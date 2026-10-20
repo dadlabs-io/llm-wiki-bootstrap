@@ -26,7 +26,7 @@ It is plain Markdown under git. Every entry carries the same frontmatter (tier, 
 | Command | What it does |
 |---|---|
 | `/new-wiki` | Start a project, or add a wiki to an existing one: checks the tooling, asks a few questions, scaffolds the wiki (with a `research/` folder, also the empty trusted-sources page discovery reads). |
-| `/wiki-update <url>` | Ingest one source now: fetch it in full, write the entry, file it (`--staged` to review it first). Two or more URLs are queued for the cycle instead. |
+| `/wiki-update <url>` | Ingest one source now: fetch it in full, write the entry, then file it or stage it by the notebook's `confirm_before_promote` (`--staged` / `--direct` for one run). Two or more URLs are queued for the cycle instead. |
 | `/wiki-cycle` | The research cycle: gather, triage, ingest, check, lint, report. `--full` adds the deeper passes. |
 | `/wiki-search "<query>"` | Hybrid search (keyword + meaning + reranking) across the wiki. |
 | `/wrap-up` | End of a session: the journal, the resume files, and the session's durable entries, staged and offered for promotion; any skill suggestions in the box are put to you. |
@@ -41,7 +41,7 @@ The rest (`/wiki-discover`, `/wiki-triage`, `/wiki-lint`, `/wiki-claims`, `/wiki
 
 1. **Written from the full source.** The agent saves the source verbatim to `raw/`, checks it is not a copy of one the wiki already holds under another link (the same file, or nearly the same text), then reads the whole article, transcript, PDF or repository and writes an entry: a TL;DR, the body, a Related section linking other entries, a footer naming the source.
 2. **Gated by a script.** Before anything is written, `wiki-update.py` checks the draft mechanically. It refuses to file an entry with no TL;DR, fewer than two Related links, or its sections out of order; the agent fixes the draft and tries again. It warns on the rest: fewer than three tags, a short entry not tagged `stub`, a figure paraphrased instead of quoted, a `>` quote not found word for word in the raw. A quote the agent read off an image (a slide, a screenshot) is written into the raw first and listed on its own line, so you know to compare it with the image. A fix made after filing is re-checked with `--regate`.
-3. **Staged or filed.** A single `/wiki-update` files straight into `wiki/` unless you ask for `--staged`. A cycle batch and `/wrap-up`'s entries wait in `_inbox/proposed/` until you approve them with `/wiki-promote` (or accept wrap-up's offer).
+3. **Staged or filed: one setting, `confirm_before_promote`.** When it is `true` (the default), every new entry waits in `_inbox/proposed/` for your yes: `/wiki-update` and `/wrap-up` ask on the spot, and a cycle's entries wait for `/wiki-promote`. When it is `false`, entries go into `wiki/` without asking (a cycle still holds any the checker flagged). `--staged` or `--direct` overrides it for one run.
 4. **Checked, when the source is long.** An entry written from a long video transcript is read against that transcript by a second agent, the `wiki-checker`, before it can be promoted.
 5. **Linked in.** Promotion resolves the links, adds a backlink to every page the entry links to, regenerates the indexes and the map, and brings the search index up to date, so the new entry is findable at once.
 6. **Verified by a person.** An entry starts `unverified`; `/wiki-verify` records who checked it and when.
@@ -75,7 +75,7 @@ You have **two checkpoints**: after discovery and email, the session marks every
 | `--lint-only [--semantic]` | The mechanical lint (plus the semantic pass). |
 | `--claims-only` · `--refresh-only` · `--report-only` | One step on its own. |
 
-Modifiers: `<notebook>` (another registered notebook), `--direct` (file into `wiki/` instead of staging), `--no-confirm-discovery` (no discovery pause, for unattended runs; email still waits for you), `--resume <cycle_id>`, `--since <hours>`, `--all-topics`, `--lint-all`. The [`wiki-cycle`](./skills/wiki-cycle.md) page has each step and when it skips itself.
+Modifiers: `<notebook>` (another registered notebook), `--direct` (file into `wiki/` as the workers go, overriding `confirm_before_promote` for that run), `--no-confirm-discovery` (no discovery pause, for unattended runs; email still waits for you), `--resume <cycle_id>`, `--since <hours>`, `--all-topics`, `--lint-all`. The [`wiki-cycle`](./skills/wiki-cycle.md) page has each step and when it skips itself.
 
 ## Common workflows
 

@@ -34,7 +34,7 @@ version of this list, see [`user-guide.md`](./user-guide.md) (the whole system o
 | [`task-list`](./skills/task-list.md) | The project's task list: one card per task in `wiki/tasks/`, worked in the order `tasks/ORDER.md` sets, NOW the first not done; a Backlog keeps each set-aside task's owner; add, mark done, reorder, note on a card, move to the backlog and back, remove only on your word. Plain speech works ("add a task …", "put 5 first", "move 5 to the backlog", "delete task 4") |
 | [`writing-skill-suggestions`](./skills/writing-skill-suggestions.md) | When a skill got in the way: a five-line note (where the lesson holds among them) in `_inbox/skill-suggestions/`, then the work carries on; `/wrap-up` puts it to you. The whole loop: [skill-suggestions](./skill-suggestions.md) |
 | [`improving-skills-from-suggestions`](./skills/improving-skills-from-suggestions.md) | The owner's side: collects a note sent to it (`receive`), checks it against the run and the skill, proposes changes, records your decision and whether each earlier fix held |
-| [`wiki-update`](./skills/wiki-update.md) | Ingest one external source (URL, video, PDF, X post, file, pasted text) and file it directly into the wiki (`--staged` to stage it for review); two or more URLs are queued for `wiki-cycle` |
+| [`wiki-update`](./skills/wiki-update.md) | Ingest one external source (URL, video, PDF, X post, file, pasted text) and file it, or stage it for your yes, by the notebook's `confirm_before_promote`; two or more URLs are queued for `wiki-cycle` |
 | [`wiki-search`](./skills/wiki-search.md) | Hybrid BM25 + vector + reranked search across the wiki |
 | [`wiki-cycle`](./skills/wiki-cycle.md) | The full research cycle: discover → ingest → lint → fix → report |
 | [`wiki-promote`](./skills/wiki-promote.md) | Review staged entries in `_inbox/proposed/` and move approved ones into the wiki; links, backlinks, indexes, map and the search index are brought up to date |
@@ -79,9 +79,9 @@ Capture happens at the edges — [`wiki-list`](./skills/wiki-list.md) /
 [`wiki-discover`](./skills/wiki-discover.md) queue sources, [`wiki-update`](./skills/wiki-update.md)
 and [`wiki-cycle`](./skills/wiki-cycle.md) ingest them (usually into `research/`), and
 [`wrap-up`](./skills/wrap-up.md) distills your own sessions into `project/` + `sessions/` entries.
-Nothing self-certifies: `wrap-up` entries and `wiki-cycle` batches stage through `_inbox/proposed/`
-for [`wiki-promote`](./skills/wiki-promote.md) (a single `wiki-update` files directly unless you
-ask for `--staged`), an entry becomes verified only through
+Nothing self-certifies: new entries stage through `_inbox/proposed/` and wait for your yes while the
+notebook's `confirm_before_promote` is true (the default; `wrap-up`, `wiki-update` and `wiki-cycle` all
+follow it, and [`wiki-promote`](./skills/wiki-promote.md) gives the yes), an entry becomes verified only through
 [`wiki-verify`](./skills/wiki-verify.md), and [`wiki-lint`](./skills/wiki-lint.md) /
 [`wiki-refresh`](./skills/wiki-refresh.md) / [`wiki-report`](./skills/wiki-report.md) keep the
 whole thing honest over time.

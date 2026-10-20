@@ -381,6 +381,26 @@ def prompt(case: dict, ctx: dict) -> str:
                          nb=ctx["notebook"].as_posix(), sandbox=ctx["sandbox"].as_posix())
     staged = " Use staged mode (--staged)." if case.get("mode") == "staged" else ""
     kind, inp = case["kind"], case.get("input")
+    if kind not in ("setting-staged", "setting-direct"):
+        # task #184 (Mark, 2026-10-19): /wiki-update now follows the notebook's confirm_before_promote (default
+        # true = stage). The older cases were written for "direct unless --staged", so they run with it false;
+        # set on every case, since the cases share one sandbox and the setting kinds turn it true
+        reg = json.loads(ctx["registry"].read_text(encoding="utf-8"))
+        reg["notebooks"][NOTEBOOK]["confirm_before_promote"] = False
+        ctx["registry"].write_text(json.dumps(reg, indent=2), encoding="utf-8")
+    if kind in ("setting-staged", "setting-direct"):
+        # confirm_before_promote is set to true in the sandbox registry for this case (explicit, not the default)
+        reg = json.loads(ctx["registry"].read_text(encoding="utf-8"))
+        reg["notebooks"][NOTEBOOK]["confirm_before_promote"] = True
+        ctx["registry"].write_text(json.dumps(reg, indent=2), encoding="utf-8")
+        if kind == "setting-staged":
+            old = "where the skill says to confirm something with the user, make the reasonable choice and say what you chose."
+            new = ("where the skill says to confirm something with the user, make the reasonable choice and say what you chose, "
+                   "except a question the skill has you put to the user: put that question in your final reply and leave it "
+                   "unanswered, because the user answers in a later message.")
+            assert old in head
+            return head.replace(old, new) + f"The user's input, with no flag, pasted text:\n\n{case['text']}"
+        return head + f"The user's input: --direct, then this pasted text:\n\n{case['text']}"
     if kind == "raw-size":
         f = ctx["sandbox"] / "inputs" / case["file"]
         _write_sized_markdown(f, case)
@@ -589,6 +609,40 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
                                                                "duplicate", "already filed", "already ingested")))
         return res
 
+    if kind in ("setting-staged", "setting-direct"):
+        # Mark 2026-10-19 (task #184): /wiki-update follows the notebook's confirm_before_promote (true here).
+        # No flag: staged into _inbox/proposed/, then asks "promote now?", promotes nothing without a yes.
+        # A typed --direct wins for this run only: filed straight into wiki/<folder>/, the setting unchanged.
+        try:
+            reg = json.loads(ctx["registry"].read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            reg = {}
+        setting = (reg.get("notebooks") or {}).get(NOTEBOOK, {}).get("confirm_before_promote")
+        add("registry still has confirm_before_promote true (set by the case, never changed by the session)",
+            setting is True, setting)
+        in_wiki = [k for k in entries if k.startswith("wiki/")]
+        in_prop = [k for k in entries if k.startswith("_inbox/proposed/")]
+        if kind == "setting-staged":
+            add("exactly one new entry, in _inbox/proposed/", len(entries) == 1 and len(in_prop) == 1, entries)
+            add("nothing new in wiki/ (nothing promoted without a yes)", not in_wiki, in_wiki)
+            asks = [ln.strip()[:120] for ln in run["text"].splitlines() if "promot" in ln.lower() and "?" in ln]
+            add("reply asks whether to promote the entry", bool(asks), asks[:2])
+        else:
+            add("exactly one new entry, in wiki/", len(entries) == 1 and len(in_wiki) == 1, entries)
+            add("nothing new in _inbox/proposed/", not in_prop, in_prop)
+            if len(entries) == 1:
+                add("entry sits in a folder under wiki/ (wiki/<folder>/.../<file>.md, any depth)",
+                    len(Path(entries[0]).parts) >= 3 and Path(entries[0]).parts[0] == "wiki", entries[0])
+        if len(entries) != 1:
+            return res
+        path = nb / entries[0]
+        entry_text = path.read_text(encoding="utf-8")
+        fm, _body = split_frontmatter(entry_text)
+        add("filed by wiki-update.py (its Source footer and frontmatter)",
+            bool(fm.get("ingested_by")) and "**Source**" in entry_text)
+        g = check_entry_file(path)
+        add("gate: no errors", not g.get("errors"), g.get("errors"))
+        return res
     if kind == "pdf-columns":
         add("exactly one new entry, in _inbox/proposed/",
             len(entries) == 1 and entries[0].startswith("_inbox/proposed/"), entries)

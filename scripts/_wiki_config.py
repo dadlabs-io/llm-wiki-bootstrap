@@ -284,6 +284,20 @@ def notebook_option(name, key, default=None, cwd=None, cfg=None):
     return default
 
 
+def confirm_before_promote(name, cwd=None, cfg=None):
+    """Whether staged entries wait for the user before they are promoted → (bool, where it came from).
+
+    Resolved as /wrap-up always did: the notebook's registry entry → the project's wiki-config.json → true.
+    Since 2026-10-19 (task #184) /wiki-update and /wiki-cycle read it too; until then only /wrap-up did."""
+    cfg = cfg if cfg is not None else load_config(cwd)
+    val = notebook_option(name, "confirm_before_promote", None, cwd=cwd, cfg=cfg)
+    if val is not None:
+        return bool(val), "the registry"
+    if (cfg or {}).get("confirm_before_promote") is not None:
+        return bool(cfg["confirm_before_promote"]), "the project's wiki-config.json"
+    return True, "the default (no setting)"
+
+
 def project_root(name, notebook_root_path, cwd=None):
     """The repo a notebook's ``describes`` paths resolve against → (abs_path|None, reason).
 

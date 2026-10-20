@@ -494,6 +494,74 @@ def _prepare_resume(ctx: dict, cycle_id: str) -> None:
     _write_run(ctx, cycle_id, fx / "scratchpad.md", queued)
 
 
+def _set_confirm(ctx: dict, value: bool) -> None:
+    """The notebook's confirm_before_promote in the sandbox registry (the other registered project is kept)."""
+    reg = json.loads(ctx["registry"].read_text(encoding="utf-8"))
+    reg["notebooks"][NOTEBOOK]["confirm_before_promote"] = bool(value)
+    ctx["registry"].write_text(json.dumps(reg, indent=2), encoding="utf-8")
+
+
+def _prepare_promote_setting(case: dict, ctx: dict, cycle_id: str) -> None:
+    """The resume fixture (two staged entries, tickets in done/, update pair). mode 'full' swaps in a --full
+    scratchpad that resumes from Phase 2.6; mode 'quick' keeps the --ingest-only one (resume from 2.5)."""
+    _prepare_resume(ctx, cycle_id)
+    nb = ctx["notebook"]
+    if case["mode"] == "full":
+        run = nb / "_inbox" / "reports" / cycle_id[:10] / cycle_id
+        tmpl = HERE / "fixtures" / "promote" / "scratchpad-full.md"
+        (run / "scratchpad.md").write_text(tmpl.read_text(encoding="utf-8").format(
+            date=cycle_id[:10], started=ctx["started"], notebook=NOTEBOOK, cycle_id=cycle_id), encoding="utf-8")
+    ctx["promote_stems"] = {p.stem for p in (nb / "_inbox" / "proposed").glob("*.md")
+                            if _is_entry(p.relative_to(nb).as_posix())}
+
+
+def _find_staged(ctx: dict, root: str) -> dict:
+    """The two fixture entries found under nb/<root> (wiki or _inbox/proposed), by source_url or file stem."""
+    from _entry_checks import split_frontmatter
+    nb = ctx["notebook"]
+    urls = {_norm_url(f"https://example.com/skilltest/{n}"): t for n, t, _ in RESUME_ITEMS}
+    found = {}
+    base = nb / root
+    for p in sorted(base.rglob("*.md")) if base.is_dir() else []:
+        rel = p.relative_to(nb).as_posix()
+        if not _is_entry(rel):
+            continue
+        fm, _ = split_frontmatter(p.read_text(encoding="utf-8", errors="replace"))
+        u = _norm_url(fm.get("source_url"))
+        if u in urls or p.stem in ctx.get("promote_stems", set()):
+            found[u or p.stem] = rel
+    return found
+
+
+def _check_promote_setting(case: dict, add, res: list, ctx: dict, run_dir: Path) -> None:
+    nb, cid = ctx["notebook"], ctx["cycle_id"]
+    # The common checks below describe a staged-only run; this kind's point is whether entries move.
+    drop = {"no --full-only step ran", "nothing filed straight into wiki/ (staged run)"}
+    if case["mode"] == "full":
+        drop.add("quick steps all wrote their pair")
+    res[:] = [x for x in res if x["name"] not in drop]
+    in_wiki, in_proposed = _find_staged(ctx, "wiki"), _find_staged(ctx, "_inbox/proposed")
+    if case["confirm_before_promote"]:
+        present = {p.stem for p in run_dir.glob("*.json")} if run_dir.is_dir() else set()
+        add("premise: the resumed run went on as --full (a lint-semantic or claims step was written)",
+            any(s.startswith(("lint-semantic", "claims")) for s in present), sorted(present))
+        add("setting true: neither staged entry reached wiki/", not in_wiki, in_wiki)
+        add("setting true: both staged entries still in _inbox/proposed/", len(in_proposed) == 2, in_proposed)
+        rep = run_dir / f"{cid}-run-cycle-report.md"
+        rtext = rep.read_text(encoding="utf-8", errors="replace").lower() if rep.is_file() else ""
+        titles = [t.lower() for _, t, _ in RESUME_ITEMS]
+        stems = [s.lower() for s in sorted(ctx.get("promote_stems", set()))]
+        listed = sum(1 for t in titles if t in rtext)
+        listed_by_slug = sum(1 for s in stems if s in rtext)
+        add("setting true: the cycle report lists each waiting entry (by title or by file name)",
+            len(stems) == 2 and max(listed, listed_by_slug) == 2, f"{listed} by title, {listed_by_slug} by file name")
+        add("setting true: the cycle report says they are waiting to be promoted", "wait" in rtext,
+            rtext[-300:] or "no report")
+    else:
+        add("setting false: both staged entries are in wiki/ by the end of the run", len(in_wiki) == 2, in_wiki)
+        add("setting false: none left in _inbox/proposed/", not in_proposed, in_proposed)
+
+
 def _write_run(ctx: dict, cycle_id: str, scratch_template: Path, queued: list[dict]) -> None:
     """A run folder interrupted after ingest: its scratchpad and the orchestrator's update pair."""
     run = ctx["notebook"] / "_inbox" / "reports" / cycle_id[:10] / cycle_id
@@ -729,6 +797,8 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_bigraw(case, ctx)
     elif case["kind"] == "synthesis":
         _prepare_synthesis(case, ctx)
+    elif case["kind"] == "promote-setting":
+        _prepare_promote_setting(case, ctx, cycle_id)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -737,6 +807,7 @@ def prompt(case: dict, ctx: dict) -> str:
     ctx["drive_token_before"] = _mtime(DRIVE_TOKEN)
     ctx["gmail_token_before"] = (Path.home() / ".config" / "wiki-cycle" / "gmail-token.json").exists()
     _prepare_models(case, ctx)
+    _set_confirm(ctx, case.get("confirm_before_promote", True))
     _commit_fixture(ctx, case["id"])
     ctx["fixture_files"] = snapshot(ctx)
     return HEADER.format(skill=ctx["skill_dir"].as_posix(), skills=ctx["skill_dir"].parent.as_posix(),
@@ -1578,6 +1649,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_bigraw(case, add, ctx, run, run_dir, proposed)
     elif case["kind"] == "synthesis":
         _check_synthesis(case, add, res, ctx, run, run_dir, proposed, workers)
+    elif case["kind"] == "promote-setting":
+        _check_promote_setting(case, add, res, ctx, run_dir)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()

@@ -123,7 +123,7 @@ Ask Q1 and Q2, then stop. Don't list round 2's questions or options, not even as
 - `Yes — show me candidates and confirm before publishing (Recommended)` → `--confirm-before-create true --confirm-before-promote true`
 - `No — file and publish automatically` → both `false`
 
-This one answer sets two independent booleans (`confirm_before_create` for `/wrap-up` Step 2, `confirm_before_promote` for Step 6). They live in the registry entry for a vault notebook (`linked-notebooks.json`), in `.claude/wiki-config.json` for an in-project wiki, and either can be flipped later by asking.
+This one answer sets two independent booleans (`confirm_before_create` for `/wrap-up` Step 2; `confirm_before_promote` for every promotion: `/wrap-up` Step 6, `/wiki-update`, `/wiki-cycle`). They live in the registry entry for a vault notebook (`linked-notebooks.json`), in `.claude/wiki-config.json` for an in-project wiki, and either can be flipped later by asking.
 
 **Round 2 (4 questions, all built from the slug)**
 

@@ -13,7 +13,7 @@ Runs a notebook's research pipeline end to end: gather new sources, give each on
 
 **Trigger:** */wiki-cycle*, plus "run the cycle", "update the wiki", "full wiki update".
 
-**Input / Output:** consumes the pending queue, the URLs you dropped into the configured Google Drive folder, the emails under your Gmail wiki label, and the wiki as it stands. Produces entries staged in `_inbox/proposed/` (`--direct` files straight into `wiki/`) and a run folder, `_inbox/reports/<date>/<cycle_id>/`: one JSON and markdown file per step, the scratchpad, the scope files, the checker's reports and the cycle report. A `cycle_id` is `<YYYY-MM-DD>-<NN>`, which is also what `--resume` takes.
+**Input / Output:** consumes the pending queue, the URLs you dropped into the configured Google Drive folder, the emails under your Gmail wiki label, and the wiki as it stands. Produces new entries, staged in `_inbox/proposed/` and then promoted or left for you by the notebook's `confirm_before_promote` (below), and a run folder, `_inbox/reports/<date>/<cycle_id>/`: one JSON and markdown file per step, the scratchpad, the scope files, the checker's reports and the cycle report. A `cycle_id` is `<YYYY-MM-DD>-<NN>`, which is also what `--resume` takes.
 
 ## What each mode runs
 
@@ -28,7 +28,8 @@ Runs a notebook's research pipeline end to end: gather new sources, give each on
 | Ingest, then the staging check | ✓ | ✓ | ✓ | — | ✓ |
 | Checker, when a transcript is long | ✓ | ✓ | ✓ | — | ✓ |
 | Mechanical lint, backlinks, indexes, map | ✓ | ✓ | ✓ | — | ✓ |
-| Semantic lint, fixes, promote | — | ✓ | — | — | — |
+| Semantic lint, fixes | — | ✓ | — | — | — |
+| Promote, when `confirm_before_promote` is false | ✓ | ✓ | ✓ | — | ✓ |
 | Claims, refresh | — | ✓ | — | — | — |
 | Best-practices synthesis, when research entries reached the wiki since the last one | ✓ | ✓ | ✓ | — | ✓ |
 | Report, one commit | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -51,7 +52,7 @@ Runs a notebook's research pipeline end to end: gather new sources, give each on
 1. **After discovery and email**, the run pauses on what it found. The session has marked every find *recommend* or *skip*, with a reason; you say "approve recommended", or adjust first ("also 14", "drop 7"). A tier-4 source is never approved for you.
 2. **The morning review**: `/wiki-report` summarises the run, and `/wiki-promote --review` walks each staged entry, including any the checker held, with its report beside it. The report's last section, **⚠️ Needs you**, lists everything waiting on you (entries to promote, held entries, pages to save as PDF, items left for retry and the card each went to, Drive files left, emails not yet approved, fixes to approve), so you can read it from the bottom.
 
-`--no-confirm-discovery` skips the first for discovery on an unattended run (tiers 1–3 are queued, tier 4 waits); entries still stage for the second. Email always waits for you: an unattended run lists its candidates and recommendations in the report and leaves the emails in the label. A `--full` run promotes its own staged entries (the ones the checker did not hold), all in one promotion run so the notebook is rebuilt once, before claims and synthesis, which read `wiki/`. Synthesis changes to your best-practices pages, in any mode, are applied only with your approval; a run nobody is watching writes them as a proposal.
+`--no-confirm-discovery` skips the first for discovery on an unattended run (tiers 1–3 are queued, tier 4 waits); entries still stage for the second. Email always waits for you: an unattended run lists its candidates and recommendations in the report and leaves the emails in the label. **Whether new entries are promoted is the notebook's `confirm_before_promote`**, the same setting [`wrap-up`](./wrap-up.md) and [`wiki-update`](./wiki-update.md) follow, printed at the start of every run: `true` (the default) → nothing is promoted, in any mode, watched or not; the entries wait for your `/wiki-promote`, and claims and synthesis leave them out until then. `false` → every mode that ingests promotes the entries the checker did not hold, in one promotion run so the notebook is rebuilt once, before claims and synthesis, which read `wiki/`. (Until 2026-10-19 the cycle ignored the setting: `--full` always promoted, every other mode never did.) Synthesis changes to your best-practices pages, in any mode, are applied only with your approval; a run nobody is watching writes them as a proposal.
 
 ## Drive-fetch
 
@@ -65,7 +66,7 @@ With `email.enabled: true` in the project's `.claude/wiki-config.json`, the cycl
 
 - Drive-fetch, when Drive ingest is off for the project; email-fetch, when email is off.
 - The Save as PDF list, when every page in this project's buckets could be fetched; the checker, when no staged transcript is long enough.
-- The link normaliser before the lint, unless entries were promoted during the cycle (`--direct` or `--full`).
+- The link normaliser before the lint, unless `--direct` filed entries during the cycle (a promotion fixes its own entries' links).
 - Semantic lint, in quick mode, and in `--full` if one ran in the last 24 hours.
 - Refresh, outside `--full` and `--refresh-only`; it then covers overdue entries only.
 
@@ -73,4 +74,4 @@ With `email.enabled: true` in the project's `.claude/wiki-config.json`, the cycl
 
 - Don't read the first report of a new install only after promoting: read it first.
 - Don't run `--full` every cycle; weekly is enough.
-- Don't pass `--direct` on an unattended run: staging exists so a person reviews overnight work.
+- Don't pass `--direct` on an unattended run: it files entries before the checker reads them and overrides the notebook's `confirm_before_promote`.

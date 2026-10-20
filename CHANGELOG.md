@@ -9,6 +9,18 @@
 
 ---
 
+## 2026-10-19
+
+### One promote setting, followed everywhere (task #184)
+
+`confirm_before_promote` was read only by `/wrap-up`. `/wiki-update` filed straight into `wiki/` unless told `--staged`, and `/wiki-cycle` never read it: `--full` promoted every entry the checker did not hold (agentic-design, set to true, got entries nobody approved), and every other mode left everything staged (five notebooks set to false still had to promote by hand). Mark: "it should be using that parameter ... properly and consistently all the time."
+
+- `_wiki_config.confirm_before_promote()` resolves it as `/wrap-up` always did: the registry entry, then the project's `wiki-config.json`, then true.
+- `wiki-update.py` follows it when given neither `--staged` nor the new `--direct` (both together are refused) and prints `promote_mode=` with the reason; `/wiki-update` then asks "promote it now?" for a staged entry.
+- `wiki-cycle-scope.py promote` prints the setting at Step 0 and writes `promote-setting.txt`; Step 5.5 runs in every mode that ingests when it is false and is skipped when it is true. Workers always pass `--staged`; a typed `--direct` wins for one run.
+- The claims scope leaves staged entries out: one still staged at Step 6 waits for the user or was held by the checker (Mark's OK to change the old check).
+- Usage pages, the user guide, the pack page, the CLAUDE.md template and two framework-contract docs (cycle step format v7, authoring v10) say so.
+
 ## 2026-10-15
 
 ### Items a cycle leaves for retry go on the owner's task list (task #155)

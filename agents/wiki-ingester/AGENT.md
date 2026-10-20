@@ -145,9 +145,11 @@ with TodoWrite. For each item:
    Leave the draft synthesis alongside it in `_inbox/temp/`. The receipt row marks the item
    failed-eval and points at the review note so the user can double-check later and override
    (hand-finish, force-file, or drop).
-6. **File staged** (`--staged`, the default): entry to `_inbox/proposed/` + a conforming dot-form
+6. **File staged** (pass `--staged` every time): entry to `_inbox/proposed/` + a conforming dot-form
    sidecar (`<slug>.proposed_metadata.json`, full-path `target_folder`, typed `suggested_backlinks`
-   capped ≤8, curated, no machine files). Direct mode only if the caller explicitly requested it.
+   capped ≤8, curated, no machine files). `--direct` only if the caller explicitly requested it. Never
+   pass neither: the script would then follow the notebook's `confirm_before_promote`, and whether an entry
+   is promoted is the orchestrator's call, after the checker (`/wiki-cycle` Step 5.5; task #184).
 7. **Advance the queue**: move the item's ticket from where it was assigned (`_inbox/pending/`, or
    an intake bucket `_inbox/intake/<folder>/` after `/wiki-triage`) to `_inbox/done/`, and regen the
    pending view — this is what makes an interrupted batch resumable.

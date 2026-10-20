@@ -13,9 +13,9 @@ A spawnable worker that owns **delegated ingestion**: hand it a list of external
 YouTube videos, PDFs, GitHub repositories, X posts, local files — and it turns each one into a
 wiki entry through the full `wiki-update` flow, one source at a time, each read in full. It is the
 worker `wiki-cycle` delegates to when the queue is drained, and the right choice for any batch you
-would rather not sit through. It stages by default: entries land in `_inbox/proposed/` (beside
-`wiki/` at the notebook root) and nothing in `wiki/` changes. It files directly only when the caller
-explicitly asks. It returns a compressed receipt of what it did.
+would rather not sit through. It always stages: entries land in `_inbox/proposed/` (beside
+`wiki/` at the notebook root) and nothing in `wiki/` changes, so the checker can read them before
+anything is promoted. It files directly only when the caller explicitly asks. It returns a compressed receipt of what it did.
 
 **Carries the skill(s):** [`wiki-update`](../skills/wiki-update.md),
 [`wiki-search`](../skills/wiki-search.md), [`wiki-list`](../skills/wiki-list.md).
@@ -61,7 +61,8 @@ transcript (15 minutes or more, the checker's line) goes to a worker on Opus and
   site's block page). The worker never deletes in `raw/`, since a raw it was handed may be an older
   one another entry cites; `wiki-cycle` deletes each listed raw after checking nothing cites it.
 
-Promotion into `wiki/` stays with you, through `wiki-promote`.
+It never promotes. Inside `wiki-cycle` the notebook's `confirm_before_promote` decides: promoted at the end of
+the run when it is false, left for you to promote with `wiki-promote` when it is true (the default).
 
 ## When it skips or fails an item
 

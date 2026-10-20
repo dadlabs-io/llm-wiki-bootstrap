@@ -116,7 +116,7 @@ tags: [<project-slug>, <category>, <topic-tags>]
 
 Where each kind of entry goes:
 - A project entry (decision, component, pattern, …) → staged at `{{LLM_WIKI_PATH}}/_inbox/proposed/<slug>.md`, its sidecar naming `project/<category>/`; `/wiki-promote` files it
-- An ingested research entry → staged the same way by `/wiki-update --staged` or `/wiki-cycle`, or filed directly by a single `/wiki-update`
+- An ingested research entry → staged the same way by `/wiki-update` or `/wiki-cycle` while the notebook's `confirm_before_promote` is true (the default), filed directly when it is false
 - A session journal → written directly by `/wrap-up` to `{{WIKI_PATH}}/sessions/<persona>/<YYYY-MM>/`
 
 Body sections (skip any that don't apply):

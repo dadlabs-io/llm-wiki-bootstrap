@@ -7,7 +7,7 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 9
+framework-version: 10
 last_reviewed: 2026-10-19
 review_after: 2027-01-13
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
@@ -206,7 +206,7 @@ Legend: ✅ implemented and enforced · ⚠️ partial / policy not fully automa
 | 3 | Raw sources immutable | ✅ | `raw/` folder preserved at wiki root. No rewrite pattern; re-fetches create new timestamped files. |
 | 4 | Both-sides-stay (contradiction preservation) | ✅ | Policy baked in. `/wiki-claims` surfaces contradictions; both entries kept. |
 | 5 | Claim-level 4-way classification | ✅ | `/wiki-claims` skill implemented. 22 entries retrofitted 2026-04-10. New ingests classify at author time. |
-| 6 | Two human checkpoints | ✅ | URL approval gate (`/wiki-list add` / Drive fetch → `_inbox/pending/`, confirmed at `/wiki-cycle` Step 1.5) + entry approval gate (`_inbox/proposed/` → `/wiki-promote --review` → `wiki/`). Non-negotiable. |
+| 6 | Two human checkpoints | ✅ | URL approval gate (`/wiki-list add` / Drive fetch → `_inbox/pending/`, confirmed at `/wiki-cycle` Step 1.5) + entry approval gate (`_inbox/proposed/` → `/wiki-promote --review` → `wiki/`). Non-negotiable. The entry gate is the notebook's `confirm_before_promote` (true by default); since 2026-10-19 (task #184) `/wrap-up`, `/wiki-update` and `/wiki-cycle` all follow it (until then the cycle ignored it and `--full` promoted without asking). A notebook set to false has chosen to skip the second checkpoint. |
 | 7 | Source tier-4 hard block | ✅ | Eval gate in `/wiki-update` step 5 (added 2026-04-13). Failing-tier entries drop to `_inbox/proposed/` for human review. |
 | 8 | Synthesis vs direct claims distinguished in prose | ⚠️ | Retrofit done 2026-04-10 for 22 entries. Convention baked into `wiki-update` SKILL.md, but enforcement across new ingests relies on author discipline — not mechanically checked by lint. |
 | 9 | Dependency tracking (`last_reviewed` / `review_after` / `confidence`) | ⚠️ | Lifecycle fields are required by the spec and lint-checked (missing `last_reviewed` / `review_after` is a lint finding). `raw_path` is **in the frontmatter schema and enforced** by `wiki-lint-mechanical.py` (missing / phantom `raw_path` checks). Remaining gap: the frozen "134/148 compliant" figure above is a 2026-04 snapshot; the live compliance number is the lint's, per wiki. |

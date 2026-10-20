@@ -47,7 +47,7 @@ wiki-promote.py --topic <topic> --check [--slug <slug>]   # validate staging, mo
 ls _inbox/proposed/*.md 2>/dev/null | grep -v README
 ```
 
-If empty, say "Nothing in staging — all entries are going direct to wiki." and stop.
+If empty, say "Nothing in staging." and stop.
 
 For each entry found, show:
 ```
@@ -129,7 +129,7 @@ To release a held entry:
 
 ## Don't
 
-- Don't promote without user approval (unless `all` was explicitly passed)
+- Don't promote without user approval, unless `all` was explicitly passed or the caller promotes under the notebook's `confirm_before_promote: false` (`/wrap-up` Step 6, `/wiki-cycle` Step 5.5)
 - Don't delete rejected entries — move to `_inbox/rejected/`
 - Don't skip backlinks — that's the whole point of the two-phase flow
 - Don't modify the entry content during promotion (only remove `status: proposed` from frontmatter)

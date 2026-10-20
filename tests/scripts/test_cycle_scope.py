@@ -112,7 +112,8 @@ with tempfile.TemporaryDirectory() as td:
 
     # ── claims ──
     p = run("claims", "--run-folder", str(run_folder))
-    check("claims with no index: every entry", len(scope("claims-scope.txt") or []) == 5 and "no claims index" in p.stdout,
+    check("claims with no index: every entry, not the staged one (task #184)",
+          len(scope("claims-scope.txt") or []) == 4 and "no claims index" in p.stdout,
           p.stdout)
     idx = nb / "_inbox" / "claims-index.json"
     idx.write_text(json.dumps({"generated": "2026-08-01", "claims": [
@@ -127,7 +128,9 @@ with tempfile.TemporaryDirectory() as td:
     check("claims: the entry revised after the index was written", c and "wiki/research/tooling/old-a.md" in c, c)
     check("claims: a machine-only edit is not", c and "wiki/research/tooling/old-b.md" not in c, c)
     check("claims: an indexed, untouched entry is not", c and "wiki/research/tooling/old-c.md" not in c, c)
-    check("claims: the staged entry is in scope", c and "_inbox/proposed/staged-e.md" in c, c)
+    # task #184 (Mark's OK, 2026-10-19): an entry still staged at the claims step waits for the user or was held by
+    # the checker, so its claims wait until it is promoted
+    check("claims: a staged entry is not in scope", c is not None and "_inbox/proposed/staged-e.md" not in c, c)
 
     # ── checker ──
     def raw(name, kind, secs):

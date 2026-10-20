@@ -1,7 +1,7 @@
 ---
 name: wiki-update
 description: "Ingest one EXTERNAL source (a URL, YouTube video, PDF, X post, local file or pasted text) into a wiki as a curated, cross-linked entry, keeping the verbatim original under raw/. Two or more URLs are queued for /wiki-cycle instead. Use when the user says 'add this to the wiki', 'save this article', 'wiki this', 'ingest this video', or hands over a source to file. Not for this session's own work (/wrap-up), and not for draining the queue or 'update the wiki' (/wiki-cycle)."
-last_reviewed: 2026-09-14
+last_reviewed: 2026-10-19
 review_after: 2026-12-14
 reviewed_for_model: claude-opus-5
 ---
@@ -44,7 +44,7 @@ Before starting, settle the notebook and the folder, and confirm them with the u
 
 ## The flow
 
-Direct mode, the default: use it unless you were asked for `--staged`. Other skills cite these step numbers (step 5 is the gate).
+**Staged or direct is the notebook's setting, `confirm_before_promote`**, never your choice: `true` (the default) stages the entry in `_inbox/proposed/` and it waits for the user; `false` files it straight into `wiki/`. `wiki-update.py` reads it when you pass neither flag and prints `promote_mode=` with the reason. Pass `--staged` or `--direct` only when the user or the calling workflow asked for one; it wins for that run only (task #184, 2026-10-19: until then this skill filed directly whatever the setting said). Other skills cite these step numbers (step 5 is the gate).
 
 1. **Fetch the raw.** Ordinary pages: `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-update.py --topic <topic> --source <url> --fetch-only`. YouTube, PDFs (arXiv papers too), X, Medium, Instagram, pages rendered by JavaScript, a whole GitHub repo, and speech (reels, podcasts, video without captions): [fetchers.md](fetchers.md). Keep the printed `raw_path=`. A source fetched before is not fetched again: `--fetch-only` prints that raw (`Reused:`), or `duplicate_of=` when an entry already cites it; `--refetch` saves a new copy when the source has changed.
 2. **Read the raw in full**, once it is not a copy: `--fetch-only` checks its content itself; any other raw (a PDF, a ticket's `raw_path`, a file handed over) gets `wiki-update.py --topic <topic> --check-duplicate <raw_path>` first, where exit 3 and `duplicate_of=` mean an entry already holds it, so stop and report it as a dedup hit (2026-10-05: a 482-page book was read in full before the filer noticed). A thin raw, or one that is mostly site navigation, came from the wrong fetcher. Nothing is drafted until every line is read: a raw too big for one Read call is sized first with `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-raw-parts.py <raw_path>` (a whole repository runs to tens of thousands of lines). When it prints `fits_one_worker=no`, the raw is read by one helper agent per part it prints, never by you alone, however large your context: a long read in one context loses detail (2026-10-15). It splits along the raw's headings and gives each part's line range, and each helper reads its range whole and reports what it holds with line numbers. A claim from outside coverage of the source (a post, an article about it) is checked against the raw before it goes in. The read guard (a global hook) refuses step 8's filing call when this session and its helpers have not read the raw to its last line, and names the unread lines (2026-10-15: an entry filed from part of a 29,095-line raw had six wrong claims).
@@ -61,22 +61,24 @@ Direct mode, the default: use it unless you were asked for `--staged`. Other ski
 
    Leave out the Source/Raw footer: the script writes it after your body. Tag a thin entry `stub`.
 5. **Eval gate.** The script is the gate. It refuses to file (exit 1, `Refusing to file`) without a `## TL;DR`, without a `## Related` holding two or more wiki links (only a warning for `tier: self`), with anything after the footer but the backlinks block, with frontmatter that would not parse, or from a raw marked `completeness: preview` or `summary` (only part of its source: [fetchers.md](fetchers.md), "Pages no fetcher can get"; `--partial-source '<why>'` only on the user's word). It warns on fewer than three tags, an unmarked thin entry, and numbers outside `>` lines. It also checks every quote on a `>` line against the raw and warns when a quote is worded differently, is not found, or has its `...` pieces out of order. For each flagged quote, copy the raw's words exactly, or take the line out of `>` and write it as paraphrase. "Not found" can also mean the raw lacks that passage. Text you read off an image in the raw (a slide, a screenshot, an X post's picture) goes into the raw under `## Transcribed from <image file> by <you>, <date>`; the gate then reports those quotes on their own line, as checked against a transcription, which is expected and stays. Any other missing passage: add it to the raw, or say in the entry where the quote comes from. Fix and re-run. Once the gate has filed or staged the entry, fix it in place and re-check it with `wiki-update.py --topic <topic> --regate <slug>` (writes nothing, skips dedup, exit 1 on an error); never re-file it with `--force`, which makes a `-2` copy. `--no-gate '<reason>'` is for an entry a rule is genuinely wrong for, and the reason is what a reviewer reads. Then score the two things a script cannot, 1 to 5 each: **extraction fidelity** (every claim attributed, every number quoted, checked against the raw) and **synthesis value** (it positions the source against what the wiki holds). Print them as one line before filing, `Scores: extraction fidelity N/5, synthesis value N/5`. Below 3, fix it or ask. The score is advisory: you do not certify your own draft.
-6. **Pick the existing entries that should link back**: the `inbound_candidates` the script lists, the area's hub page, entries the source speaks to. (Skipped with `--staged`.)
-7. **Add the new entry to their Related sections**, acting on every candidate that fits. After five or more ingests into one area, update its hub page too. (Skipped with `--staged`.)
+6. **Pick the existing entries that should link back**: the `inbound_candidates` the script lists, the area's hub page, entries the source speaks to. (Skipped when the entry is staged: promotion adds them.)
+7. **Add the new entry to their Related sections**, acting on every candidate that fits. After five or more ingests into one area, update its hub page too. (Skipped when the entry is staged.)
 8. **File it.** Tags: three or more, including the source's type when it has one (`youtube` for a video).
    ```bash
    uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-update.py --topic <topic> --folder <folder> \
      --source <topic>/_inbox/temp/<slug>.md --source-url <original url> --raw-path <raw_path> \
      --ingested-by claude-code --tier <1|2|3|4|self> --confidence <high|medium|low> \
-     --title "<title>" --tags "<tags>"            # add --staged for staged mode
+     --title "<title>" --tags "<tags>"            # --staged / --direct only when asked
    ```
    It prints `wiki_path=`, `wiki_slug=`, `outbound_fixed=` (links it rewrote), `outbound_warnings=` (links it could not resolve: fix them by hand) and `inbound_candidates=` (step 6's list); a duplicate prints `Skip (dedup)` and `duplicate_of=<path>` instead. Delete the temp files once filing succeeds: the synthesis, and the pasted-text source if you wrote one. For a queued item, move its `.queue` file from `_inbox/pending/` to `_inbox/done/` and re-render the list (`wiki-list-render.py --topic <topic>`).
 
-Tier and confidence are defined only in the frontmatter spec ("tier rubric", "confidence scale"). `--fetch-only` and `--check-duplicate` print both, read from the spec, after a raw that is not a duplicate: set `--tier` and `--confidence` by that printout (or by the spec itself), never from memory, since posts and individual repositories are tiered by their author and evidence, not by platform or fame. In short: tier is the source's quality, confidence is our entry's reliability; between two adjacent tiers take the lower; tier 4 never auto-ingests: it needs a human's yes, and a source the user handed you is that yes, so file it in the mode asked (direct unless `--staged` was asked), never staged by your own choice. Our own synthesis is tier `self`, filed with `--no-raw` (no raw copy, no `raw_path`).
+Tier and confidence are defined only in the frontmatter spec ("tier rubric", "confidence scale"). `--fetch-only` and `--check-duplicate` print both, read from the spec, after a raw that is not a duplicate: set `--tier` and `--confidence` by that printout (or by the spec itself), never from memory, since posts and individual repositories are tiered by their author and evidence, not by platform or fame. In short: tier is the source's quality, confidence is our entry's reliability; between two adjacent tiers take the lower; tier 4 never auto-ingests: it needs a human's yes, and a source the user handed you is that yes, so file it as the setting or the user's flag says, never staged or direct by your own choice. Our own synthesis is tier `self`, filed with `--no-raw` (no raw copy, no `raw_path`).
 
-## Staged mode (`--staged`)
+## Staged mode
 
-Only when the user, or the workflow that called this skill (a `/wiki-cycle` ingest worker), asks for `--staged`; never your own choice. It is meant for batches and runs nobody is watching. The entry goes to `_inbox/proposed/` with `status: proposed`, nothing else is edited, and `/wiki-promote` finishes the integration later. Steps 6 and 7 are skipped. `wiki-update.py --staged` writes the sidecar itself.
+When the script prints `promote_mode=staged` (the notebook's `confirm_before_promote` is true, or `--staged` was asked; a `/wiki-cycle` ingest worker always passes it). The entry goes to `_inbox/proposed/` with `status: proposed`, nothing else is edited, and promotion finishes the integration. Steps 6 and 7 are skipped. `wiki-update.py` writes the sidecar itself.
+
+**Then ask, unless a workflow called you:** the user handed this source over, so put the promotion to them at once: `Staged <title> in _inbox/proposed/. Promote it now? (yes / no)`. Yes → `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <topic> --auto --slug <slug>`, then report where it landed; no → it waits for `/wiki-promote`. Never promote it without that yes. A `/wiki-cycle` worker never asks: the cycle promotes or holds by the setting.
 
 ### Staged-ingest sidecar contract
 
@@ -100,7 +102,7 @@ When you write or edit a sidecar by hand (parallel workers do), follow this exac
 
 ## After running
 
-Tell the user where the entry was filed, the Scores line, any dedup hit, any gate warnings and any `Prompt injection:` line, then stop. Ingest nothing more unless asked.
+Tell the user where the entry was filed or staged (and why: the `promote_mode=` line), the Scores line, any dedup hit, any gate warnings and any `Prompt injection:` line, then stop. Ingest nothing more unless asked.
 
 ## Cycle contract
 

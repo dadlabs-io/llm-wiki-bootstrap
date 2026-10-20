@@ -19,6 +19,7 @@ Created at Step 0 as `<run-folder>/scratchpad.md` and updated after every phase;
 - Triggered by: user / cron / resume
 - This session reads as: <reader name from wiki-triage.py buckets>
 - Models (Step 0's `models` lines): ingest workers <m> · checker <m> · semantic lint <m> · lint fixes <m> · synthesis <m>
+- Promote (Step 0's `promote` line): wait for the user | automatic (confirm_before_promote, from <where>)
 
 ## Phase log
 
@@ -55,6 +56,7 @@ Created at Step 0 as `<run-folder>/scratchpad.md` and updated after every phase;
 ### Phase 4: Semantic lint (scope N: added or revised since <cut-off> + N staged)
 ### Phase 5: Fix lint issues
 ### Phase 5.5: Promote
+- **Status**: done (N promoted, N held by the checker) | skipped (confirm_before_promote: true; N staged for the user)
 ### Phase 6: Claims (scope N)
 ### Phase 6.5: Best-practices synthesis
 ### Phase 7: Refresh scan
@@ -115,7 +117,8 @@ Ingest workers share three GPU slots for their searches (`wiki-qmd-query.py`); w
 
 ## History behind the rules
 
-- **Staged entries before Steps 6 and 6.5** (2026-07-11, cycle 2026-07-10-01): claims and synthesis read `wiki/`, but ingest stages to `_inbox/proposed/`. Synthesis agents cross-linked staged entries by paths that did not exist yet: 7 broken links, found several steps later. Hence Step 5.5 promotes before them in a `--full` run.
+- **Staged entries before Steps 6 and 6.5** (2026-07-11, cycle 2026-07-10-01): claims and synthesis read `wiki/`, but ingest stages to `_inbox/proposed/`. Synthesis agents cross-linked staged entries by paths that did not exist yet: 7 broken links, found several steps later. Hence Step 5.5 promotes before them, and claims and synthesis never read a staged entry.
+- **Promotion follows the notebook's setting** (task #184, 2026-10-19): until then the cycle never read `confirm_before_promote`: `--full` promoted every entry the checker did not hold, though agentic-design asks for each one first, and every other mode staged everything, though five notebooks say promote without asking. Step 0 reads it with `wiki-cycle-scope.py promote`, and Step 5.5 runs in every mode that ingests only when it is false.
 - **Link normaliser before the mechanical lint** when entries were promoted in-cycle: ingest workers write bare-slug links by contract, and until `wiki-fix-links.py` ran end to end every cycle had about 50 broken links fixed by hand.
 - **Dequeue after ingest** (cycles 2026-07-01 and 07-02, 61 stale items each): the staged batch path never moved queue tickets, so every later cycle reconciled them by hand. `wiki-dequeue.py` matches by source URL and is idempotent.
 - **Staging check after ingest** (cycle 2026-09-14-01): a worker's receipt said every sidecar conformed while one had invalid JSON; `wiki-promote.py --check` is the check, not the receipt.

@@ -47,7 +47,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, MERGED_TAXONOMY, future_label as _future_label, resolve_vault_topic as _resolve_vault_topic, confirm_before_promote  # noqa: E402
 # Mechanical half of the eval rubric — shared with wiki-lint-mechanical.py so
 # the pre-write gate and the lint backlog view enforce ONE set of rules.
 from _entry_checks import (PARTIAL_COMPLETENESS, check_entry_body, check_frontmatter_loadable, format_result,  # noqa: E402
@@ -1359,7 +1359,12 @@ def main():
                         help="Stage the entry to _inbox/proposed/ instead of filing directly to wiki/<folder>/. "
                              "Adds status: proposed to frontmatter and writes a .proposed_metadata.json sidecar "
                              "containing the target folder, inbound link candidates, and suggested backlinks "
-                             "for /wiki-promote to finish the integration on acceptance. Safe for automated runs.")
+                             "for /wiki-promote to finish the integration on acceptance. Safe for automated runs. "
+                             "With neither --staged nor --direct, the notebook's confirm_before_promote decides: "
+                             "true (the default) stages, false files directly (task #184).")
+    parser.add_argument("--direct", action="store_true",
+                        help="File directly into wiki/<folder>/ even when the notebook's confirm_before_promote is "
+                             "true. For this run only; the setting stays as it is.")
     parser.add_argument("--no-gate", nargs="?", const="no reason given", default=None, metavar="REASON",
                         help="Override the pre-write mechanical gate (missing TL;DR, fewer than 2 Related links, "
                              "etc. — see _entry_checks.py) and file anyway. Give a reason; it is printed with the "
@@ -1379,7 +1384,11 @@ def main():
                              "An exact copy or a near-identical text exits 3 with duplicate_of=; a partial overlap "
                              "warns; exit 0 otherwise, 2 when the raw does not exist.")
     args = parser.parse_args()
+    if args.staged and args.direct:
+        parser.error("--staged and --direct contradict each other: pass one, or neither to follow the notebook's "
+                     "confirm_before_promote")
 
+    notebook = args.topic
     # --topic <registry notebook> resolves through the registry from any cwd;
     # an explicit --vault keeps the legacy <vault>/<topic> join (2026-09-13).
     args.vault, args.topic = _resolve_vault_topic(args.topic, args.vault)
@@ -1393,6 +1402,18 @@ def main():
 
     if not args.source:
         parser.error("--source is required (unless using --slug-for)")
+
+    if not args.fetch_only:
+        # task #184: until 2026-10-19 only /wrap-up read confirm_before_promote, and this script filed directly
+        # unless told --staged, whatever the notebook said
+        if args.staged or args.direct:
+            print(f"promote_mode={'staged' if args.staged else 'direct'} "
+                  f"(--{'staged' if args.staged else 'direct'} typed for this run)")
+        else:
+            wait, where = confirm_before_promote(notebook)
+            args.staged = wait
+            print(f"promote_mode={'staged' if wait else 'direct'} "
+                  f"(confirm_before_promote: {str(wait).lower()}, from {where})")
 
     tags = [t.strip() for t in args.tags.split(",") if t.strip()]
     return add_to_wiki(

@@ -6,8 +6,8 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 6
-last_reviewed: 2026-10-14
+framework-version: 7
+last_reviewed: 2026-10-19
 review_after: 2027-01-13
 tags: [best-practice, architecture, orchestrator, wiki-cycle, schema, contract]
 ---
@@ -41,6 +41,7 @@ _inbox/reports/
     └── 2026-04-24-01/
         ├── scratchpad.md                          ← Step 0; rewritten after EVERY step, enables --resume
         ├── models.json                            ← Step 0: the model each helper is spawned on
+        ├── promote-setting.txt                   ← Step 0: the notebook's confirm_before_promote, which Step 5.5 follows
         ├── drive-fetch.json                       ← Step 1.0
         ├── drive-fetch.md
         ├── discover.json                          ← Step 1
@@ -191,7 +192,7 @@ All three are deterministic Python and **all three emit cycle-contract JSON when
 
 ### `/wiki-promote` (Step 5.5)
 
-Writes `promote.json` + `promote.md`. On a `--full` run this step is **required before Steps 6 and 6.5** — those steps operate on "new `research/` entries", but ingest stages to `_inbox/proposed/`, so running them first produces cross-links to paths that don't exist yet.
+Writes `promote.json` + `promote.md`. Runs only when Step 0's `promote-setting.txt` says `confirm_before_promote: false` (since 2026-10-19, task #184; until then it ran in `--full` alone, whatever the setting), in every mode that ingests, and then **before Steps 6 and 6.5**: those steps read `wiki/` only, and ingest stages to `_inbox/proposed/`, so running them first misses the new entries (and, before they read `wiki/` only, produced cross-links to paths that did not exist yet). When the setting is true the step is recorded as skipped and the staged entries wait for the user.
 
 - `queued[]` = entries moved from `_inbox/proposed/` → `wiki/<folder>/`, each with `slug` and destination folder
 - `skipped[]` = staged entries deliberately held back

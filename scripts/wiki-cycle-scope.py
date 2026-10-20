@@ -8,6 +8,7 @@ What a /wiki-cycle step reads, decided by a script instead of by the model.
     wiki-cycle-scope.py --topic N checker  --run-folder <rf> [--min-minutes 15]
     wiki-cycle-scope.py --topic N checker-log --run-folder <rf> --entry <slug> --report <file.json>
     wiki-cycle-scope.py --topic N cost --run-folder <rf> --mark start|end [--session-id <id>]
+    wiki-cycle-scope.py --topic N promote --run-folder <rf>
 
 `semantic`: the entries added or revised since the last semantic lint (the newest
 earlier run folder holding lint-semantic.json; its `timestamp` is the cut-off), plus
@@ -16,8 +17,10 @@ has run yet, every entry. Writes <rf>/semantic-scope.txt, one path per line rela
 to the notebook under a `#` header line, and prints the count and the cut-off.
 
 `claims`: the entries no claim in _inbox/claims-index.json comes from, plus those
-revised since the index was last written, plus the staged ones. With --all, or no
-index, every entry. Writes <rf>/claims-scope.txt.
+revised since the index was last written. With --all, or no index, every entry. Writes
+<rf>/claims-scope.txt. Never a staged entry (task #184, 2026-10-19): one still staged at
+this step waits for the user or was held by the checker, so its claims wait until it is
+promoted.
 
 `synthesis`: the live research/ entries added since the last synthesis the user answered
 (the newest earlier synthesis.json with status completed; its `timestamp` is the cut-off).
@@ -56,6 +59,12 @@ reads it again and writes the difference to cost.json and cost.md. The session i
 newest file whose `cwd` is this folder (or --session-id); with no such file the step is
 NOT checked (exit 3), never a zero (task #138, 2026-10-14).
 
+`promote`: whether the cycle's new entries wait for the user or are promoted without
+asking, from the notebook's confirm_before_promote (registry → project wiki-config.json →
+true, as /wrap-up reads it). Prints one line and writes <rf>/promote-setting.txt. Until
+2026-10-19 the cycle never read the setting: --full promoted everything and every other
+mode staged everything (task #184).
+
 Entries are wiki/**/*.md except `_`-prefixed machine files, README.md and sessions/.
 (2026-09-24, task #42: C1 and C3; the 2026-09-23 cycle's findings 10 and 11.)
 """
@@ -72,7 +81,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
-from _wiki_config import load_config, now_stamp, topic_root  # noqa: E402
+from _wiki_config import confirm_before_promote, load_config, now_stamp, topic_root  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -197,7 +206,7 @@ def cmd_claims(nb: Path, args) -> int:
     all_entries, st = entries(nb), staged(nb)
     idx_path = nb / "_inbox" / "claims-index.json"
     if args.all or not idx_path.is_file():
-        scope = all_entries + st
+        scope = all_entries
         why = "--all" if args.all else "no claims index: every entry"
     else:
         idx = json.loads(idx_path.read_text(encoding="utf-8"))
@@ -205,11 +214,11 @@ def cmd_claims(nb: Path, args) -> int:
         missing = [e for e in all_entries if Path(e).name not in known]
         written = _index_written(nb, idx_path)
         revised = revised_since(nb, written, all_entries)
-        scope = sorted(set(missing) | set(revised)) + st
+        scope = sorted(set(missing) | set(revised))
         why = (f"{len(missing)} with no claims in the index, {len(set(revised) - set(missing))} revised since "
-               f"the index was written ({written.date().isoformat()}) + staged")
+               f"the index was written ({written.date().isoformat()})")
     out = write_scope(rf, "claims-scope.txt", scope, why)
-    print(f"claims scope: {len(scope)} of {len(all_entries)} entries + {len(st)} staged ({why}) -> {out}")
+    print(f"claims scope: {len(scope)} of {len(all_entries)} entries ({why}); {len(st)} staged left out -> {out}")
     return 0
 
 
@@ -358,6 +367,22 @@ def cmd_models(nb: Path, args) -> int:
     return 0
 
 
+def cmd_promote(nb: Path, args) -> int:
+    wait, where = confirm_before_promote(args.topic_name)
+    rf = Path(args.run_folder)
+    rf.mkdir(parents=True, exist_ok=True)
+    # plain text, not JSON: the run folder's *.json files are step results under the cycle contract
+    out = rf / "promote-setting.txt"
+    atomic_write_text(out, f"confirm_before_promote: {str(wait).lower()}\nfrom: {where}\nat: {now_stamp()}\n")
+    if wait:
+        print(f"promote: wait for the user (confirm_before_promote: true, from {where}): nothing is promoted; "
+              f"new entries stay staged for /wiki-promote -> {out}")
+    else:
+        print(f"promote: automatic (confirm_before_promote: false, from {where}): every new entry the checker "
+              f"did not hold is promoted at Step 5.5 -> {out}")
+    return 0
+
+
 SESSION_COST_DIR = HOME_CLAUDE / "session-cost"
 
 
@@ -451,17 +476,21 @@ def main() -> int:
     co.add_argument("--run-folder", required=True)
     co.add_argument("--mark", choices=("start", "end"), required=True)
     co.add_argument("--session-id", default=None)
+    pr = sub.add_parser("promote")
+    pr.add_argument("--run-folder", required=True)
     args = ap.parse_args()
     topic = args.topic or (load_config() or {}).get("notebook")
     if not topic:
         print("error: no notebook: pass --topic or run inside a wiki project", file=sys.stderr)
         return 2
+    args.topic_name = topic
     nb = Path(topic_root(topic))
     if not (nb / "wiki").is_dir():
         print(f"error: no wiki at {nb}", file=sys.stderr)
         return 2
     return {"semantic": cmd_semantic, "claims": cmd_claims, "synthesis": cmd_synthesis, "checker": cmd_checker,
-            "checker-log": cmd_checker_log, "models": cmd_models, "cost": cmd_cost}[args.cmd](nb, args)
+            "checker-log": cmd_checker_log, "models": cmd_models, "cost": cmd_cost,
+            "promote": cmd_promote}[args.cmd](nb, args)
 
 
 if __name__ == "__main__":
