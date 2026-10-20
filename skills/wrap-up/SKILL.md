@@ -1,8 +1,8 @@
 ---
 name: wrap-up
 description: "Crystallize the current session's work into the project wiki AND refresh the working-memory dashboards. ALWAYS (1) upserts a running per-session journal at wiki/sessions/<persona>/<YYYY-MM>/ so the \"what we did\" record builds as you go, (2) refreshes the mutable working-memory dashboards — sessions/<persona>/handoff.md + the task cards (wiki/tasks/) + sessions/active-context.md (the resume pointer; the memory-bank replacement), and (3) extracts durable knowledge — components/decisions/patterns/bugs — staged to _inbox/proposed/ then promoted to wiki/project/<category>/ (gated by two per-notebook booleans: `confirm_before_create` for Step 2's filing decision, `confirm_before_promote` for Step 6's promotion decision). With --auto-commit it commits the session's work at the end, with --auto-push it also pushes (or the notebook's wrap_up_commit setting says which by default), and every wrap-up ends on one closing line (\"WRAP-UP COMPLETE: committed and pushed\" or what is left). This is the ONE session-close command — it absorbs the retired /upd-docs. For ingesting EXTERNAL sources (URLs/papers/videos) use /wiki-update instead. Use when the user says \"wrap up\", \"wrap-up\", \"/wrap-up\", \"wrap this session\", \"document what we did\", \"crystallize this session\", \"save this work\", \"save progress\", \"save state\", \"update docs\", \"upd-docs\", \"wrap up and commit\", \"wrap up and push\"."
-last_reviewed: 2026-10-12
-review_after: 2027-01-10
+last_reviewed: 2026-10-19
+review_after: 2027-01-17
 reviewed_for_model: claude-opus-5-5
 ---
 
@@ -37,7 +37,7 @@ To change any of them: edit the notebook's registry entry (or the project's `wik
 
 ## The flow
 
-Steps 0 and 0.5 run on **every** wrap-up, and Step 7's closing line ends every one. Step 1.5 runs whenever the session changed something a doc describes. Steps 1–6 depend on what the session produced; Step 7's commit and push depend on the flag, else the `wrap_up_commit` setting.
+Steps 0 and 0.5 run on **every** wrap-up, and Step 7's closing line ends every one. Step 1.5 runs whenever the session changed something a doc describes. Steps 1–6 (3.5 among them) depend on what the session produced; Step 7's commit and push depend on the flag, else the `wrap_up_commit` setting.
 
 ### Step 0 — Update the session journal (ALWAYS)
 
@@ -136,7 +136,7 @@ One row per candidate, by category:
 |---|---|
 | **Component** | A new module, class, function or system part — what it does, how it fits |
 | **Decision** | A choice between alternatives with the *why* preserved (ADR-style) |
-| **Architecture** | A system-level structural rule that constrains future work |
+| **Living page** | How a part works now changed: revise its page in `project/architecture/` in place (Step 3.5), never a new entry beside it |
 | **Pattern** | A reusable approach the project will follow elsewhere |
 | **Troubleshooting** | A bug + root cause + fix, so future-you doesn't re-debug it |
 
@@ -171,6 +171,7 @@ I see the following durable work from this session:
 |---|---|---|---|
 | 1 | troubleshooting | OAuth re-prompt on every Drive scan — root cause + fix | wiki/project/troubleshooting/ |
 | 2 | decision | --move-handled default-ON for wiki-fetch-drive-folder | wiki/project/decisions/ |
+| 3 | living page | revise: Drive fetch now moves handled files by default | wiki/project/architecture/30-the-research-cycle.md |
 
 **Bulk accept (default):** `go` / `all` / `keep all` / `roll them up`
 **Bulk reject:** `none` / `drop all` / `skip`
@@ -203,7 +204,7 @@ Same staging discipline as `/wiki-update`: entries go to `<topic_root>/_inbox/pr
 }
 ```
 
-**`target_folder` is `project/` followed by the plural folder name** — `project/components`, `project/decisions`, `project/architecture`, `project/patterns`, `project/troubleshooting`. Never the bare folder name, and never the singular `category:` word. (Three entries landed in phantom `project/component/` folders that way; the script maps singular → plural since 2026-09-13, but write the real name.) The two array fields can stay empty: `/wiki-update` fills them for external sources.
+**`target_folder` is `project/` followed by the plural folder name** — `project/components`, `project/decisions`, `project/patterns`, `project/troubleshooting` (never `project/architecture`: its living pages are revised in place, Step 3.5). Never the bare folder name, and never the singular `category:` word. (Three entries landed in phantom `project/component/` folders that way; the script maps singular → plural since 2026-09-13, but write the real name.) The two array fields can stay empty: `/wiki-update` fills them for external sources.
 
 ```yaml
 ---
@@ -217,12 +218,23 @@ tier: self
 confidence: <high|medium|low>
 last_reviewed: <YYYY-MM-DD>
 review_after: <YYYY-MM-DD+90>
-category: <component|decision|architecture|pattern|troubleshooting>
+category: <component|decision|pattern|troubleshooting>
 tags: [<project-name>, <category>, <topic-tags>]
 ---
 ```
 
 Body, skipping any section that doesn't apply: **TL;DR** (1–2 sentences) → **What** (the durable artifact) → **Why** (the rationale, including what was rejected) → **How** (paths, commits) → **Caveats / open questions** → **Related** (links to other entries).
+
+### Step 3.5 — Revise the living pages the session's change touches
+
+A history note says why something changed; a **living page** says how it works now (authoring principle 13). Filing only the note leaves the page stale, which is how design docs went stale in every notebook (task #172, 2026-10-19). Each kept `living page` row from Step 2 is done here.
+
+1. **The living pages**: every page in `wiki/project/architecture/` not marked another `kind` (its `README.md`, `_INDEX.md` and `_MAP.md` are not pages), and any page marked `kind: living`. None in this notebook: skip the step, and Step 5 says "Living pages: none in this notebook".
+2. **Which ones the session touched**: for each change Step 1 found (and each candidate filed in Step 3), the page whose `describes:` path, title or Contents covers that part. Read each such page whole.
+3. **Revise it in place** with the Edit tool: correct every passage the change made untrue, add what is new in the section it belongs to (How it works, Rules and settings, Known gaps and bugs), move a fixed gap out of Known gaps, link the session's note under History now, as a Markdown link to the path it will have once promoted (`[<title>](../decisions/<slug>.md)`; the link resolves when the note is promoted), and set `last_reviewed` to today. Keep the page's frontmatter, `kind: living`, `describes:` and Contents. **Never re-file a living page through `wiki-update.py`**: it rewrites the frontmatter and drops `kind`, `describes` and tags.
+4. **A page you cannot settle** (the code's behaviour now is unclear, or two notes disagree) is left unedited and named in the handoff's `⚠️ WAITING ON YOU` with its path and the question.
+
+A part with no page yet gets one only when the session built a new area: `kind: living`, the next free number by tens, the sections of principle 13.
 
 ### Step 4 — Optional: a session snapshot in `raw/sessions/`
 
@@ -238,6 +250,7 @@ Wrapped up:
   Working memory refreshed: sessions/main/handoff.md + active-context.md + task cards
   Task list: #1 done, #4 added — remove the done one? (your call)
   Docs check: 3 passages read in 2 docs; 1 fixed (README.md, the --move-handled default), 0 left for you
+  Living pages: 1 revised (30-the-research-cycle.md), 0 left for you
   3 entries staged to _inbox/proposed/ (→ wiki/project/<category>/ on promote):
   - troubleshooting/oauth-re-prompt-root-cause-2026-05-12.md
   - decisions/move-handled-default-on-2026-05-12.md
@@ -274,7 +287,7 @@ An entry in `_inbox/proposed/` does nothing until it is promoted, and the old tw
 
 ```
 4 entries staged to _inbox/proposed/. Promote them now?
-  1. reading-list-includes-mechanism-2026-06-20.md      → project/architecture/
+  1. reading-list-includes-mechanism-2026-06-20.md      → project/decisions/
   2. agent-to-mdc-py-component-2026-06-20.md            → project/components/
 
 Promote all now?  (yes / no / pick numbers e.g. "1 3")

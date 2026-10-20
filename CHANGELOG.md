@@ -11,6 +11,10 @@
 
 ## 2026-10-19
 
+### Wrap-up revises the living pages a session's change touches (task #172)
+
+No step ever revised a design page: wrap-up and promote only added notes, so the design docs of every notebook went stale (investment-agent found it, 2026-10-18). `/wrap-up` Step 3.5 now finds the living page (`project/architecture/`, or `kind: living`) each change touches and edits it in place: corrects what is now untrue, adds what is new, links the session's note under History, sets `last_reviewed`. Each revision is a `living page` row of Step 2's proposal table; a page it cannot settle goes to WAITING ON YOU; a notebook with no living pages skips the step. The `Architecture` category is gone: wrap-up never stages a new entry for `project/architecture/`. Authoring principle 13's enforcement line names the step (v11).
+
 ### One promote setting, followed everywhere (task #184)
 
 `confirm_before_promote` was read only by `/wrap-up`. `/wiki-update` filed straight into `wiki/` unless told `--staged`, and `/wiki-cycle` never read it: `--full` promoted every entry the checker did not hold (agentic-design, set to true, got entries nobody approved), and every other mode left everything staged (five notebooks set to false still had to promote by hand). Mark: "it should be using that parameter ... properly and consistently all the time."

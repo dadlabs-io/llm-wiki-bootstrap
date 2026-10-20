@@ -368,6 +368,11 @@ def prompt(case: dict, ctx: dict) -> str:
     _reset_project(case, ctx)
     _reset_cards(case, ctx)  # before the notebook reset: its git commit must not carry the last case's cards
     _reset_notebook(case, ctx)
+    if case.get("living_seed"):
+        dest = ctx["wiki"] / "project" / "architecture" / LIVING_NAME
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text((HERE / "fixtures" / "seeds" / case["living_seed"]).read_text(encoding="utf-8"),
+                        encoding="utf-8")
     answers = []
     if case.get("answer"):
         answers.append(f"At the proposal table (Step 2), the user answers: `{case['answer']}`.")
@@ -727,10 +732,11 @@ def _check_cards_stack(case: dict, before: dict, after: dict, run: dict, ctx: di
     add("wrote nothing into wiki/ but sessions/ and tasks/", not stray, stray)
 
 
-def _check_staged_entries(case: dict, ctx: dict, add) -> None:
+def _check_staged_entries(case: dict, ctx: dict, add, living: str | None = None) -> None:
     """Entries staged by a full wrap-up on a card project: the same gate, front matter and sidecar rules as kind "full"."""
     gate = _load(ctx["scripts"], "_entry_checks.py", "entry_checks")
-    staged, promoted = _staged(ctx), _promoted(ctx)
+    staged = _staged(ctx)
+    promoted = [p for p in _promoted(ctx) if p.name != living]  # the in-place living page is not a promotion
     add(f"at least {case['expect']['min_staged']} entries staged", len(staged) >= case["expect"]["min_staged"],
         [p.name for p in staged])
     add("nothing promoted without the user's yes", not promoted, [p.name for p in promoted])
@@ -820,6 +826,112 @@ def _check_cards_first(case: dict, before: dict, after: dict, run: dict, ctx: di
     add("wrote nothing into wiki/ but sessions/ and tasks/", not stray, stray)
 
 
+LIVING_NAME = "20-upload-sync.md"
+LIVING_DESCRIBES = "beacon/manifest.py"
+LIVING_OLD = "written when its upload starts, before any bytes are sent"
+LIVING_KEEP = "Chunk size is 8 MiB"
+LIVING_SEED_DATE = "2026-08-01"
+LIVING_HEADINGS = ("How it works", "Rules and settings", "Known gaps and bugs", "History")
+
+
+def _arch_files(ctx: dict) -> list[Path]:
+    d = ctx["wiki"] / "project" / "architecture"
+    return sorted(p for p in d.glob("*.md") if p.name != "README.md") if d.is_dir() else []
+
+
+def _staged_architecture(ctx: dict, gate) -> list[str]:
+    out = []
+    for p in _staged(ctx):
+        fm, _ = gate.split_frontmatter(p.read_text(encoding="utf-8"))
+        tf = ""
+        try:
+            tf = str(json.loads(p.with_name(f"{p.stem}.proposed_metadata.json").read_text(encoding="utf-8"))
+                     .get("target_folder", ""))
+        except (OSError, json.JSONDecodeError):
+            pass
+        if tf.rstrip("/").endswith("architecture") or str(fm.get("category")) == "architecture":
+            out.append(p.name)
+    return out
+
+
+def _section(body: str, name: str) -> str:
+    m = re.search(rf"(?im)^#{{1,6}}\s*{re.escape(name)}\s*$", body)
+    if not m:
+        return ""
+    rest = body[m.end():]
+    n = re.search(r"(?m)^#{1,6}\s", rest)
+    return rest[:n.start()] if n else rest
+
+
+def _check_living(case: dict, before: dict, after: dict, run: dict, ctx: dict, add) -> None:
+    """kinds "living-revise" and "living-none" (task #172): the wrap-up's living-page step.
+    Reads the architecture folder, the page's frontmatter and body, the staged sidecars and the reply."""
+    gate = _load(ctx["scripts"], "_entry_checks.py", "entry_checks")
+    today = _load(ctx["scripts"], "_wiki_config.py", "wiki_config").today_label()
+    exp, text = case["expect"], run["text"]
+    _preamble(run, add)
+    arch = _arch_files(ctx)
+    page = ctx["wiki"] / "project" / "architecture" / LIVING_NAME
+    staged_arch = _staged_architecture(ctx, gate)
+    journals = _journals(ctx)
+    add("exactly one journal for this session, named with the session id",
+        len(journals) == 1 and SID in journals[0].name, [p.name for p in journals])
+    handoff = ctx["wiki"] / "sessions" / PERSONA / "handoff.md"
+    add("handoff.md written with every section", handoff.is_file() and
+        not [s for s in HANDOFF_SECTIONS if s not in handoff.read_text(encoding="utf-8")])
+    _check_staged_entries(case, ctx, add, living=LIVING_NAME)
+    _closing_line(run, add)
+    wiki_rel = {k for k in set(before) | set(after) if before.get(k) != after.get(k) and k.startswith("wiki/")}
+    living_key = "wiki/project/architecture/" + LIVING_NAME
+    allowed = living_key if exp["living"] == "revised" else None
+    # a path the previous case left and the prompt-time reset removed shows as changed (gone from `after`):
+    # that is the harness, not the session
+    stray = sorted(k for k in wiki_rel
+                   if not k.startswith("wiki/sessions/") and k != allowed
+                   and not (k == living_key and k not in after))
+    add("wrote nothing into wiki/ but sessions/ (and the living page, when there is one)", not stray, stray)
+
+    if exp["living"] == "revised":
+        seed = (HERE / "fixtures" / "seeds" / case["living_seed"]).read_text(encoding="utf-8")
+        ptext = page.read_text(encoding="utf-8") if page.is_file() else ""
+        fm, body = gate.split_frontmatter(ptext)
+        add("the living page is edited in place: it is still there and is the only architecture page",
+            page.is_file() and arch == [page], [p.name for p in arch])
+        add("frontmatter keeps kind: living and describes:",
+            str(fm.get("kind")) == "living" and str(fm.get("describes")) == LIVING_DESCRIBES,
+            {k: fm.get(k) for k in ("kind", "describes")})
+        add("last_reviewed is the session's date", str(fm.get("last_reviewed")) == today,
+            f"last_reviewed {fm.get('last_reviewed')!r}, today {today}")
+        add("the page was changed and the old claim is gone",
+            ptext.replace("\r\n", "\n") != seed.replace("\r\n", "\n") and LIVING_OLD not in ptext, ptext[:300])
+        add("the page now says the new behaviour (written after the etag / confirmation)",
+            bool(re.search(r"etag|confirm", body, re.I)), body[:300])
+        add("content the change did not touch is kept", LIVING_KEEP in ptext)
+        add("the four sections are still there", all(re.search(rf"(?im)^#{{1,6}}\s*{h}\s*$", body) for h in LIVING_HEADINGS),
+            [h for h in LIVING_HEADINGS if not re.search(rf"(?im)^#{{1,6}}\s*{h}\s*$", body)])
+        seed_hist = _section(gate.split_frontmatter(seed)[1], "History")
+        hist = _section(body, "History")
+        add("History gained a line that links the session's note",
+            len(hist.strip().splitlines()) > len(seed_hist.strip().splitlines()) and bool(re.search(r"\[\[|\]\(|\.md", hist)),
+            hist[-200:])
+        add("no new entry is staged for wiki/project/architecture/", not staged_arch, staged_arch)
+        names_page = re.compile(r"20-upload-sync|upload[- ]sync", re.I)
+        add("the proposal table has a row for the living page",
+            any(ln.lstrip().startswith("|") and names_page.search(ln) for ln in text.splitlines()))
+        tail = text.splitlines()[-40:]
+        add("the summary reports the living page revised",
+            any(names_page.search(ln) and re.search(r"revis|updat|correct|edit|chang|rewr", ln, re.I) for ln in tail),
+            tail[-6:])
+    else:
+        add("no architecture page was created", not arch, [p.name for p in arch])
+        add("no entry is staged for wiki/project/architecture/", not staged_arch, staged_arch)
+        neg = re.compile(r"\b(no|not|none|nothing|without|skipp\w*|n/a)\b|n't", re.I)
+        claims = [ln for ln in text.splitlines()
+                  if re.search(r"(living|architecture) page", ln, re.I)
+                  and re.search(r"revised|updated|edited|corrected", ln, re.I) and not neg.search(ln)]
+        add("the summary does not claim a living-page revision", not claims, claims[:2])
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     gate = _load(ctx["scripts"], "_entry_checks.py", "entry_checks")
     cfgmod = _load(ctx["scripts"], "_wiki_config.py", "wiki_config")
@@ -901,6 +1013,9 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("wrote nothing into wiki/ but sessions/ and tasks/", not stray, stray)
         return res
 
+    if case.get("kind") in ("living-revise", "living-none"):
+        _check_living(case, before, after, run, ctx, add)
+        return res
     r = run["result"]
     add("session completed", r.get("subtype") == "success" and not r.get("is_error"),
         r.get("subtype") or run.get("stderr_tail") or "no result event")

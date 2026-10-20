@@ -7,7 +7,7 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 10
+framework-version: 11
 last_reviewed: 2026-10-19
 review_after: 2027-01-13
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
@@ -189,7 +189,7 @@ A page outside its folder's default says so with `kind:` in its frontmatter (the
 - **Contents first**: after the TL;DR, a `## Contents` list of the page's major topics (5-9, linked to their headings), not every subsection.
 - **Sections**: TL;DR, Contents, How it works, Rules and settings, Known gaps and bugs, History (links to the few decision notes behind the current design), Related. A `describes:` path ties the page to its code, so the lint flags it when the code moves on.
 
-**How they stay current**: a change that alters how a part works files its history note *and* revises the living page it touches, in the same session (the history note is the why; the page is the now). The lint lists every living page that a newer history note links to, or that links to one ("Design Pages Behind Their Notes"). Enforcement: that lint section (warn-only) and `describes:` code drift; the wrap-up step that revises the pages is task #172 (until it ships, this rule is prose for wrap-up).
+**How they stay current**: a change that alters how a part works files its history note *and* revises the living page it touches, in the same session (the history note is the why; the page is the now). The lint lists every living page that a newer history note links to, or that links to one ("Design Pages Behind Their Notes"). Enforcement: that lint section (warn-only), `describes:` code drift, and `/wrap-up` Step 3.5, which revises the pages a session's change touches (task #172, 2026-10-19; each revision is a row of its proposal table).
 
 ## Implementation status — what we do now vs what the principles say
 
