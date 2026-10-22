@@ -94,6 +94,30 @@ with tempfile.TemporaryDirectory() as td:
           p2.returncode == 4 and len(list((vault / "nb" / "raw").glob("*.md"))) == 1 and "docs/guide.md" in p2.stdout + p2.stderr,
           (p2.returncode, (p2.stdout + p2.stderr)[-300:]))
 
+    # A path Windows reserves (CON, AUX, NUL) fails git's checkout there, so the clone "fails" though git has every
+    # file (kadoa-org/congress-trading-monitor's public/data/ticker/CON.json, investment-agent, 2026-10-22). The blobs
+    # go in through git plumbing, since Windows cannot create such a file on disk.
+    def blob(text):
+        return subprocess.run(["git", "-C", str(repo), "hash-object", "-w", "--stdin"], input=text, capture_output=True,
+                              text=True, encoding="utf-8").stdout.strip()
+    ntfs = ("-c", "core.protectNTFS=false")   # Git for Windows refuses such a path in its own index otherwise
+    git(*ntfs, "update-index", "--add", "--cacheinfo", f"100644,{blob('{}')},public/data/ticker/CON.json")
+    git(*ntfs, "update-index", "--add", "--cacheinfo",
+        f"100644,{blob('# Aux notes' + chr(10) + chr(10) + 'Read from git.' + chr(10))},docs/AUX.md")
+    git(*ntfs, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "reserved names")
+    check("the fixture commit holds both reserved paths",
+          {"public/data/ticker/CON.json", "docs/AUX.md"} <= set(git("ls-tree", "-r", "--name-only", "HEAD").stdout.split()),
+          git("ls-tree", "-r", "--name-only", "HEAD").stdout)
+    p4 = subprocess.run([sys.executable, str(SCRIPTS / "wiki-fetch-repo.py"), "--vault", str(vault), "--topic", "nb",
+                         "--url", url, "--clone-from", str(repo), "--ingested-by", "test"],
+                        capture_output=True, text=True, encoding="utf-8", timeout=180)
+    new = sorted(set((vault / "nb" / "raw").glob("*.md")) - set(raws))
+    text4 = new[0].read_text(encoding="utf-8") if new else ""
+    check("a repo with a Windows-reserved path (CON) still saves (exit 0)", p4.returncode == 0 and len(new) == 1,
+          (p4.returncode, (p4.stdout + p4.stderr)[-300:]))
+    check("... with the prose file whose name Windows reserves (docs/AUX.md) and the README",
+          "## File: docs/AUX.md\n" in text4 and "Read from git." in text4 and "## File: README.md\n" in text4, text4[:300])
+
     # Not a GitHub repo URL
     p3 = subprocess.run([sys.executable, str(SCRIPTS / "wiki-fetch-repo.py"), "--vault", str(vault), "--topic", "nb",
                          "--url", "https://example.com/not-a-repo"], capture_output=True, text=True, encoding="utf-8",

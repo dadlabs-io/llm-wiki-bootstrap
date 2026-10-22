@@ -69,13 +69,11 @@ def unique_path(target: Path) -> Path:
         n += 1
 
 
-def prose_files(root: Path) -> list[Path]:
+def prose_files(paths: list[str]) -> list[Path]:
     """The repo's prose files, the root README first, then the rest by path."""
     picked = []
-    for p in root.rglob("*"):
-        if not p.is_file():
-            continue
-        rel = p.relative_to(root)
+    for path in paths:
+        rel = p = Path(path)
         dirs = rel.parts[:-1]
         if any(d in SKIP_DIRS or LOCALE_DIR_RE.match(d) for d in dirs):
             continue
@@ -110,17 +108,30 @@ def fetch_repo(vault_root, topic, url, ingested_by, max_kb, clone_from=None) -> 
         dest = Path(td) / name
         src = clone_from or f"https://github.com/{owner}/{name}.git"
         print(f"  Cloning: {src} (current commit only)")
-        c = git("clone", "--depth", "1", "--quiet", str(src), str(dest))
+        # no checkout: every file is read from git's objects, so a path Windows reserves (CON, AUX, NUL) cannot fail
+        # the clone there (kadoa-org/congress-trading-monitor's public/data/ticker/CON.json, 2026-10-22)
+        c = git("clone", "--depth", "1", "--no-checkout", "--quiet", str(src), str(dest))
         if c.returncode != 0:
             print(f"ERROR: git clone failed: {c.stderr.strip()[-400:]}", file=sys.stderr)
             return 3
         commit = git("rev-parse", "HEAD", cwd=dest).stdout.strip()
         branch = git("rev-parse", "--abbrev-ref", "HEAD", cwd=dest).stdout.strip()
-        files = prose_files(dest)
+        listed = git("-c", "core.quotePath=false", "ls-tree", "-r", "--name-only", "HEAD", cwd=dest)
+        if listed.returncode != 0:
+            print(f"ERROR: git ls-tree failed: {listed.stderr.strip()[-400:]}", file=sys.stderr)
+            return 3
+        files = prose_files(listed.stdout.splitlines())
         if not files:
             print("ERROR: the repository has no prose files (no README, docs or SKILL.md)", file=sys.stderr)
             return 2
-        texts = [(f, (dest / f).read_text(encoding="utf-8", errors="replace").rstrip()) for f in files]
+        texts = []
+        for f in files:
+            shown = subprocess.run(["git", "show", f"HEAD:{f.as_posix()}"], cwd=dest, capture_output=True)
+            if shown.returncode != 0:
+                print(f"ERROR: git show failed for {f.as_posix()}: "
+                      f"{shown.stderr.decode('utf-8', 'replace').strip()[-300:]}", file=sys.stderr)
+                return 3
+            texts.append((f, shown.stdout.decode("utf-8", errors="replace").replace("\r\n", "\n").rstrip()))
 
     size_kb = sum(len(t.encode("utf-8")) for _, t in texts) / 1024
     if max_kb and size_kb > max_kb:
