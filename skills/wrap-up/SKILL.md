@@ -37,7 +37,7 @@ To change any of them: edit the notebook's registry entry (or the project's `wik
 
 ## The flow
 
-Steps 0 and 0.5 run on **every** wrap-up, and Step 7's closing line ends every one. Step 1.5 runs whenever the session changed something a doc describes. Steps 1–6 (3.5 among them) depend on what the session produced; Step 7's commit and push depend on the flag, else the `wrap_up_commit` setting.
+Steps 0 and 0.5 run on **every** wrap-up, and Step 7's closing line ends every one. Step 1.5 runs whenever the session changed something a doc describes. Steps 1–6 depend on what the session produced, except Step 3.5's final check (item 5), which runs whenever the notebook has living pages; Step 7's commit and push depend on the flag, else the `wrap_up_commit` setting.
 
 ### Step 0 — Update the session journal (ALWAYS)
 
@@ -231,8 +231,9 @@ A history note says why something changed; a **living page** says how it works n
 
 1. **The living pages**: every page in `wiki/project/architecture/` not marked another `kind` (its `README.md`, `_INDEX.md` and `_MAP.md` are not pages), and any page marked `kind: living`. None in this notebook: skip the step, and Step 5 says "Living pages: none in this notebook".
 2. **Which ones the session touched**: for each change Step 1 found (and each candidate filed in Step 3), the page whose `describes:` path, title or Contents covers that part. Read each such page whole.
-3. **Revise it in place** with the Edit tool: correct every passage the change made untrue, add what is new in the section it belongs to (How it works, Rules and settings, Known gaps and bugs), move a fixed gap out of Known gaps, link the session's note under History now, as a Markdown link to the path it will have once promoted (`[<title>](../decisions/<slug>.md)`; the link resolves when the note is promoted), and set `last_reviewed` to today. Keep the page's frontmatter, `kind: living`, `describes:` and Contents. **Never re-file a living page through `wiki-update.py`**: it rewrites the frontmatter and drops `kind`, `describes` and tags.
+3. **Revise it in place** with the Edit tool: correct every passage the change made untrue, add what is new in the section it belongs to (How it works, Rules and settings, Known gaps and bugs), move a fixed gap out of Known gaps, link the session's note under History now, as a Markdown link to the path it will have once promoted (`[<title>](../decisions/<slug>.md)`; the link resolves when the note is promoted), and set `last_reviewed` to today. Keep the page's frontmatter, `kind: living`, `describes:` and Contents. A pinned `describes: <path>@<commit>` moves with the revision: pin the path's latest commit (`git -C <repo> log -1 --format=%h -- <path>`), or write the bare path while that path still has uncommitted changes; a bare `describes:` stays bare. An old pin left behind keeps the lint's code-drift warning on a page that is current. **Never re-file a living page through `wiki-update.py`**: it rewrites the frontmatter and drops `kind`, `describes` and tags.
 4. **A page you cannot settle** (the code's behaviour now is unclear, or two notes disagree) is left unedited and named in the handoff's `⚠️ WAITING ON YOU` with its path and the question.
+5. **Final check: no living page left behind**, including pages this session never mentioned (a note an earlier session filed without revising its page). It runs on **every** wrap-up of a notebook that has living pages, even when no living-page row was kept and even when the answer at Step 2 was `none`. Run the mechanical lint, `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook>`, and read its "Design Pages Behind Their Notes" and "Code Drift" sections for living pages only. Each one listed is revised now by items 2-3 (read the notes or the code change the lint names) or, per item 4, named in `⚠️ WAITING ON YOU` with the reason. Step 5 reports how many it flagged and what happened to each. A wrap-up never ends with a flagged living page that is neither revised nor named.
 
 A part with no page yet gets one only when the session built a new area: `kind: living`, the next free number by tens, the sections of principle 13.
 
@@ -250,7 +251,7 @@ Wrapped up:
   Working memory refreshed: sessions/main/handoff.md + active-context.md + task cards
   Task list: #1 done, #4 added — remove the done one? (your call)
   Docs check: 3 passages read in 2 docs; 1 fixed (README.md, the --move-handled default), 0 left for you
-  Living pages: 1 revised (30-the-research-cycle.md), 0 left for you
+  Living pages: 1 revised (30-the-research-cycle.md), 0 left for you; final check flagged 1, revised (20-ingesting-a-source.md)
   3 entries staged to _inbox/proposed/ (→ wiki/project/<category>/ on promote):
   - troubleshooting/oauth-re-prompt-root-cause-2026-05-12.md
   - decisions/move-handled-default-on-2026-05-12.md
@@ -331,7 +332,7 @@ Items 1–4 run **only when asked**: a typed `--auto-commit` / `--auto-push`, or
    - `✅ WRAP-UP COMPLETE: committed and pushed ✅` (push asked for, every commit pushed)
    - `✅ WRAP-UP COMPLETE: committed, not pushed ✅` (commit asked for)
    - `✅ WRAP-UP COMPLETE: nothing committed ✅` (neither asked for; Step 6's promote commit, if any, is named above it)
-   - `⚠️ WRAP-UP INCOMPLETE: <what is left, e.g. "push rejected in <repo>"> ⚠️` (a commit or push failed, or the user still has to answer something; an open skill suggestion does not count, it waits in its box; nor does Step 5's question whether to remove a task you finished yourself: its card stays marked done above NOW, and the next session asks again; nor does a docs claim Step 1.5 left in `⚠️ WAITING ON YOU`)
+   - `⚠️ WRAP-UP INCOMPLETE: <what is left, e.g. "push rejected in <repo>"> ⚠️` (a commit or push failed, or the user still has to answer something; an open skill suggestion does not count, it waits in its box; nor does Step 5's question whether to remove a task you finished yourself: its card stays marked done above NOW, and the next session asks again; nor does a docs claim Step 1.5 left in `⚠️ WAITING ON YOU`, nor a living page Step 3.5 left there)
 
    Nothing follows it. A wrap-up that stops to wait for an answer (Step 2's table, Step 6's prompt) has not reached Step 7 and prints no closing line.
 

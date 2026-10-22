@@ -239,9 +239,17 @@ def _reset_project(case: dict, ctx: dict) -> None:
     _git(project, "init", "-q")
     _git(project, "config", "user.email", "test@example.invalid")
     _git(project, "config", "user.name", "Skill Test")
-    if case.get("git") in ("commits", "session-changes"):
+    if case.get("git") in ("commits", "session-changes", "pinned-committed", "pinned-uncommitted"):
         _git(project, "add", "-A")
         _git(project, "commit", "-q", "-m", "beacon: retry budget draft and the network seam")
+        ctx["base_commit"] = _git(project, "rev-parse", "HEAD").strip()
+    if case.get("git") in ("pinned-committed", "pinned-uncommitted"):
+        # the session's own change to the file a pinned living page describes (R2, 2026-10-22)
+        with open(project / "beacon" / "manifest.py", "a", encoding="utf-8") as f:
+            f.write(MANIFEST_SESSION_EDIT)
+        if case["git"] == "pinned-committed":
+            _git(project, "add", "beacon/manifest.py")
+            _git(project, "commit", "-q", "-m", "beacon: manifest records only confirmed uploads")
     if case.get("git") == "session-changes":
         # the session's own change, uncommitted, and one file of the user's it never touched
         with open(project / "beacon" / "retry.py", "a", encoding="utf-8") as f:
@@ -313,6 +321,8 @@ def _reset_notebook(case: dict, ctx: dict) -> None:
               for name, bot, uid in (("agent-builder-bootstrap", "agent-builder", AGENT_BUILDER_ID),
                                      ("llm-wiki-bootstrap", "llm-wiki", LLM_WIKI_ID)) if bot != own}
     entry = {"root": f"notebooks/{NOTEBOOK}", **flags}
+    if case.get("registry_project_root"):  # the lint's code-drift check needs the repo (relative to the registry)
+        entry["project_root"] = "project"
     if own:
         entry["discord"] = {"bot_name": own, "user_id": {"llm-wiki": LLM_WIKI_ID,
                                                          "agent-builder": AGENT_BUILDER_ID}[own]}
@@ -371,8 +381,12 @@ def prompt(case: dict, ctx: dict) -> str:
     if case.get("living_seed"):
         dest = ctx["wiki"] / "project" / "architecture" / LIVING_NAME
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text((HERE / "fixtures" / "seeds" / case["living_seed"]).read_text(encoding="utf-8"),
-                        encoding="utf-8")
+        dest.write_text((HERE / "fixtures" / "seeds" / case["living_seed"]).read_text(encoding="utf-8")
+                        .replace("{BASE_COMMIT}", ctx.get("base_commit", "")), encoding="utf-8")
+    for rel, name in (case.get("notebook_files") or {}).items():  # after the reset, which empties the category folders
+        dest = ctx["wiki"] / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text((HERE / "fixtures" / "seeds" / name).read_text(encoding="utf-8"), encoding="utf-8")
     answers = []
     if case.get("answer"):
         answers.append(f"At the proposal table (Step 2), the user answers: `{case['answer']}`.")
@@ -932,6 +946,164 @@ def _check_living(case: dict, before: dict, after: dict, run: dict, ctx: dict, a
         add("the summary does not claim a living-page revision", not claims, claims[:2])
 
 
+# ---- R1/R2 (2026-10-22): the final staleness check on living pages, and the pin that moves with a revision
+RETRY_NAME = "30-retry-policy.md"
+RETRY_NOTE = "retry-budget-replaces-attempt-cap.md"
+RETRY_SEED_PAGE = "living-retry-policy.md"
+RETRY_SEED_NOTE = "decision-retry-budget.md"
+RETRY_OLD = "capped at 5 attempts per file"
+RETRY_KEEP = "Per-request timeout is 30 seconds"
+RETRY_NOTE_TITLE = "Retry budget replaces the attempt cap"
+MANIFEST_SESSION_EDIT = (
+    "\n\ndef uploaded_keys(manifest: Path) -> set[str]:\n"
+    "    \"\"\"Keys the remote has confirmed; a resumed sync skips exactly these.\"\"\"\n"
+    "    if not manifest.is_file():\n"
+    "        return set()\n"
+    "    return {row[\"key\"] for row in json.loads(manifest.read_text(encoding=\"utf-8\"))}\n")
+
+
+def _norm_nl(s: str) -> str:
+    return s.replace("\r\n", "\n").strip()
+
+
+def _wiki_stray(before: dict, after: dict, allowed: set) -> list[str]:
+    """wiki/ paths the session changed outside sessions/ and `allowed`. A path gone from `after` is the
+    prompt-time reset removing the previous case's leftover: the harness, not the session."""
+    changed = {k for k in set(before) | set(after) if before.get(k) != after.get(k) and k.startswith("wiki/")}
+    return sorted(k for k in changed
+                  if not k.startswith("wiki/sessions/") and k not in allowed and k in after)
+
+
+def _check_living_stale(case: dict, before: dict, after: dict, run: dict, ctx: dict, add) -> None:
+    """kind "living-stale" (R1): a living page the session never touched is behind a later decision note.
+    The wrap-up's final check must leave it revised in place or named in the handoff's WAITING ON YOU with a
+    reason, and the report must say so. Either outcome passes; silence fails."""
+    gate = _load(ctx["scripts"], "_entry_checks.py", "entry_checks")
+    today = _load(ctx["scripts"], "_wiki_config.py", "wiki_config").today_label()
+    wiki = ctx["wiki"]
+    seeds = HERE / "fixtures" / "seeds"
+    _preamble(run, add)
+    journals = _journals(ctx)
+    add("exactly one journal for this session, named with the session id",
+        len(journals) == 1 and SID in journals[0].name, [p.name for p in journals])
+    handoff = wiki / "sessions" / PERSONA / "handoff.md"
+    htext = handoff.read_text(encoding="utf-8") if handoff.is_file() else ""
+    add("handoff.md written with every section",
+        handoff.is_file() and not [s for s in HANDOFF_SECTIONS if s not in htext])
+    add("nothing staged (the user answered none)", not _staged(ctx), [p.name for p in _staged(ctx)])
+    _closing_line(run, add)
+
+    page_rel = "wiki/project/architecture/" + RETRY_NAME
+    note_rel = "wiki/project/decisions/" + RETRY_NOTE
+    add("wrote nothing into wiki/ but sessions/ and the seeded retry page and note",
+        not _wiki_stray(before, after, {page_rel, note_rel}), _wiki_stray(before, after, {page_rel, note_rel}))
+    note_p = wiki / "project" / "decisions" / RETRY_NOTE
+    seed_note = (seeds / RETRY_SEED_NOTE).read_text(encoding="utf-8")
+    add("the decision note is left as it was",
+        note_p.is_file() and _norm_nl(note_p.read_text(encoding="utf-8")) == _norm_nl(seed_note))
+    add("no other architecture page was created",
+        [p.name for p in _arch_files(ctx)] == [RETRY_NAME], [p.name for p in _arch_files(ctx)])
+
+    page_p = wiki / "project" / "architecture" / RETRY_NAME
+    seed_page = (seeds / RETRY_SEED_PAGE).read_text(encoding="utf-8")
+    ptext = page_p.read_text(encoding="utf-8") if page_p.is_file() else ""
+    revised = _norm_nl(ptext) != _norm_nl(seed_page)
+    wait_at = htext.rfind("WAITING ON YOU")
+    wait = htext[wait_at:] if wait_at >= 0 else ""
+    named_lines = [ln for ln in wait.splitlines() if "30-retry-policy" in ln]
+    reason = any(len(re.findall(r"[A-Za-z]{3,}", ln.replace("30-retry-policy.md", "").replace("30-retry-policy", ""))) >= 5
+                 for ln in named_lines)
+    add("the flagged living page is revised in place, or named in WAITING ON YOU with its path and a reason",
+        revised or (bool(named_lines) and reason),
+        {"revised": revised, "named_lines": named_lines[:2], "reason_given": reason})
+
+    if revised:  # the same rules as the living-page step
+        fm, body = gate.split_frontmatter(ptext)
+        hist = _section(body, "History")
+        seed_hist = _section(gate.split_frontmatter(seed_page)[1], "History")
+        rest = body.replace(hist, "") if hist else body
+        add("the revised page keeps kind: living", str(fm.get("kind")) == "living", fm.get("kind"))
+        add("last_reviewed is the session's date", str(fm.get("last_reviewed")) == today,
+            f"last_reviewed {fm.get('last_reviewed')!r}, today {today}")
+        add("the old claim (an attempt cap) is gone from the page body", RETRY_OLD not in rest, rest[:300])
+        add("the page now says the retry budget (elapsed time) rule",
+            bool(re.search(r"120|elapsed|budget", rest, re.I)), rest[:300])
+        add("content the note did not change is kept", RETRY_KEEP in ptext)
+        add("History gained a line that links the note",
+            len(hist.strip().splitlines()) > len(seed_hist.strip().splitlines())
+            and ("retry-budget-replaces-attempt-cap" in hist or RETRY_NOTE_TITLE.lower() in hist.lower()), hist[-200:])
+
+    report = str(run["result"].get("result") or "") or run["text"]
+    rlines = report.splitlines()
+    page_lines = [ln for ln in rlines if re.search(r"30-retry-policy|retry[- ]policy", ln, re.I)]
+    add("the report names the retry page", bool(page_lines), report[-300:])
+    add("the report says what happened to it",
+        any(re.search(r"revis|updat|correct|edit|rewr|chang|fix|waiting|flag|decid|needs|unable|can.?t|cannot|left", ln, re.I)
+            for ln in page_lines), page_lines[:3])
+    add("the report says how many living pages the final check flagged (one)",
+        any(re.search(r"flag|stale|lint|final check|behind", ln, re.I) and re.search(r"\b(1|one)\b", ln, re.I)
+            for ln in rlines), rlines[-12:])
+
+
+def _check_living_pin(case: dict, before: dict, after: dict, run: dict, ctx: dict, add) -> None:
+    """kind "living-pin" (R2): the page the session's change touched is revised, and its pinned `describes:`
+    moves to the path's latest commit (expect.pin "latest"), or to the bare path while the path has uncommitted
+    changes (expect.pin "bare"). kind: living and the path are kept."""
+    gate = _load(ctx["scripts"], "_entry_checks.py", "entry_checks")
+    today = _load(ctx["scripts"], "_wiki_config.py", "wiki_config").today_label()
+    exp = case["expect"]
+    wiki = ctx["wiki"]
+    project = ctx["project"]
+    _preamble(run, add)
+    journals = _journals(ctx)
+    add("exactly one journal for this session, named with the session id",
+        len(journals) == 1 and SID in journals[0].name, [p.name for p in journals])
+    handoff = wiki / "sessions" / PERSONA / "handoff.md"
+    add("handoff.md written with every section", handoff.is_file() and
+        not [s for s in HANDOFF_SECTIONS if s not in handoff.read_text(encoding="utf-8")])
+    _check_staged_entries(case, ctx, add, living=LIVING_NAME)
+    _closing_line(run, add)
+    living_key = "wiki/project/architecture/" + LIVING_NAME
+    add("wrote nothing into wiki/ but sessions/ and the living page",
+        not _wiki_stray(before, after, {living_key}), _wiki_stray(before, after, {living_key}))
+
+    page = wiki / "project" / "architecture" / LIVING_NAME
+    arch = _arch_files(ctx)
+    ptext = page.read_text(encoding="utf-8") if page.is_file() else ""
+    fm, body = gate.split_frontmatter(ptext)
+    seed = (HERE / "fixtures" / "seeds" / case["living_seed"]).read_text(encoding="utf-8")
+    add("the living page is edited in place: still there and the only architecture page",
+        page.is_file() and arch == [page], [p.name for p in arch])
+    add("frontmatter keeps kind: living", str(fm.get("kind")) == "living", fm.get("kind"))
+    add("last_reviewed is the session's date", str(fm.get("last_reviewed")) == today,
+        f"last_reviewed {fm.get('last_reviewed')!r}, today {today}")
+    add("the page was changed and the old claim is gone",
+        _norm_nl(ptext) != _norm_nl(seed.replace("{BASE_COMMIT}", "")) and LIVING_OLD not in ptext, ptext[:300])
+    add("the page now says the new behaviour (written after the etag / confirmation)",
+        bool(re.search(r"etag|confirm", body, re.I)), body[:300])
+    add("content the change did not touch is kept", LIVING_KEEP in ptext)
+    hist = _section(body, "History")
+    seed_hist = _section(gate.split_frontmatter(seed)[1], "History")
+    add("History gained a line that links the session's note",
+        len(hist.strip().splitlines()) > len(seed_hist.strip().splitlines()) and bool(re.search(r"\[\[|\]\(|\.md", hist)),
+        hist[-200:])
+
+    desc = str(fm.get("describes") or "").strip()
+    path, sep, pin = desc.partition("@")
+    if exp["pin"] == "latest":
+        want = _git(project, "log", "-1", "--format=%H", "--", LIVING_DESCRIBES).strip()
+        got = (_git(project, "rev-parse", "--verify", "-q", f"{pin}^{{commit}}").strip()
+               if re.fullmatch(r"[0-9a-f]{7,40}", pin) else "")
+        add("describes is the path pinned at the path's latest commit (short or full hash)",
+            path == LIVING_DESCRIBES and bool(sep) and bool(want) and got == want,
+            {"describes": desc, "latest_commit": want[:12], "pin_resolves_to": got[:12]})
+        add("code drift would clear: the path is identical between the pin and the working tree",
+            bool(got) and not _git(project, "diff", "--name-only", got, "--", LIVING_DESCRIBES).strip(), desc)
+    else:
+        add("describes is the bare path (the path still has uncommitted changes), no pin",
+            desc == LIVING_DESCRIBES, desc)
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     gate = _load(ctx["scripts"], "_entry_checks.py", "entry_checks")
     cfgmod = _load(ctx["scripts"], "_wiki_config.py", "wiki_config")
@@ -1015,6 +1187,12 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
 
     if case.get("kind") in ("living-revise", "living-none"):
         _check_living(case, before, after, run, ctx, add)
+        return res
+    if case.get("kind") == "living-stale":
+        _check_living_stale(case, before, after, run, ctx, add)
+        return res
+    if case.get("kind") == "living-pin":
+        _check_living_pin(case, before, after, run, ctx, add)
         return res
     r = run["result"]
     add("session completed", r.get("subtype") == "success" and not r.get("is_error"),
