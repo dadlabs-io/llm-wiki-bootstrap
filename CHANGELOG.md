@@ -9,6 +9,20 @@
 
 ---
 
+## 2026-10-22
+
+### Wrap-up's final living-page check, and a `describes` pin that moves (task #188)
+
+- **Why**: #172's Step 3.5 revised only the living pages the session's own change touched. A page an earlier session left behind its note stayed stale, and a revised page kept its old `describes: <path>@<commit>` pin, so the lint's code-drift warning stayed on a page that was current.
+- **What**: Step 3.5 item 3 moves the pin with the revision (the path's latest commit, or the bare path while it has uncommitted edits; a bare `describes:` stays bare). New item 5, a final check on **every** wrap-up of a notebook with living pages, whatever Step 2's answer: the mechanical lint's "Design Pages Behind Their Notes" and "Code Drift" sections, living pages only; each one flagged is revised now or named in WAITING ON YOU with the reason, and Step 5 reports the count. A living page left in WAITING ON YOU does not make the wrap-up INCOMPLETE. The wrap-up and wiki-lint usage pages and wiki-lint's SKILL.md say so.
+- **Proof**: three cases by `eval-case-writer` (`stale-living-page-session-never-touched`, `pinned-page-moves-to-latest-commit`, `pinned-page-uncommitted-change-goes-bare`), red then green on both models (`20261022-134933-red-green-HEAD`, 5/6: Sonnet skipped the check when no living-page row was kept, so item 5 now says it always runs; rerun `20261022-140021` 2/2). Full suite on Mark's yes, `20261022-160118` ($24.24): 42/44, the two one-off failures (a shell-quoting slip in Sonnet's staged entries; Opus asking about another library's skill note in an automatic notebook) passed on rerun `20261022-163741`; baselines merged per case (22 per model).
+
+### Two false warnings gone from the body checks (task #187)
+
+- **Why**: on investment-agent's notebook, ten pages with a one-line forward-pointer banner (`> **Superseded by:** [page](page.md)`) were warned as misquotes, and five living pages were warned for stating figures in prose, which is what a living page is for.
+- **What**: `_entry_checks.py` skips a blockquote whose first line is a bold label followed by a link to a `.md` page, and skips the numbers-in-prose rule on a `kind: living` page; the lint and `wiki-update.py`'s regate pass `kind`. Frontmatter spec v18.
+- **Proof**: `tests/scripts/test_living_body_checks.py` 10/10 (fails on the old code); all 50 script test files pass. On investment-agent's pages, read-only: banner warnings 10 → 0, living-page number warnings 5 → 0.
+
 ## 2026-10-19
 
 ### Wrap-up revises the living pages a session's change touches (task #172)

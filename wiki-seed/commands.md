@@ -20,7 +20,7 @@ Canonical reference for the LLM-wiki framework. Each command works inside Claude
 | `/wiki-update <url>` | Add one external reference (article, paper, video) to the wiki right now |
 | `/wiki-cycle` | Batch ingest — discover, ingest (staged), then promoted or left for your review by the notebook's `confirm_before_promote`, lint, backlinks and indexes, best-practices synthesis of the research promoted since the last one, morning report, commit. `--full` adds semantic lint, claims and refresh. The daily/weekly command for `research/`. |
 | `/wiki-search "<query>"` | Hybrid BM25 + vector + LLM-reranked search across your wiki |
-| `/wrap-up` | End of session: updates the session journal and resume dashboards, proposes durable entries (you confirm), stages them, and offers to promote them. |
+| `/wrap-up` | End of session: updates the session journal and resume dashboards, revises the living design pages that went out of date, proposes durable entries (you confirm), stages them, and offers to promote them. |
 | `/task-list` | The project's task list: one card per task in `wiki/tasks/`, worked in the order `tasks/ORDER.md` sets (NOW is the first not done). Show it ("with details", or "details on 25", for a whole card), add a task, mark one done, reorder ("put 5 first"), add a dated note to a card, move one to the backlog (it keeps its owner) and back, remove one only on your word. Plain speech works as well: "add a task …", "move 5 to the backlog", "delete task 4", "what's on my list". |
 | `/wiki-promote` | Walk staged entries in `_inbox/proposed/` and accept/reject each one; promotion also brings the search index up to date |
 | `/wiki-verify` | Mark an entry verified — entries never self-certify |
