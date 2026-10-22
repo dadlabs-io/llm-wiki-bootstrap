@@ -597,7 +597,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             if _rp and not _rp.startswith("("):
                 _raw_file = next((c for c in (topic_root / _rp, wiki_root / _rp) if c.exists()), None)
             _chk = check_entry_body(body, tags=_tags, tier=tier_value or None,
-                                    raw_text=read_raw_text(_raw_file) if _raw_file else None)
+                                    raw_text=read_raw_text(_raw_file) if _raw_file else None, kind=fm.get("kind"))
             if _chk["errors"] or _chk["warnings"]:
                 body_issues.append((f, _chk["errors"], _chk["warnings"]))
 

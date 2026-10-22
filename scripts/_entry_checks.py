@@ -30,7 +30,8 @@ Checks (rubric dimension → rule → severity):
   fidelity   → numeric claims in prose outside a `>` blockquote      → WARNING
                (numbers must be quoted + attributed; paraphrased numbers drift.
                Only a line starting with `>` counts as quoted — a number inside
-               inline quotation marks "like this" is still prose to this check)
+               inline quotation marks "like this" is still prose to this check.
+               Not on a `kind: living` page, which describes our own system)
   structure  → layout: body (TL;DR … Related) → Source/Raw footer →  → ERROR
                auto backlinks block; nothing after the footer except
                that block, nothing after the block (2026-09-14)
@@ -429,9 +430,14 @@ def raw_completeness(path) -> str | None:
     return None
 
 
+# A forward pointer a retired or history page carries ("> **Current design:** [60 Members](../architecture/60-members.md)
+# (2026-10-20). ..."): a bold label, then a link to a wiki page. Our own note, never source text (task #187).
+_POINTER_RE = re.compile(r"\*\*[^*\n]+\*\*:?\s*\[[^\]\n]*\]\([^)\s]+\.md(?:#[^)]*)?\)")
+
+
 def _blockquotes(body: str) -> list[str]:
     """Each run of consecutive `>` lines as one string, fenced code removed.
-    Obsidian callouts (`> [!note]`) are our own notes, not source text."""
+    Obsidian callouts (`> [!note]`) and forward pointers to a wiki page are our own notes, not source text."""
     body = re.sub(r"```.*?```", "", body, flags=re.DOTALL)
     blocks, cur = [], []
     for line in body.splitlines() + [""]:
@@ -439,7 +445,7 @@ def _blockquotes(body: str) -> list[str]:
         if s.startswith(">"):
             cur.append(s.lstrip(">").strip())
             continue
-        if cur and not re.match(r"\[!\w", cur[0]):
+        if cur and not re.match(r"\[!\w", cur[0]) and not _POINTER_RE.match(cur[0]):
             blocks.append(" ".join(cur))
         cur = []
     return blocks
@@ -523,13 +529,15 @@ def check_quotes(body: str, raw_text: str | None) -> list[str]:
 # ── The checks ───────────────────────────────────────────────────────────────
 
 
-def check_entry_body(body: str, *, tags=None, tier=None, raw_text=None) -> dict:
+def check_entry_body(body: str, *, tags=None, tier=None, raw_text=None, kind=None) -> dict:
     """Run the mechanical rubric checks on an entry BODY (frontmatter already split off).
 
     Returns {"errors": [...], "warnings": [...], "stats": {...}}.
     `tags` may be a list or None (None = unknown → tag checks skipped).
     `tier` is the frontmatter tier as a string ("1".."4", "self") or None.
     `raw_text` is the raw source's text (read_raw_text); None skips the quote check.
+    `kind` is the frontmatter kind; a `living` page skips the numbers-in-prose rule (its figures describe our own
+    system, not an outside source's claims; task #187).
     """
     errors: list[str] = []
     warnings: list[str] = []
@@ -569,7 +577,8 @@ def check_entry_body(body: str, *, tags=None, tier=None, raw_text=None) -> dict:
 
     # fidelity → numbers outside blockquotes
     prose = _prose_only(body)
-    number_hits = [m.group(0) for m in _NUMBER_CLAIM_RE.finditer(prose)]
+    is_living = str(kind or "").strip().lower() == "living"
+    number_hits = [] if is_living else [m.group(0) for m in _NUMBER_CLAIM_RE.finditer(prose)]
     if number_hits:
         sample = ", ".join(dict.fromkeys(number_hits[:3]))
         warnings.append(
@@ -602,7 +611,7 @@ def check_entry_text(text: str) -> dict:
     tags = fm.get("tags")
     if isinstance(tags, str):
         tags = [t.strip() for t in tags.strip("[]").split(",") if t.strip()]
-    result = check_entry_body(body, tags=tags if tags is not None else None, tier=fm.get("tier"))
+    result = check_entry_body(body, tags=tags if tags is not None else None, tier=fm.get("tier"), kind=fm.get("kind"))
     result["fm"] = fm
     return result
 

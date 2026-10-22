@@ -1321,7 +1321,7 @@ def regate_entry(vault_root, topic, target):
         if raw_file is None:
             print(f"  Warning: raw_path {rp} not found; quotes are not checked.", file=sys.stderr)
     gate = check_entry_body(body, tags=tags, tier=fm.get("tier"),
-                            raw_text=read_raw_text(raw_file) if raw_file else None)
+                            raw_text=read_raw_text(raw_file) if raw_file else None, kind=fm.get("kind"))
     gate["errors"] = fm_errors + gate["errors"]
     print(format_result(gate, fm.get("title") or path.stem))
     print(f"regate_path={path}")
