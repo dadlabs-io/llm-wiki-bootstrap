@@ -35,7 +35,8 @@ Subcommands:
   receive  file one suggestion sent here: MOVED into received/ (this notebook holds the only copy; Mark, 2026-09-29),
            with `From: <project>` as its first line and a `Received from:` line naming the path it was taken from.
            Exit 0; 1 refused (the same skill, issue and Seen in is already received or decided: the sender's duplicate
-           is removed, since this notebook holds it); 2 cannot run (not a suggestion file, no notebook). The same
+           is removed, since this notebook holds it); 2 cannot run (not a suggestion file, no notebook, a file this notebook
+           already holds). The same
            skill and issue from another run is filed as its own suggestion: a repeat the improver counts.
   decide   append the decision and move the file into raw/skill-suggestions/<pass>/. Exit 0; 2 cannot run (a file
            outside received/'s top level, an empty or multi-line decision, a bad --date or --pass, or a pass whose
@@ -92,7 +93,7 @@ APPLIES = "Applies to"          # where the lesson holds (task #100); notes writ
 FROM = "Received from"          # the path the file was taken from
 SENDER = "From"                 # the project it came from: the file's first line (Mark, 2026-09-29)
 MAIN_FILES = (("skills", "SKILL.md", "skill"), ("agents", "AGENT.md", "agent"), ("workflows", "WORKFLOW.md", "workflow"))
-SELF_TEST_MINIMUM = 78       # the exact number of assertions the fixtures run: a dropped block fails
+SELF_TEST_MINIMUM = 80      # the exact number of assertions the fixtures run: a dropped block fails
 STALE_DAYS = 14              # a suggestion shown in a pass and still undecided this long is stale (task #121)
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _SLUG = re.compile(r"[a-z0-9][a-z0-9-]*[a-z0-9]")
@@ -328,7 +329,7 @@ def cmd_list(repo_arg: str, notebook: Optional[str], library: Optional[str], tod
     for p in files:
         with contextlib.suppress(OSError):
             senders.add(sender_of(parse(p.read_text(encoding="utf-8"))))
-    base_name = f"{dt.date.today().isoformat()}-{senders.pop() if len(senders) == 1 else 'mixed'}"
+    base_name = f"{today.isoformat()}-{senders.pop() if len(senders) == 1 else 'mixed'}"
     pass_name, n = base_name, 2
     while (root / RAW / pass_name / PROPOSALS_FILE).exists():   # a second pass the same day gets its own folder
         pass_name, n = f"{base_name}-{n}", n + 1
@@ -398,6 +399,13 @@ def cmd_receive(repo_arg: str, source_arg: str, notebook: Optional[str]) -> int:
         return 2
     received = root / BOX / RECEIVED
     waiting = sorted(received.glob("*.md")) if received.is_dir() else []
+    # a file this notebook already holds matches itself below, and the duplicate removal would delete the only copy
+    # (task 230 ops-b 1, agent-builder's design check, 2026-10-22)
+    held = [p for p in waiting + decided_files(root) if p.resolve() == source.resolve()]
+    if held:
+        print(f"suggestions: cannot run - {source.as_posix()} is already held in this notebook; receive takes a file "
+              f"from the sender's box", file=sys.stderr)
+        return 2
     for p, state in [(p, "received") for p in waiting] + [(p, "decided") for p in decided_files(root)]:
         with contextlib.suppress(OSError):
             if same_suggestion(parse(p.read_text(encoding="utf-8")), fields):
@@ -969,8 +977,16 @@ def self_test() -> int:
               str(fate.get("code-reviewer--shown-long-ago.md", {}).get("repeats")))
         check("a lesson seen once has no repeats", fate.get("code-reviewer--fresh.md", {}).get("repeats") == 0)
         check("list still writes nothing", len(list((own / RAW / "2026-10-01-other").glob("*"))) == 1)
+        # task 230 ops-b 2 (agent-builder's design check, 2026-10-22): the pass was named after the real date, not `today`
+        check("list names the pass after the date it was given", str(data6.get("pass", "")).startswith("2026-10-05-"),
+              str(data6.get("pass")))
+        # task 230 ops-b 1: receive run on a file this notebook already holds matched it against itself and deleted it
+        held = received / "code-reviewer--fresh.md"
+        code, out = quiet(cmd_receive, str(repo), str(held), None)
+        check("receive on a file already held here refuses (exit 2) and keeps the only copy",
+              code == 2 and held.is_file() and "already" in out, out)
         for n in ("code-reviewer--fresh.md", "code-reviewer--shown.md", "code-reviewer--shown-long-ago.md"):
-            (received / n).unlink()
+            (received / n).unlink(missing_ok=True)
 
         # --notebook overrides; a --notebook with no wiki/ is refused
         check("--notebook with no wiki/ folder exits 2", quiet(cmd_list, str(repo), str(base / "vault"), str(repo))[0] == 2)
