@@ -402,6 +402,26 @@ def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, s
     atomic_write_text(run_folder / "lint-mechanical.md", "\n".join(md))
 
 
+def _iso_date(value: str) -> bool:
+    """A YYYY-MM-DD calendar date (the frontmatter spec's ISO date)."""
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return False
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+
+def _verify_record(topic_root: Path, slug: str) -> bool:
+    """Whether /wiki-verify verified this entry: its _signals/<slug>.json says so and names who."""
+    try:
+        sc = json.loads((topic_root / "_signals" / f"{slug}.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return isinstance(sc, dict) and sc.get("verified") == "verified" and bool(sc.get("verified_by"))
+
+
 def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     # Registry-aware: resolve the wiki via _wiki_config.wiki_dir (honors the
     # linked-notebooks registry, incl. notebooks rooted at .../<name>/llm-wiki).
@@ -467,6 +487,11 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     missing_tags = []         # (file,) — no tags: field at all (spec wants >=3; presence is the mechanical check)
     missing_lifecycle = []    # (file, [fields]) — last_reviewed / review_after absent → invisible to /wiki-refresh
     live_wikilinks = []       # (file, count, sample) — [[wikilink]] outside code spans/fences, invisible to the link checker
+    # The spec's own "Lint enforcement" promises, unmet until 2026-10-22 (task #177 row 5); warn-only like the rest here
+    bad_dates = []            # (file, field, value) — date / last_reviewed / review_after not a YYYY-MM-DD calendar date
+    bad_source_url = []       # (file, value) — not http(s):// or internal://
+    missing_source = []       # (file, [fields]) — no source_url and/or ingested_by (both required by the spec)
+    self_certified = []       # (file,) — verified: verified with no /wiki-verify record in _signals/<slug>.json
 
     # Body checks (2026-09-02): the mechanical half of the eval rubric —
     # TL;DR present, Related section with >=2 wiki links, >=3 tags, stub
@@ -565,6 +590,18 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
         ib_value = fm.get("ingested_by", "").strip()
         if ib_value and ib_value not in VALID_INGESTED_BY:
             invalid_ingested_by.append((f, ib_value))
+        for date_field in ("date", "last_reviewed", "review_after"):
+            dv = fm.get(date_field, "").strip()
+            if dv and not _iso_date(dv):
+                bad_dates.append((f, date_field, dv))
+        su = fm.get("source_url", "").strip()
+        if su and not su.startswith(("http://", "https://", "internal://")):
+            bad_source_url.append((f, su))
+        absent = [k for k in ("source_url", "ingested_by") if not fm.get(k, "").strip()]
+        if absent and not is_exempt(f, fm, wiki_root=wiki_root):  # README, HOME and hubs are out of the spec's scope
+            missing_source.append((f, absent))
+        if fm.get("verified", "").strip() == "verified" and not _verify_record(topic_root, f.stem):
+            self_certified.append(f)
 
         # Spec enforcement: tags presence (>=3 items is the spec; presence is the mechanical half)
         if "tags" not in fm:
@@ -801,12 +838,15 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                   f"missing_review_of_on_review={len(missing_review_of_on_review)}, "
                   f"broken_icarus_ref={len(broken_icarus_ref)})" if icarus_total else ""))
     spec_total = (len(invalid_ingested_by) + len(missing_tags)
-                  + len(missing_lifecycle) + len(live_wikilinks))
+                  + len(missing_lifecycle) + len(live_wikilinks)
+                  + len(bad_dates) + len(bad_source_url) + len(missing_source) + len(self_certified))
     out.append(f"**Spec enforcement (added 2026-08-13)**: "
                f"invalid `ingested_by`={len(invalid_ingested_by)}, "
                f"missing `tags`={len(missing_tags)}, "
                f"missing lifecycle fields={len(missing_lifecycle)}, "
-               f"files with live wikilinks={len(live_wikilinks)}")
+               f"files with live wikilinks={len(live_wikilinks)}, "
+               f"dates not ISO={len(bad_dates)}, source_url form={len(bad_source_url)}, "
+               f"missing source_url/ingested_by={len(missing_source)}, self-certified={len(self_certified)}")
     body_err_files = sum(1 for _f, e, _w in body_issues if e)
     body_warn_files = sum(1 for _f, e, w in body_issues if w and not e)
     out.append(f"**Body checks (added 2026-09-02)**: "
@@ -1137,6 +1177,29 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                 rel = f.relative_to(wiki_root)
                 out.append(f"- `{rel.as_posix()}` — {n} match(es), first: `[[{sample}]]`")
             out.append("")
+        # 2026-10-22 (task #177 row 5): the rest of the spec's "Lint enforcement" list
+        for heading, why, rows in (
+                ("Dates not in ISO form", "`date`, `last_reviewed` and `review_after` are `YYYY-MM-DD` calendar dates "
+                 "(frontmatter spec, required fields); `/wiki-refresh` compares them as dates.",
+                 [f"`{f.relative_to(wiki_root).as_posix()}` — `{fld}: {v}`" for f, fld, v in bad_dates]),
+                ("`source_url` not http(s):// or internal://", "The spec's source_url conventions: a full "
+                 "`https://...` URL, or `internal://<kind>/<date>-<slug>` for our own pages.",
+                 [f"`{f.relative_to(wiki_root).as_posix()}` — got `{v}`" for f, v in bad_source_url]),
+                ("Missing `source_url` / `ingested_by`", "Both are required fields in the frontmatter spec.",
+                 [f"`{f.relative_to(wiki_root).as_posix()}` — missing {', '.join(m)}" for f, m in missing_source]),
+                ("`verified: verified` with no verify record", "No self-certification (spec, write-time invariant "
+                 "1): only `/wiki-verify` sets it, and it records who and when in `_signals/<slug>.json`. Run "
+                 "`/wiki-verify <slug>`, or take the field out.",
+                 [f"`{f.relative_to(wiki_root).as_posix()}`" for f in self_certified])):
+            if rows:
+                out.append(f"### {heading} ({len(rows)})")
+                out.append("")
+                out.append(why)
+                out.append("")
+                out.extend(f"- {r}" for r in rows[:30])
+                if len(rows) > 30:
+                    out.append(f"- … and {len(rows) - 30} more")
+                out.append("")
     out.append("")
 
     # Section: body checks (2026-09-02)

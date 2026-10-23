@@ -1028,6 +1028,10 @@ def add_to_wiki(vault_root, topic, folder, source, title, tags, no_index,
 
     # Apply overrides
     final_source_url = source_url_override or source_url
+    if not source_url_override and str(tier) == "self" and str(final_source_url or "").startswith("file://"):
+        # Our own page filed from a local draft (task #177, 2026-10-22): the draft is a temp file deleted once
+        # filed, so file:// named nothing; the frontmatter spec's form is internal://synthesis/<date>-<slug>
+        final_source_url = f"internal://synthesis/{datetime.now().strftime('%Y-%m-%d')}-{final_slug}"
     if no_raw:
         final_raw_path = None  # self-authored content has no raw archive
     else:
