@@ -175,7 +175,9 @@ check("a description with no text says to read the image",
 
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")
 SLIDES = [f"Photo by Acme on September 03, 2026. May be an image of text that says 'Slide {i} says hello'." for i in range(1, 5)]
-POST = """<!doctype html><html><head><title>Instagram</title>
+# Instagram's logged-out alt text since 2026-10-16: a description with no recognised text on any slide (task #200).
+NO_TEXT_SLIDES = [f"Photo by Acme on October 04, 2026. May be a graphic of poster and text {i}." for i in range(1, 4)]
+POST_TEMPLATE = """<!doctype html><html><head><title>Instagram</title>
 <meta property="og:title" content="Acme on Instagram: &quot;Build agents&quot;">
 <meta property="og:description" content="10 likes, 1 comments - acme.ai on September 3, 2026: &quot;Build agents in 4 steps.&#10;&#10;Swipe for the steps.&quot;. ">
 </head><body><main>
@@ -192,12 +194,15 @@ function add() { const li = document.createElement('li'); const im = document.cr
   if (shown >= S.length) document.getElementById('next').style.display = 'none'; }
 add(); add();
 document.getElementById('next').onclick = () => { if (shown < S.length) add(); };
-</script></body></html>""" % json.dumps(SLIDES)
+</script></body></html>"""
+POST = POST_TEMPLATE % json.dumps(SLIDES)
+NO_TEXT_POST = POST_TEMPLATE % json.dumps(NO_TEXT_SLIDES)
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        body, ctype = (PNG, "image/png") if self.path.startswith("/img/") else (POST.encode("utf-8"), "text/html")
+        page = NO_TEXT_POST if self.path.startswith("/p/NOTEXT/") else POST
+        body, ctype = (PNG, "image/png") if self.path.startswith("/img/") else (page.encode("utf-8"), "text/html")
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.end_headers()
@@ -233,6 +238,23 @@ with tempfile.TemporaryDirectory() as td:
         imgs = sorted((tmp / "nb" / "raw").glob("*-slides/slide-*.jpg"))
         check("each slide image is saved beside the raw and named in it",
               len(imgs) == 4 and all(f"{imgs[0].parent.name}/{p.name}" in text for p in imgs), [p.name for p in imgs])
+        check("the header counts the slides with recognised text (slides_text: 4 of 4)",
+              h.get("slides_text") == "4 of 4", h.get("slides_text"))
+        check("... the summary line says so, and there is no warning",
+              "text on 4 of 4" in out and "warning:" not in out + err, out[-300:])
+
+    # 6b. No slide with recognised text (task #200; 7 posts on 2026-10-16 came back like this with no warning).
+    code, out, err = run(["--topic", "nb", "--vault", str(tmp), "--mode", "instagram", "--slug", "notext",
+                          "--url", f"{base}/p/NOTEXT/"])
+    nraw = max((tmp / "nb" / "raw").glob("*-notext.md"), default=None)
+    check("a post with no recognised slide text is still captured", code == 0 and nraw is not None, (code, err[-400:]))
+    if nraw:
+        ntext, nh = nraw.read_text(encoding="utf-8"), header(nraw)
+        check("its header says slides_text: 0 of 3", nh.get("slides_text") == "0 of 3", nh.get("slides_text"))
+        check("a warning says to read every slide image",
+              "warning: Instagram recognised text on 0 of 3 slides: read every slide image" in out + err, (out + err)[-400:])
+        check("the raw itself says no slide has recognised text", "no slide has text Instagram recognised" in ntext,
+              ntext[:900])
     code, out, err = run(["--topic", "nb", "--vault", str(tmp), "--url", "https://www.instagram.com/reel/DeCVll9BBzC/"])
     check("a reel is refused with a pointer to wiki-transcribe.py", code == 2 and "wiki-transcribe.py" in err, (code, err))
 srv.shutdown()

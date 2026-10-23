@@ -86,7 +86,7 @@ with TodoWrite. For each item:
      files via raw URLs / `git clone --depth 1` into a temp dir / WebFetch as needed.
    - **YouTube, a reel, a podcast** — the entire transcript, with the ASR quote-integrity check before any blockquote.
    - **Instagram post** — the caption and every slide; open each slide image the raw marks as
-     unrecognised or that reads garbled, and quote only what you read. Append what you read to the
+     unrecognised (all of them at `slides_text: 0 of <N>`) or that reads garbled, and quote only what you read. Append what you read to the
      raw, one `## Transcribed from <image file> by wiki-ingester, <date>` section per image, before
      filing (any image a raw holds: an X post's picture, a screenshot); the gate reports those quotes
      as checked against your transcription, which is expected (`fetchers.md`, Instagram).

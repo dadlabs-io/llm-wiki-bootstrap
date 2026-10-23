@@ -17,8 +17,9 @@ fetched another way (Mark, 2026-10-05): read it in the user's own browser, or te
 
 An Instagram post URL gets its own capture (`--mode auto`, the default): the caption and the text of every
 carousel slide (clicked through; Instagram's automatic description of each image), each slide image saved
-beside the raw in `<raw>-slides/`, never the comments, no login. A reel is refused with a pointer to
-wiki-transcribe.py, which captures its speech.
+beside the raw in `<raw>-slides/`, never the comments, no login. The header's `slides_text: <n> of <N>` counts
+the slides Instagram recognised text on, and a warning is printed when it is none (task #200, 2026-10-22).
+A reel is refused with a pointer to wiki-transcribe.py, which captures its speech.
 
 At most two of these run at once on a machine (an OS lock): four parallel headless browsers once hung it
 (2026-07-10). A third caller waits.
@@ -245,10 +246,21 @@ def capture_instagram(page) -> dict:
             "slides": [{"alt": a, "src": s} for a, s in slides.values()]}
 
 
+SAYS_RE = re.compile(r"that says ['‘’](.*)['‘’]\.?\s*$", re.S)
+
+
+def _clean_alt(alt: str) -> str:
+    return (alt or "").replace("‎", "").replace("‏", "").strip()  # Instagram's invisible direction marks
+
+
+def has_recognised_text(alt: str) -> bool:
+    return bool(SAYS_RE.search(_clean_alt(alt)))
+
+
 def slide_text(alt: str) -> str:
     """The text Instagram recognised on a slide: the quoted part of "… text that says '<text>'." when present."""
-    alt = (alt or "").replace("‎", "").replace("‏", "").strip()  # Instagram's invisible direction marks
-    m = re.search(r"that says ['‘’](.*)['‘’]\.?\s*$", alt, re.S)
+    alt = _clean_alt(alt)
+    m = SAYS_RE.search(alt)
     if m:
         return m.group(1).strip()
     if alt.startswith(("Photo by", "Photo shared by", "Video by")):
@@ -274,17 +286,26 @@ def save_slide_images(page, slides: list[dict], folder: Path) -> list[str | None
     return out
 
 
+def slides_with_text(post: dict) -> int:
+    return sum(1 for s in post["slides"] if has_recognised_text(s["alt"]))
+
+
 def build_instagram_raw(url: str, post: dict, images: list[str | None], images_dir: str, ingested_by: str) -> str:
-    n = len(post["slides"])
+    n, k = len(post["slides"]), slides_with_text(post)
+    # slides_text counts the slides Instagram recognised text on: logged out it recognised none from 2026-10-16
+    # (7 posts, 60 slides), and nothing said so until every image had been read (task #200).
     fm = ["---", f"title: {_q(post['title'] or post['caption'][:80])}", f"source_url: {url}",
           f"author: {_q(post['author'])}", f"posted: {post['time'] or post['posted']}",
           "fetched_via: playwright-chromium (instagram post, no login)",
           f"fetched: {datetime.now().astimezone().isoformat(timespec='seconds')}", f"ingested_by: {ingested_by}",
-          "type: instagram-post", f"slides: {n}", "---", ""]
+          "type: instagram-post", f"slides: {n}", f"slides_text: {k} of {n}", "---", ""]
     body = [f"# {post['author'] or 'Instagram'}: {(post['caption'].splitlines() or [''])[0][:100]}", "",
             f"**Author**: {post['author']}  ", f"**Posted**: {post['posted'] or post['time']}  ", f"**Source**: <{url}>", "",
             "## Caption", "", post["caption"] or "_(no caption)_", "", "## Slides", ""]
-    if n:
+    if n and not k:
+        body += ["On this post no slide has text Instagram recognised: read every slide image and transcribe it "
+                 "into this raw before quoting it.", ""]
+    elif n:
         body += ["Each slide's text is Instagram's own automatic recognition of the image: it can garble or "
                  "cut words. Where it reads oddly, open the image named under it.", ""]
     for i, (s, img) in enumerate(zip(post["slides"], images), 1):
@@ -315,7 +336,10 @@ def fetch_instagram_post(url: str, root: Path, args) -> int:
     raw_path = raw_dir / f"{stem}.md"
     atomic_write_text(raw_path, build_instagram_raw(url, post, images, images_dir, args.ingested_by))
     print(f"Saved raw: {raw_path}")
-    print(f"  Author: {post['author']}  Slides: {len(post['slides'])} ({sum(1 for i in images if i)} images saved)")
+    n, k = len(post["slides"]), slides_with_text(post)
+    print(f"  Author: {post['author']}  Slides: {n} ({sum(1 for i in images if i)} images saved, text on {k} of {n})")
+    if n and not k:
+        print(f"warning: Instagram recognised text on 0 of {n} slides: read every slide image")
     print(f"raw_path={raw_path}")
     print(f"source_url={url}")
     if post["title"]:
