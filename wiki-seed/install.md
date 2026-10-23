@@ -102,8 +102,10 @@ git pull
 The plain run is the refresh (press Enter at its two prompts, or run it non-interactively).
 `-RefreshOnly` is still accepted for old scripts but does nothing extra. `wiki-upgrade.py` does the
 same refresh; from inside Claude Code, `/new-wiki --sync` refreshes only the global `/new-wiki`
-skill. None of these touches a project. Each refresh also brings the global toolset's docs (these pages and the six
-framework-contract docs) up to date. To refresh those docs alone, from the bootstrap clone:
+skill. None of these touches a project. A skill, script or agent the framework no longer ships is removed by the
+refresh (since 2026-10-22): each file the install manifest lists for it, unless you edited it since, which is left and
+named in the summary's `retired:` line; until then only an uninstall removed them. Each refresh also brings the global toolset's docs (these pages and the six
+framework-contract docs) up to date, and removes this pack's pages that no longer ship. To refresh those docs alone, from the bootstrap clone:
 ```
 uv run python scripts/new-wiki.py --phase docs --check   # preview, writes nothing
 uv run python scripts/new-wiki.py --phase docs           # refresh

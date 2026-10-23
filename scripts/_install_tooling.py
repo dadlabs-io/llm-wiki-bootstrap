@@ -185,7 +185,7 @@ def toolset_status(pkg: Path, root: Path) -> dict:
         elif dst.read_bytes().replace(b"\r\n", b"\n") != src.read_bytes().replace(b"\r\n", b"\n"):
             replace.append(rel.as_posix())  # line endings ignored: git converts them on checkout in either repo
     remove = []
-    for sub in ("skills", "agents"):
+    for sub in ("", "skills", "agents"):  # "": the pack's own top-level pages (task #180, 2026-10-22)
         folder = root / TOOLSET_PACK / sub
         remove += [(TOOLSET_PACK / sub / p.name).as_posix() for p in sorted(folder.glob("*.md"))
                    if TOOLSET_PACK / sub / p.name not in files] if folder.is_dir() else []
@@ -769,6 +769,10 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
         search_mode = "skipped: not the global scripts folder"
         toolset = None
 
+    # 7b) What retired skills, scripts and agents left installed (task #180): removed here, not only by an uninstall
+    progress["step"] = "retired artifacts"
+    pruned = prune_retired(scripts_dest, skills_dest, agents_dest, script_names, dry_run=dry_run)
+
     # 8) The install manifest (task #123): every file this install wrote, so an uninstall removes exactly those
     progress["step"] = "the install manifest"
     manifest = None
@@ -783,6 +787,7 @@ def _install_tooling_steps(bootstrap_source, dry_run, skills_dest, scripts_dest,
 
     return {
         "manifest": manifest,
+        "pruned": pruned,
         "tooling_env": tooling_env,
         "page_browser": page_browser,
         "session_hook": session_hook,
@@ -849,6 +854,49 @@ def write_manifest(scripts_dest: Path, written, dirs, hooks, bootstrap) -> Path:
             "hooks": hooks, "left_on_uninstall": LEFT_ON_UNINSTALL}
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     return path
+
+
+def _retired(p: Path, scripts_dest: Path, skills_dest: Path, agents_dest: Path, script_names) -> bool:
+    """Whether an installed file belongs to a skill, script or agent that no longer ships. A file in no folder
+    this install writes is never called retired."""
+    p, sk, sc, ag = (Path(x).resolve() for x in (p, skills_dest, scripts_dest, agents_dest))
+    if sk in p.parents:
+        return p.relative_to(sk).parts[0] not in TRAVEL_SKILLS
+    if p.parent == sc:
+        return p.name not in set(script_names) | set(ENV_FILES) | {MANIFEST_NAME}
+    if p.parent == ag:
+        return not any(p.name == f"{a}.md" or (p.name.startswith(f"{a}-") and p.suffix == ".json") for a in TRAVEL_AGENTS)
+    return False
+
+
+def prune_retired(scripts_dest: Path, skills_dest: Path, agents_dest: Path, script_names, dry_run: bool = False) -> dict:
+    """Remove what the previous manifest lists for a skill, script or agent that no longer ships, when unchanged
+    since install (task #180, 2026-10-22: until then only an uninstall did, so every retirement was a hand delete).
+    An edited file is left and named. A shipped skill that failed this install's gate is still shipped, so its
+    earlier copy stays. Then the folders those files were in, when now empty, deepest first; never a root."""
+    out = {"removed": [], "edited_left": [], "dry_run": dry_run}
+    path = Path(scripts_dest) / MANIFEST_NAME
+    try:
+        data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    except (OSError, ValueError):
+        return out
+    parents = set()
+    for entry in data.get("files", []):
+        p = Path(entry.get("path", ""))
+        if not p.is_file() or not _retired(p, scripts_dest, skills_dest, agents_dest, script_names):
+            continue
+        if _sha256(p) != entry.get("sha256"):
+            out["edited_left"].append(p.as_posix())
+            continue
+        out["removed"].append(p.as_posix())
+        parents.update(q for q in p.parents if Path(skills_dest).resolve() in q.parents)
+        if not dry_run:
+            p.unlink()
+    if not dry_run:
+        for folder in sorted(parents, key=lambda q: len(q.parts), reverse=True):
+            if folder.is_dir() and not any(folder.iterdir()):
+                folder.rmdir()
+    return out
 
 
 def remove_hooks(settings_path: Path, scripts: list, dry_run: bool = False) -> int:
@@ -1312,6 +1360,12 @@ def print_summary(summary: dict):
               f"{len(ts['remove'])}; registry: {ts['registered']}  → {ts['root']}")
     else:
         print("  global toolset:   skipped: not the global scripts folder")
+    pr = summary.get("pruned") or {}
+    verb_r = "would remove" if dry else "removed"
+    print(f"  retired:          {verb_r} {len(pr.get('removed', []))} files of skills, scripts or agents that no "
+          f"longer ship" + (f"; {len(pr['edited_left'])} edited since install, left" if pr.get("edited_left") else ""))
+    for p in pr.get("removed", []) + [f"{p} (edited, left)" for p in pr.get("edited_left", [])]:
+        print(f"    - {p}")
     if summary.get("undocumented"):
         _log("WARN: shipped without a usage page (add <artifact>/wiki-seed/<name>.md): "
              + ", ".join(summary["undocumented"]))
