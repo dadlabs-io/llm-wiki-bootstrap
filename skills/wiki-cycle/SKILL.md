@@ -145,7 +145,8 @@ It writes `semantic-scope.txt`: the entries added or revised since the last sema
 **Step 5.5 — Promote** (only when Step 0 printed `promote: automatic`; every mode that ingests, after Step 3.5, or after Step 5 in `--full`, so Steps 6 and 6.5, which read `wiki/`, see the new entries). On `promote: wait for the user`, promote nothing: record `skipped (confirm_before_promote: true)`, and the report lists the staged entries under ⚠️ Needs you; Steps 6 and 6.5 read only `wiki/`, so the waiting entries are picked up by a later cycle once promoted. Otherwise promote this run's staged entries not held by the checker in **one** run, naming each with its own `--slug` (the run fixes the moved entries' links, rebuilds backlinks, indexes, MAP and the search index once; one run per slug rebuilt the whole notebook each time), then confirm:
 
 ```bash
-uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --auto --slug <a> --slug <b> ...   # every entry not held
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.py --topic <notebook> --auto --slug <a> --slug <b> ... \
+  --cycle-id <cycle_id> --run-folder <run-folder>   # every entry not held; writes promote.json + .md
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py --topic <notebook>                   # 0 broken links before going on
 ```
 

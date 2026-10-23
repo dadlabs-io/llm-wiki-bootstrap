@@ -317,10 +317,10 @@ def main() -> int:
             print(f"  {state} {r['folder']}/ ({r['entries']} entries)")
 
     if args.cycle_id and args.run_folder:
-        summary = {
-            "folders_scanned": folders_scanned,
+        summary = {  # the cycle contract's keys (task #177 row 6, 2026-10-22; folders_scanned/entries_indexed before)
+            "folders_indexed": folders_scanned,
             "folders_updated": folders_updated,
-            "entries_indexed": entries_indexed,
+            "entries_listed": entries_indexed,
         }
         emit_cycle_artifacts(Path(args.run_folder), args.cycle_id, results, summary)
 

@@ -436,7 +436,7 @@ def emit_cycle_artifacts(run_folder: Path, cycle_id: str, result: dict) -> None:
             "folders": result["folders"],
             "entries_total": result["entries_total"],
             "char_count": result["char_count"],
-            "approx_tokens": result["approx_tokens"],
+            "map_tokens": result["approx_tokens"],  # the cycle contract's name (task #177 row 6; approx_tokens before)
             "changed": result["changed"],
         },
         "queued": [{

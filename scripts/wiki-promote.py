@@ -558,6 +558,39 @@ def cleanup_empty_inbox_dirs(vault: Path, dry_run: bool = False) -> None:
             pass
 
 
+def write_step_files(run_folder: Path, cycle_id: str, vault: Path, staged_total: int, promoted: list, held: list,
+                     skipped: list) -> None:
+    """The cycle contract's promote.json + promote.md (Step 5.5; task #177 row 6, 2026-10-22: until then no script
+    wrote them, so a session wrote them by hand or not at all)."""
+    from _wiki_config import now_stamp
+    run_folder = Path(run_folder)
+    run_folder.mkdir(parents=True, exist_ok=True)
+    stamp = now_stamp()
+    queued = [{"priority": None, "slug": r["slug"],
+               "folder": Path(r["to"]).parent.resolve().relative_to(vault.resolve()).as_posix(),
+               "reason": f"promoted (+{r['backlinks_added']} backlinks)", "timestamp": stamp} for r in promoted]
+    held_rows = [{"priority": None, "slug": h["slug"], "reason": h["problem"], "timestamp": stamp} for h in held]
+    held_rows += [{"priority": None, "slug": s, "reason": "skipped at review", "timestamp": stamp} for s in skipped]
+    summary = {"staged_total": staged_total, "promoted": len(promoted), "held": len(held) + len(skipped),
+               "backlinks_added": sum(r.get("backlinks_added", 0) for r in promoted)}
+    step = {"skill": "wiki-promote", "cycle_id": cycle_id, "step": "promote", "timestamp": stamp,
+            "status": "completed", "summary": summary, "queued": queued, "skipped": held_rows, "deferred": [],
+            "notes": "", "errors": []}
+    atomic_write_text(run_folder / "promote.json", json.dumps(step, indent=2, ensure_ascii=False) + "\n")
+
+    def table(rows, key):
+        if not rows:
+            return ["_(none)_"]
+        return ["| Priority | Slug | Reason | Timestamp |", "|---|---|---|---|"] + [
+            f"| — | {r['slug']}{' → ' + r['folder'] if key == 'queued' else ''} | {r['reason']} | {r['timestamp']} |"
+            for r in rows]
+    md = [f"# promote — {cycle_id}", "", "**Status**: completed", f"**Timestamp**: {stamp}",
+          "**Summary**: " + ", ".join(f"{k.replace('_', ' ')} {v}" for k, v in summary.items()), "",
+          "## Queued", "", *table(queued, "queued"), "", "## Skipped", "", *table(held_rows, "skipped"), "",
+          "## Deferred", "", "_(none)_", "", "## Notes", "", "", "## Errors", "", "_(none)_", ""]
+    atomic_write_text(run_folder / "promote.md", "\n".join(md))
+
+
 # ---------- Main ----------
 
 
@@ -597,7 +630,11 @@ def main():
         "--verify-evidence", default="",
         help="Optional one-line evidence note recorded with the verification.",
     )
+    parser.add_argument("--cycle-id", default=None,
+                        help="/wiki-cycle's cycle id; with --run-folder, also write promote.json + .md there (Step 5.5)")
+    parser.add_argument("--run-folder", default=None, help="the cycle's run folder (see --cycle-id)")
     args = parser.parse_args()
+    step_files = bool(args.cycle_id and args.run_folder) and not args.check and not args.dry_run
 
     if args.vault:
         vault = Path(args.vault)
@@ -626,6 +663,8 @@ def main():
         _info("nothing in _inbox/proposed/ to promote")
         if not args.check:
             cleanup_empty_inbox_dirs(vault, args.dry_run)
+        if step_files:
+            write_step_files(Path(args.run_folder), args.cycle_id, vault, 0, [], [], [])
         return 0
 
     _proposed_root = (vault.parent if vault.name == "wiki" else vault) / "_inbox" / "proposed"
@@ -768,6 +807,8 @@ def main():
         "held": held,
         "completed_at": datetime.now().astimezone().isoformat(timespec="seconds"),
     }, indent=2))
+    if step_files:
+        write_step_files(Path(args.run_folder), args.cycle_id, vault, len(items), promoted, held, skipped)
     return 4 if held else 0
 
 

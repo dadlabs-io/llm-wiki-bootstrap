@@ -308,9 +308,9 @@ def main() -> int:
             if args.dry_run:
                 print(f"[dry-run] {entry.relative_to(wiki_root)}: +{len(added)} -{len(removed)}")
 
-    summary = {
-        "entries_processed": entries_processed,
-        "entries_updated": entries_updated,
+    summary = {  # the cycle contract's keys (task #177 row 6, 2026-10-22; entries_processed/_updated before)
+        "files_scanned": entries_processed,
+        "entries_touched": entries_updated,
         "backlinks_added": total_added,
         "backlinks_removed": total_removed,
     }

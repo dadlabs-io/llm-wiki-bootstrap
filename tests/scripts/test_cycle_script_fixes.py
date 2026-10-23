@@ -215,6 +215,54 @@ with tempfile.TemporaryDirectory() as td:
     check("#94: two topical shared tags and a body mention are still suggested", "real-neighbour.md" in kept,
           sorted(kept))
 
+# ── task #177 row 6: the integration scripts' and the promote step's files carry the contract's keys ──
+# (cycle-step-return-format.md: reciprocate files_scanned/backlinks_added/entries_touched, index-per-folder
+# folders_indexed/entries_listed, map-compile entries_total/folders/map_tokens; promote.json + .md with
+# staged_total/promoted/held/backlinks_added. Until 2026-10-22 the scripts used their own names and no
+# script wrote promote.json.)
+with tempfile.TemporaryDirectory() as td:
+    tmp = Path(td)
+    proj = notebook(tmp)
+    nb = tmp / "notebooks" / "t"
+    run = nb / "_inbox" / "reports" / "2026-10-22" / "2026-10-22-01"
+    env = fake_qmd_env(tmp / "bin", nb / "wiki", env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+    for script, step, keys in (("wiki-reciprocate-backlinks", "reciprocate-backlinks",
+                                ("files_scanned", "backlinks_added", "entries_touched")),
+                               ("wiki-index-per-folder", "index-per-folder", ("folders_indexed", "entries_listed")),
+                               ("wiki-map-compile", "map-compile", ("entries_total", "folders", "map_tokens"))):
+        p = subprocess.run([sys.executable, str(SCRIPTS / f"{script}.py"), "--topic", "t", "--cycle-id", "2026-10-22-01",
+                            "--run-folder", str(run)], cwd=proj, capture_output=True, text=True, encoding="utf-8", env=env)
+        d = json.loads((run / f"{step}.json").read_text(encoding="utf-8")) if (run / f"{step}.json").is_file() else {}
+        s = d.get("summary") or {}
+        check(f"{step}: summary carries the contract's keys {keys}", all(isinstance(s.get(k), int) for k in keys),
+              (p.returncode, sorted(s)))
+    prop = nb / "_inbox" / "proposed"
+    prop.mkdir(parents=True)
+    for slug, sidecar in (("new-c", {"target_folder": "research/tooling", "title": "New C",
+                                     "suggested_backlinks": [{"file": "research/tooling/a.md", "link_text": "New C",
+                                                              "link_target": "new-c.md"}]}),
+                          ("held-d", {"title": "Held D"})):
+        (prop / f"{slug}.md").write_text(entry(slug, ["x", "y", "z"], "## TL;DR\n\nT.\n\n## Related\n\n- [A](a.md)\n"),
+                                         encoding="utf-8")
+        (prop / f"{slug}.proposed_metadata.json").write_text(json.dumps(sidecar), encoding="utf-8")
+    p = subprocess.run([sys.executable, str(SCRIPTS / "wiki-promote.py"), "--topic", "t", "--auto",
+                        "--cycle-id", "2026-10-22-01", "--run-folder", str(run)],
+                       cwd=proj, capture_output=True, text=True, encoding="utf-8", env=env)
+    jp, mp = run / "promote.json", run / "promote.md"
+    check("promote with --cycle-id/--run-folder writes promote.json and promote.md", jp.is_file() and mp.is_file(),
+          (p.returncode, (p.stdout + p.stderr)[-300:]))
+    d = json.loads(jp.read_text(encoding="utf-8")) if jp.is_file() else {}
+    check("promote JSON has every contract field", all(f in d for f in STEP_FIELDS), [f for f in STEP_FIELDS if f not in d])
+    check("promote JSON names its step and cycle", d.get("step") == "promote" and d.get("cycle_id") == "2026-10-22-01",
+          (d.get("step"), d.get("cycle_id")))
+    s = d.get("summary") or {}
+    check("promote summary: staged_total 2, promoted 1, held 1, backlinks_added 1",
+          (s.get("staged_total"), s.get("promoted"), s.get("held"), s.get("backlinks_added")) == (2, 1, 1, 1), s)
+    check("promote queued[]: the moved entry with its folder",
+          [(q.get("slug"), q.get("folder")) for q in d.get("queued", [])] == [("new-c", "research/tooling")], d.get("queued"))
+    check("promote skipped[]: the held entry with the reason", [q.get("slug") for q in d.get("skipped", [])] == ["held-d"]
+          and "target_folder" in (d.get("skipped") or [{}])[0].get("reason", ""), d.get("skipped"))
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)
