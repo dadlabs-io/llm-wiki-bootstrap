@@ -34,6 +34,7 @@ Checks:
 - **Code drift (added 2026-09-17)** — each `describes: <path>[@<commit>]` checked against the project's repo (the registry entry's `project_root`, or the folder above an in-project `llm-wiki/`): changed since the pinned commit or after `last_reviewed` (re-read the entry), invalid (bad path or commit, or outside `project/`), or not checked (no repo). Warn-only, even with `--strict`
 - **Design pages behind their notes (added 2026-10-18)** — a living page (`kind: living`, or under `project/architecture/` / `project/components/` and not marked another kind) linked to or from a decision, code-change or troubleshooting note dated after the page's `last_reviewed`: read the note, revise the page, bump `last_reviewed`. Warn-only; `/wrap-up` Step 3.5's final check reads this section and Code drift for living pages
 - Icarus schema invariants (`verified` / `type` enums, `contradicted_by` / `revises` / `review_of` / `synthesis_of` references)
+- **Hubs behind their tag (added 2026-10-23)** — a page declaring `hub_tag: <tag>` collects every entry carrying that tag; each live tagged entry it does not link is listed under it. Warn-only
 - **Retirement links and renamed terms (added 2026-10-14)** — a `superseded_by` names a real entry that names the retired one back; an old name from the notebook's `_config/renamed-terms.md` table left in our own pages (tier `self` or `project/`, decisions excepted). Warn-only
 - **Body checks (added 2026-09-02)** — the mechanical half of the eval rubric, via `_entry_checks.py`, the SAME code `wiki-update.py` runs as a hard pre-write gate on every new entry: `## TL;DR` present (bold `**TL;DR**` lead accepted), `## Related` with 2+ wiki links (warning for `tier: self`), 3+ tags, thin entries (under 30 lines and under 300 words) tagged `stub`, numeric claims outside a `>` blockquote (not on a `kind: living` page; a one-line forward-pointer banner is not a quote, 2026-10-22). Here they are the **backlog view** over existing entries and warn only; wiki-root hub pages and `framework-contract: true` docs are exempt.
 - **Task cards (added 2026-10-10)** — in a project on cards (`wiki/tasks/ORDER.md` exists) the cards are not entries: `tasks/` is skipped by every check above (a link to a card still resolves), and the report's `## 🗂️ Task cards` section lists each break of the cards' six rules instead
@@ -168,6 +169,16 @@ Format:
 <numbered list, most impactful first>
 ```
 
+### Step 4.5: Link-gap pass
+
+Run the link-gap pass (task #201): the full search on each thin or newly filed entry's title and TL;DR, kept as Related-link candidates on a review sheet. It writes no entry.
+
+```bash
+uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-link-gaps.py suggest --topic <topic>
+```
+
+The sheet is `<topic>/_inbox/reports/link-gaps-<date>.md`, one `- [ ] <entry> -> <candidate> (score) title` line per pair. Thin means fewer than 2 links under a Related, See also or Cross-references heading; new means dated on or after the last sheet. Exit 3 means every search failed: say the pass was NOT checked. A score is a pointer, not a verdict: the user ticks only pairs about the same subject, then `wiki-link-gaps.py --topic <topic> apply --sheet <sheet>` links each ticked pair both ways.
+
 ### Step 5: Present summary to user
 
 After writing the report, show the user:
@@ -175,8 +186,9 @@ After writing the report, show the user:
 - Count of contradictions, missing cross-refs, concept gaps, tier issues
 - Top 5 highest-priority fixes
 - Path to the full report
+- The link-gap sheet: how many targets and candidate pairs, and its path
 
-**Do NOT auto-apply fixes.** The user reviews and decides. If they approve fixes, apply them, then re-run the mechanical lint (Step 6) to verify.
+**Do NOT auto-apply fixes.** The user reviews and decides. If they approve fixes, apply them (for links, tick the sheet's lines and run `apply`), then re-run the mechanical lint (Step 6) to verify.
 
 ### Step 6: Mechanical re-run (if fixes were applied)
 
@@ -207,6 +219,7 @@ After applying approved fixes, run `wiki-lint-mechanical.py` again to verify:
 - Mechanical script: `{{WIKI_SCRIPTS_DIR}}/wiki-lint-mechanical.py`
 - Mechanical report: `<vault>/<topic>/_inbox/reports/lint-report.md`
 - Semantic report: `<vault>/<topic>/_inbox/reports/<agent>-semantic-lint-<date>.md`
+- Link-gap script and sheet: `{{WIKI_SCRIPTS_DIR}}/wiki-link-gaps.py`, `<vault>/<topic>/_inbox/reports/link-gaps-<date>.md`
 
 
 ## Cycle contract

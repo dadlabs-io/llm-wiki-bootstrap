@@ -507,6 +507,10 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     design_since = {}         # resolved design page -> the day it was last revised (last_reviewed, else date)
     note_day = {}             # resolved note -> its date
 
+    # Hubs behind their tag (task #204): a page's `hub_tag: <tag>` collects every entry carrying that tag. Warn-only.
+    hub_pages = {}            # hub file -> its tag
+    tagged = {}               # tag -> live entries carrying it
+
     for f in files:
         try:
             content = f.read_text(encoding="utf-8")
@@ -547,6 +551,13 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                 supersede_no_backlink.append((f, succ))
 
         rel_f = f.relative_to(wiki_root)
+        full_fm = split_frontmatter(content)[0]
+        if fm.get("hub_tag", "").strip():
+            hub_pages[f] = fm["hub_tag"].strip().lower()
+        if not is_superseded(full_fm):
+            tags = full_fm.get("tags")
+            for tag in (tags if isinstance(tags, list) else []):
+                tagged.setdefault(str(tag).strip().lower(), []).append(f)
         if not is_superseded(split_frontmatter(content)[0]):
             if is_design_page(rel_f, fm):
                 since = day(fm.get("last_reviewed")) or day(fm.get("date"))
@@ -843,6 +854,17 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                   else " (the renamed-terms table has no rows)"))
     out.append(f"**Retirement links (`superseded_by`)**: no such entry={len(supersede_bad_target)}, "
                f"successor does not name it back={len(supersede_no_backlink)}")
+    hub_missing = []          # (hub, tag, entries it does not link)
+    for hub, tag in sorted(hub_pages.items()):
+        try:
+            hub_text = hub.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        linked = {p for _, t in extract_links(hub_text) for p in [resolve_link(hub, t)] if p}
+        missing_here = [e for e in tagged.get(tag, []) if e != hub and e.resolve() not in linked]
+        hub_missing.append((hub, tag, missing_here))
+    out.append(f"**Hubs behind their tag**: {sum(len(m) for _, _, m in hub_missing)}"
+               + ("" if hub_pages else " (no page declares `hub_tag`)"))
     if on_cards:
         out.append(f"**Task cards (`tasks/`)**: {len(task_problems)} rule breach(es)")
     out.append("")
@@ -1296,6 +1318,24 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                    f"`{succ.relative_to(wiki_root.resolve()).as_posix()}` does not name it back: add a link to it")
     out.append("")
 
+    # Section: hubs behind their tag (2026-10-23, task #204)
+    out.append("## 🧭 Hubs Behind Their Tag (`hub_tag`)")
+    out.append("")
+    out.append("A hub page names the tag it collects (`hub_tag: <tag>`, the frontmatter spec); every live entry carrying "
+               "that tag, in any folder, belongs on it. Add one line per entry listed here, written from its TL;DR. "
+               "Warn-only.")
+    out.append("")
+    if not hub_pages:
+        out.append("_Not checked: no page declares `hub_tag`._")
+    elif not any(m for _, _, m in hub_missing):
+        out.append("_None: every hub links every entry carrying its tag._")
+    for hub, tag, missing_here in hub_missing:
+        if missing_here:
+            out.append(f"- `{hub.relative_to(wiki_root).as_posix()}` (`{tag}`) is missing "
+                       f"{len(missing_here)}: " + ", ".join(f"`{e.relative_to(wiki_root).as_posix()}`"
+                                                             for e in missing_here))
+    out.append("")
+
     # Save report
     report_path = topic_root / "_inbox" / "reports" / "lint-report.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1324,6 +1364,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             "renamed_terms_left": len(renamed_hits),
             "supersede_bad_target": len(supersede_bad_target),
             "supersede_no_backlink": len(supersede_no_backlink),
+            "hub_entries_missing": sum(len(m) for _, _, m in hub_missing),
         }, broken_links, orphans, standalone, wiki_root, report_path, not_checked)
         print(f"Cycle step files: {Path(run_folder) / 'lint-mechanical.json'} (+ .md)")
 

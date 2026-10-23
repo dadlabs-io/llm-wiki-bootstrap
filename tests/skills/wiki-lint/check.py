@@ -117,6 +117,8 @@ def prompt(case: dict, ctx: dict) -> str:
     # each case starts from a clean copy of the seed
     _rmtree(ctx["notebook"])
     shutil.copytree(HERE / "fixtures" / "seed-notebook", ctx["notebook"])
+    if case.get("overlay"):
+        shutil.copytree(HERE / "fixtures" / case["overlay"], ctx["notebook"], dirs_exist_ok=True)
     if case["id"] != "prior-report-trap":
         # the poisoned prior report only exists for the trap case
         (ctx["notebook"] / "_inbox" / "reports" /
@@ -124,6 +126,17 @@ def prompt(case: dict, ctx: dict) -> str:
     return HEADER.format(skill=ctx["skill_dir"].as_posix(), notebook=NOTEBOOK,
                          nb=ctx["notebook"].as_posix(),
                          sandbox=ctx["sandbox"].as_posix()) + case["say"]
+
+
+LEASE_A = "wiki/project/components/kestrel-lease-renewal.md"
+LEASE_B = "wiki/project/architecture/kestrel-lease-expiry.md"
+BATCH_C = "wiki/project/components/kestrel-batch-sizing.md"
+
+
+def _related(nb: Path, rel: str) -> str:
+    t = (nb / rel).read_text(encoding="utf-8")
+    m = re.search(r"^## Related\s*$(.*?)(?=^## |\Z)", t, re.M | re.S)
+    return m.group(1) if m else ""
 
 
 def _semantic_reports(ctx: dict) -> list[Path]:
@@ -179,7 +192,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     # no mode ever edits the wiki: the skill reports, the user decides
     touched = sorted(k for k in set(before) | set(after)
                      if before.get(k) != after.get(k) and k.startswith("wiki/"))
-    add("no wiki entry modified", not touched, touched)
+    if not exp.get("links_applied"):
+        add("no wiki entry modified", not touched, touched)
 
     reports = _semantic_reports(ctx)
     if exp.get("no_semantic_report"):
@@ -238,6 +252,41 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             if "kestrel-ack-routing" in seg.lower() and old_name.search(seg) and not excl.search(seg):
                 wrongly.append(seg.strip()[:120])
         add("did not report the old name in the decision page", not wrongly, wrongly)
+
+    if exp.get("link_gap_sheet"):
+        sheets = (sorted(ctx["reports"].glob("link-gaps-*.md"))
+                  if ctx["reports"].is_dir() else [])
+        add("link-gap sheet written under _inbox/reports/", bool(sheets),
+            [p.name for p in ctx["reports"].glob("*")] if ctx["reports"].is_dir() else "no reports folder")
+        add("full mode also wrote the semantic report", bool(_semantic_reports(ctx)))
+        add("no entry gained a link (nothing ticked, nothing applied)",
+            all(before.get(k) == after.get(k) for k in (LEASE_A, LEASE_B, BATCH_C)),
+            [k for k in (LEASE_A, LEASE_B, BATCH_C) if before.get(k) != after.get(k)])
+        if sheets:
+            sheet = sheets[-1]
+            body = sheet.read_text(encoding="utf-8")
+            pairs = re.findall(r"^- \[( |x|X)\] (wiki/\S+)\s*->\s*(wiki/\S+)", body, re.M)
+            add("sheet lists the thin entry with its same-subject entry",
+                any({a, b} == {LEASE_A, LEASE_B} for _, a, b in pairs), pairs[:6])
+            add("sheet lists nothing scored under 0.45 (the decoy)",
+                not any(BATCH_C in (a, b) for _, a, b in pairs), pairs[:6])
+            add("sheet has no ticked pair", all(t == " " for t, _, _ in pairs), pairs[:6])
+            add("reply names the sheet",
+                sheet.name in text or bool(re.search(r"link-gaps-\d{4}-\d{2}-\d{2}", text)), sheet.name)
+
+    if exp.get("links_applied"):
+        nb = ctx["notebook"]
+        a_rel, b_rel, c_rel = _related(nb, LEASE_A), _related(nb, LEASE_B), _related(nb, BATCH_C)
+        add("ticked pair linked from A's Related section", "kestrel-lease-expiry.md" in a_rel, a_rel[-200:])
+        add("ticked pair linked back from B's Related section", "kestrel-lease-renewal.md" in b_rel, b_rel[-200:])
+        add("unticked pair not linked from A", "kestrel-batch-sizing.md" not in a_rel, a_rel[-200:])
+        add("unticked pair not linked from C", "kestrel-lease-renewal.md" not in c_rel, c_rel[-200:])
+        calls = [str((c.get("input") or {}).get("command") or "") for c in run["tool_calls"]]
+        applies = [i for i, c in enumerate(calls) if "wiki-link-gaps.py" in c and re.search(r"\bapply\b", c)]
+        add("ran the sheet's apply line", bool(applies))
+        last = max(applies) if applies else len(calls)
+        add("re-ran the mechanical lint after the apply",
+            any("wiki-lint-mechanical.py" in c for c in calls[last + 1:]))
 
     if not exp.get("semantic_report"):
         return res

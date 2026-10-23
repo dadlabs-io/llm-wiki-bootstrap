@@ -149,6 +149,26 @@ def _where(nb: Path, ticket: str) -> str:
     return hits[0].parent.name if len(hits) == 1 else ("missing" if not hits else "several")
 
 
+def _norm_path(p) -> str:
+    return str(p or "").replace("\\", "/")
+
+
+def _capture_agents(run: dict) -> list[dict]:
+    return [c for c in (run.get("tool_calls") or [])
+            if c.get("name") in ("Agent", "Task") and not c.get("parent_tool_use_id")]
+
+
+def _agent_corpus(run: dict, agents: list[dict]) -> str:
+    parts = [str((c.get("input") or {}).get("prompt", "")) for c in agents]
+    for c in run.get("tool_calls") or []:
+        inp = c.get("input") or {}
+        if c.get("name") == "Write" and "triage-capture" in _norm_path(inp.get("file_path")):
+            parts.append(str(inp.get("content", "")))
+        elif c.get("name") == "Bash" and "triage-capture" in _norm_path(inp.get("command")):
+            parts.append(str(inp.get("command", "")))
+    return "\n".join(parts).lower()
+
+
 def _front(path: Path) -> dict:
     m = re.match(r"\A---\s*\n(.*?)\n---", path.read_text(encoding="utf-8", errors="replace"), re.S)
     return dict(l.split(":", 1) for l in (m.group(1).splitlines() if m else []) if ":" in l)
@@ -198,4 +218,50 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     if case["id"] == "bad-config":
         add("stops on the config problem and names it", "main" in text and bool(
             re.search(r"problem|missing|no .main|catch-all", text)))
+    if case["id"] in ("big-batch-capture-agents", "small-batch-no-agents"):
+        opaque = case["opaque"]
+        plain = [n for n in case["pending"] if n not in opaque]
+        agents = _capture_agents(run)
+        for name, want in case["expect"].items():
+            if want in ("agents", "money"):
+                t = nb / "_inbox" / "intake" / want / ctx["tickets"][name]
+                rp = _front(t).get("raw_path", "").strip() if t.is_file() else ""
+                add(f"{name}: raw captured and named on the ticket", bool(rp) and (nb / rp).is_file(), rp or "no raw_path")
+        logtext = log.read_text(encoding="utf-8").lower() if log.is_file() else ""
+        missing = [n for n in case["expect"]
+                   if not any((Path(ctx["tickets"][n]).stem.lower() in r.lower() or n.lower() in r.lower())
+                              for r in rows)]
+        add("a triage-log row names each routed ticket", not missing, missing)
+        if case["id"] == "small-batch-no-agents":
+            add("no capture agents spawned below the threshold", not agents, f"{len(agents)} agent calls")
+        else:
+            add("capture agents spawned for the opaque sources", len(agents) >= 1, f"{len(agents)} agent calls")
+            add("no more than four capture agents (1 reels + at most 2 posts + 1 other)", len(agents) <= 4,
+                f"{len(agents)} agent calls")
+            models = [str((c.get("input") or {}).get("model", "")).lower() for c in agents]
+            add("every capture agent passed the capture model (sonnet) as the Agent model",
+                bool(agents) and all("sonnet" in m for m in models), models)
+            corpus = _agent_corpus(run, agents)
+            add("no capture agent was given a plain-titled source", not [n for n in plain if n.lower() in corpus], plain)
+            unread = [n for n in opaque if n.lower() not in corpus]
+            add("every opaque source is handed to some capture agent", not unread, unread)
+            top_bash = [str((c.get("input") or {}).get("command", "")) for c in run.get("tool_calls") or []
+                        if c.get("name") == "Bash" and not c.get("parent_tool_use_id")]
+            add("the session routed with route itself", any(re.search(r"\broute\b", b) for b in top_bash))
+            ids = {c.get("id") for c in agents}
+            bad = []
+            for c in run.get("tool_calls") or []:
+                if c.get("parent_tool_use_id") not in ids:
+                    continue
+                inp = c.get("input") or {}
+                if c.get("name") in ("Write", "Edit"):
+                    fp = _norm_path(inp.get("file_path"))
+                    if "_inbox/intake" in fp or "_inbox/pending" in fp:
+                        bad.append(f"{c['name']} {fp}")
+                elif c.get("name") == "Bash":
+                    cmd = str(inp.get("command", ""))
+                    if "_inbox" in cmd and re.search(
+                            r"(?i)\b(mv|rm|git mv|move-item|remove-item|del)\b|\broute\b", cmd):
+                        bad.append(cmd[:120])
+            add("no capture agent routed, moved or deleted a ticket", not bad, bad)
     return res

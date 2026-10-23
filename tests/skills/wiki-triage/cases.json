@@ -1,20 +1,11 @@
 {
   "skill": "wiki-triage",
   "cases": [
-    {"id": "shared-five", "config": "shared",
-     "pending": ["vector-index-tuning", "subagent-harness", "side-hustles", "gpu-cluster-costs", "memory-for-subagents"],
-     "expect": {"vector-index-tuning": "memory", "subagent-harness": "agents", "side-hustles": "money",
-                "gpu-cluster-costs": "main", "memory-for-subagents": "main"},
-     "say": "triage the research notebook's pending queue", "author": "legacy"},
-    {"id": "single-no-config", "config": "none",
-     "pending": ["vector-index-tuning", "gpu-cluster-costs"],
-     "expect": {"vector-index-tuning": "main", "gpu-cluster-costs": "main"},
-     "say": "sort the pending items in the research notebook", "author": "legacy"},
-    {"id": "user-drop", "config": "shared", "pending": [], "dropped": {"subagent-harness": "memory"},
-     "expect": {"subagent-harness": "memory"},
-     "say": "triage the research notebook", "author": "legacy"},
-    {"id": "bad-config", "config": "no-main", "pending": ["vector-index-tuning", "side-hustles"],
-     "expect": {"vector-index-tuning": "pending", "side-hustles": "pending"},
-     "say": "triage the research notebook's pending queue", "author": "legacy"}
+    {"id": "shared-five", "config": "shared", "pending": ["vector-index-tuning", "subagent-harness", "side-hustles", "gpu-cluster-costs"], "expect": {"vector-index-tuning": "memory", "subagent-harness": "agents", "side-hustles": "money", "gpu-cluster-costs": "main"}, "say": "triage the research notebook's pending queue", "author": "eval-case-writer"},
+    {"id": "single-no-config", "config": "none", "pending": ["vector-index-tuning", "gpu-cluster-costs"], "expect": {"vector-index-tuning": "main", "gpu-cluster-costs": "main"}, "say": "sort the pending items in the research notebook", "author": "eval-case-writer"},
+    {"id": "user-drop", "config": "shared", "pending": [], "dropped": {"subagent-harness": "memory"}, "expect": {"subagent-harness": "memory"}, "say": "triage the research notebook", "author": "eval-case-writer"},
+    {"id": "bad-config", "config": "no-main", "pending": ["vector-index-tuning", "side-hustles"], "expect": {"vector-index-tuning": "pending", "side-hustles": "pending"}, "say": "triage the research notebook's pending queue", "author": "eval-case-writer"},
+    {"id": "big-batch-capture-agents", "config": "shared", "tags": ["complex"], "pending": ["p-3k9f", "p-7m2x", "p-1d8q", "p-9w4c", "p-5t6r", "p-2h7v", "p-8b3n", "p-4y1z", "p-6j5s", "p-0e9g", "p-aa42", "p-bc17", "vector-index-tuning", "subagent-harness"], "opaque": ["p-3k9f", "p-7m2x", "p-1d8q", "p-9w4c", "p-5t6r", "p-2h7v", "p-8b3n", "p-4y1z", "p-6j5s", "p-0e9g", "p-aa42", "p-bc17"], "expect": {"p-3k9f": "memory", "p-7m2x": "memory", "p-1d8q": "memory", "p-9w4c": "agents", "p-5t6r": "agents", "p-2h7v": "agents", "p-8b3n": "money", "p-4y1z": "money", "p-6j5s": "money", "p-0e9g": "main", "p-aa42": "main", "p-bc17": "main", "vector-index-tuning": "memory", "subagent-harness": "agents"}, "say": "triage the research notebook's pending queue", "author": "eval-case-writer"},
+    {"id": "small-batch-no-agents", "config": "shared", "pending": ["p-3k9f", "p-7m2x", "p-9w4c", "p-5t6r", "p-8b3n", "p-0e9g"], "opaque": ["p-3k9f", "p-7m2x", "p-9w4c", "p-5t6r", "p-8b3n", "p-0e9g"], "expect": {"p-3k9f": "memory", "p-7m2x": "memory", "p-9w4c": "agents", "p-5t6r": "agents", "p-8b3n": "money", "p-0e9g": "main"}, "say": "sort the research notebook's pending queue", "author": "eval-case-writer"}
   ]
 }

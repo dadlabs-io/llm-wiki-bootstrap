@@ -1,5 +1,7 @@
 {
-  "_comment": "Runtime configuration for the wiki-checker agent, read by the SPAWNER (/wiki-cycle) and by wiki-cycle-scope.py, not by the checker itself. model_default: the model passed as the Agent tool's spawn-time override (opus: holding an hour-long transcript and the entry in view is where it earns its cost; the user, 2026-09-24). min_transcript_minutes: a staged entry is checked when its raw is a transcript (YouTube captions or Whisper) at least this long (15 to start, set low on purpose; checker-log.jsonl records each check's length and verdict, so the pass rate by length shows whether to raise it). Change either here, not in the agent or the skill.",
+  "_comment": "Runtime configuration for the wiki-checker agent, read by the SPAWNER (/wiki-cycle) and by wiki-cycle-scope.py, not by the checker itself. model_default: the model passed as the Agent tool's spawn-time override (opus: holding an hour-long transcript and the entry in view is where it earns its cost; the user, 2026-09-24). min_transcript_minutes: a staged entry is checked when its raw is a transcript (YouTube captions or Whisper) at least this long (15 to start, set low on purpose; checker-log.jsonl records each check's length and verdict, so the pass rate by length shows whether to raise it). min_raw_kb: a staged entry whose raw is at least this big (a long PDF, a whole repo) is checked too; 0 turns it off. sample_every: 1 in this many of the other staged entries with a raw is spot-checked, picked by a hash of the entry's name (the same on every run); 0 turns it off; if the spot checks keep passing, set it to 0 (the user, 2026-10-23, task #202). Change any of these here, not in the agent or the skill.",
   "model_default": "opus",
-  "min_transcript_minutes": 15
+  "min_transcript_minutes": 15,
+  "min_raw_kb": 60,
+  "sample_every": 10
 }

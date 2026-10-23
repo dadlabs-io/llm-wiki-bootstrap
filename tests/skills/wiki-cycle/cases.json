@@ -46,13 +46,17 @@
     {"id": "confirm-false-ingest-only-resume-promotes-at-end", "kind": "promote-setting", "mode": "quick", "confirm_before_promote": false, "timeout": 2400, "staged": 0, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"},
     {"id": "mixed-queue-long-transcript-on-opus-short-items-on-default-and-models-named", "kind": "model-mix", "timeout": 4500, "items": ["small", "short2", "talk"], "staged": 3, "done": 3, "say": "/wiki-cycle --ingest-only", "author": "eval-case-writer"},
     {"id": "user-asks-to-choose-ingest-model-session-raises-the-choice-with-the-default", "kind": "model-ask", "timeout": 3000, "items": ["small"], "staged": 1, "done": 1, "say": "/wiki-cycle --ingest-only\n\nI want to choose the ingest model for this run myself.", "author": "eval-case-writer"},
-    {"id": "flagged-transcript-entry-corrected-recorded-then-promoted-when-confirm-false", "kind": "checker-promote", "confirm_before_promote": false, "timeout": 3000, "staged": 0, "done": 0, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"}
+    {"id": "flagged-transcript-entry-corrected-recorded-then-promoted-when-confirm-false", "kind": "checker-promote", "confirm_before_promote": false, "timeout": 3000, "staged": 0, "done": 0, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"},
+    {"id": "full-lint-all-reads-every-entry-older-included", "kind": "lint-all", "timeout": 5400, "staged": 0, "done": 0, "say": "/wiki-cycle --full --lint-all", "tags": ["complex"], "author": "eval-case-writer"},
+    {"id": "lint-scope-new-revised-and-staged-not-unchanged", "kind": "scope", "scope": "lint", "timeout": 5400, "staged": 2, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "tags": ["complex"], "author": "eval-case-writer"},
+    {"id": "claims-scope-new-and-revised-not-unchanged", "kind": "scope", "scope": "claims", "timeout": 5400, "staged": 2, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "tags": ["complex"], "author": "eval-case-writer"},
+    {"id": "hub-misses-one-tagged-entry-gets-one-line-others-untouched", "kind": "hub", "hub_complete": false, "timeout": 3000, "staged": 2, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"},
+    {"id": "hub-already-links-every-tagged-entry-stays-unchanged", "kind": "hub", "hub_complete": true, "timeout": 3000, "staged": 2, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"},
+    {"id": "big-source-entry-checked-small-unpicked-entry-not", "kind": "checker-gate", "items": ["big", "small0"], "checked": ["big"], "unchecked": ["small0"], "timeout": 3000, "staged": 2, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"},
+    {"id": "spot-check-picks-one-small-entry-only-that-one-checked", "kind": "checker-gate", "items": ["small2", "small0"], "checked": ["small2"], "unchecked": ["small0"], "timeout": 3000, "staged": 2, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"}
   ],
   "_planned": {
-    "_comment": "Cases from the #42 plan (notebook sessions/main/42-wiki-cycle-plan.md, section D) not built yet. The scope rules behind lint-scope-new and claims-scope-new are proven for free by tests/scripts/test_cycle_scope.py; the model-level cases need a --full run (semantic lint, claims, synthesis) and are tagged complex when built.",
-    "youtube-batch": "#45, needs live YouTube fetches, complex", "gated-no-browser": "B5, needs a known login-gated URL, complex",
-    "lint-scope-new": "C1 in a --full run, complex", "claims-scope-new": "C1 in a --full run, complex",
-    "lint-all-flag": "C1, complex", "canon-gate-headless": "a --full run, complex",
-    "discover-live": "finding 2, complex", "quote-check-in-cycle": "#47 inside a cycle, complex"
+    "_comment": "Cases from the #42 plan (notebook sessions/main/42-wiki-cycle-plan.md, section D) not built yet. gated-no-browser, discover-live, quote-check-in-cycle and canon-gate-headless were dropped as overtaken or covered (Mark, 2026-10-23).",
+    "youtube-batch": "#45; kind youtube-batch is in check.py; its case waits for two real videos (under 15 min, captions, on topic) in sources (Mark, 2026-10-23: hold until we have one), complex"
   }
 }

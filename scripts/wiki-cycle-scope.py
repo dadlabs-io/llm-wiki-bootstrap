@@ -77,6 +77,7 @@ Entries are wiki/**/*.md except `_`-prefixed machine files, README.md and sessio
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -95,6 +96,8 @@ if hasattr(sys.stdout, "reconfigure"):
 
 CHECKER_CONFIG = Path.home() / ".claude" / "agents" / "wiki-checker-config.json"
 DEFAULT_MIN_MINUTES = 15
+DEFAULT_MIN_RAW_KB = 60.0  # task #202: a long PDF or a whole repo carries the same omission risk as a long talk
+DEFAULT_SAMPLE_EVERY = 10  # task #202: a spot check of the rest, to learn whether short sources have errors too
 # raw types that are a transcript with a length (task #105: cycle 2026-10-11-01's 30-minute Whisper
 # transcript was missed, when only YouTube's counted)
 TRANSCRIPT_TYPES = {"youtube-transcript", "media-transcript"}
@@ -281,24 +284,55 @@ def min_minutes(args) -> float:
         return DEFAULT_MIN_MINUTES
 
 
+def checker_setting(args, flag: str, key: str, default):
+    """A checker scope setting: the flag, else wiki-checker-config.json's key, else the default."""
+    if getattr(args, flag) is not None:
+        return getattr(args, flag)
+    try:
+        return type(default)(json.loads(CHECKER_CONFIG.read_text(encoding="utf-8")).get(key, default))
+    except (OSError, json.JSONDecodeError, ValueError, TypeError):
+        return default
+
+
+def spot_checked(entry: str, every: int) -> bool:
+    """1 in `every` entries, by a hash of the entry's name: random across entries, the same on every run."""
+    return every > 0 and int(hashlib.sha1(Path(entry).stem.encode("utf-8")).hexdigest(), 16) % every == 0
+
+
 def cmd_checker(nb: Path, args) -> int:
+    """Staged entries the checker reads: a transcript of --min-minutes+, a raw of --min-raw-kb+ (a long PDF, a whole
+    repo), and 1 in --sample-every of the rest as a spot check (task #202, Mark 2026-10-23). An entry with no raw
+    is never in scope."""
     rf, floor = Path(args.run_folder), min_minutes(args)
+    min_kb = checker_setting(args, "min_raw_kb", "min_raw_kb", DEFAULT_MIN_RAW_KB)
+    every = checker_setting(args, "sample_every", "sample_every", DEFAULT_SAMPLE_EVERY)
     picked, skipped = [], []
     for e in staged(nb):
         rp = _front((nb / e).read_text(encoding="utf-8", errors="replace")).get("raw_path", "")
         raw = nb / rp if rp and not rp.startswith("(") else None
-        meta = _front(raw.read_text(encoding="utf-8", errors="replace")) if raw and raw.is_file() else {}
+        if not (raw and raw.is_file()):
+            skipped.append(e)
+            continue
+        meta = _front(raw.read_text(encoding="utf-8", errors="replace"))
         secs = meta.get("duration_seconds", "")
         minutes = float(secs) / 60 if secs.replace(".", "", 1).isdigit() else None
+        kb = raw.stat().st_size / 1024
+        mins = f"{minutes:.0f}" if minutes is not None else "-"
         if meta.get("type") in TRANSCRIPT_TYPES and minutes is not None and minutes >= floor:
-            picked.append(f"{e}\t{rp}\t{minutes:.0f}")
+            picked.append((f"{e}\t{rp}\t{mins}", f"transcript of {mins} minutes"))
+        elif min_kb > 0 and kb >= min_kb:
+            picked.append((f"{e}\t{rp}\t{mins}", f"raw of {kb:.0f} KB"))
+        elif spot_checked(e, every):
+            picked.append((f"{e}\t{rp}\t{mins}", f"spot check, 1 in {every}"))
         else:
             skipped.append(e)
-    out = write_scope(rf, "checker-scope.txt", picked, f"staged transcripts of {floor:g}+ minutes: entry, raw, minutes")
-    print(f"checker scope: {len(picked)} of {len(picked) + len(skipped)} staged entries are transcripts of "
-          f"{floor:g}+ minutes -> {out}")
-    for line in picked:
-        print("  " + line.replace("\t", "  "))
+    rules = [f"transcripts of {floor:g}+ minutes"] + ([f"raws of {min_kb:g}+ KB"] if min_kb > 0 else []) \
+        + ([f"1 in {every} of the rest"] if every > 0 else [])
+    out = write_scope(rf, "checker-scope.txt", [line for line, _ in picked],
+                      f"staged entries: {', '.join(rules)}; entry, raw, minutes ('-' when not a transcript)")
+    print(f"checker scope: {len(picked)} of {len(picked) + len(skipped)} staged entries ({', '.join(rules)}) -> {out}")
+    for line, why in picked:
+        print("  " + line.replace("\t", "  ") + f"  ({why})")
     return 0
 
 
@@ -511,6 +545,8 @@ def main() -> int:
     c = sub.add_parser("checker")
     c.add_argument("--run-folder", required=True)
     c.add_argument("--min-minutes", type=float, default=None)
+    c.add_argument("--min-raw-kb", type=float, default=None, help="a raw this big is checked too (0: off)")
+    c.add_argument("--sample-every", type=int, default=None, help="spot-check 1 in N other entries (0: off)")
     lg = sub.add_parser("checker-log")
     lg.add_argument("--run-folder", required=True)
     lg.add_argument("--entry", required=True)

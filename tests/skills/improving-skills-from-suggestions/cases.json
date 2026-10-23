@@ -715,6 +715,161 @@
         "task-121"
       ],
       "author": "eval-case-writer"
+    },
+    {
+      "id": "accepted-fix-held-later-record-clean",
+      "should_trigger": true,
+      "tier": "gate",
+      "timeout": 600,
+      "prompt": "Run the improver over the skill suggestions we've received.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n\n## Gotchas\n- **An empty input file** (2026-10-02, task 64): export.py checks the file size and writes an empty output file instead of raising StopIteration.\n",
+          "skills/csv-exporter/scripts/export.py": "import csv\nimport os\nimport sys\n\n\ndef export(path, out):\n    if os.path.getsize(path) == 0:\n        open(out, \"w\").close()\n        return\n    with open(path, encoding=\"utf-8-sig\", newline=\"\") as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        body = list(rows)\n    with open(out, \"w\", encoding=\"utf-8\", newline=\"\") as fh:\n        w = csv.writer(fh)\n        w.writerow(header)\n        w.writerows(body)\n\n\nif __name__ == \"__main__\":\n    export(sys.argv[1], sys.argv[2])\n",
+          "skills/report-mailer/SKILL.md": "---\nname: report-mailer\ndescription: \"Mails a finished report to a list of recipients with scripts/send.py. Use when asked to mail a report.\"\n---\n\n# Report mailer\n\nRun `python scripts/send.py <report.md> <recipients.txt>` to mail the report, subject taken from its first heading.\n",
+          "demo-notebook/raw/code-changes/2026-10-09-quarterly-export/checkpoints.md": "# Checkpoints — quarterly-export\n\n## Implement — 2026-10-09\nStep 3's test tests/test_export.py::test_empty_input fed tests/data/empty.csv (a zero-byte file) to the exporter: `export.py` wrote an empty output file and exited 0, and the run printed \"14 passed\". No workaround was needed in our code.\n\n## Finishing decision — 2026-10-09\nMark: \"merge it\".\n",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--empty-input-crashes.md": "Skill: csv-exporter\nSeen in: csv-export (2026-09-20)\nIssue: export.py raises StopIteration on an empty input file; the run worked around it by checking the file size first.\nFix: write an empty output when the input is empty\nApplies to: any empty input file\nDecision (2026-10-02, Mark): accepted as task 64\n",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/proposals.md": "# Proposals, 2026-10-02\n\n(the earlier pass that decided this suggestion)\n",
+          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md": "Skill: report-mailer\nSeen in: weekly-digest (2026-10-08)\nIssue: send.py cuts the subject line at 40 characters, so long report titles arrive truncated.\nFix: allow subjects up to 78 characters\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/report-mailer--subject-cut-short.md\n"
+        }
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--empty-input-crashes.md"
+        ],
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/received/archive"
+        ],
+        "file_contains": {
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--empty-input-crashes.md": [
+            "accepted as task 64"
+          ]
+        },
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,os,sys; h=[p for p in glob.glob('notebook/**/*.md', recursive=True) if os.path.basename(p)!='proposals.md' and 'Outcome (' in open(p,encoding='utf-8').read()]; print(h); sys.exit(1 if h else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,sys; f=[p for p in glob.glob('notebook/raw/skill-suggestions/*/proposals.md') if '2026-10-02-demo-notebook' not in p.replace(chr(92),'/')]; t=' '.join(open(p,encoding='utf-8').read() for p in f); print(f); sys.exit(0 if 'report-mailer--subject-cut-short.md' in t else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply tell the user that the earlier accepted fix for the empty-input crash (task 64) held? Any wording counts ('held', 'worked', 'handled cleanly'); answer YES only if task 64 is named.",
+          "expect": true,
+          "quote_from": "user"
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply back its finding that the task 64 fix held with text taken from the later run's record (the quarterly-export checkpoints), for example that test_empty_input fed a zero-byte empty.csv, export.py wrote an empty output and exited 0, or that 14 tests passed? Answer YES if it quotes or closely repeats such lines; NO if it only states the conclusion.",
+          "expect": true,
+          "quote_from": "user"
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply say that the task 64 fix did NOT hold, or propose again a change to csv-exporter for the empty-input crash? Answer NO if it reports the fix as held or only reports on how the fix fared.",
+          "expect": false
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply put the held outcome to the user to see (as a finding awaiting the user's view) rather than stating that it has already been written into the earlier suggestion's note? Answer NO only if the reply says the outcome was already recorded or saved on the note.",
+          "expect": true
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply say what it makes of the received report-mailer suggestion (send.py cuts the subject at 40 characters): either a proposal to change report-mailer, or a statement that it is set aside or not borne out, with a reason?",
+          "expect": true
+        }
+      ],
+      "judge": "The only received note is report-mailer's. The 2026-10-09 record, dated after task 64's fix (2026-10-02) and inside its Applies to line, shows the same case (a zero-byte input) handled cleanly with a test result as evidence. The pass says task 64's fix held, quoting the record, and shows that outcome to Mark; it writes no Outcome line on the old note, archives nothing and edits nothing under skills/.",
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "accepted-fix-no-evidence-nothing-recorded",
+      "should_trigger": true,
+      "tier": "gate",
+      "timeout": 600,
+      "prompt": "Run the improver over the skill suggestions we've received.",
+      "allowed_tools": "Skill,Read,Grep,Glob,Write,Bash(python *),Bash(git *)",
+      "setup": {
+        "git": true,
+        "files": {
+          ".claude/wiki-config.json": "{\"notebook\": \"agent-builder-bootstrap\", \"registry\": \"linked-notebooks.json\"}",
+          "linked-notebooks.json": "{\"notebooks\": {\"agent-builder-bootstrap\": {\"root\": \"notebook\"}, \"demo-app\": {\"root\": \"demo-notebook\"}}}",
+          "notebook/wiki/README.md": "# agent-builder-bootstrap wiki\n",
+          "demo-notebook/wiki/README.md": "# demo-app wiki\n",
+          "skills/csv-exporter/SKILL.md": "---\nname: csv-exporter\ndescription: \"Exports a table of rows to a CSV file with scripts/export.py. Use when asked to export rows to CSV.\"\n---\n\n# CSV exporter\n\nRun `python scripts/export.py <input.csv> <output.csv>` to normalise a CSV export: header first, then rows.\n\n## Gotchas\n- **An empty input file** (2026-10-02, task 66): export.py checks the file size and writes an empty output file instead of raising StopIteration.\n",
+          "skills/csv-exporter/scripts/export.py": "import csv\nimport os\nimport sys\n\n\ndef export(path, out):\n    if os.path.getsize(path) == 0:\n        open(out, \"w\").close()\n        return\n    with open(path, encoding=\"utf-8-sig\", newline=\"\") as fh:\n        rows = csv.reader(fh)\n        header = next(rows)\n        body = list(rows)\n    with open(out, \"w\", encoding=\"utf-8\", newline=\"\") as fh:\n        w = csv.writer(fh)\n        w.writerow(header)\n        w.writerows(body)\n\n\nif __name__ == \"__main__\":\n    export(sys.argv[1], sys.argv[2])\n",
+          "skills/report-mailer/SKILL.md": "---\nname: report-mailer\ndescription: \"Mails a finished report to a list of recipients with scripts/send.py. Use when asked to mail a report.\"\n---\n\n# Report mailer\n\nRun `python scripts/send.py <report.md> <recipients.txt>` to mail the report, subject taken from its first heading.\n",
+          "demo-notebook/raw/code-changes/2026-10-09-quarterly-export/checkpoints.md": "# Checkpoints — quarterly-export\n\n## Implement — 2026-10-09\nStep 2 ran csv-exporter on the quarter's table (412 rows) and wrote build/q3.csv. The agent reported that the export went fine and scored the step 9/10. No test result or output was kept for the step, and no empty input file came up in this run.\n\n## Finishing decision — 2026-10-09\nMark: \"merge it\".\n",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--empty-input-crashes.md": "Skill: csv-exporter\nSeen in: csv-export (2026-09-20)\nIssue: export.py raises StopIteration on an empty input file; the run worked around it by checking the file size first.\nFix: write an empty output when the input is empty\nApplies to: any empty input file\nDecision (2026-10-02, Mark): accepted as task 66\n",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/proposals.md": "# Proposals, 2026-10-02\n\n(the earlier pass that decided this suggestion)\n",
+          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md": "Skill: report-mailer\nSeen in: weekly-digest (2026-10-08)\nIssue: send.py cuts the subject line at 40 characters, so long report titles arrive truncated.\nFix: allow subjects up to 78 characters\nReceived from: demo-notebook/_inbox/skill-suggestions/archive/report-mailer--subject-cut-short.md\n"
+        }
+      },
+      "expect": {
+        "files_exist": [
+          "notebook/_inbox/skill-suggestions/received/report-mailer--subject-cut-short.md",
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--empty-input-crashes.md"
+        ],
+        "files_absent": [
+          "notebook/_inbox/skill-suggestions/received/archive"
+        ],
+        "file_contains": {
+          "notebook/raw/skill-suggestions/2026-10-02-demo-notebook/csv-exporter--empty-input-crashes.md": [
+            "accepted as task 66"
+          ]
+        },
+        "commands": [
+          {
+            "cmd": "python -c \"import subprocess,sys; r=lambda *a: subprocess.run(['git',*a],capture_output=True,text=True).stdout; o=r('diff','--name-only','--','skills')+r('ls-files','--others','--exclude-standard','--','skills'); print(o); sys.exit(1 if o.strip() else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,os,sys; h=[p for p in glob.glob('notebook/**/*.md', recursive=True) if os.path.basename(p)!='proposals.md' and 'Outcome (' in open(p,encoding='utf-8').read()]; print(h); sys.exit(1 if h else 0)\"",
+            "exit": 0
+          },
+          {
+            "cmd": "python -c \"import glob,sys; f=[p for p in glob.glob('notebook/raw/skill-suggestions/*/proposals.md') if '2026-10-02-demo-notebook' not in p.replace(chr(92),'/')]; t=' '.join(open(p,encoding='utf-8').read() for p in f); print(f); sys.exit(0 if 'report-mailer--subject-cut-short.md' in t else 1)\"",
+            "exit": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply conclude that the earlier accepted fix for the empty-input crash (task 66) held, meaning it states as a finding that the fix worked or that a later run handled the case cleanly? Answer NO if the reply says there is no evidence either way, says the later record is not about that case, or does not mention task 66.",
+          "expect": false
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply conclude that the earlier accepted fix for the empty-input crash (task 66) did NOT hold, or propose again a change to csv-exporter for the empty-input crash? Answer NO if it says there is no evidence either way or does not mention task 66.",
+          "expect": false
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply say what it makes of the received report-mailer suggestion (send.py cuts the subject at 40 characters): either a proposal to change report-mailer, or a statement that it is set aside or not borne out, with a reason?",
+          "expect": true
+        },
+        {
+          "q": "The reply is a set of proposals and findings; nothing is meant to be edited or recorded in this session. Does the reply say that it wrote or recorded an outcome (held or did not hold) on the earlier task 66 note? Answer NO if it records nothing for task 66.",
+          "expect": false
+        },
+        {
+          "q": "Did the model ask the user to decide on the proposal (accept it, turn it down, or leave it for later)?",
+          "expect": true,
+          "quote_from": "user"
+        }
+      ],
+      "judge": "The only received note is report-mailer's. The one later record (2026-10-09, quarterly-export) does not touch an empty input and offers only the run's own report and a self-score (weak). The pass claims neither that task 66's fix held nor that it did not hold, proposes nothing again for it, and records nothing on the old note (saying there is no evidence either way is fine). It archives nothing and edits nothing under skills/.",
+      "author": "eval-case-writer"
     }
   ]
 }

@@ -186,6 +186,10 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         not any(re.search(r"--all-notebooks|--notebook\s+(?!skilltest\b)", c) for c in helper_calls)
         and all(NOTEBOOK in str(s.get("scope", "")) for s in searches), [s.get("scope") for s in searches])
 
+    if kind == "keyword-extras":  # ranked list cut to k hits, so the answer can only come from the keyword-only extras
+        add(f"asked the helper for only {case['k']} ranked result(s)",
+            any(re.search(rf"(?<![\w-])-k\s*[= ]?\s*{case['k']}\b", c) for c in helper_calls), helper_calls[:2])
+
     opened = _opened(run)
     unflagged = []
     for slug, pat in ENTRY_FACTS.items():
@@ -212,6 +216,18 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
                            and "wiki-qmd-query.py" not in c.split("wiki-search-rerank.py")[0]]
             add("rerank is fed from the helper's --json output",
                 rerank_cmds and helper_json and not piped_wrong, [helper_json[:1], piped_wrong[:1]])
+        for slug in case.get("must_open", []):
+            add(f"opened {slug}", slug in opened, sorted(opened))
+        for fact in case.get("answer_has", []):
+            add(f"answer states {fact}", re.search(rf"(?<![\d.]){re.escape(fact)}(?!\d|\.\d)", answer), answer[:200])
+        return res
+
+    if kind == "keyword-lookup":  # a machine with no GPU (task #63): keyword search, never a model
+        cmds = [str(c["input"].get("command", "")) for c in run["tool_calls"] if c["name"] in ("Bash", "PowerShell")]
+        model_runs = [c for c in cmds if re.search(r"(?<![\w-])qmd(\.js)?(?![\w-])[^\n|;&]*\s(query|vsearch|embed)\b|--no-gpu", c)]
+        add("never runs a model search (qmd query / vsearch / embed)", not model_runs, model_runs[:2])
+        add("its searches ran as keyword", searches and all(s.get("mode") == "keyword" for s in searches),
+            [s.get("mode") for s in searches])
         for slug in case.get("must_open", []):
             add(f"opened {slug}", slug in opened, sorted(opened))
         for fact in case.get("answer_has", []):

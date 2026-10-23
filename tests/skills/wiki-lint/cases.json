@@ -65,6 +65,8 @@
       "author": "legacy"
     },
     {"id": "quick-lint-not-fully-checked", "mode": "mechanical", "tags": ["task-132-133"], "say": "give the wiki a quick lint", "expect": {"runs_mechanical": true, "no_semantic_report": true, "not_fully_checked": true}, "author": "eval-case-writer"},
-    {"id": "quick-lint-renamed-term-and-retirement", "mode": "mechanical", "tags": ["task-132-133"], "say": "run a quick lint on the wiki and tell me what it finds", "expect": {"runs_mechanical": true, "no_semantic_report": true, "renamed_and_retirement": true}, "author": "eval-case-writer"}
+    {"id": "quick-lint-renamed-term-and-retirement", "mode": "mechanical", "tags": ["task-132-133"], "say": "run a quick lint on the wiki and tell me what it finds", "expect": {"runs_mechanical": true, "no_semantic_report": true, "renamed_and_retirement": true}, "author": "eval-case-writer"},
+    {"id": "full-lint-writes-link-gap-sheet", "mode": "full", "tags": ["link-gaps"], "say": "wiki-lint --full", "overlay": "linkgap-thin", "env": {"WIKI_LINK_GAPS_SEARCH_FROM": "{notebook}/_config/search-stub.json"}, "expect": {"link_gap_sheet": true}, "author": "eval-case-writer"},
+    {"id": "apply-ticked-link-gaps", "mode": "apply", "tags": ["link-gaps"], "say": "I've ticked the pairs I want on the link-gap sheet _inbox/reports/link-gaps-2026-10-23.md and left the rest. Apply the ticked ones.", "overlay": "linkgap-sheet", "expect": {"links_applied": true}, "author": "eval-case-writer"}
   ]
 }

@@ -1,10 +1,10 @@
 ---
 name: wiki-checker
-description: "Checks one staged wiki entry against its raw source and reports what the entry gets wrong: claims the raw does not support, sections of the raw the entry skipped, quotes that are not the raw's words, and passages vaguer than the raw where its specifics matter. It sees only the entry and the raw, never the ingest worker's notes or scores, and it never edits the entry: it writes one JSON report. /wiki-cycle spawns one per staged entry whose raw is a long transcript (wiki-checker-config.json: min_transcript_minutes, default 15), before promotion. SPAWNER CONTRACT: read ~/.claude/agents/wiki-checker-config.json and pass model_default as the Agent tool's spawn-time model override; brief it with three paths only (the entry, the raw, the report to write). Example: \"Check _inbox/proposed/<slug>.md against raw/<file>.md; write the report to <run-folder>/checker/<slug>.json\"."
+description: "Checks one staged wiki entry against its raw source and reports what the entry gets wrong: claims the raw does not support, sections of the raw the entry skipped, quotes that are not the raw's words, and passages vaguer than the raw where its specifics matter. It sees only the entry and the raw, never the ingest worker's notes or scores, and it never edits the entry: it writes one JSON report. /wiki-cycle spawns one per staged entry whose raw is a long transcript (wiki-checker-config.json: min_transcript_minutes, default 15) or a big raw such as a long PDF or a whole repo (min_raw_kb, default 60), and for 1 in sample_every (default 10) of the rest as a spot check, before promotion. SPAWNER CONTRACT: read ~/.claude/agents/wiki-checker-config.json and pass model_default as the Agent tool's spawn-time model override; brief it with three paths only (the entry, the raw, the report to write). Example: \"Check _inbox/proposed/<slug>.md against raw/<file>.md; write the report to <run-folder>/checker/<slug>.json\"."
 tools: Read, Grep, Glob, Write
 model: opus
 role: checker
-last_reviewed: 2026-10-15
+last_reviewed: 2026-10-23
 review_after: 2026-12-24
 reviewed_for_model: claude-opus-5-5
 ---
@@ -13,7 +13,7 @@ You check a wiki entry against the source it was written from. Someone else wrot
 
 ## What you are given
 
-Three paths: the staged entry, its raw source (a transcript, usually an auto-caption one), and the report file you write. Read **both files in full**, the raw from its first line to its last, before you judge anything. A long raw comes back in parts; read every part.
+Three paths: the staged entry, its raw source (a transcript, often an auto-caption one; or a long PDF's text, a whole repository's prose, an article), and the report file you write. Read **both files in full**, the raw from its first line to its last, before you judge anything. A long raw comes back in parts; read every part.
 
 ## What you look for
 
@@ -45,7 +45,7 @@ One JSON file at the report path you were given, and nothing else, anywhere:
 }
 ```
 
-`verdict` is `pass` when all four lists are empty, else `fix`. `source_minutes` comes from the raw's `duration_seconds` (divided by 60, rounded). Then reply with the verdict and the four counts, in one line.
+`verdict` is `pass` when all four lists are empty, else `fix`. `source_minutes` comes from the raw's `duration_seconds` (divided by 60, rounded); `null` when the raw has none (a PDF, a repo, an article). Then reply with the verdict and the four counts, in one line.
 
 ## Out of scope
 

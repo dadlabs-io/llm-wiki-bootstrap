@@ -1,0 +1,6 @@
+{
+  "project/components/kestrel-lease-renewal.md": [
+    {"file": "qmd://kestrel/wiki/project/architecture/kestrel-lease-expiry.md", "score": 0.82, "title": "Kestrel lease expiry"},
+    {"file": "qmd://kestrel/wiki/project/components/kestrel-batch-sizing.md", "score": 0.30, "title": "Kestrel batch sizing"}
+  ]
+}

@@ -244,7 +244,8 @@ def claude_exe() -> str:
 def run_case(case: dict, model: str, ctx: dict, check, out_dir: Path, tools: list[str], timeout: int) -> dict:
     env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
     env.update(ctx.get("env", {}))
-    env.update(case.get("env", {}))  # a case's own setting, e.g. wiki-search's keyword-machine case
+    # a case's own setting, e.g. wiki-search's keyword-machine case; `{notebook}` is the sandbox notebook's path
+    env.update({k: str(v).replace("{notebook}", str(ctx.get("notebook", ""))) for k, v in case.get("env", {}).items()})
     # tag this case's searches in the search helper's log, so the checks can count them
     caller = f"{env.get('WIKI_QMD_CALLER', 'skilltest')}-{case['id']}"
     env["WIKI_QMD_CALLER"] = caller

@@ -149,6 +149,17 @@ def _reset(case: dict, ctx: dict) -> None:
     ctx["project"].mkdir(parents=True, exist_ok=True)
     if case.get("seed_claude_md"):
         (ctx["project"] / "CLAUDE.md").write_text(CLAUDE_MD_SEED, encoding="utf-8")
+    # "drive_on": the skill reads Drive from the machine config itself, so the case gets a copy of the real one
+    # with Drive on, and the prompt points the skill at it (the real file is never written)
+    ctx["machine_config"] = None
+    if case.get("drive_on"):
+        try:
+            real = json.loads(REAL_GLOBAL.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            real = {}
+        real.setdefault("drive", {})["enabled"] = True
+        ctx["machine_config"] = ctx["sandbox"] / "machine-wiki-config.json"
+        ctx["machine_config"].write_text(json.dumps(real, indent=2), encoding="utf-8")
     # The runner snapshots BEFORE it builds the prompt, and building the prompt is what
     # resets the sandbox; "what the session created" is measured from here instead.
     ctx["reset_files"] = snapshot(ctx)["files"]
@@ -176,15 +187,24 @@ def prompt(case: dict, ctx: dict) -> str:
     if a.get("plan"):
         lines.append(f"At the plan summary the user says: `{a['plan']}`.")
     block = ("\n".join(lines) + "\n\n") if lines else ""
-    return HEADER.format(skill=ctx["skill_dir"].as_posix(), project=ctx["project"].as_posix(),
+    text = HEADER.format(skill=ctx["skill_dir"].as_posix(), project=ctx["project"].as_posix(),
                          vault=ctx["vault"].as_posix(), sandbox=ctx["sandbox"].as_posix(),
                          answers=block, say=case["say"])
+    if ctx.get("machine_config"):
+        text = text.replace("\n\nAskUserQuestion", MACHINE_CONFIG_NOTE.format(
+            path=ctx["machine_config"].as_posix()) + "\n\nAskUserQuestion", 1)
+    return text
 
 
-def _tooling_state(ctx: dict) -> str:
+MACHINE_CONFIG_NOTE = ("\n\nThis machine's config is {path}: wherever the skill reads ~/.claude/wiki-config.json, "
+                       "read that file instead, and never write to either.")
+
+
+def _tooling_state(ctx: dict, case: dict | None = None) -> str:
+    """The state the session's own --mode status saw: the case's env (WIKI_TOOLING_STATE) included."""
     proc = subprocess.run([sys.executable, str(ctx["scripts"] / "new-wiki.py"), "--mode", "status"],
                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120,
-                          env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+                          env={**os.environ, "PYTHONIOENCODING": "utf-8", **((case or {}).get("env") or {})})
     try:
         return json.loads(proc.stdout).get("state", "unknown")
     except json.JSONDecodeError:
@@ -220,7 +240,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
 
     # ---- Step 0.0: the state check before anything else, and the questions it rules out
     add("ran the state check (--mode status)", _ran_status(run))
-    state = _tooling_state(ctx)
+    state = _tooling_state(ctx, case)
     if state in ("installed", "stale"):
         # a stable name whatever the state, so the baseline always matches it
         add("no skills question (tooling installed or stale)", not SKILLS_QUESTION.search(text),
@@ -307,6 +327,32 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
                 [c[:160] for c in calls if yes_flag.search(c)][:2])
             add("waits for the go: nothing scaffolded", not created, created[:8])
             return res
+
+    if kind == "skills-ask":
+        # tooling partial (case env pins it, dry run on): the install-once-or-bundle question is asked
+        # with both choices, and nothing is scaffolded before an answer
+        install_opt = re.search(r"\binstall\b[^\n]*\b(now|once)\b", text, re.I)
+        bundle_opt = re.search(r"\bbundl", text, re.I)
+        add("state pinned to partial by the case env", state == "partial", state)
+        add("offers the install-once-and-use-it choice", bool(install_opt), (install_opt or [""])[0])
+        add("offers the bundle-into-the-project choice", bool(bundle_opt), (bundle_opt or [""])[0])
+        add("asks it as a question", bool(ASKS.search(text)))
+        calls = [json.dumps(c.get("input") or {}) for c in run["tool_calls"]]
+        dry_off = re.compile(r"WIKI_TOOLING_DRY_RUN[=\s'\"]*(0|false|no)\b|unset\s+WIKI_TOOLING|env\s+-u", re.I)
+        add("no call turned the tooling dry run off", not any(dry_off.search(c) for c in calls),
+            [c[:120] for c in calls if dry_off.search(c)][:2])
+        add("nothing scaffolded before the answer", not created, created[:8])
+        return res
+
+    if kind == "drive-ask":
+        # Drive enabled on the machine (the case's machine-config copy): the Drive question is asked,
+        # no answer is given, and nothing is scaffolded (a scaffold with Drive yes would start a real sign-in)
+        add("machine-config copy with Drive enabled was given",
+            bool(ctx.get("machine_config")) and ctx["machine_config"].is_file())
+        asked = [ln for ln in text.splitlines() if DRIVE_QUESTION.search(ln)]
+        add("asks the Drive question (Drive is enabled)", bool(asked), asked[:2])
+        add("nothing scaffolded before the answer", not created, created[:8])
+        return res
 
     # ---- scaffold cases
     exp = case["expect"]

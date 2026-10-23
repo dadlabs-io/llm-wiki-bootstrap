@@ -143,7 +143,7 @@ with tempfile.TemporaryDirectory() as td:
     (nb / "_inbox" / "proposed" / "short-f.md").write_text(entry("short-f", "2026-09-24", raw="raw/short.md"), encoding="utf-8")
     (nb / "_inbox" / "proposed" / "article-g.md").write_text(entry("article-g", "2026-09-24", raw="raw/article.md"), encoding="utf-8")
     (nb / "_inbox" / "proposed" / "noraw-h.md").write_text(entry("noraw-h", "2026-09-24"), encoding="utf-8")
-    p = run("checker", "--run-folder", str(run_folder), "--min-minutes", "15")
+    p = run("checker", "--run-folder", str(run_folder), "--min-minutes", "15", "--sample-every", "0", "--min-raw-kb", "0")
     k = scope("checker-scope.txt") or []
     check("checker: exit 0", p.returncode == 0, p.stderr[-300:])
     check("checker: only the 20-minute YouTube and the 30-minute Whisper transcript at 15",
@@ -152,16 +152,47 @@ with tempfile.TemporaryDirectory() as td:
     check("checker: its raw and minutes recorded", rows.get("_inbox/proposed/staged-e.md") == ["raw/long.md", "20"], k)
     check("checker #105: a Whisper transcript's raw and minutes recorded",
           rows.get("_inbox/proposed/whisper-i.md") == ["raw/whisper.md", "30"], k)
-    p = run("checker", "--run-folder", str(run_folder), "--min-minutes", "5")
+    p = run("checker", "--run-folder", str(run_folder), "--min-minutes", "5", "--sample-every", "0", "--min-raw-kb", "0")
     k = scope("checker-scope.txt") or []
     check("checker at 5 minutes: every transcript, never the article (a page, Mark 2026-10-12) or a raw-less entry",
           sorted(l.split("\t")[0] for l in k) == ["_inbox/proposed/short-f.md", "_inbox/proposed/staged-e.md",
                                                    "_inbox/proposed/whisper-i.md"], k)
 
-    p = run("checker", "--run-folder", str(run_folder), "--min-minutes", "999")
+    p = run("checker", "--run-folder", str(run_folder), "--min-minutes", "999", "--sample-every", "0", "--min-raw-kb", "0")
     f = run_folder / "checker-scope.txt"
     check("checker with nothing in scope: the file is not zero bytes (a header line)",
           f.is_file() and f.stat().st_size > 0 and scope("checker-scope.txt") == [], f.read_text(encoding="utf-8") if f.is_file() else "missing")
+
+
+    # ── checker beyond transcripts (task #202, Mark 2026-10-23): a big raw (min_raw_kb) and a spot check of 1 in N ──
+    (nb / "raw" / "big.md").write_text("---\ntype: repo\n---\n\n" + "word " * 14000, encoding="utf-8")  # ~70 KB
+    (nb / "_inbox" / "proposed" / "big-j.md").write_text(entry("big-j", "2026-09-24", raw="raw/big.md"), encoding="utf-8")
+    p = run("checker", "--run-folder", str(run_folder), "--min-minutes", "15", "--min-raw-kb", "60", "--sample-every", "0")
+    k = scope("checker-scope.txt") or []
+    rows = {l.split(chr(9))[0]: l.split(chr(9))[1:] for l in k}
+    check("checker #202: a raw of 60+ KB is checked, its minutes '-', its size printed as the reason",
+          rows.get("_inbox/proposed/big-j.md") == ["raw/big.md", "-"]
+          and any("big-j.md" in l and "KB)" in l for l in p.stdout.splitlines()), (k, p.stdout))
+    check("checker #202: a transcript keeps its columns and the printed reason says transcript",
+          rows.get("_inbox/proposed/staged-e.md") == ["raw/long.md", "20"]
+          and any("staged-e.md" in l and "(transcript of 20 minutes)" in l for l in p.stdout.splitlines()), p.stdout)
+    check("checker #202: a small article is not picked without the spot check", "_inbox/proposed/article-g.md" not in rows, k)
+    p = run("checker", "--run-folder", str(run_folder), "--min-minutes", "15", "--min-raw-kb", "60", "--sample-every", "1")
+    k = scope("checker-scope.txt") or []
+    rows = {l.split(chr(9))[0]: l.split(chr(9))[1:] for l in k}
+    check("checker #202: the spot check (1 in 1) takes every other entry with a raw, printed as a spot check",
+          "_inbox/proposed/article-g.md" in rows and "_inbox/proposed/short-f.md" in rows
+          and any("article-g.md" in l and "spot check, 1 in 1" in l for l in p.stdout.splitlines()), (k, p.stdout))
+    check("checker #202: an entry with no raw is never picked", "_inbox/proposed/noraw-h.md" not in rows, k)
+    first = sorted(k)
+    run("checker", "--run-folder", str(run_folder), "--min-minutes", "15", "--min-raw-kb", "60", "--sample-every", "3")
+    once = sorted(scope("checker-scope.txt") or [])
+    run("checker", "--run-folder", str(run_folder), "--min-minutes", "15", "--min-raw-kb", "60", "--sample-every", "3")
+    check("checker #202: the spot check picks the same entries every time (a resumed run agrees)",
+          once == sorted(scope("checker-scope.txt") or []), once)
+    run("checker", "--run-folder", str(run_folder), "--min-minutes", "15", "--min-raw-kb", "60", "--sample-every", "1000")
+    check("checker #202: a sparser spot check picks fewer", len(scope("checker-scope.txt") or []) < len(first), first)
+    (nb / "_inbox" / "proposed" / "big-j.md").unlink()
 
     # ── checker-log ──
     rep = tmp / "rep.json"

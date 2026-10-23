@@ -1,0 +1,4 @@
+{
+  "_comment": "The model /wiki-triage's capture agents run on (at-volume.md, task #203). Change it to switch them; a file that cannot be read means sonnet.",
+  "capture": "sonnet"
+}

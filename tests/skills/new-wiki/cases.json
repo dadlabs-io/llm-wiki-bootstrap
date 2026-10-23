@@ -140,6 +140,31 @@
         "round2": "description `Wiki for harbor-log`; project folder: `Yes, with the default stubs`; research folder: `No`; where the wiki lives: `Notebook in the vault`"
       },
       "author": "eval-case-writer"
+    },
+    {
+      "id": "tooling-partial-asks-install-or-bundle",
+      "kind": "skills-ask",
+      "say": "/new-wiki harbor log",
+      "env": {
+        "WIKI_TOOLING_STATE": "partial",
+        "WIKI_TOOLING_DRY_RUN": "1"
+      },
+      "answers": {
+        "round1": "name `harbor-log`; review gate: `Yes — show me candidates and confirm before publishing`",
+        "round2": "description `Wiki for harbor-log`; project folder: `Yes, with the default stubs`; research folder: `No`; where the wiki lives: `Notebook in the vault`"
+      },
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "drive-enabled-asks-drive",
+      "kind": "drive-ask",
+      "say": "/new-wiki harbor log",
+      "drive_on": true,
+      "answers": {
+        "round1": "name `harbor-log`; review gate: `Yes — show me candidates and confirm before publishing`",
+        "round2": "description `Wiki for harbor-log`; project folder: `Yes, with the default stubs`; research folder: `No`; where the wiki lives: `Notebook in the vault`"
+      },
+      "author": "eval-case-writer"
     }
   ]
 }

@@ -889,7 +889,9 @@ def phase_b(args):
                       "or pass --skills-install bundled.")
                 return 1
             _info("global tooling incomplete — installing it now (--install-global-if-missing)")
-            if not args.dry_run:
+            if os.environ.get("WIKI_TOOLING_DRY_RUN") == "1":  # tests: never install into the machine's ~/.claude
+                _info("dry run (WIKI_TOOLING_DRY_RUN=1): the tooling install is skipped")
+            elif not args.dry_run:
                 try:
                     summary = _install_tooling(bootstrap, skills_dest=CC_GLOBAL_SKILLS_DIR,
                                                scripts_dest=CC_GLOBAL_WIKI_SCRIPTS_DIR)

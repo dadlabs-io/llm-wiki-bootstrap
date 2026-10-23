@@ -801,6 +801,16 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_promote_setting(case, ctx, cycle_id)
     elif case["kind"] in ("model-mix", "model-ask"):
         _prepare_local_items(case, ctx)
+    elif case["kind"] == "scope":
+        _prepare_scope(case, ctx, cycle_id)
+    elif case["kind"] == "hub":
+        _prepare_hub(case, ctx, cycle_id)
+    elif case["kind"] == "checker-gate":
+        _prepare_checker_gate(case, ctx, cycle_id)
+    elif case["kind"] == "lint-all":
+        _prepare_lint_all(case, ctx)
+    elif case["kind"] == "youtube-batch":
+        _prepare_youtube(case, ctx)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -1381,6 +1391,636 @@ def _check_checker_promote(case: dict, add, res: list, ctx: dict, run: dict, run
         bool(found) and "70%" not in body and bool(re.search(r"ninth|rollback", body, re.I)), body[:200])
 
 
+# ---------- kind "checker-gate": which staged entries the checker reads (long transcript, big source, spot check) ----------
+
+def _gate_big_raw() -> str:
+    """About 79 KB of written-for-the-test prose (the first six sections of the big field guide), under a short
+    summary the entry follows. No duration: it qualifies by size alone."""
+    rng = random.Random(11)
+    out = ["# Field Guide to Handoffs and Durable State in Long-Running AI Agents (first six sections)", "",
+           "## Summary", "",
+           "A shared ledger of decisions lets one agent session hand work to the next. It holds when every handoff "
+           "brief states a testable goal and an acceptance check, every ledger entry follows a versioned schema and "
+           "is rejected if it does not validate, every entry has an identifier that other entries can cite, every "
+           "transfer is accepted by its receiver, acknowledgements follow a read-back of the goal, and a sweep flags "
+           "stale handoffs by age without reassigning them.", ""]
+    for i, (title, c, purpose, fails, remedies, arts, metric) in enumerate(_BIG_SECTIONS[:6], 1):
+        out += [f"## Section {i}: {title}", ""]
+        size = 0
+        while size < 13200:
+            sents = []
+            for t in rng.sample(_BIG_TEMPLATES, 3):
+                f, f2 = rng.sample(fails, 2)
+                sents.append(t.format(C=c, Cc=c[0].upper() + c[1:], P=purpose, F=f, F2=f2, R=rng.choice(remedies),
+                                      A=rng.choice(arts), M=metric, N=rng.randint(3, 60), X=rng.randint(4, 71)))
+            para = " ".join(sents)
+            out += [para, ""]
+            size += len(para) + 1
+    text = "\n".join(out)
+    if not 70_000 <= len(text.encode("utf-8")) <= 120_000:
+        raise RuntimeError(f"gate big raw is the wrong size: {len(text.encode('utf-8'))} bytes")
+    return text
+
+
+_GATE_RELATED = """
+## Related
+
+- [Agent memory architectures](agent-memory-architectures.md): a small external store read back into the context.
+- [Context engineering basics](context-engineering-basics.md): choosing what enters the window is a context decision.
+"""
+
+GATE_ITEMS = {
+    "big": {
+        "name": "gate-handoff-ledger-guide", "url": "https://example.com/skilltest/gate-handoff-ledger-guide",
+        "title": "Handoff ledger essentials from a long field guide", "tags": "agents,memory,handoff",
+        "raw": _gate_big_raw,
+        "body": """# Handoff ledger essentials from a long field guide
+
+## TL;DR
+
+A shared ledger of decisions lets one agent session hand work to the next: it holds when each brief states a testable goal, each entry follows a versioned schema, and each transfer is accepted by its receiver.
+
+## What it says
+
+- Intake: write the goal as one testable sentence and attach an acceptance check to every brief.
+- Structure: use a versioned schema with required fields and reject entries that fail validation.
+- Identifiers: give every entry an identifier other entries can cite, and check references at write time.
+- Ownership: require an explicit accept step, with a single owner field that expires.
+- Acknowledgement: acknowledge only after a read-back of the goal, with a bounded wait and escalation.
+- Stale handoffs: flag work by an age threshold per task class; the sweep flags and never reassigns.
+""" + _GATE_RELATED},
+    "small0": {
+        "name": "gate-budget-note-0", "url": "https://example.com/skilltest/gate-budget-note-0",
+        "title": "Context window budgeting note 0", "slug": "context-window-budgeting-note-0",
+        "tags": "context-engineering,agents",
+        "raw": "Keep a reserve of the window empty for the model's reply. Reserve at least 15 percent so a long answer "
+               "is not cut off, and measure the reserve against the longest reply seen, not the average.\n",
+        "body": """# Context window budgeting note 0
+
+## TL;DR
+
+Leave part of the context window empty for the model's reply, sized from the longest reply seen.
+
+## What it says
+
+- Reserve at least 15 percent of the window so a long answer is not cut off.
+- Size the reserve from the longest reply seen, not the average.
+""" + _GATE_RELATED},
+    "small2": {
+        "name": "gate-budget-note-2", "url": "https://example.com/skilltest/gate-budget-note-2",
+        "title": "Context window budgeting note 2", "slug": "context-window-budgeting-note-2",
+        "tags": "context-engineering,agents",
+        "raw": "Budget the context window per source. Give the system instructions, the tool definitions, the "
+               "retrieved documents and the running conversation each a fixed share, and trim the largest share "
+               "first when the window fills. A common split is 10 percent instructions, 20 percent tools, "
+               "40 percent retrieved text and 30 percent conversation.\n",
+        "body": """# Context window budgeting note 2
+
+## TL;DR
+
+Give each source in the context window a fixed share, and trim the largest share first when the window fills.
+
+## What it says
+
+- The sources are the system instructions, the tool definitions, the retrieved documents and the conversation.
+- A common split is 10 percent instructions, 20 percent tools, 40 percent retrieved text and 30 percent conversation.
+""" + _GATE_RELATED},
+}
+
+
+def _prepare_checker_gate(case: dict, ctx: dict, cycle_id: str) -> None:
+    """A run interrupted after its staging check (resume from Phase 2.6), with the case's items staged: each a raw
+    in raw/, a ticket moved to done/, and an entry in _inbox/proposed/ filed by wiki-update.py. None is a
+    transcript and none carries a duration; the scratchpad says nothing about sizes."""
+    nb = ctx["notebook"]
+    bodies = ctx["project"] / "gate-bodies"
+    bodies.mkdir(parents=True, exist_ok=True)
+    queued, slugs = [], {}
+    for key in case["items"]:
+        it = GATE_ITEMS[key]
+        raw = it["raw"]() if callable(it["raw"]) else it["raw"]
+        (nb / "raw" / f"{it['name']}.md").write_text(
+            f"---\nsource_url: {it['url']}\nfetched: {ctx['started']}\n---\n\n{raw}", encoding="utf-8")
+        (bodies / f"{it['name']}.md").write_text(it["body"], encoding="utf-8")
+        p = _script(ctx, "wiki-list-add.py", "--topic", NOTEBOOK, "--source", it["url"], "--added-by", "skilltest")
+        if p.returncode != 0:
+            raise RuntimeError(f"could not queue {it['url']}: {p.stdout}{p.stderr}")
+        p = _script(ctx, "wiki-update.py", "--topic", NOTEBOOK, "--source", str(bodies / f"{it['name']}.md"),
+                    "--source-url", it["url"], "--raw-path", f"raw/{it['name']}.md", "--title", it["title"],
+                    "--tags", it["tags"], "--folder", "research/best-practices", "--tier", "3",
+                    "--confidence", "medium", "--ingested-by", "skilltest-fixture",
+                    "--staged", "--skip-integration", "--no-index")
+        if p.returncode != 0:
+            raise RuntimeError(f"could not stage {key}: {p.stdout}{p.stderr}")
+        m = re.search(r"^wiki_path=.*?([^/\\]+)\.md\s*$", p.stdout, re.M)
+        slug = m.group(1) if m else ""
+        if it.get("slug") and slug != it["slug"]:
+            raise RuntimeError(f"{key} was filed as '{slug}', not '{it['slug']}': the spot-check facts hold only for that name")
+        slugs[key] = slug
+        queued.append({"priority": 3, "url": it["url"], "slug": slug, "reason": f"staged: {it['title']}",
+                       "timestamp": ctx["started"]})
+    for t in (nb / "_inbox" / "pending").glob("*.md"):
+        if not t.name.startswith("_"):
+            t.rename(nb / "_inbox" / "done" / t.name)
+    ctx["gate_slugs"] = slugs
+    _write_run(ctx, cycle_id, HERE / "fixtures" / "checker-gate" / "scratchpad.md", queued)
+
+
+def _check_checker_gate(case: dict, add, ctx: dict, run: dict, run_dir: Path) -> None:
+    nb = ctx["notebook"]
+    slugs = ctx["gate_slugs"]
+    want = {slugs[k] for k in case["checked"]}
+    skip = {slugs[k] for k in case["unchecked"]}
+    calls = _agent_calls(run)
+    chk = [a for a in calls if str(a.get("subagent_type", "")) == "wiki-checker"]
+    add("spawned a wiki-checker", bool(chk), [a.get("subagent_type") for a in calls])
+    d = run_dir / "checker"
+    got = {p.stem for p in d.glob("*.json")} if d.is_dir() else set()
+    add("a checker report for each entry the gate picks", bool(want) and want <= got, f"want {sorted(want)}, got {sorted(got)}")
+    add("no checker report for an entry the gate does not pick", not (skip & got), sorted(skip & got))
+    clog = nb / "_inbox" / "reports" / "checker-log.jsonl"
+    rows = []
+    for x in (clog.read_text(encoding="utf-8").splitlines() if clog.is_file() else []):
+        try:
+            rows.append(json.loads(x))
+        except json.JSONDecodeError:
+            pass
+    add("checker-log.jsonl has one row per checked entry and no more", len(rows) == len(want), rows)
+    workers = [a for a in calls if str(a.get("subagent_type", "")) == "wiki-ingester"]
+    add("no ingest worker spawned (ingest was done)", not workers, [a.get("description") for a in workers])
+
+
+# ---------- kind "scope": what the semantic lint and the claims step read in a --full run ----------
+
+SCOPE_FILES = {"lint": "semantic-scope.txt", "claims": "claims-scope.txt"}
+
+
+def _scope_now():
+    from datetime import datetime
+    return datetime.now().astimezone()
+
+
+def _scope_age(nb: Path, when) -> None:
+    """Every file under wiki/ gets the same old mtime, so only what a case then writes looks recent."""
+    ts = when.timestamp()
+    for p in (nb / "wiki").rglob("*"):
+        if p.is_file():
+            os.utime(p, (ts, ts))
+
+
+def _scope_entry_stems(nb: Path) -> dict:
+    return {p.stem: p.relative_to(nb).as_posix() for p in sorted((nb / "wiki").rglob("*.md"))
+            if _is_entry(p.relative_to(nb).as_posix())}
+
+
+def _scope_entry(nb: Path, stem: str, title: str, written, reviewed, tldr: str, covers: list, why: str, mtime) -> str:
+    """A test-written entry under wiki/research/best-practices/; returns its path relative to the notebook."""
+    from datetime import timedelta
+    p = nb / "wiki" / "research" / "best-practices" / f"{stem}.md"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    bullets = "\n".join(f"- {c}" for c in covers)
+    p.write_text(
+        f'---\ntitle: "{title}"\ndate: {written.isoformat()}\nsource_url: "internal://skilltest/scope/{stem}"\n'
+        f"ingested_by: skilltest-fixture\ntier: self\nconfidence: medium\nlast_reviewed: {reviewed.isoformat()}\n"
+        f"review_after: {(reviewed + timedelta(days=90)).isoformat()}\ntags: [agents, tools]\n---\n\n"
+        f"# {title}\n\n## TL;DR\n\n{tldr}\n\n## What it covers\n\n{bullets}\n\n## Why it matters\n\n{why}\n",
+        encoding="utf-8")
+    ts = mtime.timestamp()
+    os.utime(p, (ts, ts))
+    return p.relative_to(nb).as_posix()
+
+
+def _scope_prior_lint(ctx: dict, when) -> str:
+    """An earlier run folder holding only a completed semantic-lint pair whose `timestamp` is `when`;
+    returns the date folder's path relative to the sandbox."""
+    cid = f"{when.strftime('%Y-%m-%d')}-01"
+    rel = f"notebooks/{NOTEBOOK}/_inbox/reports/{cid[:10]}"
+    run = ctx["sandbox"] / rel / cid
+    run.mkdir(parents=True, exist_ok=True)
+    step = {"skill": "wiki-lint", "cycle_id": cid, "step": "lint-semantic", "timestamp": when.isoformat(),
+            "status": "completed", "summary": {"entries_in_scope": 0, "findings": 0}, "queued": [],
+            "skipped": [], "deferred": [], "notes": "test fixture: an earlier semantic lint", "errors": []}
+    (run / "lint-semantic.json").write_text(json.dumps(step, indent=2), encoding="utf-8")
+    (run / "lint-semantic.md").write_text(
+        f"# Semantic lint - {cid}\n\n**Status**: completed\n**Timestamp**: {when.isoformat()}\n", encoding="utf-8")
+    return rel
+
+
+def _scope_backdated_history(ctx: dict, when, paths: list) -> None:
+    """'Added' is read from git history, and the case's ordinary fixture commit is made now, so every file it
+    commits looks created after the cut-off. Start this case's history on a fresh orphan branch whose first
+    commit, dated `when` (before the cut-off), holds `paths` (relative to the sandbox); the fixture commit then
+    adds only what the case wrote afterwards. Earlier cases' commits stay on their own branch. The repo is
+    initialised with the same config as _commit_fixture when .git is missing."""
+    import time
+    if not (ctx["sandbox"] / ".git").is_dir():
+        for args in (["init", "-q"], ["config", "user.name", "skilltest"],
+                     ["config", "user.email", "skilltest@example.com"], ["config", "core.autocrlf", "false"],
+                     ["config", "core.longpaths", "true"]):
+            _git(ctx, *args)
+    env = {**os.environ, "GIT_AUTHOR_DATE": when.isoformat(), "GIT_COMMITTER_DATE": when.isoformat()}
+
+    def g(*a, check=True):
+        return subprocess.run(["git", "-C", str(ctx["sandbox"]), *a], capture_output=True, text=True,
+                              encoding="utf-8", errors="replace", env=env, check=check)
+    g("checkout", "-q", "--orphan", f"scope-{int(time.time())}")
+    g("rm", "-r", "-q", "--cached", "--ignore-unmatch", ".", check=False)
+    g("add", "-A", "--", *paths)
+    g("commit", "-q", "--allow-empty", "-m", "fixture: history before the cut-off")
+
+
+def _prepare_scope(case: dict, ctx: dict, cycle_id: str) -> None:
+    """The promote-setting fixture in its --full form (two staged entries, resume from the checker phase), the
+    wiki aged to 8 days, then this case's few entries, with git history that matches the scope rules:
+    - an entry meant to be old is created in a commit dated before the cut-off and keeps an old last_reviewed;
+    - 'revised' is an old entry whose last_reviewed is rewritten to a day on or after the cut-off's day;
+    - 'added' is created after the backdated commit (and carries a date after the cut-off).
+    lint: cut-off = the timestamp of an earlier run folder's lint-semantic.json (72 h ago).
+    claims: cut-off = when _inbox/claims-index.json was last written (48 h ago); the index holds claims for every
+    older entry."""
+    from datetime import timedelta
+    _prepare_promote_setting({"mode": "full"}, ctx, cycle_id)
+    nb, now = ctx["notebook"], _scope_now()
+    at = lambda h: now - timedelta(hours=h)
+    day = lambda h: at(h).date()
+    lint = case["scope"] == "lint"
+    cutoff = at(72) if lint else at(48)
+    base = _scope_entry_stems(nb)  # the seed's entries, unchanged in every case
+    for stem, rel in base.items():
+        m = re.search(r'(?m)^last_reviewed:\s*"?(\d{4}-\d{2}-\d{2})', (nb / rel).read_text(encoding="utf-8"))
+        if m and m.group(1) >= cutoff.date().isoformat():
+            raise RuntimeError(f"seed entry {stem} has last_reviewed {m.group(1)}: it would count as revised")
+    _scope_age(nb, at(24 * 8))
+    sc = {"base": sorted(base), "rel": {}, "titles": {}}
+
+    def put(key, stem, title, written, reviewed, tldr, covers, why, mtime):
+        sc["rel"][stem] = _scope_entry(nb, stem, title, written, reviewed, tldr, covers, why, mtime)
+        sc["titles"][stem] = title
+        sc[key] = stem
+
+    if lint:
+        extra = [_scope_prior_lint(ctx, cutoff)]
+        put("old", "session-ledger-retention-rules", "Session ledger retention rules", day(960), day(960),
+            "Keep ledger entries for 30 days, then archive them.",
+            ["**Retention**: ledger entries are deleted after 90 days and nothing is archived.",
+             "**Review**: read the oldest entries before each deletion."],
+            "A retention rule that contradicts itself leaves operators guessing which period applies.", at(24 * 8))
+        rev = dict(key="revised", stem="retry-budget-guidelines", title="Retry budget guidelines", written=day(720),
+                   tldr="Give every tool call a retry budget of three attempts, so a flaky tool cannot stall a session.",
+                   covers=["**Budget size**: the budget is seven attempts per call, never fewer, because transient failures often need several tries.",
+                           "**Scope**: count the budget per tool, not per task.",
+                           "**Exhaustion**: return the error with the attempt count."],
+                   why="A budget of three attempts keeps the session moving; the budget stops a loop from running unbounded.")
+        put(reviewed=day(720), mtime=at(24 * 8), **rev)          # old: created before the cut-off
+        _scope_backdated_history(ctx, cutoff - timedelta(days=5), [f"notebooks/{NOTEBOOK}/wiki", *extra])
+        put(reviewed=day(60), mtime=at(60), **rev)               # revised after the cut-off (last_reviewed moves)
+        put("added", "incident-handoff-checklist", "Incident handoff checklist", day(48), day(48),
+            "Before handing an incident to another agent, write down what is known, what was tried and what is next.",
+            ["**Known facts**: the symptoms and when they started.", "**Tried**: each fix and its result.",
+             "**Next**: the one step the receiver should take first."],
+            "A receiver that starts from a written state does not repeat the sender's work.", at(48))
+        sc["in"] = [sc["revised"], sc["added"]]
+        sc["unchanged"] = sc["base"] + [sc["old"]]
+        sc["defect_out_tokens"] = r"\b90 days\b"
+    else:
+        rev = dict(key="revised", stem="prompt-caching-layout-rules", title="Prompt caching layout rules",
+                   written=day(720),
+                   tldr="Order the context from most stable to least stable so the cached prefix stays long.",
+                   covers=["**Order**: stable blocks first, volatile blocks last.",
+                           "**Clock**: put the current time after the cache breakpoint.",
+                           "**Tools**: sort the tool list once, at session start."],
+                   why="A cached prefix is only reused while its bytes do not change.")
+        put(reviewed=day(720), mtime=at(24 * 8), **rev)          # has claims in the index, old when it was written
+        claims = []
+        for stem, rel in {**base, rev["stem"]: sc["rel"][rev["stem"]]}.items():
+            for n in (1, 2):
+                claims.append({"id": f"{stem}-{n}", "entry": rel, "source": rel, "source_entry": rel, "path": rel,
+                               "subject": stem.replace("-", " "), "predicate": f"states point {n}",
+                               "object": "as written when the index was built", "classification": "sourced"})
+        idx = nb / "_inbox" / "claims-index.json"
+        idx.parent.mkdir(parents=True, exist_ok=True)
+        idx.write_text(json.dumps({"version": 1, "generated_at": cutoff.isoformat(), "written_at": cutoff.isoformat(),
+                                   "updated": cutoff.isoformat(), "claims": claims}, indent=2), encoding="utf-8")
+        os.utime(idx, (cutoff.timestamp(), cutoff.timestamp()))
+        _scope_backdated_history(ctx, cutoff - timedelta(days=5),
+                                 [f"notebooks/{NOTEBOOK}/wiki", f"notebooks/{NOTEBOOK}/_inbox/claims-index.json"])
+        put(reviewed=day(36), mtime=at(36), **rev)               # revised after the index was written
+        put("added", "eval-set-versioning", "Eval set versioning", day(24), day(24),
+            "Version an eval set the way code is versioned, so a score always names the set that produced it.",
+            ["**Versions**: give every eval set a version string.", "**Scores**: record the version beside each score.",
+             "**Changes**: never edit a set in place; add a new version."],
+            "A score without a set version cannot be compared with last month's.", at(24))
+        sc["in"] = [sc["revised"], sc["added"]]
+        sc["unchanged"] = sc["base"]
+    ctx["scope"] = sc
+
+
+def _scope_named(text: str, stem: str, title: str = "") -> bool:
+    return bool(re.search(rf"(?<![\w-]){re.escape(stem)}(?![\w-])", text)) or (bool(title) and title.lower() in text)
+
+
+def _check_scope(case: dict, add, res: list, ctx: dict, run_dir: Path) -> None:
+    nb, sc, which = ctx["notebook"], ctx["scope"], case["scope"]
+    # this is a --full run: the common "no --full-only step ran" contradicts the kind's premise
+    res[:] = [x for x in res if x["name"] != "no --full-only step ran"]
+    step = "lint-semantic" if which == "lint" else "claims"
+
+    def step_ran() -> bool:
+        for p in sorted(run_dir.glob(f"{step}*.json")) if run_dir.is_dir() else []:
+            try:
+                st = str(json.loads(p.read_text(encoding="utf-8")).get("status") or "")
+            except (json.JSONDecodeError, OSError, AttributeError):
+                continue
+            if not st.lower().startswith("skipped"):
+                return True
+        return False
+
+    add(f"premise: the {which} step ran and was not skipped", step_ran(),
+        sorted(p.name for p in run_dir.glob("*.json")) if run_dir.is_dir() else "no run folder")
+    f = run_dir / SCOPE_FILES[which]
+    lines = f.read_text(encoding="utf-8", errors="replace").splitlines() if f.is_file() else []
+    add(f"{f.name} written into the run folder, under a # header line",
+        f.is_file() and bool(lines) and lines[0].lstrip().startswith("#"), lines[:2] or "no file")
+    paths = [l.strip().replace("\\", "/") for l in lines if l.strip() and not l.lstrip().startswith("#")]
+    stems = {p.rsplit("/", 1)[-1].removesuffix(".md") for p in paths}
+    for stem in sc["in"]:
+        add(f"{which} scope lists {stem} (added or revised after the cut-off)", sc["rel"][stem] in paths, paths[:12])
+    if which == "lint":
+        staged = sorted(ctx.get("promote_stems", set()))
+        add("lint scope lists this run's staged entries (both)", len(staged) == 2 and all(s in stems for s in staged),
+            {"staged": staged, "scope": paths[:12]})
+    unchanged = [s for s in sc["unchanged"] if s in stems]
+    add(f"{which} scope lists none of the unchanged entries", not unchanged, unchanged)
+
+    if which == "lint":
+        reports = [p for p in sorted(run_dir.glob("lint-semantic*")) if p.suffix in (".json", ".md")] if run_dir.is_dir() else []
+        rtext = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in reports).lower()
+        rv, old = sc["revised"], sc["old"]
+        add("the semantic lint reports the planted defect in the revised entry", _scope_named(rtext, rv, sc["titles"][rv]),
+            rtext[:300] or "no lint-semantic report")
+        add("the semantic lint does not report the older, unchanged entry's defect (never read)",
+            not (_scope_named(rtext, old, sc["titles"][old]) or re.search(sc["defect_out_tokens"], rtext)), rtext[:300])
+    else:
+        idx = nb / "_inbox" / "claims-index.json"
+        itext = idx.read_text(encoding="utf-8", errors="replace").lower() if idx.is_file() else ""
+        a = sc["added"]
+        add("the claims index now holds claims for the entry that had none", _scope_named(itext, a, sc["titles"][a]),
+            itext[:200] or "no claims-index.json")
+
+
+# ---------- kind "lint-all": --full --lint-all puts every entry in the semantic lint's scope (task #179) ----------
+
+LA_OLD_SLUG = "handoff-checklists-for-agent-sessions"
+LA_NEW_SLUGS = ("tool-result-pointers-in-agent-context", "backoff-rules-for-agent-retries")
+LA_SEED_OLD = "agent-tool-security-basics"  # extra-seed entry, dated 2026-01-12
+LA_TITLES = {LA_OLD_SLUG: "Handoff checklists for agent sessions",
+             LA_NEW_SLUGS[0]: "Tool result pointers in agent context",
+             LA_NEW_SLUGS[1]: "Backoff rules for agent retries"}
+LA_DIR = "wiki/research/best-practices"
+
+
+def _la_entry(slug: str, day: str, tldr: str) -> str:
+    return (f'---\ntitle: "{LA_TITLES[slug]}"\ndate: {day}\nsource_url: "internal://skilltest/seed/{slug}"\n'
+            f'ingested_by: skilltest-fixture\ntier: self\nconfidence: medium\nlast_reviewed: {day}\n'
+            f'review_after: 2099-01-01\ntags: [agents, tools, context-engineering]\n---\n\n'
+            f'# {LA_TITLES[slug]}\n\n## TL;DR\n\n{tldr}\n\n## What it covers\n\n- One practice, stated briefly.\n\n'
+            f'## Why it matters\n\nIt keeps long agent sessions predictable.\n')
+
+
+def _prior_lint(ctx: dict, cycle_id: str, timestamp: str) -> None:
+    """An earlier run folder holding only a completed semantic-lint pair."""
+    run = ctx["notebook"] / "_inbox" / "reports" / cycle_id[:10] / cycle_id
+    run.mkdir(parents=True, exist_ok=True)
+    step = {"skill": "wiki-cycle", "cycle_id": cycle_id, "step": "lint-semantic", "timestamp": timestamp,
+            "status": "completed", "summary": {"entries_in_scope": 0}, "queued": [], "skipped": [], "deferred": [],
+            "notes": "test fixture: an earlier semantic lint", "errors": []}
+    (run / "lint-semantic.json").write_text(json.dumps(step, indent=2), encoding="utf-8")
+    (run / "lint-semantic.md").write_text(
+        f"# Semantic lint - {cycle_id}\n\n**Status**: completed\n**Timestamp**: {timestamp}\n", encoding="utf-8")
+
+
+def _prepare_lint_all(case: dict, ctx: dict) -> None:
+    """A semantic lint 3 days ago (outside the 24 hours). The entries older than it are committed with a
+    back-dated commit (the scope script reads git history), then two entries dated today are written, to be
+    added by the fixture commit."""
+    from datetime import datetime, timedelta
+    nb, sb = ctx["notebook"], ctx["sandbox"]
+    started = datetime.fromisoformat(ctx["started"])
+    prior = started - timedelta(days=3)
+    _prior_lint(ctx, f"{prior.date().isoformat()}-01", prior.isoformat())
+    base = nb / LA_DIR
+    old_when = started - timedelta(days=60)
+    old_ts = old_when.timestamp()
+    (base / f"{LA_OLD_SLUG}.md").write_text(_la_entry(LA_OLD_SLUG, "2026-03-02", "Hand a session over with a short checklist of open work."), encoding="utf-8")
+    for slug in (LA_OLD_SLUG, LA_SEED_OLD):
+        os.utime(base / f"{slug}.md", (old_ts, old_ts))
+    if not (sb / ".git").is_dir():  # same init as _commit_fixture
+        for args in (["init", "-q"], ["config", "user.name", "skilltest"],
+                     ["config", "user.email", "skilltest@example.com"], ["config", "core.autocrlf", "false"],
+                     ["config", "core.longpaths", "true"]):
+            _git(ctx, *args)
+    env = {**os.environ, "GIT_AUTHOR_DATE": old_when.isoformat(), "GIT_COMMITTER_DATE": old_when.isoformat()}
+    for args in (["add", "-A"], ["commit", "-q", "--allow-empty", "-m", "fixture: older entries"]):
+        subprocess.run(["git", "-C", str(sb), *args], capture_output=True, text=True, env=env, check=True)
+    today = _today(ctx)
+    for slug, tldr in ((LA_NEW_SLUGS[0], "Return a pointer to a large tool result, not the result."),
+                       (LA_NEW_SLUGS[1], "Back off between retries and cap the attempts.")):
+        (base / f"{slug}.md").write_text(_la_entry(slug, today, tldr), encoding="utf-8")
+    ctx["lint_all"] = {"old": [LA_OLD_SLUG, LA_SEED_OLD], "new": list(LA_NEW_SLUGS)}
+
+
+def _check_lint_all(case: dict, add, res: list, ctx: dict, run_dir: Path) -> None:
+    # A --full run with discovery cannot be held to the staged-run counts of the common checks.
+    res[:] = [x for x in res if not (x["name"].startswith(("quick steps all wrote", "no --full-only", "pending queue",
+                                                         "both tickets", "0 ticket"))
+                                     or x["name"].endswith(("in _inbox/proposed/", "in _inbox/done/")))]
+    sj = run_dir / "lint-semantic.json"
+    try:
+        step = json.loads(sj.read_text(encoding="utf-8")) if sj.is_file() else {}
+    except json.JSONDecodeError:
+        step = {}
+    add("the semantic lint ran (the earlier one was 3 days ago, outside the 24 hours)",
+        bool(step) and not re.match(r"skipped", str(step.get("status") or ""), re.I), step.get("status") or "no lint-semantic.json")
+    sf = run_dir / "semantic-scope.txt"
+    add("semantic-scope.txt written in the run folder", sf.is_file(), [p.name for p in run_dir.iterdir()] if run_dir.is_dir() else "no run folder")
+    lines = {l.strip().replace("\\", "/").lower() for l in sf.read_text(encoding="utf-8", errors="replace").splitlines()
+             if l.strip() and not l.lstrip().startswith("#")} if sf.is_file() else set()
+    la = ctx["lint_all"]
+    path = lambda s: f"{LA_DIR}/{s}.md".lower()
+    add("--lint-all: every entry older than the last lint is in the scope",
+        sf.is_file() and all(path(s) in lines for s in la["old"]), [s for s in la["old"] if path(s) not in lines])
+    add("--lint-all: every entry newer than the last lint is in the scope",
+        sf.is_file() and all(path(s) in lines for s in la["new"]), [s for s in la["new"] if path(s) not in lines])
+
+
+# ---------- kind "hub": a hub page behind its hub_tag gets one line per missing live entry ----------
+
+HUB_TAG = "lantern-ops"
+HUB_PATH = "wiki/project/hubs/lantern-hub.md"
+# slug -> (folder, title, tldr, tags, section of the hub that fits)
+HUB_ENTRIES = {
+    "lantern-start-and-stop-order": ("wiki/research/best-practices", "Starting and stopping Lantern in order",
+                                     "Start the lease store before the workers and stop them in the reverse order.",
+                                     ["agents", HUB_TAG], "Running Lantern"),
+    "lantern-lease-expiry-settings": ("wiki/project/components", "Lantern lease expiry settings",
+                                      "Set the lease expiry to twice the longest task so no live task is reclaimed.",
+                                      ["agents", HUB_TAG], "Troubleshooting"),
+    "lantern-stuck-queue-diagnosis": ("wiki/research/best-practices", "Diagnosing a stuck Lantern queue",
+                                      "When a Lantern queue stops draining, check the lease table first, then the worker heartbeat.",
+                                      ["agents", HUB_TAG], "Troubleshooting"),
+    "lantern-naming-notes": ("wiki/project/components", "Lantern naming notes",
+                             "Name Lantern queues after the job they carry, not the team that owns them.",
+                             ["agents", "lantern"], ""),  # decoy: a different tag, never on the hub
+}
+HUB_MISSING = "lantern-stuck-queue-diagnosis"
+HUB_DECOY = "lantern-naming-notes"
+
+
+def _hub_entry_text(title: str, tldr: str, tags: list, day: str, slug: str) -> str:
+    return (f'---\ntitle: "{title}"\ndate: {day}\nsource_url: "internal://skilltest/seed/{slug}"\n'
+            f'ingested_by: skilltest-fixture\ntier: self\nconfidence: medium\nlast_reviewed: {day}\n'
+            f'review_after: 2099-01-01\ntags: [{", ".join(tags)}]\n---\n\n# {title}\n\n## TL;DR\n\n{tldr}\n\n'
+            f'## What it covers\n\n- One practice, stated briefly.\n\n## Why it matters\n\nIt keeps Lantern predictable.\n')
+
+
+def _hub_rel(slug: str) -> str:
+    import posixpath
+    return posixpath.relpath(f"{HUB_ENTRIES[slug][0]}/{slug}.md", posixpath.dirname(HUB_PATH))
+
+
+def _prepare_hub(case: dict, ctx: dict, cycle_id: str) -> None:
+    """The resume fixture (two staged entries, update pair), plus a live hub page declaring hub_tag, three live
+    entries carrying the tag and one decoy carrying another tag. The hub links the first two and, when
+    hub_complete, the third too."""
+    _prepare_resume(ctx, cycle_id)
+    nb, day = ctx["notebook"], _today(ctx)
+    for slug, (folder, title, tldr, tags, _sec) in HUB_ENTRIES.items():
+        (nb / folder).mkdir(parents=True, exist_ok=True)
+        (nb / folder / f"{slug}.md").write_text(_hub_entry_text(title, tldr, tags, day, slug), encoding="utf-8")
+    line = lambda s: f"- [{HUB_ENTRIES[s][1]}]({_hub_rel(s)}) — {HUB_ENTRIES[s][2]}"
+    running = [line("lantern-start-and-stop-order")]
+    trouble = [line("lantern-lease-expiry-settings")]
+    if case.get("hub_complete"):
+        trouble.append(line(HUB_MISSING))
+    text = (f'---\ntitle: "Lantern hub"\ndate: {day}\nsource_url: "internal://skilltest/seed/lantern-hub"\n'
+            f'ingested_by: skilltest-fixture\ntier: self\nconfidence: medium\nlast_reviewed: {day}\n'
+            f'review_after: 2099-01-01\nhub_tag: {HUB_TAG}\ntags: [hub]\n---\n\n# Lantern hub\n\n'
+            "Everything we know about running Lantern, gathered from across the wiki.\n\n"
+            "## Running Lantern\n\n" + "\n".join(running) + "\n\n## Troubleshooting\n\n" + "\n".join(trouble) + "\n")
+    (nb / HUB_PATH).parent.mkdir(parents=True, exist_ok=True)
+    data = text.encode("utf-8")
+    (nb / HUB_PATH).write_bytes(data)
+    ctx["hub_before"] = data
+
+
+def _check_hub(case: dict, add, ctx: dict, run_dir: Path) -> None:
+    import posixpath
+    nb, cid = ctx["notebook"], ctx["cycle_id"]
+    hub = nb / HUB_PATH
+    before_b = ctx["hub_before"]
+    after_b = hub.read_bytes() if hub.is_file() else b""
+    lint = run_dir / "lint-mechanical.json"
+    try:
+        lsum = json.loads(lint.read_text(encoding="utf-8")).get("summary", {}) if lint.is_file() else {}
+    except json.JSONDecodeError:
+        lsum = {}
+    add("after the run the lint counts no hub entry missing (hub_entries_missing is 0)",
+        lsum.get("hub_entries_missing") == 0, lsum.get("hub_entries_missing", "no hub_entries_missing in the summary"))
+    after_t = after_b.decode("utf-8", errors="replace")
+    add("the decoy entry (another tag) is not linked on the hub", f"{HUB_DECOY}.md" not in after_t)
+    if case.get("hub_complete"):
+        add("the hub already links every tagged entry: the hub file is byte-for-byte unchanged", after_b == before_b,
+            "changed" if after_b != before_b else "")
+        changed = _git(ctx, "diff", "--name-only", ctx["fixture_commit"], "HEAD").split("\n")
+        add("the hub is not in the run's commit", f"notebooks/{NOTEBOOK}/{HUB_PATH}" not in changed,
+            [x for x in changed if "hub" in x])
+        return
+    before = before_b.decode("utf-8").splitlines()
+    after = after_t.splitlines()
+    # the hub's own lines keep their text and their order
+    it = iter(after)
+    kept = all(any(l == a for a in it) for l in before if l.strip())
+    add("the hub's original lines are all still there, unrewritten and in their order", kept, after_t[-400:])
+    old = set(before)
+    new = [l for l in after if l.strip() and l not in old]
+    add("exactly one line was added to the hub", len(new) == 1, new)
+    miss_target = posixpath.normpath(f"{HUB_ENTRIES[HUB_MISSING][0]}/{HUB_MISSING}.md")
+    hit = [l for l in new
+           if any(posixpath.normpath(posixpath.join(posixpath.dirname(HUB_PATH), t.strip())) == miss_target
+                  for t in re.findall(r"\]\(([^)]+)\)", l))]
+    add("the added line links the missing tagged entry (a path that resolves from the hub)", len(hit) == 1, new)
+    if new:
+        i = max(j for j, l in enumerate(after) if l == new[0])
+        head = next((after[j] for j in range(i, -1, -1) if after[j].startswith("## ")), "")
+        add("the line sits under the heading that fits (Troubleshooting)", head.strip() == "## Troubleshooting", head)
+    rep = run_dir / f"{cid}-run-cycle-report.md"
+    rtext = rep.read_text(encoding="utf-8", errors="replace").lower() if rep.is_file() else ""
+    add("the cycle report names the line added (the entry's title or file name)",
+        HUB_ENTRIES[HUB_MISSING][1].lower() in rtext or HUB_MISSING in rtext, rtext[-300:] or "no report")
+
+
+# ---------- kind "youtube-batch": several videos in one batch go to one worker, fetched one at a time ----------
+
+YT_ID = re.compile(r"(?:v=|youtu\.be/)([\w-]{11})")
+
+
+def _prepare_youtube(case: dict, ctx: dict) -> None:
+    """Queue the case's items; record, per video, its id and its ticket's file name (a worker's brief may name
+    either)."""
+    _prepare_quick(case, ctx)
+    sources = _suite()["sources"]
+    marks = {}
+    for key in case["videos"]:
+        url = sources[key]["url"]
+        vid = YT_ID.search(url).group(1)
+        names = [t.name for t in (ctx["notebook"] / "_inbox" / "pending").glob("*.md")
+                 if vid in t.read_text(encoding="utf-8", errors="replace")]
+        marks[key] = [vid, *names, *[Path(n).stem for n in names]]
+    ctx["yt_marks"] = marks
+
+
+def _check_youtube_batch(case: dict, add, ctx: dict, run: dict, proposed: list) -> None:
+    nb, marks = ctx["notebook"], ctx["yt_marks"]
+    sys.path.insert(0, str(ctx["scripts"]))
+    from _entry_checks import check_entry_file, split_frontmatter
+    spawns = [c for c in run["tool_calls"] if c["name"] in ("Agent", "Task")
+              and str((c.get("input") or {}).get("subagent_type", "")) == "wiki-ingester"]
+
+    def holds(c, ms):
+        inp = c.get("input") or {}
+        t = (str(inp.get("prompt", "")) + " " + str(inp.get("description", ""))).lower()
+        return any(m.lower() in t for m in ms)
+
+    holders = {k: [i for i, c in enumerate(spawns) if holds(c, ms)] for k, ms in marks.items()}
+    add("every video was handed to a wiki-ingester worker", all(holders.values()), holders)
+    used = {i for hs in holders.values() for i in hs}
+    add("all the videos went to the same one worker (parallel workers would hit YouTube's rate limit)",
+        all(holders.values()) and len(used) == 1, holders)
+    if len(used) == 1:
+        wid = spawns[next(iter(used))].get("id") or spawns[next(iter(used))].get("tool_use_id")
+        kids = [c for c in run["tool_calls"] if wid and (c.get("parent_tool_use_id") or c.get("parent")) == wid]
+        add("the video worker's own tool calls are identifiable in the run", bool(kids), f"{len(kids)} calls")
+        bg = [c["name"] for c in kids if (c.get("input") or {}).get("run_in_background")
+              or c["name"] in ("Agent", "Task")]
+        add("the video worker started nothing in the background and spawned no sub-agent (one at a time)", not bg, bg)
+    else:
+        add("the video worker's own tool calls are identifiable in the run", False, "no single video worker")
+    ids = {k: ms[0] for k, ms in marks.items()}
+    got, gate_errs = [], []
+    for k in proposed:
+        path = nb / k
+        fm, _ = split_frontmatter(path.read_text(encoding="utf-8"))
+        m = YT_ID.search(str(fm.get("source_url") or ""))
+        got.append(m.group(1) if m else _norm_url(fm.get("source_url")))
+        g = check_entry_file(path)
+        if g.get("errors"):
+            gate_errs.append(f"{k}: {g['errors']}")
+    add("each video's entry staged exactly once", all(got.count(v) == 1 for v in ids.values()), got)
+    ordinary = _norm_url(_suite()["sources"]["context-engineering"]["url"])
+    add("the ordinary item staged too", ordinary in got, got)
+    add("staged entries pass the gate", proposed and not gate_errs, gate_errs)
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     sys.path.insert(0, str(ctx["scripts"]))
     from _entry_checks import check_entry_file, split_frontmatter
@@ -1793,6 +2433,16 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_model_choice(case, add, res, ctx, run_dir, proposed, workers, text)
     elif case["kind"] == "checker-promote":
         _check_checker_promote(case, add, res, ctx, run, run_dir)
+    elif case["kind"] == "scope":
+        _check_scope(case, add, res, ctx, run_dir)
+    elif case["kind"] == "hub":
+        _check_hub(case, add, ctx, run_dir)
+    elif case["kind"] == "checker-gate":
+        _check_checker_gate(case, add, ctx, run, run_dir)
+    elif case["kind"] == "lint-all":
+        _check_lint_all(case, add, res, ctx, run_dir)
+    elif case["kind"] == "youtube-batch":
+        _check_youtube_batch(case, add, ctx, run, proposed)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()

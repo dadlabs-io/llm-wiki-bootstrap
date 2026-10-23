@@ -84,6 +84,7 @@ TRAVEL_SCRIPTS = [
     "wiki-transcribe.py",  # local Whisper speech-to-text for media without captions: reels, podcasts (2026-10-05)
     "wiki-tasks.py",  # the task cards in wiki/tasks/ (+ tasks/ORDER.md), behind /task-list (cards-only since 2026-10-12)
     "wiki-cycle-scope.py",  # what /wiki-cycle's semantic lint, claims and checker read (2026-09-24)
+    "wiki-link-gaps.py",  # /wiki-lint --full's link-gap pass: a review sheet of Related-link candidates, apply ticked ones (task #201, 2026-10-23)
     "wiki-claims-corroborate.py",  # /wiki-claims: score claims by independent agreeing sources, tier-weighted (2026-10-13, task #110)
     "wiki-triage.py",  # intake buckets + routing pending tickets, behind /wiki-triage (2026-09-24)
     "wiki-update.py",
@@ -1208,6 +1209,11 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
         state = "stale"
     else:
         state = "installed"
+    pinned = None
+    forced = os.environ.get("WIKI_TOOLING_STATE")  # tests: pin the state, never read the machine's
+    if forced in ("installed", "stale", "partial", "missing"):
+        state, not_checked, pinned = forced, [], True
+        missing, stale = forced in ("partial", "missing"), forced == "stale"
     return {
         "bootstrap": str(bootstrap),
         "skills_dest": str(skills_dest),
@@ -1230,6 +1236,7 @@ def global_tooling_status(bootstrap_source: Path, skills_dest: Path = None,
         "current": not missing and not stale and not not_checked,
         # one word for the skill's question: installed | stale | partial | missing
         "state": state,
+        **({"pinned": True} if pinned else {}),
     }
 
 

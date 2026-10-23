@@ -35,10 +35,11 @@ This is the universal interface: the other `wiki-*` skills (discover, triage, li
 | 1.7 Triage | ✓ | ✓ | ✓ | — | — (the user chose them) |
 | 1.8 Pages no fetcher can get (only when one is this session's) | ✓ | ✓ | ✓ | — | ✓ |
 | 2 Ingest, 2.5 dequeue + staging check | ✓ | ✓ | ✓ | — | ✓ |
-| 2.6 Checker (only when a staged raw is a long transcript) | ✓ | ✓ | ✓ | — | ✓ |
+| 2.6 Checker (only when its scope is not empty) | ✓ | ✓ | ✓ | — | ✓ |
 | 3 Mechanical lint, 3.5 integration scripts | ✓ | ✓ | ✓ | — | ✓ |
 | 4 Semantic lint, 5 fixes | — | ✓ | — | — | — |
 | 5.5 Promote (only when Step 0 says `automatic`) | ✓ | ✓ | ✓ | — | ✓ |
+| 5.6 Hubs (only when the lint lists a hub behind its tag) | ✓ | ✓ | ✓ | — | ✓ |
 | 6 Claims, 7 refresh | — | ✓ | — | — | — |
 | 6.5 Best-practices synthesis (when its scope is not empty) | ✓ | ✓ | ✓ | — | ✓ |
 | 8 Report, 9 commit | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -114,13 +115,13 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.p
 
 Fix every sidecar `--check` names before the commit; a worker's receipt is a claim, the check is the evidence.
 
-**Step 2.6 — Checker** (only when a staged entry's raw is a long transcript):
+**Step 2.6 — Checker** (only when the scope below is not empty: staged entries whose raw is a long transcript or a big raw, such as a long PDF or a whole repo, plus a spot check of 1 in 10 of the rest; the lines in `wiki-checker-config.json`):
 
 ```bash
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-scope.py --topic <notebook> checker --run-folder <run-folder>
 ```
 
-For each line it prints (entry, raw, minutes), spawn a `wiki-checker` agent, unnamed, up to 4 at a time, on Step 0's `checker` model, briefed with three paths only: the entry, the raw, and `<run-folder>/checker/<slug>.json`. Log each report: `wiki-cycle-scope.py --topic <notebook> checker-log --run-folder <run-folder> --entry <slug> --report <run-folder>/checker/<slug>.json`; it also writes the verdict into the entry's sidecar. A `fix` verdict: correct the staged entry from the report (take out or correct what the raw does not support, add what it skipped, restore the raw's words in quotes, give each vague passage the raw's specifics), then record it, `wiki-cycle-scope.py --topic <notebook> checker-corrected --entry <slug>`, and re-run `wiki-promote.py --check --slug <slug>`. A session that cannot make the fix leaves the entry staged and lists it under "held: checker findings" with its report. **An entry with an uncorrected `fix` report is never promoted**: the promote script holds it (`HELD`, and `--check` names it) until `checker-corrected` has run. The checker never edits anything itself.
+For each line it prints (entry, raw, minutes or `-`, and why it is in scope), spawn a `wiki-checker` agent, unnamed, up to 4 at a time, on Step 0's `checker` model, briefed with three paths only: the entry, the raw, and `<run-folder>/checker/<slug>.json`. Log each report: `wiki-cycle-scope.py --topic <notebook> checker-log --run-folder <run-folder> --entry <slug> --report <run-folder>/checker/<slug>.json`; it also writes the verdict into the entry's sidecar. A `fix` verdict: correct the staged entry from the report (take out or correct what the raw does not support, add what it skipped, restore the raw's words in quotes, give each vague passage the raw's specifics), then record it, `wiki-cycle-scope.py --topic <notebook> checker-corrected --entry <slug>`, and re-run `wiki-promote.py --check --slug <slug>`. A session that cannot make the fix leaves the entry staged and lists it under "held: checker findings" with its report. **An entry with an uncorrected `fix` report is never promoted**: the promote script holds it (`HELD`, and `--check` names it) until `checker-corrected` has run. The checker never edits anything itself.
 
 **Step 3 — Mechanical lint.** If this run promoted anything into `wiki/` already (`--direct`), run `wiki-fix-links.py --topic <notebook>` first. Then:
 
@@ -151,6 +152,8 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-lint-mech
 ```
 
 Never run `wiki-fix-links.py` across the notebook here: the promote script already ran it, scoped to the moved entries, and an unscoped run rewrites links in entries nobody promoted. Re-run Step 3.5's three scripts with `--cycle-id` only so the run folder's step files describe the notebook after promotion (they are idempotent; the promote script already did the work). Each promotion also re-indexes the search itself, so Steps 6 and 6.5 search the promoted entries. Entries staged before this run are not this run's to promote: they wait for the user.
+
+**Step 5.6 — Hubs** (only when the last mechanical lint's `🧭 Hubs Behind Their Tag` section lists an entry; after Step 5.5, so promoted entries count). A hub page names the tag it collects (`hub_tag`, the frontmatter spec). For each listed entry, add one line to its hub, `- [<title>](<relative path>) — <what it holds, from its TL;DR>`, under the hub's heading that fits it (its last list when none does); never reorder, rewrite or remove the hub's other lines. Then re-run the mechanical lint once; the section must read none. Name the lines added in the report. (2026-10-23, task #204: agentic-design's Obsidian hub was kept by hand and fell behind.)
 
 **Step 6 — Claims** (`--full`; `--claims-only`). Scope: `wiki-cycle-scope.py --topic <notebook> claims --run-folder <run-folder>` (`--all` with `--lint-all`): entries in `wiki/` with no claims in the index, or revised since it was written; never a staged one. Follow `/wiki-claims` over that scope: append to the index, never rebuild it, and write `claims.json` + `.md`.
 
