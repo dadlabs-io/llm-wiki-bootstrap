@@ -20,6 +20,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -53,12 +54,13 @@ def _suite() -> dict:
 
 
 def _qmd() -> list[str]:
-    shim = shutil.which("qmd")
-    if not shim:
+    """The scripts' shared qmd launcher (task #181); the callers add their own --index."""
+    sys.path.insert(0, str(HERE.parents[2] / "scripts"))
+    from _wiki_config import qmd_command
+    cmd = qmd_command()
+    if cmd is None:
         raise SystemExit("qmd not found on PATH")
-    entry = Path(shim).resolve().parent / "node_modules" / "@tobilu" / "qmd" / "dist" / "cli" / "qmd.js"
-    node = shutil.which("node")
-    return [node, str(entry)] if entry.exists() and node else [shim]
+    return cmd
 
 
 def _qmd_index_file(index: str) -> Path:

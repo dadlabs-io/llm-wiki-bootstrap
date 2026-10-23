@@ -36,7 +36,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 # source of truth for the multi-wiki config schema). Re-exported under the
 # historical private names so the rest of this script is unchanged.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, in_tasks as _in_tasks, project_root as _project_root, now_stamp, search_mode  # noqa: E402
+from _wiki_config import default_vault as _default_vault, default_topic as _default_topic, wiki_dir as _wiki_dir, in_sessions as _in_sessions, in_tasks as _in_tasks, project_root as _project_root, now_stamp, qmd_command, search_mode  # noqa: E402
 import _task_cards  # noqa: E402
 # Body-level rubric checks — shared with wiki-update.py's pre-write gate so the
 # lint backlog view and the gate enforce ONE rule set (_entry_checks.py, 2026-09-02).
@@ -222,36 +222,20 @@ def reindex_command():
 def qmd_index_coverage(wiki_root):
     """Compare qmd's indexed file count for this wiki against `.md` files on disk.
     Returns {"state": ok|missing|not-a-collection|error, ...}."""
-    import shutil
     import subprocess
-    qmd = shutil.which("qmd")
+    # The shared launcher (task #181, 2026-10-22; this check had its own, which tried the shim, then the sh script
+    # through Git Bash, and ignored $WIKI_QMD_BIN). $WIKI_QMD_INDEX names the qmd index in use (the skill tests keep a
+    # sandbox notebook in its own), as wiki-qmd-query.py reads it.
+    qmd = qmd_command(os.environ.get("WIKI_QMD_INDEX"))
     if not qmd:
         return {"state": "missing"}
-    # Launchers, in order. On Windows `which` returns npm's qmd.cmd, and qmd's
-    # .cmd shim execs /bin/sh — which cmd.exe cannot find — so fall back to the
-    # extension-less sh script beside it, run through bash/sh (Git Bash).
-    # $WIKI_QMD_INDEX names the qmd index in use (the skill tests keep a sandbox notebook in its own), as
-    # wiki-qmd-query.py reads it; without it the lint looked in the default index and never found the notebook.
-    index = os.environ.get("WIKI_QMD_INDEX")
-    ls = ["--index", index, "ls"] if index else ["ls"]
-    launchers = [[qmd, *ls]]
-    stem = re.sub(r"\.(cmd|bat|ps1|exe)$", "", qmd, flags=re.IGNORECASE)
-    sh = shutil.which("bash") or shutil.which("sh")
-    if sh and stem != qmd and Path(stem).is_file():
-        launchers.append([sh, stem, *ls])
-    proc, last_err = None, ""
-    for cmd in launchers:
-        try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30,
-                                  encoding="utf-8", errors="replace")
-        except (OSError, subprocess.TimeoutExpired) as e:
-            last_err = str(e)
-            continue
-        if proc.returncode == 0:
-            break
-        last_err = (proc.stderr or proc.stdout).strip()[:200]
-    if proc is None or proc.returncode != 0:
-        return {"state": "error", "detail": last_err}
+    try:
+        proc = subprocess.run([*qmd, "ls"], capture_output=True, text=True, timeout=30,
+                              encoding="utf-8", errors="replace")
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return {"state": "error", "detail": str(e)[:200]}
+    if proc.returncode != 0:
+        return {"state": "error", "detail": (proc.stderr or proc.stdout).strip()[:200]}
     want = Path(wiki_root).resolve().as_posix().rstrip("/").lower()
     for line in proc.stdout.splitlines():
         m = re.search(r"qmd://(.+?)/?\s+\((\d+) files\)", line)

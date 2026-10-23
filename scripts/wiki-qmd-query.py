@@ -114,7 +114,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _wiki_config import load_config, now_stamp, wiki_dir, search_mode, set_search_mode  # noqa: E402
+from _wiki_config import load_config, now_stamp, qmd_command, wiki_dir, search_mode, set_search_mode  # noqa: E402
 from _entry_checks import split_frontmatter, is_superseded  # noqa: E402
 
 DEFAULT_K = int(os.environ.get("WIKI_QMD_K", "30"))
@@ -244,27 +244,14 @@ def kill_tree(proc: subprocess.Popen) -> None:
 
 
 def qmd_cmd() -> list[str]:
-    """The command that starts qmd. npm's Windows shim (qmd.CMD) hands off to
-    /bin/sh, which exists only inside Git Bash, so launched from Python it fails
-    with "The system cannot find the path specified". qmd's own bin/qmd script
-    just runs `node <pkg>/dist/cli/qmd.js`; do that directly when the package is
-    found next to the shim, which also keeps the process tree one level deep.
+    """The command that starts qmd: the shared launcher (`_wiki_config.qmd_command`, task #181).
     $WIKI_QMD_INDEX selects a named qmd index (qmd's --index); the skill test
     baseline (tests/skills/) keeps its sandbox notebook in its own index."""
-    index = os.environ.get("WIKI_QMD_INDEX")
-    extra = ["--index", index] if index else []
-    override = os.environ.get("WIKI_QMD_BIN")
-    if override:
-        return [override, *extra]
-    shim = shutil.which("qmd")
-    if not shim:
+    cmd = qmd_command(os.environ.get("WIKI_QMD_INDEX"))
+    if cmd is None:
         print("[wiki-qmd-query] qmd not found on PATH (npm i -g @tobilu/qmd)", file=sys.stderr)
         sys.exit(EXIT_USAGE)
-    entry = Path(shim).resolve().parent / "node_modules" / "@tobilu" / "qmd" / "dist" / "cli" / "qmd.js"
-    node = shutil.which("node")
-    if entry.exists() and node:
-        return [node, str(entry), *extra]
-    return [shim, *extra]
+    return cmd
 
 
 def run_qmd(argv: list[str], timeout: float) -> tuple[int | None, str, str]:

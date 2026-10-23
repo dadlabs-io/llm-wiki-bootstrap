@@ -474,6 +474,26 @@ def search_mode(config_path=None) -> str:
     return value if value in SEARCH_MODES else "keyword"
 
 
+def qmd_command(index: str | None = None) -> list | None:
+    """The command that starts qmd, the one launcher the search helper, the lint and the test suites share (task #181,
+    2026-10-22; three copies before). npm's Windows shim (qmd.CMD) hands off to /bin/sh, which exists only inside
+    Git Bash, so launched from Python it fails; qmd's own bin script just runs `node <pkg>/dist/cli/qmd.js`, so that
+    runs directly when the package sits beside the shim. $WIKI_QMD_BIN overrides (tests). `index` adds qmd's
+    `--index <name>`; callers pass the one they mean ($WIKI_QMD_INDEX for the helper and the lint). None: no qmd."""
+    import os
+    import shutil
+    extra = ["--index", index] if index else []
+    override = os.environ.get("WIKI_QMD_BIN")
+    if override:
+        return [override, *extra]
+    shim = shutil.which("qmd")
+    if not shim:
+        return None
+    entry = Path(shim).resolve().parent / "node_modules" / "@tobilu" / "qmd" / "dist" / "cli" / "qmd.js"
+    node = shutil.which("node")
+    return [node, str(entry), *extra] if entry.exists() and node else [shim, *extra]
+
+
 def set_search_mode(mode: str, config_path=None) -> Path:
     """Write this machine's search mode, keeping every other key. Returns the file written."""
     if mode not in SEARCH_MODES:
