@@ -255,6 +255,20 @@ with tempfile.TemporaryDirectory() as td:
     p = cost("end", folder=tmp / "fresh-run")
     check("cost end with no start mark: NOT checked", p.returncode == 3 and "no start mark" in p.stdout, p.stdout)
 
+    # ── session-cost (task #182 row 34: /wrap-up's cost line, the session's running total, no run folder) ──
+    def session_cost(*a):
+        return subprocess.run([sys.executable, str(SCRIPT), "--topic", "t", "session-cost", *a], cwd=proj,
+                              capture_output=True, text=True, encoding="utf-8",
+                              env={**os.environ, "PYTHONIOENCODING": "utf-8", "WIKI_SESSION_COST_DIR": str(sc)})
+    p = session_cost("--session-id", "this")
+    check("session-cost: the named session's running total, said to be an estimate",
+          p.returncode == 0 and "$20.25" in p.stdout and "estimate" in p.stdout, (p.returncode, p.stdout, p.stderr[-200:]))
+    p = session_cost()
+    check("session-cost with no id: the newest session in this folder", p.returncode == 0 and "$99.00" in p.stdout, p.stdout)
+    p = session_cost("--session-id", "nobody")
+    check("session-cost for a session with no file: NOT checked (exit 3), never a zero",
+          p.returncode == 3 and "NOT checked" in p.stdout and "$0" not in p.stdout, p.stdout)
+
 failed =[n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

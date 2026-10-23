@@ -119,6 +119,7 @@ Create `_inbox/rejected/` if it doesn't exist. Rejected entries are kept (not de
 To release a held entry:
 - Broken JSON: fix the file (a trailing comma after the last list item is the usual cause) and re-run.
 - Missing sidecar or no folder: ask the user which folder it belongs in, run a quick qmd search for backlink candidates, write or complete `<slug>.proposed_metadata.json` per the sidecar contract in `wiki-update/SKILL.md`, then re-run.
+- `the checker found problems not yet corrected (report: …)`: the `wiki-checker` read the entry against its transcript and asked for fixes (the sidecar's `checker` field; `--review` prints it). Correct the entry from that report as `/wiki-cycle` Step 2.6 says, then `wiki-cycle-scope.py --topic <topic> checker-corrected --entry <slug>` and re-run. An entry the checker flagged is never promoted as flagged (task #178, 2026-10-22: until then only the cycle's choice of slugs held it).
 
 ## Key paths
 

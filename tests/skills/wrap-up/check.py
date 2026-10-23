@@ -1115,6 +1115,26 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     def add(name, ok, detail=""):
         res.append({"name": name, "ok": bool(ok), "detail": str(detail)[:300]})
 
+    if case.get("kind") == "cost-none":
+        # task #182 row 34: with no running total for the session, the report's cost line says the cost was
+        # not checked and why, and carries no dollar figure (never a guessed or zero one)
+        _preamble(run, add)
+        cost_lines = [ln.strip() for ln in text.splitlines() if re.search(r"\bcost", ln, re.I)]
+        not_checked = re.compile(r"not\s+checked|unchecked|not\s+available|unavailable|no\s+(running\s+)?(total|cost)|"
+                                 r"could\s*n[o']t|couldn'?t|unable|not\s+(been\s+)?(read|found|recorded|reported)", re.I)
+        add("the report has a line about the session's cost", bool(cost_lines), text[-300:])
+        nc = [ln for ln in cost_lines if not_checked.search(ln)]
+        add("the cost line says the cost was not checked", bool(nc), cost_lines[:3])
+        figures = [ln for ln in cost_lines
+                   if re.search(r"\$\s*\d|\b\d+(?:\.\d+)?\s*(?:usd|dollars)\b", ln, re.I)]
+        add("no cost line carries a dollar figure (no guessed or zero cost)", not figures, figures[:2])
+        add("the not-checked line gives a reason",
+            any(len(re.findall(r"[A-Za-z]{3,}",
+                               re.sub(r"(?i)cost|not\s+checked|unchecked", "", ln))) >= 3 for ln in nc),
+            nc[:2])
+        _closing_line(run, add)
+        return res
+
     if case.get("kind") == "cards":
         _check_cards(case, before, after, run, ctx, add)
         return res

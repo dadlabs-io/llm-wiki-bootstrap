@@ -31,11 +31,11 @@ anything is promoted. It files directly only when the caller explicitly asks. It
 ## How it is spawned
 
 Its model is set in `~/.claude/agents/wiki-ingester-config.json` (if that file is missing, the
-agent's own default, Sonnet, is used). While that file's confirm flag is on, an interactive session
-that spawns it asks you which model to use for the batch, defaulting to the configured one, and
-passes your choice at spawn time. A session that cannot ask (an autonomous or unattended run) uses
-the configured default without asking and names the model in the batch receipt, so you can see
-afterwards what ran. Turn the flag off to stop being asked in interactive sessions too. Inside `wiki-cycle`, a long
+agent's own default, Sonnet, is used). The session that spawns it uses that model without asking and
+names it in the batch receipt, so you can see afterwards what ran; say so when you want to pick the
+model for a batch. Turning that file's confirm flag on (off since 2026-10-22) makes an interactive
+session ask you every batch, defaulting to the configured model; a session that cannot ask (an
+autonomous or unattended run) still uses the default. Inside `wiki-cycle`, a long
 transcript (15 minutes or more, the checker's line) goes to a worker on Opus and everything else to that model
 (2026-10-14: in a blind comparison on five talks Opus's drafts needed about 40% fewer fixes).
 

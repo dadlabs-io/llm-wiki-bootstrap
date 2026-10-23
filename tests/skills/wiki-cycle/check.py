@@ -789,7 +789,7 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_triage(case, ctx)
     elif case["kind"] == "resume":
         _prepare_resume(ctx, cycle_id)
-    elif case["kind"] == "checker":
+    elif case["kind"] in ("checker", "checker-promote"):
         _prepare_checker(ctx, cycle_id)
     elif case["kind"] == "retry":
         _prepare_retry(case, ctx)
@@ -799,6 +799,8 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_synthesis(case, ctx)
     elif case["kind"] == "promote-setting":
         _prepare_promote_setting(case, ctx, cycle_id)
+    elif case["kind"] in ("model-mix", "model-ask"):
+        _prepare_local_items(case, ctx)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -1243,6 +1245,142 @@ def _check_bigraw(case: dict, add, ctx: dict, run: dict, run_dir: Path, proposed
         not (u.get("skipped") or u.get("deferred")), json.dumps([u.get("skipped"), u.get("deferred")])[:200])
 
 
+SHORT2_SLUG = "timeouts-for-agent-tool-calls"
+SHORT2_URL = f"https://example.com/skilltest/{SHORT2_SLUG}"
+_SHORT2_RAW = """# Timeouts for agent tool calls
+
+Give every tool call a timeout shorter than the session's own limit. A call that hangs for ten minutes
+costs the whole session more than the call is worth.
+
+Set the timeout per tool: a local file read needs seconds, a web fetch needs tens of seconds.
+
+When a call times out, tell the model how long it waited and let it choose between a retry and another route.
+"""
+TALK_URL = "https://www.youtube.com/watch?v=skilltest01"
+LONG_MARK = re.compile(r"talk-transcript|skilltest01", re.I)
+LOCAL_ITEMS = {"small": (SMALL_SLUG, SMALL_URL), "short2": (SHORT2_SLUG, SHORT2_URL),
+               "talk": ("talk-transcript", TALK_URL)}
+
+
+def _prepare_local_items(case: dict, ctx: dict) -> None:
+    """Queue the case's items from local raws in raw/ (no live fetch), each ticket carrying its raw_path."""
+    nb = ctx["notebook"]
+    texts = {"small": _SMALL_RAW, "short2": _SHORT2_RAW,
+             "talk": (HERE / "fixtures" / "checker" / "talk-transcript.md").read_text(encoding="utf-8")}
+    for key in case["items"]:
+        slug, url = LOCAL_ITEMS[key]
+        (nb / "raw" / f"{slug}.md").write_text(texts[key], encoding="utf-8")
+        p = _script(ctx, "wiki-list-add.py", "--topic", NOTEBOOK, "--source", url, "--added-by", "skilltest")
+        if p.returncode != 0:
+            raise RuntimeError(f"could not queue {url}: {p.stdout}{p.stderr}")
+        for t in (nb / "_inbox" / "pending").glob("*.md"):
+            body = t.read_text(encoding="utf-8")
+            if url in body and "raw_path:" not in body:
+                t.write_text(re.sub(r"\A---\r?\n", f"---\nraw_path: raw/{slug}.md\n", body, count=1), encoding="utf-8")
+
+
+def _check_model_choice(case: dict, add, res: list, ctx: dict, run_dir: Path, proposed: list, workers: list, text: str) -> None:
+    nb = ctx["notebook"]
+    sys.path.insert(0, str(ctx["scripts"]))
+    from _entry_checks import split_frontmatter
+    # Step 5.5 writes its promote pair in every ingesting mode (task #184), so the common check that counts a
+    # promote step as --full-only is replaced by the same check without promote.
+    res[:] = [x for x in res if x["name"] != "no --full-only step ran"]
+    full = [p.stem for p in run_dir.glob("*.json") if p.stem.startswith(("lint-semantic", "claims"))] \
+        if run_dir.is_dir() else []
+    add("no --full-only step ran except the promote step", not full, full)
+    want = {_norm_url(LOCAL_ITEMS[k][1]) for k in case["items"]}
+    got = {_norm_url(split_frontmatter((nb / k).read_text(encoding="utf-8"))[0].get("source_url")) for k in proposed}
+    add("each queued item staged once", got == want, sorted(got))
+    add("spawned wiki-ingester workers", bool(workers), [a.get("subagent_type") for a in workers])
+    model = lambda a: str(a.get("model", "")).lower()
+    fields = lambda a: str(a.get("prompt", "")) + " " + str(a.get("description", ""))
+    if case["kind"] == "model-mix":
+        long_w = [a for a in workers if LONG_MARK.search(fields(a))]
+        short_w = [a for a in workers if not LONG_MARK.search(fields(a))]
+        add("a worker took the long transcript", bool(long_w), [a.get("description") for a in workers])
+        add("every worker holding the long transcript is on opus",
+            bool(long_w) and all("opus" in model(a) for a in long_w), [model(a) for a in long_w])
+        add("the short items went to workers that do not hold the transcript", bool(short_w),
+            [a.get("description") for a in workers])
+        add("those workers are on sonnet (the default ingest model)",
+            bool(short_w) and all("sonnet" in model(a) for a in short_w), [model(a) for a in short_w])
+        scratch, rep = run_dir / "scratchpad.md", run_dir / f"{ctx['cycle_id']}-run-cycle-report.md"
+        record = " ".join(p.read_text(encoding="utf-8", errors="replace") for p in (scratch, rep) if p.is_file()) + " " + text
+        record = record.lower()
+        add("the run's record (reply, scratchpad or cycle report) names both opus and sonnet",
+            "opus" in record and "sonnet" in record, record[:200])
+    else:
+        add("every worker is on the default ingest model (sonnet)",
+            bool(workers) and all("sonnet" in model(a) for a in workers), [model(a) for a in workers])
+        raised = re.search(r"(?s)which (ingest )?model|choos\w*.{0,40}model|model.{0,60}(choice|choos|ask|pick|select)|"
+                           r"(ask|pick|select)\w*.{0,60}model", text)
+        add("the reply raises the model choice the user asked for", bool(raised), text[:300])
+        add("the reply names the configured default (sonnet)", "sonnet" in text, text[:300])
+
+
+CHECKER_URL = "https://www.youtube.com/watch?v=skilltest01"
+
+
+def _check_checker_promote(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
+    nb = ctx["notebook"]
+    sys.path.insert(0, str(ctx["scripts"]))
+    from _entry_checks import split_frontmatter
+    # this kind's point is that the entry leaves _inbox/proposed/ for wiki/; and Step 5.5 writes its promote pair
+    # in every ingesting mode (task #184), so --full-only is checked without promote
+    res[:] = [x for x in res if x["name"] not in ("nothing filed straight into wiki/ (staged run)",
+                                                  "no --full-only step ran")]
+    full = [p.stem for p in run_dir.glob("*.json") if p.stem.startswith(("lint-semantic", "claims"))] \
+        if run_dir.is_dir() else []
+    add("no --full-only step ran except the promote step", not full, full)
+    chk = [a for a in _agent_calls(run) if str(a.get("subagent_type", "")) == "wiki-checker"]
+    add("spawned a wiki-checker", bool(chk), [a.get("subagent_type") for a in _agent_calls(run)])
+    clog = nb / "_inbox" / "reports" / "checker-log.jsonl"
+    rows = []
+    for x in (clog.read_text(encoding="utf-8").splitlines() if clog.is_file() else []):
+        try:
+            rows.append(json.loads(x))
+        except json.JSONDecodeError:
+            pass
+    add("checker-log.jsonl has the fix row", any(r.get("verdict") == "fix" for r in rows), rows)
+
+    calls = run["tool_calls"]
+
+    def cmd(c):
+        return str((c.get("input") or {}).get("command", "")) if c["name"] == "Bash" else ""
+
+    # the recording: the first Bash call holding checker-corrected, and where in its text
+    rec_i = next((i for i, c in enumerate(calls) if "checker-corrected" in cmd(c)), None)
+    add("the correction was recorded with the checker-corrected command", rec_i is not None, len(calls))
+
+    def rechecks(text_):
+        """Offsets of wiki-promote invocations that carry --check and --slug (one invocation = up to the next
+        ; & | or newline)."""
+        return [m.start() for m in re.finditer(r"wiki-promote[^\n;&|]*", text_)
+                if "--check" in m.group(0) and "--slug" in m.group(0)]
+
+    after = False
+    if rec_i is not None:
+        pos = cmd(calls[rec_i]).find("checker-corrected")
+        after = any(o > pos for o in rechecks(cmd(calls[rec_i]))) \
+            or any(rechecks(cmd(c)) for c in calls[rec_i + 1:])
+    add("wiki-promote.py --check --slug was run after recording (in the same command or a later one)", after,
+        len(calls))
+
+    found = []
+    base = nb / "wiki"
+    for p in sorted(base.rglob("*.md")) if base.is_dir() else []:
+        rel = p.relative_to(nb).as_posix()
+        if _is_entry(rel):
+            fm, body = split_frontmatter(p.read_text(encoding="utf-8", errors="replace"))
+            if _norm_url(fm.get("source_url")) == _norm_url(CHECKER_URL):
+                found.append((rel, body))
+    add("the flagged entry is promoted into wiki/", len(found) == 1, [r for r, _ in found])
+    body = found[0][1] if found else ""
+    add("the promoted entry is the corrected one (no 70%, the ninth technique present)",
+        bool(found) and "70%" not in body and bool(re.search(r"ninth|rollback", body, re.I)), body[:200])
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     sys.path.insert(0, str(ctx["scripts"]))
     from _entry_checks import check_entry_file, split_frontmatter
@@ -1651,6 +1789,10 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_synthesis(case, add, res, ctx, run, run_dir, proposed, workers)
     elif case["kind"] == "promote-setting":
         _check_promote_setting(case, add, res, ctx, run_dir)
+    elif case["kind"] in ("model-mix", "model-ask"):
+        _check_model_choice(case, add, res, ctx, run_dir, proposed, workers, text)
+    elif case["kind"] == "checker-promote":
+        _check_checker_promote(case, add, res, ctx, run, run_dir)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()

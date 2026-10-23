@@ -252,6 +252,7 @@ Wrapped up:
   Task list: #1 done, #4 added — remove the done one? (your call)
   Docs check: 3 passages read in 2 docs; 1 fixed (README.md, the --move-handled default), 0 left for you
   Living pages: 1 revised (30-the-research-cycle.md), 0 left for you; final check flagged 1, revised (20-ingesting-a-source.md)
+  Cost: $14.35 so far this session (Claude Code's estimate)
   3 entries staged to _inbox/proposed/ (→ wiki/project/<category>/ on promote):
   - troubleshooting/oauth-re-prompt-root-cause-2026-05-12.md
   - decisions/move-handled-default-on-2026-05-12.md
@@ -259,7 +260,7 @@ Wrapped up:
 Raw snapshot: raw/sessions/2026-05-12-drive-cleanup-session.md
 ```
 
-With `confirm_before_create: false`, Step 2's table goes above this report. Include the task-list line whenever a card changed: it is where the "remove the done ones?" question gets asked. Then Step 5.5, then straight to Step 6 — never end on "run /wiki-promote later".
+With `confirm_before_create: false`, Step 2's table goes above this report. Include the task-list line whenever a card changed: it is where the "remove the done ones?" question gets asked. The cost line is on every report: run `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-scope.py --topic <notebook> session-cost --session-id <this session's id>` and copy the figure it prints; exit 3 means no total is available, and the line says `Cost: not checked` with its reason, never a guess (task #182, 2026-10-22). Then Step 5.5, then straight to Step 6 — never end on "run /wiki-promote later".
 
 ### Step 5.5 — The skill-suggestion box (only when it has files)
 

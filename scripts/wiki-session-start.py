@@ -19,6 +19,10 @@ Claude Code adds what it prints to the session's context. For each session:
     with the startup checklist to run before the first reply (additionalContext,
     for Claude), and one line for the user — the handoff's GOAL — shown in the
     terminal at startup (systemMessage)
+  - notes, in both, when the previous session's transcript (the newest other
+    *.jsonl beside this session's transcript_path) was still being written 30+
+    minutes after handoff.md: it probably ended without /wrap-up, so the resume
+    files describe the session before it (task #182, 2026-10-22)
 
 The user line (2026-09-15): a hook cannot start a model turn, so the recap
 only comes with the user's first message, and plain stdout reaches Claude
@@ -54,17 +58,37 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
-def session_cwd(argv: list[str]) -> Path:
-    if "--cwd" in argv:
-        return Path(argv[argv.index("--cwd") + 1])
+def hook_input(argv: list[str]) -> dict:
+    """The hook's input (cwd, session_id, transcript_path, ...); --cwd by hand overrides the cwd."""
+    data = {}
     if not sys.stdin.isatty():
         try:
             data = json.loads(sys.stdin.read() or "{}")
-            if isinstance(data, dict) and data.get("cwd"):
-                return Path(data["cwd"])
         except (json.JSONDecodeError, OSError, UnicodeDecodeError):
-            pass
-    return Path.cwd()
+            data = {}
+    data = data if isinstance(data, dict) else {}
+    if "--cwd" in argv:
+        data["cwd"] = argv[argv.index("--cwd") + 1]
+    return data
+
+
+# A session still being written this long after the handoff ran on past its last wrap-up (task #182 row 33).
+NO_WRAPUP_MINUTES = 30
+
+
+def unwrapped_previous(transcript: str | None, handoff: Path) -> tuple[Path, float] | None:
+    """The previous session's transcript and how many minutes it ran on after handoff.md was written, when that
+    is NO_WRAPUP_MINUTES or more: it probably ended without /wrap-up, so the resume files describe the one before.
+    The previous session is the newest other *.jsonl beside this session's transcript."""
+    if not transcript or not handoff.is_file():
+        return None
+    here = Path(transcript)
+    others = [p for p in here.parent.glob("*.jsonl") if p.resolve() != here.resolve()]
+    if not others:
+        return None
+    prev = max(others, key=lambda p: p.stat().st_mtime)
+    gap = (prev.stat().st_mtime - handoff.stat().st_mtime) / 60
+    return (prev, gap) if gap >= NO_WRAPUP_MINUTES else None
 
 
 def project_config(start: Path) -> Path | None:
@@ -90,7 +114,7 @@ def handoff_goal(handoff: Path) -> str:
     return ""
 
 
-def hook_output(start: Path) -> dict | None:
+def hook_output(start: Path, transcript: str | None = None) -> dict | None:
     """The hook's JSON: the resume instruction for Claude, one line for the user."""
     cfg_path = project_config(start)
     if not cfg_path:
@@ -137,11 +161,19 @@ def hook_output(start: Path) -> dict | None:
               "4. Start no other work (no runs, no edits) until the recap is given.",
               "5. Open the first reply with one paragraph on where we left off and what is next, then say what "
               "steps 1-3 found."]
+    stale = unwrapped_previous(transcript, sessions / persona / "handoff.md")
+    if stale:
+        prev, gap = stale
+        lines.append(f"NOTE: the previous session ({prev.stem}) was still running {gap:.0f} minutes after handoff.md "
+                     "was written, so it may have ended without /wrap-up: the resume files may not cover its work. "
+                     f"Say so in the recap; its transcript is {prev}.")
     goal = handoff_goal(sessions / persona / "handoff.md")
     # Layout the user drew (2026-09-15): "Next:" on its own line, the goal's lead ("Start QUEUE 6:") above the rest
     head, sep, rest = goal.partition(": ")
     goal = f"{head}:\n{rest}" if sep else goal
     user_line = f"llm-wiki: {name} resume files are loaded.\n\n" + (f"Next:\n\n{goal} " if goal else "")
+    if stale:
+        user_line += "The last session may have ended without /wrap-up: these files may be behind.\n\n"
     user_line += "Send any message for the full recap.\n\n\n"
     return {"systemMessage": user_line,
             "hookSpecificOutput": {"hookEventName": "SessionStart",
@@ -150,7 +182,8 @@ def hook_output(start: Path) -> dict | None:
 
 def main() -> int:
     try:
-        out = hook_output(session_cwd(sys.argv[1:]).resolve())
+        data = hook_input(sys.argv[1:])
+        out = hook_output(Path(data.get("cwd") or Path.cwd()).resolve(), data.get("transcript_path"))
         if out:
             sys.stdout.write(json.dumps(out) + "\n")  # ASCII-escaped, so no console encoding trap
     except Exception:  # noqa: BLE001 — a resume hook must never break a session start

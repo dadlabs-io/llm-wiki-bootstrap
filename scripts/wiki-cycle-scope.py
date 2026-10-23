@@ -7,7 +7,9 @@ What a /wiki-cycle step reads, decided by a script instead of by the model.
     wiki-cycle-scope.py --topic N synthesis --run-folder <rf> [--all]
     wiki-cycle-scope.py --topic N checker  --run-folder <rf> [--min-minutes 15]
     wiki-cycle-scope.py --topic N checker-log --run-folder <rf> --entry <slug> --report <file.json>
+    wiki-cycle-scope.py --topic N checker-corrected --entry <slug>
     wiki-cycle-scope.py --topic N cost --run-folder <rf> --mark start|end [--session-id <id>]
+    wiki-cycle-scope.py --topic N session-cost [--session-id <id>]
     wiki-cycle-scope.py --topic N promote --run-folder <rf>
 
 `semantic`: the entries added or revised since the last semantic lint (the newest
@@ -42,7 +44,10 @@ counted (Mark, 2026-10-12). Writes <rf>/checker-scope.txt.
 
 `checker-log`: appends one line to _inbox/reports/checker-log.jsonl from a checker's
 report (entry, source minutes, finding counts by kind, verdict, model), so the pass
-rate by length can be read later.
+rate by length can be read later, and writes the verdict into the staged entry's sidecar
+(`checker`: verdict, report, corrected false). wiki-promote.py holds an entry whose verdict
+is `fix` until `checker-corrected --entry <slug>` records that it was corrected from its
+report (task #178 row 8, 2026-10-22).
 
 `models`: the model each kind of helper is spawned on, read from the setting files
 (--ingester, --checker, --helpers; default the installed paths), printed one line per
@@ -57,7 +62,8 @@ API-price estimate, subagents included; on a subscription plan it is a compariso
 not a bill). `--mark start` records the session's total in <rf>/cost.json; `--mark end`
 reads it again and writes the difference to cost.json and cost.md. The session is the
 newest file whose `cwd` is this folder (or --session-id); with no such file the step is
-NOT checked (exit 3), never a zero (task #138, 2026-10-14).
+NOT checked (exit 3), never a zero (task #138, 2026-10-14). `session-cost [--session-id <id>]`
+prints the session's running total alone, for /wrap-up's report (task #182, 2026-10-22).
 
 `promote`: whether the cycle's new entries wait for the user or are promoted without
 asking, from the notebook's confirm_before_promote (registry → project wiki-config.json →
@@ -313,6 +319,41 @@ def cmd_checker_log(nb: Path, args) -> int:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
     print(f"logged: {row['entry']} {row['verdict']} "
           + ", ".join(f"{k.replace('_', ' ')} {row[k]}" for k in kinds) + f" -> {log}")
+    # The verdict also goes into the staged entry's sidecar, where wiki-promote.py holds an uncorrected fix
+    # (task #178 row 8: the hold rested only on the orchestrator leaving the slug out of the promote call).
+    sc = _sidecar(nb, args.entry)
+    if sc is None:
+        print(f"warning: {args.entry} is not staged (no sidecar in _inbox/proposed/): the verdict is only logged")
+        return 0
+    meta = json.loads(sc.read_text(encoding="utf-8"))
+    meta["checker"] = {"verdict": row["verdict"], "report": args.report, "corrected": False, "logged_at": row["ts"]}
+    atomic_write_text(sc, json.dumps(meta, indent=2, ensure_ascii=False) + "\n")
+    if row["verdict"] == "fix":
+        print(f"held from promotion until corrected: fix the entry from the report, then "
+              f"`wiki-cycle-scope.py checker-corrected --entry {args.entry}`")
+    return 0
+
+
+def _sidecar(nb: Path, slug: str) -> Path | None:
+    f = nb / "_inbox" / "proposed" / f"{slug}.proposed_metadata.json"
+    return f if f.is_file() else None
+
+
+def cmd_checker_corrected(nb: Path, args) -> int:
+    """The staged entry was corrected from its checker report: wiki-promote.py may promote it now."""
+    sc = _sidecar(nb, args.entry)
+    if sc is None:
+        print(f"error: {args.entry} is not staged (no {args.entry}.proposed_metadata.json in _inbox/proposed/)",
+              file=sys.stderr)
+        return 2
+    meta = json.loads(sc.read_text(encoding="utf-8"))
+    chk = meta.get("checker")
+    if not isinstance(chk, dict):
+        print(f"error: {args.entry} has no checker verdict to correct (run checker-log first)", file=sys.stderr)
+        return 2
+    chk.update({"corrected": True, "corrected_at": now_stamp()})
+    atomic_write_text(sc, json.dumps(meta, indent=2, ensure_ascii=False) + "\n")
+    print(f"corrected: {args.entry} (checker verdict {chk.get('verdict')}) may be promoted -> {sc}")
     return 0
 
 
@@ -419,6 +460,17 @@ def _write_json(path: Path, rec: dict) -> None:
     atomic_write_text(path, json.dumps(rec, indent=2) + "\n")
 
 
+def cmd_session_cost(nb: Path, args) -> int:
+    """The session's running total, for /wrap-up's report (task #182 row 34): no run folder, writes nothing."""
+    cur, err = _session_cost(args.session_id)
+    if cur is None:
+        print(f"cost: NOT checked: {err}")
+        return 3
+    print(f"cost: ${cur['total_cost_usd']:.2f} so far this session (session {cur['session_id']}; Claude Code's "
+          "API-price estimate, subagents included; on a subscription plan a comparison figure, not a bill)")
+    return 0
+
+
 def cmd_cost(nb: Path, args) -> int:
     rf = Path(args.run_folder)
     rf.mkdir(parents=True, exist_ok=True)
@@ -467,6 +519,8 @@ def main() -> int:
     lg.add_argument("--run-folder", required=True)
     lg.add_argument("--entry", required=True)
     lg.add_argument("--report", required=True)
+    cc = sub.add_parser("checker-corrected")
+    cc.add_argument("--entry", required=True)
     m = sub.add_parser("models")
     m.add_argument("--run-folder", required=True)
     m.add_argument("--ingester", default=str(HOME_CLAUDE / "agents" / "wiki-ingester-config.json"))
@@ -476,6 +530,8 @@ def main() -> int:
     co.add_argument("--run-folder", required=True)
     co.add_argument("--mark", choices=("start", "end"), required=True)
     co.add_argument("--session-id", default=None)
+    sco = sub.add_parser("session-cost")
+    sco.add_argument("--session-id", default=None)
     pr = sub.add_parser("promote")
     pr.add_argument("--run-folder", required=True)
     args = ap.parse_args()
@@ -489,7 +545,8 @@ def main() -> int:
         print(f"error: no wiki at {nb}", file=sys.stderr)
         return 2
     return {"semantic": cmd_semantic, "claims": cmd_claims, "synthesis": cmd_synthesis, "checker": cmd_checker,
-            "checker-log": cmd_checker_log, "models": cmd_models, "cost": cmd_cost,
+            "checker-log": cmd_checker_log, "checker-corrected": cmd_checker_corrected, "models": cmd_models,
+            "cost": cmd_cost, "session-cost": cmd_session_cost,
             "promote": cmd_promote}[args.cmd](nb, args)
 
 

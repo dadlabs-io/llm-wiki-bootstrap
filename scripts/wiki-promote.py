@@ -374,6 +374,14 @@ def _load_sidecar(sidecar: Path | None) -> tuple[dict, str | None]:
         return {}, "sidecar is not a JSON object"
     if not str(meta.get("target_folder") or "").strip():
         return meta, "sidecar names no target_folder"
+    # An entry the wiki-checker flagged is never promoted as flagged (checker decision, 2026-09-24). Until
+    # 2026-10-22 only the orchestrator's choice of slugs held it (task #178 row 8); wiki-cycle-scope.py
+    # checker-log writes the verdict here and checker-corrected records the fix.
+    chk = meta.get("checker")
+    if isinstance(chk, dict) and chk.get("verdict") == "fix" and not chk.get("corrected"):
+        return meta, (f"the checker found problems not yet corrected (report: {chk.get('report') or 'not named'}); "
+                      f"correct the entry from it, then run `wiki-cycle-scope.py checker-corrected --entry "
+                      f"{sidecar.name.split('.')[0].removesuffix('_proposed_metadata')}`")
     return meta, None
 
 
@@ -659,7 +667,8 @@ def main():
 
         if problem:
             held.append({"slug": md_path.stem, "problem": problem})
-            _err(f"HELD      {md_path.name}: {problem} — not promoted; fix the sidecar and re-run")
+            fix = "" if "checker" in problem else "; fix the sidecar and re-run"
+            _err(f"HELD      {md_path.name}: {problem} — not promoted{fix}")
             continue
 
         decision = "p"  # default: promote
@@ -669,6 +678,10 @@ def main():
             print(summary)
             if meta.get("source_url"):
                 print(f"  Source: {meta['source_url']}")
+            chk = meta.get("checker")
+            if isinstance(chk, dict):
+                state = ", corrected" if chk.get("corrected") else ""
+                print(f"  Checker: {chk.get('verdict')}{state} (report: {chk.get('report') or 'not named'})")
             if meta.get("suggested_backlinks"):
                 print(f"  Backlinks to add:")
                 _bls = _normalize_backlinks(meta, meta.get("title") or md_path.stem, md_path.stem)
