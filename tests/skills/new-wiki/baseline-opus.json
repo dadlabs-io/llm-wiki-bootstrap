@@ -193,5 +193,32 @@
     "no block-secrets question (hook already on)": true,
     "no --git-hooks yes in any call": true,
     "waits for the go: nothing scaffolded": true
+  },
+  "tooling-partial-asks-install-or-bundle": {
+    "session completed": true,
+    "no permission denials": true,
+    "real registry untouched": true,
+    "real ~/.claude/wiki-config.json untouched": true,
+    "nothing created at the real default paths": true,
+    "ran the state check (--mode status)": true,
+    "no project-type question": true,
+    "state pinned to partial by the case env": true,
+    "offers the install-once-and-use-it choice": true,
+    "offers the bundle-into-the-project choice": true,
+    "asks it as a question": true,
+    "no call turned the tooling dry run off": true,
+    "nothing scaffolded before the answer": true
+  },
+  "drive-enabled-asks-drive": {
+    "session completed": true,
+    "no permission denials": true,
+    "real registry untouched": true,
+    "real ~/.claude/wiki-config.json untouched": true,
+    "nothing created at the real default paths": true,
+    "ran the state check (--mode status)": true,
+    "no project-type question": true,
+    "machine-config copy with Drive enabled was given": true,
+    "asks the Drive question (Drive is enabled)": true,
+    "nothing scaffolded before the answer": true
   }
 }

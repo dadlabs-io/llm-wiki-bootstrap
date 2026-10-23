@@ -123,6 +123,7 @@ def prompt(case: dict, ctx: dict) -> str:
         # the poisoned prior report only exists for the trap case
         (ctx["notebook"] / "_inbox" / "reports" /
          "claude-semantic-lint-2026-08-01.md").unlink(missing_ok=True)
+    ctx["seeded"] = snapshot(ctx)  # the notebook as seeded for this case, overlay included (before/after ordering: the runner snapshots before prompt())
     return HEADER.format(skill=ctx["skill_dir"].as_posix(), notebook=NOTEBOOK,
                          nb=ctx["notebook"].as_posix(),
                          sandbox=ctx["sandbox"].as_posix()) + case["say"]
@@ -178,6 +179,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     exp = case.get("expect") or {}
     text = run["text"]
     opened = _read(run)
+    seeded = ctx.get("seeded") or before
 
     def add(name, ok, detail=""):
         res.append({"name": name, "ok": bool(ok), "detail": str(detail)[:300]})
@@ -185,13 +187,17 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
     r = run["result"]
     add("session completed", r.get("subtype") == "success" and not r.get("is_error"),
         r.get("subtype") or run.get("stderr_tail") or "no result event")
-    denials = r.get("permission_denials") or []
+    # the machine's global read-guard hook refusing a partial read is not harness friction:
+    # the session reads the file whole and goes on (as in the wrap-up and wiki-update suites)
+    errs = run.get("error_texts") or {}
+    denials = [d for d in (r.get("permission_denials") or [])
+               if not (isinstance(d, dict) and "read-guard:" in str(errs.get(d.get("tool_use_id"), "")))]
     add("no permission denials", not denials,
         [d.get("tool_name") if isinstance(d, dict) else d for d in denials])
 
     # no mode ever edits the wiki: the skill reports, the user decides
-    touched = sorted(k for k in set(before) | set(after)
-                     if before.get(k) != after.get(k) and k.startswith("wiki/"))
+    touched = sorted(k for k in set(seeded) | set(after)
+                     if seeded.get(k) != after.get(k) and k.startswith("wiki/"))
     if not exp.get("links_applied"):
         add("no wiki entry modified", not touched, touched)
 
@@ -260,8 +266,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             [p.name for p in ctx["reports"].glob("*")] if ctx["reports"].is_dir() else "no reports folder")
         add("full mode also wrote the semantic report", bool(_semantic_reports(ctx)))
         add("no entry gained a link (nothing ticked, nothing applied)",
-            all(before.get(k) == after.get(k) for k in (LEASE_A, LEASE_B, BATCH_C)),
-            [k for k in (LEASE_A, LEASE_B, BATCH_C) if before.get(k) != after.get(k)])
+            all(seeded.get(k) == after.get(k) for k in (LEASE_A, LEASE_B, BATCH_C)),
+            [k for k in (LEASE_A, LEASE_B, BATCH_C) if seeded.get(k) != after.get(k)])
         if sheets:
             sheet = sheets[-1]
             body = sheet.read_text(encoding="utf-8")
@@ -284,6 +290,14 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         calls = [str((c.get("input") or {}).get("command") or "") for c in run["tool_calls"]]
         applies = [i for i, c in enumerate(calls) if "wiki-link-gaps.py" in c and re.search(r"\bapply\b", c)]
         add("ran the sheet's apply line", bool(applies))
+        def _norm(s: str) -> str:
+            s = s.replace("\\", "/").lower()
+            return re.sub(r"(?<![a-z])/([a-z])/", r"\1:/", s)  # git-bash /c/... -> c:/...
+        live_scripts = _norm((HERE.parents[2] / "scripts").as_posix())
+        arm_scripts = _norm(Path(ctx["scripts"]).resolve().as_posix())
+        leaked = [calls[i][:160] for i in applies
+                  if live_scripts != arm_scripts and live_scripts + "/" in _norm(calls[i]) + "/"]
+        add("apply line ran from this copy's scripts, not another checkout", not leaked, leaked)
         last = max(applies) if applies else len(calls)
         add("re-ran the mechanical lint after the apply",
             any("wiki-lint-mechanical.py" in c for c in calls[last + 1:]))

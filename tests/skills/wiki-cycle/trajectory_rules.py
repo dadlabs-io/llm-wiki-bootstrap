@@ -12,6 +12,11 @@ _spec = importlib.util.spec_from_file_location(
 _wu = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_wu)
 
+# a global option and its value (`--topic cycletest`, `--topic=cycletest`) may come before the subcommand
+_SCOPE_OPTS = r"(?:\s+--[\w-]+(?:=\S+|\s+\S+))*"
+# `models` must be the subcommand itself: not `helper-models.json`, not `models.json`
+_SCOPE_MODELS = r"\s+models(?![\w.-])"
+
 RULES = [
     {"id": "read reference.md before writing the scratchpad", "kind": "read_before",
      "rule": "Create ... `scratchpad.md` from the template in reference.md",
@@ -20,7 +25,11 @@ RULES = [
     # spawning workers", which 21 of 22 runs since 2026-10-07 broke; Step 0 now prints the models instead
     {"id": "print the models before spawning any helper", "kind": "run_before",
      "rule": "At the start of every run the cycle runs one command that reads all three files and prints the model of each role ... it spawns from that list",
-     "before": r"wiki-cycle-scope\.py[^\n]*\bmodels\b", "before_tool": ["Bash", "PowerShell"],
+     # fixed 2026-10-23: the script may sit in a shell variable (S="uv run ... wiki-cycle-scope.py --topic t"; $S models ...)
+     "before": (r"wiki-cycle-scope\.py[\"']?" + _SCOPE_OPTS + _SCOPE_MODELS
+                + r"|(?:^|[\s;&(])\$?(\w+)=\\?[\"']?[^;&|\n]*?wiki-cycle-scope\.py.*?\$\{?\1\}?"
+                + _SCOPE_OPTS + _SCOPE_MODELS),
+     "before_tool": ["Bash", "PowerShell"],
      "action": r".", "tool": ["Agent", "Task"]},
     {"id": "helpers are spawned unnamed", "kind": "never",
      "rule": "spawn every one unnamed",

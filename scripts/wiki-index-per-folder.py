@@ -239,9 +239,9 @@ def emit_cycle_artifacts(
         "",
         f"**Status**: completed  ",
         f"**Timestamp**: {payload['timestamp']}  ",
-        f"**Summary**: {summary['folders_scanned']} folders scanned, "
+        f"**Summary**: {summary['folders_indexed']} folders scanned, "
         f"{summary['folders_updated']} regenerated, "
-        f"{summary['entries_indexed']} entries total.",
+        f"{summary['entries_listed']} entries total.",
         "",
         "## Queued (folders with an INDEX)",
         "",

@@ -236,6 +236,10 @@ with tempfile.TemporaryDirectory() as td:
         s = d.get("summary") or {}
         check(f"{step}: summary carries the contract's keys {keys}", all(isinstance(s.get(k), int) for k in keys),
               (p.returncode, sorted(s)))
+        # the .md beside it is written from the same summary (2026-10-23: it still read the old keys and
+        # raised KeyError after the .json, so the step had no .md)
+        check(f"{step}: exits 0 and writes {step}.md", p.returncode == 0 and (run / f"{step}.md").is_file(),
+              (p.returncode, p.stderr[-300:]))
     prop = nb / "_inbox" / "proposed"
     prop.mkdir(parents=True)
     for slug, sidecar in (("new-c", {"target_folder": "research/tooling", "title": "New C",

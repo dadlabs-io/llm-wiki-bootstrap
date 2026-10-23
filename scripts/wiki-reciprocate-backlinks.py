@@ -218,8 +218,8 @@ def emit_cycle_json(
         "",
         f"**Status**: completed  ",
         f"**Timestamp**: {payload['timestamp']}  ",
-        f"**Summary**: {summary['entries_processed']} entries processed, "
-        f"{summary['entries_updated']} updated, {summary['backlinks_added']} backlinks added, "
+        f"**Summary**: {summary['files_scanned']} entries processed, "
+        f"{summary['entries_touched']} updated, {summary['backlinks_added']} backlinks added, "
         f"{summary['backlinks_removed']} removed.",
         "",
         "## Queued (entries with backlink changes)",

@@ -30,8 +30,7 @@
     "opened lantern-reranker-choice": true,
     "opened lantern-query-latency-budget": true,
     "answer states 180": true,
-    "answer states 250": true,
-    "offers to file the answer": true
+    "answer states 250": true
   },
   "gap-disaster-recovery": {
     "session completed": true,
@@ -58,8 +57,31 @@
     "states facts only from opened entries (others marked as not read)": true,
     "never runs a model search (qmd query / vsearch / embed)": true,
     "its searches ran as keyword": true,
-    "tells the user this machine searches by keyword only": true,
     "opened lantern-ingest-batch-size": true,
     "answer states 250": true
+  },
+  "keyword-extras-below-ranked": {
+    "session completed": true,
+    "no permission denials": true,
+    "nothing written to the notebook": true,
+    "searched with the full search helper": true,
+    "no search outside this notebook": true,
+    "asked the helper for only 1 ranked result(s)": true,
+    "states facts only from opened entries (others marked as not read)": true,
+    "opened lantern-compaction-notes": true,
+    "answer states 37": true
+  },
+  "keyword-machine-word-not-in-entry": {
+    "session completed": true,
+    "no permission denials": true,
+    "nothing written to the notebook": true,
+    "searched with the full search helper": true,
+    "no search outside this notebook": true,
+    "states facts only from opened entries (others marked as not read)": true,
+    "never runs a model search (qmd query / vsearch / embed)": true,
+    "its searches ran as keyword": true,
+    "tells the user this machine searches by keyword only": true,
+    "opened lantern-chunking": true,
+    "answer states 512": true
   }
 }

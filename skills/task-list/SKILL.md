@@ -50,7 +50,7 @@ the card's body. `--append-details` adds a paragraph and keeps what is there. `-
 details is refused (exit 2, nothing written; task #101, a progress note once wiped a card's steps); replace them
 only when the user asks, with `--details "<new>" --replace-details`. Progress goes in the Log: `log <N> "<note>"`.
 
-`show` prints NOW, then the ORDER.md tasks in order, then the backlog by owner; `show <N>` prints the card in full;
+`show` prints NOW, then the ORDER.md tasks in order, then the backlog by owner (each owner's cards doing, ready, then waiting); `show <N>` prints the card in full;
 `show --waiting` lists every waiting card (current and backlog) with what it waits on, and `show --waiting <who>` only
 those whose `waiting_on` names them;
 `show --details` adds every current card's body.

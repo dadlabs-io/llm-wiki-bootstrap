@@ -63,5 +63,28 @@
     "reported the old name left in our own page": true,
     "reported the successor that does not name the retired entry back": true,
     "did not report the old name in the decision page": true
+  },
+  "full-lint-writes-link-gap-sheet": {
+    "session completed": true,
+    "no permission denials": true,
+    "no wiki entry modified": true,
+    "link-gap sheet written under _inbox/reports/": true,
+    "full mode also wrote the semantic report": true,
+    "no entry gained a link (nothing ticked, nothing applied)": true,
+    "sheet lists the thin entry with its same-subject entry": true,
+    "sheet lists nothing scored under 0.45 (the decoy)": true,
+    "sheet has no ticked pair": true,
+    "reply names the sheet": true
+  },
+  "apply-ticked-link-gaps": {
+    "session completed": true,
+    "no permission denials": true,
+    "ticked pair linked from A's Related section": true,
+    "ticked pair linked back from B's Related section": true,
+    "unticked pair not linked from A": true,
+    "unticked pair not linked from C": true,
+    "ran the sheet's apply line": true,
+    "apply line ran from this copy's scripts, not another checkout": true,
+    "re-ran the mechanical lint after the apply": true
   }
 }

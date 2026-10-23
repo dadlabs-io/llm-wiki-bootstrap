@@ -13,7 +13,7 @@ Runs a notebook's research pipeline end to end: gather new sources, give each on
 
 **Trigger:** */wiki-cycle*, plus "run the cycle", "update the wiki", "full wiki update".
 
-**Input / Output:** consumes the pending queue, the URLs you dropped into the configured Google Drive folder, the emails under your Gmail wiki label, and the wiki as it stands. Produces new entries, staged in `_inbox/proposed/` and then promoted or left for you by the notebook's `confirm_before_promote` (below), and a run folder, `_inbox/reports/<date>/<cycle_id>/`: one JSON and markdown file per step, the scratchpad, the scope files, the checker's reports and the cycle report. A `cycle_id` is `<YYYY-MM-DD>-<NN>`, which is also what `--resume` takes.
+**Input / Output:** consumes the pending queue, the URLs you dropped into the configured Google Drive folder, the emails under your Gmail wiki label, and the wiki as it stands. Produces new entries, staged in `_inbox/proposed/` and then promoted or left for you by the notebook's `confirm_before_promote` (below), and a run folder, `_inbox/reports/<date>/<cycle_id>/`: one JSON and markdown file per step, the scratchpad, the scope files, the checker's reports and the cycle report. Nothing else: the helper agents keep their working files in scratch folders outside the notebook, and any left over are deleted before the commit (2026-10-23). A `cycle_id` is `<YYYY-MM-DD>-<NN>`, which is also what `--resume` takes.
 
 ## What each mode runs
 

@@ -371,8 +371,10 @@ def render(stack: Stack, tag: str | None = None) -> list[str]:
             continue
         out.append(f"| {n} | {_cell(c.get('title'))} | {_cell(c.get('owner'))} | {c.get('status')} | "
                    f"{_cell(c.get('priority'))} | {_cell(_next_cell(c))} |")
+    # each owner's cards doing, ready, then waiting: the backlog has no ORDER.md, so `order` cannot place them
+    rank = {"doing": 0, "ready": 1, "waiting": 2}
     backlog = sorted((c for c in stack.cards if c.get("list") == "backlog" and c.id is not None and keep(c)),
-                     key=lambda c: (str(c.get("owner")).lower(), c.id))
+                     key=lambda c: (str(c.get("owner")).lower(), rank.get(c.get("status"), 3), c.id))
     out += ["", f"### {BACKLOG}", "", "| # | Task | Owner | Status | P | Next / waiting on |",
             "|---|---|---|---|---|---|"]
     out += [f"| {c.id} | {_cell(c.get('title'))} | {_cell(c.get('owner'))} | {c.get('status')} | "

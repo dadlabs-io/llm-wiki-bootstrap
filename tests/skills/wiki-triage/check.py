@@ -158,14 +158,30 @@ def _capture_agents(run: dict) -> list[dict]:
             if c.get("name") in ("Agent", "Task") and not c.get("parent_tool_use_id")]
 
 
-def _agent_corpus(run: dict, agents: list[dict]) -> str:
-    parts = [str((c.get("input") or {}).get("prompt", "")) for c in agents]
-    for c in run.get("tool_calls") or []:
-        inp = c.get("input") or {}
-        if c.get("name") == "Write" and "triage-capture" in _norm_path(inp.get("file_path")):
-            parts.append(str(inp.get("content", "")))
-        elif c.get("name") == "Bash" and "triage-capture" in _norm_path(inp.get("command")):
-            parts.append(str(inp.get("command", "")))
+_FILE_TOKEN = re.compile(r"[^\s\"'`<>|*?()\[\]]+\.(?:md|txt|json|ya?ml|csv)")
+
+
+def _agent_corpus(run: dict, agents: list[dict], ctx: dict) -> str:
+    """What the capture agents were given: their prompts, plus the content of every file a prompt
+    names (the brief), read from the sandbox as it stands when the check runs. The session's own
+    Bash and Write calls are not counted, so routing a plain item in the same command that creates
+    the triage-capture folder is not handing it to an agent."""
+    prompts = [str((c.get("input") or {}).get("prompt", "")) for c in agents]
+    parts = list(prompts)
+    sandbox = ctx["sandbox"].resolve()
+    for prompt in prompts:
+        for tok in _FILE_TOKEN.findall(prompt):
+            tok = _norm_path(tok).rstrip(".,;:")
+            p = Path(tok)
+            candidates = [p] if p.is_absolute() else [ctx["sandbox"] / tok, ctx["notebook"] / tok, ctx["project"] / tok]
+            for cand in candidates:
+                try:
+                    cand = cand.resolve()
+                    if cand.is_file() and sandbox in cand.parents:
+                        parts.append(cand.read_text(encoding="utf-8", errors="replace"))
+                        break
+                except OSError:
+                    continue
     return "\n".join(parts).lower()
 
 
@@ -241,7 +257,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
             models = [str((c.get("input") or {}).get("model", "")).lower() for c in agents]
             add("every capture agent passed the capture model (sonnet) as the Agent model",
                 bool(agents) and all("sonnet" in m for m in models), models)
-            corpus = _agent_corpus(run, agents)
+            corpus = _agent_corpus(run, agents, ctx)
             add("no capture agent was given a plain-titled source", not [n for n in plain if n.lower() in corpus], plain)
             unread = [n for n in opaque if n.lower() not in corpus]
             add("every opaque source is handed to some capture agent", not unread, unread)

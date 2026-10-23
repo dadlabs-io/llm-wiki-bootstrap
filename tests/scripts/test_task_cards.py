@@ -166,6 +166,17 @@ with tempfile.TemporaryDirectory() as tmp:
     check("show --details: the details after the overview", "Fifty questions on the labelling page." in p.stdout
           and "NOW: #20 " in p.stdout, p.stdout)
 
+    # --- the backlog lists each owner's cards doing, ready, then waiting (agent-builder's suggestion, 2026-10-23:
+    # it listed them by number, so a waiting card sat above a ready one and order cannot move backlog cards)
+    blog = td / "blog" / "wiki" / "tasks"
+    seed(blog)
+    run(blog, "add", "A later idea", "--owner", "main", "--backlog")
+    run(blog, "set", "5", "--status", "waiting", "--waiting-on", "a measurement")
+    p = run(blog, "show")
+    rows = [ln for ln in p.stdout.split("### Backlog", 1)[-1].splitlines() if ln.startswith("| ") and "| main |" in ln]
+    check("show: in the backlog a ready card is listed above a waiting one of the same owner",
+          [r.split("|")[1].strip() for r in rows] == ["30", "5"], rows)
+
     # --- waiting and waiting_on (rule 5)
     p = run(tasks, "set", "12", "--status", "waiting", "--next", "Mark's labels")
     fm, _, _ = card(tasks, 12)
