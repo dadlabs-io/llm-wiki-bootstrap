@@ -39,7 +39,7 @@ MOVED into `received/`, with `From: <project>` as its first line and a `Received
 notebook now holds the only copy, since the skill is this library's (Mark, 2026-09-29). Exit 1: the same suggestion
 (skill, issue and `Seen in`) is already here, received or decided; the script removes the sender's duplicate, and you
 report which copy is held here. The same skill and issue from another run is received as its own file: a repeat,
-which Step 3 counts. Exit 2: not a suggestion file. Answer the sender, tagged, that it is filed for the next pass (or,
+which Step 3 counts. Exit 2: not a suggestion file, or a file this notebook already holds (nothing is moved). Answer the sender, tagged, that it is filed for the next pass (or,
 on exit 1, that it was already here). Done when the file is in `received/` or the refusal has been reported.
 
 **Step 1 — Gather.** `uv run --project {{WIKI_SCRIPTS_DIR}} python <this skill's folder>/scripts/suggestions.py list`. Exit 3 means nothing has been
