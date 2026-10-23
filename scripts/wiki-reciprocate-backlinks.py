@@ -51,6 +51,7 @@ from pathlib import Path
 
 # Local helper for atomic writes (icarus integration plan §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _entry_checks import split_frontmatter  # noqa: E402
 from _atomic_io import atomic_write_text  # noqa: E402
 
 MARKER_START = "<!-- BACKLINKS-AUTO START -->"
@@ -63,19 +64,14 @@ def iso_now() -> str:
 
 
 def read_frontmatter_title(path: Path) -> str:
-    """Extract title from frontmatter; fall back to H1 or filename."""
+    """The frontmatter title (the one shared parser (task #177, 2026-10-22)); else the H1; else the file name."""
     try:
         text = path.read_text(encoding="utf-8")
     except OSError:
         return path.stem
-    # Frontmatter title:
-    m = re.search(r"^---\s*\n(.*?)\n---\s*\n", text, re.DOTALL | re.MULTILINE)
-    if m:
-        fm = m.group(1)
-        tm = re.search(r'^title:\s*["\']?(.+?)["\']?\s*$', fm, re.MULTILINE)
-        if tm:
-            return tm.group(1).strip().strip('"').strip("'")
-    # H1 fallback:
+    title = split_frontmatter(text)[0].get("title")
+    if isinstance(title, str) and title.strip():
+        return title.strip()
     hm = re.search(r"^# (.+)$", text, re.MULTILINE)
     if hm:
         return hm.group(1).strip()

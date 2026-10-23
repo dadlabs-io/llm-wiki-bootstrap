@@ -54,9 +54,8 @@ from pathlib import Path
 # Atomic-write helper (icarus §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
-from _entry_checks import is_superseded  # noqa: E402  (retired entries leave the folder index, 2026-09-14)
+from _entry_checks import is_superseded, split_frontmatter  # noqa: E402  (retired entries leave the folder index, 2026-09-14)
 
-FM_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 TLDR_HEADING_RE = re.compile(r"^##+\s*TL;DR\s*$", re.MULTILINE | re.IGNORECASE)
 H1_RE = re.compile(r"^#\s+(.+)$", re.MULTILINE)
 
@@ -70,20 +69,10 @@ def iso_now() -> str:
 
 
 def parse_frontmatter(text: str) -> tuple[dict, str]:
-    m = FM_RE.match(text)
-    if not m:
-        return {}, text
-    raw, body = m.group(1), text[m.end():]
-    fm = {}
-    for line in raw.splitlines():
-        s = line.strip()
-        if not s or s.startswith("#"):
-            continue
-        if ":" not in line:
-            continue
-        key, _, val = line.partition(":")
-        fm[key.strip()] = val.strip().strip('"').strip("'")
-    return fm, body
+    """(frontmatter, body), by the one shared parser (task #177, 2026-10-22)."""
+    fm, body = split_frontmatter(text, flat=True)
+    # the body starts after the blank lines below the closing ---, as this script's own regex always had it
+    return fm, re.sub(r"\A\s*\n", "", body)
 
 
 def extract_tldr(body: str) -> str:

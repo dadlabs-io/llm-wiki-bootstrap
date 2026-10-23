@@ -64,6 +64,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _entry_checks import split_frontmatter  # noqa: E402
 from _atomic_io import atomic_write_text  # noqa: E402
 from _wiki_config import load_config, load_registry, today_label, topic_root  # noqa: E402
 
@@ -156,13 +157,8 @@ def _tickets(nb: Path) -> list[Path]:
 
 
 def _front(text: str) -> dict:
-    m = re.match(r"\A---\s*\n(.*?)\n---", text, re.S)
-    out = {}
-    for line in (m.group(1).splitlines() if m else []):
-        k, _, v = line.partition(":")
-        if v:
-            out[k.strip()] = v.strip()
-    return out
+    """The frontmatter, by the one shared parser (task #177, 2026-10-22) (quotes now come off, as YAML reads them)."""
+    return split_frontmatter(text, flat=True)[0]
 
 
 def cmd_buckets(nb: Path, args) -> int:

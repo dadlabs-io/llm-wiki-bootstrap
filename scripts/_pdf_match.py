@@ -21,6 +21,8 @@ from collections import Counter
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from _entry_checks import split_frontmatter
+
 MIN_SHARED = 3
 STOP = {"the", "and", "for", "with", "you", "your", "are", "how", "what", "why", "this", "that", "from", "into",
         "not", "but", "can", "its", "our", "all", "about", "medium", "com", "www", "https", "http", "html", "pdf",
@@ -33,13 +35,8 @@ def words(text: str) -> set[str]:
 
 
 def _front(text: str) -> dict:
-    m = re.match(r"\A---\s*\n(.*?)\n---", text, re.S)
-    out = {}
-    for line in (m.group(1).splitlines() if m else []):
-        k, _, v = line.partition(":")
-        if v:
-            out[k.strip()] = v.strip().strip("\"'")
-    return out
+    """The frontmatter, by the one shared parser (task #177, 2026-10-22)."""
+    return split_frontmatter(text, flat=True)[0]
 
 
 def waiting_tickets(nb: Path) -> list[dict]:

@@ -41,6 +41,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _entry_checks import split_frontmatter  # noqa: E402
 import _wiki_config  # noqa: E402
 from _atomic_io import atomic_write_text  # noqa: E402
 from _source_identity import source_key  # noqa: E402
@@ -51,17 +52,12 @@ THIN = 0.3       # a high-confidence entry's claim under this is flagged
 
 
 def _front(path: Path) -> dict:
+    """A file's frontmatter, by the one shared parser (task #177, 2026-10-22)."""
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError:
         return {}
-    m = re.match(r"\A---\s*\n(.*?)\n---", text, re.S)
-    out = {}
-    for line in (m.group(1).splitlines() if m else []):
-        k, _, v = line.partition(":")
-        if v and not line.startswith((" ", "-", "\t")):
-            out[k.strip()] = v.strip().strip("\"'")
-    return out
+    return split_frontmatter(text, flat=True)[0]
 
 
 def _tier_out(t: str):

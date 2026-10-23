@@ -59,7 +59,7 @@ from pathlib import Path
 # Atomic-write helper (icarus §8).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _atomic_io import atomic_write_text  # noqa: E402
-from _entry_checks import is_superseded  # noqa: E402  (retired entries leave the MAP, 2026-09-14)
+from _entry_checks import is_superseded, split_frontmatter  # noqa: E402  (retired entries leave the MAP, 2026-09-14)
 
 FM_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 MAP_FILE = "_MAP.md"
@@ -188,17 +188,8 @@ def iso_now() -> str:
 
 
 def parse_frontmatter(text: str) -> dict:
-    m = FM_RE.match(text)
-    if not m:
-        return {}
-    fm = {}
-    for line in m.group(1).splitlines():
-        s = line.strip()
-        if not s or s.startswith("#") or ":" not in line:
-            continue
-        key, _, val = line.partition(":")
-        fm[key.strip()] = val.strip().strip('"').strip("'")
-    return fm
+    """The frontmatter, by the one shared parser (task #177, 2026-10-22)."""
+    return split_frontmatter(text, flat=True)[0]
 
 
 def tier_rank(tier: str) -> int:

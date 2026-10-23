@@ -41,37 +41,13 @@ DEFAULT_VAULT = _default_vault()
 # ── Frontmatter / metadata extraction ────────────────────────────────────────
 
 
-FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 
 
 def parse_frontmatter(content):
-    """Parse a minimal YAML-style frontmatter block. Returns (frontmatter_dict, body).
-
-    Only supports flat key: value pairs and one-line list values like
-    `tags: [a, b, c]`. Good enough for INDEX generation; not a full YAML parser.
-    """
-    m = FRONTMATTER_RE.match(content)
-    if not m:
-        return {}, content
-
-    raw = m.group(1)
-    body = content[m.end():]
-    fm = {}
-    for line in raw.splitlines():
-        if not line.strip() or line.strip().startswith("#"):
-            continue
-        if ":" not in line:
-            continue
-        key, _, value = line.partition(":")
-        key = key.strip()
-        value = value.strip()
-        # List form: [a, b, c]
-        if value.startswith("[") and value.endswith("]"):
-            inner = value[1:-1]
-            fm[key] = [v.strip().strip('"').strip("'") for v in inner.split(",") if v.strip()]
-        else:
-            fm[key] = value.strip('"').strip("'")
-    return fm, body
+    """(frontmatter, body), by the one shared parser (task #177, 2026-10-22)."""
+    fm, body = split_frontmatter(content)
+    # the body starts after the blank lines below the closing ---, as this script's own regex always had it
+    return fm, re.sub(r"\A\s*\n", "", body)
 
 
 def extract_title(body, fallback):

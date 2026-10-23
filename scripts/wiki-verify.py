@@ -56,6 +56,7 @@ VERIFIED_LINE_RE = re.compile(r"^verified:\s*\S+\s*$", re.MULTILINE)
 # Path-resolution helper lives in the shared _wiki_config module (single
 # source of truth for the multi-wiki config schema).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _entry_checks import split_frontmatter  # noqa: E402
 from _wiki_config import default_vault as _default_vault, resolve_vault_topic as _resolve_vault_topic  # noqa: E402
 
 
@@ -82,17 +83,8 @@ def resolve_entry(topic_root: Path, slug_or_path: str) -> Path | None:
 
 
 def parse_fm(entry: Path) -> dict[str, str]:
-    text = entry.read_text(encoding="utf-8", errors="replace")
-    m = FM_RE.match(text)
-    if not m:
-        return {}
-    fm = {}
-    for line in m.group(1).splitlines():
-        if not line.strip() or line.strip().startswith("#") or ":" not in line:
-            continue
-        k, _, v = line.partition(":")
-        fm[k.strip()] = v.strip().strip("\"' ")
-    return fm
+    """The frontmatter, by the one shared parser (task #177, 2026-10-22)."""
+    return split_frontmatter(entry.read_text(encoding="utf-8", errors="replace"), flat=True)[0]
 
 
 def sidecar_path(topic_root: Path, entry: Path) -> Path:

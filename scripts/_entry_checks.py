@@ -56,6 +56,7 @@ whether it was quoted.
 from __future__ import annotations
 
 import html
+import json
 import re
 from pathlib import Path
 
@@ -89,37 +90,59 @@ _NUMBER_CLAIM_RE = re.compile(
 # ── Parsing helpers (kept local to avoid circular imports) ───────────────────
 
 
-def split_frontmatter(text: str):
-    """Return (frontmatter_dict, body). Minimal YAML: `key: value` lines only;
-    inline `[a, b]` lists are returned as lists; block lists (`- item`) too."""
+FRONTMATTER_BLOCK = re.compile(r"\A---[ \t]*\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|\Z)", re.S)
+
+
+def yaml_scalar(value: str) -> str:
+    """One scalar as YAML reads the forms the wiki writes: a double-quoted value decoded (`\\"`, `\\\\`, `\\u00e9`;
+    json.dumps writes them), a single-quoted one with its pair off and `''` as a quote, anything else as it stands.
+    Until 2026-10-22 each script stripped every quote at both ends (task #177)."""
+    v = value.strip()
+    if len(v) >= 2 and v[0] == v[-1] == '"':
+        try:
+            out = json.loads(v)
+            return out if isinstance(out, str) else v[1:-1]
+        except ValueError:
+            return v[1:-1]
+    if len(v) >= 2 and v[0] == v[-1] == "'":
+        return v[1:-1].replace("''", "'")
+    return v
+
+
+def split_frontmatter(text: str, flat: bool = False):
+    """Return (frontmatter_dict, body): the one frontmatter parser every script uses (task #177, 2026-10-22).
+    Minimal YAML: top-level `key: value` lines (an indented line is never a top-level key; a repeated key, the
+    last wins), values by yaml_scalar(); inline `[a, b]` and block (`- item`) lists as lists; an empty value is
+    "". The body starts on the line after the closing `---`. No block at the top: ({}, text).
+    flat=True keeps every value a string, for scripts that read fields as text: an inline list stays its own
+    `[a, b]` text and block-list items are skipped (their key reads ""), as those scripts always had it."""
+    m = FRONTMATTER_BLOCK.match(text)
+    if not m:
+        return {}, text
     fm: dict = {}
-    body = text
-    if text.startswith("---"):
-        end = text.find("\n---", 3)
-        if end > 0:
-            header = text[3:end]
-            body = text[end + 4:]
-            last_key = None
-            for line in header.splitlines():
-                if not line.strip():
-                    continue
-                if line.startswith(("-", "  -")) and last_key:
-                    fm.setdefault(last_key, [])
-                    if isinstance(fm[last_key], list):
-                        fm[last_key].append(line.strip().lstrip("-").strip().strip("\"'"))
-                    continue
-                if ":" in line and not line.startswith(" "):
-                    key, value = line.split(":", 1)
-                    key = key.strip()
-                    value = value.strip()
-                    if value.startswith("[") and value.endswith("]"):
-                        fm[key] = [v.strip().strip("\"'") for v in value[1:-1].split(",") if v.strip()]
-                    elif value == "":
-                        fm[key] = []  # block list follows (or genuinely empty)
-                    else:
-                        fm[key] = value.strip("\"'")
-                    last_key = key
-    return fm, body
+    last_key = None
+    for line in m.group(1).splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("- ") or stripped == "-":
+            if last_key is not None and not flat:
+                if not isinstance(fm.get(last_key), list):
+                    if fm.get(last_key):
+                        continue  # a list item under a scalar: not this parser's business
+                    fm[last_key] = []
+                fm[last_key].append(yaml_scalar(stripped[1:]))
+            continue
+        if line[0] in " \t" or ":" not in line:
+            continue  # a nested mapping or a continuation line
+        key, _, value = line.partition(":")
+        key, value = key.strip(), value.strip()
+        if value.startswith("[") and value.endswith("]"):
+            fm[key] = value if flat else [yaml_scalar(v) for v in value[1:-1].split(",") if v.strip()]
+        else:
+            fm[key] = yaml_scalar(value)
+        last_key = key
+    return fm, text[m.end():]
 
 
 def check_frontmatter_loadable(text: str) -> list[tuple[str, str, str]]:

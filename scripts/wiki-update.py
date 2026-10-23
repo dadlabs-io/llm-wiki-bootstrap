@@ -479,19 +479,15 @@ def _title_search_terms(title, slug=None, tags=None):
 
 
 def _read_frontmatter_tags(path):
-    """Pull the `tags:` line from a file's YAML frontmatter. Returns list of strings."""
+    """The `tags:` of a file's frontmatter, as a list of strings (the one shared parser (task #177, 2026-10-22))."""
     try:
-        head = Path(path).read_text(encoding="utf-8")[:2000]
+        text = Path(path).read_text(encoding="utf-8")
     except (UnicodeDecodeError, OSError):
         return []
-    m = re.search(r"^tags:\s*\[([^\]]*)\]", head, re.MULTILINE)
-    if m:
-        return [t.strip().strip("'\"") for t in m.group(1).split(",") if t.strip()]
-    # YAML list form
-    m = re.search(r"^tags:\s*\n((?:\s*-\s*[^\n]+\n)+)", head, re.MULTILINE)
-    if m:
-        return [ln.strip().lstrip("-").strip().strip("'\"") for ln in m.group(1).splitlines() if ln.strip()]
-    return []
+    tags = split_frontmatter(text)[0].get("tags")
+    if isinstance(tags, str):
+        tags = [t.strip() for t in tags.strip("[]").split(",") if t.strip()]
+    return [t for t in (tags or []) if isinstance(t, str) and t]
 
 
 def find_inbound_candidates(new_path, wiki_dir, title, max_results=15):

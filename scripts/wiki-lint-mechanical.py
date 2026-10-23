@@ -178,24 +178,10 @@ def day(value):
 
 
 def parse_frontmatter(content):
-    """Return (frontmatter_dict, body) from a markdown file."""
-    m = FRONTMATTER_RE.match(content)
-    if not m:
-        return {}, content
-    raw = m.group(1)
-    body = content[m.end():]
-    fm = {}
-    for line in raw.splitlines():
-        if not line.strip() or line.strip().startswith("#") or ":" not in line:
-            continue
-        key, _, value = line.partition(":")
-        value = value.strip()
-        # Strip one matching pair of surrounding quotes — YAML-quoted values
-        # (raw_path: "raw/x.md", title: "...") must compare/resolve unquoted.
-        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
-            value = value[1:-1]
-        fm[key.strip().lower()] = value
-    return fm, body
+    """(frontmatter with lower-cased keys, body), by the one shared parser (task #177, 2026-10-22)."""
+    fm, body = split_frontmatter(content, flat=True)
+    # the body starts after the blank lines below the closing ---, as this script's own regex always had it
+    return {k.lower(): v for k, v in fm.items()}, re.sub(r"\A\s*\n", "", body)
 
 
 def collect_md_files(wiki_root):

@@ -86,6 +86,7 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _entry_checks import split_frontmatter  # noqa: E402
 from _atomic_io import atomic_write_text  # noqa: E402
 from _wiki_config import confirm_before_promote, load_config, now_stamp, topic_root  # noqa: E402
 
@@ -266,13 +267,8 @@ def cmd_synthesis(nb: Path, args) -> int:
 
 
 def _front(text: str) -> dict:
-    m = re.match(r"\A---\s*\n(.*?)\n---", text, re.S)
-    out = {}
-    for line in (m.group(1).splitlines() if m else []):
-        k, _, v = line.partition(":")
-        if v.strip():
-            out[k.strip()] = v.strip().strip('"').strip("'")
-    return out
+    """The frontmatter, by the one shared parser (task #177, 2026-10-22)."""
+    return split_frontmatter(text, flat=True)[0]
 
 
 def min_minutes(args) -> float:
