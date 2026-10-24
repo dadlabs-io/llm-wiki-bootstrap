@@ -63,7 +63,7 @@ If you want the global install first, then create projects separately:
 - the wiki root — `<project>/llm-wiki/` or a registered notebook in your notebooks vault — with `README`, `wiki/` (the folders you chose; `sessions/` always) and `raw/sessions/`; no usage docs, which live in the global toolset
 - only with `-SkillsInstall bundled`: `<project>/.claude/skills/`, `wiki-scripts/`, `wiki-templates/` (a private copy of the tooling)
 
-For Cursor users (Windows installer only; the Mac/Linux installer does not support Cursor yet): `.cursor/` replaces `.claude/`, the skills are always bundled, and `.cursor/rules/*.mdc` are generated from the SKILL.md files so Cursor's agent picks them up natively.
+For Cursor users: Cursor reads `~/.claude/skills/` and `~/.claude/agents/` natively, so the standard install above serves it too. What to set up by hand (rules, hooks, MCP, memory) and what does not work there: [`migrating-from-claude-to-cursor`](./migrating-from-claude-to-cursor.md). The older `-Tool cursor` installer (Windows only) bundles the skills into the project and generates `.cursor/rules/*.mdc` copies of them; with native loading those copies duplicate every skill.
 
 ## Prerequisites
 

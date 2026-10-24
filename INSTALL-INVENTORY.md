@@ -59,7 +59,7 @@ Manifest: `TRAVEL_AGENTS` in `scripts/_install_tooling.py` (added 2026-08-20)
 
 ## A3. Pack usage docs (wiki-seed)
 
-Source-of-truth: `wiki-seed/` (the pack page `llm-wiki.md`, plus `user-guide.md`, `commands.md`, `getting-started.md`, `install.md`, `drive-setup.md`) + `skills/<name>/wiki-seed/<name>.md` + `agents/<name>/wiki-seed/<name>.md`
+Source-of-truth: `wiki-seed/` (the pack page `llm-wiki.md`, plus `user-guide.md`, `commands.md`, `getting-started.md`, `install.md`, `drive-setup.md`, `skill-suggestions.md`, `migrating-from-claude-to-cursor.md`) + `skills/<name>/wiki-seed/<name>.md` + `agents/<name>/wiki-seed/<name>.md`
 Install target: the global toolset (section G): `how-to/llm-wiki/<page>.md` + `how-to/llm-wiki/skills/<name>.md` + `how-to/llm-wiki/agents/<name>.md`, by every global install and by `--phase docs`. Until 2026-10-04 every project wiki got its own copy
 
 `user-guide.md` is the one-page guide to the whole system (2026-09-25, task #41). Until then it was a file in the old notebook template that no refresh reached, so three copies drifted apart; it moved here so there is one copy and a fix is made once.
@@ -214,6 +214,6 @@ Kept by `seed_toolset()` (`_install_tooling.py`) as step 7 of every global insta
 2. **Update notifications** — none; the refresh is idempotent and cheap, so it is run rather than detected. The lint's installed-skill section checks loadability, not staleness.
 3. **Versioning** — the six framework-contract docs carry `framework-version`; every skill and the agent carry `last_reviewed` / `review_after` / `reviewed_for_model`; `install_version` is a date stamp. Extending `framework-version` to the other scaffolded files is on the roadmap.
 4. **Test mode** — `--dry-run` on every phase; `--check` on `--phase docs`.
-5. **OS support** — `install-wiki.sh` covers Mac/Linux for Claude Code; Cursor is Windows-only (`-Tool cursor`).
+5. **OS support** — `install-wiki.sh` covers Mac/Linux for Claude Code; Cursor is Windows-only (`-Tool cursor`). Since Cursor reads `~/.claude/skills/` and `~/.claude/agents/` natively, the standard install serves Cursor too: `wiki-seed/migrating-from-claude-to-cursor.md` (2026-10-24).
 
 Everything listed in this file ships; the manifests in `_install_tooling.py` are the authoritative lists.

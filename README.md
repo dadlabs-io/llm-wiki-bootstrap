@@ -146,6 +146,11 @@ For each session afterward: `/wrap-up` at the end.
 > **Windows only** for now — `install-wiki.ps1 -Tool cursor`. The `.sh` script
 > does not yet support Cursor; Mac/Linux Cursor users should use the Claude Code
 > install path (Cursor 2.4+ also scans `~/.claude/skills/` natively).
+>
+> **Already on Claude Code and moving to Cursor?** Keep the Claude Code install and read
+> [`wiki-seed/migrating-from-claude-to-cursor.md`](wiki-seed/migrating-from-claude-to-cursor.md):
+> Cursor reads `~/.claude/skills/` and `~/.claude/agents/` itself, so `-Tool cursor` would only
+> add duplicate `.mdc` copies of every skill. The page says what to set up by hand.
 
 ### Install globally (Windows)
 

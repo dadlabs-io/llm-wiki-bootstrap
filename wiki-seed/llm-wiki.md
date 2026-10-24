@@ -24,7 +24,8 @@ session picks up where the last one left off; outside a wiki project it prints n
 Every skill has its own page in the sibling `skills/` folder — linked below. For the guided
 version of this list, see [`user-guide.md`](./user-guide.md) (the whole system on one page),
 [`commands.md`](./commands.md) (the full command reference) and
-[`getting-started.md`](./getting-started.md) (the first-hour walkthrough).
+[`getting-started.md`](./getting-started.md) (the first-hour walkthrough). Moving to Cursor:
+[`migrating-from-claude-to-cursor.md`](./migrating-from-claude-to-cursor.md) (what carries over, what to set up).
 
 ## Daily drivers
 
