@@ -10,7 +10,7 @@ date: 2026-09-08
 
 > ⚠️ **Framework-managed file.** This is shipped by the LLM-wiki installer and may be overwritten when you refresh the framework. **Don't hand-edit.** To customize, see the wiki root's `README.md` → "Framework-managed folders".
 
-Canonical reference for the LLM-wiki framework. Each command works inside Claude Code (or Cursor, via the .mdc rules) once the framework is installed for this project.
+Canonical reference for the LLM-wiki framework. Each command works inside Claude Code once the framework is installed for this project. Cursor loads the same installed skills from `~/.claude/skills/`; what else it needs is in [`migrating-from-claude-to-cursor`](./migrating-from-claude-to-cursor.md).
 
 ## The user-facing commands (these are the only ones you'll typically type)
 
