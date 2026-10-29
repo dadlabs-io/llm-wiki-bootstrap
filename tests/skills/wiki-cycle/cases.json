@@ -7,7 +7,9 @@
     "effective-context-engineering": {"url": "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents"},
     "writing-tools-for-agents": {"url": "https://www.anthropic.com/engineering/writing-tools-for-agents"},
     "multi-agent-research": {"url": "https://www.anthropic.com/engineering/multi-agent-research-system"},
-    "react-paper-pdf": {"url": "https://arxiv.org/pdf/2210.03629"}
+    "react-paper-pdf": {"url": "https://arxiv.org/pdf/2210.03629"},
+    "yt-one": {"url": "https://www.youtube.com/watch?v=rj7xi-s4Ssg"},
+    "yt-two": {"url": "https://www.youtube.com/watch?v=2xuFcmUAQUc"}
   },
   "cases": [
     {"id": "quick-staged", "kind": "ingest-only", "timeout": 3000,
@@ -53,10 +55,10 @@
     {"id": "hub-misses-one-tagged-entry-gets-one-line-others-untouched", "kind": "hub", "hub_complete": false, "timeout": 3000, "staged": 2, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"},
     {"id": "hub-already-links-every-tagged-entry-stays-unchanged", "kind": "hub", "hub_complete": true, "timeout": 3000, "staged": 2, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"},
     {"id": "big-source-entry-checked-small-unpicked-entry-not", "kind": "checker-gate", "items": ["big", "small0"], "checked": ["big"], "unchecked": ["small0"], "timeout": 3000, "staged": 2, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"},
-    {"id": "spot-check-picks-one-small-entry-only-that-one-checked", "kind": "checker-gate", "items": ["small2", "small0"], "checked": ["small2"], "unchecked": ["small0"], "timeout": 3000, "staged": 2, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"}
+    {"id": "spot-check-picks-one-small-entry-only-that-one-checked", "kind": "checker-gate", "items": ["small2", "small0"], "checked": ["small2"], "unchecked": ["small0"], "timeout": 3000, "staged": 2, "done": 2, "say": "/wiki-cycle --resume {cycle_id}", "author": "eval-case-writer"},
+    {"id": "youtube-videos-in-one-batch-go-to-one-worker", "kind": "youtube-batch", "timeout": 5400, "queue": ["yt-one", "context-engineering", "yt-two"], "videos": ["yt-one", "yt-two"], "staged": 3, "done": 3, "say": "/wiki-cycle --ingest-only", "tags": ["complex"], "author": "eval-case-writer"}
   ],
   "_planned": {
-    "_comment": "Cases from the #42 plan (notebook sessions/main/42-wiki-cycle-plan.md, section D) not built yet. gated-no-browser, discover-live, quote-check-in-cycle and canon-gate-headless were dropped as overtaken or covered (Mark, 2026-10-23).",
-    "youtube-batch": "#45; kind youtube-batch is in check.py; its case waits for two real videos (under 15 min, captions, on topic) in sources (Mark, 2026-10-23: hold until we have one), complex"
+    "_comment": "Cases from the #42 plan (notebook sessions/main/42-wiki-cycle-plan.md, section D) not built yet. gated-no-browser, discover-live, quote-check-in-cycle and canon-gate-headless were dropped as overtaken or covered (Mark, 2026-10-23)."
   }
 }
