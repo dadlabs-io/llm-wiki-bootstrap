@@ -14,9 +14,10 @@ and what does not:
   SKILL.md". The files_absent/regex checks beside it carry the rest.
 - `questions`: answered YES or NO by a judge model (Sonnet) from the session's reply,
   compared with `expect`.
-- `judge` (the free-text rubric) and the without-skill ablation runs are not ported: our
-  standard is a baseline per model with the skill, and every rubric's testable parts are
-  already in `expect` and `questions`.
+- `judge` (the free-text rubric) is not ported: every rubric's testable parts are already in
+  `expect` and `questions`. The without-skill ablation is the runner's `--ablation` (2026-10-29),
+  which works for every suite; there "the skill is used" passes in both arms (the stub
+  SKILL.md is read), so it is listed as a check with no signal, which is expected.
 
 Each case gets a fresh project folder built from its own setup, so no case depends on another.
 """

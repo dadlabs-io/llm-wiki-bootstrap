@@ -122,15 +122,89 @@ def render_skill(skill: str, ref: str | None, dest: Path, replacements: dict | N
     return dest
 
 
-def build_toolset(root: Path, repo: Path = REPO) -> Path:
+def render_without(skill: str, ref: str | None, dest: Path, repo: Path = REPO) -> Path:
+    """--ablation's skill: a SKILL.md with the skill's own frontmatter (so every suite's prompt, which
+    names the skill and may read its description, still works) and none of its instructions; the
+    folder's other files (reference pages, step files) are withheld too."""
+    src_rel = f"skills/{skill}/SKILL.md"
+    if ref:
+        text = subprocess.run(["git", "-C", str(REPO), "show", f"{ref}:{src_rel}"],
+                              capture_output=True, text=True, encoding="utf-8", check=True).stdout
+    else:
+        text = (repo / src_rel).read_text(encoding="utf-8")
+    m = re.match(r"(---\n.*?\n---\n)", text.replace("\r\n", "\n"), re.S)
+    if not m:
+        sys.exit(f"{src_rel} has no frontmatter")
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / "SKILL.md").write_text(
+        m.group(1) + f"\n# {skill}\n\nThis run measures the session without this skill: its instructions are "
+        "withheld. Do what the request asks as you would without them.\n", encoding="utf-8")
+    return dest
+
+
+def build_toolset(root: Path, repo: Path = REPO, without: str | None = None) -> Path:
     """The sandbox's global toolset: the repo's files as an install lays them out (toolset_files()),
-    added beside whatever the suite already put there (e.g. another pack's usage pages)."""
+    added beside whatever the suite already put there (e.g. another pack's usage pages). ``without``
+    names a skill whose own usage page is left out (--ablation: the page carries its walkthrough)."""
     sys.path.insert(0, str(REPO / "scripts"))
     from _install_tooling import toolset_files
     for rel, src in toolset_files(repo).items():
+        if without and src.parent.name == "wiki-seed" and src.parent.parent.name == without \
+                and src.parent.parent.parent.name == "skills":
+            continue
         (root / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, root / rel)
     return root
+
+
+def escapes(run: dict, skill: str) -> list[str]:
+    """The calls by which a run without the skill still reached it: the installed copy
+    (~/.claude/skills/<skill>/), the Skill tool loading it, or the real toolset's usage page. Any one
+    voids that case's with/without delta; it never fails the case."""
+    hits = []
+    installed = f".claude/skills/{skill}/"
+    page = f"global-toolset/how-to/llm-wiki/skills/{skill}.md"
+    for c in run.get("tool_calls", []):
+        inp = c.get("input") or {}
+        if c.get("name") == "Skill":
+            if str(inp.get("skill", "")).split(":")[-1] == skill:
+                hits.append(f"Skill: {skill}")
+            continue
+        blob = json.dumps(inp).replace("\\\\", "/").lower()
+        if installed in blob or page in blob:
+            hits.append(f"{c.get('name')}: {blob[:120]}")
+    return hits
+
+
+def ablation(with_res: dict, without_res: dict, cases: list[dict]) -> dict:
+    """Per case and model: passed with the skill, without it, and the delta (+1 the skill made it pass,
+    0 no difference, -1 it made it fail; None when the run without it escaped to the skill). Positives
+    are the cases that should use the skill; under four, a delta is a hint, not a measure (agent-builder's
+    floor). A check true in both arms on every run of a case carries no signal ("weak")."""
+    rows, void, weak = {}, [], []
+    for m, rs in with_res.items():
+        for case in cases:
+            w, o = rs.get(case["id"]), (without_res.get(m) or {}).get(case["id"])
+            if w is None:
+                continue
+            if o is None or o.get("escaped"):
+                rows[(case["id"], m)] = {"with": w["passed"], "without": None if o is None else o["passed"], "delta": None}
+                void.append((case["id"], m))
+            else:
+                rows[(case["id"], m)] = {"with": w["passed"], "without": o["passed"],
+                                         "delta": int(w["passed"]) - int(o["passed"])}
+    for case in cases:
+        runs = [(with_res[m][case["id"]], without_res[m][case["id"]]) for m in with_res
+                if (case["id"], m) in rows and rows[(case["id"], m)]["delta"] is not None]
+        if not runs:
+            continue
+        names = {c["name"] for w, _o in runs for c in w["checks"]}
+        for n in sorted(names):
+            if all(any(c["name"] == n and c["ok"] for c in w["checks"])
+                   and any(c["name"] == n and c["ok"] for c in o["checks"]) for w, o in runs):
+                weak.append((case["id"], n))
+    positives = sum(1 for c in cases if c.get("should_trigger") is not False)
+    return {"rows": rows, "positives": positives, "below_floor": positives < 4, "weak": weak, "void": void}
 
 
 def export_tree(ref: str, dest: Path) -> Path:
@@ -310,10 +384,12 @@ def trajectory_checks(skill: str, run: dict, today: str) -> list[dict]:
 
 
 def run_model(model: str, cases: list[dict], args, check, stamp_dir: Path, tools: list[str],
-              repo: Path = REPO, label: str = "") -> dict:
+              repo: Path = REPO, label: str = "", without: bool = False) -> dict:
     """Every case on one model. ``repo`` is this repo, or --red-green's export of the old ref
-    (``label`` "-old"), whose skill, scripts, agents and docs the sandbox then uses."""
+    (``label`` "-old"), whose skill, scripts, agents and docs the sandbox then uses. ``without``
+    (--ablation) runs the cases with the skill's instructions withheld, label "-without"."""
     ref = None if repo != REPO else args.skill_ref
+    label = "-without" if without else label
     out_dir = stamp_dir / f"{model}{label}"
     out_dir.mkdir(parents=True, exist_ok=True)
     ctx = check.setup(model, stamp_dir / f"sandbox-{model}{label}", repo)
@@ -321,10 +397,16 @@ def run_model(model: str, cases: list[dict], args, check, stamp_dir: Path, tools
     ctx["repo_root"] = repo
     ctx["toolset"] = Path(ctx.get("toolset") or ctx["sandbox"] / "global-toolset")
     if ctx["toolset"].resolve().is_relative_to(Path(ctx["sandbox"]).resolve()):  # never write outside the sandbox
-        build_toolset(ctx["toolset"], repo)
+        if without:
+            build_toolset(ctx["toolset"], repo, without=args.skill)
+        else:
+            build_toolset(ctx["toolset"], repo)
     repl = {TOOLSET_PLACEHOLDER: ctx["toolset"].as_posix(),
             **(check.render_replacements(ctx) if hasattr(check, "render_replacements") else {})}
-    render_skill(args.skill, ref, ctx["skill_dir"], repl, repo)
+    if without:
+        render_without(args.skill, ref, ctx["skill_dir"], repo)
+    else:
+        render_skill(args.skill, ref, ctx["skill_dir"], repl, repo)
     for extra in getattr(check, "EXTRA_SKILLS", []):  # the skills this one calls, beside it
         render_skill(extra, ref, ctx["skill_dir"].parent / extra, repl, repo)
     results = {}
@@ -342,6 +424,8 @@ def run_model(model: str, cases: list[dict], args, check, stamp_dir: Path, tools
                "wall_s": run["wall_s"], "tool_errors": run["tool_errors"],
                "permission_denials": run["result"].get("permission_denials") or [],
                "stderr_tail": run["stderr_tail"]}
+        if without:
+            rec["escaped"] = escapes(run, args.skill)
         (out_dir / f"{case['id']}.json").write_text(json.dumps(rec, indent=2), encoding="utf-8")
         print(f"[{model}{label}] {case['id']}: {'PASS' if rec['passed'] else 'FAIL'} "
               f"({rec['wall_s']:.0f}s, {rec['turns']} turns, ${rec['cost_usd'] or 0:.2f})", flush=True)
@@ -366,7 +450,13 @@ def report_header(args, models: list[str], cases: list[dict], results: dict, inf
     headings are the template for a measurement written by hand (README, Reporting a measurement)."""
     rg = info.get("red_green") or {}
     old = info.get("old") or {}
-    if args.red_green:
+    abl = info.get("ablation")
+    without = info.get("without") or {}
+    old = {**{f"{m}-old": rs for m, rs in old.items()}, **{f"{m}-without": rs for m, rs in without.items()}}
+    if abl:
+        compared = ("Without the skill: each case also ran with the skill's instructions withheld (a SKILL.md "
+                    "with only its name and description, its usage page left out of the toolset).")
+    elif args.red_green:
         compared = (f"Red then green: each case ran on an export of `{args.red_green}` (its skill and scripts), "
                     f"then on {'git ' + args.skill_ref if args.skill_ref else 'the working tree'}.")
     else:
@@ -384,7 +474,8 @@ def report_header(args, models: list[str], cases: list[dict], results: dict, inf
     lines = ["## Compared with", "", compared, "",
              "## n", "",
              f"{len(cases)} case(s) x {len(models)} model(s), one session each"
-             + (", on the old copy and on the new" if args.red_green else "") + f": {n_runs} session(s).", "",
+             + (", on the old copy and on the new" if args.red_green else "")
+             + (", with and without the skill" if abl else "") + f": {n_runs} session(s).", "",
              "## Cost", "", f"${cost:.2f} in all, {minutes:.0f} min of sessions.", "",
              "## What this does not show", "",
              "- One session per case and model: a single pass or fail can be noise; a flip needs a rerun before it counts."]
@@ -403,6 +494,13 @@ def report_header(args, models: list[str], cases: list[dict], results: dict, inf
         weak = sorted({f"{cid} ({m})" for (cid, m), v in rg.items() if v == "green-green"})
         if weak:
             lines.append(f"- Passed on the old copy too, so they do not test this change: {', '.join(weak)}.")
+    if abl:
+        if abl["below_floor"]:
+            lines.append(f"- Only {abl['positives']} positive case(s), below the four a with/without delta needs: "
+                         "read the delta as a hint, not a measure.")
+        if abl["void"]:
+            lines.append("- Delta void, the run without the skill reached it (installed copy, Skill tool or usage page): "
+                         + ", ".join(f"{cid} ({m})" for cid, m in abl["void"]) + ".")
     return lines + [""]
 
 
@@ -427,6 +525,33 @@ def write_report(stamp_dir: Path, args, models: list[str], cases: list[dict], re
                        if o and not o["passed"] else "")
                 cells.append(names[v] + why)
             lines.append(f"| {case['id']} | " + " | ".join(cells) + " |")
+        lines.append("")
+    if info.get("ablation"):
+        abl = info["ablation"]
+        word = {True: "PASS", False: "FAIL", None: "void"}
+        lines += ["## With and without the skill", "", "| Case | " + " | ".join(models) + " |", "|---|" + "---|" * len(models)]
+        for case in cases:
+            cells = []
+            for m in models:
+                r = abl["rows"].get((case["id"], m))
+                if not r:
+                    cells.append("—")
+                    continue
+                d = r["delta"]
+                cells.append(f"with {word[r['with']]} · without {word[r['without']] if d is not None else 'void'} · "
+                             + ("delta void" if d is None else f"delta {d:+d}"))
+            neg = " (should not use the skill)" if case.get("should_trigger") is False else ""
+            lines.append(f"| {case['id']}{neg} | " + " | ".join(cells) + " |")
+        lines.append("")
+        pos = [c["id"] for c in cases if c.get("should_trigger") is not False]
+        for m in models:
+            rs = [abl["rows"][(cid, m)] for cid in pos if (cid, m) in abl["rows"] and abl["rows"][(cid, m)]["delta"] is not None]
+            lines.append(f"- **{m}**: positives passed {sum(r['with'] for r in rs)}/{len(rs)} with the skill vs "
+                         f"{sum(r['without'] for r in rs)}/{len(rs)} without.")
+        if abl["weak"]:
+            lines += ["", "Checks true in both arms on every run (no signal between them; a case-writer `legacy-review` "
+                      "can rewrite them):", ""]
+            lines += [f"- {cid}: {n}" for cid, n in abl["weak"]]
         lines.append("")
     lines += ["## Results", "", "| Case | " + " | ".join(models) + " |", "|---|" + "---|" * len(models)]
     for case in cases:
@@ -491,7 +616,12 @@ def main() -> int:
     ap.add_argument("--red-green", metavar="REF",
                     help="run each selected case on an export of REF (skill and scripts) first, then on the "
                          "working tree; exit 0 only when every case fails on the old copy and passes on the new")
+    ap.add_argument("--ablation", action="store_true",
+                    help="also run every case without the skill's instructions; report the per-case delta "
+                         "(the exit code is still the with-skill run's)")
     args = ap.parse_args()
+    if args.ablation and args.red_green:
+        ap.error("--ablation and --red-green do not combine: run them separately")
     args.today = datetime.now().strftime("%Y-%m-%d")
 
     check = load_check(args.skill)
@@ -509,6 +639,7 @@ def main() -> int:
     models = [m.strip() for m in args.models.split(",") if m.strip()]
     stamp = (datetime.now().strftime("%Y%m%d-%H%M%S") + (f"-{args.skill_ref}" if args.skill_ref else "")
              + (f"-red-green-{args.red_green}" if args.red_green else "")
+             + ("-ablation" if args.ablation else "")
              + (f"-effort-{args.effort}" if args.effort else ""))
     stamp_dir = HERE / ".results" / args.skill / re.sub(r"[^\w.-]", "_", stamp)
     stamp_dir.mkdir(parents=True)
@@ -521,17 +652,28 @@ def main() -> int:
     tools = getattr(check, "ALLOWED_TOOLS", DEFAULT_TOOLS)
     old_repo = export_tree(args.red_green, stamp_dir / "old-tree") if args.red_green else None
 
-    def both(m):  # the old copy first, then the new, each in its own sandbox
+    def both(m):  # the old copy first, then the new, then (--ablation) without the skill, each in its own sandbox
         old = run_model(m, cases, args, check, stamp_dir, tools, old_repo, "-old") if old_repo else None
-        return old, run_model(m, cases, args, check, stamp_dir, tools)
+        new = run_model(m, cases, args, check, stamp_dir, tools)
+        wo = run_model(m, cases, args, check, stamp_dir, tools, without=True) if args.ablation else None
+        return old, new, wo
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(models)) as ex:
         futures = {m: ex.submit(both, m) for m in models}
         pairs = {m: f.result() for m, f in futures.items()}
-    results = {m: new for m, (_old, new) in pairs.items()}
+    results = {m: new for m, (_old, new, _wo) in pairs.items()}
     if old_repo:
-        info["old"] = {m: old for m, (old, _new) in pairs.items()}
+        info["old"] = {m: old for m, (old, _new, _wo) in pairs.items()}
         info["red_green"] = red_green(info["old"], results)
+    if args.ablation:
+        info["without"] = {m: wo for m, (_old, _new, wo) in pairs.items()}
+        info["ablation"] = ablation(results, info["without"], cases)
+        abl = info["ablation"]
+        (stamp_dir / "ablation.json").write_text(json.dumps(
+            {"positives": abl["positives"], "below_floor": abl["below_floor"],
+             "rows": [{"case": cid, "model": m, **r} for (cid, m), r in abl["rows"].items()],
+             "void": [{"case": cid, "model": m} for cid, m in abl["void"]],
+             "weak": [{"case": cid, "check": n} for cid, n in abl["weak"]]}, indent=2), encoding="utf-8")
 
     report = write_report(stamp_dir, args, models, cases, results, fixtures, info)
     (stamp_dir / "summary.json").write_text(json.dumps(

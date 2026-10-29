@@ -48,6 +48,16 @@ uv run python tests/skills/run_skill_test.py wiki-update --cases <new-case>,<cha
 
 Each case runs on an export of that ref (its skill **and** its scripts, agents and docs, so a change made in a script counts), then on the working tree. The report's Red then green table gives each case and model one verdict: red then green (proves the change, with the checks that failed on the old copy, so you can see it failed for the right reason), passes on the old copy too, fails on the new copy. The exit code is 0 only when every case is red then green. A case that passes on the old copy goes back to `eval-case-writer` (mode `replay`) with the old run's reply; it is not counted as proof. The old copy's sessions cost the same as the new ones: run only the new and changed cases this way. Nothing more runs by default; a full suite waits for Mark's yes (above).
 
+## With and without the skill (--ablation)
+
+A suite passing says the skill's output is right; it does not say the skill is why (task #226 A1, agent-builder's ablation ported). `--ablation` runs every selected case a second time per model with the skill's instructions withheld: the sandbox gets a SKILL.md with only the skill's name and description (so every suite's prompt still works), none of the folder's other files, and a toolset without the skill's own usage page. Everything else (scripts, the skills it calls) is the same in both runs.
+
+```bash
+uv run python tests/skills/run_skill_test.py writing-skill-suggestions --models sonnet --ablation
+```
+
+The report's "With and without the skill" table gives each case's delta: +1 the skill made it pass, 0 no difference, -1 it made it fail. Then come the positives passed in each run (cases with `"should_trigger": false` are not positives), and the checks true in both runs on every model, which carry no signal and are worth a case-writer `legacy-review`. Under four positives the delta is a hint, not a measure (agent-builder's floor). The sessions run on the user's own config, so a run without the skill can still reach it: the installed `~/.claude/skills/<skill>/`, the Skill tool, or the real toolset's page. Any of those makes that case's delta **void**; it never fails the case. The exit code, the baseline (`--save-baseline`) and `summary.json` come from the run with the skill only; the comparison is in `ablation.json`. It doubles a run's cost, and it does not combine with `--red-green`.
+
 ## Nothing reads clean that checked nothing
 
 - A run that selects zero cases stops with an error (exit 1), never a clean report.
