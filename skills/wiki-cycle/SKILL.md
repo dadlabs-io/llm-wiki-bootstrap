@@ -115,7 +115,7 @@ uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-promote.p
 
 Fix every sidecar `--check` names before the commit; a worker's receipt is a claim, the check is the evidence.
 
-**Step 2.6 — Checker** (only when the scope below is not empty: staged entries whose raw is a long transcript or a big raw, such as a long PDF or a whole repo, plus a spot check of 1 in 10 of the rest; the lines in `wiki-checker-config.json`):
+**Step 2.6 — Checker** (only when the scope below is not empty: staged entries whose raw is a long transcript or a big raw, such as a long PDF or a whole repo, plus 1 in `sample_every` of the rest, by default all of them; the lines in `wiki-checker-config.json`):
 
 ```bash
 uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-scope.py --topic <notebook> checker --run-folder <run-folder>

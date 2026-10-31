@@ -97,7 +97,7 @@ if hasattr(sys.stdout, "reconfigure"):
 CHECKER_CONFIG = Path.home() / ".claude" / "agents" / "wiki-checker-config.json"
 DEFAULT_MIN_MINUTES = 15
 DEFAULT_MIN_RAW_KB = 60.0  # task #202: a long PDF or a whole repo carries the same omission risk as a long talk
-DEFAULT_SAMPLE_EVERY = 10  # task #202: a spot check of the rest, to learn whether short sources have errors too
+DEFAULT_SAMPLE_EVERY = 1  # task #236: every entry; 43 of 44 checked entries needed fixes
 # raw types that are a transcript with a length (task #105: cycle 2026-10-11-01's 30-minute Whisper
 # transcript was missed, when only YouTube's counted)
 TRANSCRIPT_TYPES = {"youtube-transcript", "media-transcript"}

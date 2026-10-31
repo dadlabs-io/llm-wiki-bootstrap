@@ -11,6 +11,9 @@
 
 ## 2026-10-31
 
+### The checker reads every entry (task #236 B2)
+- **Why**: it is the only thing that reads plain sentences against the raw, and it found fixes in 43 of 44 entries. `sample_every` goes from 10 to 1; once the fail rate falls, 3.
+
 ### Entries say only what the source says (task #236 B1)
 - **Why**: cycle 2026-10-30-01's checker found 43 of 44 entries needing fixes, with 132 unsupported claims and 0 misquotes. Mark: "I don't want you to make shit up I want you to read and summarize what you actually read". `/wiki-update` asked for a synthesis, so writers filled gaps with what they knew.
 - **What**: `/wiki-update` and `wiki-ingester` write a summary: extract the source's explicit points first, write from that list only, then a delete-only pass over every sentence. Anything of ours goes in one optional `## Our reading` section; an explanation of a word is tagged `[our gloss: ...]`; hedges are kept; a thin source gets a thin entry; a transcript cannot show anything, and nothing reports what was not shown. `claimed` and `unknown` are the one word (authoring doctrine, principle 5). The score "synthesis value" now grades `## Related in this wiki` only.
