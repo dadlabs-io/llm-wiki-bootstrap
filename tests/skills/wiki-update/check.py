@@ -366,6 +366,119 @@ _Subscribe to keep reading._
 PREVIEW_SAID = re.compile(r"preview|paywall|partial|incomplete|teaser|truncat|not (the )?(full|whole|complete)|"
                           r"only (part|a (part|portion|fragment|piece|snippet)|the first)")
 
+# ---------- fidelity-replay: the entry's plain sentences judged against the saved raw ----------
+# The raw is copied at run time from the agentic-design notebook (or the cache); nothing third-party is committed.
+AGENTIC_RAW_DIR = Path(os.environ.get("AGENTIC_RAW_DIR") or "C:/github.com/project-notebooks/notebooks/agentic-design/raw")
+FIDELITY_CACHE = CACHE / "fidelity"
+FIDELITY_JUDGE_MODEL = os.environ.get("FIDELITY_JUDGE_MODEL", "opus")
+FIDELITY_RUNS = 3
+
+FIDELITY_ASK = """You are an independent fact-checker. Below is ONE source document, then a SUMMARY written from it. Judge the summary against the source only. Use no outside knowledge, and assume nothing about who wrote the summary or how.
+
+A sentence of the summary is SUPPORTED when the source says it, or says it in other words. A sentence is UNSUPPORTED when it states anything the source does not say, including:
+- where a figure or fact came from (a screen, a dashboard, a file, a page) when the source does not say so;
+- what a video showed or did not show, or what was on screen. The source is text only: unless the source itself describes an image or a frame, every statement about what was visible, shown, or missing from view is UNSUPPORTED;
+- how a tool, system or method works inside, when the source does not describe it;
+- a sales funnel, call to action, offer or link that the source does not mention;
+- words, claims or actions given to a different person or party than the one the source gives them to;
+- a hedge the source has ("apparently", "said to", "claims", "it looks like", "I guess") dropped, so that something the source hedges is stated as plain fact;
+- the writer's own inference, opinion, comparison or evaluation put forward as something the source says;
+- a number, name, date or detail that is not in the source.
+Do not count headings. An explanation the summary tags as its own, "[our gloss: ...]", is not a claim about the source and is not counted. A sentence that only names the source, its author or its format as the source does is supported. A sentence saying the source lacks something is supported only if that thing really is absent from the source.
+
+Output format. For each UNSUPPORTED sentence, one line exactly:
+UNSUPPORTED: "<the sentence, or the unsupported part of it, copied exactly from the summary>" | <what the source says about it, or "nothing">
+After those lines, two final lines:
+SUPPORTED: <number of summary sentences the source supports>
+COUNT: <number of UNSUPPORTED lines>
+
+<source>
+{raw}
+</source>
+
+<summary>
+{summary}
+</summary>
+"""
+
+
+def _fid_norm(s: str) -> str:
+    s = s.replace("\u2018", "'").replace("\u2019", "'").replace("\u201c", '"').replace("\u201d", '"')
+    return re.sub(r"\s+", " ", re.sub(r"[*`_]", "", s)).strip().lower()
+
+
+def _fidelity_scope(body: str) -> str:
+    """The entry's body minus its '## Our reading' and '## Related...' sections, the Source footer and rules.
+    An entry with no '## Our reading' (the old skill) is judged whole."""
+    keep, skip = [], False
+    for ln in body.splitlines():
+        h = re.match(r"^##\s+(.*?)\s*$", ln)
+        if h:
+            title = h.group(1).strip().lower()
+            skip = title == "our reading" or title.startswith("related")
+            if skip:
+                continue
+        if re.match(r"^---\s*$", ln) or re.match(r"^\*\*Source\*\*", ln):
+            skip = False
+            continue
+        if not skip:
+            keep.append(ln)
+    return "\n".join(keep).strip()
+
+
+def _fid_claude_exe() -> str:
+    found = shutil.which("claude")
+    if found and found.lower().endswith((".cmd", ".bat")):
+        exe = Path(found).parent / "node_modules" / "@anthropic-ai" / "claude-code" / "bin" / "claude.exe"
+        if exe.is_file():
+            return str(exe)
+    return found or "claude"
+
+
+def _fid_judge_once(raw_text: str, scope: str) -> dict | None:
+    """One judge call under the Claude subscription (ANTHROPIC_API_KEY removed, as _jsonl_cases does).
+    Returns the validated unsupported quotes and the judge's SUPPORTED count, or None with no verdict."""
+    import tempfile
+    ask = FIDELITY_ASK.format(raw=raw_text, summary=scope)
+    env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:
+        try:
+            p = subprocess.run([_fid_claude_exe(), "-p", "--model", FIDELITY_JUDGE_MODEL, "--output-format", "text"],
+                               input=ask, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                               timeout=900, env=env, cwd=td)
+        except subprocess.TimeoutExpired:
+            return None
+    out = p.stdout or ""
+    if not re.search(r"^COUNT:\s*\d+\s*$", out, re.M):
+        return None
+    sup = re.search(r"^SUPPORTED:\s*(\d+)\s*$", out, re.M)
+    quotes = re.findall(r'^UNSUPPORTED:\s*"(.+?)"\s*\|', out, re.M) or \
+        [q.strip().strip('"') for q in re.findall(r"^UNSUPPORTED:\s*(.+?)\s*\|", out, re.M)]
+    hay = _fid_norm(scope)
+    valid, dropped = [], []
+    for q in quotes:
+        pieces = [x for x in re.split(r"\.\.\.|\u2026", _fid_norm(q)) if len(x.strip()) >= 8]
+        # a quote that is not in the judged text is not a sentence this entry wrote: it never counts
+        (valid if pieces and all(x.strip() in hay for x in pieces) else dropped).append(q)
+    return {"unsupported": list(dict.fromkeys(valid)), "dropped": dropped, "supported": int(sup.group(1)) if sup else 0,
+            "out": out}
+
+
+def _fidelity_stage_raw(case: dict, ctx: dict) -> Path:
+    """Copy the case's raw into the sandbox notebook's raw/ (through the cache); fail loudly if it is missing."""
+    name = case["raw_file"]
+    cached = FIDELITY_CACHE / name
+    if not cached.is_file():
+        src = AGENTIC_RAW_DIR / name
+        if not src.is_file():
+            raise SystemExit(f"fidelity-replay: raw not found: {src} (set AGENTIC_RAW_DIR)")
+        FIDELITY_CACHE.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, cached)
+    dest = ctx["notebook"] / "raw" / name
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(cached, dest)
+    return dest
+
 
 # ---------- prompts ----------
 
@@ -407,6 +520,13 @@ def prompt(case: dict, ctx: dict) -> str:
         return head + f"The user's input: the local file {f.as_posix()}{staged}"
     if kind == "redirect":
         return head + "The user typed /wiki-update with nothing after it."
+    if kind == "fidelity-replay":
+        raw = _fidelity_stage_raw(case, ctx)
+        m = re.search(r"^source_url:\s*(\S+)", raw.read_text(encoding="utf-8", errors="replace"), re.M)
+        url = m.group(1) if m else case["source_url"]
+        return head + (f"The user handed over a source that was already fetched: its raw is {raw.as_posix()}, "
+                       f"the saved original of {url}. File it with --source-url {url} --raw-path raw/{raw.name}."
+                       f"{staged} File from this raw only; do not fetch, clone or download anything.")
     if kind == "queue":
         return head + "The user's input: " + " ".join(case["urls"])
     if kind == "dedup":
@@ -1168,6 +1288,67 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("gate: no errors", not g.get("errors"), g.get("errors"))
         side = path.with_suffix(".proposed_metadata.json")
         add("sidecar written", side.is_file(), side.name)
+        return res
+
+    if kind == "fidelity-replay":
+        # Requirement (Mark, 2026-10-30): "read and summarize what you actually read". The mechanical gate reads quotes,
+        # structure and links only, so a gate pass proves nothing here: the entry's plain sentences are judged against
+        # the raw. The same code runs on the old and the new skill (the judge sees only the raw and the entry text).
+        raw_file = nb / "raw" / case["raw_file"]
+        add("premise: the raw was seeded into the sandbox", raw_file.is_file(), raw_file.name)
+        used = []
+        for c in run["tool_calls"]:
+            if c["name"] in ("WebFetch", "WebSearch"):
+                used.append(c["name"])
+            elif c["name"] == "Bash":
+                cmd = str(c["input"].get("command", ""))
+                if re.search(r"git\s+clone|\bcurl\b|\bwget\b|Invoke-WebRequest|wiki-fetch-|wiki-transcribe|--fetch-only", cmd):
+                    used.append(cmd[:100])
+        add("no fetch, clone or download (filed from the saved raw only)", not used, used[:3])
+        add("exactly one new entry, in _inbox/proposed/",
+            len(entries) == 1 and entries[0].startswith("_inbox/proposed/"), entries)
+        if len(entries) != 1 or not raw_file.is_file():
+            return res
+        path = nb / entries[0]
+        entry_text = path.read_text(encoding="utf-8")
+        fm, body = split_frontmatter(entry_text)
+        add("filed by wiki-update.py (its Source footer and frontmatter)",
+            bool(fm.get("ingested_by")) and "**Source**" in entry_text)
+        rp = str(fm.get("raw_path", "")).strip().strip('"').strip("'")
+        add("raw_path names the handed-over raw", rp.endswith(case["raw_file"]), rp)
+        raw_text = raw_file.read_text(encoding="utf-8", errors="replace")
+        m = re.search(r"^source_url:\s*(\S+)", raw_text, re.M)
+        add("source_url is the raw's", bool(m) and _norm_url(fm.get("source_url")) == _norm_url(m.group(1)),
+            fm.get("source_url"))
+        g = check_entry_file(path)
+        add("gate: no errors (a pass proves only that it was filed)", not g.get("errors"), g.get("errors"))
+        readings = re.findall(r"^##\s+Our reading\s*$", body, re.M)
+        add("at most one ## Our reading section", len(readings) <= 1, len(readings))
+        scope = _fidelity_scope(body)
+        add("premise: the entry has body text to judge", len(scope) > 40, len(scope))
+        if len(scope) <= 40:
+            return res
+        if len(raw_text) > 600_000:
+            add("premise: the raw fits one judge call", False, len(raw_text))
+            return res
+        verdicts = [v for v in (_fid_judge_once(raw_text, scope) for _ in range(FIDELITY_RUNS)) if v]
+        add(f"fidelity judge gave a verdict on at least 2 of {FIDELITY_RUNS} calls", len(verdicts) >= 2, len(verdicts))
+        if len(verdicts) < 2:
+            return res
+        counts = sorted(len(v["unsupported"]) for v in verdicts)
+        med = counts[(len(counts) - 1) // 2]
+        mid = [v for v in verdicts if len(v["unsupported"]) == med][0]
+        sup = sorted(v["supported"] for v in verdicts)[(len(verdicts) - 1) // 2]
+        try:  # the judge's full words, for review (the check's detail is cut at 300 characters)
+            FIDELITY_CACHE.mkdir(parents=True, exist_ok=True)
+            (FIDELITY_CACHE / f"judgment-{case['id']}-{ctx['index']}.txt").write_text(
+                "\n\n=====\n\n".join(v["out"] for v in verdicts), encoding="utf-8")
+        except OSError:
+            pass
+        add("fidelity: at least one sentence of the entry is supported by the raw", sup >= 1, sup)
+        add("fidelity: median count of sentences outside ## Our reading / ## Related that the raw does not support is 0 "
+            f"(per-call counts {counts}; old entry had {case.get('old_unsupported')})", med == 0,
+            " || ".join(q[:90] for q in mid["unsupported"][:3]))
         return res
 
     # ---- an ingest ----

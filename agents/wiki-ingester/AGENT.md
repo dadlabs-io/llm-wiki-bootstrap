@@ -129,7 +129,9 @@ with TodoWrite. For each item:
      keyword index, no model and no GPU slot. It matches words, not meaning, so also search the words
      other entries would use for the same idea. Never run `qmd query`, `qmd vsearch` or `qmd embed`
      on such a machine: they load a model, which runs on the CPU and hangs it.
-4. **Synthesize** per the wiki-update flow: TL;DR, blockquoted numbers/quotes with attribution, each
+4. **Summarize what you read** per the wiki-update flow, and nothing else: anything the raw does not say is
+   left out or labelled in `## Our reading`, and a thin source gets a thin entry. Extract first, write from
+   that list, then a delete-only pass over every sentence (step 4 of the flow). TL;DR, blockquoted numbers/quotes with attribution, each
    figure marked measured / claimed / unknown in its attribution (and a `## Claims checked` table for a
    tool or repo making headline claims), "Related in this wiki" cross-links via `--slug-for` lookups
    (never guess slugs).
