@@ -9,6 +9,13 @@
 
 ---
 
+## 2026-11-09
+
+### The raw's size picks the ingest writer (task #239)
+- **Why**: on 10 sources Opus's entries held 2 unsupported sentences to Sonnet's 17, with about twice the content on raws of 10 KB or more, at about 3.8 times the cost. Mark chose Sonnet under 10 KB and Opus from 10 KB.
+- **What**: `wiki-ingester-config.json` gains `large_raw_kb` (10) and `large_raw_model` (opus). `wiki-cycle-scope.py writer <raw>...` prints each raw's KB and model, and the Step 0 models line names the size line. `/wiki-cycle` Step 2 sizes the tickets that carry a raw before spawning; the rest go to Sonnet workers briefed to hand back raws of 10 KB+ unread, which Opus workers then file from the saved raw. It replaces the 2026-10-14 rule sending transcripts of 15+ minutes to Opus: all 64 such transcripts in agentic-design were 15 KB or more. `min_transcript_minutes` now sets the checker's scope only.
+- **Tests**: `test_cycle_scope.py` 52/52 (5 new checks, red first).
+
 ## 2026-10-31
 
 ### The checker reads every entry (task #236 B2)

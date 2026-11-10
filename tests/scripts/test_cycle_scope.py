@@ -252,6 +252,28 @@ with tempfile.TemporaryDirectory() as td:
           p.returncode == 0 and "bad.json: unreadable" in p.stdout and m["roles"]["ingest_workers"]["model"] == "sonnet",
           p.stdout + p.stderr[-200:])
 
+    # ── writer by raw size (task #239, Mark 2026-11-09: Sonnet writes a raw under 10 KB, Opus one of 10 KB or more) ──
+    (cfg / "ing-size.json").write_text(json.dumps({"model_default": "sonnet", "large_raw_kb": 10,
+                                                   "large_raw_model": "opus"}), encoding="utf-8")
+    p, m = models(ingester=cfg / "ing-size.json", checker=cfg / "chk.json", helpers=cfg / "help.json")
+    w = m.get("roles", {}).get("ingest_workers", {})
+    check("models #239: the size line is recorded and printed",
+          w.get("large_raw_kb") == 10 and w.get("large_raw_model") == "opus"
+          and "ingest workers: sonnet; opus for a raw of 10 KB or more" in p.stdout, (w, p.stdout))
+    p, m = models(ingester=cfg / "ing.json", checker=cfg / "chk.json", helpers=cfg / "help.json")
+    w = m.get("roles", {}).get("ingest_workers", {})
+    check("models #239: a file without the size line falls back to 10 KB and opus",
+          w.get("large_raw_kb") == 10 and w.get("large_raw_model") == "opus", w)
+    (nb / "raw" / "small.md").write_text("x" * (9 * 1024), encoding="utf-8")
+    (nb / "raw" / "edge.md").write_text("x" * (10 * 1024), encoding="utf-8")
+    p = run("writer", "--ingester", str(cfg / "ing-size.json"), str(nb / "raw" / "small.md"), str(nb / "raw" / "edge.md"),
+            str(nb / "raw" / "missing.md"))
+    rows = {Path(l.split("\t")[0]).name: l.split("\t")[1:] for l in p.stdout.splitlines() if "\t" in l}
+    check("writer #239: a 9 KB raw goes to the default model", rows.get("small.md") == ["9", "sonnet"], p.stdout)
+    check("writer #239: a raw of exactly 10 KB goes to opus", rows.get("edge.md") == ["10", "opus"], p.stdout)
+    check("writer #239: a missing raw is named and the exit is 1",
+          p.returncode == 1 and "missing.md" in (p.stdout + p.stderr), (p.returncode, p.stdout, p.stderr))
+
     # ── cost (task #138: the status line's session total at the start and end of a run) ──
     sc = tmp / "session-cost"
     sc.mkdir()

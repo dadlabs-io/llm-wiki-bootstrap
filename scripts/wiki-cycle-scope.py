@@ -11,6 +11,7 @@ What a /wiki-cycle step reads, decided by a script instead of by the model.
     wiki-cycle-scope.py --topic N cost --run-folder <rf> --mark start|end [--session-id <id>]
     wiki-cycle-scope.py --topic N session-cost [--session-id <id>]
     wiki-cycle-scope.py --topic N promote --run-folder <rf>
+    wiki-cycle-scope.py --topic N writer <raw> [<raw> ...] [--ingester <config.json>]
 
 `semantic`: the entries added or revised since the last semantic lint (the newest
 earlier run folder holding lint-semantic.json; its `timestamp` is the cut-off), plus
@@ -54,7 +55,16 @@ report (task #178 row 8, 2026-10-22).
 role and written to <rf>/models.json. A cycle runs it at Step 0 and spawns from it,
 because a sentence asking it to read the files was skipped in 21 of 22 test runs
 (task #99, 2026-10-12): the workers got the agent description's default instead. A
-file that is missing or unreadable is named, with the fallback used.
+file that is missing or unreadable is named, with the fallback used. The ingest workers'
+line also gives the size from which a raw is written on another model (`large_raw_kb`,
+`large_raw_model` in the ingester's file; 10 and opus when absent).
+
+`writer`: which model writes each raw given, by its size on disk against that line:
+`<raw>\t<KB>\t<model>` per raw, exit 1 when one is missing. Mark, 2026-11-09 (task #239):
+Sonnet writes a raw under 10 KB, Opus one of 10 KB or more; on 10 sources Opus left 2
+unsupported sentences to Sonnet's 17, with about twice the content on raws of 10 KB+.
+Every agentic-design transcript of 15+ minutes was 15 KB or more, so the size line also
+covers the long-transcript rule it replaced for writers.
 
 `cost`: what the run cost, from the session's running total that the user's status line
 saves to ~/.claude/session-cost/<session_id>.json (`total_cost_usd`, Claude Code's own
@@ -390,7 +400,8 @@ def cmd_checker_corrected(nb: Path, args) -> int:
 HOME_CLAUDE = Path.home() / ".claude"
 # what each role falls back to when its setting file cannot be read
 FALLBACK = {"ingest_workers": "sonnet", "checker": "opus",
-            "semantic_lint": "sonnet", "lint_fixes": "sonnet", "synthesis": "sonnet"}
+            "semantic_lint": "sonnet", "lint_fixes": "sonnet", "synthesis": "sonnet",
+            "large_raw_kb": 10, "large_raw_model": "opus"}
 
 
 def _settings(path: str) -> tuple[dict | None, str]:
@@ -404,14 +415,47 @@ def _settings(path: str) -> tuple[dict | None, str]:
         return None, f"{p}: unreadable ({e})"
 
 
+def _large_raw(ing: dict | None) -> tuple[float, str]:
+    """The size (KB) from which a raw is written on large_raw_model (task #239)."""
+    ing = ing or {}
+    try:
+        kb = float(ing.get("large_raw_kb", FALLBACK["large_raw_kb"]))
+    except (TypeError, ValueError):
+        kb = float(FALLBACK["large_raw_kb"])
+    return kb, ing.get("large_raw_model") or FALLBACK["large_raw_model"]
+
+
+def cmd_writer(nb: Path, args) -> int:
+    ing, err = _settings(args.ingester)
+    if err:
+        print(f"warning: {err}; using the fallback ({FALLBACK['ingest_workers']}, "
+              f"{FALLBACK['large_raw_model']} from {FALLBACK['large_raw_kb']} KB)")
+    kb, big = _large_raw(ing)
+    small = (ing or {}).get("model_default") or FALLBACK["ingest_workers"]
+    rc = 0
+    for r in args.raws:
+        p = Path(r)
+        if not p.is_absolute() and not p.is_file():
+            p = nb / r
+        if not p.is_file():
+            print(f"missing: {r}", file=sys.stderr)
+            rc = 1
+            continue
+        size_kb = p.stat().st_size / 1024
+        print(f"{r}\t{size_kb:.0f}\t{big if size_kb >= kb else small}")
+    return rc
+
+
 def cmd_models(nb: Path, args) -> int:
     rf = Path(args.run_folder)
     roles, problems = {}, []
     ing, err = _settings(args.ingester)
     if err:
         problems.append(err)
+    kb, big = _large_raw(ing)
     roles["ingest_workers"] = {"model": (ing or {}).get("model_default") or FALLBACK["ingest_workers"],
                                "ask_each_run": bool((ing or {}).get("confirm_model_each_run", False)),
+                               "large_raw_kb": kb, "large_raw_model": big,
                                "from": str(Path(args.ingester).expanduser()) if ing else "fallback"}
     chk, err = _settings(args.checker)
     if err:
@@ -428,8 +472,9 @@ def cmd_models(nb: Path, args) -> int:
     out = rf / "models.json"
     atomic_write_text(out, json.dumps({"timestamp": now_stamp(), "roles": roles, "problems": problems}, indent=2) + "\n")
     w = roles["ingest_workers"]
-    print(f"ingest workers: {w['model']}" + (" (ask the user each run when the session can ask; this is the default)"
-                                              if w["ask_each_run"] else ""))
+    print(f"ingest workers: {w['model']}"
+          + (" (ask the user each run when the session can ask; this is the default)" if w["ask_each_run"] else "")
+          + f"; {w['large_raw_model']} for a raw of {w['large_raw_kb']:g} KB or more")
     for role in ("checker", "semantic_lint", "lint_fixes", "synthesis"):
         print(f"{role.replace('_', ' ')}: {roles[role]['model']}")
     for p in problems:
@@ -566,6 +611,9 @@ def main() -> int:
     sco.add_argument("--session-id", default=None)
     pr = sub.add_parser("promote")
     pr.add_argument("--run-folder", required=True)
+    wr = sub.add_parser("writer")
+    wr.add_argument("raws", nargs="+", help="raw files (absolute, or relative to the notebook)")
+    wr.add_argument("--ingester", default=str(HOME_CLAUDE / "agents" / "wiki-ingester-config.json"))
     args = ap.parse_args()
     topic = args.topic or (load_config() or {}).get("notebook")
     if not topic:
@@ -579,7 +627,7 @@ def main() -> int:
     return {"semantic": cmd_semantic, "claims": cmd_claims, "synthesis": cmd_synthesis, "checker": cmd_checker,
             "checker-log": cmd_checker_log, "checker-corrected": cmd_checker_corrected, "models": cmd_models,
             "cost": cmd_cost, "session-cost": cmd_session_cost,
-            "promote": cmd_promote}[args.cmd](nb, args)
+            "promote": cmd_promote, "writer": cmd_writer}[args.cmd](nb, args)
 
 
 if __name__ == "__main__":

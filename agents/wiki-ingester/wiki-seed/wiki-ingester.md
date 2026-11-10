@@ -35,9 +35,13 @@ agent's own default, Sonnet, is used). The session that spawns it uses that mode
 names it in the batch receipt, so you can see afterwards what ran; say so when you want to pick the
 model for a batch. Turning that file's confirm flag on (off since 2026-10-22) makes an interactive
 session ask you every batch, defaulting to the configured model; a session that cannot ask (an
-autonomous or unattended run) still uses the default. Inside `wiki-cycle`, a long
-transcript (15 minutes or more, the checker's line) goes to a worker on Opus and everything else to that model
-(2026-10-14: in a blind comparison on five talks Opus's drafts needed about 40% fewer fixes).
+autonomous or unattended run) still uses the default. Inside `wiki-cycle`, the size of the
+saved source picks the writer: one of 10 KB or more is written by a worker on Opus, a smaller one on
+that model (`large_raw_kb` and `large_raw_model` in the same file; 2026-11-09: on ten sources Opus's
+entries held 2 sentences the source did not support to Sonnet's 17, with about twice the content on
+sources of 10 KB or more). A worker the cycle briefs to hand back large sources fetches each one,
+checks its size, and returns the ones over the line unread, so an Opus worker writes them from the
+saved copy without fetching again.
 
 ## What you get back
 
@@ -54,8 +58,8 @@ transcript (15 minutes or more, the checker's line) goes to a worker on Opus and
   review note quoting why stay in `_inbox/temp/`, so you can finish it, file it anyway or drop it.
 - Before reporting done, it runs the promote script's check on every staged entry, so a broken
   sidecar is caught by the script rather than reported as conforming.
-- A receipt: per source, staged / skipped / failed with the reason for anything not staged, and a
-  line reconciling the counts (assigned = staged + failed + skipped). Queue items it processed move
+- A receipt: per source, staged / skipped / failed / handed back, with the reason for anything not
+  staged, and a line reconciling the counts (assigned = staged + failed + skipped + handed back). Queue items it processed move
   from `_inbox/pending/` to `_inbox/done/`, which is what lets an interrupted batch resume.
 - A "Raws to delete" line: any raw its fetches wrote that holds no article (a paywall preview or a
   site's block page). The worker never deletes in `raw/`, since a raw it was handed may be an older

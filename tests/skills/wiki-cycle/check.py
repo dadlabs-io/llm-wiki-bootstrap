@@ -811,6 +811,8 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_lint_all(case, ctx)
     elif case["kind"] == "youtube-batch":
         _prepare_youtube(case, ctx)
+    elif case["kind"] == "size-model":
+        _prepare_size_model(case, ctx)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -1329,7 +1331,204 @@ def _check_model_choice(case: dict, add, res: list, ctx: dict, run_dir: Path, pr
         add("the reply names the configured default (sonnet)", "sonnet" in text, text[:300])
 
 
-CHECKER_URL = "https://www.youtube.com/watch?v=skilltest01"
+# ---------- size-model: the writer's model follows the raw's size on disk (task #239) ----------
+
+SIZE_LOW, SIZE_HIGH = 10_000, 10_240  # "10 KB" read either way; fixtures stay outside this band
+
+
+def _prose(title: str, target: int, seed: int) -> str:
+    """Written-for-the-test markdown about agent handoffs, from the big-raw vocabularies, at least `target` bytes (ASCII)."""
+    rng = random.Random(seed)
+    out = [f"# {title}", ""]
+    total, i = len(out[0]) + 2, 0
+    while total < target:
+        sec, c, purpose, fails, remedies, arts, metric = _BIG_SECTIONS[i % len(_BIG_SECTIONS)]
+        i += 1
+        head = f"## {sec.capitalize()}"
+        out += [head, ""]
+        total += len(head) + 2
+        for _ in range(2):
+            if total >= target:
+                break
+            sents = []
+            for t in rng.sample(_BIG_TEMPLATES, 3):
+                f, f2 = rng.sample(fails, 2)
+                sents.append(t.format(C=c, Cc=c[0].upper() + c[1:], P=purpose, F=f, F2=f2, R=rng.choice(remedies),
+                                      A=rng.choice(arts), M=metric, N=rng.randint(3, 60), X=rng.randint(4, 71)))
+            para = " ".join(sents)
+            out += [para, ""]
+            total += len(para) + 2
+    return "\n".join(out)
+
+
+def _transcript(title: str, vid: str, minutes: int, target: int) -> str:
+    """A speech-style transcript raw of `minutes`, in the shape of fixtures/checker/talk-transcript.md, >= target bytes."""
+    src = _prose(title, target + 900, seed=minutes)
+    lines = []
+    for ln in src.splitlines():
+        if ln and not ln.startswith("#"):
+            lines += [s.lower().rstrip(".") for s in re.split(r"(?<=[.!?]) ", ln)]
+    body = "\n".join(lines)
+    head = (f"---\ntitle: \"{title} (test talk)\"\nsource_url: https://www.youtube.com/watch?v={vid}\nvideo_id: {vid}\n"
+            f"channel: Skilltest Conf\nduration_seconds: {minutes * 60}\nduration: {minutes}m\ntype: youtube-transcript\n"
+            f"word_count: {len(body.split())}\n---\n\n# {title} (test talk) - Transcript\n\n**Channel**: Skilltest Conf\n"
+            f"**Duration**: {minutes}m\n\n---\n\n## Transcript\n\n")
+    text = head + body + "\n"
+    if len(text.encode("utf-8")) < target:
+        raise RuntimeError(f"transcript fixture too small: {len(text)} bytes")
+    return text
+
+
+def _html_page(title: str, md: str) -> str:
+    paras = "".join(f"<h2>{l[3:]}</h2>" if l.startswith("## ") else f"<p>{l}</p>"
+                    for l in md.splitlines()[2:] if l.strip())
+    return f"<html><head><title>{title}</title></head><body><article><h1>{title}</h1>{paras}</article></body></html>"
+
+
+def _serve_pages(pages: dict):
+    """A loopback site answering GET/HEAD from `pages` (path -> html), 404 otherwise. srv.hits = [(method, path)]."""
+    import http.server
+    import threading
+
+    class H(http.server.BaseHTTPRequestHandler):
+        def _send(self):
+            srv.hits.append((self.command, self.path.split("?")[0]))
+            body = pages.get(self.path.split("?")[0])
+            data = (body or "<html><body>not found</body></html>").encode("utf-8")
+            self.send_response(200 if body else 404)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            if self.command != "HEAD":
+                self.wfile.write(data)
+        do_GET = do_HEAD = _send
+
+        def log_message(self, *a):
+            pass
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H)
+    srv.hits = []
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv
+
+
+def _prepare_size_model(case: dict, ctx: dict) -> None:
+    """Queue the case's items. how=fetch: a ticket with no raw, its page served from a loopback site.
+    how=raw: a raw written into raw/ and a ticket carrying its raw_path. Sizes come from the case, never the model's guess."""
+    nb, pages, srv = ctx["notebook"], {}, None
+    if any(it["how"] == "fetch" for it in case["items"]):
+        srv = _serve_pages(pages)
+        ctx["size_srv"] = srv
+    ctx["size_items"] = []
+    for it in case["items"]:
+        key, fx = it["key"], it.get("fixture")
+        slug, url = LOCAL_ITEMS[fx] if fx else (key, None)
+        title = key.replace("-", " ").capitalize()
+        path = None
+        if it["how"] == "fetch":
+            path = f"/skilltest/{key}"
+            url = f"http://127.0.0.1:{srv.server_address[1]}{path}"
+            pages[path] = _html_page(title, _prose(title, it["bytes"], len(key)))
+        else:
+            if fx:
+                raw = {"small": _SMALL_RAW, "short2": _SHORT2_RAW,
+                       "talk": (HERE / "fixtures" / "checker" / "talk-transcript.md").read_text(encoding="utf-8")}[fx]
+            elif it.get("style") == "transcript":
+                url = url or f"https://www.youtube.com/watch?v=st-{key}"
+                raw = _transcript(title, f"st-{key}", it["minutes"], it["bytes"])
+            else:
+                raw = _prose(title, it["bytes"], len(key))
+            url = url or f"https://example.com/skilltest/{key}"
+            (nb / "raw" / f"{slug}.md").write_text(raw, encoding="utf-8")
+        p = _script(ctx, "wiki-list-add.py", "--topic", NOTEBOOK, "--source", url, "--added-by", "skilltest")
+        if p.returncode != 0:
+            raise RuntimeError(f"could not queue {url}: {p.stdout}{p.stderr}")
+        if it["how"] == "raw":
+            for t in (nb / "_inbox" / "pending").glob("*.md"):
+                body = t.read_text(encoding="utf-8")
+                if url in body and "raw_path:" not in body:
+                    t.write_text(re.sub(r"\A---\r?\n", f"---\nraw_path: raw/{slug}.md\n", body, count=1), encoding="utf-8")
+        tail = re.split(r"[/=]", url.rstrip("/"))[-1].lower()
+        ctx["size_items"].append({**it, "url": url, "path": path, "marks": sorted({slug.lower(), tail})})
+
+
+def _check_size_model(case: dict, add, ctx: dict, run: dict, run_dir: Path, proposed: list) -> None:
+    nb = ctx["notebook"]
+    sys.path.insert(0, str(ctx["scripts"]))
+    from _entry_checks import check_entry_file, split_frontmatter
+    items, srv = ctx["size_items"], ctx.get("size_srv")
+    spawns = [c for c in run["tool_calls"] if c["name"] in ("Agent", "Task")
+              and str((c.get("input") or {}).get("subagent_type", "")) == "wiki-ingester"]
+    model = lambda c: str((c.get("input") or {}).get("model", "")).lower()
+
+    def brief(c):
+        inp = c.get("input") or {}
+        return (str(inp.get("prompt", "")) + " " + str(inp.get("description", ""))).lower()
+
+    def holders(it):
+        return [c for c in spawns if any(m in brief(c) for m in it["marks"])]
+
+    def kids(c):
+        wid = c.get("id") or c.get("tool_use_id")
+        return [k for k in run["tool_calls"] if wid and (k.get("parent_tool_use_id") or k.get("parent")) == wid]
+
+    def fetchy(c, it):  # a call that fetches the item's source again
+        s = json.dumps(c.get("input") or {}).lower()
+        if not any(m in s for m in it["marks"]):
+            return False
+        return c["name"] == "WebFetch" or (c["name"] == "Bash" and bool(re.search(r"\b(curl|wget|yt-dlp)\b|fetch\w*\.py", s)))
+
+    entries, gate_errs = {}, []
+    for k in proposed:
+        path = nb / k
+        fm, _ = split_frontmatter(path.read_text(encoding="utf-8"))
+        entries[_norm_url(fm.get("source_url"))] = fm
+        g = check_entry_file(path)
+        if g.get("errors"):
+            gate_errs.append(f"{k}: {g['errors']}")
+    add("spawned wiki-ingester workers", bool(spawns), len(spawns))
+    add("each queued item staged once", sorted(entries) == sorted(_norm_url(i["url"]) for i in items)
+        and len(proposed) == len(items), sorted(entries))
+    add("staged entries pass the gate", proposed and not gate_errs, gate_errs)
+
+    for it in items:
+        key, exp = it["key"], it["model"]
+        fm = entries.get(_norm_url(it["url"]), {})
+        rp = str(fm.get("raw_path") or "")
+        size = (nb / rp).stat().st_size if rp and (nb / rp).is_file() else -1
+        ok = size > SIZE_HIGH if exp == "opus" else 0 <= size < SIZE_LOW
+        add(f"{key}: fixture premise, its raw on disk is {'over' if exp == 'opus' else 'under'} 10 KB", ok, f"{rp}: {size} bytes")
+        held = holders(it)
+        add(f"{key}: handed to a wiki-ingester worker", bool(held), [brief(c)[:60] for c in spawns])
+        if it["how"] == "raw":
+            add(f"{key}: every worker holding it is on {exp}", bool(held) and all(exp in model(c) for c in held),
+                [model(c) for c in held])
+            again = [c["name"] for c in run["tool_calls"] if fetchy(c, it)]
+            add(f"{key}: its captured raw was not fetched again", not again, again)
+        else:
+            add(f"{key}: the page was fetched", any(m == "GET" and p == it["path"] for m, p in srv.hits), srv.hits)
+            add(f"{key}: a default-model (sonnet) worker held it first", any("sonnet" in model(c) for c in held),
+                [model(c) for c in held])
+            if exp == "opus":
+                op = [c for c in held if "opus" in model(c)]
+                add(f"{key}: an opus worker was given it to file", bool(op), [model(c) for c in held])
+                ks = [k for c in op for k in kids(c)]
+                add(f"{key}: the opus worker's own calls are identifiable in the run", bool(ks), f"{len(ks)} calls")
+                add(f"{key}: the opus worker did not fetch it again", not [k["name"] for k in ks if fetchy(k, it)],
+                    [k["name"] for k in ks if fetchy(k, it)])
+            else:
+                add(f"{key}: no opus worker holds it", not [c for c in held if "opus" in model(c)], [model(c) for c in held])
+    um = run_dir / "update.md"
+    ut = um.read_text(encoding="utf-8", errors="replace").lower() if um.is_file() else ""
+    want = sorted({i["model"] for i in items})
+    add(f"update.md names the models used ({', '.join(want)})", bool(ut) and all(w in ut for w in want), ut[:200] or "no update.md")
+    if srv:
+        try:
+            srv.shutdown()
+        except Exception:  # noqa: BLE001 - a loopback server that will not stop never fails the case
+            pass
+
+
+CHECKER_URL ="https://www.youtube.com/watch?v=skilltest01"
 
 
 def _check_checker_promote(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
@@ -2443,6 +2642,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_lint_all(case, add, res, ctx, run_dir)
     elif case["kind"] == "youtube-batch":
         _check_youtube_batch(case, add, ctx, run, proposed)
+    elif case["kind"] == "size-model":
+        _check_size_model(case, add, ctx, run, run_dir, proposed)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()

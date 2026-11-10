@@ -99,7 +99,11 @@ with TodoWrite. For each item:
    `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-raw-parts.py <raw>`.
    `fits_one_worker=no` fails the item unread, "raw too large for one worker (N parts)", N from its
    `parts=` line, rather than reading partway or filing from part of it; the orchestrator reads it in
-   parts (`/wiki-cycle` Step 2).
+   parts (`/wiki-cycle` Step 2). **When your brief says `hand back raws of <N> KB or more`**, also run
+   `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-cycle-scope.py --topic <topic> writer <raw>`
+   after the fetch: a raw it gives to another model than yours is not read and not filed; return it as
+   **handed back: <model> writer (N KB)**, with its `raw_path` and source URL, and leave its ticket where it
+   is. A larger model writes it from that raw (task #239, 2026-11-09).
 3. **Search the wiki** for related entries — integrate, don't isolate. 3–5 key terms, each with
    the shared search helper:
    `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-qmd-query.py --caller wiki-ingester --notebook <target notebook> --compact "<term>"`
@@ -217,7 +221,7 @@ context). One line per item + a reconciliation summary:
 | 2 | youtube.com/watch?v=... | staged | boris-cherny-on-... | research/agents | 3/medium | 3.6 | ASR note added |
 | 3 | deadblog.example/post | FAILED | — | — | — | — | 404 on both fetchers |
 
-**Reconciliation: 3 assigned = 2 staged + 1 failed + 0 skipped. Queue: 3 moved pending→done.**
+**Reconciliation: 3 assigned = 2 staged + 1 failed + 0 skipped + 0 handed back. Queue: 3 moved pending→done.**
 
 **Raws to delete:** one line per raw your fetch wrote that the fetcher flagged `completeness=preview`
 or as a block page (`paywall=suspected`, a Cloudflare "Attention Required" page) and no entry of yours
@@ -233,7 +237,7 @@ it, and a cycle brief had to override it).
 ## Done when
 Every assigned item is accounted for: either **staged** (entry + conforming dot-form sidecar in
 `_inbox/proposed/`, raw artifact in `raw/`, queue file moved, temp cleaned) or **failed with a
-stated reason** — and the reconciliation counts balance (assigned = staged + failed + skipped).
+stated reason** or **handed back** — and the reconciliation counts balance (assigned = staged + failed + skipped + handed back).
 Before finishing, run the pre-exit checklist **against the assignment you were given, not against
 what you produced**: (1) does the receipt cover every item the caller listed? (2) does
 `uv run --project ~/.claude/wiki-scripts python ~/.claude/wiki-scripts/wiki-promote.py --topic <target notebook> --check --slug <slug>` exit 0
