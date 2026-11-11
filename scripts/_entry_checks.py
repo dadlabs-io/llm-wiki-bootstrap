@@ -474,7 +474,8 @@ def _blockquotes(body: str) -> list[str]:
     return blocks
 
 
-_HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
+# One heading line (its own name: reusing _HEADING_RE here replaced the multi-line one above, task #233).
+_LINE_HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 _TRANSCRIBED_RE = re.compile(r"^Transcribed from .+ by .+", re.I)
 
 
@@ -484,7 +485,7 @@ def split_transcriptions(raw_text: str) -> tuple[str, str]:
     or a higher level (task #81 P4: image-only raws made every slide quote "not found")."""
     own, transcribed, level = [], [], 0
     for line in raw_text.splitlines():
-        m = _HEADING_RE.match(line.strip())
+        m = _LINE_HEADING_RE.match(line.strip())
         if m and level and len(m.group(1)) <= level and not _TRANSCRIBED_RE.match(m.group(2)):
             level = 0
         if m and _TRANSCRIBED_RE.match(m.group(2)):
