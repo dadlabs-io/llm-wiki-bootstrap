@@ -9,6 +9,12 @@
 
 ---
 
+## 2026-11-10
+
+### Two framework docs brought up to date (task #234)
+- **Why**: agentic-design's semantic lint (cycle 2026-10-30-01, findings 22 and 23) found both docs behind the skills.
+- **What**: `cycle-step-return-format` (v8): `cost.json`/`.md`, `synthesis-scope.txt`, `synthesis.json`/`.md` in the layout; synthesis statuses `skipped` and `awaiting_approval`; the semantic lint's incremental scope; the checker's scope by `wiki-checker-config.json`; the timestamp row and example in local time with an offset, as Invariant 2 says. `wiki-authoring-best-practices` (v12): the content dedup in `wiki-update.py` (85%, warning from 50%) is the duplicate control; the eval gate does not check tier (status row 7 now ⚠️); triage and the checker join the federation; `--no-confirm-discovery` noted under the two checkpoints.
+
 ## 2026-11-09
 
 ### The raw's size picks the ingest writer (task #239)

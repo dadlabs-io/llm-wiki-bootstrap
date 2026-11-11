@@ -6,9 +6,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 7
-last_reviewed: 2026-10-19
-review_after: 2027-01-13
+framework-version: 8
+last_reviewed: 2026-11-10
+review_after: 2027-02-08
 tags: [best-practice, architecture, orchestrator, wiki-cycle, schema, contract]
 ---
 
@@ -42,6 +42,8 @@ _inbox/reports/
         ├── scratchpad.md                          ← Step 0; rewritten after EVERY step, enables --resume
         ├── models.json                            ← Step 0: the model each helper is spawned on
         ├── promote-setting.txt                   ← Step 0: the notebook's confirm_before_promote, which Step 5.5 follows
+        ├── cost.json                              ← Step 0 (`cost --mark start`), completed at Step 8 (`--mark end`)
+        ├── cost.md                                ← the report header reads this run's cost from it
         ├── drive-fetch.json                       ← Step 1.0
         ├── drive-fetch.md
         ├── discover.json                          ← Step 1
@@ -54,7 +56,7 @@ _inbox/reports/
         ├── triage.md
         ├── update.json                            ← Step 2
         ├── update.md
-        ├── checker-scope.txt                      ← Step 2.6 (only when a staged raw is a long transcript)
+        ├── checker-scope.txt                      ← Step 2.6: the staged entries to check (wiki-checker-config.json)
         ├── checker/<slug>.json                    ← Step 2.6: one checker report per entry
         ├── lint-mechanical.json                   ← Step 3
         ├── lint-mechanical.md
@@ -73,7 +75,10 @@ _inbox/reports/
         ├── claims.json                            ← Step 6
         ├── claims.md
         ├── corroboration.md                       ← Step 6: wiki-claims-corroborate.py --report
-        ├── synthesis-<topic>.md                   ← Step 6.5 (one or more)
+        ├── synthesis-scope.txt                    ← Step 6.5: the entries in scope
+        ├── synthesis.json                         ← Step 6.5 (written even when skipped)
+        ├── synthesis.md                           ← Step 6.5: the consolidated proposal
+        ├── synthesis-<area>.md                    ← Step 6.5: each agent's working notes (one or more)
         ├── refresh.json                           ← Step 7
         ├── refresh.md
         ├── 2026-04-24-01-run-cycle-report.md      ← orchestrator-assembled final
@@ -89,7 +94,7 @@ The iteration number (`01`, `02`, ...) increments for same-day re-runs. The orch
   "skill": "wiki-discover",
   "cycle_id": "2026-04-24-01",
   "step": "discover",
-  "timestamp": "2026-04-24T18:45:00Z",
+  "timestamp": "2026-04-24T18:45:00-04:00",
   "status": "completed",
   "summary": {
     "<step-specific-count>": <n>,
@@ -110,8 +115,8 @@ The iteration number (`01`, `02`, ...) increments for same-day re-runs. The orch
 | `skill` | string | Full skill name (e.g. `wiki-discover`) |
 | `cycle_id` | string | `<date>-<NN>` — assigned by orchestrator |
 | `step` | string | Short step name (`discover`, `update`, `lint-mechanical`, etc.) |
-| `timestamp` | ISO-8601 UTC | When the step completed |
-| `status` | string | `completed`, `partial`, `failed` |
+| `timestamp` | tz-aware ISO-8601 | When the step completed: local time with its UTC offset (Invariant 2) |
+| `status` | string | `completed`, `partial`, `failed`; synthesis also uses `skipped` and `awaiting_approval` (its section) |
 | `summary` | object | Step-specific counters — keep keys consistent per skill |
 | `queued` | array | Items approved/produced by this step |
 | `skipped` | array | Items intentionally skipped, with reason |
@@ -151,9 +156,9 @@ The iteration number (`01`, `02`, ...) increments for same-day re-runs. The orch
 
 ### Checker (Step 2.6)
 
-- One `checker/<slug>.json` report per staged entry whose raw is a long transcript, written by the `wiki-checker` agent; the scope is `checker-scope.txt`
+- One `checker/<slug>.json` report per staged entry in scope, written by the `wiki-checker` agent. The scope is `checker-scope.txt`: entries whose raw is a long transcript or a big raw (a long PDF, a whole repo), plus 1 in `sample_every` of the rest (by default all of them), per `wiki-checker-config.json`
 - No step JSON of its own: each report is logged to `_inbox/reports/checker-log.jsonl` (`wiki-cycle-scope.py checker-log`), the scratchpad's Phase 2.6 line counts checked / pass / fix / held, and the report lists any entry held for an uncorrected `fix` verdict
-- A skipped step (no long transcript) is recorded in the scratchpad as `skipped (<why>)`
+- A skipped step (an empty scope) is recorded in the scratchpad as `skipped (<why>)`
 
 ### `/wiki-update`
 
@@ -184,7 +189,7 @@ All three are deterministic Python and **all three emit cycle-contract JSON when
 
 ### `/wiki-lint --full` (semantic)
 
-- N parallel agents run (4 is the proven pattern), partitioned over `research/*` + `project/*` + wiki-root files, balanced by file count for the wiki's current shape — the partition is chosen per run, not a frozen folder list (reworded 2026-08-13 to match `wiki-cycle/SKILL.md` Step 4; the frozen four-way list previously here disagreed with both canon and actual dispatch). Orchestrator merges their outputs.
+- The scope is incremental: `semantic-scope.txt` (`wiki-cycle-scope.py semantic`) lists the entries added or revised since the last semantic lint, plus this run's staged entries; `--lint-all` widens it to every entry. One agent per ~100 entries in scope, up to 4, each given a partition of the scope balanced by file count, chosen per run. Orchestrator merges their outputs. (Reworded 2026-11-10: until then this line described a partition of the whole wiki.)
 - `queued[]` is empty
 - Findings live in: `contradictions[]`, `missing_cross_refs[]`, `thin_coverage[]`, `concept_gaps[]`, `tier_review[]`, `other[]`
 - Each finding: `{ file, line, severity: "high|med|low", description, recommended_fix }`
@@ -202,7 +207,9 @@ Writes `promote.json` + `promote.md`. Runs only when Step 0's `promote-setting.t
 
 ### Synthesis (Step 6.5)
 
-Writes `synthesis-<topic>.md` (one or more; report-only, no JSON mutation of the wiki). Reviews the cycle's new `research/` entries against the canonical `project/best-practices/*` pages and proposes confirm / dated watch-note / doctrine-change diffs. A human gate approves what lands in canon.
+Runs in every mode that ingests. The scope is `synthesis-scope.txt`: the `research/` entries in `wiki/` added since the last synthesis the user answered. Report-only agents review them against the canonical `project/best-practices/*` pages and propose confirm / dated watch-note / doctrine-change diffs, each in its own `synthesis-<area>.md`. The orchestrator writes `synthesis.json` + `synthesis.md` (the consolidated proposal: every scoped entry and what is proposed for it). A human gate approves what lands in canon.
+
+- `status`: `completed` once the user has answered (even "none"); its `timestamp` is the next run's cut-off. `skipped` when the scope is empty (no agent is spawned; `notes` carries the script's line). `awaiting_approval` when nobody could answer: no canon changes, the cut-off stays put so those entries come round again, and the report's Needs you lists it
 
 - `queued[]` = proposed doctrine changes awaiting the human gate
 - `skipped[]` = entries reviewed with no best-practices implication
@@ -281,7 +288,7 @@ Because the JSON is authoritative, editing only the markdown has no effect on do
 2. **Timestamps are tz-aware ISO-8601** — local time with an explicit UTC offset, as `now_stamp()` in `_wiki_config.py` produces (e.g. `2026-09-08T16:32:07-04:00`). Never a naive timestamp; the zone must always be labelled. (Corrected 2026-09-08: this line said "UTC" while `cycle_id` and every date label are local-day values — a night-time run stamped in UTC lands on tomorrow's day. Date *labels* — `cycle_id`, report folders, frontmatter dates — are the local calendar day via `today_label()`.)
 3. **`cycle_id` is assigned by the orchestrator**, not by individual skills — ensures uniqueness even on same-day re-runs
 4. **Errors surface at the step level** — any non-empty `errors[]` flags the cycle as degraded but doesn't halt downstream steps that don't depend on this one
-5. **The aggregated cycle report is build from the per-step JSONs** — never scrape markdown sidecars for the final report
+5. **The aggregated cycle report is built from the per-step JSONs** — never scrape markdown sidecars for the final report
 
 ## Related
 

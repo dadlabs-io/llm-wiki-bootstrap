@@ -7,9 +7,9 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 11
-last_reviewed: 2026-10-19
-review_after: 2027-01-13
+framework-version: 12
+last_reviewed: 2026-11-10
+review_after: 2027-02-08
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
 ---
 
@@ -69,7 +69,7 @@ This is workflows-core's **signature policy** and goes beyond every external sou
 
 Rationale: the minority view today may be right tomorrow. Auto-resolving contradictions lossy-compresses the evidence. Better to flag, disclose, and let the reader (human or agent) weigh.
 
-**Duplicate carve-out (added 2026-08-05 in agentic-design; narrow, exact-identity only — user decision).** Both-sides-stay does not apply to true duplicates: the exact same URL ingested twice, or the exact same article republished verbatim (or near-verbatim) at a different URL/site (mirror, syndication, cross-post). Those are **retired in place**: the copy gets `superseded_by: <surviving entry>` and `status: superseded`, anything only it says is folded into the survivor first, and curated links are pointed at the survivor (the frontmatter spec's "On retirement" rule, the one mechanism for this). A retired entry stays on disk but leaves the INDEX, the MAP and search results — "we don't need to ingest the same feed 25 times." (Until 2026-10-13 this paragraph said to move the copy into `_inbox/archived-duplicates/`, a second mechanism nothing implemented; agentic-design's semantic lint, cycle 2026-10-12-02, found the two rules disagreeing.) This is an **identity** test, not a similarity test: **any** actual difference in content — a correction, an update, new details, or the same story reported with different framing — does NOT qualify. Differences get handled by editing the existing entry or adding a `revises:` pointer on the newer one, never by removal from the live wiki. The bar is deliberately narrow so a future agent can't extend it to "overlapping" or "merely similar" entries. Enforcement: `wiki-list-add.py` and the Drive fetcher dedup on canonical URL at queue time (mechanical); the verbatim-republish case is prose-only — a content-hash check is the missing control.
+**Duplicate carve-out (added 2026-08-05 in agentic-design; narrow, exact-identity only — user decision).** Both-sides-stay does not apply to true duplicates: the exact same URL ingested twice, or the exact same article republished verbatim (or near-verbatim) at a different URL/site (mirror, syndication, cross-post). Those are **retired in place**: the copy gets `superseded_by: <surviving entry>` and `status: superseded`, anything only it says is folded into the survivor first, and curated links are pointed at the survivor (the frontmatter spec's "On retirement" rule, the one mechanism for this). A retired entry stays on disk but leaves the INDEX, the MAP and search results — "we don't need to ingest the same feed 25 times." (Until 2026-10-13 this paragraph said to move the copy into `_inbox/archived-duplicates/`, a second mechanism nothing implemented; agentic-design's semantic lint, cycle 2026-10-12-02, found the two rules disagreeing.) This is an **identity** test, not a similarity test: **any** actual difference in content — a correction, an update, new details, or the same story reported with different framing — does NOT qualify. Differences get handled by editing the existing entry or adding a `revises:` pointer on the newer one, never by removal from the live wiki. The bar is deliberately narrow so a future agent can't extend it to "overlapping" or "merely similar" entries. Enforcement: mechanical. `wiki-list-add.py` and the Drive fetcher dedup on canonical URL at queue time; `wiki-update.py` skips a source already in `wiki/` or `_inbox/proposed/`, and a raw whose content an entry already cites under another URL (an exact copy, or 85% or more the same text), and warns on a partial overlap (50-85%), which is read as a possible copy (since 2026-10-06). (Until 2026-11-10 this line called the verbatim-republish case prose-only.)
 
 ### 5. Claim-level extraction with 4-way classification
 
@@ -105,6 +105,8 @@ An entry about a tool or a repository whose source makes headline claims adds a 
 - rohitg00: event-driven automation, human stays in the loop for curation.
 - **workflows-core**: two human checkpoints (URL approval + entry approval) as non-negotiable.
 
+One exception is written down: `/wiki-cycle --no-confirm-discovery`, for unattended runs, skips checkpoint 1 for discovery's tiers 1-3 (it queues them) and defers tier 4; email candidates are never approved unattended. Checkpoint 2 still follows the notebook's `confirm_before_promote`.
+
 Rationale: **silent poisoning risk** (Mem0 warning, Asel L2) + source-quality blindness justify the conservatism. The wiki is load-bearing for downstream decisions; a bad ingest that survives review can pollute months of work.
 
 Don't soften this. The right move when automation wants to push further is to make the checkpoints *faster*, not remove them.
@@ -115,7 +117,7 @@ The 4-tier rubric is defined in ONE place — the tier table in [wiki-frontmatte
 
 rohitg00 has a quality threshold; Huber has a gold-set. **No external source implements the full tier rubric or tier-4-hard-block.** Ours is stricter.
 
-Enforce in `/wiki-update` eval gate and `/wiki-list process`. When a source fails tier evaluation, drop to `_inbox/proposed/` for human review, never direct to `wiki/`.
+Tier 4 needs a human's yes: discovery never queues it unattended (`--no-confirm-discovery` defers it), and a source the user handed over is that yes. Filing then follows the notebook's `confirm_before_promote` (staged in `_inbox/proposed/` by default) or the user's flag, as for any tier. The `/wiki-update` eval gate is structural (TL;DR, Related, frontmatter, partial raws, quotes); it does not check the tier. (Until 2026-11-10 this paragraph said the gate enforced it.)
 
 ### 8. Distinguish synthesis from direct claims in prose
 
@@ -143,7 +145,9 @@ When a raw source gets an update, or `review_after` passes, the entry is flagged
 
 The full-wiki-cycle system is a federation:
 - **Discovery** (`/wiki-discover`) — find candidate sources from feeds
-- **Ingestion** (`/wiki-update`) — fetch, synthesize, file with eval gate
+- **Triage** (`/wiki-triage`) — route each intake ticket to the reader it belongs to
+- **Ingestion** (`/wiki-update`, spawned as `wiki-ingester` workers in a cycle) — fetch, synthesize, file with eval gate
+- **Checking** (the `wiki-checker` agent) — read each staged entry against its raw and report what it gets wrong, before promotion
 - **Linting** (`/wiki-lint`) — mechanical + semantic structural health
 - **Claims extraction** (`/wiki-claims`) — pull every factual assertion into indexed form
 - **Contradiction hunting** — cross-compare claims for conflicts
@@ -207,12 +211,12 @@ Legend: ✅ implemented and enforced · ⚠️ partial / policy not fully automa
 | 3 | Raw sources immutable | ✅ | `raw/` folder preserved at wiki root. No rewrite pattern; re-fetches create new timestamped files. |
 | 4 | Both-sides-stay (contradiction preservation) | ✅ | Policy baked in. `/wiki-claims` surfaces contradictions; both entries kept. |
 | 5 | Claim-level 4-way classification | ✅ | `/wiki-claims` skill implemented. 22 entries retrofitted 2026-04-10. New ingests classify at author time. |
-| 6 | Two human checkpoints | ✅ | URL approval gate (`/wiki-list add` / Drive fetch → `_inbox/pending/`, confirmed at `/wiki-cycle` Step 1.5) + entry approval gate (`_inbox/proposed/` → `/wiki-promote --review` → `wiki/`). Non-negotiable. The entry gate is the notebook's `confirm_before_promote` (true by default); since 2026-10-19 (task #184) `/wrap-up`, `/wiki-update` and `/wiki-cycle` all follow it (until then the cycle ignored it and `--full` promoted without asking). A notebook set to false has chosen to skip the second checkpoint. |
-| 7 | Source tier-4 hard block | ✅ | Eval gate in `/wiki-update` step 5 (added 2026-04-13). Failing-tier entries drop to `_inbox/proposed/` for human review. |
+| 6 | Two human checkpoints | ✅ | URL approval gate (`/wiki-list add` / Drive fetch → `_inbox/pending/`, confirmed at `/wiki-cycle` Step 1.5; `--no-confirm-discovery` queues discovery's tiers 1-3 unreviewed on an unattended run) + entry approval gate (`_inbox/proposed/` → `/wiki-promote --review` → `wiki/`). Non-negotiable. The entry gate is the notebook's `confirm_before_promote` (true by default); since 2026-10-19 (task #184) `/wrap-up`, `/wiki-update` and `/wiki-cycle` all follow it (until then the cycle ignored it and `--full` promoted without asking). A notebook set to false has chosen to skip the second checkpoint. |
+| 7 | Source tier-4 hard block | ⚠️ | Tier 4 is never auto-approved at discovery (`--no-confirm-discovery` defers it); filing follows `confirm_before_promote`. The `/wiki-update` eval gate does not check tier; the tier is set from the frontmatter spec's rubric, and the semantic lint reviews it. |
 | 8 | Synthesis vs direct claims distinguished in prose | ⚠️ | Retrofit done 2026-04-10 for 22 entries. Convention baked into `wiki-update` SKILL.md, but enforcement across new ingests relies on author discipline — not mechanically checked by lint. |
 | 9 | Dependency tracking (`last_reviewed` / `review_after` / `confidence`) | ⚠️ | Lifecycle fields are required by the spec and lint-checked (missing `last_reviewed` / `review_after` is a lint finding). `raw_path` is **in the frontmatter schema and enforced** by `wiki-lint-mechanical.py` (missing / phantom `raw_path` checks). Remaining gap: the frozen "134/148 compliant" figure above is a 2026-04 snapshot; the live compliance number is the lint's, per wiki. |
-| 10 | Federation of specialists (`/wiki-*` skills) | ✅ | Every skill in the install manifest (`TRAVEL_SKILLS` in `_install_tooling.py` — point there, not at a count here) ships as a Claude Code skill at `~/.claude/skills/`, plus the `wiki-ingester` agent. `rollback` + `verify` implement the truth-status lifecycle the sibling specs depend on. |
-| 11 | Hard rules are hybrid artifacts (prose + check) | ⚠️ | 2026-09-02: rubric's structural rules moved into `_entry_checks.py` (gate + lint); skill frontmatter carries lifecycle fields. 2026-09-08: frontmatter loadability is an install-time gate + lint check. Still prose-only: the claim-classification convention (principle 5), the duplicate carve-out's verbatim-republish case (principle 4), the frozen-count rule (principle 9), and most SKILL.md "don't" bullets — each needs an enforcement note or a check. |
+| 10 | Federation of specialists (`/wiki-*` skills) | ✅ | Every skill in the install manifest (`TRAVEL_SKILLS` in `_install_tooling.py` — point there, not at a count here) ships as a Claude Code skill at `~/.claude/skills/`, plus the `wiki-ingester` and `wiki-checker` agents (`/wiki-cycle` Steps 2 and 2.6) and the `/wiki-triage` skill (Step 1.7). `rollback` + `verify` implement the truth-status lifecycle the sibling specs depend on. |
+| 11 | Hard rules are hybrid artifacts (prose + check) | ⚠️ | 2026-09-02: rubric's structural rules moved into `_entry_checks.py` (gate + lint); skill frontmatter carries lifecycle fields. 2026-09-08: frontmatter loadability is an install-time gate + lint check. Since 2026-10-06: the duplicate carve-out's verbatim-republish case (principle 4) is a content check in `wiki-update.py`. Still prose-only: the claim-classification convention (principle 5), the frozen-count rule (principle 9), and most SKILL.md "don't" bullets — each needs an enforcement note or a check. |
 
 ### Explicit gaps (punch list — where improvement lives)
 
