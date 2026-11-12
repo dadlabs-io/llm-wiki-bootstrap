@@ -26,5 +26,5 @@
 
 ## Decisions
 
-1. **The closing hint after a block.** Recommendation: keep the one closing line, reworded so it does not invite the bypass after a dcc refusal: "pre-commit: fix the lines above. A do-code-change refusal needs a run (its message says how); --no-verify is only for a gitleaks or private-word hit you are sure is a false alarm." Alternative: leave it as it is (agent-builder flagged that it invites the bypass).
-2. **`python` cannot run** (not on PATH when git runs the hook). The given line then fails with 127 and blocks every commit with a shell error. Recommendation: block, with a clear line "pre-commit: BLOCKED — NOT checked: python not found for the do-code-change commit check", matching how a missing gitleaks is handled. Alternative: treat it like the pack being absent (NOT CHECKED, commit goes on), which lets script changes through unchecked on that machine.
+1. **The closing hint after a block** — decided by Mark (2026-11-12): every block is fixed; `--no-verify` only when Mark has said so. The line becomes "pre-commit: fix the lines above. --no-verify only when Mark has said so." Alternative was keeping the old line.
+2. **`python` cannot run** — decided by Mark (2026-11-12): fail loud, no special handling. The change request's line is used as given: a missing python makes the shell print its own error and sets status=1, so the commit is blocked. Alternative was a guard with its own BLOCKED line (dropped as unneeded).
