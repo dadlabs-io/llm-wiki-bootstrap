@@ -7,7 +7,7 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 13
+framework-version: 14
 last_reviewed: 2026-11-11
 review_after: 2027-02-08
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
@@ -81,7 +81,7 @@ Every factual assertion in every entry is classified as one of:
 - **synthesis** — our conclusion drawn from multiple sources
 - **inference** — our own assertion, unsourced (highest drift risk)
 
-Claims are indexed in `_inbox/claims-index-*.json` for cross-entry comparison. This makes contradiction detection precise (sentence-level, not page-level) and makes drift visible (every `inference` claim is a candidate for future verification).
+Claims are indexed in one file, `_inbox/claims-index.json`, for cross-entry comparison. This makes contradiction detection precise (sentence-level, not page-level) and makes drift visible (every `inference` claim is a candidate for future verification).
 
 **Read before you reject (added 2026-08-01; observed doctrine since 2026-04-29).** No title-pattern rejections, no URL-pattern guesses, no domain-quality heuristic as a standalone basis for skipping. The user has already curated at queue-add time; the ingest agent's job is to render the item, not re-litigate whether it belongs. **Every queued item is fully fetched and read before any tier / cluster / skip decision, and every rejection is content-grounded: a quoted passage from the fetched source plus the slug of the existing entry it overlaps.** The rule was added after a cycle agent rejected 22 of 26 user-curated URLs on title patterns alone — the drop rate was the tell. The rule also lives in the `wiki-update` skill and the `wiki-ingester` agent (their operational home); this section is the doctrinal record. Enforcement: prose, plus the ingester's receipt row (a rejection without a quoted passage is a visible defect).
 
@@ -135,7 +135,7 @@ Pages track their raw sources and last-compiled date. Frontmatter contract:
 - `review_after`: when to re-check (decay trigger)
 - `confidence`: high / medium / low based on source and age
 
-When a raw source gets an update, or `review_after` passes, the entry is flagged for recompilation. This makes the wiki **reproducible and auditable** — a property external wiki patterns don't describe at this level.
+When `review_after` passes, the entry is flagged for re-checking (`/wiki-refresh`). A source that changed is caught only when it is fetched again with `--refetch`, which saves a new raw; nothing compares an entry with a newer raw on its own. This makes the wiki **reproducible and auditable** — a property external wiki patterns don't describe at this level.
 
 **Never write a count you could point at (added 2026-08-13).** A number derived from the corpus itself — entry counts, folder counts, "the `wiki-*` family is N skills" — is a dependency like any other, but one with no `review_after`, no `raw_path`, and no lint rule behind it. It rots the moment the next cycle runs, and nothing announces the rot. **Point at the live artifact instead of freezing the number**: `_MAP.md` for entry and folder counts, a folder's `_INDEX.md` for its contents, the install manifest (`_install_tooling.py`) for how many skills and scripts ship, a named verify-command for anything a script can recount. Where a frozen number is genuinely load-bearing — a snapshot you are *arguing from* rather than merely reporting — keep it, but stamp it as a dated snapshot in the same sentence, so a reader can tell a measurement from a fact. Cycle 2026-08-04-01 in agentic-design found seven such counts across four project docs, every one stale by roughly an order of magnitude and every one invisible to mechanical lint. The rule reaches section headings that count their own contents ("The ten operational principles") — a frozen count that makes growing the list an edit in two places. Enforcement: prose; `_entry_checks.py` warns on numeric claims in prose outside a blockquote, which catches the external-figure case below but not a bare integer.
 

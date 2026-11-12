@@ -14,6 +14,7 @@
 ### The authoring doc's status table moves to llm-wiki's notebook (task #231)
 - **Why**: the doc ships to every project as general practice, but its "Implementation status" table and gap list described llm-wiki's own build, and a gap list goes stale whenever the practice changes (Mark, 2026-11-11).
 - **What**: `wiki-authoring-best-practices` (v13): the table and the gap list are replaced by one line linking llm-wiki's "Wiki authoring: where llm-wiki stands" page, which lists what we have area by area with links to the design pages.
+- **Also** (v14): principle 5 names the one claims file, `_inbox/claims-index.json` (it said `claims-index-*.json`); principle 9 no longer says a changed raw flags its entry: `/wiki-refresh` lists entries past `review_after`, and a changed source is caught only by `--refetch`.
 
 ## 2026-11-10
 
