@@ -11,6 +11,10 @@
 
 ## 2026-11-12
 
+### The cycle's overview page merges into llm-wiki's page 30 (task #231)
+- **Why**: agentic-design's `wiki-cycle-system-overview.md` described our own cycle, not general practice, and its step and mode tables repeated llm-wiki's living page 30 and had gone stale (it still had the checker sampling 1 in 10).
+- **What**: page 30 gains its hand-off table, its design principles (both sides stay, read before you reject, a second reader, compile don't retrieve, the human reviews permanent by choice, promote before synthesis), the two recorded runs and the old fix-pass split as history. The overview page is deleted and its links point at page 30. `/wiki-report` step J no longer names it.
+
 ### Reading the wiki in Obsidian is a usage page in the pack (task #231)
 - **Why**: how to read a notebook in Obsidian applies to every wiki, but it sat in agentic-design's Obsidian hub, which only that notebook's readers saw (Mark, 2026-11-12: it ships with the default install).
 - **What**: new pack page `wiki-seed/obsidian.md`, installed to the global toolset's `how-to/llm-wiki/`: opening a notebook as a vault (Obsidian creates `.obsidian/` itself; the installer adds nothing), the `_` folder layout, plugins worth running, what to leave off, a reading routine. Corrected on the way: there is no `_INDEX-FULL.md`, `_inbox/` and `_config/` sit beside `wiki/`, and links are rewritten by `wiki-fix-links.py`. agentic-design's hub keeps its list of Obsidian entries and links the page.

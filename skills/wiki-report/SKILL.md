@@ -83,7 +83,7 @@ Read `wiki/concept-gaps-things-mentioned-not-yet-covered.md` — count rows in C
 **J. Best practices gap analysis**:
 Compare what the wiki recommends as best practice against what our system actually does. Read the key best-practice entries and cross-check against current implementation state:
 
-1. If the wiki has a cycle-setup or system-overview page (agentic-design keeps `research/implementation/research-cycle-setup.md` and a root `wiki-cycle-system-overview.md`; other wikis may have neither — skip when absent), read it: what does it say the cycle should have? What's built, what's not?
+1. If the wiki has a cycle-setup or system-overview page (agentic-design keeps `research/implementation/research-cycle-setup.md`; other wikis may have none — skip when absent), read it: what does it say the cycle should have? What's built, what's not?
 2. If the wiki has a getting-started / "Current status" page, read it — is its status table accurate?
 3. Scan recent ingests — did any new entry introduce a best practice we're not following? Look for entries with tags containing `best-practice`, `architecture`, `pattern`, or `recommendation`.
 4. Check if any newly ingested entry contradicts or updates an existing best practice. For example: if we ingested an article saying "staging is essential" and we're not using staging, that's a gap.
