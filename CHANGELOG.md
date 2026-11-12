@@ -9,6 +9,12 @@
 
 ---
 
+## 2026-11-12
+
+### Reading the wiki in Obsidian is a usage page in the pack (task #231)
+- **Why**: how to read a notebook in Obsidian applies to every wiki, but it sat in agentic-design's Obsidian hub, which only that notebook's readers saw (Mark, 2026-11-12: it ships with the default install).
+- **What**: new pack page `wiki-seed/obsidian.md`, installed to the global toolset's `how-to/llm-wiki/`: opening a notebook as a vault (Obsidian creates `.obsidian/` itself; the installer adds nothing), the `_` folder layout, plugins worth running, what to leave off, a reading routine. Corrected on the way: there is no `_INDEX-FULL.md`, `_inbox/` and `_config/` sit beside `wiki/`, and links are rewritten by `wiki-fix-links.py`. agentic-design's hub keeps its list of Obsidian entries and links the page.
+
 ## 2026-11-11
 
 ### The authoring doc's status table moves to llm-wiki's notebook (task #231)

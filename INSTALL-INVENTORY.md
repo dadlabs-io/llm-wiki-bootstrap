@@ -59,7 +59,7 @@ Manifest: `TRAVEL_AGENTS` in `scripts/_install_tooling.py` (added 2026-08-20)
 
 ## A3. Pack usage docs (wiki-seed)
 
-Source-of-truth: `wiki-seed/` (the pack page `llm-wiki.md`, plus `user-guide.md`, `commands.md`, `getting-started.md`, `install.md`, `drive-setup.md`, `skill-suggestions.md`, `migrating-from-claude-to-cursor.md`) + `skills/<name>/wiki-seed/<name>.md` + `agents/<name>/wiki-seed/<name>.md`
+Source-of-truth: `wiki-seed/` (the pack page `llm-wiki.md`, plus `user-guide.md`, `commands.md`, `getting-started.md`, `install.md`, `drive-setup.md`, `skill-suggestions.md`, `migrating-from-claude-to-cursor.md`, `obsidian.md`) + `skills/<name>/wiki-seed/<name>.md` + `agents/<name>/wiki-seed/<name>.md`
 Install target: the global toolset (section G): `how-to/llm-wiki/<page>.md` + `how-to/llm-wiki/skills/<name>.md` + `how-to/llm-wiki/agents/<name>.md`, by every global install and by `--phase docs`. Until 2026-10-04 every project wiki got its own copy
 
 `user-guide.md` is the one-page guide to the whole system (2026-09-25, task #41). Until then it was a file in the old notebook template that no refresh reached, so three copies drifted apart; it moved here so there is one copy and a fix is made once.

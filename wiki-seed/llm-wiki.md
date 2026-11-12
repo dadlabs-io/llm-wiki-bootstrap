@@ -26,6 +26,7 @@ version of this list, see [`user-guide.md`](./user-guide.md) (the whole system o
 [`commands.md`](./commands.md) (the full command reference) and
 [`getting-started.md`](./getting-started.md) (the first-hour walkthrough). Moving to Cursor:
 [`migrating-from-claude-to-cursor.md`](./migrating-from-claude-to-cursor.md) (what carries over, what to set up).
+Reading a notebook in Obsidian: [`obsidian.md`](./obsidian.md) (opening it, plugins, what to leave off).
 
 ## Daily drivers
 
