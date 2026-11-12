@@ -1,0 +1,19 @@
+{
+  "slug": "241-pre-commit-dcc-check",
+  "task": 241,
+  "outcome": "success",
+  "size": "small",
+  "size_moves": [],
+  "fixed_point": "bc898ad5696789890603485b57efffa06f85d6b7",
+  "review_rounds": 2,
+  "fix_rounds": 1,
+  "gates": {
+    "pre_plan": "pass (Change confirmation 2026-11-12)",
+    "post_plan": "pass (small: six criteria held; scope widened once, recorded)",
+    "post_review": "pass (round 1 and focused round 2; read-only guard PASS both)",
+    "pre_verify": "met (review-ledger query --cap 3)",
+    "pre_finish": "VERDICT: FAIL — tests-bite (not checked: no mutation tool for shell); approved by Mark, Discord 2026-11-12 23:15"
+  },
+  "budget_at_finish": "27 of 720 active minutes, 114 of 2200 turns (main 92, sub-agents 22), $10.16 of $120.00",
+  "date": "2026-11-12"
+}

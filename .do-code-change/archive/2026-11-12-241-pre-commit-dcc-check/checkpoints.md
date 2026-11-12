@@ -29,3 +29,13 @@ Left open (non-blocking, a verdict of open in the ledger): standards-2 to -13 an
 Standards clear; Spec found two wording slips in this run's own notes (spec-4, spec-5), amended in place: requirements Decision 1's note narrowed to the bypass rule, plan Solution matched to the ruled line. Not a code change, so no fix round. Parked for Mark: the hook's header, README and install.sh still name Mark outside the bypass rule ("for every bot and for Mark", "Mark fills the list"), which predates this change.
 
 Pre-verify: `review-ledger.py query --cap 3` (the cap WORKFLOW.md Pre-verify names) prints met: no open blocking item, 2 rounds. With `--cap 1` (the small path's retry ceiling) the same ledger halts as "round 2 is past the cap of 1", though this run had one fix round; the small path's cap and the query's round count disagree (skill suggestion filed).
+
+## Verify — 2026-11-12
+
+tests-bite not checked (no mutation tool for shell). Mark (Discord, 23:15): "Yeah, it sounds like mutation doesn't apply here right?" and "Let's accept that and continue please." → a named FAIL the requester approved.
+
+## Finishing decision — 2026-11-12
+
+keep — verify VERDICT: FAIL — tests-bite only, approved by Mark (above) (verification-result.md), on the branch the run started on (main).
+Tags: code-change, git-hooks, do-code-change, edit-gate.
+Revises no earlier recorded change.
