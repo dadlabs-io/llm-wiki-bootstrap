@@ -7,8 +7,8 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 12
-last_reviewed: 2026-11-10
+framework-version: 13
+last_reviewed: 2026-11-11
 review_after: 2027-02-08
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
 ---
@@ -196,38 +196,9 @@ A page outside its folder's default says so with `kind:` in its frontmatter (the
 
 **How they stay current**: a change that alters how a part works files its history note *and* revises the living page it touches, in the same session (the history note is the why; the page is the now). The lint lists every living page that a newer history note links to, or that links to one ("Design Pages Behind Their Notes"). Enforcement: that lint section (warn-only), `describes:` code drift, and `/wrap-up` Step 3.5, which revises the pages a session's change touches (task #172, 2026-10-19; each revision is a row of its proposal table).
 
-## Implementation status — what we do now vs what the principles say
+## What llm-wiki has built
 
-**Purpose**: one-stop view of principle-vs-reality, so gaps are visible at a glance and we know where to look when we want to improve. Update this section when state changes; don't let it drift.
-
-Legend: ✅ implemented and enforced · ⚠️ partial / policy not fully automated · ❌ aspirational, not built
-
-**Snapshot note (counts are point-in-time):** the absolute entry counts in this table — principle 9's "134/148 entries compliant", and the "22 entries retrofitted 2026-04-10" under principles 5 and 8 — are a snapshot **as of 2026-04-10** from the first wiki this framework ran. Any wiki has since grown past them (see its `_MAP.md` for the live count); the ✅/⚠️/❌ marks reflect current capability, only the frozen counts are historical.
-
-| # | Principle | Status | Evidence / gap |
-|---|---|---|---|
-| 1 | Compile, don't retrieve | ✅ | Wiki is plain markdown (no RAG DB). Confirmed by folder layout at `<notebook-root>/wiki/`. |
-| 2 | LLM writes, human reads | ✅ | User queues URLs via `/wiki-list add` (or drops them in Drive) → agent compiles via `/wiki-update`. |
-| 3 | Raw sources immutable | ✅ | `raw/` folder preserved at wiki root. No rewrite pattern; re-fetches create new timestamped files. |
-| 4 | Both-sides-stay (contradiction preservation) | ✅ | Policy baked in. `/wiki-claims` surfaces contradictions; both entries kept. |
-| 5 | Claim-level 4-way classification | ✅ | `/wiki-claims` skill implemented. 22 entries retrofitted 2026-04-10. New ingests classify at author time. |
-| 6 | Two human checkpoints | ✅ | URL approval gate (`/wiki-list add` / Drive fetch → `_inbox/pending/`, confirmed at `/wiki-cycle` Step 1.5; `--no-confirm-discovery` queues discovery's tiers 1-3 unreviewed on an unattended run) + entry approval gate (`_inbox/proposed/` → `/wiki-promote --review` → `wiki/`). Non-negotiable. The entry gate is the notebook's `confirm_before_promote` (true by default); since 2026-10-19 (task #184) `/wrap-up`, `/wiki-update` and `/wiki-cycle` all follow it (until then the cycle ignored it and `--full` promoted without asking). A notebook set to false has chosen to skip the second checkpoint. |
-| 7 | Source tier-4 hard block | ⚠️ | Tier 4 is never auto-approved at discovery (`--no-confirm-discovery` defers it); filing follows `confirm_before_promote`. The `/wiki-update` eval gate does not check tier; the tier is set from the frontmatter spec's rubric, and the semantic lint reviews it. |
-| 8 | Synthesis vs direct claims distinguished in prose | ⚠️ | Retrofit done 2026-04-10 for 22 entries. Convention baked into `wiki-update` SKILL.md, but enforcement across new ingests relies on author discipline — not mechanically checked by lint. |
-| 9 | Dependency tracking (`last_reviewed` / `review_after` / `confidence`) | ⚠️ | Lifecycle fields are required by the spec and lint-checked (missing `last_reviewed` / `review_after` is a lint finding). `raw_path` is **in the frontmatter schema and enforced** by `wiki-lint-mechanical.py` (missing / phantom `raw_path` checks). Remaining gap: the frozen "134/148 compliant" figure above is a 2026-04 snapshot; the live compliance number is the lint's, per wiki. |
-| 10 | Federation of specialists (`/wiki-*` skills) | ✅ | Every skill in the install manifest (`TRAVEL_SKILLS` in `_install_tooling.py` — point there, not at a count here) ships as a Claude Code skill at `~/.claude/skills/`, plus the `wiki-ingester` and `wiki-checker` agents (`/wiki-cycle` Steps 2 and 2.6) and the `/wiki-triage` skill (Step 1.7). `rollback` + `verify` implement the truth-status lifecycle the sibling specs depend on. |
-| 11 | Hard rules are hybrid artifacts (prose + check) | ⚠️ | 2026-09-02: rubric's structural rules moved into `_entry_checks.py` (gate + lint); skill frontmatter carries lifecycle fields. 2026-09-08: frontmatter loadability is an install-time gate + lint check. Since 2026-10-06: the duplicate carve-out's verbatim-republish case (principle 4) is a content check in `wiki-update.py`. Still prose-only: the claim-classification convention (principle 5), the frozen-count rule (principle 9), and most SKILL.md "don't" bullets — each needs an enforcement note or a check. |
-
-### Explicit gaps (punch list — where improvement lives)
-
-1. ~~**L5 self-improvement loop not built**~~ **— resolved 2026-08-01.** The L5 read/write loop **is** built: `/wiki-cycle` closes it, with Step 6.5 (best-practices synthesis) as the write path from `research/` into canon and `cycle-step-return-format.md` §Synthesis as its contract. Per this doc's own gloss (*"read/write loop over L1-L4"*) and Asel's definition, L5 denotes a **closed loop, not an unattended one** — and by principle 6 the loop is human-gated permanently and by choice. **The two real remaining gaps are narrower**: (a) no scheduler — the loop runs when a human starts it; (b) the parallel-dispatch step is execution-context-dependent (in-process teammates cannot use the documented background-agent recipe).
-2. ~~**`raw_path` frontmatter field not enforced**~~ **✅ RESOLVED** — `raw_path` is in the frontmatter schema and enforced by `wiki-lint-mechanical.py` (missing / phantom `raw_path` checks); lint verifies raw-source integrity.
-3. **Entries missing `last_reviewed` / `review_after`** (principle 9 compliance gap). The "14 entries" figure was a 2026-04-16 snapshot and is not a live number; the lint's "missing lifecycle fields" counter is. Track the per-wiki backlog in that wiki's task list (a card in `tasks/`, through `/task-list`), not here.
-4. **Synthesis-vs-direct-claim prose distinction only partly verified** (principle 8 enforcement gap). Partially closed 2026-09-02: `_entry_checks.py` flags numeric claims in prose outside a blockquote (gate + lint). Assertion-level detection for non-numeric claims is still not built.
-5. **Wiki-discover URL verification bug** (discovery correctness gap). 3 of 4 queue URLs mislabeled in 2026-04-16 cycle; worked around via host yt-dlp, root cause unfixed. Violates principle 3 (raw source integrity starts at discovery).
-6. ~~**Mem0 "(per MemPalace third-party)" qualifier not applied** to 4+ entries~~ **✅ RESOLVED 2026-04-22** — sweep applied across all 5 entries (Mem0, Zep/Graphiti, Mastra, session-memory-comparison x2, the-active-memory-layer). Each benchmark claim now carries explicit MemPalace-third-party attribution. (Principle 5 precision gap.) Tracked in arch task queue item 7.
-
-Every item here should either have a tracked task or a decision to accept the gap. No silent drift.
+Not in this doc: the principles hold for any wiki. What the llm-wiki framework has built for each one, area by area, is on llm-wiki's own page, [Wiki authoring: where llm-wiki stands](../../../../../llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md) (moved there 2026-11-11, task #231; the status table and gap list that stood here are in this doc's git history).
 
 ## The one real wiki contradiction — autonomy trajectory
 

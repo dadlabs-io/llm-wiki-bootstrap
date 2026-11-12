@@ -9,6 +9,12 @@
 
 ---
 
+## 2026-11-11
+
+### The authoring doc's status table moves to llm-wiki's notebook (task #231)
+- **Why**: the doc ships to every project as general practice, but its "Implementation status" table and gap list described llm-wiki's own build, and a gap list goes stale whenever the practice changes (Mark, 2026-11-11).
+- **What**: `wiki-authoring-best-practices` (v13): the table and the gap list are replaced by one line linking llm-wiki's "Wiki authoring: where llm-wiki stands" page, which lists what we have area by area with links to the design pages.
+
 ## 2026-11-10
 
 ### A promoted backlink lands in Related again, not under Sources (task #233)
