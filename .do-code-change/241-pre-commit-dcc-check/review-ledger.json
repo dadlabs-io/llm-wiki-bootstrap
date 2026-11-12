@@ -1,0 +1,397 @@
+{
+  "schema": 1,
+  "diff_base": "bc898ad5696789890603485b57efffa06f85d6b7",
+  "rounds": [
+    {
+      "round": 1,
+      "at": "2026-11-12T22:48:29Z",
+      "diff_sha256": "b44c4e6982d04f21e1094ede585ddfaf589c1c8ad5e96c06d306d77667db769a",
+      "findings_sha256": "70079283da246de774f3a2b73edd096f34d30eba6205ef41096dcbf6c06db8af",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "standards-13",
+        "spec-1",
+        "spec-2",
+        "spec-3"
+      ],
+      "new": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "standards-13",
+        "spec-1",
+        "spec-2",
+        "spec-3"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "5f38d1a8af0a0bcb7b7573104ea1ea67526a47e3063538a08b54a338cec84957",
+        "tests/scripts/test_git_hooks_dcc.py": "aca0455d6348597e8c72c579b0fcdbd8d2cd39e189bca468901ed3284489fe8c",
+        "tools/git-hooks/README.md": "85303f02cfeaa5e007c3fa50c2e260d7171bde4b6d78a02b868d5fd3c51bab84",
+        "tools/git-hooks/pre-commit": "707ebddee75de00e209932d562cdb28c2eeed1dc2165e7825028869231140a85",
+        "wiki-seed/install.md": "f8bf2cff4289397a3f0aaec8894c7321315664189d16fd8380c2531f3f0e7b7f"
+      }
+    }
+  ],
+  "items": {
+    "standards-1": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tools/git-hooks/pre-commit:31` and `wiki-seed/install.md:124` \u2014 R3, two words for one authority: the hook and README say \"--no-verify only when Mark has said so\", the shipped install page says \"only when the machine's owner has agreed the hit is a false alarm\"; the hook is copied to every machine that opts in, so every installer's blocked commits print a maintainer's name. Fix: one phrase in the hook, README and install.md, and the pinned line in the test to match.",
+      "file": "tools/git-hooks/pre-commit",
+      "line": 31,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "270b08ad3b21b06ec25de33ee68ff7d36a05f9b3898ea3c7abe0633617ae22e2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "270b08ad3b21b06ec25de33ee68ff7d36a05f9b3898ea3c7abe0633617ae22e2"
+        }
+      ]
+    },
+    "standards-2": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks_dcc.py:56-74` against `tests/scripts/test_git_hooks.py:52-67` \u2014 S2: the temp-HOME setup and `repo`/`commit` helpers are copied from the sibling test. Fix: one shared helper both import, or say why the copy stands in the docstring.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 56,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2"
+        }
+      ]
+    },
+    "standards-3": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks_dcc.py:93-95` against `:63-66` \u2014 S2 within the diff: the pass test writes its fake inline, duplicating `fake_dcc`. Fix: give `fake_dcc` a body argument.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 93,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2"
+        }
+      ]
+    },
+    "standards-4": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks_dcc.py:113` and `:138` \u2014 S2 within the diff: the same refusal setup twice. Fix: a constant or helper.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 113,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2"
+        }
+      ]
+    },
+    "standards-5": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks_dcc.py:142` \u2014 T1: the closing line changed on every block path but only the dcc path asserts it; the python-missing behaviour the CHANGELOG states has no test. Fix: assert the closing line on a gitleaks block too; a python-absent case.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 142,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2"
+        }
+      ]
+    },
+    "standards-6": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks_dcc.py:25-86` \u2014 PY10: a fixture class in the test module where the sibling keeps setup at module level. Fix: match the sibling, or say why per-test HOME needs the class.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 25,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2"
+        }
+      ]
+    },
+    "standards-7": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks_dcc.py:47` \u2014 N7: `repo()` creates and inits a repository; reads as a lookup. Fix: `new_repo` (the sibling uses the same name).",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 47,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2"
+        }
+      ]
+    },
+    "standards-8": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks_dcc.py:50`/`:57` \u2014 R10: a failing install assert in `__init__` leaves the temp dir uncleaned. Fix: clean up before the assert.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 50,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2"
+        }
+      ]
+    },
+    "standards-9": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks_dcc.py:73` \u2014 G4: `git init`/`git config` return codes ignored. Fix: check them.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 73,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2"
+        }
+      ]
+    },
+    "standards-10": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks_dcc.py:156`/`:158` \u2014 R9: `main` catches only AssertionError; an unknown name is a bare KeyError. Fix: catch per test, validate names.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 156,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "aca0455d6348597e8c72c579b0fcdbd8d2cd39e189bca468901ed3284489fe8c",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "aca0455d6348597e8c72c579b0fcdbd8d2cd39e189bca468901ed3284489fe8c"
+        }
+      ]
+    },
+    "standards-11": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tools/git-hooks/pre-commit:19` against `:28` \u2014 R3: \"NOT checked:\" and \"NOT CHECKED -\" for one state. Fix: one form (the dcc line is the change request's text as given).",
+      "file": "tools/git-hooks/pre-commit",
+      "line": 19,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "707ebddee75de00e209932d562cdb28c2eeed1dc2165e7825028869231140a85",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "707ebddee75de00e209932d562cdb28c2eeed1dc2165e7825028869231140a85"
+        }
+      ]
+    },
+    "standards-12": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tools/git-hooks/pre-commit:28` \u2014 G16: the new conditional is one line where the file's other blocks are multi-line. Fix: expand it.",
+      "file": "tools/git-hooks/pre-commit",
+      "line": 28,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "2bd960c42c33e297dcd769944c46848dd41001c9cd570038ce855449f8382678",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "2bd960c42c33e297dcd769944c46848dd41001c9cd570038ce855449f8382678"
+        }
+      ]
+    },
+    "standards-13": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks_dcc.py:101-104` \u2014 R8: `head()` returns `\"\"` for no HEAD. Fix: return None.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 101,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2"
+        }
+      ]
+    },
+    "spec-1": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `wiki-seed/install.md:124` \u2014 the plan says README and install.md \"name the third check and the new hint\"; requirements Decision 1 says \"--no-verify only when Mark has said so\"; install.md says \"only when the machine's owner has agreed the hit is a false alarm\", a different rule from the one the hook prints. Fix: match the closing line, or have Mark rule on the public page's wording.",
+      "file": "wiki-seed/install.md",
+      "line": 124,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3f69f2e482f4948f83770443315533c436c7079fe55a67ecde4990c7543c8d68",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "3f69f2e482f4948f83770443315533c436c7079fe55a67ecde4990c7543c8d68"
+        }
+      ]
+    },
+    "spec-2": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tools/git-hooks/README.md:15` and `CHANGELOG.md:16` \u2014 the plan's manual rule says each docs sentence names behaviour a test proves; \"If `python` cannot run, the shell's own error blocks the commit\" has no test (that step was removed by ruling). Fix: drop the sentence, or record the untested behaviour as accepted.",
+      "file": "tools/git-hooks/README.md",
+      "line": 15,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "b1d33790d5d8fb2b3073782138fa74cc7ae72213cdd6dd98db0ce457a4b88c28",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "b1d33790d5d8fb2b3073782138fa74cc7ae72213cdd6dd98db0ce457a4b88c28"
+        }
+      ]
+    },
+    "spec-3": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks_dcc.py:113-122` \u2014 plan step 3 says the test checks \"the refused commit of step 1\"; the test builds its own refusal. Fix: amend the plan wording.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 113,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a1684f471135a4879f8174d23cfb2337ac9982d97cd365f17f2909e47488c0b2"
+        }
+      ]
+    }
+  }
+}
