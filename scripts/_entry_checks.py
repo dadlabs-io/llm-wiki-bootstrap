@@ -2,7 +2,7 @@
 """Shared body-level checks for wiki entries — the MECHANICAL half of the eval rubric.
 
 Single source of truth for every structural rule the eval rubric
-(`wiki/research/implementation/eval-rubric.md`) and the wiki-update skill
+("Scoring an entry" in the wiki-authoring practice, `framework-docs/wiki-authoring-best-practices.md`) and the wiki-update skill
 state in prose. Two callers:
 
   * `wiki-update.py`           — pre-write GATE. Hard failures refuse to file

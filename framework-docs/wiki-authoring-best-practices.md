@@ -7,7 +7,7 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 15
+framework-version: 16
 last_reviewed: 2026-11-11
 review_after: 2027-02-08
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
@@ -197,6 +197,24 @@ A page outside its folder's default says so with `kind:` in its frontmatter (the
 - **Sections**: TL;DR, Contents, How it works, Rules and settings, Known gaps and bugs, History (links to the few decision notes behind the current design), Related. A `describes:` path ties the page to its code, so the lint flags it when the code moves on.
 
 **How they stay current**: a change that alters how a part works files its history note *and* revises the living page it touches, in the same session (the history note is the why; the page is the now). The lint lists every living page that a newer history note links to, or that links to one ("Design Pages Behind Their Notes"). Enforcement: that lint section (warn-only), `describes:` code drift, and `/wrap-up` Step 3.5, which revises the pages a session's change touches (task #172, 2026-10-19; each revision is a row of its proposal table).
+
+## Scoring an entry
+
+(The eval rubric, 2026-04-10, folded in here 2026-11-12, task #231. Its "synthesis value" score used to reward "why this matters to us" and "non-obvious implications", which the 2026-10-31 rule below took out; its gold examples were dropped with it.)
+
+An entry is judged in two halves:
+
+- **What a script checks** is the filing gate, `_entry_checks.py`, run by `wiki-update.py` (it refuses to file) and the mechanical lint (a backlog view): a TL;DR, a `## Related` section with two or more wiki links, three or more tags, a short entry marked `stub`, numbers on `>` lines, quotes that match the raw, frontmatter that loads, the layout order.
+- **What the writer scores** is two things a script cannot, 1 to 5 each, printed before filing as `Scores: extraction fidelity N/5, synthesis value N/5`. *Extraction fidelity*: every sentence of the summary is in the raw, every claim attributed, every number quoted. *Synthesis value*: the Related section places the source against what the wiki already holds. Synthesis value is never a reason to add to the summary: an entry summarizes what was read, and anything of ours goes in an optional `## Our reading` (Mark, 2026-10-31). Below 3 on either, fix the entry or do not stage it. The scores are advisory, since a writer never certifies its own draft (principle 11); the `wiki-checker` agent reads every staged entry that has a raw against that raw before promotion.
+- **Tier and confidence** come from the frontmatter spec's tier rubric and confidence scale, which are not restated here (principle 7).
+
+Three mistakes to look for before filing:
+
+1. **A figure without its provenance.** A benchmark score or a count copied without who measured it, on what and when turns into misinformation as the system it describes changes. Principle 5 (measured, claimed or unknown) and principle 9 (an as-of date) are the fix; a figure that cannot be attributed is left out.
+2. **The orphan.** An entry that links nothing it relates to breaks the compounding: the wiki is a graph, not a pile of documents. Search the wiki for each key concept before filing, and link both ways.
+3. **A stale gap reference.** Where a notebook keeps a list of concepts not yet covered, the entry that covers one takes it off the list in the same change.
+
+Enforcement: the gate (script) for the first half; prose, the printed scores and the checker for the second.
 
 ## What llm-wiki has built
 

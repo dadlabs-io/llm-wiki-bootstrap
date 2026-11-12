@@ -19,10 +19,10 @@
     },
     {
       "notebook": "(runtime-resolved target notebook)",
-      "title": "Eval rubric (background to the ingest gate)",
-      "link": "wiki/research/implementation/eval-rubric.md",
+      "title": "Scoring an entry (the wiki-authoring practice)",
+      "link": "{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-authoring-best-practices.md#scoring-an-entry",
       "required": false,
-      "why": "Background only; the gate is split. wiki-update.py's mechanical checks refuse to file an entry without a ## TL;DR, without a ## Related holding 2+ wiki links (a warning for tier self), with its layout out of order, or with frontmatter that would not parse. The agent scores the two judgment dimensions, extraction fidelity and synthesis value, 1-5 each, and prints them as one line, `Scores: extraction fidelity N/5, synthesis value N/5` (wiki-update/SKILL.md step 5); below 3 means fix it or do not stage. If the target topic lacks this file, step 5 is all you need."
+      "why": "Background only; the gate is split. wiki-update.py's mechanical checks refuse to file an entry without a ## TL;DR, without a ## Related holding 2+ wiki links (a warning for tier self), with its layout out of order, or with frontmatter that would not parse. The agent scores the two judgment dimensions, extraction fidelity and synthesis value, 1-5 each, and prints them as one line, `Scores: extraction fidelity N/5, synthesis value N/5` (wiki-update/SKILL.md step 5); below 3 means fix it or do not stage."
     },
     {
       "notebook": "(runtime-resolved target notebook)",

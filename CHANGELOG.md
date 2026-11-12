@@ -20,6 +20,10 @@
 - **Why**: every item in it shipped on 2026-05-25; it records what we adopted from icarus, which is ours, not general practice.
 - **What**: agentic-design's `project/best-practices/framework/icarus-integration-plan.md` is now llm-wiki's `project/decisions/icarus-integration-plan-2026-05-21.md`. `/wiki-rollback`, `/wiki-verify`, the frontmatter spec, the rerank spec and the lint's icarus section name the new place. `wiki-authoring-best-practices` (v15) carries the plan's one live rule: `project/` or `research/` by where a page came from, not its topic.
 
+### The eval rubric folds into the wiki-authoring practice (task #231)
+- **Why**: the rubric (agentic-design `research/implementation/eval-rubric.md`) was our own ingest rubric, not research, and its synthesis-value score still rewarded "why this matters to us", which the 2026-10-31 summary rule took out.
+- **What**: `wiki-authoring-best-practices` (v16) gains "Scoring an entry": the gate's half, the writer's two scores as `/wiki-update` step 5 defines them, and three mistakes to check before filing. The rubric page is deleted and its links point at the new section; the `wiki-ingester` reading list and `_entry_checks.py` name it.
+
 ## 2026-11-10
 
 ### A promoted backlink lands in Related again, not under Sources (task #233)
