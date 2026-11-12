@@ -121,7 +121,7 @@ An optional git pre-commit hook stops a commit that adds a secret (an API key, a
 - **It is machine-wide:** it sets git's global `core.hooksPath` to `~/.git-hooks`, so every commit in every repo on the machine is checked. A repo's own `.git/hooks` still run after it. A repo with its own `core.hooksPath` (husky and the like) keeps it and is not checked.
 - **Your private words:** one per line in `~/.git-hooks/private-words.txt`; an install never overwrites the list.
 - **do-code-change's commit check:** when that pack is installed, the hook also runs its commit check, which stops a commit that adds or changes a script no do-code-change run covers. Without the pack it says so (NOT CHECKED) and the commit goes on.
-- **When it blocks:** fix the line it names; every block is fixed. `git commit --no-verify` skips the hook, only when the machine's owner has agreed the hit is a false alarm.
+- **When it blocks:** fix the line it names; every block is fixed. `git commit --no-verify` skips the hook, only when the machine's owner has said so.
 - **Its state:** `--mode status` reports `git_hooks`: `on`, `off`, or `on-no-gitleaks` (on, but gitleaks is gone: every commit is blocked as NOT checked until gitleaks is back or the hook is turned off).
 - **Turning it off:** `--mode uninstall` turns it off with the rest of the tooling; on its own, `sh <clone>/tools/git-hooks/install.sh --remove`. Either way `~/.git-hooks` and your list stay.
 

@@ -13,7 +13,7 @@
 
 ### The commit hook runs do-code-change's commit check (task #241)
 - **Why**: agent-builder's edit gate (its task 260) refuses an edit of a script no do-code-change run covers; edits made through the shell are only caught at commit, by its `dcc-commit-check.py`, which runs from this machine-wide hook (agent-builder's change request; Mark said yes 2026-11-12).
-- **What**: `tools/git-hooks/pre-commit` runs the check after the private-words check, when the pack is installed; without the pack it prints NOT CHECKED and the commit goes on; a missing `python` blocks the commit with the shell's own error (Mark: fail loud). The closing line is now "fix the lines above. --no-verify only when Mark has said so." **Migration**: re-run `sh tools/git-hooks/install.sh` to install the new hook.
+- **What**: `tools/git-hooks/pre-commit` runs the check after the private-words check, when the pack is installed; without the pack it prints NOT CHECKED and the commit goes on; a missing `python` blocks the commit with the shell's own error (Mark: fail loud). The closing line is now "fix the lines above. --no-verify only when the machine's owner has said so." **Migration**: re-run `sh tools/git-hooks/install.sh` to install the new hook.
 
 ### The cycle's overview page merges into llm-wiki's page 30 (task #231)
 - **Why**: agentic-design's `wiki-cycle-system-overview.md` described our own cycle, not general practice, and its step and mode tables repeated llm-wiki's living page 30 and had gone stale (it still had the checker sampling 1 in 10).

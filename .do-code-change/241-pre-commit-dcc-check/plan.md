@@ -21,7 +21,7 @@ flow, and reword the closing hint: every block is fixed, `--no-verify` only on M
   dcc="$HOME/.claude/workflows/do-code-change/scripts/dcc-commit-check.py"
   if [ -f "$dcc" ]; then python "$dcc" || status=1; else echo "pre-commit: do-code-change commit check NOT CHECKED - pack not installed" >&2; fi
   ```
-- Closing line (decision 1): `pre-commit: fix the lines above. --no-verify only when Mark has said so.`
+- Closing line (decision 1): `pre-commit: fix the lines above. --no-verify only when the machine's owner has said so.`
 - The header comment's numbered list gains item 3 (the dcc check); the repo hand-over becomes item 4.
 
 ## Testing Decisions
@@ -70,7 +70,6 @@ none (the two choices are Decisions 1 and 2 in requirements.md, put at Change co
 2. With the pack absent, the commit goes on and says NOT CHECKED — done when the test, with no fake dcc in HOME,
    commits a clean change (exit 0) and stderr holds "do-code-change commit check NOT CHECKED - pack not installed".
    Trivial stakes: no
-3. The closing hint and the docs say what the hook now does — done when the test checks the refused commit of step 1
-   ends with the new closing line (no "commit anyway on purpose"), and README + `wiki-seed/install.md` name the third
+3. The closing hint and the docs say what the hook now does — done when a refused commit (the step 1 refusal, set up again in its own repo) ends with the new closing line (no "commit anyway on purpose"), and README + `wiki-seed/install.md` name the third
    check and the new hint (manual: read against steps 1-2). CHANGELOG gets one dated entry.
    Trivial stakes: yes — wording of a message and docs; the refusal itself is pinned by step 1

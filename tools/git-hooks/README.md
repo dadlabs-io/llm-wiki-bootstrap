@@ -18,7 +18,7 @@ something enters history.
   hands over to the repo's own hook of that name (`_local`). A repo that sets its own `core.hooksPath` (one does:
   sudoku-app) keeps its own hooks and skips this one.
 
-A blocked commit names the file and line. Every block is fixed; `git commit --no-verify` only when Mark has said so.
+A blocked commit names the file and line. Every block is fixed; `git commit --no-verify` only when the machine's owner has said so.
 If gitleaks cannot be found, the commit is blocked as NOT checked, never let through silently.
 
 ## Install, refresh, remove

@@ -110,7 +110,7 @@ def test_absent_pack_commits_with_a_not_checked_line():
         m.close()
 
 
-def test_blocked_commit_says_no_verify_needs_mark():
+def test_blocked_commit_says_no_verify_needs_the_owner():
     m = Machine()
     try:
         r = m.repo("a")
@@ -118,7 +118,7 @@ def test_blocked_commit_says_no_verify_needs_mark():
         p = m.commit(r, {"tool.py": "print('hi')\n"})
         assert p.returncode != 0, "the commit went through"
         last = p.stderr.strip().splitlines()[-1]
-        assert last == "pre-commit: fix the lines above. --no-verify only when Mark has said so.", last
+        assert last == "pre-commit: fix the lines above. --no-verify only when the machine's owner has said so.", last
         assert "commit anyway" not in p.stderr, p.stderr[-400:]
     finally:
         m.close()

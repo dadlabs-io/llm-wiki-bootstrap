@@ -5,7 +5,7 @@
 #   2. the private-words list on the lines being added (private-words.txt beside this hook);
 #   3. do-code-change's commit check (dcc-commit-check.py, when that pack is installed): a staged script no open run covers;
 #   4. the repo's own .git/hooks/pre-commit, if it has one (a global hooks path replaces it otherwise).
-# A block names the file and line. Every block is fixed; --no-verify only when Mark has said so.
+# A block names the file and line. Every block is fixed; --no-verify only when the machine's owner has said so.
 here="$(cd "$(dirname "$0")" && pwd)"
 . "$here/hooks.conf"
 status=0
@@ -28,7 +28,7 @@ dcc="$HOME/.claude/workflows/do-code-change/scripts/dcc-commit-check.py"
 if [ -f "$dcc" ]; then python "$dcc" || status=1; else echo "pre-commit: do-code-change commit check NOT CHECKED - pack not installed" >&2; fi
 
 if [ $status -ne 0 ]; then
-    echo "pre-commit: fix the lines above. --no-verify only when Mark has said so." >&2
+    echo "pre-commit: fix the lines above. --no-verify only when the machine's owner has said so." >&2
     exit $status
 fi
 exec sh "$here/_local" pre-commit "$@"

@@ -18,3 +18,8 @@ Mark (Discord, 22:14): "2. Agreed. We don't ignore changes we need to do they ne
 Size: small — Mark (Discord, 22:16): "Okay yeah so this is a small change so create the small change process."
 
 Scope widened (implement, before the first red): the new checks go in `tests/scripts/test_git_hooks_dcc.py`, not `test_git_hooks.py`. Reason: that file has no test functions (it runs its checks at import), so check-freeze would hash the whole file and step 2's additions would break step 1's freeze; one function per check in a new file keeps each freeze to its own test. `test_git_hooks.py` is unchanged and still runs as the invariants' check.
+
+## Fix round 1 — 2026-11-12
+
+Mark (Discord, 22:49), on standards-1: "It should say the human. Machine owner. Operator. Something consistent" → the closing line, the hook's header, README, install.md and CHANGELOG all say "--no-verify only when the machine's owner has said so". The test was renamed `test_blocked_commit_says_no_verify_needs_the_owner` (old entry retired with that reason) and frozen red before the hook changed. Plan step 3's wording amended in place (spec-3).
+Left open (non-blocking, a verdict of open in the ledger): standards-2 to -13 and spec-2. spec-2 (README/CHANGELOG state that a missing python blocks, with no test) stands by Mark's ruling "fail loud, no special handling"; the rest are test-file layout and naming suggestions, parked for Mark at the finish.
