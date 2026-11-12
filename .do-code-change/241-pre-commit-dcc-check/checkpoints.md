@@ -15,4 +15,4 @@ Size: small (proposed; Mark confirms at Change confirmation)
 
 Mark (Discord, 22:14): "2. Agreed. We don't ignore changes we need to do they need to be fixed? No verify is strictly. I need to say that's okay to do" → Decision 1: closing line "fix the lines above. --no-verify only when Mark has said so."
 "3. If python can't be found, fail loud. We don't need to handle how we're going to do this if it's not there." → Decision 2: no guard; the change request's line as given; plan step 3 (python not found) removed, steps renumbered.
-Size: asked again in plain words; waiting.
+Size: small — Mark (Discord, 22:16): "Okay yeah so this is a small change so create the small change process."
