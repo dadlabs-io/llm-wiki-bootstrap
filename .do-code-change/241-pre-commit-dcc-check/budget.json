@@ -1,0 +1,11 @@
+{
+ "schema": 1,
+ "started_at": "2026-11-12T21:27:13Z",
+ "session_id": "321873e7-82c2-47ec-89f8-65a39937fe31",
+ "transcript": "C:/Users/mark/.claude/projects/C--github-com-llm-wiki-bootstrap/321873e7-82c2-47ec-89f8-65a39937fe31.jsonl",
+ "caps": {
+  "turns": 2200,
+  "minutes": 720.0,
+  "cost": 120.0
+ }
+}
