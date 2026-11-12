@@ -8,6 +8,7 @@
 
 - `test_blocked_commit_says_no_verify_needs_mark` — PASS. Reviewer's caveat (not a name word): the test does not assert the fake's refusal text, so it does not itself prove the dcc path caused the block; that is step 1's `test_dcc_refusal_blocks_the_commit`, which asserts the fake's message. Left as is.
 
-## Step 1
+## Step 1 — 2026-11-12 (one doubt-reviewer, `check-freeze.py names` output only)
 
-Pending: `test_dcc_pass_lets_the_commit_through` is not green (its fake prints on a pass); waiting on Mark's OK to change that test's one line.
+- `test_dcc_refusal_blocks_the_commit` — PASS.
+- `test_dcc_pass_lets_the_commit_through` — OVER-CLAIMS, round 1: "dcc pass" was unchecked, since nothing showed the check ran. Fixed: the fake writes a marker file and the test asserts it exists (assertions only added); re-frozen with `--unfrozen-reason "name review round 1: ..."`. Bite shown by hand: with the hook restored to the fixed point the test fails ("the dcc check did not run").

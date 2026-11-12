@@ -16,19 +16,6 @@
   },
   {
     "file": "tests/scripts/test_git_hooks_dcc.py",
-    "test_name": "test_dcc_pass_lets_the_commit_through",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "21341f9ce4b521a1515b54fd0432c17a915b9f8fe9e552f62ba62154cfefd2c4",
-    "frozen_at_step": 1,
-    "frozen_at": "2026-11-12",
-    "green_reason": {
-      "reason": "The pass case already holds before the change (the hook never calls dcc). Its bite comes from the refusal test beside it, which runs the same harness and was red before the change; this test pins that a passing check stays silent and lets the commit through.",
-      "date": "2026-11-12"
-    }
-  },
-  {
-    "file": "tests/scripts/test_git_hooks_dcc.py",
     "test_name": "test_absent_pack_commits_with_a_not_checked_line",
     "hash_of": "test",
     "hash_scope": "test+module",
@@ -54,5 +41,33 @@
       "tail": "FAIL test_blocked_commit_says_no_verify_needs_mark  [pre-commit: fix the lines above, or commit anyway on purpose with: git commit --no-verify]\n0/1 passed",
       "date": "2026-11-12"
     }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_dcc_pass_lets_the_commit_through",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "7132e358c1633fa0d662097d55e0eab48994bed6b5b2065fc730ae24e89ff9df",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-12",
+    "green_reason": {
+      "reason": "Bite shown by hand: with tools/git-hooks/pre-commit restored to the fixed point bc898ad the test fails ('the dcc check did not run'); with the change it passes.",
+      "date": "2026-11-12"
+    },
+    "unfreezes": [
+      {
+        "reason": "The test's fake printed FAKE-DCC-PASSED on a pass, which the real check never does (its pass is silent), so the test failed on its own fake. The fake now prints nothing on a pass; the assertions are unchanged. Mark's OK, Discord 2026-11-12 22:40: 'Yes please'.",
+        "date": "2026-11-12",
+        "step": 1,
+        "hash": "4ce20b82c7ca80f12bcecd516d5c8e73fb9c1aeeb60832edf6a4b55f99285aa7"
+      },
+      {
+        "reason": "name review round 1: 'dcc pass' was not checked, since nothing showed the check ran; the fake now writes a marker file and the test asserts it exists. Assertions only added.",
+        "date": "2026-11-12",
+        "step": 1,
+        "hash": "7132e358c1633fa0d662097d55e0eab48994bed6b5b2065fc730ae24e89ff9df"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: 'dcc pass' was not checked, since nothing showed the check ran; the fake now writes a marker file and the test asserts it exists. Assertions only added."
   }
 ]

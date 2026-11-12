@@ -68,9 +68,13 @@ class Machine:
 def test_dcc_pass_lets_the_commit_through():
     m = Machine()
     try:
-        m.fake_dcc(0, "FAKE-DCC-PASSED")
+        ran = m.base / "dcc-ran.txt"
+        dcc = m.home / DCC_REL
+        dcc.parent.mkdir(parents=True, exist_ok=True)
+        dcc.write_text(f"from pathlib import Path\nPath({ran.as_posix()!r}).write_text('ran')\n", encoding="utf-8")
         r = m.repo("a")
         p = m.commit(r, {"notes.md": "An ordinary note.\n"})
+        assert ran.is_file(), "the dcc check did not run"
         assert p.returncode == 0, p.stderr[-400:]
         assert m.head(r), "no commit was made"
         assert "do-code-change" not in p.stderr and "FAKE-DCC" not in p.stderr, p.stderr[-400:]
