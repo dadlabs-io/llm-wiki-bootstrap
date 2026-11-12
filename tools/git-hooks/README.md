@@ -9,11 +9,16 @@ something enters history.
 - **Private words** (`private-words.txt`, one word or phrase per line, any case): looked for in the lines a
   commit adds, never in lines already committed. Mark fills the list in `~/.git-hooks/private-words.txt`; a repo
   where a word belongs lists it in `.private-words-allow` at its root.
+- **do-code-change's commit check** (task #241): when that pack is installed
+  (`~/.claude/workflows/do-code-change/scripts/dcc-commit-check.py`), the hook runs it, and it refuses a commit that
+  stages a script no open do-code-change run covers. Its rules and messages are its own (the pack's `edit-gate.md`).
+  Without the pack the hook prints that the check was NOT CHECKED and the commit goes on. If `python` cannot run, the
+  shell's own error blocks the commit.
 - **The repo's own hooks still run**: a global `core.hooksPath` replaces `.git/hooks`, so every hook name here
   hands over to the repo's own hook of that name (`_local`). A repo that sets its own `core.hooksPath` (one does:
   sudoku-app) keeps its own hooks and skips this one.
 
-A blocked commit names the file and line. To commit anyway, on purpose: `git commit --no-verify`.
+A blocked commit names the file and line. Every block is fixed; `git commit --no-verify` only when Mark has said so.
 If gitleaks cannot be found, the commit is blocked as NOT checked, never let through silently.
 
 ## Install, refresh, remove
@@ -42,4 +47,5 @@ since a raw is a source's own words (one security paper quoted example keys). Af
 
 `tests/scripts/test_git_hooks.py` (run under a temporary HOME, so the real machine is never touched): a clean
 commit, a planted token, a private word with its file and line, the allow file, `--no-verify`, the repo's own
-pre-commit and commit-msg hooks, a missing gitleaks, and the remove.
+pre-commit and commit-msg hooks, a missing gitleaks, and the remove. `tests/scripts/test_git_hooks_dcc.py` (the
+same way, with a fake commit check): a passing check, a refusing check, the pack absent, and the closing line.

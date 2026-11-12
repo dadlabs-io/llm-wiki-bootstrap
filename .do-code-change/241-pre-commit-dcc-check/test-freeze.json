@@ -1,0 +1,58 @@
+[
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_dcc_refusal_blocks_the_commit",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f0372f1bf53469f81a9eebbb55b351f0263c04dfa7c90891ceba0334c86852ef",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-12",
+    "red": {
+      "command": "uv run python tests/scripts/test_git_hooks_dcc.py test_dcc_refusal_blocks_the_commit",
+      "exit": 1,
+      "tail": "FAIL test_dcc_refusal_blocks_the_commit  [the commit went through]\n0/1 passed",
+      "date": "2026-11-12"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_dcc_pass_lets_the_commit_through",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "21341f9ce4b521a1515b54fd0432c17a915b9f8fe9e552f62ba62154cfefd2c4",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-12",
+    "green_reason": {
+      "reason": "The pass case already holds before the change (the hook never calls dcc). Its bite comes from the refusal test beside it, which runs the same harness and was red before the change; this test pins that a passing check stays silent and lets the commit through.",
+      "date": "2026-11-12"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_absent_pack_commits_with_a_not_checked_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "9e2a58655351abf81a622cf4968601bcee4e573318170dce685092553aa18b73",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-12",
+    "green_reason": {
+      "reason": "Step 1's two lines (the change request's, as given) carry both branches, so the absent-pack path was built with step 1. Bite shown by hand: with tools/git-hooks/pre-commit stashed back to HEAD the test failed (0/1), with the change it passes.",
+      "date": "2026-11-12"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_blocked_commit_says_no_verify_needs_mark",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e83a4b76e2f7a34d96f10774d9fbc094fdef6e18e8b42ae66f41b7854955cd6a",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-12",
+    "red": {
+      "command": "uv run python tests/scripts/test_git_hooks_dcc.py test_blocked_commit_says_no_verify_needs_mark",
+      "exit": 1,
+      "tail": "FAIL test_blocked_commit_says_no_verify_needs_mark  [pre-commit: fix the lines above, or commit anyway on purpose with: git commit --no-verify]\n0/1 passed",
+      "date": "2026-11-12"
+    }
+  }
+]

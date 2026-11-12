@@ -3,8 +3,9 @@
 # llm-wiki-bootstrap tools/git-hooks, task #135). Runs on every commit in every repo, for every bot and for Mark:
 #   1. gitleaks on the staged changes (API keys, tokens, private keys);
 #   2. the private-words list on the lines being added (private-words.txt beside this hook);
-#   3. the repo's own .git/hooks/pre-commit, if it has one (a global hooks path replaces it otherwise).
-# A block names the file and line. To commit anyway, deliberately: git commit --no-verify
+#   3. do-code-change's commit check (dcc-commit-check.py, when that pack is installed): a staged script no open run covers;
+#   4. the repo's own .git/hooks/pre-commit, if it has one (a global hooks path replaces it otherwise).
+# A block names the file and line. Every block is fixed; --no-verify only when Mark has said so.
 here="$(cd "$(dirname "$0")" && pwd)"
 . "$here/hooks.conf"
 status=0
@@ -23,8 +24,11 @@ if ! sh "$here/private-words.sh"; then
     status=1
 fi
 
+dcc="$HOME/.claude/workflows/do-code-change/scripts/dcc-commit-check.py"
+if [ -f "$dcc" ]; then python "$dcc" || status=1; else echo "pre-commit: do-code-change commit check NOT CHECKED - pack not installed" >&2; fi
+
 if [ $status -ne 0 ]; then
-    echo "pre-commit: fix the lines above, or commit anyway on purpose with: git commit --no-verify" >&2
+    echo "pre-commit: fix the lines above. --no-verify only when Mark has said so." >&2
     exit $status
 fi
 exec sh "$here/_local" pre-commit "$@"

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "captured_at": "2026-11-12T22:17:04Z",
+  "repo_root": "C:/github.com/llm-wiki-bootstrap",
+  "baseline_sha": "bc898ad5696789890603485b57efffa06f85d6b7",
+  "head_at_capture": "bc898ad5696789890603485b57efffa06f85d6b7",
+  "tree_was_clean": true,
+  "untracked_at_baseline": {},
+  "untracked_capped": false,
+  "artifact_dir": ".do-code-change/241-pre-commit-dcc-check"
+}

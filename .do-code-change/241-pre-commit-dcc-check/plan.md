@@ -42,7 +42,7 @@ flow, and reword the closing hint: every block is fixed, `--no-verify` only on M
 
 - tools/git-hooks/pre-commit
 - tools/git-hooks/README.md
-- tests/scripts/test_git_hooks.py
+- tests/scripts/test_git_hooks_dcc.py
 - wiki-seed/install.md
 - CHANGELOG.md
 
@@ -60,12 +60,12 @@ none (the two choices are Decisions 1 and 2 in requirements.md, put at Change co
 
 ## Steps
 
-1. A commit whose dcc check refuses is blocked — done when `tests/scripts/test_git_hooks.py` passes these new checks:
+1. A commit whose dcc check refuses is blocked — done when `tests/scripts/test_git_hooks_dcc.py` passes these new checks (and `tests/scripts/test_git_hooks.py` stays 18/18):
    - Expected: a fake dcc script that exits 0 → a clean commit goes through, and nothing about dcc is printed.
    - Failures: a fake dcc script that exits 1 with a marker message → the commit is refused, the marker is on stderr,
      and no new commit exists (HEAD unchanged).
    - Invariant: the five Invariants above stay green in the same run.
-   uses: the test file's existing `repo()`, `commit()`, `run()` helpers; no new helper.
+   new test file, one function per check, run by name (`python tests/scripts/test_git_hooks_dcc.py <test>`), so each step's test is frozen alone; the harness mirrors test_git_hooks.py's install/repo/commit (searched for: a shared git-hooks test helper module in tests/scripts — found none; the existing file runs its checks at import, so it cannot be imported).
    Trivial stakes: no
 2. With the pack absent, the commit goes on and says NOT CHECKED — done when the test, with no fake dcc in HOME,
    commits a clean change (exit 0) and stderr holds "do-code-change commit check NOT CHECKED - pack not installed".
