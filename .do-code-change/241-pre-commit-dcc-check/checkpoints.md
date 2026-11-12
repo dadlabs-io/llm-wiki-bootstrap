@@ -23,3 +23,9 @@ Scope widened (implement, before the first red): the new checks go in `tests/scr
 
 Mark (Discord, 22:49), on standards-1: "It should say the human. Machine owner. Operator. Something consistent" → the closing line, the hook's header, README, install.md and CHANGELOG all say "--no-verify only when the machine's owner has said so". The test was renamed `test_blocked_commit_says_no_verify_needs_the_owner` (old entry retired with that reason) and frozen red before the hook changed. Plan step 3's wording amended in place (spec-3).
 Left open (non-blocking, a verdict of open in the ledger): standards-2 to -13 and spec-2. spec-2 (README/CHANGELOG state that a missing python blocks, with no test) stands by Mark's ruling "fail loud, no special handling"; the rest are test-file layout and naming suggestions, parked for Mark at the finish.
+
+## Review round 2 — 2026-11-12
+
+Standards clear; Spec found two wording slips in this run's own notes (spec-4, spec-5), amended in place: requirements Decision 1's note narrowed to the bypass rule, plan Solution matched to the ruled line. Not a code change, so no fix round. Parked for Mark: the hook's header, README and install.sh still name Mark outside the bypass rule ("for every bot and for Mark", "Mark fills the list"), which predates this change.
+
+Pre-verify: `review-ledger.py query --cap 3` (the cap WORKFLOW.md Pre-verify names) prints met: no open blocking item, 2 rounds. With `--cap 1` (the small path's retry ceiling) the same ledger halts as "round 2 is past the cap of 1", though this run had one fix round; the small path's cap and the query's round count disagree (skill suggestion filed).

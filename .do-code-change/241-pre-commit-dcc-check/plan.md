@@ -10,7 +10,7 @@ run, so the edit gate's commit-time backstop never runs on this machine.
 ## Solution
 
 Add agent-builder's call to `dcc-commit-check.py` after the private-words check, inside the same status/one-stop
-flow, and reword the closing hint: every block is fixed, `--no-verify` only on Mark's word. Tests drive a fake `dcc-commit-check.py` placed in the test's temporary HOME.
+flow, and reword the closing hint: every block is fixed, `--no-verify` only when the machine's owner has said so. Tests drive a fake `dcc-commit-check.py` placed in the test's temporary HOME.
 
 ## Implementation Decisions
 

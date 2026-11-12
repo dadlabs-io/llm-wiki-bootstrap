@@ -26,5 +26,5 @@
 
 ## Decisions
 
-1. **The closing hint after a block** — decided by Mark (2026-11-12): every block is fixed; `--no-verify` only when the machine's owner (Mark, here) has said so. The line becomes "pre-commit: fix the lines above. --no-verify only when the machine's owner has said so." (wording ruled at fix round 1: the shipped hook names no person) Alternative was keeping the old line.
+1. **The closing hint after a block** — decided by Mark (2026-11-12): every block is fixed; `--no-verify` only when the machine's owner (Mark, here) has said so. The line becomes "pre-commit: fix the lines above. --no-verify only when the machine's owner has said so." (wording ruled at fix round 1: the bypass rule names no person; the hook's header and README still name Mark elsewhere, outside this ruling) Alternative was keeping the old line.
 2. **`python` cannot run** — decided by Mark (2026-11-12): fail loud, no special handling. The change request's line is used as given: a missing python makes the shell print its own error and sets status=1, so the commit is blocked. Alternative was a guard with its own BLOCKED line (dropped as unneeded).

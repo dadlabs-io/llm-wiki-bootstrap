@@ -54,6 +54,31 @@
         "tools/git-hooks/pre-commit": "707ebddee75de00e209932d562cdb28c2eeed1dc2165e7825028869231140a85",
         "wiki-seed/install.md": "f8bf2cff4289397a3f0aaec8894c7321315664189d16fd8380c2531f3f0e7b7f"
       }
+    },
+    {
+      "round": 2,
+      "at": "2026-11-12T22:53:19Z",
+      "diff_sha256": "118649fd9a0e617e91af1996d1ff4a92263b92112673a35e983e025f0114be6c",
+      "findings_sha256": "ca216080bf10a3dc90a418b0d9aee7a7d88099923f6f7b89765689bac9131ce7",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "spec-4",
+        "spec-5"
+      ],
+      "new": [
+        "spec-4",
+        "spec-5"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "e91449e194432191e8c9c84a9c20d38960ec936f81978c493dd57bffbd69a243",
+        "tests/scripts/test_git_hooks_dcc.py": "d659180603ba01407e5eed7592ee0ae203e180f734efdc1ee7c48b1d03a18410",
+        "tools/git-hooks/README.md": "76d37ef78ac9c2d83c461206ff691acd23326be167ec691f0ae58ed0892a8c1d",
+        "tools/git-hooks/pre-commit": "c34ad7e31714b57f973284206825b984c0dff6b9c332251f0996fb636ee2eece",
+        "wiki-seed/install.md": "ea42585ddb6c28a0a8bdb6835d259a97b12d45258224df2dd3d22df4df7661e4"
+      }
     }
   ],
   "items": {
@@ -470,6 +495,58 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "0ac4d797d41d202d5c88b26060481911d17ccce58b681a23c4016bfd45a5b9e5"
+        }
+      ]
+    },
+    "spec-4": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `.do-code-change/241-pre-commit-dcc-check/requirements.md:29` \u2014 the note says \"the shipped hook names no person\", but the hook's header (`tools/git-hooks/pre-commit:3`), README (`:3`, `:10`) and `install.sh:5` still name Mark outside the bypass rule; the ruling covered the bypass rule only. Fix: narrow the note to \"the bypass rule names no person\".",
+      "file": ".do-code-change/241-pre-commit-dcc-check/requirements.md",
+      "line": 29,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "2ba790863aba34d7038eba2ce9231c6ea89f1c00a82bb2123f9a21ac23128bac",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "f1913210d3e792f736be1b6e3da96a4026985ed470bc4b82c4219768467b5afe"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "2ba790863aba34d7038eba2ce9231c6ea89f1c00a82bb2123f9a21ac23128bac"
+        }
+      ]
+    },
+    "spec-5": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `.do-code-change/241-pre-commit-dcc-check/plan.md:13` \u2014 the Solution still says \"`--no-verify` only on Mark's word\", against plan.md:24's ruled line. Fix: amend the Solution sentence in place.",
+      "file": ".do-code-change/241-pre-commit-dcc-check/plan.md",
+      "line": 13,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "9369ac83b419563ba6ce4e037fcdff5174c329c8902a9e99ed83ac1df221be89",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "0b828db2ba284cf35b94530eaf455ca2105a4b5b7101fbf7ba204d93cfb71f0f"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "9369ac83b419563ba6ce4e037fcdff5174c329c8902a9e99ed83ac1df221be89"
         }
       ]
     }
