@@ -7,7 +7,7 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 14
+framework-version: 15
 last_reviewed: 2026-11-11
 review_after: 2027-02-08
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
@@ -186,6 +186,8 @@ Every page is one of four **kinds**, and each kind has one rule:
 | **working** | Resume state: handoff, active context, task cards | Overwritten every session | `sessions/<persona>/handoff.md`, `active-context.md`, `tasks/` |
 
 A page outside its folder's default says so with `kind:` in its frontmatter (the spec's optional fields).
+
+**`project/` or `research/`: by where a page came from, not its topic** (from the icarus integration plan §6, 2026-05-21). `project/` holds what we wrote about our own system (decisions, components, patterns, bugs); `research/` holds what we took in about the world (papers, posts, repos). A synthesis that draws on research to record what we decided goes in `project/`. Enforcement: prose.
 
 **Living pages** follow five conventions:
 - **Where**: `wiki/project/architecture/`, the folder of living pages. Nothing else goes there; a design page that stops being current is retired with `superseded_by` (it leaves the indexes, the map and search, and stays on disk).

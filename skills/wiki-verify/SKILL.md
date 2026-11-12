@@ -10,7 +10,7 @@ reviewed_for_model: claude-fable-5-1
 
 # /wiki-verify
 
-First-class verify primitive per [icarus-integration-plan.md §5](agentic-design :: wiki/project/best-practices/framework/icarus-integration-plan.md — not shipped with the framework). Sets `verified: verified` on an entry's sidecar, recording who certified and when.
+First-class verify primitive per [icarus-integration-plan.md §5](llm-wiki-bootstrap :: wiki/project/decisions/icarus-integration-plan-2026-05-21.md — not shipped with the framework). Sets `verified: verified` on an entry's sidecar, recording who certified and when.
 
 ## Usage
 
@@ -131,7 +131,7 @@ Without step 2, step 4 fails.
 
 ## Related
 
-- [icarus-integration-plan.md §5](agentic-design :: wiki/project/best-practices/framework/icarus-integration-plan.md — not shipped with the framework)
+- [icarus-integration-plan.md §5](llm-wiki-bootstrap :: wiki/project/decisions/icarus-integration-plan-2026-05-21.md — not shipped with the framework)
 - [memory-signals-sidecar-vs-frontmatter-pattern.md]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/memory-signals-sidecar-vs-frontmatter-pattern.md) — sidecar truth-status block this writes
 - [wiki-rollback SKILL.md](../wiki-rollback/SKILL.md) — the other half of the lifecycle
 - [wiki-frontmatter-best-practices.md]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md) — the optional `verified:` field

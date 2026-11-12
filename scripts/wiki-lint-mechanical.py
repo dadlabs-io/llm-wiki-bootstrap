@@ -1074,7 +1074,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     # Section: icarus schema (truth-status + lineage)
     out.append("## 🧬 Icarus Schema (truth-status + lineage)")
     out.append("")
-    out.append("Fields adopted from icarus-memory-infra (MIT schema lift). See `wiki/best-practices/framework/icarus-integration-plan.md` §1 and §7. These checks WARN by default; pass `--strict` to fail the run on any of these (CI mode).")
+    out.append("Fields adopted from icarus-memory-infra (MIT schema lift). See the icarus integration plan (llm-wiki-bootstrap notebook, `project/decisions/icarus-integration-plan-2026-05-21.md`) §1 and §7. These checks WARN by default; pass `--strict` to fail the run on any of these (CI mode).")
     out.append("")
     if icarus_total == 0:
         out.append("_All icarus-schema fields valid (or absent)._")

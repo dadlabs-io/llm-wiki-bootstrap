@@ -16,6 +16,10 @@
 - **What**: `wiki-authoring-best-practices` (v13): the table and the gap list are replaced by one line linking llm-wiki's "Wiki authoring: where llm-wiki stands" page, which lists what we have area by area with links to the design pages.
 - **Also** (v14): principle 5 names the one claims file, `_inbox/claims-index.json` (it said `claims-index-*.json`); principle 9 no longer says a changed raw flags its entry: `/wiki-refresh` lists entries past `review_after`, and a changed source is caught only by `--refetch`.
 
+### The icarus integration plan moves to llm-wiki's notebook as history (task #231)
+- **Why**: every item in it shipped on 2026-05-25; it records what we adopted from icarus, which is ours, not general practice.
+- **What**: agentic-design's `project/best-practices/framework/icarus-integration-plan.md` is now llm-wiki's `project/decisions/icarus-integration-plan-2026-05-21.md`. `/wiki-rollback`, `/wiki-verify`, the frontmatter spec, the rerank spec and the lint's icarus section name the new place. `wiki-authoring-best-practices` (v15) carries the plan's one live rule: `project/` or `research/` by where a page came from, not its topic.
+
 ## 2026-11-10
 
 ### A promoted backlink lands in Related again, not under Sources (task #233)
