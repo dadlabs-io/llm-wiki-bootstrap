@@ -1,0 +1,350 @@
+{
+  "schema": 1,
+  "diff_base": "58767fda5e86",
+  "rounds": [
+    {
+      "round": 1,
+      "at": "2026-11-13T01:04:54Z",
+      "diff_sha256": "6b710ce04e01b649c50f01f2fc1d2b1a2ee8ed7307978c8233192392748dfb97",
+      "findings_sha256": "4f40462d7d7f3dcc687ea8306377db04a78bda755e7fa78cc00fb74852c48756",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "spec-1",
+        "spec-2",
+        "spec-3"
+      ],
+      "new": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "spec-1",
+        "spec-2",
+        "spec-3"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "tests/scripts/_git_hooks_harness.py": "6fd2854b596b5d63c26dbda879115871b46f4c1d642546bc4068711541df92c5",
+        "tests/scripts/test_git_hooks.py": "921516543f7ea44b99da4907f17476d0d6e8a5f76dd137e00664c104f1f0b1b9",
+        "tests/scripts/test_git_hooks_dcc.py": "455ed9a5565246b5d61685f6b98dc17d2d83c8854b5299f9b4b737aeeb4ac89b",
+        "tools/git-hooks/README.md": "664f5101246244014c5abc8c8a18f342c26411cf8f6c9d9624b1007fde1e6e67"
+      }
+    }
+  ],
+  "items": {
+    "standards-1": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks.py:26` and 22 other test bodies \u2014 S2: the `m = Machine()` / `try` / `finally: m.close()` lifecycle is copied in 23 tests. Fix: a context manager in the harness.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": 26,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56"
+        }
+      ]
+    },
+    "standards-2": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks.py:224` and `tests/scripts/test_git_hooks_dcc.py:91` \u2014 S2: the same `TESTS = {...}` line in both files. Fix: `collect_tests(globals())` in the harness.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": 224,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56"
+        }
+      ]
+    },
+    "standards-3": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks.py:70`, `:79`, `tests/scripts/test_git_hooks_dcc.py:78` \u2014 S2: three checks each plant a token on a fresh Machine. Fix: one commit, or a harness helper.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": 70,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56"
+        }
+      ]
+    },
+    "standards-4": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/_git_hooks_harness.py:44` and `:72` \u2014 S9/R26: `run(env=None)` and `commit(*extra)` have no caller using them. Fix: drop both.",
+      "file": "tests/scripts/_git_hooks_harness.py",
+      "line": 44,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "11d68371f148da38df3035fec2302e093a0de37e23b8902ff4049f8b00ce03cb",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "11d68371f148da38df3035fec2302e093a0de37e23b8902ff4049f8b00ce03cb"
+        }
+      ]
+    },
+    "standards-5": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks.py:48` \u2014 R13: the hand-over check reads the stub's text. Fix: run the stub in a scratch repo and assert it reaches the repo's own hook.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": 48,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56"
+        }
+      ]
+    },
+    "standards-6": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks.py` and `tests/scripts/test_git_hooks_dcc.py:78` \u2014 R22/R25: moves and new checks land in one step. Fix: separate commits.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "921516543f7ea44b99da4907f17476d0d6e8a5f76dd137e00664c104f1f0b1b9",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "921516543f7ea44b99da4907f17476d0d6e8a5f76dd137e00664c104f1f0b1b9"
+        }
+      ]
+    },
+    "standards-7": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/_git_hooks_harness.py:108` and `:95-98` \u2014 R21/T3: the runner's ERROR and unknown-name branches are exercised by no check. Fix: a check each, or record the runs.",
+      "file": "tests/scripts/_git_hooks_harness.py",
+      "line": 108,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "6fd2854b596b5d63c26dbda879115871b46f4c1d642546bc4068711541df92c5",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "6fd2854b596b5d63c26dbda879115871b46f4c1d642546bc4068711541df92c5"
+        }
+      ]
+    },
+    "standards-8": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks.py:14` \u2014 S15: `Path` imported, never used. Fix: delete.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": 14,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "921516543f7ea44b99da4907f17476d0d6e8a5f76dd137e00664c104f1f0b1b9",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "921516543f7ea44b99da4907f17476d0d6e8a5f76dd137e00664c104f1f0b1b9"
+        }
+      ]
+    },
+    "standards-9": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks.py:128` \u2014 G31: the setup commit's result unasserted. Fix: assert it was blocked.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": 128,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56"
+        }
+      ]
+    },
+    "standards-10": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks.py:28` \u2014 G16: the assert repeats the constructor's own guard. Fix: drop it.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": 28,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56"
+        }
+      ]
+    },
+    "standards-11": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/_git_hooks_harness.py:25` \u2014 G25: `range(36)` unexplained. Fix: a named constant.",
+      "file": "tests/scripts/_git_hooks_harness.py",
+      "line": 25,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "11d68371f148da38df3035fec2302e093a0de37e23b8902ff4049f8b00ce03cb",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "11d68371f148da38df3035fec2302e093a0de37e23b8902ff4049f8b00ce03cb"
+        }
+      ]
+    },
+    "spec-1": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `.do-code-change/242-dcc-test-tidy/checkpoints.md` (Implement) \u2014 the plan's invariant says every existing check \"still fails at the fixed point's hook\"; the four restructured dcc checks were shown green only, and the pass test's body changed. Fix: run them against bc898ad's hook and record the red tails.",
+      "file": ".do-code-change/242-dcc-test-tidy/checkpoints.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f154eeffa9d0dc464995cd463a670eca4e190459485a9726051a473fc7e1be8d",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "f154eeffa9d0dc464995cd463a670eca4e190459485a9726051a473fc7e1be8d"
+        }
+      ]
+    },
+    "spec-2": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `.do-code-change/242-dcc-test-tidy/checkpoints.md` (step 3) \u2014 the plan names evidence for \"a deliberately raising test\"; only the unknown-name run is recorded. Fix: run a throwaway raising check and record the ERROR line and exit 1.",
+      "file": ".do-code-change/242-dcc-test-tidy/checkpoints.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f154eeffa9d0dc464995cd463a670eca4e190459485a9726051a473fc7e1be8d",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "f154eeffa9d0dc464995cd463a670eca4e190459485a9726051a473fc7e1be8d"
+        }
+      ]
+    },
+    "spec-3": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks.py:127-130` \u2014 `test_committed_word_is_not_rechecked`'s setup commit is unasserted though its unfreeze reason says \"the setup commit's outcome\". Fix: assert it was blocked.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": 127,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "17ab8b92e511e2482a11ba0cdc9efa902fa125c64c4b7d47b9667aa628842a56"
+        }
+      ]
+    }
+  }
+}
