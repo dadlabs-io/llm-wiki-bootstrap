@@ -1,38 +1,31 @@
-# Review findings — 242-dcc-test-tidy, round 1
+# Review findings — 242-dcc-test-tidy, round 2 (focused)
 
-Fixed point 58767fd; 4 files, tests and one README. Prescan clean; read-only guard PASS.
+Scope: what fix round 1 moved (665ba18 → HEAD) plus the sibling sites of its addressed findings. Prescan clean; read-only guard PASS.
 
 ## Standards
 
-- [suggestion] `tests/scripts/test_git_hooks.py:26` and 22 other test bodies — S2: the `m = Machine()` / `try` / `finally: m.close()` lifecycle is copied in 23 tests. Fix: a context manager in the harness.
-- [suggestion] `tests/scripts/test_git_hooks.py:224` and `tests/scripts/test_git_hooks_dcc.py:91` — S2: the same `TESTS = {...}` line in both files. Fix: `collect_tests(globals())` in the harness.
-- [suggestion] `tests/scripts/test_git_hooks.py:70`, `:79`, `tests/scripts/test_git_hooks_dcc.py:78` — S2: three checks each plant a token on a fresh Machine. Fix: one commit, or a harness helper.
-- [suggestion] `tests/scripts/_git_hooks_harness.py:44` and `:72` — S9/R26: `run(env=None)` and `commit(*extra)` have no caller using them. Fix: drop both.
-- [suggestion] `tests/scripts/test_git_hooks.py:48` — R13: the hand-over check reads the stub's text. Fix: run the stub in a scratch repo and assert it reaches the repo's own hook.
-- [suggestion] `tests/scripts/test_git_hooks.py` and `tests/scripts/test_git_hooks_dcc.py:78` — R22/R25: moves and new checks land in one step. Fix: separate commits.
-- [nit] `tests/scripts/_git_hooks_harness.py:108` and `:95-98` — R21/T3: the runner's ERROR and unknown-name branches are exercised by no check. Fix: a check each, or record the runs.
-- [nit] `tests/scripts/test_git_hooks.py:14` — S15: `Path` imported, never used. Fix: delete.
-- [nit] `tests/scripts/test_git_hooks.py:128` — G31: the setup commit's result unasserted. Fix: assert it was blocked.
-- [nit] `tests/scripts/test_git_hooks.py:28` — G16: the assert repeats the constructor's own guard. Fix: drop it.
-- [nit] `tests/scripts/_git_hooks_harness.py:25` — G25: `range(36)` unexplained. Fix: a named constant.
+- [important] `tests/scripts/test_git_hooks.py:101` (and `:90`) — PY9: `assert blocked.returncode != 0, "the private word was not blocked first"` passes for any refusal, never reading stderr. Fix: also assert "private word" in stderr.
+- [suggestion] `tests/scripts/test_git_hooks.py:41` and `:130` — S2: the same marker-hook script is written twice. Fix: a harness helper.
+- [nit] `tests/scripts/test_git_hooks_dcc.py:79-80` — S2: the hook file is read twice. Fix: read once.
+- [suggestion] `tests/scripts/test_git_hooks_harness.py:36` — R13: the check pins the runner's exact print format, two spaces included. Fix: assert the parts.
 
 Unverified:
-- `tests/scripts/test_git_hooks_optin.py` still has its own setup (outside the diff); 23 installs' runtime not measured.
+- `test_git_hooks.py:49` reads hooks.conf's text (R13), a line the fix did not touch: out of this round.
 
-Coverage: every every-diff rule and pasted section has a row in the lens report; found S2, S9/R26, G25, R13, G31, G16, S15, R21/T3, R22/R25; the rest clear or n/a.
-Well built: each check has its own temporary HOME, and both files share one harness.
+Coverage: S2 found; S9/R26, S15, R14, R15, G31, R12 clear; R13 found; PY9 found.
+Well built: `run_tests` prints the exact lines the runner's own checks assert.
 
 ## Spec
 
-- [important] `.do-code-change/242-dcc-test-tidy/checkpoints.md` (Implement) — the plan's invariant says every existing check "still fails at the fixed point's hook"; the four restructured dcc checks were shown green only, and the pass test's body changed. Fix: run them against bc898ad's hook and record the red tails.
-- [important] `.do-code-change/242-dcc-test-tidy/checkpoints.md` (step 3) — the plan names evidence for "a deliberately raising test"; only the unknown-name run is recorded. Fix: run a throwaway raising check and record the ERROR line and exit 1.
-- [suggestion] `tests/scripts/test_git_hooks.py:127-130` — `test_committed_word_is_not_rechecked`'s setup commit is unasserted though its unfreeze reason says "the setup commit's outcome". Fix: assert it was blocked.
+- [important] `tests/scripts/test_git_hooks_dcc.py:76` — the plan invariant "Every dcc check still passes on the current hook and fails at the fixed point bc898ad's hook" is a test for the refusal check only; the other four checks' failure at bc898ad is still only in the notes. Fix: one test running every dcc check against bc898ad's hook, expecting each to fail.
+- [suggestion] `tests/scripts/test_git_hooks.py:122-126` — the plan says the refactor "change[s] no assertion", but the hand-over check's text assertion was replaced by a behavioural one. Fix: record the departure in plan.md.
+- [nit] `.do-code-change/242-dcc-test-tidy/plan.md:17` — the harness API list lacks `machine()`, `collect_tests`, `GITHUB_TOKEN_BODY_LEN`. Fix: add them.
 
 Unverified:
-- The step 4 red tail and the 18/18 claims are producer records, not re-run by the lens.
+- The 0/5 run and the bc898ad hook contents (no shell).
 
-Coverage: every plan step, invariant, decision, exclusion and the harness API has a row in the lens report; found: the invariant, step 3; the rest clear.
-Well built: one harness owns setup and the runner; the 18 checks survive as functions with their assertions kept or strengthened.
+Coverage: spec-1 found (partial); spec-2 clear; spec-3 clear; scope clear; plan wording found.
+Well built: the runner checks assert the exact strings the runner prints.
 
 ## Change risk
 
@@ -40,11 +33,11 @@ Well built: one harness owns setup and the runner; the 18 checks survive as func
 |---|---|---|---|---|---|
 | `tests/scripts/_git_hooks_harness.py` | LOW (test) | 1 | in full | in full | — |
 | `tests/scripts/test_git_hooks.py` | LOW (test) | 1 | in full | in part (diff) | — |
-| `tests/scripts/test_git_hooks_dcc.py` | LOW (test) | 1 | in full | in part (diff) | — |
-| `tools/git-hooks/README.md` | LOW (docs) | 1 | in full (hunk) | in part | — |
+| `tests/scripts/test_git_hooks_dcc.py` | LOW (test) | 1 | in full | in full | — |
+| `tests/scripts/test_git_hooks_harness.py` | LOW (test) | 1 | in full | in full | — |
 
 No high-risk file; the change-risk lens was not run.
 
-Standards: 11 findings (6 suggestions, 5 nits). Spec: 3 findings (2 important: the invariant's red evidence, the runner's raising path). Change risk: not run.
+Standards: 4 findings (1 important). Spec: 3 findings (1 important). Change risk: not run.
 
 VERDICT: Standards FINDINGS · Spec FINDINGS · Change risk NOT RUN · needs-a-human 0

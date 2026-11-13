@@ -49,6 +49,41 @@
         "tests/scripts/test_git_hooks_dcc.py": "455ed9a5565246b5d61685f6b98dc17d2d83c8854b5299f9b4b737aeeb4ac89b",
         "tools/git-hooks/README.md": "664f5101246244014c5abc8c8a18f342c26411cf8f6c9d9624b1007fde1e6e67"
       }
+    },
+    {
+      "round": 2,
+      "at": "2026-11-13T02:17:17Z",
+      "diff_sha256": "1164b18b64cf592f045824138c2cc4123548764cbd8aa4b64269c08ee28a43f0",
+      "findings_sha256": "0d48b321ad0d55601aaa9780cebfe11b45fc0202087904afeb281070c5598037",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-12",
+        "standards-13",
+        "standards-14",
+        "standards-15",
+        "spec-4",
+        "spec-5",
+        "spec-6"
+      ],
+      "new": [
+        "standards-12",
+        "standards-13",
+        "standards-14",
+        "standards-15",
+        "spec-4",
+        "spec-5",
+        "spec-6"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "tests/scripts/_git_hooks_harness.py": "4693c7b8f989576366b2b81b248162d0826640927b6e695251706c02b71a5016",
+        "tests/scripts/test_git_hooks.py": "38ce9d10277997d5932da843380cce0588a9796a9936ece1e3e257df685876cb",
+        "tests/scripts/test_git_hooks_dcc.py": "ba0fb2dfa4b9fbe50ec1c324de5fc85635da79cb4884e2aeadef6f69fabc2c76",
+        "tests/scripts/test_git_hooks_harness.py": "e42d0cebb32db62b26d484a513df833b70f10cfe512a0416b4055b21de8218ce",
+        "tools/git-hooks/README.md": "664f5101246244014c5abc8c8a18f342c26411cf8f6c9d9624b1007fde1e6e67"
+      }
     }
   ],
   "items": {
@@ -423,6 +458,153 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e"
+        }
+      ]
+    },
+    "standards-12": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/scripts/test_git_hooks.py:101` (and `:90`) \u2014 PY9: `assert blocked.returncode != 0, \"the private word was not blocked first\"` passes for any refusal, never reading stderr. Fix: also assert \"private word\" in stderr.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": 101,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e"
+        }
+      ]
+    },
+    "standards-13": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks.py:41` and `:130` \u2014 S2: the same marker-hook script is written twice. Fix: a harness helper.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": 41,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e"
+        }
+      ]
+    },
+    "standards-14": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks_dcc.py:79-80` \u2014 S2: the hook file is read twice. Fix: read once.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 79,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f24d467914cbf3acbd482fda7f809ee85d32f6261dcfbf2e681af3807eed1177",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "f24d467914cbf3acbd482fda7f809ee85d32f6261dcfbf2e681af3807eed1177"
+        }
+      ]
+    },
+    "standards-15": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks_harness.py:36` \u2014 R13: the check pins the runner's exact print format, two spaces included. Fix: assert the parts.",
+      "file": "tests/scripts/test_git_hooks_harness.py",
+      "line": 36,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "308d08ef17edc6fe1ea57c5f25622295738c68c40dd4d1e0266714e41b5e7659",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "308d08ef17edc6fe1ea57c5f25622295738c68c40dd4d1e0266714e41b5e7659"
+        }
+      ]
+    },
+    "spec-4": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `tests/scripts/test_git_hooks_dcc.py:76` \u2014 the plan invariant \"Every dcc check still passes on the current hook and fails at the fixed point bc898ad's hook\" is a test for the refusal check only; the other four checks' failure at bc898ad is still only in the notes. Fix: one test running every dcc check against bc898ad's hook, expecting each to fail.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 76,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f24d467914cbf3acbd482fda7f809ee85d32f6261dcfbf2e681af3807eed1177",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "f24d467914cbf3acbd482fda7f809ee85d32f6261dcfbf2e681af3807eed1177"
+        }
+      ]
+    },
+    "spec-5": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks.py:122-126` \u2014 the plan says the refactor \"change[s] no assertion\", but the hand-over check's text assertion was replaced by a behavioural one. Fix: record the departure in plan.md.",
+      "file": "tests/scripts/test_git_hooks.py",
+      "line": 122,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e"
+        }
+      ]
+    },
+    "spec-6": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `.do-code-change/242-dcc-test-tidy/plan.md:17` \u2014 the harness API list lacks `machine()`, `collect_tests`, `GITHUB_TOKEN_BODY_LEN`. Fix: add them.",
+      "file": ".do-code-change/242-dcc-test-tidy/plan.md",
+      "line": 17,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "ed1a853cef99efce8924ee0820c6e0126b1d93dda6abe6aa6d8cb2f40261ec63",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "ed1a853cef99efce8924ee0820c6e0126b1d93dda6abe6aa6d8cb2f40261ec63"
         }
       ]
     }
