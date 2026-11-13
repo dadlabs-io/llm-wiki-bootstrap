@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -321,6 +322,178 @@ with tempfile.TemporaryDirectory() as td:
     p = session_cost("--session-id", "nobody")
     check("session-cost for a session with no file: NOT checked (exit 3), never a zero",
           p.returncode == 3 and "NOT checked" in p.stdout and "$0" not in p.stdout, p.stdout)
+
+    # ── unfinished (task #240, lesson #10): Step 0 names an earlier run folder that has no report ──
+    reports = nb / "_inbox" / "reports"
+    cur = reports / "2026-11-20" / "2026-11-20-01"
+
+    def mkrun(cid, scratch=None, report=False):
+        d = reports / cid[:10] / cid
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "semantic-scope.txt").write_text("# a step file\n", encoding="utf-8")
+        if scratch is not None:
+            (d / "scratchpad.md").write_text(
+                f"# Cycle Run — {cid[:10]}\n\n**Status**: {scratch}\n**Cycle**: {cid}\n\n## Decisions log\n"
+                "- 2026-10-01T10:00:00-04:00 — started\n", encoding="utf-8")
+        if report:
+            (d / f"{cid}-run-cycle-report.md").write_text("# report\n", encoding="utf-8")
+        return d
+
+    mkrun("2026-10-01-01")                                # steps run by hand: no scratchpad, no report
+    mkrun("2026-10-02-01", scratch="in_progress")
+    mkrun("2026-10-03-01", scratch="completed", report=True)
+    mkrun("2026-10-04-01", scratch="interrupted")
+    (reports / "2026-10-05" / "checker").mkdir(parents=True)
+    (reports / "2026-10-05" / "checker" / "x.json").write_text("{}", encoding="utf-8")
+    mkrun("2026-11-20-01")                                # the current run: no report yet, never named
+
+    def unfinished_names_runs_without_report():
+        p = run("unfinished", "--run-folder", str(cur))
+        lines = [l for l in p.stdout.splitlines() if l.startswith("unfinished: ")]
+        ids = [l.split()[1] for l in lines]
+        by = dict(zip(ids, lines))
+        # 2026-09-10-01 and 2026-09-24-01 are the lint run and the run folder the sections above used: no report either
+        check("unfinished_names_runs_without_report: exit 0, exactly the four unfinished folders, oldest first",
+              p.returncode == 0 and ids == ["2026-09-10-01", "2026-09-24-01", "2026-10-01-01", "2026-10-02-01"],
+              (p.returncode, p.stdout, p.stderr[-200:]))
+        check("unfinished_names_runs_without_report: a folder with no scratchpad says so",
+              "no scratchpad" in by.get("2026-10-01-01", ""), by)
+        check("unfinished_names_runs_without_report: an in_progress scratchpad says so",
+              "scratchpad says in_progress" in by.get("2026-10-02-01", ""), by)
+        check("unfinished_names_runs_without_report: each line gives both ways out",
+              bool(ids) and all(f"/wiki-cycle --resume {i}" in by[i] and f'unfinished --mark-interrupted {i} --reason "'
+                                in by[i] for i in ids), by)
+        f = cur / "unfinished-runs.txt"
+        rows = ([l.split("\t") for l in f.read_text(encoding="utf-8").splitlines() if l and not l.startswith("#")]
+                if f.is_file() else None)
+        check("unfinished_names_runs_without_report: unfinished-runs.txt lists each folder and its why",
+              rows is not None and [r[0] for r in rows] == ids
+              and all(len(r) == 2 for r in rows) and "no scratchpad" in rows[2][1] and "in_progress" in rows[3][1],
+              (rows, p.stdout))
+    unfinished_names_runs_without_report()
+
+    def unfinished_none_case():
+        for cid in ("2026-09-10-01", "2026-09-24-01", "2026-10-01-01", "2026-10-02-01"):
+            (reports / cid[:10] / cid / f"{cid}-run-cycle-report.md").write_text("# report\n", encoding="utf-8")
+        p = run("unfinished", "--run-folder", str(cur))
+        f = cur / "unfinished-runs.txt"
+        text = f.read_text(encoding="utf-8") if f.is_file() else ""
+        check("unfinished_none_case: the one line 'unfinished: none', exit 0",
+              p.returncode == 0 and p.stdout.strip() == "unfinished: none", (p.returncode, p.stdout, p.stderr[-200:]))
+        check("unfinished_none_case: the file holds only its header line, not zero bytes",
+              len(text.splitlines()) == 1 and text.startswith("#"), repr(text))
+    unfinished_none_case()
+
+    def unfinished_without_a_reports_folder():
+        away = nb / "_inbox" / "reports-away"
+        reports.rename(away)
+        elsewhere = tmp / "rf-no-reports"
+        p = run("unfinished", "--run-folder", str(elsewhere))
+        made = reports.exists()
+        wrote = sorted(x.name for x in elsewhere.iterdir()) if elsewhere.is_dir() else None
+        if made:
+            shutil.rmtree(reports)    # whatever the script made, so the real folder can come back
+        away.rename(reports)
+        check("unfinished_without_a_reports_folder: exit 0 and 'unfinished: none'",
+              p.returncode == 0 and p.stdout.strip() == "unfinished: none", (p.returncode, p.stdout, p.stderr[-200:]))
+        check("unfinished_without_a_reports_folder: nothing created outside the run folder",
+              not made and wrote == ["unfinished-runs.txt"], (made, wrote))
+    unfinished_without_a_reports_folder()
+
+    def mark_interrupted_closes_a_scratchpad_run():
+        d = mkrun("2026-10-06-01", scratch="in_progress")
+        before = run("unfinished", "--run-folder", str(cur))
+        p = run("unfinished", "--mark-interrupted", "2026-10-06-01", "--reason", "died at ingest")
+        pad = (d / "scratchpad.md").read_text(encoding="utf-8")
+        head, _, log = pad.partition("## Decisions log")
+        after = run("unfinished", "--run-folder", str(cur))
+        check("mark_interrupted_closes_a_scratchpad_run: the folder was named before, exit 0 now",
+              "unfinished: 2026-10-06-01 " in before.stdout and p.returncode == 0, (before.stdout, p.returncode, p.stderr[-200:]))
+        check("mark_interrupted_closes_a_scratchpad_run: the Status line says interrupted, in_progress is gone",
+              "**Status**: interrupted" in head and "in_progress" not in pad, pad)
+        check("mark_interrupted_closes_a_scratchpad_run: the reason is appended under the Decisions log, the old line kept",
+              any(l.startswith("- ") and l.endswith("— marked interrupted: died at ingest") for l in log.splitlines())
+              and "- 2026-10-01T10:00:00-04:00 — started" in log, pad)
+        check("mark_interrupted_closes_a_scratchpad_run: the next unfinished run leaves it out",
+              "2026-10-06-01" not in after.stdout, after.stdout)
+    mark_interrupted_closes_a_scratchpad_run()
+
+    def mark_interrupted_puts_the_reason_inside_the_log_section():
+        # a real scratchpad's Decisions log is followed by "## Unresolved for next run" (skills/wiki-cycle/reference.md)
+        d = mkrun("2026-10-07-02", scratch="in_progress")
+        pad = d / "scratchpad.md"
+        pad.write_text(pad.read_text(encoding="utf-8") + "\n## Unresolved for next run\n- the checker report\n",
+                       encoding="utf-8")
+        p = run("unfinished", "--mark-interrupted", "2026-10-07-02", "--reason", "laptop closed")
+        lines = pad.read_text(encoding="utf-8").splitlines()
+        at = next((i for i, l in enumerate(lines) if l.endswith("marked interrupted: laptop closed")), -1)
+        log = lines.index("## Decisions log")
+        nxt = lines.index("## Unresolved for next run")
+        check("mark_interrupted_puts_the_reason_inside_the_log_section: the line sits between the log heading and the next section",
+              p.returncode == 0 and log < at < nxt, (p.returncode, p.stderr[-200:], lines))
+        check("mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line",
+              lines[nxt + 1:] == ["- the checker report"], lines)
+    mark_interrupted_puts_the_reason_inside_the_log_section()
+
+    def mark_interrupted_writes_a_scratchpad_for_a_run_with_none():
+        d = mkrun("2026-10-08-01")
+        p = run("unfinished", "--mark-interrupted", "2026-10-08-01", "--reason", "run by hand, never reported")
+        pad = d / "scratchpad.md"
+        lines = pad.read_text(encoding="utf-8").splitlines() if pad.is_file() else []
+        after = run("unfinished", "--run-folder", str(cur))
+        check("mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status",
+              p.returncode == 0 and lines[:1] == ["# Cycle Run — 2026-10-08"] and "**Status**: interrupted" in lines,
+              (p.returncode, p.stderr[-200:], lines))
+        check("mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading",
+              "## Decisions log" in lines and lines[-1].endswith("— marked interrupted: run by hand, never reported")
+              and lines.index("## Decisions log") < len(lines) - 1, lines)
+        check("mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out",
+              "2026-10-08-01" not in after.stdout, after.stdout)
+    mark_interrupted_writes_a_scratchpad_for_a_run_with_none()
+
+    def mark_interrupted_adds_the_log_heading_when_missing():
+        d = mkrun("2026-10-09-01")
+        pad = d / "scratchpad.md"
+        pad.write_text("# Cycle Run — 2026-10-09\n\n**Status**: in_progress\n", encoding="utf-8")
+        p = run("unfinished", "--mark-interrupted", "2026-10-09-01", "--reason", "no log yet")
+        lines = pad.read_text(encoding="utf-8").splitlines()
+        check("mark_interrupted_adds_the_log_heading_when_missing: exit 0, status closed, heading added with the reason below it",
+              p.returncode == 0 and "**Status**: interrupted" in lines and "## Decisions log" in lines
+              and lines[-1].endswith("— marked interrupted: no log yet")
+              and lines.index("## Decisions log") == len(lines) - 2, (p.returncode, p.stderr[-200:], lines))
+    mark_interrupted_adds_the_log_heading_when_missing()
+
+    def tree(root):
+        return {p.relative_to(root).as_posix(): (p.read_bytes() if p.is_file() else None) for p in root.rglob("*")}
+
+    def mark_interrupted_refuses_an_unknown_run():
+        before = tree(nb)
+        for bad in ("2026-12-31-01", "not-a-run", "../../../wiki"):
+            p = run("unfinished", "--mark-interrupted", bad, "--reason", "x")
+            check(f"mark_interrupted_refuses_an_unknown_run: {bad!r} exits 2 and the error names it",
+                  p.returncode == 2 and bad in p.stderr, (p.returncode, p.stdout, p.stderr[-300:]))
+        check("mark_interrupted_refuses_an_unknown_run: nothing in the notebook was written",
+              tree(nb) == before, sorted(set(tree(nb).items()) ^ set(before.items()), key=str)[:5])
+    mark_interrupted_refuses_an_unknown_run()
+
+    def mark_interrupted_needs_a_reason():
+        mkrun("2026-10-10-01", scratch="in_progress")
+        before = tree(nb)
+        p = run("unfinished", "--mark-interrupted", "2026-10-10-01")
+        check("mark_interrupted_needs_a_reason: exit 2 and the error names --reason",
+              p.returncode == 2 and "--reason" in p.stderr, (p.returncode, p.stdout, p.stderr[-300:]))
+        check("mark_interrupted_needs_a_reason: nothing in the notebook was written", tree(nb) == before,
+              sorted(set(tree(nb).items()) ^ set(before.items()), key=str)[:5])
+    mark_interrupted_needs_a_reason()
+
+    def mark_interrupted_closes_a_scratchpad_with_no_status_line():
+        d = mkrun("2026-10-11-01")
+        (d / "scratchpad.md").write_text("# Cycle Run — 2026-10-11\n\n## Decisions log\n- started\n", encoding="utf-8")
+        p = run("unfinished", "--mark-interrupted", "2026-10-11-01", "--reason", "no status written")
+        after = run("unfinished", "--run-folder", str(cur))
+        check("mark_interrupted_closes_a_scratchpad_with_no_status_line: exit 0 and the next unfinished run leaves it out",
+              p.returncode == 0 and "2026-10-11-01" not in after.stdout, (p.returncode, p.stderr[-200:], after.stdout))
+    mark_interrupted_closes_a_scratchpad_with_no_status_line()
 
 failed =[n for ok, n in results if not ok]
 for ok, n in results:

@@ -11,6 +11,8 @@ What a /wiki-cycle step reads, decided by a script instead of by the model.
     wiki-cycle-scope.py --topic N cost --run-folder <rf> --mark start|end [--session-id <id>]
     wiki-cycle-scope.py --topic N session-cost [--session-id <id>]
     wiki-cycle-scope.py --topic N promote --run-folder <rf>
+    wiki-cycle-scope.py --topic N unfinished --run-folder <rf>
+    wiki-cycle-scope.py --topic N unfinished --mark-interrupted <cycle_id> --reason "<why>"
     wiki-cycle-scope.py --topic N writer <raw> [<raw> ...] [--ingester <config.json>]
 
 `semantic`: the entries added or revised since the last semantic lint (the newest
@@ -80,6 +82,14 @@ asking, from the notebook's confirm_before_promote (registry → project wiki-co
 true, as /wrap-up reads it). Prints one line and writes <rf>/promote-setting.txt. Until
 2026-10-19 the cycle never read the setting: --full promoted everything and every other
 mode staged everything (task #184).
+
+`unfinished`: the earlier run folders (`_inbox/reports/<date>/<YYYY-MM-DD>-<NN>/`, not <rf>) that never got
+their `<cycle_id>-run-cycle-report.md`, unless their scratchpad says `interrupted`. Prints one line each, oldest
+first, with the two ways out (`/wiki-cycle --resume <cycle_id>`, or `--mark-interrupted`), or `unfinished: none`,
+and writes <rf>/unfinished-runs.txt (`<cycle_id>` tab why). Exit 0 either way. Nothing is resumed or deleted.
+`--mark-interrupted <cycle_id> --reason "<why>"` closes one: its scratchpad's Status becomes `interrupted` and the
+reason joins the Decisions log (a scratchpad is written when there is none); an unknown id is exit 2, nothing
+written (task #240, lesson #10: the 2026-07-17 cycle died before its report and nothing flagged it).
 
 Entries are wiki/**/*.md except `_`-prefixed machine files, README.md and sessions/.
 (2026-09-24, task #42: C1 and C3; the 2026-09-23 cycle's findings 10 and 11.)
@@ -499,6 +509,69 @@ def cmd_promote(nb: Path, args) -> int:
     return 0
 
 
+RUN_ID = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{2}$")
+
+
+def unfinished_runs(nb: Path, run_folder: Path) -> list[tuple[str, str]]:
+    """(cycle_id, why) for each earlier run folder with no `<id>-run-cycle-report.md`, unless its scratchpad says
+    `interrupted`, oldest first. A run folder is `_inbox/reports/<date>/<YYYY-MM-DD>-<NN>/`; `checker/` and the
+    like are not (task #240, lesson #10: a run that died before its report was never looked at again)."""
+    out = []
+    for d in sorted((nb / "_inbox" / "reports").glob("*/*")):
+        if not d.is_dir() or not RUN_ID.match(d.name) or d.resolve() == run_folder.resolve():
+            continue
+        if (d / f"{d.name}-run-cycle-report.md").is_file():
+            continue
+        pad = d / "scratchpad.md"
+        if not pad.is_file():
+            out.append((d.name, "no scratchpad"))
+            continue
+        m = re.search(r"^\*\*Status\*\*:\s*(\S+)", pad.read_text(encoding="utf-8", errors="replace"), re.M)
+        status = m.group(1) if m else "unknown"
+        if status != "interrupted":
+            out.append((d.name, f"scratchpad says {status}"))
+    return sorted(out)
+
+
+def mark_interrupted(nb: Path, cycle_id: str, reason: str) -> None:
+    """Close one run folder by its scratchpad: Status becomes `interrupted` and the reason joins the Decisions log."""
+    pad = nb / "_inbox" / "reports" / cycle_id[:10] / cycle_id / "scratchpad.md"
+    text = pad.read_text(encoding="utf-8") if pad.is_file() else (
+        f"# Cycle Run — {cycle_id[:10]}\n\n**Status**: interrupted\n\n## Decisions log\n")
+    text, n = re.subn(r"^(\*\*Status\*\*:).*$", r"\1 interrupted", text, count=1, flags=re.M)
+    if not n:
+        title, _, rest = text.partition("\n")
+        text = f"{title}\n\n**Status**: interrupted\n{rest}"
+    line = f"- {now_stamp()} — marked interrupted: {reason}\n"
+    if not re.search(r"^## Decisions log\n", text, re.M):
+        text = text.rstrip("\n") + "\n\n## Decisions log\n"
+    log = re.search(r"^## Decisions log\n", text, re.M)
+    after = re.search(r"^## ", text[log.end():], re.M)
+    end = log.end() + after.start() if after else len(text)
+    atomic_write_text(pad, text[:end].rstrip("\n") + "\n" + line + ("\n" + text[end:] if after else ""))
+
+
+def cmd_unfinished(nb: Path, args) -> int:
+    if args.mark_interrupted:
+        cid = args.mark_interrupted
+        if not RUN_ID.match(cid) or not (nb / "_inbox" / "reports" / cid[:10] / cid).is_dir():
+            print(f"error: no run folder {cid!r} under _inbox/reports/ (a cycle id is <YYYY-MM-DD>-<NN>)", file=sys.stderr)
+            return 2
+        mark_interrupted(nb, args.mark_interrupted, args.reason)
+        print(f"unfinished: {args.mark_interrupted} marked interrupted: {args.reason}")
+        return 0
+    rf = Path(args.run_folder)
+    found = unfinished_runs(nb, rf)
+    why = f"{len(found)} earlier run folder(s) with no run-cycle report"
+    out = write_scope(rf, "unfinished-runs.txt", [f"{cid}\t{w}" for cid, w in found], why)
+    for cid, w in found:
+        print(f'unfinished: {cid} ({w}) — resume: /wiki-cycle --resume {cid}; or close it: '
+              f'wiki-cycle-scope.py unfinished --mark-interrupted {cid} --reason "<why>"')
+    if not found:
+        print("unfinished: none")
+    return 0
+
+
 SESSION_COST_DIR = HOME_CLAUDE / "session-cost"
 
 
@@ -611,10 +684,18 @@ def main() -> int:
     sco.add_argument("--session-id", default=None)
     pr = sub.add_parser("promote")
     pr.add_argument("--run-folder", required=True)
+    un = sub.add_parser("unfinished")
+    un.add_argument("--run-folder", default=None)
+    un.add_argument("--mark-interrupted", metavar="CYCLE_ID", default=None)
+    un.add_argument("--reason", default=None)
     wr = sub.add_parser("writer")
     wr.add_argument("raws", nargs="+", help="raw files (absolute, or relative to the notebook)")
     wr.add_argument("--ingester", default=str(HOME_CLAUDE / "agents" / "wiki-ingester-config.json"))
     args = ap.parse_args()
+    if args.cmd == "unfinished" and not (args.run_folder or args.mark_interrupted):
+        un.error("--run-folder (to list) or --mark-interrupted (to close one) is required")
+    if args.cmd == "unfinished" and args.mark_interrupted and not args.reason:
+        un.error("--mark-interrupted needs --reason \"<why>\"")
     topic = args.topic or (load_config() or {}).get("notebook")
     if not topic:
         print("error: no notebook: pass --topic or run inside a wiki project", file=sys.stderr)
@@ -627,7 +708,7 @@ def main() -> int:
     return {"semantic": cmd_semantic, "claims": cmd_claims, "synthesis": cmd_synthesis, "checker": cmd_checker,
             "checker-log": cmd_checker_log, "checker-corrected": cmd_checker_corrected, "models": cmd_models,
             "cost": cmd_cost, "session-cost": cmd_session_cost,
-            "promote": cmd_promote, "writer": cmd_writer}[args.cmd](nb, args)
+            "promote": cmd_promote, "unfinished": cmd_unfinished, "writer": cmd_writer}[args.cmd](nb, args)
 
 
 if __name__ == "__main__":

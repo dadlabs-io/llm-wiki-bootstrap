@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "captured_at": "2026-11-13T19:15:59Z",
+  "repo_root": "C:/github.com/llm-wiki-bootstrap",
+  "baseline_sha": "a7119f880ca43a4589f3f3c6425e160de1bbcaab",
+  "head_at_capture": "a7119f880ca43a4589f3f3c6425e160de1bbcaab",
+  "tree_was_clean": true,
+  "untracked_at_baseline": {},
+  "untracked_capped": false,
+  "artifact_dir": ".do-code-change/240-unfinished-run-check"
+}

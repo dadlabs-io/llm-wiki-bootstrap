@@ -1,0 +1,150 @@
+[
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_names_runs_without_report",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "cc9d2d34d9aed2da5c0f7063841bb8eb2613d939014acd841b744869af52878a",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS cost start: the newest session in this folder, not another folder's\nPASS cost end: the start's session is read again (not a newer one), the difference recorded\nPASS cost end with no start mark: NOT checked\nPASS session-cost: the named session's running total, said to be an estimate\nPASS session-cost with no id: the newest session in this folder\nPASS session-cost for a session with no file: NOT checked (exit 3), never a zero\nFAIL unfinished_names_runs_without_report: exit 0, exactly the four unfinished folders, oldest first  [(2, '', \"\\nwiki-cycle-scope.py: error: argument cmd: invalid choice: 'unfinished' (choose from semantic, claims, synthesis, checker, checker-log, checker-corrected, models, cost, session-cost, promote, writer)\\n\")]\nFAIL unfinished_names_runs_without_report: a folder with no scratchpad says so  [{}]\nFAIL unfinished_names_runs_without_report: an in_progress scratchpad says so  [{}]\nFAIL unfinished_names_runs_without_report: each line gives both ways out  [{}]\nFAIL unfinished_names_runs_without_report: unfinished-runs.txt lists each folder and its why  [(None, '')]\n52/57 passed",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_none_case",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "4326bc33ec633a98961c80ecc0231994991cdbb3256635e7335a38c657d8b643",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS cost end with no start mark: NOT checked\nPASS session-cost: the named session's running total, said to be an estimate\nPASS session-cost with no id: the newest session in this folder\nPASS session-cost for a session with no file: NOT checked (exit 3), never a zero\nPASS unfinished_names_runs_without_report: exit 0, exactly the four unfinished folders, oldest first\nPASS unfinished_names_runs_without_report: a folder with no scratchpad says so\nPASS unfinished_names_runs_without_report: an in_progress scratchpad says so\nPASS unfinished_names_runs_without_report: each line gives both ways out\nPASS unfinished_names_runs_without_report: unfinished-runs.txt lists each folder and its why\nFAIL unfinished_none_case: the one line 'unfinished: none', exit 0  [(0, '', '')]\nPASS unfinished_none_case: the file holds only its header line, not zero bytes\n58/59 passed",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_without_a_reports_folder",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "13a4ddad9858a787678acac41bc99ea4959c40e287bd43f53ae41f378ff03974",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "the code walks reports with glob, which yields nothing for a missing folder, so it cannot fail first; bite proven by a one-off mutant (reports.mkdir added to cmd_unfinished) that made the 'nothing created outside the run folder' check FAIL, then reverted",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_closes_a_scratchpad_run",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "9392b1414532efc4571bf60abd81c0713e01f3b8445d00eb57009188a78b6410",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "## Decisions log\n- 2026-10-01T10:00:00-04:00 \ufffd started\n]\nFAIL mark_interrupted_closes_a_scratchpad_run: the reason is appended under the Decisions log, the old line kept  [# Cycle Run \ufffd 2026-10-06\n**Status**: in_progress\n**Cycle**: 2026-10-06-01\n## Decisions log\n- 2026-10-01T10:00:00-04:00 \ufffd started\n]\nFAIL mark_interrupted_closes_a_scratchpad_run: the next unfinished run leaves it out  [unfinished: 2026-10-06-01 (scratchpad says in_progress) \ufffd resume: /wiki-cycle --resume 2026-10-06-01; or close it: wiki-cycle-scope.py unfinished --mark-interrupted 2026-10-06-01 --reason \"<why>\"\n]\n61/65 passed",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_puts_the_reason_inside_the_log_section",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "197d415f61dcc319fcc26f5df3ffc45fcb008bd24b9b243aa66edeb98ee6e354",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS unfinished_names_runs_without_report: unfinished-runs.txt lists each folder and its why\nPASS unfinished_none_case: the one line 'unfinished: none', exit 0\nPASS unfinished_none_case: the file holds only its header line, not zero bytes\nPASS unfinished_without_a_reports_folder: exit 0 and 'unfinished: none'\nPASS unfinished_without_a_reports_folder: nothing created outside the run folder\nPASS mark_interrupted_closes_a_scratchpad_run: the folder was named before, exit 0 now\nPASS mark_interrupted_closes_a_scratchpad_run: the Status line says interrupted, in_progress is gone\nPASS mark_interrupted_closes_a_scratchpad_run: the reason is appended under the Decisions log, the old line kept\nPASS mark_interrupted_closes_a_scratchpad_run: the next unfinished run leaves it out\nFAIL mark_interrupted_puts_the_reason_inside_the_log_section: the line sits between the log heading and the next section  [(0, '', ['# Cycle Run \ufffd 2026-10-07', '', '**Status**: interrupted', '**Cycle**: 2026-10-07-02', '', '## Decisions log', '- 2026-10-01T10:00:00-04:00 \ufffd started', '', '## Unresolved for next run', '- the checker report', '- 2026-11-13T14:29:14-05:00 \ufffd marked interrupted: laptop closed'])]\nFAIL mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line  [['# Cycle Run \ufffd 2026-10-07', '', '**Status**: interrupted', '**Cycle**: 2026-10-07-02', '', '## Decisions log', '- 2026-10-01T10:00:00-04:00 \ufffd started', '', '## Unresolved for next run', '- the checker report', '- 2026-11-13T14:29:14-05:00 \ufffd marked interrupted: laptop closed']]\n65/67 passed",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_writes_a_scratchpad_for_a_run_with_none",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "be4901eed11e25e8d541400efdb43b6bd64ffa4750a70e1db02c7772852e1d03",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS unfinished_without_a_reports_folder: nothing created outside the run folder\nPASS mark_interrupted_closes_a_scratchpad_run: the folder was named before, exit 0 now\nPASS mark_interrupted_closes_a_scratchpad_run: the Status line says interrupted, in_progress is gone\nPASS mark_interrupted_closes_a_scratchpad_run: the reason is appended under the Decisions log, the old line kept\nPASS mark_interrupted_closes_a_scratchpad_run: the next unfinished run leaves it out\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the line sits between the log heading and the next section\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line\nFAIL mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status  [(1, \"\\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\\\\\Users\\\\\\\\mark\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\2025-05-10_Temp\\\\\\\\tmpxz1l91ha\\\\\\\\notebooks\\\\\\\\t\\\\\\\\_inbox\\\\\\\\reports\\\\\\\\2026-10-08\\\\\\\\2026-10-08-01\\\\\\\\scratchpad.md'\\n\", [])]\nFAIL mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading  [[]]\nFAIL mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out  [unfinished: 2026-10-08-01 (no scratchpad) \ufffd resume: /wiki-cycle --resume 2026-10-08-01; or close it: wiki-cycle-scope.py unfinished --mark-interrupted 2026-10-08-01 --reason \"<why>\"\n]\n67/70 passed",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_adds_the_log_heading_when_missing",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "85c5d7757d394be437464b74fc6cb4ee69d1409fa3e012016fc17ee962f23444",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS unfinished_without_a_reports_folder: nothing created outside the run folder\nPASS mark_interrupted_closes_a_scratchpad_run: the folder was named before, exit 0 now\nPASS mark_interrupted_closes_a_scratchpad_run: the Status line says interrupted, in_progress is gone\nPASS mark_interrupted_closes_a_scratchpad_run: the reason is appended under the Decisions log, the old line kept\nPASS mark_interrupted_closes_a_scratchpad_run: the next unfinished run leaves it out\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the line sits between the log heading and the next section\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out\nFAIL mark_interrupted_adds_the_log_heading_when_missing: exit 0, status closed, heading added with the reason below it  [(1, 'le-scope.py\", line 534, in mark_interrupted\\n    after = re.search(r\"^## \", text[log.end():], re.M)\\n                                    ^^^^^^^\\nAttributeError: \\'NoneType\\' object has no attribute \\'end\\'\\n', ['# Cycle Run \ufffd 2026-10-09', '', '**Status**: in_progress'])]\n70/71 passed",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_refuses_an_unknown_run",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "a43cfeadf623278e459b7be5863806a5078993158a20a6f0d374c8da61e7cfe4",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS mark_interrupted_closes_a_scratchpad_run: the next unfinished run leaves it out\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the line sits between the log heading and the next section\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out\nPASS mark_interrupted_adds_the_log_heading_when_missing: exit 0, status closed, heading added with the reason below it\nFAIL mark_interrupted_refuses_an_unknown_run: '2026-12-31-01' exits 2 and the error names it  [(0, 'unfinished: 2026-12-31-01 marked interrupted: x\\n', '')]\nFAIL mark_interrupted_refuses_an_unknown_run: 'not-a-run' exits 2 and the error names it  [(0, 'unfinished: not-a-run marked interrupted: x\\n', '')]\nFAIL mark_interrupted_refuses_an_unknown_run: '../../../wiki' exits 2 and the error names it  [(0, 'unfinished: ../../../wiki marked interrupted: x\\n', '')]\nFAIL mark_interrupted_refuses_an_unknown_run: nothing in the notebook was written  [[('_inbox/reports/2026-12-31', None), ('_inbox/reports/2026-12-31/2026-12-31-01', None), ('_inbox/reports/2026-12-31/2026-12-31-01/scratchpad.md', b'# Cycle Run \\xe2\\x80\\x94 2026-12-31\\n\\n**Status**: interrupted\\n\\n## Decisions log\\n- 2026-11-13T14:32:17-05:00 \\xe2\\x80\\x94 marked interrupted: x\\n'), ('_inbox/reports/not-a-run', None), ('_inbox/reports/not-a-run/not-a-run', None)]]\n71/75 passed",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_needs_a_reason",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "983209f33ce9d8bd229b98f12f8f647072229343d5f2d6506d279bb608e0ee4a",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out\nPASS mark_interrupted_adds_the_log_heading_when_missing: exit 0, status closed, heading added with the reason below it\nPASS mark_interrupted_refuses_an_unknown_run: '2026-12-31-01' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: 'not-a-run' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: '../../../wiki' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: nothing in the notebook was written\nFAIL mark_interrupted_needs_a_reason: exit 2 and the error names --reason  [(0, 'unfinished: 2026-10-10-01 marked interrupted: None\\n', '')]\nFAIL mark_interrupted_needs_a_reason: nothing in the notebook was written  [[('_inbox/reports/2026-10-10/2026-10-10-01/scratchpad.md', b'# Cycle Run \\xe2\\x80\\x94 2026-10-10\\n\\n**Status**: interrupted\\n**Cycle**: 2026-10-10-01\\n\\n## Decisions log\\n- 2026-10-01T10:00:00-04:00 \\xe2\\x80\\x94 started\\n- 2026-11-13T14:33:14-05:00 \\xe2\\x80\\x94 marked interrupted: None\\n'), ('_inbox/reports/2026-10-10/2026-10-10-01/scratchpad.md', b'# Cycle Run \\xe2\\x80\\x94 2026-10-10\\r\\n\\r\\n**Status**: in_progress\\r\\n**Cycle**: 2026-10-10-01\\r\\n\\r\\n## Decisions log\\r\\n- 2026-10-01T10:00:00-04:00 \\xe2\\x80\\x94 started\\r\\n')]]\n75/77 passed",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_closes_a_scratchpad_with_no_status_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "636ca79abc624e5b80057a036bc5ce865f93a902522292a45c4b440e872c339e",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out\nPASS mark_interrupted_adds_the_log_heading_when_missing: exit 0, status closed, heading added with the reason below it\nPASS mark_interrupted_refuses_an_unknown_run: '2026-12-31-01' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: 'not-a-run' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: '../../../wiki' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: nothing in the notebook was written\nPASS mark_interrupted_needs_a_reason: exit 2 and the error names --reason\nPASS mark_interrupted_needs_a_reason: nothing in the notebook was written\nFAIL mark_interrupted_closes_a_scratchpad_with_no_status_line: exit 0 and the next unfinished run leaves it out  [(0, '', 'unfinished: 2026-10-10-01 (scratchpad says in_progress) \ufffd resume: /wiki-cycle --resume 2026-10-10-01; or close it: wiki-cycle-scope.py unfinished --mark-interrupted 2026-10-10-01 --reason \"<why>\"\\nunfinished: 2026-10-11-01 (scratchpad says unknown) \ufffd resume: /wiki-cycle --resume 2026-10-11-01; or close it: wiki-cycle-scope.py unfinished --mark-interrupted 2026-10-11-01 --reason \"<why>\"\\n')]\n77/78 passed",
+      "date": "2026-11-13"
+    }
+  }
+]
