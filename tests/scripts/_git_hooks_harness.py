@@ -136,7 +136,7 @@ def run_tests(tests: dict, argv: list[str]) -> int:
         except AssertionError as e:
             failed += 1
             print(f"FAIL {name}  [{e}]")
-        except Exception as e:  # noqa: BLE001 - a crashing check is reported as one, never ends the run
+        except Exception as e:  # a crashing check is reported as one and counted failed, so the run goes on
             failed += 1
             print(f"ERROR {name}  [{type(e).__name__}: {e}]")
     print(f"\n{len(names) - failed}/{len(names)} passed")
