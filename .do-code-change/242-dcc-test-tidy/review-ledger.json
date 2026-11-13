@@ -123,6 +123,37 @@
         "tests/scripts/test_git_hooks_harness.py": "3d87d00dca213fdd1013c3e4516e505d551ec4afdb727ead65d123c2912f8225",
         "tools/git-hooks/README.md": "664f5101246244014c5abc8c8a18f342c26411cf8f6c9d9624b1007fde1e6e67"
       }
+    },
+    {
+      "round": 4,
+      "at": "2026-11-13T02:42:59Z",
+      "diff_sha256": "c713e6fdc0958391a149636940b1bf7c0e9a0f1f0bbd3f23c0ef084a69df7d74",
+      "findings_sha256": "e02ece50eea011042c64afec7e326b82439a044974db4b5c59b4ea3f07a61723",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-20",
+        "standards-21",
+        "standards-22",
+        "standards-23",
+        "spec-12"
+      ],
+      "new": [
+        "standards-20",
+        "standards-21",
+        "standards-22",
+        "standards-23",
+        "spec-12"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "tests/scripts/_git_hooks_harness.py": "7eecd47e4b6d01ccdd5f9f97c60c11962f884c280569625eed1509c4eff36f64",
+        "tests/scripts/test_git_hooks.py": "2b07283b7ac4a8e30214fa3019a5ed6864c44e9213b85929151a09c9aea0cd98",
+        "tests/scripts/test_git_hooks_dcc.py": "b6d36dbdf5dacfed72914ba9ce48765b7a73943bef17709c30df37fddc515d11",
+        "tests/scripts/test_git_hooks_harness.py": "b8bdc4ecf80c14193bad278a50aba7fdd04e48508bbebde3110d4d076b7e6daa",
+        "tools/git-hooks/README.md": "664f5101246244014c5abc8c8a18f342c26411cf8f6c9d9624b1007fde1e6e67"
+      }
     }
   ],
   "items": {
@@ -421,8 +452,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 2,
-      "fingerprint": "9443b60c8669983830de739688dcf3ca040317613d9bbd61bf8f3d6c89b9868e",
+      "verdict_round": 3,
+      "fingerprint": "42df2ecd74b0bad0958024c54057ffadc532e898b3acb2ae113905a718bccb8d",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -445,6 +476,11 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "9443b60c8669983830de739688dcf3ca040317613d9bbd61bf8f3d6c89b9868e"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "42df2ecd74b0bad0958024c54057ffadc532e898b3acb2ae113905a718bccb8d"
         }
       ]
     },
@@ -457,8 +493,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 2,
-      "fingerprint": "9443b60c8669983830de739688dcf3ca040317613d9bbd61bf8f3d6c89b9868e",
+      "verdict_round": 3,
+      "fingerprint": "42df2ecd74b0bad0958024c54057ffadc532e898b3acb2ae113905a718bccb8d",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -481,6 +517,11 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "9443b60c8669983830de739688dcf3ca040317613d9bbd61bf8f3d6c89b9868e"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "42df2ecd74b0bad0958024c54057ffadc532e898b3acb2ae113905a718bccb8d"
         }
       ]
     },
@@ -623,8 +664,8 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "addressed",
-      "verdict_round": 2,
-      "fingerprint": "f7a7365d11209e087535d5bc1cc76fd48e198bc3c8482083de4e7220041def4b",
+      "verdict_round": 3,
+      "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -637,6 +678,11 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "f7a7365d11209e087535d5bc1cc76fd48e198bc3c8482083de4e7220041def4b"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0"
         }
       ]
     },
@@ -700,9 +746,9 @@
       "line": 92,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -710,6 +756,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0"
         }
       ]
     },
@@ -721,9 +772,9 @@
       "line": 38,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "382253715e9c206ee07a221bb59695889cd0b1df9d530dba3de6d7b1c0b93f4a",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "bfb5130cff190018ed82673e0c18b6211de4b028b57d6d2d6d39416273f037b7",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -731,6 +782,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "382253715e9c206ee07a221bb59695889cd0b1df9d530dba3de6d7b1c0b93f4a"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "bfb5130cff190018ed82673e0c18b6211de4b028b57d6d2d6d39416273f037b7"
         }
       ]
     },
@@ -742,9 +798,9 @@
       "line": 36,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "0278b8fa627d4fe7d18c457dfc66670daf9ebf77576d8fd9c62bde6bf447dd45",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "8d18044352e7ffbb5f7be9c373518ade7516624b43df640a2ebaf9acd9d5b28d",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -752,6 +808,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "0278b8fa627d4fe7d18c457dfc66670daf9ebf77576d8fd9c62bde6bf447dd45"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "8d18044352e7ffbb5f7be9c373518ade7516624b43df640a2ebaf9acd9d5b28d"
         }
       ]
     },
@@ -763,9 +824,9 @@
       "line": 84,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -773,6 +834,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0"
         }
       ]
     },
@@ -784,16 +850,21 @@
       "line": 25,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "255084c260aa22f50ca65d458b8923affccbce3d28cd9958179ae179d3a89c35",
-      "fingerprint_kind": "file-diff",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "27bf500badf2958c8caf3a2964ac8aa2fb5c23640385caa511fc767842937356",
+      "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 3,
           "verdict": "open",
           "fingerprint": "255084c260aa22f50ca65d458b8923affccbce3d28cd9958179ae179d3a89c35"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "27bf500badf2958c8caf3a2964ac8aa2fb5c23640385caa511fc767842937356"
         }
       ]
     },
@@ -805,9 +876,9 @@
       "line": 17,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "b517e625a8422326b788528b30b50d4b05ed9d8d5c76c6182582997ca4b45d2f",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "3387473f0a289e9f2ccb57ec2eae454f148f1cd2af3bee8435aa5f880b99e392",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -815,6 +886,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "b517e625a8422326b788528b30b50d4b05ed9d8d5c76c6182582997ca4b45d2f"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "3387473f0a289e9f2ccb57ec2eae454f148f1cd2af3bee8435aa5f880b99e392"
         }
       ]
     },
@@ -826,9 +902,9 @@
       "line": 36,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "0278b8fa627d4fe7d18c457dfc66670daf9ebf77576d8fd9c62bde6bf447dd45",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "8d18044352e7ffbb5f7be9c373518ade7516624b43df640a2ebaf9acd9d5b28d",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -836,6 +912,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "0278b8fa627d4fe7d18c457dfc66670daf9ebf77576d8fd9c62bde6bf447dd45"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "8d18044352e7ffbb5f7be9c373518ade7516624b43df640a2ebaf9acd9d5b28d"
         }
       ]
     },
@@ -847,9 +928,9 @@
       "line": 84,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -857,6 +938,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0"
         }
       ]
     },
@@ -868,9 +954,9 @@
       "line": 92,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -878,6 +964,116 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0"
+        }
+      ]
+    },
+    "standards-20": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/scripts/test_git_hooks_dcc.py:78-79` \u2014 PY9: in the pass check the marker assert runs before the exit-code assert, so a commit blocked for an unrelated reason still matches its expected message. Fix: assert the exit code first.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 78,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0"
+        }
+      ]
+    },
+    "standards-21": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/scripts/test_git_hooks_dcc.py:83` \u2014 PY9: the gitleaks check's expected message \"commit anyway\" is hook output, not a message the test wrote. Fix: give the owner-line assert its own message and key on it.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 83,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0"
+        }
+      ]
+    },
+    "standards-22": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks_dcc.py:92` \u2014 S2: `collect_tests` is run again where `TESTS` already holds the map. Fix: filter `TESTS`.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 92,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "dcd084dc39263c40850739430fc3bebb4bd08c0ccef8c4dd06676e1e9b9d93e0"
+        }
+      ]
+    },
+    "standards-23": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks_dcc.py:42` \u2014 S2: \"the commit went through\" repeated five times. Fix: one constant.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 42,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "b6d36dbdf5dacfed72914ba9ce48765b7a73943bef17709c30df37fddc515d11",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "b6d36dbdf5dacfed72914ba9ce48765b7a73943bef17709c30df37fddc515d11"
+        }
+      ]
+    },
+    "spec-12": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `.do-code-change/242-dcc-test-tidy/plan.md:22-29` \u2014 Testing Decisions names neither the bite test nor `OLD_HOOK_FAILURES`, though checkpoints says it was rewritten. Fix: add a bullet and correct the checkpoint sentence.",
+      "file": ".do-code-change/242-dcc-test-tidy/plan.md",
+      "line": 22,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d921bef53ade541b0c0eb70794ff1cc6d5d39e856f532cf85063d4f561268409",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "d921bef53ade541b0c0eb70794ff1cc6d5d39e856f532cf85063d4f561268409"
         }
       ]
     }
