@@ -1,125 +1,110 @@
-# Review report, round 2 (focused): 240-unfinished-run-check
+# Review report, round 3 (focused): 240-unfinished-run-check
 
-Fixed point `08d9c6cb7db1df6d731976fc00fd326fde8e0b09` resolves; merge-base with HEAD is the same commit; no untracked files outside `.do-code-change/`; the diff is non-empty (12 files, about 640 changed lines, one part per axis). Focused round: the scope is the 12 files in `round2-changed.txt` plus the sibling sites of each addressed round-1 finding. Spec source: `plan.md` and `requirements.md` (rewritten in place with the rulings). The prescan (dates, review ids, width) ran clean, so the Standards lens raised none of those in `.py` files. Lenses ran as `code-reviewer-lens`, foreground flag set, default tier, each reporting after a launch notice. The Spec lens marked four files `in part`, so it got its one retry on those four files, which read them in full. Items standards-4, -6 (as first raised), -7, -14 and the plan nits were not re-raised, as briefed.
+Fixed point `08d9c6cb7db1df6d731976fc00fd326fde8e0b09` resolves (`git log` lists the run's commits since it); the diff against it is non-empty (13 files, one part per axis, far under 3,000 lines); no untracked files outside `.do-code-change/`. Focused round: the scope is the 10 files in `round3-changed.txt` (what fix round 2 moved), read as the diff from the round-2 commit `efb6ab0` to the working tree, plus the sibling sites of each addressed finding. Spec source: `plan.md` and `requirements.md` (both read; both already carry the rulings and the `--topic <notebook>` forms). The prescan ran clean, so the Standards lens raised no dates, review ids or width in `.py` files. Lenses ran as `code-reviewer-lens`, foreground flag set, default tier; both reported after a launch notice and were waited for. Items left open with reasons (standards-17 to -20, spec-12, -15, -17; round-1 standards-4, -6, -7, -14, spec-4, -7, -8, -9) were not re-raised; the Standards lens found none of them made worse.
 
 ## Standards
 
-- [suggestion] `scripts/wiki-cycle-scope.py:524` — S2 sibling of round-1 standards-3, not converted to the helper: `for d in sorted((nb / "_inbox" / "reports").glob("*/*")):` while `run_folder_of` (`:540-542`) builds `nb / "_inbox" / "reports" / cycle_id[:10] / cycle_id`. A run filed under a different date folder is listed with a close-out command that `cmd_unfinished` refuses (`:566`, exit 2).
-  - Fix: in `unfinished_runs` skip any `d` where `d != run_folder_of(nb, d.name)`, so listing and close-out use one rule.
-- [suggestion] `tests/scripts/test_cycle_scope.py:486` (also `:495`, `:506`) — PY9 the error assertions pass on argparse's own usage text: `p.returncode == 2 and "--reason" in p.stderr`, and `"--run-folder" in p.stderr and "--mark-interrupted" in p.stderr`. The subparser's usage line already prints those option names, so the checks hold if the error sentence is deleted.
-  - Fix: assert the sentences: `"needs --reason" in p.stderr` (script `:709`) and `"not both and not neither" in p.stderr` (script `:707`).
-- [suggestion] `skills/wiki-cycle/SKILL.md:63` and `:175`, `skills/wiki-report/SKILL.md:276`, `skills/wiki-cycle/wiki-seed/wiki-cycle.md:43` — S2/S7 the ruling's rule "resume only for a run with a scratchpad" is now restated in four prose places plus the script (`:577`). Raised because the fix added the clause to Step 8, the report template and the usage page, which widens the duplication that standards-6 declined.
-  - Fix: state it once (Step 0) and have Step 8, the report and the usage page say "the way out Step 0 printed".
-- [nit] `scripts/wiki-cycle-scope.py:708` — G2 `--reason` given with `--run-folder` passes every check and is ignored.
-  - Fix: also refuse `args.reason and not args.mark_interrupted` with `un.error(...)`.
-- [nit] `tests/skills/wiki-cycle/check.py:2253` [eval-case-writer] — G16/G17 `_runs_mark_interrupted` is a shell-text parser nested inside `_check_unfinished`, while the file's other helpers (`_needs_you`, `_unfinished_ids`) sit at module level.
-  - Fix: move it to module level beside `_needs_you`.
-- [nit] `tests/skills/wiki-cycle/check.py:2168` [eval-case-writer] — R3 the `earlier` value `"open"` / `"complete-and-interrupted"` against the kind, skill and script word "unfinished". May predate round 1.
-  - Fix: rename the value to `"unfinished"` in check.py and cases.json.
+- [important] `tests/skills/wiki-cycle/check.py:2292` [eval-case-writer] — R15 softened assertion: `not re.search(way_out("resume", oid), corpus),` replaced the old `r"--resume\s+`?(?:" + re.escape(oid) + r"|<)"`, whose `|<` branch failed a generic `--resume <cycle_id>` offered for a run with no scratchpad; that generic offer now passes.
+  - Note for the reader: round-2 spec-14 asked for exactly this `|<` drop, and the Spec lens finds it clear. The axes differ here; both are reported as given. The Standards point is that adding `<notebook>` to the printed line did not require the loosening.
+  - Fix: `not re.search(way_out("resume", oid) + r"|--resume\s+`?<", corpus),`, or record in the check's docstring that a generic `--resume <cycle_id>` is allowed.
+- [suggestion] `tests/skills/wiki-cycle/check.py:2309` [eval-case-writer] — S2 `not re.search(r"--(?:resume|mark-interrupted)[\s=]+[`\"']?" + re.escape(i), corpus)` re-spells the pattern `way_out` builds at `:2246`, in the same function.
+  - Fix: `not re.search(way_out("resume", i) + "|" + way_out("mark-interrupted", i), corpus)`.
+- [suggestion] `tests/skills/wiki-cycle/check.py:2239` and `:2286` [eval-case-writer] — the check is stricter than the rule it tests: `oid in final` ("named in the final reply") against SKILL.md `:63` "tell the user each line now", which an interim text satisfies; a run that told the user at Step 0 and left the id out of its final reply now fails. The old check read `reply` (all assistant text).
+  - Fix: keep `reply` for "told the user" and add a separate final-reply check if wanted. (Same-expression note, S2: the `final` expression is written in five other suites; each is self-contained, so a note only.)
+- [nit] `scripts/wiki-cycle-scope.py:558` and `:560` — S2 the literal `r"^## Decisions log$"` appears twice in `mark_interrupted`.
+  - Fix: one module constant.
+- [nit] `scripts/wiki-cycle-scope.py:521-523` (and the module docstring at `:86`) — C2 the docstring says a run folder is `_inbox/reports/<date>/<YYYY-MM-DD>-<NN>/`, but the guard at `:528` now also requires the id's own date.
+  - Fix: add "under the id's own date" to both.
 
 Unverified:
-- `unfinished_without_a_reports_folder` restores the renamed folder with no try/finally (`reports.rename(away)` ... `away.rename(reports)`); if `run()` raises, the notebook stays renamed. Round-1 status unknown; not run.
-- The new `drop` set (check.py `:2227`) and the parser could not be told apart from round-1 code by the lens (diff is against the fixed point); reviewed as fix-round code.
-- Baseline JSON validity: the lens read the joins and file ends but could not parse it (no shell). See Checks made.
+- `tests/skills/wiki-cycle/baseline-opus.json` `earlier-complete-and-interrupted-runs-not-named`: the key `"run: read reference.md before writing the scratchpad": true` was removed by the re-merge from run `164536`, while the same key stays in every other Opus case and in the sibling new case (and Sonnet's baseline has none). Whether it hides a failed trajectory check or is a merge artifact (the rule `trajectory_rules.py:21` only fires on a `Write` of the scratchpad) is not settled; the opus result for that case in run `164536` would settle it.
+- `scripts/wiki-cycle-scope.py:204` and `:264` glob `*/*/lint-semantic.json` and `*/*/synthesis.json` with no date check; whether a misfiled run folder changes their cut-off was not traced.
+- Baseline JSON validity after the re-merge: read at the changed keys only, not parsed (no shell in the lens).
 
 Checks made:
-- Round-1 items against the diff, one by one. standards-1 addressed: `git diff --stat` on cases.json is 3 insertions, 1 deletion (the old last line gains a comma, two case lines appended). standards-2 addressed as ruled: no lock or age check in the code; the one-cycle rule is in SKILL.md `Don't` list (`:182`), Step 0 text, the script docstring and the usage page; a grep of `skills/wiki-cycle` for concurrent / second cycle / another cycle found nothing that permits overlap. standards-3 partly addressed (see the first finding). standards-5, -8, -9, -10, -11, -12, -13 addressed (no `RUN_ID` left in the repo outside `.do-code-change/`; one `sorted`; no unused assignment; two new exit-2 tests; first line `#` asserted; the shell-variable alternative gone).
-- The two new case ids are in both baseline files, each as a whole entry with every check true; the renamed case's old id appears nowhere in the repo; the PENDING row carries "Baselines merged per case from `161525`".
+- standards-15 addressed: `wiki-cycle-scope.py:528` `if d != run_folder_of(nb, d.name):`; `run_folder_of` (`:543-545`) is the one builder of the id path, used at `:550`, `:569`, `:581`; the new test `unfinished_skips_a_folder_filed_under_another_date` (`test_cycle_scope.py:390-398`) lists the misfiled folder without the guard. (The Spec lens's first finding disputes the behaviour the guard chose, not that it is applied.)
+- standards-16 addressed: the script's own sentences `"not both and not neither"` (`:710`) and `"--mark-interrupted needs --reason"` (`:712`) are what the tests assert (`:510`, `:519`, `:530`); argparse's usage line prints neither, so they bite. The remaining stderr check at `:500` matches the bad id, not an option name.
+- Round-2 items left open (standards-17 to -20, round-1 standards-4, -6, -7, -14) not made worse by the fix.
 
 | Rule | Verdict | Search |
 |---|---|---|
-| S1, S3, S4, S6, S8-S12, G25, F3, R1, N7, C5 | clear | each added function and identifier read in the diff |
-| S2, S7 | found | glob at `:524` against `run_folder_of`; four prose restatements |
-| S5 | clear | `CYCLE_ID` defined once, used at `:525`, `:566` |
-| R26 | clear | callers: `main` dispatch, check.py dispatch |
-| Comments C1-C3, R2 | clear | docstrings read against the code |
-| Names N2, N3, N5, N6 | clear | added names read |
-| R3 | found | `earlier` value (nit) |
-| Functions S13, G34, S14, G19, G28, G29, R4, G31, Dead Code | clear | read; imports `shutil`, `timedelta` used |
-| G16 | found | nested parser (nit) |
-| Classes S16, G8, G7, G17, G18, G13, S17, S18, R5, R6, G35, G1 | clear | no class added; `CYCLE_ID` immutable |
-| Error handling R7-R11, G4 | clear | `unknown` status is shown, not a failure return; R10 see Unverified |
-| Boundary G3, G33, G26 | clear | empty, none and header-only cases tested |
-| G2 | found | `--reason` ignored with `--run-folder` (nit) |
-| Tests T1, T3, T4, T5, T6, R12, R13, R15 | clear | each new branch has a test |
-| R14 | clear | order dependence declined in round 1, not raised |
-| PY9 | found | argparse usage text satisfies the assertions |
-| PY1-PY3, PY7, PY8, PY10, PY11 | clear | added lines read |
-| PY4-PY6, Concurrency | n/a | no async or threads |
-| Refactoring R21-R25 | clear | diff adds only; R25 round-1 finding fixed |
+| S2 | found | `check.py:2309` vs `:2246`; script `:558/:560`; `final` expression across suites |
+| S1, S3-S11, S12, G25, F3, R1, N7, C5 | clear (S12 n/a, no subclass) | every added identifier and function read in context |
+| R26 | clear | callers of `way_out`, `run_folder_of`, the new test function: all used |
+| C1, C3, R2 | clear | added comments and docstrings read; no TODO/FIXME |
+| C2 | found | `:521-523`, `:86` |
+| N2, N3, N5, N6, R3 | clear | new names read; "close it" / "mark-interrupted" grep in the changed skill pages |
+| S13, G34, S14, G19, G28, G29, R4, G31, G16, Dead Code | clear | `cmd_unfinished`, `mark_interrupted`, `way_out`, `_check_unfinished` read |
+| G3, G33, G26, G2 | clear | EOF-heading and misfiled-folder tests cover the new boundaries; `now_stamp()` used |
+| T1, T3, T5, T6, R12, R13, R14, T4 | clear | each new branch has a test that fails without it; no skips; R14 order dependence ruled in round 1 |
+| R15 | found | `check.py:2292` |
+| PY1-PY3, PY7, PY8, PY10, PY11 | clear | changed `.py` lines read |
+| PY9 | clear | the EOF test fails on the old regex; the misfiled test fails without the guard; error assertions match script sentences |
+| PY4-PY6; Classes, Error handling, Concurrency, Refactoring sections | n/a | no async; sections not met by this diff |
 
-Read depth: all twelve files `in full` (every changed line, via the diff; baselines plus file ends).
-Well built: one flag or the other is enforced before any write; the listing and the close-out share `run_folder_of`; the lock-free ruling is stated where the listing relies on it and nothing contradicts it.
+Read depth: changed lines of the ten moved files read (see the file table); `wiki-cycle.md`, `wiki-report/SKILL.md` and `PENDING.md` read in the diff only.
+Well built: each new test fails without the fix it covers, the error assertions match the script's own sentences, and `run_folder_of` is the single builder of the run-folder path.
 
 ## Spec
 
-- [important] `scripts/wiki-cycle-scope.py:577-580` and `skills/wiki-cycle/SKILL.md:63` — the printed close-out (and the resume line) omits `--topic`, so the command is not complete for a cycle on a notebook other than the project's. Note: the clause predates the fix and the plan's own sample (`plan.md:16`) omits it too; it is in lines the fix reshaped (the resume conditional) and was not raised in round 1, so the caller may treat it as new rather than a regression.
-  - Intent: docstring `:15` gives `--topic N unfinished --mark-interrupted`; SKILL.md Step 0 takes a `<notebook>`; plan Invariants, the check changes an earlier folder "only through `--mark-interrupted` on the one named".
-  - Implemented: `f'wiki-cycle-scope.py unfinished --mark-interrupted {cid} --reason "<why>"'` (`:579-580`); SKILL.md `:63` the same. The topic falls back to the project's notebook (`:710`).
-  - Affected: a user pasting the line for another notebook closes the wrong run when the same `<date>-01` exists there, otherwise gets exit 2.
-  - Fix: print `--topic <notebook>` in both lines (the script has the topic before dispatch) and in SKILL.md `:63`; amend the plan's sample.
-- [suggestion] `scripts/wiki-cycle-scope.py:115` (print branch, `:577` in the file as numbered by the retry lens) — a scratchpad whose Status is `completed` (or has no Status line) and no report is still offered `--resume`; no spec text says whether that is right. This is the remaining part of round-1 spec-1; the ruling covered only the no-scratchpad case.
-  - Intent: plan Step 1, "`resume: /wiki-cycle --resume <cycle_id>` only when the folder has a scratchpad"; SKILL.md "`--resume <cycle_id>`: ... continue from the phase after the last `done`"; `completed` is set only after the Step 8 report.
-  - Implemented: `if (run_folder_of(nb, cid) / "scratchpad.md").is_file()`, true for `completed`.
-  - Affected: a user offered resume on a run with no phase left and no report.
-  - Fix: state in requirements Decision 2 whether `completed` with no report is resumed or only closed, and make the line match.
-- [suggestion] `tests/skills/wiki-cycle/check.py:2237` [eval-case-writer] — the "Step 0 told the user" check reads every assistant message (`reply = run["text"]`), so a later mention of the id passes even when Step 0 never told the user.
-  - Intent: SKILL.md `:63`, "tell the user each line now".
-  - Fix: check the assistant text after the Step 0 `unfinished` call, or the final reply.
-- [suggestion] `tests/skills/wiki-cycle/check.py:2283` [eval-case-writer] — `r"--resume\s+`?(?:" + re.escape(oid) + r"|<)"`: the `|<` alternative fails "no resume is offered" on any generic `--resume <cycle_id>` text in a reply, which SKILL.md `:63` itself contains.
-  - Intent: Decision 2 ruling, resume only for a folder with a scratchpad.
-  - Fix: drop the `|<` alternative and match only the earlier id.
-- [nit] `scripts/wiki-cycle-scope.py:113` — the plan invariant "never deletes or edits an earlier run folder except through `--mark-interrupted`" is not enforced for an earlier folder passed as `--run-folder` (`write_scope` writes into any folder named). SKILL.md always passes the current one, so this is misuse only. Round-1 spec-9 asked "correct the pin text; guard or document": only the pin text was done.
-  - Fix: reject a `--run-folder` under `_inbox/reports/` whose id is not the current one, or document it in the docstring.
-- [nit] `scripts/wiki-cycle-scope.py:555-556` — a scratchpad ending in `## Decisions log` with no trailing newline gets a second heading (`re.search(r"^## Decisions log\n", ...)`). Intent: plan `:17`, "adding the heading if missing". Round-1 unverified item, now confirmed by reading the regex; not run.
-  - Fix: accept end-of-string as the heading match.
-- [nit] `tests/skills/wiki-cycle/check.py:2263-2265` [eval-case-writer] — a quoted flag such as `'--mark-interrupted'` is stripped as text, so a real close can pass "no command closes an earlier run"; the folder-untouched check still catches a changed or added scratchpad.
-  - Fix: strip only the quoted `--reason` value.
+- [important] `scripts/wiki-cycle-scope.py:528-529` — a run folder filed under the wrong date is dropped without a line in the listing, the report or the close-out.
+  - Intent: plan.md:16 "run folders are directories two levels under `_inbox/reports/` whose name matches `^\d{4}-\d{2}-\d{2}-\d{2}$`, the current one (`rf`) left out"; plan Step 1 "a run folder with no report and no scratchpad is printed".
+  - Implemented: `if d != run_folder_of(nb, d.name):    # filed under another date: the close-out would refuse it` then `continue`; the test `test_cycle_scope.py:390-398` pins the exclusion; the close-out refuses such a folder at `:569`.
+  - Affected: a dead run filed under a wrong date is never named, never reaches Needs you and cannot be closed, which is the failure lesson #10 exists to catch. The fix narrows the plan's definition without a recorded ruling. (Round-2 standards-15 itself suggested the skip; the axes pull in different directions and both are reported.)
+  - Fix: list the folder and let the close-out find it by searching `_inbox/reports/*/<cycle_id>`; or, if the narrowing is wanted, record it as a Decision in requirements.md and tell the user such folders are invisible.
+- [suggestion] `tests/skills/wiki-cycle/check.py:2239` and `:2286-2287` [eval-case-writer] — the Step 0 "tell the user" check tests only the final reply, not the timing SKILL.md `:63` asks for ("tell the user each line now"); the harness keeps text and tool calls in separate lists (`run_skill_test.py:285`, `:288`), so no check can order a text before the Step 0 call.
+  - Intent: SKILL.md `:63`. Affected: the eval signal for "now"; a final reply naming the id from Needs you passes even if Step 0 never told the user.
+  - Fix: keep the final-reply check and say in PENDING.md or the check's docstring that the timing is untested; testing it needs a text-order record in `parse_events`.
+- [suggestion] `CHANGELOG.md:16` — the corrected "What" entry still carries bare forms beside the fixed ones: `unfinished --run-folder <rf>`, "(`/wiki-cycle --resume` only for a folder with a scratchpad ...)" and "`unfinished --mark-interrupted <cycle_id> --reason \"<why>\"` closes one" sit in the same sentence as the added "(the printed lines carry `--topic <notebook>` ...)".
+  - Intent: spec-11's fix says the notebook-carrying forms are in the CHANGELOG. Affected: a reader copying the entry's commands gets a form that acts on the default notebook; spec-11 is only partly addressed there.
+  - Fix: write `/wiki-cycle <notebook> --resume` and `--topic <notebook> unfinished --mark-interrupted` in that sentence.
+- [nit] `scripts/wiki-cycle-scope.py:95` — the docstring prose "`--mark-interrupted <cycle_id> --reason \"<why>\"` closes one" has no `--topic`; it is not a printed line.
+  - Fix: `--topic <notebook> unfinished --mark-interrupted`, matching `:14-15` and `:89`.
 
 Unverified:
-- Red/green run `20261113-161525-red-green-1d6b03c` and the 84/84 suite result are producer claims (PENDING row, checkpoints); the run folder is outside the repo. The earlier checkpoint said case 2 passed on the old copy on Opus; round 3 says red then green on all four, so the check changes since then are what the claim rests on.
-- `--mark-interrupted` on a folder that already has its report: line `:566` checks only that the folder exists; the spec is silent.
-- Requirements' "5 of 37 run folders with no report" not re-checked.
-- Plan Step 4's refresh and `--mode status` are not in the diff, by design (moved to the finish).
+- `tests/skills/PENDING.md:28` cites run `20261113-164536-red-green-1d6b03c`, "red then green on both models"; the run folder is outside the repo and was not read (producer claim).
+- The `baseline-opus.json` key removal (see Standards Unverified).
+- Whether the existing `test_cycle_scope.py` checks stay green (plan Invariant 1) is a producer claim; a review runs no test.
 
 Checks made:
-- Round-1 Spec findings: spec-1 (no-scratchpad part) addressed: `cmd_unfinished` prints resume only when `scratchpad.md` exists; SKILL.md Step 0 and Step 8, wiki-report SKILL.md, the usage page, CHANGELOG, plan Step 1 and requirements Decision 2 all say the same; `test_cycle_scope.py` pins resume for the in_progress folder only; the eval case checks no resume for the no-scratchpad folder. spec-2 addressed (baselines, see Standards Checks made; run result unverified). spec-3 addressed in form (see the check.py suggestion). spec-5 addressed (wiki-report usage page names the item). spec-6 addressed (plan Testing Decisions says two cases). spec-10 addressed (`earlier` validated in `_unfinished_ids`).
-- spec-4, -7, -8, -9: the brief calls these declined, but checkpoints.md says they were taken in the artifacts. Checked in the artifacts: requirements Exclusions reads "beyond Decision 3's one scratchpad line and one Needs-you line"; plan's output-format line matches the printed form; the wiki-report template says "one line per run"; plan Invariants' pin text now names the folder-untouched check. The ledger still lists them `open` because the artifacts carry no fingerprint, so the ledger keeper may need to close them. The no-edit guard part of spec-9 is the nit above.
-- Rulings applied as recorded: Decision 2 and plan Step 1 rewritten for resume-only-with-scratchpad; the one-cycle-per-notebook rule has no lock or age check in code (grep of the script for lock/age found none) and is stated in the SKILL.md Don't list, the docstring, the usage page and requirements Exclusions.
+- plan.md line 16 read whole: it carries `/wiki-cycle <notebook> --resume` and `--topic <notebook> unfinished --mark-interrupted`; requirements.md `:27` carries the `--topic` form (grep of both).
+- spec-11 mostly addressed: script `:580-583` prints the notebook from `args.topic_name` (set at `:717` from the same `topic` the listing used); `/wiki-cycle <notebook>` is a form SKILL.md `:25` accepts; SKILL.md `:63`, wiki-report `:276`, the usage page and the tests carry it; SKILL.md `:175` says "the way out as Step 0 printed it" and `reference.md:23` names no command. Residue: the two findings above (CHANGELOG, docstring `:95`).
+- spec-16 addressed: `mark_interrupted` traced for a heading mid-file, last with newline, last without newline and missing: correct in each; the new test (`test_cycle_scope.py:476-488`) pins the no-newline case.
+- spec-13 addressed in form (harness has `run["result"]` and `run["texts"]`, `run_skill_test.py:269-300`); the timing caveat is the suggestion above.
+- spec-14 addressed: `way_out` matches the printed forms and not generic `--resume <cycle_id>` text.
+- Rulings not reversed: resume only with a scratchpad (`:580-581`, SKILL.md `:63`, wiki-report `:276`, usage page, test `:368`); one cycle per notebook with no lock or age check (none in `:520-586`, `:548-563`; stated at SKILL.md `:182`).
 
 | Spec item | Verdict | Evidence |
 |---|---|---|
-| Plan Step 1: listing, ways out, none, missing reports folder | found | `--topic` omission; completed-scratchpad resume |
-| Plan Step 2: `--mark-interrupted`, refusals | clear (nit) | `:83-109`, `:139-142`; tests; heading nit |
-| Plan Step 3: cases, baselines, template | clear (run unverified) | both ids in both baselines; template line |
-| Plan Step 4: usage page, CHANGELOG | clear | wiki-cycle.md `:204`; CHANGELOG `:13` |
-| Plan Invariants | found (nit) | `write_scope` into an earlier `--run-folder` |
-| Out of Scope / Exclusions | clear | no resume, delete or repair path added |
-| Requirements Decisions 1, 2, 3 | clear except Decision 2's completed case | see findings |
-| Ruling on spec-1 | clear for no scratchpad; remainder found | see above |
-| Ruling on standards-2 | clear | grep of script and skills |
-| Fix code: one-of-two flags, `run_folder_of`, `CYCLE_ID` | clear | `main`, tests, grep for `RUN_ID` |
+| spec-11 notebook in printed lines | found (residue) | grep of `--resume` / `--mark-interrupted` outside `.do-code-change` and baselines; CHANGELOG and docstring `:95` |
+| spec-13 final reply | found (suggestion) | `check.py:2239`, `:2286` |
+| spec-14 `way_out` | clear | `check.py:2246` against `test_cycle_scope.py:364`, `:368` |
+| spec-16 heading | clear | `mark_interrupted` traced, four positions |
+| Ruling 1, ruling 2 | clear | cited above |
+| Plan Step 1 listing | found | misfiled folders (important) |
+| Plan Step 2 mark-interrupted | clear | `:566-574`, `:709-712` |
+| Plan Step 3 cases | clear (run unverified) | `cases.json:62-63`, `check.py:2224-2311` |
+| Invariants | clear (suite unverified) | listing writes only `rf` (`:575-578`); `mark_interrupted` writes one scratchpad |
+| Plan Step 4 | n/a | install deliberately at the finish |
 
-Read depth: nine files `in full` on the first pass; `scripts/wiki-cycle-scope.py`, `skills/wiki-cycle/SKILL.md`, `cases.json` and `check.py` `in part` on the first pass and `in full` on the retry.
-Well built: the listing and the close-out for a folder with no scratchpad follow the plan and both rulings line for line, and the mark path validates the id before any write.
+Read depth: `CHANGELOG.md` line 16 and `check.py` `:2224-2311` in full; the script, SKILL.md, the usage page, wiki-report SKILL.md, test_cycle_scope.py, PENDING.md and the baselines read at the changed functions and hunks (the lens's table marks them `in part`).
+Well built: the printed close-out and resume lines take the notebook from the same `args.topic_name` the listing used; the heading fix handles all four heading positions and the new test pins the no-newline case; `way_out` matches only this run's id.
 
 ## Change risk
 
 | File | Risk | Part | Standards | Spec | Change risk |
 |---|---|---|---|---|---|
-| `scripts/wiki-cycle-scope.py` | MEDIUM (new public CLI, rewrites a scratchpad) | 1 | in full | in full (retry) | — |
-| `skills/wiki-cycle/SKILL.md` | MEDIUM (procedure the cycle follows) | 1 | in full | in full (retry) | — |
-| `skills/wiki-report/SKILL.md` | LOW | 1 | in full | in full | — |
-| `skills/wiki-cycle/wiki-seed/wiki-cycle.md` | LOW | 1 | in full | in full | — |
-| `skills/wiki-report/wiki-seed/wiki-report.md` | LOW | 1 | in full | in full | — |
-| `CHANGELOG.md` | LOW | 1 | in full | in full | — |
-| `tests/scripts/test_cycle_scope.py` | LOW | 1 | in full | in full | — |
-| `tests/skills/wiki-cycle/check.py` | LOW | 1 | in full | in full (retry) | — |
-| `tests/skills/wiki-cycle/cases.json` | LOW | 1 | in full | in full (retry) | — |
-| `tests/skills/wiki-cycle/baseline-opus.json`, `baseline-sonnet.json` | LOW | 1 | in full | in full | — |
-| `tests/skills/PENDING.md` | LOW | 1 | in full | in full | — |
+| `scripts/wiki-cycle-scope.py` | MEDIUM (new public CLI, rewrites a scratchpad) | 1 | in full (changed lines) | in part (changed functions) | — |
+| `skills/wiki-cycle/SKILL.md` | MEDIUM (procedure the cycle follows) | 1 | in part (lines 60-76) | in part (63-69, 175) | — |
+| `skills/wiki-report/SKILL.md` | LOW | 1 | in part (diff only) | in part (276) | — |
+| `skills/wiki-cycle/wiki-seed/wiki-cycle.md` | LOW | 1 | in part (diff only) | in part (43) | — |
+| `CHANGELOG.md` | LOW | 1 | in full | in part (line 16) | — |
+| `tests/scripts/test_cycle_scope.py` | LOW | 1 | in full (changed lines) | in part | — |
+| `tests/skills/wiki-cycle/check.py` | LOW | 1 | in full (changed lines) | in full (2224-2311) | — |
+| `tests/skills/wiki-cycle/baseline-opus.json`, `baseline-sonnet.json` | LOW | 1 | in part | in part | — |
+| `tests/skills/PENDING.md` | LOW | 1 | in part (diff only) | in part (diff only) | — |
 
-`skills/wiki-cycle/reference.md` was reviewed in round 1 and not moved by the fix: out of this round, nothing raised there. No high-risk file (no auth, sessions, crypto, payments, external call, migration or removed validation); the change-risk lens was not run.
+Files the earlier rounds reviewed and the fix did not move (`skills/wiki-cycle/reference.md`, `skills/wiki-report/wiki-seed/wiki-report.md`, `tests/skills/wiki-cycle/cases.json`) are out of this round: nothing raised there. No high-risk file (no auth, sessions, crypto, payments, external call, migration or removed validation); the change-risk lens was not run.
 
 ## needs-a-human
 
@@ -127,6 +112,8 @@ None. No auth, authz, token or session handling, and no production-data migratio
 
 ## Summary
 
-Standards: 6 findings (3 suggestion, 3 nit; 2 nits for the eval-case-writer; worst: the listing's glob and the close-out's path rule can disagree, and the argparse-usage-text assertions pass for the wrong reason). Spec: 7 findings (1 important, 3 suggestion incl. 2 for the eval-case-writer, 3 nit incl. 1 for it; worst: the printed close-out command omits `--topic`). Change risk: not run. Of round 1's twelve findings marked addressed, all but standards-3 are addressed in full; standards-3 leaves one sibling site, and the completed-scratchpad part of spec-1 is not covered by the ruling. Both rulings were applied as recorded. The axes agree that the listing, the printed commands and the rule that `--mark-interrupted` and `--resume` act on a run folder should use one definition. Worth acting on the `--topic` finding and the two path-rule suggestions; findings tagged [eval-case-writer] go back to that agent.
+Standards: 5 findings (1 important, 2 suggestion, 2 nit; the first three are for the eval-case-writer; worst: the no-resume check lost its generic `--resume <...>` branch, which the Spec axis counts as the fix of spec-14, so the axes differ). Spec: 4 findings (1 important, 2 suggestion incl. 1 for the eval-case-writer, 1 nit; worst: the listing now silently drops a run folder filed under another date, narrowing the plan's definition, and the close-out refuses it, so such a run is never named). Change risk: not run. Of the round-2 findings marked addressed, standards-15, standards-16, spec-16, spec-13 and spec-14 are addressed in form; spec-11 is addressed in the script, SKILL.md, wiki-report, the usage page and the tests, with the CHANGELOG sentence and docstring `:95` still carrying bare forms. Both rulings hold. The axes agree the misfiled-folder rule (listing, close-out, docstring) should be one stated definition: the Standards docstring nit and the Spec important finding point at the same lines. Worth acting on the misfiled-folder finding and the CHANGELOG forms; findings tagged [eval-case-writer] go back to that agent. This is the third round, the retry ceiling.
+
+Risks or assumptions: several files are marked `in part` by the lenses because they read changed hunks and context, not whole current files; no read-depth retry was spawned, so a reader should treat those rows as read at the changed lines only. The lenses saw the fix-round-2 delta (from `efb6ab0`), not a fresh diff against the fixed point.
 
 VERDICT: Standards FINDINGS · Spec FINDINGS · Change risk NOT RUN · needs-a-human 0

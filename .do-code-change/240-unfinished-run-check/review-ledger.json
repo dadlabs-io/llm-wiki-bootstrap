@@ -130,6 +130,53 @@
         "tests/skills/wiki-cycle/cases.json": "1ee503bacbcbacb2b69fb36c027f9afef6cb945f42a6818c849c14f33a5306b4",
         "tests/skills/wiki-cycle/check.py": "7529e1ba92773dfae85d29806986d6aaa065cd425e0d0f83fe0fdcc92ac13c72"
       }
+    },
+    {
+      "round": 3,
+      "at": "2026-11-13T22:08:14Z",
+      "diff_sha256": "db38f51db951fcf8faaa397dd15d587ced077c0b5438043213356068ec1eb1d1",
+      "findings_sha256": "9a086be21b8860f716bd39d661453074c8e16535cfd86c67f82045504b1878a6",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-21",
+        "standards-22",
+        "standards-23",
+        "standards-24",
+        "standards-25",
+        "spec-18",
+        "spec-19",
+        "spec-20",
+        "spec-21"
+      ],
+      "new": [
+        "standards-21",
+        "standards-22",
+        "standards-23",
+        "standards-24",
+        "standards-25",
+        "spec-18",
+        "spec-19",
+        "spec-20",
+        "spec-21"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "f251c23c658287c036829bdf171ef8f54a525f2c11dc4437e570e9f710ea092e",
+        "scripts/wiki-cycle-scope.py": "3aa2273d2f150fa33aec2650cec0474ec0506bbef6d507111cf6df3315dd0f64",
+        "skills/wiki-cycle/SKILL.md": "17fe4c08148bf9c55f9e6914cb3ffc9f13b95da94fb79f99951c90aca20f4d7d",
+        "skills/wiki-cycle/reference.md": "697a090548354a832b8d8d4077253fe09932062c280bec59005df51d9a742c40",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "94ef76f2ff00414e850728a251e3c763d11571f7b61c005fe4f9cdbbbdab227c",
+        "skills/wiki-report/SKILL.md": "656b4c6d4f6a16ebc343264d1e3ba9e4f3fbe20cad9cefab82e0d3ee08f78ffe",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "2fa3552b1609c12689c8e828c3d5714139c52b5e84f8904516ba797ddca945c4",
+        "tests/scripts/test_cycle_scope.py": "19b7122b0d78ea6f907a59e25f93a2f8b3dc1f8abe3fd2ce7f8edac7b3748f53",
+        "tests/skills/PENDING.md": "638d1068ca8bcb9c7bc638e533a23689aa4886a3e5d13d2d4ee489736095925f",
+        "tests/skills/wiki-cycle/baseline-opus.json": "6fb8f57eb265c3efec5514c48f3b576e1160358017dda18afa53d61738df32ce",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "d37065a9209a01263669bf3a20b6c4930d24e88ba887a7b3ca1b1f8b746991ad",
+        "tests/skills/wiki-cycle/cases.json": "1ee503bacbcbacb2b69fb36c027f9afef6cb945f42a6818c849c14f33a5306b4",
+        "tests/skills/wiki-cycle/check.py": "55c34b6d5720e1b8fe3468a7ef89a18fcdcc0c3585b64f4b7b756f7c0744ebe6"
+      }
     }
   ],
   "items": {
@@ -1112,6 +1159,195 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba"
+        }
+      ]
+    },
+    "standards-21": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/skills/wiki-cycle/check.py:2292` [eval-case-writer] \u2014 R15 softened assertion: `not re.search(way_out(\"resume\", oid), corpus),` replaced the old `r\"--resume\\s+`?(?:\" + re.escape(oid) + r\"|<)\"`, whose `|<` branch failed a generic `--resume <cycle_id>` offered for a run with no scratchpad; that generic offer now passes. Note for the reader: round-2 spec-14 asked for exactly this `|<` drop, and the Spec lens finds it clear. The axes differ here; both are reported as given. The Standards point is that adding `<notebook>` to the printed line did not require the loosening. Fix: `not re.search(way_out(\"resume\", oid) + r\"|--resume\\s+`?<\", corpus),`, or record in the check's docstring that a generic `--resume <cycle_id>` is allowed.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2292,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba"
+        }
+      ]
+    },
+    "standards-22": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/check.py:2309` [eval-case-writer] \u2014 S2 `not re.search(r\"--(?:resume|mark-interrupted)[\\s=]+[`\\\"']?\" + re.escape(i), corpus)` re-spells the pattern `way_out` builds at `:2246`, in the same function. Fix: `not re.search(way_out(\"resume\", i) + \"|\" + way_out(\"mark-interrupted\", i), corpus)`.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2309,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba"
+        }
+      ]
+    },
+    "standards-23": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/check.py:2239` and `:2286` [eval-case-writer] \u2014 the check is stricter than the rule it tests: `oid in final` (\"named in the final reply\") against SKILL.md `:63` \"tell the user each line now\", which an interim text satisfies; a run that told the user at Step 0 and left the id out of its final reply now fails. The old check read `reply` (all assistant text). Fix: keep `reply` for \"told the user\" and add a separate final-reply check if wanted. (Same-expression note, S2: the `final` expression is written in five other suites; each is self-contained, so a note only.)",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2239,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba"
+        }
+      ]
+    },
+    "standards-24": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-cycle-scope.py:558` and `:560` \u2014 S2 the literal `r\"^## Decisions log$\"` appears twice in `mark_interrupted`. Fix: one module constant.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 558,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e"
+        }
+      ]
+    },
+    "standards-25": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-cycle-scope.py:521-523` (and the module docstring at `:86`) \u2014 C2 the docstring says a run folder is `_inbox/reports/<date>/<YYYY-MM-DD>-<NN>/`, but the guard at `:528` now also requires the id's own date. Fix: add \"under the id's own date\" to both.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 521,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e"
+        }
+      ]
+    },
+    "spec-18": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `scripts/wiki-cycle-scope.py:528-529` \u2014 a run folder filed under the wrong date is dropped without a line in the listing, the report or the close-out. Intent: plan.md:16 \"run folders are directories two levels under `_inbox/reports/` whose name matches `^\\d{4}-\\d{2}-\\d{2}-\\d{2}$`, the current one (`rf`) left out\"; plan Step 1 \"a run folder with no report and no scratchpad is printed\". Implemented: `if d != run_folder_of(nb, d.name):    # filed under another date: the close-out would refuse it` then `continue`; the test `test_cycle_scope.py:390-398` pins the exclusion; the close-out refuses such a folder at `:569`. Affected: a dead run filed under a wrong date is never named, never reaches Needs you and cannot be closed, which is the failure lesson #10 exists to catch. The fix narrows the plan's definition without a recorded ruling. (Round-2 standards-15 itself suggested the skip; the axes pull in different directions and both are reported.) Fix: list the folder and let the close-out find it by searching `_inbox/reports/*/<cycle_id>`; or, if the narrowing is wanted, record it as a Decision in requirements.md and tell the user such folders are invisible.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 528,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e"
+        }
+      ]
+    },
+    "spec-19": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/check.py:2239` and `:2286-2287` [eval-case-writer] \u2014 the Step 0 \"tell the user\" check tests only the final reply, not the timing SKILL.md `:63` asks for (\"tell the user each line now\"); the harness keeps text and tool calls in separate lists (`run_skill_test.py:285`, `:288`), so no check can order a text before the Step 0 call. Intent: SKILL.md `:63`. Affected: the eval signal for \"now\"; a final reply naming the id from Needs you passes even if Step 0 never told the user. Fix: keep the final-reply check and say in PENDING.md or the check's docstring that the timing is untested; testing it needs a text-order record in `parse_events`.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2239,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba"
+        }
+      ]
+    },
+    "spec-20": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `CHANGELOG.md:16` \u2014 the corrected \"What\" entry still carries bare forms beside the fixed ones: `unfinished --run-folder <rf>`, \"(`/wiki-cycle --resume` only for a folder with a scratchpad ...)\" and \"`unfinished --mark-interrupted <cycle_id> --reason \\\"<why>\\\"` closes one\" sit in the same sentence as the added \"(the printed lines carry `--topic <notebook>` ...)\". Intent: spec-11's fix says the notebook-carrying forms are in the CHANGELOG. Affected: a reader copying the entry's commands gets a form that acts on the default notebook; spec-11 is only partly addressed there. Fix: write `/wiki-cycle <notebook> --resume` and `--topic <notebook> unfinished --mark-interrupted` in that sentence.",
+      "file": "CHANGELOG.md",
+      "line": 16,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "9086ddd66579012364c0f1ab576a7e457aaf383cc276caccc4f62437c2e7c2e9",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "9086ddd66579012364c0f1ab576a7e457aaf383cc276caccc4f62437c2e7c2e9"
+        }
+      ]
+    },
+    "spec-21": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-cycle-scope.py:95` \u2014 the docstring prose \"`--mark-interrupted <cycle_id> --reason \\\"<why>\\\"` closes one\" has no `--topic`; it is not a printed line. Fix: `--topic <notebook> unfinished --mark-interrupted`, matching `:14-15` and `:89`.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 95,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "816e6a0100ca5b15900e22969a6b38d5bbb21572077471e9d2197095cb884251",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "816e6a0100ca5b15900e22969a6b38d5bbb21572077471e9d2197095cb884251"
         }
       ]
     }

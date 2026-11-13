@@ -48,3 +48,7 @@ Developer: spec-11 (both printed ways out carry the notebook: `wiki-cycle-scope.
 ## Suite red then green, round 4 — 2026-11-13
 
 Run 20261113-164536-red-green-1d6b03c (~$6.9): RED THEN GREEN on all four. Baselines re-merged per case; PENDING row updated in place.
+
+## Review round 3 (the cap) — 2026-11-13
+
+9 findings, 2 blocking, each reversing an earlier round's own ask: spec-18 (a folder filed under another date is now skipped: round 2's standards-15 asked for that skip) and standards-21 (the no-resume check no longer fails on generic `--resume <cycle_id>` text: round 2's spec-14 asked for that). Ledger query: not yet met, 2 open. Round 3 is the retry ceiling: Retry-ceiling exhaustion, to Mark.
