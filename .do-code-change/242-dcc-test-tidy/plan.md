@@ -36,6 +36,7 @@ setup and cleanup, a safer runner, and one new check that a gitleaks block also 
 - tests/scripts/test_git_hooks_dcc.py
 - tests/scripts/test_git_hooks.py
 - tests/scripts/_git_hooks_harness.py
+- tests/scripts/test_git_hooks_harness.py
 - tools/git-hooks/README.md
 
 ## Invariants

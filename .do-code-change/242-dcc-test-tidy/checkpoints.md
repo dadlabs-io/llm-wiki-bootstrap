@@ -20,3 +20,7 @@ Evidence for spec-1: the five dcc checks run against the fixed point bc898ad's h
 Evidence for spec-2 and standards-7: a throwaway run of `run_tests` with a raising check printed "ERROR test_raises  [RuntimeError: deliberate]", "1/2 passed", exit 1; the unknown-name run (Implement) exit 2.
 Left open, with reasons: standards-3 (three token checks each own one concept, R12), -6 (moves and new checks already committed; history is not rewritten), -10 (the constructor guard is the fixture's; `test_install_exits_zero` keeps #135's check).
 Suites: test_git_hooks.py 18/18, test_git_hooks_dcc.py 5/5; all 23 re-frozen with reason "fix round 1".
+
+## Fix round 1, continued — 2026-11-13
+
+Mark (terminal, 2026-11-13) on spec-1 and spec-2: "Make them real tests" (not accepted on recorded evidence). Scope widened: `tests/scripts/test_git_hooks_harness.py`, the runner's own checks (spec-2: a crashing check reported as ERROR; an unknown name refused). spec-1 becomes `test_refusal_needs_the_hook_dcc_lines` in the dcc file: with the dcc lines stripped from the installed hook, a refusing fake no longer blocks.

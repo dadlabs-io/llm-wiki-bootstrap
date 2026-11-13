@@ -576,5 +576,44 @@
       }
     ],
     "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_harness.py",
+    "test_name": "test_runner_reports_a_crashing_check_as_error",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "7dfb7ed7c828056dc658904cfd8240d1baa10b41d3f9cc9ec1cec894db9d23e7",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "spec-2 as a real test (Mark: make them real tests); the runner predates it. Bite shown by hand: with run_tests' ERROR branch replaced by a re-raise, the check crashed the run; restored, 2/2",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_harness.py",
+    "test_name": "test_runner_refuses_an_unknown_check_name",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e58089a34d03f16542764f9e9977252a695505d0c4fdcd60d6b29ba7f93ef3c3",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "spec-2 as a real test; bite shown by hand: with run_tests returning 1 for an unknown name the check failed (0/1); restored, 2/2",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_refusal_needs_the_hook_dcc_lines",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f6bca5934bcc42387cad764944da5ede7aa6ce5a1dd026c97dcf6ecf39cc5db1",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "spec-1 as a real test (Mark: make them real tests): strips the dcc lines from the installed hook and shows a refusing fake no longer blocks, so the refusal checks depend on those lines; also recorded: the five dcc checks fail 0/5 against bc898ad's hook",
+      "date": "2026-11-13"
+    }
   }
 ]

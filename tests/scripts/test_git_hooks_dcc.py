@@ -73,6 +73,19 @@ def test_gitleaks_block_ends_on_the_owner_line():
         assert last == OWNER_LINE, last
 
 
+def test_refusal_needs_the_hook_dcc_lines():
+    with machine() as m:
+        hook = m.hooks / "pre-commit"
+        kept = [line for line in hook.read_text(encoding="utf-8").splitlines(keepends=True) if "dcc" not in line]
+        assert len(kept) < len(hook.read_text(encoding="utf-8").splitlines()), "the hook has no dcc lines to remove"
+        hook.write_text("".join(kept), encoding="utf-8")
+        r = m.new_repo("a")
+        m.fake_dcc(1, REFUSAL)
+        p = m.commit(r, {"tool.py": "print('hi')\n"})
+        assert p.returncode == 0, f"a commit was refused with the dcc lines removed: {p.stderr[-300:]}"
+        assert REFUSAL not in p.stderr, p.stderr[-400:]
+
+
 TESTS = collect_tests(dict(globals()))
 
 if __name__ == "__main__":
