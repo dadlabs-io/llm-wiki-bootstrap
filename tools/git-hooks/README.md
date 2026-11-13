@@ -48,4 +48,6 @@ since a raw is a source's own words (one security paper quoted example keys). Af
 `tests/scripts/test_git_hooks.py` (run under a temporary HOME, so the real machine is never touched): a clean
 commit, a planted token, a private word with its file and line, the allow file, `--no-verify`, the repo's own
 pre-commit and commit-msg hooks, a missing gitleaks, and the remove. `tests/scripts/test_git_hooks_dcc.py` (the
-same way, with a fake commit check): a passing check, a refusing check, the pack absent, and the closing line.
+same way, with a fake commit check): a passing check, a refusing check, the pack absent, and the closing line after a
+dcc block and after a gitleaks block. Both files run one function per check on the shared
+`tests/scripts/_git_hooks_harness.py`, each check under its own temporary HOME; name a check to run it alone.

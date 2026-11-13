@@ -1,0 +1,351 @@
+[
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_dcc_pass_lets_the_commit_through",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ad5795ced783e945b40d3b82a300ed81c922a333298b1a5114199f36dc2e4e9b",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "Frozen by #241 with its bite shown; this step only restructures, all four checks green before and after",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "The test's fake printed FAKE-DCC-PASSED on a pass, which the real check never does (its pass is silent), so the test failed on its own fake. The fake now prints nothing on a pass; the assertions are unchanged. Mark's OK, Discord 2026-11-12 22:40: 'Yes please'.",
+        "date": "2026-11-12",
+        "step": 1,
+        "hash": "4ce20b82c7ca80f12bcecd516d5c8e73fb9c1aeeb60832edf6a4b55f99285aa7"
+      },
+      {
+        "reason": "name review round 1: 'dcc pass' was not checked, since nothing showed the check ran; the fake now writes a marker file and the test asserts it exists. Assertions only added.",
+        "date": "2026-11-12",
+        "step": 1,
+        "hash": "7132e358c1633fa0d662097d55e0eab48994bed6b5b2065fc730ae24e89ff9df"
+      },
+      {
+        "reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened",
+        "date": "2026-11-13",
+        "step": 1,
+        "hash": "ad5795ced783e945b40d3b82a300ed81c922a333298b1a5114199f36dc2e4e9b"
+      }
+    ],
+    "unfrozen_reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_dcc_refusal_blocks_the_commit",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d7463726b8daffc817faca6176959f947cf88399aa37eb162477e6fb694b20c9",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "Frozen by #241 with its bite shown; this step only restructures, all four checks green before and after",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened",
+        "date": "2026-11-13",
+        "step": 1,
+        "hash": "d7463726b8daffc817faca6176959f947cf88399aa37eb162477e6fb694b20c9"
+      }
+    ],
+    "unfrozen_reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_absent_pack_commits_with_a_not_checked_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "beaf5a7dc05fc3eff416b42d6d6a78678986f8d24f9a72be5aabe0f8e0d53738",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "Frozen by #241 with its bite shown; this step only restructures, all four checks green before and after",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened",
+        "date": "2026-11-13",
+        "step": 1,
+        "hash": "beaf5a7dc05fc3eff416b42d6d6a78678986f8d24f9a72be5aabe0f8e0d53738"
+      }
+    ],
+    "unfrozen_reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_blocked_commit_says_no_verify_needs_the_owner",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "7a2660c8dd1e7b949cebc1418867c04192d5ade87459068ee264d1466e7adf9e",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "Frozen by #241 with its bite shown; this step only restructures, all four checks green before and after",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened",
+        "date": "2026-11-13",
+        "step": 1,
+        "hash": "7a2660c8dd1e7b949cebc1418867c04192d5ade87459068ee264d1466e7adf9e"
+      }
+    ],
+    "unfrozen_reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_install_exits_zero",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "cb97048174c8b22f9d8b03b9e6e6ebb0c9e031f8c94ca0bccc41cfc476891c27",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_install_sets_the_global_hooks_path",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e4d1cd4e14d2bde53dda14e7112ccf15ec8cc7f19c6a07bf892ac8fa3fdcad9d",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_install_writes_the_hand_over_hooks",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "8fe9e719f98e4bbe14ad66b30ceff52f6aa074fb22625e2e2900456a6a19f580",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_install_records_gitleaks",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "eb410e5dfa44c5622e4913119ce421b18fd23d46a54af3e00c6f6754803aafc3",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_clean_commit_goes_through",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "7b7ead64a232322def49961c74941285b1fcdc60c9d9f808cdc34d9ba03fdf66",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_staged_github_token_is_blocked",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "fcbbd0645e0f2bcae6cc2bf6a9caaf47e9908b84ca5a0816758d675e107f51bd",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_gitleaks_names_the_file",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d83bede4ad002de1db2a541851cd1d2107165a0b4baf1f0f9640060c7902f8f1",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_private_word_blocked_in_any_case",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d59ac3e8da31eabae71e27ba674de3b9e8d5ed7231a5fa56c1db47ee981c853c",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_private_word_block_names_file_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "22475ea9045a5d2db498b7f5942daefa431aac1029853084097a9de58bcddd89",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_no_verify_commits_anyway",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "2ef56100234838da6ba0eb15b0ccedac188922b33ec2b7415b8771d33d1af89c",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_committed_word_is_not_rechecked",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "bb31b292c48c25dfa60cdb3f009cae79fcbf747b08bf5e95626ea683c897075b",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_allow_file_lets_its_word_through",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "65664dd7f791f99b97ee25b597ab9586824103876b7751e9b64d3e2a126660b8",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_allow_file_keeps_other_words_blocked",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "6159505de9d2e0f353d01354b9f95db8d5c56d953381cdf6ee9df1ff9b41f7f5",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_repo_pre_commit_hook_still_runs",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "0023e10e728d654bc01325d74c06ee9d4560bf5e84cef09ac623aecd4d56c596",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_repo_commit_msg_hook_can_refuse",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d74559e72c50731e35413c31ce3cc82f8124c59410c1c492e9755b08d4233f80",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_failing_repo_pre_commit_still_blocks",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ba4fb69c931558bf791a09eb19b1cf9fe47884fda1f656c73b39302156e3e849",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_missing_gitleaks_blocks_as_not_checked",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "19035f7a011941c58ff83ad6f808848073c3a6a8cd9f86b6910a9181c390c9ad",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_remove_unsets_the_hooks_path",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "0171b1bc1035f96ef869918655ab03f9c1ca982c3f29032a8328a375586cc98b",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_gitleaks_block_ends_on_the_owner_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "a00eaf1e3a8fcf9539b2a903f06c748eff6f8de479c8307dd20f9096868113fb",
+    "frozen_at_step": 4,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_git_hooks_dcc.py test_gitleaks_block_ends_on_the_owner_line",
+      "exit": 1,
+      "tail": "FAIL test_gitleaks_block_ends_on_the_owner_line  [pre-commit: fix the lines above, or commit anyway on purpose with: git commit --no-verify]\n0/1 passed",
+      "date": "2026-11-13"
+    }
+  }
+]
