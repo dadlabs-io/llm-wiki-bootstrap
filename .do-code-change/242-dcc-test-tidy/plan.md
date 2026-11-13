@@ -9,8 +9,8 @@ non-assertion errors; one closing-line path is unasserted.
 
 ## Solution
 
-Small edits inside the test file only: helper arguments and one constant, checked git setup and cleanup, a safer
-runner, and one new check that a gitleaks block also ends on the owner line.
+One shared harness module for both hook test files, the older file converted to one function per check, checked git
+setup and cleanup, a safer runner, and one new check that a gitleaks block also ends on the owner line.
 
 ## Implementation Decisions
 
@@ -23,13 +23,13 @@ runner, and one new check that a gitleaks block also ends on the owner line.
 
 - Seam: the file's own checks run by name (`uv run python tests/scripts/test_git_hooks_dcc.py <test>`), as in #241.
 - The refactor steps change no assertion; their evidence is all checks green before and after, and the re-freeze
-  reasons recorded (manual: steps 1-2 — the full file run, 4/4 before and after, in checkpoints.md).
+  reasons recorded (manual: steps 1-2 — both files run in full before and after, in checkpoints.md).
 - manual: step 3 — `main()`'s new paths shown by running an unknown name (exit 2) and by a deliberately raising
   test name never added to the file; evidence in checkpoints.md.
 
 ## Out of Scope
 
-- The hook, the sibling test, a python-absent test (Exclusions).
+- The hook and a python-absent test (Exclusions).
 
 ## Scope
 
