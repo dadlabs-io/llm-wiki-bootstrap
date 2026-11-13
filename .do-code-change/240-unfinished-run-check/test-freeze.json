@@ -144,11 +144,11 @@
     "test_name": "unfinished_names_runs_without_report",
     "hash_of": "test",
     "hash_scope": "test+module",
-    "hash": "bace8510f85d5b6c5de5fd28cd72981ddf5007717a3a46714ee0f4ae9da66fbe",
-    "frozen_at_step": "prescan",
+    "hash": "01ba86020f6aa9b5ea34e7a610ce970f7a3880dfd3c2d38f74b98ae6339f7f55",
+    "frozen_at_step": "fix-1",
     "frozen_at": "2026-11-13",
     "green_reason": {
-      "reason": "comment-only edit; behaviour unchanged since step 1",
+      "reason": "red observed before the code change (81/84 passed, the resume check failing); green after: 84/84",
       "date": "2026-11-13"
     },
     "unfreezes": [
@@ -157,8 +157,40 @@
         "date": "2026-11-13",
         "step": "prescan",
         "hash": "bace8510f85d5b6c5de5fd28cd72981ddf5007717a3a46714ee0f4ae9da66fbe"
+      },
+      {
+        "reason": "fix round 1, spec-1 ruled by Mark 2026-11-13: resume is offered only for a folder with a scratchpad; the check that pinned 'both ways out' for the no-scratchpad folder is split into the close-out for every line and resume for the in_progress folder only",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "01ba86020f6aa9b5ea34e7a610ce970f7a3880dfd3c2d38f74b98ae6339f7f55"
       }
     ],
-    "unfrozen_reason": "review prescan: a comment's two run ids (dates) reworded; no code or assertion changed"
+    "unfrozen_reason": "fix round 1, spec-1 ruled by Mark 2026-11-13: resume is offered only for a folder with a scratchpad; the check that pinned 'both ways out' for the no-scratchpad folder is split into the close-out for every line and resume for the in_progress folder only"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_refuses_a_run_folder_beside_it",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "3298ddc4f222667276e9397ef54640bac6eea4f95564a7e6969806b239cbddab",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "red observed before the code change (both flags exited 0 and rewrote the scratchpad; 81/84 passed); green after: 84/84",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_needs_a_flag",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "2bdb4cdd97413092783fbe6e4a318b6ddcb32dff83cae9c2fabd97ec3fede7a9",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "the neither-flag refusal already existed (argparse error), so it cannot fail first; bite proven by a one-off mutant (guard changed to refuse only both flags) that made the check FAIL (83/84), run from a scratch copy",
+      "date": "2026-11-13"
+    }
   }
 ]

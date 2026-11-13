@@ -360,9 +360,11 @@ with tempfile.TemporaryDirectory() as td:
               "no scratchpad" in by.get("2026-10-01-01", ""), by)
         check("unfinished_names_runs_without_report: an in_progress scratchpad says so",
               "scratchpad says in_progress" in by.get("2026-10-02-01", ""), by)
-        check("unfinished_names_runs_without_report: each line gives both ways out",
-              bool(ids) and all(f"/wiki-cycle --resume {i}" in by[i] and f'unfinished --mark-interrupted {i} --reason "'
-                                in by[i] for i in ids), by)
+        check("unfinished_names_runs_without_report: each line gives the close-out",
+              bool(ids) and all(f'unfinished --mark-interrupted {i} --reason "' in by[i] for i in ids), by)
+        # Mark, 2026-11-13: resume only for a folder with a scratchpad; nothing in one without can be resumed
+        check("unfinished_names_runs_without_report: resume is offered for the in_progress folder only",
+              bool(ids) and all((f"/wiki-cycle --resume {i}" in by[i]) == (i == "2026-10-02-01") for i in ids), by)
         f = cur / "unfinished-runs.txt"
         rows = ([l.split("\t") for l in f.read_text(encoding="utf-8").splitlines() if l and not l.startswith("#")]
                 if f.is_file() else None)
@@ -485,6 +487,27 @@ with tempfile.TemporaryDirectory() as td:
         check("mark_interrupted_needs_a_reason: nothing in the notebook was written", tree(nb) == before,
               sorted(set(tree(nb).items()) ^ set(before.items()), key=str)[:5])
     mark_interrupted_needs_a_reason()
+
+    def unfinished_needs_a_flag():
+        before = tree(nb)
+        p = run("unfinished")
+        check("unfinished_needs_a_flag: neither flag exits 2 and the error names both",
+              p.returncode == 2 and "--run-folder" in p.stderr and "--mark-interrupted" in p.stderr,
+              (p.returncode, p.stdout, p.stderr[-300:]))
+        check("unfinished_needs_a_flag: nothing in the notebook was written", tree(nb) == before,
+              sorted(set(tree(nb).items()) ^ set(before.items()), key=str)[:5])
+    unfinished_needs_a_flag()
+
+    def mark_interrupted_refuses_a_run_folder_beside_it():
+        mkrun("2026-10-12-01", scratch="in_progress")
+        before = tree(nb)
+        p = run("unfinished", "--run-folder", str(cur), "--mark-interrupted", "2026-10-12-01", "--reason", "x")
+        check("mark_interrupted_refuses_a_run_folder_beside_it: both flags exit 2 and the error names both",
+              p.returncode == 2 and "--run-folder" in p.stderr and "--mark-interrupted" in p.stderr,
+              (p.returncode, p.stdout, p.stderr[-300:]))
+        check("mark_interrupted_refuses_a_run_folder_beside_it: nothing in the notebook was written",
+              tree(nb) == before, sorted(set(tree(nb).items()) ^ set(before.items()), key=str)[:5])
+    mark_interrupted_refuses_a_run_folder_beside_it()
 
     def mark_interrupted_closes_a_scratchpad_with_no_status_line():
         d = mkrun("2026-10-11-01")

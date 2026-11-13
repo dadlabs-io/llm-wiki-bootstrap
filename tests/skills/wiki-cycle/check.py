@@ -2165,6 +2165,9 @@ def _check_hub(case: dict, add, ctx: dict, run_dir: Path) -> None:
 def _unfinished_ids(ctx: dict, case: dict) -> dict:
     """The earlier run ids a case seeds: dated before today, so today's day folder holds only the new run."""
     from datetime import date, timedelta
+    if case["earlier"] not in ("open", "complete-and-interrupted"):
+        raise ValueError(f"unfinished case {case.get('id')}: earlier must be 'open' or 'complete-and-interrupted', "
+                         f"got {case['earlier']!r}")
     d = date.fromisoformat(ctx["cycle_id"][:10])
     if case["earlier"] == "open":
         return {"open": f"{(d - timedelta(days=3)).isoformat()}-01"}
@@ -2219,7 +2222,7 @@ def _needs_you(text: str) -> str:
 
 
 def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
-    cid, ids = ctx["cycle_id"], _unfinished_ids(ctx, case)
+    cid, ids = ctx["cycle_id"], _unfinished_ids(ctx, case)  # _unfinished_ids rejects an unknown `earlier`
     # an empty-queue run: the quick-step pair and the lint counts are not what this kind is about
     drop = {"quick steps all wrote their pair", "lint-mechanical.json counts broken links"}
     res[:] = [x for x in res if x["name"] not in drop]
@@ -2231,8 +2234,12 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
     utext = read(run_dir / "unfinished-runs.txt")
     stext = read(run_dir / "scratchpad.md")
     needs = _needs_you(rtext)
-    reply = run["text"]
+    reply = run["text"]  # every assistant text of the session, not only the last message
     corpus = "\n".join([reply, rtext, utext, stext])
+
+    # Step 0 ran: it writes the scratchpad first thing, so the new run's own scratchpad must exist and carry its id
+    add("Step 0 ran: the new run's scratchpad exists and carries the new run's id", cid in stext,
+        stext[:200] or "no scratchpad.md in the new run folder")
 
     # nothing resumed, deleted, edited, repaired or closed automatically
     fixture, now = ctx["fixture_files"], snapshot(ctx)
@@ -2255,7 +2262,7 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
                 continue  # prints or writes text; does not run the script
             bare = re.sub(r"\"[^\"]*\"|'[^']*'", " ", stmt)  # the option must sit outside quotes
             if re.search(r"(?:^|\s)--mark-interrupted\b", bare) and re.search(r"\bunfinished\b", bare) \
-                    and re.search(r"wiki-cycle-scope|\bpython\d?\b|\buv\s+run\b|\.py\b|\$\{?\w+\}?", bare):
+                    and re.search(r"wiki-cycle-scope|\bpython\d?\b|\buv\s+run\b|\.py\b", bare):
                 return True
         return False
 
@@ -2267,19 +2274,27 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
         add("unfinished-runs.txt is in the new run folder", bool(utext.strip()), "missing or empty")
         add("unfinished-runs.txt names the earlier run", oid in utext, utext[:200])
         add("the scratchpad carries the earlier run's id", oid in stext, stext[-200:])
+        add("Step 0 told the user the earlier run's id (named in the session's replies)", oid in reply,
+            reply[-300:] or "no reply text")
         add("the earlier run's line says why: no scratchpad",
             any(oid in l and re.search("scratchpad", l, re.I) for l in utext.splitlines()), utext[:200])
-        add("both ways out given: resume with --resume <id>",
-            bool(re.search(r"--resume\s+`?" + re.escape(oid), corpus)), "not found")
-        add("both ways out given: close with --mark-interrupted <id>",
+        # a folder with no scratchpad has nothing to resume: only the close-out is offered
+        add("no resume is offered for the earlier run (--resume <id>)",
+            not re.search(r"--resume\s+`?(?:" + re.escape(oid) + r"|<)", corpus),
+            [m.group(0) for m in re.finditer(r"[^\n]*--resume[^\n]*", corpus)][:3])
+        add("the close-out is offered: --mark-interrupted <id>",
             bool(re.search(r"--mark-interrupted\s+`?" + re.escape(oid), corpus)), "not found")
         add("Needs you has exactly one line for the earlier run",
             sum(1 for l in needs.splitlines() if oid in l) == 1, needs[:300] or "no Needs you section")
     else:
         add("the report has a Needs you section", bool(re.search(r"^##\s+[^\n]*needs you", rtext, re.I | re.M)),
             "no Needs you heading")
+        # Step 0 always writes unfinished-runs.txt; with nothing unfinished it holds only its '#' header line
+        first = utext.splitlines()[0] if utext.strip() else ""
+        add("Step 0 ran: unfinished-runs.txt exists and its first line is the '#' header",
+            first.startswith("#"), utext[:200] or "missing or empty")
         for name, i in ids.items():
-            add(f"unfinished-runs.txt (if written) does not name the {name} run", i not in utext, utext[:200])
+            add(f"unfinished-runs.txt does not name the {name} run", i not in utext, utext[:200])
             add(f"Needs you does not name the {name} run", i not in needs, needs[:300])
             add(f"no way out is offered for the {name} run",
                 not re.search(r"--(resume|mark-interrupted)\s+`?" + re.escape(i), corpus), "found")
