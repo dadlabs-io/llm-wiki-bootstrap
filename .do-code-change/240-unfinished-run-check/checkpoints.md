@@ -44,3 +44,7 @@ Fix round 2 takes: spec-11 (blocking), standards-15 (listing skips a folder not 
 ## Fix round 2 — 2026-11-13
 
 Developer: spec-11 (both printed ways out carry the notebook: `wiki-cycle-scope.py --topic <nb> unfinished --mark-interrupted ...`, `/wiki-cycle <nb> --resume <id>`; script, docstring, SKILL.md Step 0, wiki-report, usage page, CHANGELOG, plan sample; requirements Decision 2's forms by the orchestrator), standards-15 (listing skips a folder filed under another date), standards-16 (refusals assert the script's own sentences; bite by a scratch mutant, 83/86), spec-16 (no second heading). Red 82/86, green 86/86; check-freeze PASS. Case writer (replay): spec-14 (only this run's id matches a way out; generic text never fails), spec-13 (the final reply must name the id), new forms matched; saved unchanged.
+
+## Suite red then green, round 4 — 2026-11-13
+
+Run 20261113-164536-red-green-1d6b03c (~$6.9): RED THEN GREEN on all four. Baselines re-merged per case; PENDING row updated in place.

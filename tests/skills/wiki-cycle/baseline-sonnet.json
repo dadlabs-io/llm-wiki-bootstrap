@@ -740,7 +740,7 @@
     "unfinished-runs.txt is in the new run folder": true,
     "unfinished-runs.txt names the earlier run": true,
     "the scratchpad carries the earlier run's id": true,
-    "Step 0 told the user the earlier run's id (named in the session's replies)": true,
+    "Step 0 told the user the earlier run's id (named in the final reply)": true,
     "the earlier run's line says why: no scratchpad": true,
     "no resume is offered for the earlier run (--resume <id>)": true,
     "the close-out is offered: --mark-interrupted <id>": true,
