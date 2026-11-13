@@ -20,6 +20,7 @@ Created at Step 0 as `<run-folder>/scratchpad.md` and updated after every phase;
 - This session reads as: <reader name from wiki-triage.py buckets>
 - Models (Step 0's `models` lines): ingest workers <m> · checker <m> · semantic lint <m> · lint fixes <m> · synthesis <m>
 - Promote (Step 0's `promote` line): wait for the user | automatic (confirm_before_promote, from <where>)
+- Unfinished earlier runs (Step 0's `unfinished` lines): none | <cycle_id> (<why>), ...
 
 ## Phase log
 

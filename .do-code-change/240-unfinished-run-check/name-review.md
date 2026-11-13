@@ -1,0 +1,3 @@
+# Name review — 240-unfinished-run-check
+
+Steps 1, 2 and fix-1 (10 tests): one doubt-reviewer was spawned (foreground flag written out, no name, haiku) with the tests' sources and the contract "each test's name claims nothing its assertions do not check". Its verdict had NOT arrived when the developer handed back (the launch notice came back and no completion notification followed in the run). Nothing is recorded as judged. The orchestrator should take the verdict if it arrives, or re-run `check-freeze.py names --freeze-file .do-code-change/240-unfinished-run-check/test-freeze.json` for steps 1, 2 and fix-1 through a fresh reviewer.
