@@ -21,7 +21,7 @@ A new `unfinished` subcommand in the cycle's step helper lists earlier run folde
 
 - Seam: the script through its command line on a throwaway notebook, in `tests/scripts/test_cycle_scope.py` (the file's existing pattern).
 - Seam: the wiki-cycle skill suite (`tests/skills/run_skill_test.py wiki-cycle`), one new case: a fixture notebook with an earlier run folder lacking its report; Step 0 must name it. Red on the installed skill, green after.
-- manual: step 4 — usage page and CHANGELOG read against steps 1-3; the refresh's `--mode status` says installed and current (output in checkpoints.md).
+- manual: step 4 — usage page and CHANGELOG read against steps 1-3 (the install itself is the finish's, output in checkpoints.md).
 
 ## Out of Scope
 
@@ -57,4 +57,4 @@ none beyond requirements Decisions 1-3
    - Failures: an unknown `<cycle_id>` (or a name not matching `<YYYY-MM-DD>-<NN>`) → exit 2, error names it, nothing written; `--reason` missing → exit 2 (argparse), nothing written.
    Trivial stakes: no
 3. The skill runs it and the report shows it — done when the new wiki-cycle suite case is red on the installed skill and green on the changed one (Sonnet and Opus baselines), and the wiki-report Needs-you template names the line. Trivial stakes: no
-4. Docs and install — the wiki-cycle usage page and CHANGELOG say what changed; refresh; `--mode status` current (manual: step 4). Trivial stakes: yes — docs and install only
+4. Docs — the wiki-cycle usage page and CHANGELOG say what changed (manual: step 4). The refresh and `--mode status` run at the finish, after verify, so nothing unreviewed is installed. Trivial stakes: yes — docs only
