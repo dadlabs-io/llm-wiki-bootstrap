@@ -1,0 +1,12 @@
+review-ledger: 10 file(s) changed since round 2 (the focused round's scope; add the sibling sites of each finding the fix round addressed):
+  changed CHANGELOG.md
+  changed scripts/wiki-cycle-scope.py
+  changed skills/wiki-cycle/SKILL.md
+  changed skills/wiki-cycle/wiki-seed/wiki-cycle.md
+  changed skills/wiki-report/SKILL.md
+  changed tests/scripts/test_cycle_scope.py
+  changed tests/skills/PENDING.md
+  changed tests/skills/wiki-cycle/baseline-opus.json
+  changed tests/skills/wiki-cycle/baseline-sonnet.json
+  changed tests/skills/wiki-cycle/check.py
+review-ledger: exit 0 - the files above are the focused round's scope
