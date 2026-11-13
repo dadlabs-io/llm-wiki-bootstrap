@@ -41,7 +41,11 @@ def test_install_sets_the_global_hooks_path():
 def test_install_writes_the_hand_over_hooks():
     m = Machine()
     try:
-        assert (m.hooks / "pre-push").is_file() and (m.hooks / "commit-msg").is_file()
+        for name in ("pre-push", "commit-msg"):
+            stub = m.hooks / name
+            assert stub.is_file(), f"{name} not written"
+            text = stub.read_text(encoding="utf-8")
+            assert "_local" in text and "exec" in text, f"{name} does not hand over: {text[-200:]}"
     finally:
         m.close()
 
@@ -85,8 +89,9 @@ def test_private_word_blocked_in_any_case():
     m = Machine()
     try:
         m.write_words(WORDS)
-        p = m.commit(m.new_repo("a"), {"report.md": "line one\nWe worked for ACME WIDGETS LTD last year.\n"})
-        assert p.returncode != 0 and "private word" in p.stderr, p.stderr[-300:]
+        for i, word in enumerate(("ACME WIDGETS LTD", "acme widgets ltd", "aCmE wIdGeTs LtD")):
+            p = m.commit(m.new_repo(f"a{i}"), {"report.md": f"line one\nWe worked for {word} last year.\n"})
+            assert p.returncode != 0 and "private word" in p.stderr, f"{word!r}: {p.stderr[-300:]}"
     finally:
         m.close()
 
@@ -106,9 +111,11 @@ def test_no_verify_commits_anyway():
     try:
         m.write_words(WORDS)
         r = m.new_repo("a")
-        m.commit(r, {"report.md": "We worked for ACME WIDGETS LTD last year.\n"})
+        blocked = m.commit(r, {"report.md": "We worked for ACME WIDGETS LTD last year.\n"})
+        assert blocked.returncode != 0, "the private word was not blocked first"
         p = m.run(["git", "commit", "-q", "-m", "on purpose", "--no-verify"], r)
         assert p.returncode == 0, p.stderr[-200:]
+        assert m.head(r) is not None, "no commit was made"
     finally:
         m.close()
 
@@ -119,7 +126,8 @@ def test_committed_word_is_not_rechecked():
         m.write_words(WORDS)
         r = m.new_repo("a")
         m.commit(r, {"report.md": "We worked for ACME WIDGETS LTD last year.\n"})
-        m.run(["git", "commit", "-q", "-m", "on purpose", "--no-verify"], r)
+        forced = m.run(["git", "commit", "-q", "-m", "on purpose", "--no-verify"], r)
+        assert forced.returncode == 0, "the word was not committed"
         p = m.commit(r, {"other.md": "unrelated change\n"})
         assert p.returncode == 0, p.stdout[-300:] + p.stderr[-300:]
     finally:
@@ -169,10 +177,14 @@ def test_repo_commit_msg_hook_can_refuse():
         r = m.new_repo("c")
         (r / ".git" / "hooks" / "commit-msg").write_text("#!/bin/sh\ngrep -q 'needs-ticket' \"$1\" && exit 1\nexit 0\n",
                                                         encoding="utf-8")
+        ok = m.commit(r, {"x.md": "x\n"})
+        assert ok.returncode == 0, f"a message without the trigger was refused: {ok.stderr[-300:]}"
+        before = m.head(r)
         (r / "y.md").write_text("y\n", encoding="utf-8")
         m.run(["git", "add", "-A"], r)
         p = m.run(["git", "commit", "-q", "-m", "needs-ticket"], r)
         assert p.returncode != 0, p.stderr[-300:]
+        assert m.head(r) == before, "a commit was made despite the commit-msg hook"
     finally:
         m.close()
 
@@ -201,7 +213,9 @@ def test_missing_gitleaks_blocks_as_not_checked():
 def test_remove_unsets_the_hooks_path():
     m = Machine()
     try:
+        assert _hooks_path(m), "the hooks path was never set"
         p = m.run([SH, str(HOOKS / "install.sh"), "--remove"], ROOT)
+        assert p.returncode == 0, p.stderr[-200:]
         assert _hooks_path(m) == "", p.stdout[-200:]
     finally:
         m.close()

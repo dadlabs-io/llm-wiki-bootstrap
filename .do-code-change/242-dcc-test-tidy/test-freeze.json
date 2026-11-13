@@ -127,19 +127,6 @@
   },
   {
     "file": "tests/scripts/test_git_hooks.py",
-    "test_name": "test_install_writes_the_hand_over_hooks",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "8fe9e719f98e4bbe14ad66b30ceff52f6aa074fb22625e2e2900456a6a19f580",
-    "frozen_at_step": 2,
-    "frozen_at": "2026-11-13",
-    "green_reason": {
-      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
-      "date": "2026-11-13"
-    }
-  },
-  {
-    "file": "tests/scripts/test_git_hooks.py",
     "test_name": "test_install_records_gitleaks",
     "hash_of": "test",
     "hash_scope": "test+module",
@@ -192,49 +179,10 @@
   },
   {
     "file": "tests/scripts/test_git_hooks.py",
-    "test_name": "test_private_word_blocked_in_any_case",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "d59ac3e8da31eabae71e27ba674de3b9e8d5ed7231a5fa56c1db47ee981c853c",
-    "frozen_at_step": 2,
-    "frozen_at": "2026-11-13",
-    "green_reason": {
-      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
-      "date": "2026-11-13"
-    }
-  },
-  {
-    "file": "tests/scripts/test_git_hooks.py",
     "test_name": "test_private_word_block_names_file_line",
     "hash_of": "test",
     "hash_scope": "test+module",
     "hash": "22475ea9045a5d2db498b7f5942daefa431aac1029853084097a9de58bcddd89",
-    "frozen_at_step": 2,
-    "frozen_at": "2026-11-13",
-    "green_reason": {
-      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
-      "date": "2026-11-13"
-    }
-  },
-  {
-    "file": "tests/scripts/test_git_hooks.py",
-    "test_name": "test_no_verify_commits_anyway",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "2ef56100234838da6ba0eb15b0ccedac188922b33ec2b7415b8771d33d1af89c",
-    "frozen_at_step": 2,
-    "frozen_at": "2026-11-13",
-    "green_reason": {
-      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
-      "date": "2026-11-13"
-    }
-  },
-  {
-    "file": "tests/scripts/test_git_hooks.py",
-    "test_name": "test_committed_word_is_not_rechecked",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "bb31b292c48c25dfa60cdb3f009cae79fcbf747b08bf5e95626ea683c897075b",
     "frozen_at_step": 2,
     "frozen_at": "2026-11-13",
     "green_reason": {
@@ -283,19 +231,6 @@
   },
   {
     "file": "tests/scripts/test_git_hooks.py",
-    "test_name": "test_repo_commit_msg_hook_can_refuse",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "d74559e72c50731e35413c31ce3cc82f8124c59410c1c492e9755b08d4233f80",
-    "frozen_at_step": 2,
-    "frozen_at": "2026-11-13",
-    "green_reason": {
-      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
-      "date": "2026-11-13"
-    }
-  },
-  {
-    "file": "tests/scripts/test_git_hooks.py",
     "test_name": "test_failing_repo_pre_commit_still_blocks",
     "hash_of": "test",
     "hash_scope": "test+module",
@@ -321,19 +256,6 @@
     }
   },
   {
-    "file": "tests/scripts/test_git_hooks.py",
-    "test_name": "test_remove_unsets_the_hooks_path",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "0171b1bc1035f96ef869918655ab03f9c1ca982c3f29032a8328a375586cc98b",
-    "frozen_at_step": 2,
-    "frozen_at": "2026-11-13",
-    "green_reason": {
-      "reason": "#242 step 2: an existing check of task #135's suite moved into its own function on the shared harness, its assertion unchanged; it passed before (18/18) and after",
-      "date": "2026-11-13"
-    }
-  },
-  {
     "file": "tests/scripts/test_git_hooks_dcc.py",
     "test_name": "test_gitleaks_block_ends_on_the_owner_line",
     "hash_of": "test",
@@ -347,5 +269,137 @@
       "tail": "FAIL test_gitleaks_block_ends_on_the_owner_line  [pre-commit: fix the lines above, or commit anyway on purpose with: git commit --no-verify]\n0/1 passed",
       "date": "2026-11-13"
     }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_install_writes_the_hand_over_hooks",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "9aaf6373b53b66a4c072dd726ba2db0a298c825a9a3a93db8e33d522a81a7b4f",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "existing check strengthened; passes on the current hook (18/18)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "9aaf6373b53b66a4c072dd726ba2db0a298c825a9a3a93db8e33d522a81a7b4f"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_private_word_blocked_in_any_case",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "53f7bc3ee6bbf15fc53e7c8a2af9df211821564fbfbd1467deb374cee6d5390c",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "existing check strengthened; passes on the current hook (18/18)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "53f7bc3ee6bbf15fc53e7c8a2af9df211821564fbfbd1467deb374cee6d5390c"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_repo_commit_msg_hook_can_refuse",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "78298ab45f9b1bd2045741530915fac9b7428e0d5dc550df6fc0e9e1326873fd",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "existing check strengthened; passes on the current hook (18/18)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "78298ab45f9b1bd2045741530915fac9b7428e0d5dc550df6fc0e9e1326873fd"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_no_verify_commits_anyway",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "3e95ac32790c7f8bd430969ff94e0e57388ec8b57edb4a6c7c2a577094a2db9f",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "existing check strengthened; passes on the current hook (18/18)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "3e95ac32790c7f8bd430969ff94e0e57388ec8b57edb4a6c7c2a577094a2db9f"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_committed_word_is_not_rechecked",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "b90d1a8d02e023a4a7dac9cbfda08e3d6b1a5b0b590e4b30f5a683fb9ad1def5",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "existing check strengthened; passes on the current hook (18/18)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "b90d1a8d02e023a4a7dac9cbfda08e3d6b1a5b0b590e4b30f5a683fb9ad1def5"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_remove_unsets_the_hooks_path",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ec4c2df2e7839758441eba4bc3532bd58a0be12b29b3f91769b1e262b7b6d7b8",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "existing check strengthened; passes on the current hook (18/18)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "ec4c2df2e7839758441eba4bc3532bd58a0be12b29b3f91769b1e262b7b6d7b8"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened"
   }
 ]
