@@ -42,3 +42,13 @@ The bite test now: checks the old hook has no dcc call, installs it through `hoo
 review-ledger query: "halt: round 4 is past the cap of 3". Per-file blocking list: tests/scripts/test_git_hooks_dcc.py 2 of 4 (the bite test), plan.md 1 of 2.
 Mark (terminal): "just continue normally., the flag is more information- why has it take 3 trues?" → **continue manually**. Explained: each round found faults in the previous fix's own new code (the bite test, grown each fix round), not regressions; the fixes were written without first asking how the test could pass or fail for the wrong reason, and the added mechanism was never put to Mark as a design question.
 Manual fixes: the pass check asserts the exit code before the marker; the gitleaks owner-line assert has its own message, and `OLD_HOOK_FAILURES` keys on it; plan Testing Decisions gains the bite test's bullet. Suites 6/6, 2/2, 18/18. No further review round (Mark's call).
+
+## Verify — 2026-11-13
+
+tests-bite not checked (test-only change, no source to mutate). Mark (terminal): "Accept and finish" -> a named FAIL the requester approved.
+
+## Finishing decision — 2026-11-13
+
+keep — verify VERDICT: FAIL — tests-bite only, approved by Mark (above) (verification-result.md), on the branch the run started on (main).
+Tags: code-change, git-hooks, do-code-change.
+Revises 2026-11-12-241-pre-commit-dcc-check (its test file).

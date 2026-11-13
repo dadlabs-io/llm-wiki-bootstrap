@@ -4,30 +4,88 @@
     "test_name": "test_dcc_refusal_blocks_the_commit",
     "hash_of": "test",
     "hash_scope": "test+module",
-    "hash": "f0372f1bf53469f81a9eebbb55b351f0263c04dfa7c90891ceba0334c86852ef",
-    "frozen_at_step": 1,
-    "frozen_at": "2026-11-12",
+    "hash": "c67c80c690354778f16952656741c7267cdab897ca1e453b431fffd40a1f6159",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "green on the current hook; on bc898ad's hook each fails with its expected message; bite shown with HEAD's hook (the precondition refuses it)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened",
+        "date": "2026-11-13",
+        "step": 1,
+        "hash": "d7463726b8daffc817faca6176959f947cf88399aa37eb162477e6fb694b20c9"
+      },
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "c67c80c690354778f16952656741c7267cdab897ca1e453b431fffd40a1f6159"
+      },
+      {
+        "reason": "fix round 2: the harness Machine gained pre_commit_override (unset by default); body unchanged",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "c67c80c690354778f16952656741c7267cdab897ca1e453b431fffd40a1f6159"
+      },
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "c67c80c690354778f16952656741c7267cdab897ca1e453b431fffd40a1f6159"
+      }
+    ],
+    "unfrozen_reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+    "change": "242-dcc-test-tidy",
     "red": {
       "command": "uv run python tests/scripts/test_git_hooks_dcc.py test_dcc_refusal_blocks_the_commit",
       "exit": 1,
       "tail": "FAIL test_dcc_refusal_blocks_the_commit  [the commit went through]\n0/1 passed",
       "date": "2026-11-12"
-    },
-    "change": "241-pre-commit-dcc-check"
+    }
   },
   {
     "file": "tests/scripts/test_git_hooks_dcc.py",
     "test_name": "test_absent_pack_commits_with_a_not_checked_line",
     "hash_of": "test",
     "hash_scope": "test+module",
-    "hash": "9e2a58655351abf81a622cf4968601bcee4e573318170dce685092553aa18b73",
-    "frozen_at_step": 2,
-    "frozen_at": "2026-11-12",
+    "hash": "77c1d7f92b36d81757d4c9ecf6540321ffc970ca92f2bec903ee7a0e21f3ca00",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-13",
     "green_reason": {
-      "reason": "Step 1's two lines (the change request's, as given) carry both branches, so the absent-pack path was built with step 1. Bite shown by hand: with tools/git-hooks/pre-commit stashed back to HEAD the test failed (0/1), with the change it passes.",
-      "date": "2026-11-12"
+      "reason": "green on the current hook; on bc898ad's hook each fails with its expected message; bite shown with HEAD's hook (the precondition refuses it)",
+      "date": "2026-11-13"
     },
-    "change": "241-pre-commit-dcc-check"
+    "unfreezes": [
+      {
+        "reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened",
+        "date": "2026-11-13",
+        "step": 1,
+        "hash": "beaf5a7dc05fc3eff416b42d6d6a78678986f8d24f9a72be5aabe0f8e0d53738"
+      },
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "c5ac60e0d0909af8ca3094f1b8878254e86e012c123b3e5adfbf1e257b8e7093"
+      },
+      {
+        "reason": "fix round 2: the harness Machine gained pre_commit_override (unset by default); body unchanged",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "c5ac60e0d0909af8ca3094f1b8878254e86e012c123b3e5adfbf1e257b8e7093"
+      },
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "77c1d7f92b36d81757d4c9ecf6540321ffc970ca92f2bec903ee7a0e21f3ca00"
+      }
+    ],
+    "unfrozen_reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+    "change": "242-dcc-test-tidy"
   },
   {
     "file": "tests/scripts/test_git_hooks_dcc.py",
@@ -54,12 +112,12 @@
     "test_name": "test_dcc_pass_lets_the_commit_through",
     "hash_of": "test",
     "hash_scope": "test+module",
-    "hash": "7132e358c1633fa0d662097d55e0eab48994bed6b5b2065fc730ae24e89ff9df",
-    "frozen_at_step": 1,
-    "frozen_at": "2026-11-12",
+    "hash": "a995c663e87c185bf3e011c55e9a8e0e8a7159c33c4af30b4b74aee3ceadaa63",
+    "frozen_at_step": "manual-1",
+    "frozen_at": "2026-11-13",
     "green_reason": {
-      "reason": "Bite shown by hand: with tools/git-hooks/pre-commit restored to the fixed point bc898ad the test fails ('the dcc check did not run'); with the change it passes.",
-      "date": "2026-11-12"
+      "reason": "green on the current hook; the bite test passes, so each check fails on bc898ad's hook with its own message",
+      "date": "2026-11-13"
     },
     "unfreezes": [
       {
@@ -73,25 +131,691 @@
         "date": "2026-11-12",
         "step": 1,
         "hash": "7132e358c1633fa0d662097d55e0eab48994bed6b5b2065fc730ae24e89ff9df"
+      },
+      {
+        "reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened",
+        "date": "2026-11-13",
+        "step": 1,
+        "hash": "ad5795ced783e945b40d3b82a300ed81c922a333298b1a5114199f36dc2e4e9b"
+      },
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "be4bde5ee3360c74126565791ca919406872a67deccde6f6bc80078e52118c56"
+      },
+      {
+        "reason": "fix round 2: the harness Machine gained pre_commit_override (unset by default); body unchanged",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "be4bde5ee3360c74126565791ca919406872a67deccde6f6bc80078e52118c56"
+      },
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "be4bde5ee3360c74126565791ca919406872a67deccde6f6bc80078e52118c56"
+      },
+      {
+        "reason": "retry-ceiling, continue manually (Mark 2026-11-13): exit code asserted before the marker; the owner-line assert has its own message and the bite test keys on it; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "manual-1",
+        "hash": "a995c663e87c185bf3e011c55e9a8e0e8a7159c33c4af30b4b74aee3ceadaa63"
       }
     ],
-    "unfrozen_reason": "name review round 1: 'dcc pass' was not checked, since nothing showed the check ran; the fake now writes a marker file and the test asserts it exists. Assertions only added.",
-    "change": "241-pre-commit-dcc-check"
+    "unfrozen_reason": "retry-ceiling, continue manually (Mark 2026-11-13): exit code asserted before the marker; the owner-line assert has its own message and the bite test keys on it; no assertion loosened",
+    "change": "242-dcc-test-tidy"
   },
   {
     "file": "tests/scripts/test_git_hooks_dcc.py",
     "test_name": "test_blocked_commit_says_no_verify_needs_the_owner",
     "hash_of": "test",
     "hash_scope": "test+module",
-    "hash": "968065b6eda7522d79b892e6c9f43b95d43767ac6d9e45c415ec5d18a940ab57",
-    "frozen_at_step": "fix-1",
-    "frozen_at": "2026-11-12",
+    "hash": "64621121dc8ddde6a594d8b87c41e4de7badb14f080779ba5a874cebea7c7b32",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "green on the current hook; on bc898ad's hook each fails with its expected message; bite shown with HEAD's hook (the precondition refuses it)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "#242 step 1 (Mark's go 2026-11-13): moved onto the shared harness (_git_hooks_harness.Machine, new_repo, head() returning None, REFUSAL/OWNER_LINE constants, fake_dcc with ran_marker); no assertion loosened",
+        "date": "2026-11-13",
+        "step": 1,
+        "hash": "7a2660c8dd1e7b949cebc1418867c04192d5ade87459068ee264d1466e7adf9e"
+      },
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "64621121dc8ddde6a594d8b87c41e4de7badb14f080779ba5a874cebea7c7b32"
+      },
+      {
+        "reason": "fix round 2: the harness Machine gained pre_commit_override (unset by default); body unchanged",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "64621121dc8ddde6a594d8b87c41e4de7badb14f080779ba5a874cebea7c7b32"
+      },
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "64621121dc8ddde6a594d8b87c41e4de7badb14f080779ba5a874cebea7c7b32"
+      }
+    ],
+    "unfrozen_reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+    "change": "242-dcc-test-tidy",
     "red": {
       "command": "uv run python tests/scripts/test_git_hooks_dcc.py test_blocked_commit_says_no_verify_needs_the_owner",
       "exit": 1,
       "tail": "FAIL test_blocked_commit_says_no_verify_needs_the_owner  [pre-commit: fix the lines above. --no-verify only when Mark has said so.]\n0/1 passed",
       "date": "2026-11-12"
+    }
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_install_exits_zero",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "5e0b7a8206884606803b752efb09c9de9f8fab2ce143f8f849df79258fe579cf",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
     },
-    "change": "241-pre-commit-dcc-check"
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "5e0b7a8206884606803b752efb09c9de9f8fab2ce143f8f849df79258fe579cf"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_install_sets_the_global_hooks_path",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e1a40967cf6ad92082fa2a22d7c6d94d822b4a3463ab697b2f55d03b631df454",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "e1a40967cf6ad92082fa2a22d7c6d94d822b4a3463ab697b2f55d03b631df454"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_install_records_gitleaks",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e3e6261603f2d578533837d28e81e0beccff7e872dd7cd77e31a03fac1864fb4",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "e3e6261603f2d578533837d28e81e0beccff7e872dd7cd77e31a03fac1864fb4"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_clean_commit_goes_through",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "452009f923dfd44206df9f57566cd925ac32af732af18b4c0fac6791c690ac62",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "452009f923dfd44206df9f57566cd925ac32af732af18b4c0fac6791c690ac62"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_staged_github_token_is_blocked",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "80cb957de89df45f52263b4fce44b53fc4ca9bddf16dab29f5d1ee7589cd8c03",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "80cb957de89df45f52263b4fce44b53fc4ca9bddf16dab29f5d1ee7589cd8c03"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_gitleaks_names_the_file",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "a7e2997e2968016b284f3f4ed50ab96b7030883fb5da65a24bf8596890e899bf",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "a7e2997e2968016b284f3f4ed50ab96b7030883fb5da65a24bf8596890e899bf"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_private_word_blocked_in_any_case",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e0c0ee51a15333642a2174ad4515f1b18780642afbcd629838204d8551870485",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "53f7bc3ee6bbf15fc53e7c8a2af9df211821564fbfbd1467deb374cee6d5390c"
+      },
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "e0c0ee51a15333642a2174ad4515f1b18780642afbcd629838204d8551870485"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_private_word_block_names_file_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "0bcac56d9f0d9853c06844d52b48566231385a7fed5c45d5f708c4d1a4298962",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "0bcac56d9f0d9853c06844d52b48566231385a7fed5c45d5f708c4d1a4298962"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_allow_file_lets_its_word_through",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "816bd0c192120a36b60310cf121f12280e01e0e6f7102d3abdc6520f4bfabc98",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "816bd0c192120a36b60310cf121f12280e01e0e6f7102d3abdc6520f4bfabc98"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_allow_file_keeps_other_words_blocked",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "5a84f6dc5f26c529b569594d91e229e8733f15ac05a0fe58d67534e894543368",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "5a84f6dc5f26c529b569594d91e229e8733f15ac05a0fe58d67534e894543368"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_repo_commit_msg_hook_can_refuse",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "3f110192afd00fdaddf1699d77b5156821e793afef1767a40fe0f0a93d40beb5",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "78298ab45f9b1bd2045741530915fac9b7428e0d5dc550df6fc0e9e1326873fd"
+      },
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "3f110192afd00fdaddf1699d77b5156821e793afef1767a40fe0f0a93d40beb5"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_failing_repo_pre_commit_still_blocks",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "625d107b1a8c8a4efd86288cdb33c1dca644f34cc47646c30b8edd4685ed60d7",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "625d107b1a8c8a4efd86288cdb33c1dca644f34cc47646c30b8edd4685ed60d7"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_missing_gitleaks_blocks_as_not_checked",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "7e328658274c86cbbbae0a69e0cf07f3e2adde98c91b58c04a439ce77b82da87",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "7e328658274c86cbbbae0a69e0cf07f3e2adde98c91b58c04a439ce77b82da87"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_remove_unsets_the_hooks_path",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "acbbc9fa7bcdd2f26b4bb865d7828cd10df649d46e630908e31aae58c69b24ca",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "fix round 1; the dcc checks all failed against the fixed point bc898ad's hook (0/5, recorded in checkpoints.md); the #135 checks pass on both hooks by design (they test behaviour bc898ad already had)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "ec4c2df2e7839758441eba4bc3532bd58a0be12b29b3f91769b1e262b7b6d7b8"
+      },
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "acbbc9fa7bcdd2f26b4bb865d7828cd10df649d46e630908e31aae58c69b24ca"
+      }
+    ],
+    "unfrozen_reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_harness.py",
+    "test_name": "test_runner_refuses_an_unknown_check_name",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e58089a34d03f16542764f9e9977252a695505d0c4fdcd60d6b29ba7f93ef3c3",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "spec-2 as a real test; bite shown by hand: with run_tests returning 1 for an unknown name the check failed (0/1); restored, 2/2",
+      "date": "2026-11-13"
+    },
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_refusal_needs_the_hook_dcc_lines",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f6bca5934bcc42387cad764944da5ede7aa6ce5a1dd026c97dcf6ecf39cc5db1",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "spec-1 as a real test (Mark: make them real tests): strips the dcc lines from the installed hook and shows a refusing fake no longer blocks, so the refusal checks depend on those lines; also recorded: the five dcc checks fail 0/5 against bc898ad's hook",
+      "date": "2026-11-13"
+    },
+    "retired": {
+      "reason": "fix round 2, spec-1: replaced by test_every_dcc_check_fails_on_the_hook_before_241, which runs all five dcc checks on the hook before #241",
+      "date": "2026-11-13"
+    },
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_no_verify_commits_anyway",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "71b2b63790fa3b61e5af8299e5b00b5e72cd97466a7df979f920f2059098acd2",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "passes 18/18 on the current hook",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "3e95ac32790c7f8bd430969ff94e0e57388ec8b57edb4a6c7c2a577094a2db9f"
+      },
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "3cdd9356a80681a13134f5d1a43f626fa5e55ab7391b23c3ea34f43cca566cc1"
+      },
+      {
+        "reason": "fix round 2: setup blocks also assert the private-word message (PY9); marker hooks via write_marker_hook (S2); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "71b2b63790fa3b61e5af8299e5b00b5e72cd97466a7df979f920f2059098acd2"
+      }
+    ],
+    "unfrozen_reason": "fix round 2: setup blocks also assert the private-word message (PY9); marker hooks via write_marker_hook (S2); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_committed_word_is_not_rechecked",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e28b3808a8131fbb17d7e8b95a9f1c558f030c35cbf6325071d9db0ecbb205f8",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "passes 18/18 on the current hook",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "b90d1a8d02e023a4a7dac9cbfda08e3d6b1a5b0b590e4b30f5a683fb9ad1def5"
+      },
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "4e417ed773339d1f7bc97452667b1ea8da1fb9dcd1d98a3aba4c7a665a4de370"
+      },
+      {
+        "reason": "fix round 2: setup blocks also assert the private-word message (PY9); marker hooks via write_marker_hook (S2); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "e28b3808a8131fbb17d7e8b95a9f1c558f030c35cbf6325071d9db0ecbb205f8"
+      }
+    ],
+    "unfrozen_reason": "fix round 2: setup blocks also assert the private-word message (PY9); marker hooks via write_marker_hook (S2); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_install_writes_the_hand_over_hooks",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f5aa12c6d27750c9b38db536da7f97d5544ce6653e3d3958811cf0c271a76a12",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "passes 18/18 on the current hook",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertions added so the name's claim is checked (hand-over stubs exec _local; three cases of the word; the commit-msg hook's positive control and HEAD unchanged; the setup commit's outcome; --remove's exit); none loosened",
+        "date": "2026-11-13",
+        "step": 2,
+        "hash": "9aaf6373b53b66a4c072dd726ba2db0a298c825a9a3a93db8e33d522a81a7b4f"
+      },
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "8df4e048583376ca152803d5e5dad1ca4759123a76b1e0c7dceeed2f3feeedf3"
+      },
+      {
+        "reason": "fix round 2: setup blocks also assert the private-word message (PY9); marker hooks via write_marker_hook (S2); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "f5aa12c6d27750c9b38db536da7f97d5544ce6653e3d3958811cf0c271a76a12"
+      }
+    ],
+    "unfrozen_reason": "fix round 2: setup blocks also assert the private-word message (PY9); marker hooks via write_marker_hook (S2); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks.py",
+    "test_name": "test_repo_pre_commit_hook_still_runs",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "fec7926d06370ad39f9c5c3de75113b14ac3b8b15bc698557f519aa433d8f9bd",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "passes 18/18 on the current hook",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "615bfba2c5a0e7576615c7e1bfa187d7c1fc376911cff3996c77ebadc51ab379"
+      },
+      {
+        "reason": "fix round 2: setup blocks also assert the private-word message (PY9); marker hooks via write_marker_hook (S2); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "fec7926d06370ad39f9c5c3de75113b14ac3b8b15bc698557f519aa433d8f9bd"
+      }
+    ],
+    "unfrozen_reason": "fix round 2: setup blocks also assert the private-word message (PY9); marker hooks via write_marker_hook (S2); no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_harness.py",
+    "test_name": "test_runner_reports_a_crashing_check_as_error",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "cd654f604414f6272da451911c15b0d13277ccce878f3bec7e26ed0b1b976349",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "bite shown in fix round 1 (a re-raise mutation crashed the run)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 2 (R13): asserts the ERROR line's parts, not its exact spacing",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "ed4e9b6dad84f847ebf5b173319c8bc8e4511a442c0fad1b57874da564b64850"
+      },
+      {
+        "reason": "fix round 3 (R15): one regex pins the whole ERROR line, its format as the plan states",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "cd654f604414f6272da451911c15b0d13277ccce878f3bec7e26ed0b1b976349"
+      }
+    ],
+    "unfrozen_reason": "fix round 3 (R15): one regex pins the whole ERROR line, its format as the plan states",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_gitleaks_block_ends_on_the_owner_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e783ad198ce4e09000bbc924fb2d004c1bbcc5defb9b971ffd63fb5cbd35383b",
+    "frozen_at_step": "manual-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "green on the current hook; the bite test passes, so each check fails on bc898ad's hook with its own message",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 1: with machine() replaces Machine()/try/finally (standards-1); harness run/commit lose unused parameters; for the hand-over and committed-word checks, assertions added (spec-3, R13); no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "8f699ce9fba9cef0529fbf07c08f85f2b3d3861aad4a944c0b508169bcc7a2f6"
+      },
+      {
+        "reason": "fix round 2: the harness Machine gained pre_commit_override (unset by default); body unchanged",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "8f699ce9fba9cef0529fbf07c08f85f2b3d3861aad4a944c0b508169bcc7a2f6"
+      },
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "8f699ce9fba9cef0529fbf07c08f85f2b3d3861aad4a944c0b508169bcc7a2f6"
+      },
+      {
+        "reason": "retry-ceiling, continue manually (Mark 2026-11-13): exit code asserted before the marker; the owner-line assert has its own message and the bite test keys on it; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "manual-1",
+        "hash": "e783ad198ce4e09000bbc924fb2d004c1bbcc5defb9b971ffd63fb5cbd35383b"
+      }
+    ],
+    "unfrozen_reason": "retry-ceiling, continue manually (Mark 2026-11-13): exit code asserted before the marker; the owner-line assert has its own message and the bite test keys on it; no assertion loosened",
+    "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_every_dcc_check_fails_on_the_hook_before_241",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "77f5ad6326ca4f39590d25cbac65f658cfc60cb27ef842b0eeffa4067bd115bb",
+    "frozen_at_step": "manual-1",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "green on the current hook; the bite test passes, so each check fails on bc898ad's hook with its own message",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "1e1d926a65db70bef8685e608c7313cb3c1e560ac407debd29169589356c79b6"
+      },
+      {
+        "reason": "retry-ceiling, continue manually (Mark 2026-11-13): exit code asserted before the marker; the owner-line assert has its own message and the bite test keys on it; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "manual-1",
+        "hash": "77f5ad6326ca4f39590d25cbac65f658cfc60cb27ef842b0eeffa4067bd115bb"
+      }
+    ],
+    "unfrozen_reason": "retry-ceiling, continue manually (Mark 2026-11-13): exit code asserted before the marker; the owner-line assert has its own message and the bite test keys on it; no assertion loosened",
+    "change": "242-dcc-test-tidy"
   }
 ]

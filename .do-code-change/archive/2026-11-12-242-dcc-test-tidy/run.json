@@ -1,0 +1,17 @@
+{
+  "slug": "242-dcc-test-tidy",
+  "task": 242,
+  "outcome": "success",
+  "size": "full",
+  "size_moves": ["small -> full: second fix round (review round 2's important findings)"],
+  "fixed_point": "58767fda5e86",
+  "review_rounds": 4,
+  "fix_rounds": 3,
+  "retry_ceiling": "reached at round 4; Mark chose continue manually (three fixes by hand, no further review round)",
+  "gates": {
+    "pre_verify": "met (review-ledger query, 9 closed, 26 non-blocking)",
+    "pre_finish": "VERDICT: FAIL — tests-bite (not checked: test-only change, no source to mutate); approved by Mark 2026-11-13"
+  },
+  "budget_at_finish": "100 of 720 active minutes, 240 of 2200 turns (main 101, sub-agents 139), $26.54 of $120.00",
+  "date": "2026-11-13"
+}
