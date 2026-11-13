@@ -25,6 +25,9 @@ setup and cleanup, a safer runner, and one new check that a gitleaks block also 
 - The refactor steps loosen no assertion. Where the reviews asked, assertions were added or made stricter: the hand-over
   check runs each stub; the two private-word setup blocks also check the message; the runner's ERROR line is matched
   whole; each re-freeze records its reason. Their evidence is all checks green before and after (manual: steps 1-2 — both files run in full before and after, in checkpoints.md).
+- The invariant's fail side is `test_every_dcc_check_fails_on_the_hook_before_241`: it installs bc898ad's hook through
+  `hook_override`, derives the dcc checks from the module, and requires each to fail with its own message in
+  `OLD_HOOK_FAILURES`, every one a message the check's own assert writes; any other failure is re-raised.
 - manual: step 3 — `main()`'s new paths shown by running an unknown name (exit 2) and by a deliberately raising
   test name never added to the file; evidence in checkpoints.md.
 

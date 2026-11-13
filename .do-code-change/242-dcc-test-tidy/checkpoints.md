@@ -35,4 +35,10 @@ spec-1 (round 2): `test_every_dcc_check_fails_on_the_hook_before_241` runs all f
 
 ## Fix round 3 — 2026-11-13
 
-The bite test now: checks the old hook has no dcc call, installs it through `hook_override` (saves and restores), verifies a Machine got it, derives the checks from the module (the bite test excluded) and requires each to fail with its own message in `OLD_HOOK_FAILURES` (a set equality makes a new check need an entry); anything else is re-raised. The absent-pack assert gained a message for that match. The runner's ERROR line is matched whole by one regex. Plan Testing Decisions and the harness API list rewritten in place. Suites 6/6, 2/2, 18/18; check-freeze PASS. Bite with HEAD's hook: refused by the precondition.
+The bite test now: checks the old hook has no dcc call, installs it through `hook_override` (saves and restores), verifies a Machine got it, derives the checks from the module (the bite test excluded) and requires each to fail with its own message in `OLD_HOOK_FAILURES` (a set equality makes a new check need an entry); anything else is re-raised. The absent-pack assert gained a message for that match. The runner's ERROR line is matched whole by one regex. The harness API list and the loosen-no-assertion wording were rewritten in place (the bite test's bullet was added at the ceiling, below). Suites 6/6, 2/2, 18/18; check-freeze PASS. Bite with HEAD's hook: refused by the precondition.
+
+## Retry-ceiling exhaustion — 2026-11-13
+
+review-ledger query: "halt: round 4 is past the cap of 3". Per-file blocking list: tests/scripts/test_git_hooks_dcc.py 2 of 4 (the bite test), plan.md 1 of 2.
+Mark (terminal): "just continue normally., the flag is more information- why has it take 3 trues?" → **continue manually**. Explained: each round found faults in the previous fix's own new code (the bite test, grown each fix round), not regressions; the fixes were written without first asking how the test could pass or fail for the wrong reason, and the added mechanism was never put to Mark as a design question.
+Manual fixes: the pass check asserts the exit code before the marker; the gitleaks owner-line assert has its own message, and `OLD_HOOK_FAILURES` keys on it; plan Testing Decisions gains the bite test's bullet. Suites 6/6, 2/2, 18/18. No further review round (Mark's call).

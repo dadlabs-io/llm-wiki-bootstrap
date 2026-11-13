@@ -25,8 +25,8 @@ def test_dcc_pass_lets_the_commit_through():
         m.fake_dcc(0, ran_marker=ran)
         r = m.new_repo("a")
         p = m.commit(r, {"notes.md": "An ordinary note.\n"})
-        assert ran.is_file(), "the dcc check did not run"
         assert p.returncode == 0, p.stderr[-400:]
+        assert ran.is_file(), "the dcc check did not run"
         assert m.head(r) is not None, "no commit was made"
         assert "do-code-change" not in p.stderr and "FAKE-DCC" not in p.stderr, p.stderr[-400:]
 
@@ -71,7 +71,7 @@ def test_gitleaks_block_ends_on_the_owner_line():
         assert p.returncode != 0, "the commit went through"
         assert "gitleaks found a secret" in p.stderr, p.stderr[-400:]
         last = p.stderr.strip().splitlines()[-1]
-        assert last == OWNER_LINE, last
+        assert last == OWNER_LINE, f"the last line is not the owner line: {last}"
 
 
 HOOK_BEFORE_241 = "bc898ad5696789890603485b57efffa06f85d6b7"  # the commit before task #241 changed the hook
@@ -80,7 +80,7 @@ OLD_HOOK_FAILURES = {  # what each dcc check must fail with on that hook, so a s
     "test_dcc_refusal_blocks_the_commit": "the commit went through",
     "test_absent_pack_commits_with_a_not_checked_line": "no NOT CHECKED line",
     "test_blocked_commit_says_no_verify_needs_the_owner": "the commit went through",
-    "test_gitleaks_block_ends_on_the_owner_line": "commit anyway",
+    "test_gitleaks_block_ends_on_the_owner_line": "the last line is not the owner line",
 }
 
 
