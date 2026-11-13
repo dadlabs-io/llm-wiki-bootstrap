@@ -19,3 +19,10 @@ Run 20261113-144230-red-green-1d6b03c ($7.63, 8 sessions). Old copy: case 1 red 
 ## Implement: suite red then green, round 2 — 2026-11-13
 
 Run 20261113-145815-red-green-1d6b03c (~$7.6): new copy 4/4 PASS. Case 1 red then green on Sonnet and Opus; case 2 red then green on Sonnet, passes on the old copy on Opus (kept as a guard, not counted as proof). Scope widened out loud: tests/skills/PENDING.md (the suite README says a skill change is logged there); row added.
+
+## Review round 1: design questions — 2026-11-13
+
+Mark (terminal), on spec-1 (resume offered for a folder with no scratchpad) and standards-2 (a live run listed, and --mark-interrupted could rewrite it): "should we jave a process start a notes file first thing? there really shouldnt be 2 runs running at the same time."
+- spec-1: Step 0 already writes the scratchpad first thing (status in_progress), so a run folder with no scratchpad is a hand-run step folder or one older than that rule; nothing in it can be resumed. Ruling: such a folder gets only the close-out way; resume is offered only when a scratchpad exists. Requirements Decision 2 and plan step 1 rewritten in place.
+- standards-2: one cycle per notebook at a time (Mark). Addressed by stating that rule in the skill's Don't list and the script's docstring, which the listing relies on; no lock or age refusal (no new code).
+Fix round 1 (the small path's one round): spec-1, standards-2 as above; cheap suggestions and nits taken where they touch the same lines (standards-5, -8, -11, -12, -13; spec-5 usage page, scope widened to skills/wiki-report/**; spec-4, -7, -8, -9 in the artifacts). check.py/cases items (standards-9, -10, -14; spec-3, -10; and case 1's resume check under the new ruling) go back to eval-case-writer (replay). standards-1 and spec-2 fixed by the orchestrator (3325ec7). standards-3, -4 (refactors), -6 (one-source rule for Step 8 vs wiki-report), -7 (test order) considered in the round.

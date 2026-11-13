@@ -18,10 +18,11 @@
 
 - Nothing is resumed, deleted or repaired automatically: the check only names the folders and what to do.
 - Not lessons #11, #12 or #9 (later changes on card #240).
-- No change to how a run writes its report or scratchpad.
+- No lock against two cycles at once: one cycle per notebook at a time (Mark, 2026-11-13); the skill states the rule.
+- No change to how a run writes its report or scratchpad, beyond Decision 3's one scratchpad line and one Needs-you line.
 
 ## Decisions
 
 1. **What counts as unfinished** (matters most). Recommended: a run folder (name `<YYYY-MM-DD>-<NN>`, not this run's) with no `<cycle_id>-run-cycle-report.md`, unless its scratchpad says `interrupted`. That is the lesson as written, and it catches the original incident (no scratchpad at all). Alternative: only folders whose scratchpad says `in_progress`: quieter (1 of today's 5), but misses a run that died before writing a scratchpad, which is what happened on 2026-07-17.
-2. **How a flagged folder stops being flagged.** Recommended: `wiki-cycle-scope.py unfinished --mark-interrupted <cycle_id> --reason "<why>"` sets its scratchpad's status to `interrupted` with the reason in its Decisions log (writing a short scratchpad when there is none); `--resume <cycle_id>` finishes it the other way. Alternative: look back only 30 days, so old folders age out with no command; but a recent hand-run step folder would be named every cycle for a month.
+2. **How a flagged folder stops being flagged.** (Ruled 2026-11-13, review round 1: resume is offered only for a folder that has a scratchpad; a folder with none gets only the close-out.) Recommended: `wiki-cycle-scope.py unfinished --mark-interrupted <cycle_id> --reason "<why>"` sets its scratchpad's status to `interrupted` with the reason in its Decisions log (writing a short scratchpad when there is none); `--resume <cycle_id>` finishes it the other way. Alternative: look back only 30 days, so old folders age out with no command; but a recent hand-run step folder would be named every cycle for a month.
 3. **Where it shows.** Recommended: Step 0 prints each folder and the two ways out, writes `unfinished-runs.txt` in the run folder and a line in the scratchpad; the report's ⚠️ Needs you carries one line per folder. Alternative: Step 0 output only (easy to miss in a long run).
