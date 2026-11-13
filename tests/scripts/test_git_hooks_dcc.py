@@ -12,15 +12,14 @@ from __future__ import annotations
 
 import sys
 
-from _git_hooks_harness import Machine, github_token, run_tests
+from _git_hooks_harness import collect_tests, github_token, machine, run_tests
 
 REFUSAL = "FAKE-DCC-REFUSED: tool.py changed without a run"
 OWNER_LINE = "pre-commit: fix the lines above. --no-verify only when the machine's owner has said so."
 
 
 def test_dcc_pass_lets_the_commit_through():
-    m = Machine()
-    try:
+    with machine() as m:
         ran = m.base / "dcc-ran.txt"
         m.fake_dcc(0, ran_marker=ran)
         r = m.new_repo("a")
@@ -29,13 +28,10 @@ def test_dcc_pass_lets_the_commit_through():
         assert p.returncode == 0, p.stderr[-400:]
         assert m.head(r) is not None, "no commit was made"
         assert "do-code-change" not in p.stderr and "FAKE-DCC" not in p.stderr, p.stderr[-400:]
-    finally:
-        m.close()
 
 
 def test_dcc_refusal_blocks_the_commit():
-    m = Machine()
-    try:
+    with machine() as m:
         r = m.new_repo("a")
         first = m.commit(r, {"notes.md": "An ordinary note.\n"})
         assert first.returncode == 0, first.stderr[-400:]
@@ -45,25 +41,19 @@ def test_dcc_refusal_blocks_the_commit():
         assert p.returncode != 0, "the commit went through"
         assert REFUSAL in p.stderr, p.stderr[-400:]
         assert m.head(r) == before, "a commit was made despite the refusal"
-    finally:
-        m.close()
 
 
 def test_absent_pack_commits_with_a_not_checked_line():
-    m = Machine()
-    try:
+    with machine() as m:
         r = m.new_repo("a")
         p = m.commit(r, {"notes.md": "An ordinary note.\n"})
         assert p.returncode == 0, p.stderr[-400:]
         assert m.head(r) is not None, "no commit was made"
         assert "do-code-change commit check NOT CHECKED - pack not installed" in p.stderr, p.stderr[-400:]
-    finally:
-        m.close()
 
 
 def test_blocked_commit_says_no_verify_needs_the_owner():
-    m = Machine()
-    try:
+    with machine() as m:
         r = m.new_repo("a")
         m.fake_dcc(1, REFUSAL)
         p = m.commit(r, {"tool.py": "print('hi')\n"})
@@ -71,24 +61,19 @@ def test_blocked_commit_says_no_verify_needs_the_owner():
         last = p.stderr.strip().splitlines()[-1]
         assert last == OWNER_LINE, last
         assert "commit anyway" not in p.stderr, p.stderr[-400:]
-    finally:
-        m.close()
 
 
 def test_gitleaks_block_ends_on_the_owner_line():
-    m = Machine()
-    try:
+    with machine() as m:
         r = m.new_repo("a")
         p = m.commit(r, {"config.py": f'TOKEN = "{github_token()}"\n'})
         assert p.returncode != 0, "the commit went through"
         assert "gitleaks found a secret" in p.stderr, p.stderr[-400:]
         last = p.stderr.strip().splitlines()[-1]
         assert last == OWNER_LINE, last
-    finally:
-        m.close()
 
 
-TESTS = {name: fn for name, fn in dict(globals()).items() if name.startswith("test_") and callable(fn)}
+TESTS = collect_tests(dict(globals()))
 
 if __name__ == "__main__":
     raise SystemExit(run_tests(TESTS, sys.argv[1:]))

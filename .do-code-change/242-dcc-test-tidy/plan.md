@@ -40,7 +40,7 @@ setup and cleanup, a safer runner, and one new check that a gitleaks block also 
 
 ## Invariants
 
-- Every existing check still passes and still fails at the fixed point's hook — pinned by the four frozen tests
+- Every dcc check still passes on the current hook and fails at the fixed point bc898ad's hook; the #135 checks pass on both (they test behaviour bc898ad already had) — pinned by the frozen tests
   (re-frozen with reasons where their loaded helpers change).
 
 ## Decisions needed

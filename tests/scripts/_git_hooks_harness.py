@@ -12,17 +12,19 @@ import shutil
 import string
 import subprocess
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HOOKS = ROOT / "tools" / "git-hooks"
 SH = shutil.which("sh") or shutil.which("bash")
 DCC_REL = Path(".claude") / "workflows" / "do-code-change" / "scripts" / "dcc-commit-check.py"
+GITHUB_TOKEN_BODY_LEN = 36  # characters after the "ghp_" prefix in a classic GitHub token
 
 
 def github_token() -> str:
     """A GitHub-shaped token built at run time, so no secret sits in the repository."""
-    return "ghp_" + "".join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(36))
+    return "ghp_" + "".join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(GITHUB_TOKEN_BODY_LEN))
 
 
 class Machine:
@@ -41,8 +43,8 @@ class Machine:
             self._td.cleanup()
             raise AssertionError(f"install.sh failed: {self.install.stderr[-300:]}{self.install.stdout[-300:]}")
 
-    def run(self, args, cwd, env=None) -> subprocess.CompletedProcess:
-        return subprocess.run(args, cwd=cwd, env=env or self.env, capture_output=True, text=True,
+    def run(self, args, cwd) -> subprocess.CompletedProcess:
+        return subprocess.run(args, cwd=cwd, env=self.env, capture_output=True, text=True,
                               encoding="utf-8", errors="replace")
 
     def write_words(self, text: str) -> None:
@@ -69,12 +71,12 @@ class Machine:
             assert p.returncode == 0, f"{' '.join(args)} failed: {p.stderr[-300:]}"
         return r
 
-    def commit(self, r: Path, files: dict[str, str], *extra: str) -> subprocess.CompletedProcess:
+    def commit(self, r: Path, files: dict[str, str]) -> subprocess.CompletedProcess:
         for rel, body in files.items():
             (r / rel).parent.mkdir(parents=True, exist_ok=True)
             (r / rel).write_text(body, encoding="utf-8")
         self.run(["git", "add", "-A"], r)
-        return self.run(["git", "commit", "-q", "-m", "test", *extra], r)
+        return self.run(["git", "commit", "-q", "-m", "test"], r)
 
     def head(self, r: Path) -> str | None:
         p = self.run(["git", "rev-parse", "-q", "--verify", "HEAD"], r)
@@ -82,6 +84,21 @@ class Machine:
 
     def close(self) -> None:
         self._td.cleanup()
+
+
+@contextmanager
+def machine():
+    """A Machine for one check, cleaned up however the check ends."""
+    m = Machine()
+    try:
+        yield m
+    finally:
+        m.close()
+
+
+def collect_tests(namespace: dict) -> dict:
+    """The module's checks: every callable whose name starts with test_, in definition order."""
+    return {name: fn for name, fn in namespace.items() if name.startswith("test_") and callable(fn)}
 
 
 def run_tests(tests: dict, argv: list[str]) -> int:
