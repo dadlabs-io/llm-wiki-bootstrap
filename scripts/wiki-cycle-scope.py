@@ -88,7 +88,7 @@ their `<cycle_id>-run-cycle-report.md`, unless their scratchpad says `interrupte
 first, with the ways out (`/wiki-cycle --resume <cycle_id>` only when the folder has a scratchpad, since a run with
 none has nothing to resume; always `--mark-interrupted`), or `unfinished: none`,
 and writes <rf>/unfinished-runs.txt (`<cycle_id>` tab why). Exit 0 either way. Nothing is resumed or deleted.
-One cycle runs on a notebook at a time (Mark, 2026-11-13): the listing counts any earlier run still in progress as
+One cycle runs on a notebook at a time (Mark's rule): the listing counts any earlier run still in progress as
 dead, and `--mark-interrupted` rewrites it; there is no lock and no age check. `--run-folder` (list) and
 `--mark-interrupted` (close) are separate commands: both together, or neither, is exit 2.
 `--mark-interrupted <cycle_id> --reason "<why>"` closes one: its scratchpad's Status becomes `interrupted` and the

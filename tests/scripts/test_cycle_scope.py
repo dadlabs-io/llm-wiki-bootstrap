@@ -362,7 +362,7 @@ with tempfile.TemporaryDirectory() as td:
               "scratchpad says in_progress" in by.get("2026-10-02-01", ""), by)
         check("unfinished_names_runs_without_report: each line gives the close-out",
               bool(ids) and all(f'unfinished --mark-interrupted {i} --reason "' in by[i] for i in ids), by)
-        # Mark, 2026-11-13: resume only for a folder with a scratchpad; nothing in one without can be resumed
+        # Mark's ruling: resume only for a folder with a scratchpad; nothing in one without can be resumed
         check("unfinished_names_runs_without_report: resume is offered for the in_progress folder only",
               bool(ids) and all((f"/wiki-cycle --resume {i}" in by[i]) == (i == "2026-10-02-01") for i in ids), by)
         f = cur / "unfinished-runs.txt"
