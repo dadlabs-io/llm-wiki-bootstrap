@@ -1,43 +1,45 @@
-# Review findings — 242-dcc-test-tidy, round 2 (focused)
+# Review findings — 242-dcc-test-tidy, round 3 (focused)
 
-Scope: what fix round 1 moved (665ba18 → HEAD) plus the sibling sites of its addressed findings. Prescan clean; read-only guard PASS.
+Scope: fix round 2's diff (5adfcaf → HEAD) and the sibling sites of its addressed findings. Prescan clean; read-only guard PASS.
 
 ## Standards
 
-- [important] `tests/scripts/test_git_hooks.py:101` (and `:90`) — PY9: `assert blocked.returncode != 0, "the private word was not blocked first"` passes for any refusal, never reading stderr. Fix: also assert "private word" in stderr.
-- [suggestion] `tests/scripts/test_git_hooks.py:41` and `:130` — S2: the same marker-hook script is written twice. Fix: a harness helper.
-- [nit] `tests/scripts/test_git_hooks_dcc.py:79-80` — S2: the hook file is read twice. Fix: read once.
-- [suggestion] `tests/scripts/test_git_hooks_harness.py:36` — R13: the check pins the runner's exact print format, two spaces included. Fix: assert the parts.
+- [important] `tests/scripts/test_git_hooks_dcc.py:92-93` — PY9: `except AssertionError: continue` counts any assertion, a setup failure or a missing gitleaks included, as the old hook failing. Fix: verify the override first, and require each check's own expected failure.
+- [suggestion] `tests/scripts/_git_hooks_harness.py:38` — S17: `pre_commit_override` is process-wide state reset to None, not restored. Fix: a context manager that saves and restores it.
+- [suggestion] `tests/scripts/test_git_hooks_harness.py:36` — R15: the ERROR line's parts can match separately. Fix: one regex for the line.
+- [nit] `tests/scripts/test_git_hooks_dcc.py:84-86` — R12: the five checks are hand-listed; a sixth would escape. Fix: derive them from the module.
 
 Unverified:
-- `test_git_hooks.py:49` reads hooks.conf's text (R13), a line the fix did not touch: out of this round.
+- That bc898ad's hook exists and lacks the dcc lines (no shell; the returncode assert would fail loudly).
 
-Coverage: S2 found; S9/R26, S15, R14, R15, G31, R12 clear; R13 found; PY9 found.
-Well built: `run_tests` prints the exact lines the runner's own checks assert.
+Coverage: S2 clear; S17 found; R14 clear; R15 found; PY9 found; R12 found; S9/R26 clear.
+Well built: each check builds its own Machine under machine(), and the override is cleared in finally.
 
 ## Spec
 
-- [important] `tests/scripts/test_git_hooks_dcc.py:76` — the plan invariant "Every dcc check still passes on the current hook and fails at the fixed point bc898ad's hook" is a test for the refusal check only; the other four checks' failure at bc898ad is still only in the notes. Fix: one test running every dcc check against bc898ad's hook, expecting each to fail.
-- [suggestion] `tests/scripts/test_git_hooks.py:122-126` — the plan says the refactor "change[s] no assertion", but the hand-over check's text assertion was replaced by a behavioural one. Fix: record the departure in plan.md.
-- [nit] `.do-code-change/242-dcc-test-tidy/plan.md:17` — the harness API list lacks `machine()`, `collect_tests`, `GITHUB_TOKEN_BODY_LEN`. Fix: add them.
+- [important] `.do-code-change/242-dcc-test-tidy/plan.md:25` — "The refactor steps change no assertion" is untrue after fix round 2 (two private-word asserts added, the ERROR check changed); only the hand-over departure is in the plan. Fix: list all three departures.
+- [suggestion] `.do-code-change/242-dcc-test-tidy/plan.md:17` — the API list omits ROOT, HOOKS, SH, DCC_REL, close and the Machine attributes. Fix: add them or say it lists helpers only.
+- [suggestion] `tests/scripts/test_git_hooks_harness.py:36` — the plan's `ERROR <name>  [<type>: <message>]` format is no longer pinned. Fix: an exact-format assertion.
+- [suggestion] `tests/scripts/test_git_hooks_dcc.py:84-86` — the hand-typed five-check list. Fix: derive it.
+- [suggestion] `tests/scripts/test_git_hooks_dcc.py:92-93` — any assertion counts as the old hook failing. Fix: assert the expected message.
 
 Unverified:
-- The 0/5 run and the bc898ad hook contents (no shell).
+- bc898ad's hook content not read; the bite run in test-freeze.json not re-run.
 
-Coverage: spec-1 found (partial); spec-2 clear; spec-3 clear; scope clear; plan wording found.
-Well built: the runner checks assert the exact strings the runner prints.
+Coverage: invariant (five checks, bc898ad hook, fails if any passes) met; hand-over departure met; API list partly met; plan wording found; scope clear.
+Well built: the bite test reads the old hook from git history, and the override is applied in Machine.__init__.
 
 ## Change risk
 
 | File | Risk | Part | Standards | Spec | Change risk |
 |---|---|---|---|---|---|
 | `tests/scripts/_git_hooks_harness.py` | LOW (test) | 1 | in full | in full | — |
-| `tests/scripts/test_git_hooks.py` | LOW (test) | 1 | in full | in part (diff) | — |
 | `tests/scripts/test_git_hooks_dcc.py` | LOW (test) | 1 | in full | in full | — |
-| `tests/scripts/test_git_hooks_harness.py` | LOW (test) | 1 | in full | in full | — |
+| `tests/scripts/test_git_hooks.py` | LOW (test) | 1 | in part (diff) | in part (diff) | — |
+| `tests/scripts/test_git_hooks_harness.py` | LOW (test) | 1 | in part (diff) | in part (diff) | — |
 
 No high-risk file; the change-risk lens was not run.
 
-Standards: 4 findings (1 important). Spec: 3 findings (1 important). Change risk: not run.
+Standards: 4 findings (1 important). Spec: 5 findings (1 important). Change risk: not run.
 
 VERDICT: Standards FINDINGS · Spec FINDINGS · Change risk NOT RUN · needs-a-human 0

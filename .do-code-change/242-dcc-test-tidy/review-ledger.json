@@ -84,6 +84,45 @@
         "tests/scripts/test_git_hooks_harness.py": "e42d0cebb32db62b26d484a513df833b70f10cfe512a0416b4055b21de8218ce",
         "tools/git-hooks/README.md": "664f5101246244014c5abc8c8a18f342c26411cf8f6c9d9624b1007fde1e6e67"
       }
+    },
+    {
+      "round": 3,
+      "at": "2026-11-13T02:37:22Z",
+      "diff_sha256": "8e29052e828a74480bb5cad261ab8ff68de3b8bfe98fc9df678520bc9b40525c",
+      "findings_sha256": "730f7c1ecfd50197330197b831fca99a83e0258f0747c72e630918b6dd668244",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-16",
+        "standards-17",
+        "standards-18",
+        "standards-19",
+        "spec-7",
+        "spec-8",
+        "spec-9",
+        "spec-10",
+        "spec-11"
+      ],
+      "new": [
+        "standards-16",
+        "standards-17",
+        "standards-18",
+        "standards-19",
+        "spec-7",
+        "spec-8",
+        "spec-9",
+        "spec-10",
+        "spec-11"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "tests/scripts/_git_hooks_harness.py": "4a607b82f18d2c249f87d9cdeb2db3cff4b9809fcb5376f1aba60d5fb469b64e",
+        "tests/scripts/test_git_hooks.py": "2b07283b7ac4a8e30214fa3019a5ed6864c44e9213b85929151a09c9aea0cd98",
+        "tests/scripts/test_git_hooks_dcc.py": "b6417e77fe0368e66440506b7c8d81f62d3474ca976e42b6f40d67cc6096b7e2",
+        "tests/scripts/test_git_hooks_harness.py": "3d87d00dca213fdd1013c3e4516e505d551ec4afdb727ead65d123c2912f8225",
+        "tools/git-hooks/README.md": "664f5101246244014c5abc8c8a18f342c26411cf8f6c9d9624b1007fde1e6e67"
+      }
     }
   ],
   "items": {
@@ -382,8 +421,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "ec2745f87d52b8813f0b114a7d72c7770e1145636ce0848d8c67f76f30d7f635",
+      "verdict_round": 2,
+      "fingerprint": "9443b60c8669983830de739688dcf3ca040317613d9bbd61bf8f3d6c89b9868e",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -401,6 +440,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "ec2745f87d52b8813f0b114a7d72c7770e1145636ce0848d8c67f76f30d7f635"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "9443b60c8669983830de739688dcf3ca040317613d9bbd61bf8f3d6c89b9868e"
         }
       ]
     },
@@ -413,8 +457,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "ec2745f87d52b8813f0b114a7d72c7770e1145636ce0848d8c67f76f30d7f635",
+      "verdict_round": 2,
+      "fingerprint": "9443b60c8669983830de739688dcf3ca040317613d9bbd61bf8f3d6c89b9868e",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -432,6 +476,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "ec2745f87d52b8813f0b114a7d72c7770e1145636ce0848d8c67f76f30d7f635"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "9443b60c8669983830de739688dcf3ca040317613d9bbd61bf8f3d6c89b9868e"
         }
       ]
     },
@@ -469,9 +518,9 @@
       "line": 101,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "ebcbe9dafe9881662fbeab4f696bbfe4215e4eb53d9d7faf8d3b32c55ad933c7",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -479,6 +528,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "ebcbe9dafe9881662fbeab4f696bbfe4215e4eb53d9d7faf8d3b32c55ad933c7"
         }
       ]
     },
@@ -490,9 +544,9 @@
       "line": 41,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "ebcbe9dafe9881662fbeab4f696bbfe4215e4eb53d9d7faf8d3b32c55ad933c7",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -500,6 +554,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "ebcbe9dafe9881662fbeab4f696bbfe4215e4eb53d9d7faf8d3b32c55ad933c7"
         }
       ]
     },
@@ -511,16 +570,21 @@
       "line": 79,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "f24d467914cbf3acbd482fda7f809ee85d32f6261dcfbf2e681af3807eed1177",
-      "fingerprint_kind": "hunk-diff",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "b6417e77fe0368e66440506b7c8d81f62d3474ca976e42b6f40d67cc6096b7e2",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 2,
           "verdict": "open",
           "fingerprint": "f24d467914cbf3acbd482fda7f809ee85d32f6261dcfbf2e681af3807eed1177"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "b6417e77fe0368e66440506b7c8d81f62d3474ca976e42b6f40d67cc6096b7e2"
         }
       ]
     },
@@ -532,9 +596,9 @@
       "line": 36,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "308d08ef17edc6fe1ea57c5f25622295738c68c40dd4d1e0266714e41b5e7659",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "0278b8fa627d4fe7d18c457dfc66670daf9ebf77576d8fd9c62bde6bf447dd45",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -542,6 +606,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "308d08ef17edc6fe1ea57c5f25622295738c68c40dd4d1e0266714e41b5e7659"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "0278b8fa627d4fe7d18c457dfc66670daf9ebf77576d8fd9c62bde6bf447dd45"
         }
       ]
     },
@@ -553,9 +622,9 @@
       "line": 76,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "f24d467914cbf3acbd482fda7f809ee85d32f6261dcfbf2e681af3807eed1177",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "f7a7365d11209e087535d5bc1cc76fd48e198bc3c8482083de4e7220041def4b",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -563,6 +632,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "f24d467914cbf3acbd482fda7f809ee85d32f6261dcfbf2e681af3807eed1177"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "f7a7365d11209e087535d5bc1cc76fd48e198bc3c8482083de4e7220041def4b"
         }
       ]
     },
@@ -574,9 +648,9 @@
       "line": 122,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "ebcbe9dafe9881662fbeab4f696bbfe4215e4eb53d9d7faf8d3b32c55ad933c7",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -584,6 +658,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "9c8628202cd4eb6cc4be4b5c9597db549f326a1866e2e747581a0416b0b81d5e"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "ebcbe9dafe9881662fbeab4f696bbfe4215e4eb53d9d7faf8d3b32c55ad933c7"
         }
       ]
     },
@@ -595,16 +674,210 @@
       "line": 17,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "ed1a853cef99efce8924ee0820c6e0126b1d93dda6abe6aa6d8cb2f40261ec63",
-      "fingerprint_kind": "file-diff",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "b517e625a8422326b788528b30b50d4b05ed9d8d5c76c6182582997ca4b45d2f",
+      "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 2,
           "verdict": "open",
           "fingerprint": "ed1a853cef99efce8924ee0820c6e0126b1d93dda6abe6aa6d8cb2f40261ec63"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "b517e625a8422326b788528b30b50d4b05ed9d8d5c76c6182582997ca4b45d2f"
+        }
+      ]
+    },
+    "standards-16": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/scripts/test_git_hooks_dcc.py:92-93` \u2014 PY9: `except AssertionError: continue` counts any assertion, a setup failure or a missing gitleaks included, as the old hook failing. Fix: verify the override first, and require each check's own expected failure.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 92,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2"
+        }
+      ]
+    },
+    "standards-17": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/_git_hooks_harness.py:38` \u2014 S17: `pre_commit_override` is process-wide state reset to None, not restored. Fix: a context manager that saves and restores it.",
+      "file": "tests/scripts/_git_hooks_harness.py",
+      "line": 38,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "382253715e9c206ee07a221bb59695889cd0b1df9d530dba3de6d7b1c0b93f4a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "382253715e9c206ee07a221bb59695889cd0b1df9d530dba3de6d7b1c0b93f4a"
+        }
+      ]
+    },
+    "standards-18": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks_harness.py:36` \u2014 R15: the ERROR line's parts can match separately. Fix: one regex for the line.",
+      "file": "tests/scripts/test_git_hooks_harness.py",
+      "line": 36,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "0278b8fa627d4fe7d18c457dfc66670daf9ebf77576d8fd9c62bde6bf447dd45",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "0278b8fa627d4fe7d18c457dfc66670daf9ebf77576d8fd9c62bde6bf447dd45"
+        }
+      ]
+    },
+    "standards-19": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_git_hooks_dcc.py:84-86` \u2014 R12: the five checks are hand-listed; a sixth would escape. Fix: derive them from the module.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 84,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2"
+        }
+      ]
+    },
+    "spec-7": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `.do-code-change/242-dcc-test-tidy/plan.md:25` \u2014 \"The refactor steps change no assertion\" is untrue after fix round 2 (two private-word asserts added, the ERROR check changed); only the hand-over departure is in the plan. Fix: list all three departures.",
+      "file": ".do-code-change/242-dcc-test-tidy/plan.md",
+      "line": 25,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "255084c260aa22f50ca65d458b8923affccbce3d28cd9958179ae179d3a89c35",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "255084c260aa22f50ca65d458b8923affccbce3d28cd9958179ae179d3a89c35"
+        }
+      ]
+    },
+    "spec-8": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `.do-code-change/242-dcc-test-tidy/plan.md:17` \u2014 the API list omits ROOT, HOOKS, SH, DCC_REL, close and the Machine attributes. Fix: add them or say it lists helpers only.",
+      "file": ".do-code-change/242-dcc-test-tidy/plan.md",
+      "line": 17,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "b517e625a8422326b788528b30b50d4b05ed9d8d5c76c6182582997ca4b45d2f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "b517e625a8422326b788528b30b50d4b05ed9d8d5c76c6182582997ca4b45d2f"
+        }
+      ]
+    },
+    "spec-9": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks_harness.py:36` \u2014 the plan's `ERROR <name>  [<type>: <message>]` format is no longer pinned. Fix: an exact-format assertion.",
+      "file": "tests/scripts/test_git_hooks_harness.py",
+      "line": 36,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "0278b8fa627d4fe7d18c457dfc66670daf9ebf77576d8fd9c62bde6bf447dd45",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "0278b8fa627d4fe7d18c457dfc66670daf9ebf77576d8fd9c62bde6bf447dd45"
+        }
+      ]
+    },
+    "spec-10": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks_dcc.py:84-86` \u2014 the hand-typed five-check list. Fix: derive it.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 84,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2"
+        }
+      ]
+    },
+    "spec-11": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_git_hooks_dcc.py:92-93` \u2014 any assertion counts as the old hook failing. Fix: assert the expected message.",
+      "file": "tests/scripts/test_git_hooks_dcc.py",
+      "line": 92,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7fd40c9a151993e3d68989b9f3481e49278cd7659ea0ced1942349c6ae357dc2"
         }
       ]
     }
