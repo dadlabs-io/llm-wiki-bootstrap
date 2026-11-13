@@ -2243,8 +2243,24 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
     add("the earlier run folders are untouched (nothing deleted, edited, repaired, closed or added to)",
         not (gone or changed or added), {"gone": gone, "changed": changed, "added": added})
     cmds = [str((c.get("input") or {}).get("command", "")) for c in run["tool_calls"] if c["name"] == "Bash"]
-    add("no command closes an earlier run (--mark-interrupted)",
-        not [c for c in cmds if "--mark-interrupted" in c], [c[:120] for c in cmds if "--mark-interrupted" in c])
+    def _runs_mark_interrupted(cmd: str) -> bool:
+        """True when the command line actually runs `wiki-cycle-scope.py ... unfinished --mark-interrupted`.
+        Text that only quotes the option is not a run: heredoc bodies (cat/python file writes), echo/printf/cat
+        statements and quoted strings are dropped before looking."""
+        # drop heredoc bodies: <<EOF, <<'EOF', <<-"EOF" ... up to the closing tag
+        c = re.sub(r"<<-?\s*(['\"]?)(\w+)\1[^\n]*\n.*?^[ \t]*\2[ \t]*$", " ", cmd, flags=re.M | re.S)
+        for stmt in re.split(r"[;\n|&]+", c):
+            stmt = stmt.strip()
+            if re.match(r"(?:echo|printf|cat)\b", stmt):
+                continue  # prints or writes text; does not run the script
+            bare = re.sub(r"\"[^\"]*\"|'[^']*'", " ", stmt)  # the option must sit outside quotes
+            if re.search(r"(?:^|\s)--mark-interrupted\b", bare) and re.search(r"\bunfinished\b", bare) \
+                    and re.search(r"wiki-cycle-scope|\bpython\d?\b|\buv\s+run\b|\.py\b|\$\{?\w+\}?", bare):
+                return True
+        return False
+
+    closers = [c for c in cmds if _runs_mark_interrupted(c)]
+    add("no command closes an earlier run (--mark-interrupted)", not closers, [c[:120] for c in closers])
 
     if case["earlier"] == "open":
         oid = ids["open"]

@@ -273,7 +273,7 @@ Everything waiting on the user, one line each, with what to do and where:
 - <N> PDFs `attach-pdfs` could not match — each file and the tickets it might belong to
 - <N> items left for retry — each link and why, and the task card each reader got
 - <N> files left in Drive — each name and why
-- Unfinished earlier runs (from `<run-folder>/unfinished-runs.txt`) — each id, why, and the two ways out: `/wiki-cycle --resume <cycle_id>`, or `wiki-cycle-scope.py unfinished --mark-interrupted <cycle_id> --reason "<why>"`
+- Unfinished earlier runs (from `<run-folder>/unfinished-runs.txt`) — each id, why, and the two ways out: `/wiki-cycle --resume <cycle_id>`, or `wiki-cycle-scope.py unfinished --mark-interrupted <cycle_id> --reason "<why>"`; only for runs the file names, and when it names none the report says nothing about earlier runs (no "none" line, no mention of an interrupted or complete one)
 - <N> email candidates not yet approved (an unattended run) — the next reviewed run asks
 - lint fixes awaiting approval — where they are
 - Best-practices synthesis awaiting your approval (when `synthesis.json` says `awaiting_approval`): N entries, `<run-folder>/synthesis.md`

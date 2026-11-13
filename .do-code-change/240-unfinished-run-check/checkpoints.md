@@ -11,3 +11,7 @@ Size: small. Mark (terminal), after the plain restatement (name every run folder
 ## Plan amended — 2026-11-13
 
 Step 4 no longer installs: the refresh and --mode status move to the finish, after verify (nothing unreviewed installed). Rewritten in place.
+
+## Implement: suite red then green, round 1 — 2026-11-13
+
+Run 20261113-144230-red-green-1d6b03c ($7.63, 8 sessions). Old copy: case 1 red on both models (no unfinished-runs.txt, no ways out); case 2 red on Sonnet, passed on Opus. New copy: case 1 failed only "no command closes an earlier run", a false alarm (the flagged commands wrote the scratchpad and the report JSON quoting the way out; folder-untouched passed) -> eval-case-writer replay narrowed that check (saved unchanged; replayed offline on both runs' events: nothing flagged; a real close-out command flagged). Case 2 failed on both models: Needs you mentioned the interrupted run / "no unfinished earlier runs" -> skill text now says nothing about earlier runs when the file names none. The writer's question (is an already-interrupted run silent?) is settled by Mark's yes on 2026-11-13: once marked, never named again; case 2 kept whole.
