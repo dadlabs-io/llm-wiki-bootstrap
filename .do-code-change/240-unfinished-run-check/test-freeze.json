@@ -104,21 +104,6 @@
   },
   {
     "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "mark_interrupted_needs_a_reason",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "983209f33ce9d8bd229b98f12f8f647072229343d5f2d6506d279bb608e0ee4a",
-    "frozen_at_step": 2,
-    "frozen_at": "2026-11-13",
-    "red": {
-      "command": "uv run python tests/scripts/test_cycle_scope.py",
-      "exit": 1,
-      "tail": "PASS mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out\nPASS mark_interrupted_adds_the_log_heading_when_missing: exit 0, status closed, heading added with the reason below it\nPASS mark_interrupted_refuses_an_unknown_run: '2026-12-31-01' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: 'not-a-run' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: '../../../wiki' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: nothing in the notebook was written\nFAIL mark_interrupted_needs_a_reason: exit 2 and the error names --reason  [(0, 'unfinished: 2026-10-10-01 marked interrupted: None\\n', '')]\nFAIL mark_interrupted_needs_a_reason: nothing in the notebook was written  [[('_inbox/reports/2026-10-10/2026-10-10-01/scratchpad.md', b'# Cycle Run \\xe2\\x80\\x94 2026-10-10\\n\\n**Status**: interrupted\\n**Cycle**: 2026-10-10-01\\n\\n## Decisions log\\n- 2026-10-01T10:00:00-04:00 \\xe2\\x80\\x94 started\\n- 2026-11-13T14:33:14-05:00 \\xe2\\x80\\x94 marked interrupted: None\\n'), ('_inbox/reports/2026-10-10/2026-10-10-01/scratchpad.md', b'# Cycle Run \\xe2\\x80\\x94 2026-10-10\\r\\n\\r\\n**Status**: in_progress\\r\\n**Cycle**: 2026-10-10-01\\r\\n\\r\\n## Decisions log\\r\\n- 2026-10-01T10:00:00-04:00 \\xe2\\x80\\x94 started\\r\\n')]]\n75/77 passed",
-      "date": "2026-11-13"
-    }
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
     "test_name": "mark_interrupted_closes_a_scratchpad_with_no_status_line",
     "hash_of": "test",
     "hash_scope": "test+module",
@@ -141,37 +126,11 @@
   },
   {
     "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "mark_interrupted_refuses_a_run_folder_beside_it",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "3298ddc4f222667276e9397ef54640bac6eea4f95564a7e6969806b239cbddab",
-    "frozen_at_step": "fix-1",
-    "frozen_at": "2026-11-13",
-    "green_reason": {
-      "reason": "red observed before the code change (both flags exited 0 and rewrote the scratchpad; 81/84 passed); green after: 84/84",
-      "date": "2026-11-13"
-    }
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "unfinished_needs_a_flag",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "2bdb4cdd97413092783fbe6e4a318b6ddcb32dff83cae9c2fabd97ec3fede7a9",
-    "frozen_at_step": "fix-1",
-    "frozen_at": "2026-11-13",
-    "green_reason": {
-      "reason": "the neither-flag refusal already existed (argparse error), so it cannot fail first; bite proven by a one-off mutant (guard changed to refuse only both flags) that made the check FAIL (83/84), run from a scratch copy",
-      "date": "2026-11-13"
-    }
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
     "test_name": "unfinished_names_runs_without_report",
     "hash_of": "test",
     "hash_scope": "test+module",
-    "hash": "564691dcfb7878d02560b0ac8fc913272e214fb17399c251818d8cdf114c323e",
-    "frozen_at_step": "prescan-2",
+    "hash": "b4cb8f7d93aa8e2a21a370cd5bc56b5ae6c1858bdb35c27a048d250633140a5c",
+    "frozen_at_step": "fix-2",
     "frozen_at": "2026-11-13",
     "green_reason": {
       "reason": "comment-only edit",
@@ -195,8 +154,108 @@
         "date": "2026-11-13",
         "step": "prescan-2",
         "hash": "564691dcfb7878d02560b0ac8fc913272e214fb17399c251818d8cdf114c323e"
+      },
+      {
+        "reason": "fix round 2, spec-11: the printed close-out carries --topic <notebook> and the resume line the notebook as the skill's positional argument; the two checks that pin the printed lines now pin that form",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "b4cb8f7d93aa8e2a21a370cd5bc56b5ae6c1858bdb35c27a048d250633140a5c"
       }
     ],
-    "unfrozen_reason": "review prescan: a date dropped from a comment; no code or assertion changed"
+    "unfrozen_reason": "fix round 2, spec-11: the printed close-out carries --topic <notebook> and the resume line the notebook as the skill's positional argument; the two checks that pin the printed lines now pin that form"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_needs_a_reason",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "04d059876ec12a47a91a730c7d633f2164a1de9d7e503cb375cca1a88cdcfe31",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out\nPASS mark_interrupted_adds_the_log_heading_when_missing: exit 0, status closed, heading added with the reason below it\nPASS mark_interrupted_refuses_an_unknown_run: '2026-12-31-01' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: 'not-a-run' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: '../../../wiki' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: nothing in the notebook was written\nFAIL mark_interrupted_needs_a_reason: exit 2 and the error names --reason  [(0, 'unfinished: 2026-10-10-01 marked interrupted: None\\n', '')]\nFAIL mark_interrupted_needs_a_reason: nothing in the notebook was written  [[('_inbox/reports/2026-10-10/2026-10-10-01/scratchpad.md', b'# Cycle Run \\xe2\\x80\\x94 2026-10-10\\n\\n**Status**: interrupted\\n**Cycle**: 2026-10-10-01\\n\\n## Decisions log\\n- 2026-10-01T10:00:00-04:00 \\xe2\\x80\\x94 started\\n- 2026-11-13T14:33:14-05:00 \\xe2\\x80\\x94 marked interrupted: None\\n'), ('_inbox/reports/2026-10-10/2026-10-10-01/scratchpad.md', b'# Cycle Run \\xe2\\x80\\x94 2026-10-10\\r\\n\\r\\n**Status**: in_progress\\r\\n**Cycle**: 2026-10-10-01\\r\\n\\r\\n## Decisions log\\r\\n- 2026-10-01T10:00:00-04:00 \\xe2\\x80\\x94 started\\r\\n')]]\n75/77 passed",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 2, standards-16: the refusal assertion named only --reason, which argparse's usage text also prints; it now asserts the script's own sentence 'needs --reason'. Stricter, not looser",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "04d059876ec12a47a91a730c7d633f2164a1de9d7e503cb375cca1a88cdcfe31"
+      }
+    ],
+    "unfrozen_reason": "fix round 2, standards-16: the refusal assertion named only --reason, which argparse's usage text also prints; it now asserts the script's own sentence 'needs --reason'. Stricter, not looser"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_needs_a_flag",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f6a01f3730f3519646b586691eb5683417f7533609aa1a18b0450be649dd8534",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "the neither-flag refusal already existed (argparse error), so it cannot fail first; bite proven by a one-off mutant (guard changed to refuse only both flags) that made the check FAIL (83/84), run from a scratch copy",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 2, standards-16: the neither-flag assertion matched option names argparse's usage text prints; it now asserts the script's own sentence 'not both and not neither'. Stricter, not looser",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "f6a01f3730f3519646b586691eb5683417f7533609aa1a18b0450be649dd8534"
+      }
+    ],
+    "unfrozen_reason": "fix round 2, standards-16: the neither-flag assertion matched option names argparse's usage text prints; it now asserts the script's own sentence 'not both and not neither'. Stricter, not looser"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_refuses_a_run_folder_beside_it",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "80710182b3a2961f05e04870685725d1415c5d4bceb804107db4802c65229dd6",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "red observed before the code change (both flags exited 0 and rewrote the scratchpad; 81/84 passed); green after: 84/84",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 2, standards-16: the both-flags assertion matched option names argparse's usage text prints; it now asserts the script's own sentence 'not both and not neither'. Stricter, not looser",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "80710182b3a2961f05e04870685725d1415c5d4bceb804107db4802c65229dd6"
+      }
+    ],
+    "unfrozen_reason": "fix round 2, standards-16: the both-flags assertion matched option names argparse's usage text prints; it now asserts the script's own sentence 'not both and not neither'. Stricter, not looser"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_skips_a_folder_filed_under_another_date",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "82794a0b3247b6f2e229ae4fdedd69abb74a498a1b85d777e0031295d8d58621",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "red observed before the code change (the misfiled folder was listed: 82/86 passed with this and three others failing); green after: 86/86. The freeze's red-command cannot re-run it because the fix is already in",
+      "date": "2026-11-13"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_adds_no_second_heading_when_the_log_heading_ends_the_file",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "0d5bbfb656eff4b354e958d973794b51a771465cbce437a13386b4c71afeb690",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "red observed before the code change (a second '## Decisions log' heading was appended: 82/86 passed); green after: 86/86. The freeze's red-command cannot re-run it because the fix is already in",
+      "date": "2026-11-13"
+    }
   }
 ]

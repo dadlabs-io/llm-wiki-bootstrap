@@ -85,8 +85,9 @@ mode staged everything (task #184).
 
 `unfinished`: the earlier run folders (`_inbox/reports/<date>/<YYYY-MM-DD>-<NN>/`, not <rf>) that never got
 their `<cycle_id>-run-cycle-report.md`, unless their scratchpad says `interrupted`. Prints one line each, oldest
-first, with the ways out (`/wiki-cycle --resume <cycle_id>` only when the folder has a scratchpad, since a run with
-none has nothing to resume; always `--mark-interrupted`), or `unfinished: none`,
+first, with the ways out (`/wiki-cycle <notebook> --resume <cycle_id>` only when the folder has a scratchpad, since a
+run with none has nothing to resume; always `--topic <notebook> unfinished --mark-interrupted`, the notebook the
+listing ran on, so a pasted line acts on the right one), or `unfinished: none`,
 and writes <rf>/unfinished-runs.txt (`<cycle_id>` tab why). Exit 0 either way. Nothing is resumed or deleted.
 One cycle runs on a notebook at a time (Mark's rule): the listing counts any earlier run still in progress as
 dead, and `--mark-interrupted` rewrites it; there is no lock and no age check. `--run-folder` (list) and
@@ -524,6 +525,8 @@ def unfinished_runs(nb: Path, run_folder: Path) -> list[tuple[str, str]]:
     for d in sorted((nb / "_inbox" / "reports").glob("*/*")):
         if not d.is_dir() or not CYCLE_ID.match(d.name) or d.resolve() == run_folder.resolve():
             continue
+        if d != run_folder_of(nb, d.name):    # filed under another date: the close-out would refuse it
+            continue
         if (d / f"{d.name}-run-cycle-report.md").is_file():
             continue
         pad = d / "scratchpad.md"
@@ -552,9 +555,9 @@ def mark_interrupted(nb: Path, cycle_id: str, reason: str) -> None:
         title, _, rest = text.partition("\n")
         text = f"{title}\n\n**Status**: interrupted\n{rest}"
     line = f"- {now_stamp()} — marked interrupted: {reason}\n"
-    if not re.search(r"^## Decisions log\n", text, re.M):
+    if not re.search(r"^## Decisions log$", text, re.M):
         text = text.rstrip("\n") + "\n\n## Decisions log\n"
-    log = re.search(r"^## Decisions log\n", text, re.M)
+    log = re.search(r"^## Decisions log$", text, re.M)
     after = re.search(r"^## ", text[log.end():], re.M)
     end = log.end() + after.start() if after else len(text)
     atomic_write_text(pad, text[:end].rstrip("\n") + "\n" + line + ("\n" + text[end:] if after else ""))
@@ -574,10 +577,10 @@ def cmd_unfinished(nb: Path, args) -> int:
     why = f"{len(found)} earlier run folder(s) with no run-cycle report"
     write_scope(rf, "unfinished-runs.txt", [f"{cid}\t{w}" for cid, w in found], why)
     for cid, w in found:
-        resume = (f"resume: /wiki-cycle --resume {cid}; or " if (run_folder_of(nb, cid) / "scratchpad.md").is_file()
-                  else "")
+        resume = (f"resume: /wiki-cycle {args.topic_name} --resume {cid}; or "
+                  if (run_folder_of(nb, cid) / "scratchpad.md").is_file() else "")
         print(f'unfinished: {cid} ({w}) — {resume}close it: '
-              f'wiki-cycle-scope.py unfinished --mark-interrupted {cid} --reason "<why>"')
+              f'wiki-cycle-scope.py --topic {args.topic_name} unfinished --mark-interrupted {cid} --reason "<why>"')
     if not found:
         print("unfinished: none")
     return 0

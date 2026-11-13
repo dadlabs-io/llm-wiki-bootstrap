@@ -2235,7 +2235,15 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
     stext = read(run_dir / "scratchpad.md")
     needs = _needs_you(rtext)
     reply = run["text"]  # every assistant text of the session, not only the last message
+    # what the user reads at the end: the final result, else the last assistant text
+    final = str((run.get("result") or {}).get("result") or "").strip() or (run.get("texts") or [""])[-1]
     corpus = "\n".join([reply, rtext, utext, stext])
+
+    def way_out(option: str, i: str) -> str:
+        """`--<option> <id>` as the skill prints it: the id right after the option (a quote, backtick or `=` may
+        sit between). The notebook and --topic come before the option, so they never matter. A generic
+        `--resume <cycle_id>` does not match: only this run's id does."""
+        return r"--" + option + r"[\s=]+[`\"']?" + re.escape(i)
 
     # Step 0 ran: it writes the scratchpad first thing, so the new run's own scratchpad must exist and carry its id
     add("Step 0 ran: the new run's scratchpad exists and carries the new run's id", cid in stext,
@@ -2251,7 +2259,8 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
         not (gone or changed or added), {"gone": gone, "changed": changed, "added": added})
     cmds = [str((c.get("input") or {}).get("command", "")) for c in run["tool_calls"] if c["name"] == "Bash"]
     def _runs_mark_interrupted(cmd: str) -> bool:
-        """True when the command line actually runs `wiki-cycle-scope.py ... unfinished --mark-interrupted`.
+        """True when the command line actually runs `wiki-cycle-scope.py ... unfinished --mark-interrupted`
+        (with or without `--topic <notebook>` before `unfinished`).
         Text that only quotes the option is not a run: heredoc bodies (cat/python file writes), echo/printf/cat
         statements and quoted strings are dropped before looking."""
         # drop heredoc bodies: <<EOF, <<'EOF', <<-"EOF" ... up to the closing tag
@@ -2274,16 +2283,16 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
         add("unfinished-runs.txt is in the new run folder", bool(utext.strip()), "missing or empty")
         add("unfinished-runs.txt names the earlier run", oid in utext, utext[:200])
         add("the scratchpad carries the earlier run's id", oid in stext, stext[-200:])
-        add("Step 0 told the user the earlier run's id (named in the session's replies)", oid in reply,
-            reply[-300:] or "no reply text")
+        add("Step 0 told the user the earlier run's id (named in the final reply)", oid in final,
+            final[-300:] or "no reply text")
         add("the earlier run's line says why: no scratchpad",
             any(oid in l and re.search("scratchpad", l, re.I) for l in utext.splitlines()), utext[:200])
         # a folder with no scratchpad has nothing to resume: only the close-out is offered
         add("no resume is offered for the earlier run (--resume <id>)",
-            not re.search(r"--resume\s+`?(?:" + re.escape(oid) + r"|<)", corpus),
+            not re.search(way_out("resume", oid), corpus),
             [m.group(0) for m in re.finditer(r"[^\n]*--resume[^\n]*", corpus)][:3])
         add("the close-out is offered: --mark-interrupted <id>",
-            bool(re.search(r"--mark-interrupted\s+`?" + re.escape(oid), corpus)), "not found")
+            bool(re.search(way_out("mark-interrupted", oid), corpus)), "not found")
         add("Needs you has exactly one line for the earlier run",
             sum(1 for l in needs.splitlines() if oid in l) == 1, needs[:300] or "no Needs you section")
     else:
@@ -2297,7 +2306,7 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
             add(f"unfinished-runs.txt does not name the {name} run", i not in utext, utext[:200])
             add(f"Needs you does not name the {name} run", i not in needs, needs[:300])
             add(f"no way out is offered for the {name} run",
-                not re.search(r"--(resume|mark-interrupted)\s+`?" + re.escape(i), corpus), "found")
+                not re.search(r"--(?:resume|mark-interrupted)[\s=]+[`\"']?" + re.escape(i), corpus), "found")
         add("nothing about unfinished runs in Needs you",
             not re.search(r"unfinished[^\n]{0,30}run", needs, re.I), needs[:300])
 

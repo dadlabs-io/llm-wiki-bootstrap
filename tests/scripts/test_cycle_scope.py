@@ -361,10 +361,11 @@ with tempfile.TemporaryDirectory() as td:
         check("unfinished_names_runs_without_report: an in_progress scratchpad says so",
               "scratchpad says in_progress" in by.get("2026-10-02-01", ""), by)
         check("unfinished_names_runs_without_report: each line gives the close-out",
-              bool(ids) and all(f'unfinished --mark-interrupted {i} --reason "' in by[i] for i in ids), by)
+              bool(ids) and all(f'wiki-cycle-scope.py --topic t unfinished --mark-interrupted {i} --reason "' in by[i]
+                                for i in ids), by)
         # Mark's ruling: resume only for a folder with a scratchpad; nothing in one without can be resumed
         check("unfinished_names_runs_without_report: resume is offered for the in_progress folder only",
-              bool(ids) and all((f"/wiki-cycle --resume {i}" in by[i]) == (i == "2026-10-02-01") for i in ids), by)
+              bool(ids) and all((f"/wiki-cycle t --resume {i}" in by[i]) == (i == "2026-10-02-01") for i in ids), by)
         f = cur / "unfinished-runs.txt"
         rows = ([l.split("\t") for l in f.read_text(encoding="utf-8").splitlines() if l and not l.startswith("#")]
                 if f.is_file() else None)
@@ -385,6 +386,16 @@ with tempfile.TemporaryDirectory() as td:
         check("unfinished_none_case: the file holds only its header line, not zero bytes",
               len(text.splitlines()) == 1 and text.startswith("#"), repr(text))
     unfinished_none_case()
+
+    def unfinished_skips_a_folder_filed_under_another_date():
+        # a run id is filed under its own date; a folder elsewhere is one the close-out would refuse, so it is not listed
+        misfiled = reports / "2026-10-14" / "2026-10-15-01"
+        misfiled.mkdir(parents=True)
+        p = run("unfinished", "--run-folder", str(cur))
+        shutil.rmtree(misfiled.parent)
+        check("unfinished_skips_a_folder_filed_under_another_date: not named, the listing stays 'unfinished: none'",
+              p.returncode == 0 and p.stdout.strip() == "unfinished: none", (p.returncode, p.stdout, p.stderr[-200:]))
+    unfinished_skips_a_folder_filed_under_another_date()
 
     def unfinished_without_a_reports_folder():
         away = nb / "_inbox" / "reports-away"
@@ -465,6 +476,19 @@ with tempfile.TemporaryDirectory() as td:
               and lines.index("## Decisions log") == len(lines) - 2, (p.returncode, p.stderr[-200:], lines))
     mark_interrupted_adds_the_log_heading_when_missing()
 
+    def mark_interrupted_adds_no_second_heading_when_the_log_heading_ends_the_file():
+        d = mkrun("2026-10-13-01")
+        pad = d / "scratchpad.md"
+        pad.write_bytes(b"# Cycle Run - 2026-10-13\n\n**Status**: in_progress\n\n## Decisions log")
+        p = run("unfinished", "--mark-interrupted", "2026-10-13-01", "--reason", "heading last, no newline")
+        lines = pad.read_text(encoding="utf-8").splitlines()
+        check("mark_interrupted_adds_no_second_heading_when_the_log_heading_ends_the_file: exit 0, one heading, "
+              "the reason on the line below it",
+              p.returncode == 0 and lines.count("## Decisions log") == 1
+              and lines[-1].endswith("— marked interrupted: heading last, no newline")
+              and lines.index("## Decisions log") == len(lines) - 2, (p.returncode, p.stderr[-200:], lines))
+    mark_interrupted_adds_no_second_heading_when_the_log_heading_ends_the_file()
+
     def tree(root):
         return {p.relative_to(root).as_posix(): (p.read_bytes() if p.is_file() else None) for p in root.rglob("*")}
 
@@ -483,7 +507,7 @@ with tempfile.TemporaryDirectory() as td:
         before = tree(nb)
         p = run("unfinished", "--mark-interrupted", "2026-10-10-01")
         check("mark_interrupted_needs_a_reason: exit 2 and the error names --reason",
-              p.returncode == 2 and "--reason" in p.stderr, (p.returncode, p.stdout, p.stderr[-300:]))
+              p.returncode == 2 and "needs --reason" in p.stderr, (p.returncode, p.stdout, p.stderr[-300:]))
         check("mark_interrupted_needs_a_reason: nothing in the notebook was written", tree(nb) == before,
               sorted(set(tree(nb).items()) ^ set(before.items()), key=str)[:5])
     mark_interrupted_needs_a_reason()
@@ -491,8 +515,8 @@ with tempfile.TemporaryDirectory() as td:
     def unfinished_needs_a_flag():
         before = tree(nb)
         p = run("unfinished")
-        check("unfinished_needs_a_flag: neither flag exits 2 and the error names both",
-              p.returncode == 2 and "--run-folder" in p.stderr and "--mark-interrupted" in p.stderr,
+        check("unfinished_needs_a_flag: neither flag exits 2 and the error says to give one, not both and not neither",
+              p.returncode == 2 and "not both and not neither" in p.stderr,
               (p.returncode, p.stdout, p.stderr[-300:]))
         check("unfinished_needs_a_flag: nothing in the notebook was written", tree(nb) == before,
               sorted(set(tree(nb).items()) ^ set(before.items()), key=str)[:5])
@@ -502,8 +526,8 @@ with tempfile.TemporaryDirectory() as td:
         mkrun("2026-10-12-01", scratch="in_progress")
         before = tree(nb)
         p = run("unfinished", "--run-folder", str(cur), "--mark-interrupted", "2026-10-12-01", "--reason", "x")
-        check("mark_interrupted_refuses_a_run_folder_beside_it: both flags exit 2 and the error names both",
-              p.returncode == 2 and "--run-folder" in p.stderr and "--mark-interrupted" in p.stderr,
+        check("mark_interrupted_refuses_a_run_folder_beside_it: both flags exit 2 and the error says not both and not neither",
+              p.returncode == 2 and "not both and not neither" in p.stderr,
               (p.returncode, p.stdout, p.stderr[-300:]))
         check("mark_interrupted_refuses_a_run_folder_beside_it: nothing in the notebook was written",
               tree(nb) == before, sorted(set(tree(nb).items()) ^ set(before.items()), key=str)[:5])

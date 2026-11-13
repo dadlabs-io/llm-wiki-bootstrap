@@ -13,7 +13,7 @@
 
 ### The cycle names an earlier run that never finished (task #240, lesson #10)
 - **Why**: a cycle that dies before its report leaves a run folder nobody looks at again (2026-07-17-01 held step files and no scratchpad or report, and nothing flagged it); the pre-mortem listed it as "not built".
-- **What**: `wiki-cycle-scope.py unfinished --run-folder <rf>` lists the earlier run folders with no `<id>-run-cycle-report.md` (unless their scratchpad says `interrupted`), each with its why and the way out (`/wiki-cycle --resume` only for a folder with a scratchpad, closing it for every folder), and writes `unfinished-runs.txt`; `unfinished --mark-interrupted <cycle_id> --reason "<why>"` closes one. `/wiki-cycle` Step 0 runs it after the promote line, tells the user, and changes nothing; the report's ⚠️ Needs you lists each folder (`/wiki-report` template and `wiki-cycle` usage page updated). Nothing is resumed or deleted automatically.
+- **What**: `wiki-cycle-scope.py unfinished --run-folder <rf>` lists the earlier run folders with no `<id>-run-cycle-report.md` (unless their scratchpad says `interrupted`), each with its why and the way out (`/wiki-cycle --resume` only for a folder with a scratchpad, closing it for every folder), and writes `unfinished-runs.txt`; `unfinished --mark-interrupted <cycle_id> --reason "<why>"` closes one (the printed lines carry `--topic <notebook>`, and `/wiki-cycle <notebook> --resume <cycle_id>`, so a pasted line acts on the notebook the listing ran on). `/wiki-cycle` Step 0 runs it after the promote line, tells the user, and changes nothing; the report's ⚠️ Needs you lists each folder (`/wiki-report` template and `wiki-cycle` usage page updated). Nothing is resumed or deleted automatically.
 
 ## 2026-11-12
 
