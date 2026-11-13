@@ -30,3 +30,7 @@ Fix round 1 (the small path's one round): spec-1, standards-2 as above; cheap su
 ## Fix round 1 — 2026-11-13
 
 Developer: spec-1 (resume only with a scratchpad; frozen test split and re-frozen with the ruling as reason), standards-2 (Don't line + docstring + usage page), standards-3 (`run_folder_of` helper: a small design addition, three sites), -5 (dropped the unused assignment instead of printing; the frozen none-case pins stdout), -8 (exactly one of --run-folder / --mark-interrupted, two new tests; the neither case's bite shown by a mutant in a scratch copy, 83/84), -11, -12, -13; spec-5, spec-8. Not done with reasons: standards-4 (refactor with no failing test), -6 (both skill rules covered by suite cases), -7 (the file's one-notebook pattern). Red 81/84, green 84/84; check-freeze PASS. Case writer (replay): case renamed `earlier-run-without-report-or-scratchpad-gets-close-out-only`, checks: no resume for the no-scratchpad folder, close-out offered, the reply names the id, Step 0 ran (own scratchpad; header-only file in the none case), `earlier` validated, the shell-variable alternative dropped; saved unchanged; old baseline entry for the renamed id removed. Small path: this was its one fix round; a second moves the run to full.
+
+## Suite red then green, round 3 — 2026-11-13
+
+Run 20261113-161525-red-green-1d6b03c (~$7.4): RED THEN GREEN on all four (both cases, both models). Baselines merged per case from it; PENDING row rewritten in place.
