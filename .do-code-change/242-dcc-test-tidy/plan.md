@@ -14,7 +14,7 @@ setup and cleanup, a safer runner, and one new check that a gitleaks block also 
 
 ## Implementation Decisions
 
-- New module `tests/scripts/_git_hooks_harness.py` (searched for: an existing shared test harness under tests/scripts — found `_samples.py` and `_fake_qmd.py`, neither a git-hooks harness). It holds `Machine` (temp HOME, install, cleanup on a failed install), `Machine.fake_dcc(exit_code, message="", ran_marker=None)`, `Machine.new_repo(name)` (each git setup call's return code asserted), `Machine.commit(r, files)`, `Machine.head(r) -> str | None`, `Machine.run(args, cwd)`, `Machine.write_words(text)` (the private-words list), `github_token()`, `machine()` (a context manager: one Machine per check, closed however it ends), `collect_tests(namespace)`, `write_marker_hook(path, marker)`, `GITHUB_TOKEN_BODY_LEN`, `Machine.pre_commit_override` (an old hook installed over the new one, for the bite check), and `run_tests(tests: dict, argv) -> int` (unknown name: exit 2 with the known names; any exception reported as `ERROR <name>  [<type>: <message>]` and counted failed).
+- New module `tests/scripts/_git_hooks_harness.py` (searched for: an existing shared test harness under tests/scripts — found `_samples.py` and `_fake_qmd.py`, neither a git-hooks harness). It holds the constants `ROOT`, `HOOKS`, `SH`, `DCC_REL`, and `Machine` (attributes `base`, `home`, `hooks`, `env`, `install`; `close()`; temp HOME, install, cleanup on a failed install), `Machine.fake_dcc(exit_code, message="", ran_marker=None)`, `Machine.new_repo(name)` (each git setup call's return code asserted), `Machine.commit(r, files)`, `Machine.head(r) -> str | None`, `Machine.run(args, cwd)`, `Machine.write_words(text)` (the private-words list), `github_token()`, `machine()` (a context manager: one Machine per check, closed however it ends), `collect_tests(namespace)`, `write_marker_hook(path, marker)`, `GITHUB_TOKEN_BODY_LEN`, `Machine.pre_commit_override` with `hook_override(text)` (an old hook installed over the new one for the bite check, the previous value restored), and `run_tests(tests: dict, argv) -> int` (unknown name: exit 2 with the known names; any exception reported as `ERROR <name>  [<type>: <message>]` and counted failed).
 - `test_git_hooks.py`: each of its 18 checks becomes one `test_*` function on its own `Machine`, same assertions, except where the name review and the reviews strengthened one (the hand-over check now runs each stub and asserts it reached the repo's own hook, in place of reading the stub's text; recorded in checkpoints.md); the checks that relied on an earlier check's state (the allow file, the already-committed word, the local hooks) set that state up themselves. Its `--remove` check and its install checks keep their own functions.
 - `test_git_hooks_dcc.py`: imports the harness; `REFUSAL` constant for both refusal tests; the pass test uses `fake_dcc(0, ran_marker=...)`.
 - The new closing-line check plants a GitHub-shaped token so gitleaks blocks, with no fake dcc present.
@@ -22,8 +22,9 @@ setup and cleanup, a safer runner, and one new check that a gitleaks block also 
 ## Testing Decisions
 
 - Seam: the file's own checks run by name (`uv run python tests/scripts/test_git_hooks_dcc.py <test>`), as in #241.
-- The refactor steps change no assertion; their evidence is all checks green before and after, and the re-freeze
-  reasons recorded (manual: steps 1-2 — both files run in full before and after, in checkpoints.md).
+- The refactor steps loosen no assertion. Where the reviews asked, assertions were added or made stricter: the hand-over
+  check runs each stub; the two private-word setup blocks also check the message; the runner's ERROR line is matched
+  whole; each re-freeze records its reason. Their evidence is all checks green before and after (manual: steps 1-2 — both files run in full before and after, in checkpoints.md).
 - manual: step 3 — `main()`'s new paths shown by running an unknown name (exit 2) and by a deliberately raising
   test name never added to the file; evidence in checkpoints.md.
 

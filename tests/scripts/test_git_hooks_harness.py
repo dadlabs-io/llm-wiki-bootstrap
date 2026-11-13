@@ -10,6 +10,7 @@ show up as a failure, never end the run silently.
 from __future__ import annotations
 
 import io
+import re
 import sys
 from contextlib import redirect_stdout
 
@@ -32,7 +33,7 @@ def test_runner_reports_a_crashing_check_as_error():
 
     code, out = _run({"test_raises": test_raises, "test_passes": test_passes}, [])
     assert code == 1, out
-    assert "ERROR test_raises" in out and "RuntimeError: deliberate" in out, out
+    assert re.search(r"^ERROR test_raises  \[RuntimeError: deliberate\]$", out, re.MULTILINE), out
     assert "PASS test_passes" in out and "1/2 passed" in out, out
 
 

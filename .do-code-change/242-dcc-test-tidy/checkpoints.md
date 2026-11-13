@@ -32,3 +32,7 @@ Size: full — second fix round (review round 2 found two important findings); t
 ## Fix round 2 — 2026-11-13
 
 spec-1 (round 2): `test_every_dcc_check_fails_on_the_hook_before_241` runs all five dcc checks with the hook from bc898ad installed over the new one (`Machine.pre_commit_override`) and requires each to fail; bite shown: with HEAD's hook it failed. It replaces `test_refusal_needs_the_hook_dcc_lines` (retired with that reason). standards-1 (round 2): both setup blocks assert the private-word message too. S2: `write_marker_hook` in the harness. R13: the ERROR check asserts its parts. spec-2/nit (round 2): plan's API list and the hand-over departure recorded in place. Suites 6/6, 18/18, 2/2; check-freeze PASS.
+
+## Fix round 3 — 2026-11-13
+
+The bite test now: checks the old hook has no dcc call, installs it through `hook_override` (saves and restores), verifies a Machine got it, derives the checks from the module (the bite test excluded) and requires each to fail with its own message in `OLD_HOOK_FAILURES` (a set equality makes a new check need an entry); anything else is re-raised. The absent-pack assert gained a message for that match. The runner's ERROR line is matched whole by one regex. Plan Testing Decisions and the harness API list rewritten in place. Suites 6/6, 2/2, 18/18; check-freeze PASS. Bite with HEAD's hook: refused by the precondition.

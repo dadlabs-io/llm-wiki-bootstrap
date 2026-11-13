@@ -96,6 +96,17 @@ class Machine:
 
 
 @contextmanager
+def hook_override(text: str):
+    """Install `text` over ~/.git-hooks/pre-commit in every Machine built inside the block; restores the previous."""
+    previous = Machine.pre_commit_override
+    Machine.pre_commit_override = text
+    try:
+        yield
+    finally:
+        Machine.pre_commit_override = previous
+
+
+@contextmanager
 def machine():
     """A Machine for one check, cleaned up however the check ends."""
     m = Machine()

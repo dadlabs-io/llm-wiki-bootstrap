@@ -356,19 +356,6 @@
     }
   },
   {
-    "file": "tests/scripts/test_git_hooks_dcc.py",
-    "test_name": "test_every_dcc_check_fails_on_the_hook_before_241",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "76ff13141b1c4dd1d3aa8735fbe5d8d1e14b5359bab17072a1130f22b525b3cc",
-    "frozen_at_step": "fix-2",
-    "frozen_at": "2026-11-13",
-    "green_reason": {
-      "reason": "spec-1 as one real test over all five dcc checks (Mark: make them real tests). Bite shown: with HOOK_BEFORE_241 set to HEAD it failed (test_dcc_pass_lets_the_commit_through passed on the hook before #241)",
-      "date": "2026-11-13"
-    }
-  },
-  {
     "file": "tests/scripts/test_git_hooks.py",
     "test_name": "test_no_verify_commits_anyway",
     "hash_of": "test",
@@ -499,37 +486,15 @@
     "unfrozen_reason": "fix round 2: setup blocks also assert the private-word message (PY9); marker hooks via write_marker_hook (S2); no assertion loosened"
   },
   {
-    "file": "tests/scripts/test_git_hooks_harness.py",
-    "test_name": "test_runner_reports_a_crashing_check_as_error",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "ed4e9b6dad84f847ebf5b173319c8bc8e4511a442c0fad1b57874da564b64850",
-    "frozen_at_step": "fix-2",
-    "frozen_at": "2026-11-13",
-    "green_reason": {
-      "reason": "bite shown in fix round 1 (a re-raise mutation crashed the run)",
-      "date": "2026-11-13"
-    },
-    "unfreezes": [
-      {
-        "reason": "fix round 2 (R13): asserts the ERROR line's parts, not its exact spacing",
-        "date": "2026-11-13",
-        "step": "fix-2",
-        "hash": "ed4e9b6dad84f847ebf5b173319c8bc8e4511a442c0fad1b57874da564b64850"
-      }
-    ],
-    "unfrozen_reason": "fix round 2 (R13): asserts the ERROR line's parts, not its exact spacing"
-  },
-  {
     "file": "tests/scripts/test_git_hooks_dcc.py",
     "test_name": "test_dcc_pass_lets_the_commit_through",
     "hash_of": "test",
     "hash_scope": "test+module",
     "hash": "be4bde5ee3360c74126565791ca919406872a67deccde6f6bc80078e52118c56",
-    "frozen_at_step": "fix-2",
+    "frozen_at_step": "fix-3",
     "frozen_at": "2026-11-13",
     "green_reason": {
-      "reason": "green on the current hook; all fail on the hook before #241 (test_every_dcc_check_fails_on_the_hook_before_241)",
+      "reason": "green on the current hook; on bc898ad's hook each fails with its expected message; bite shown with HEAD's hook (the precondition refuses it)",
       "date": "2026-11-13"
     },
     "unfreezes": [
@@ -562,9 +527,15 @@
         "date": "2026-11-13",
         "step": "fix-2",
         "hash": "be4bde5ee3360c74126565791ca919406872a67deccde6f6bc80078e52118c56"
+      },
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "be4bde5ee3360c74126565791ca919406872a67deccde6f6bc80078e52118c56"
       }
     ],
-    "unfrozen_reason": "fix round 2: the harness Machine gained pre_commit_override (unset by default); body unchanged"
+    "unfrozen_reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened"
   },
   {
     "file": "tests/scripts/test_git_hooks_dcc.py",
@@ -572,10 +543,10 @@
     "hash_of": "test",
     "hash_scope": "test+module",
     "hash": "c67c80c690354778f16952656741c7267cdab897ca1e453b431fffd40a1f6159",
-    "frozen_at_step": "fix-2",
+    "frozen_at_step": "fix-3",
     "frozen_at": "2026-11-13",
     "green_reason": {
-      "reason": "green on the current hook; all fail on the hook before #241 (test_every_dcc_check_fails_on_the_hook_before_241)",
+      "reason": "green on the current hook; on bc898ad's hook each fails with its expected message; bite shown with HEAD's hook (the precondition refuses it)",
       "date": "2026-11-13"
     },
     "unfreezes": [
@@ -596,20 +567,26 @@
         "date": "2026-11-13",
         "step": "fix-2",
         "hash": "c67c80c690354778f16952656741c7267cdab897ca1e453b431fffd40a1f6159"
+      },
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "c67c80c690354778f16952656741c7267cdab897ca1e453b431fffd40a1f6159"
       }
     ],
-    "unfrozen_reason": "fix round 2: the harness Machine gained pre_commit_override (unset by default); body unchanged"
+    "unfrozen_reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened"
   },
   {
     "file": "tests/scripts/test_git_hooks_dcc.py",
     "test_name": "test_absent_pack_commits_with_a_not_checked_line",
     "hash_of": "test",
     "hash_scope": "test+module",
-    "hash": "c5ac60e0d0909af8ca3094f1b8878254e86e012c123b3e5adfbf1e257b8e7093",
-    "frozen_at_step": "fix-2",
+    "hash": "77c1d7f92b36d81757d4c9ecf6540321ffc970ca92f2bec903ee7a0e21f3ca00",
+    "frozen_at_step": "fix-3",
     "frozen_at": "2026-11-13",
     "green_reason": {
-      "reason": "green on the current hook; all fail on the hook before #241 (test_every_dcc_check_fails_on_the_hook_before_241)",
+      "reason": "green on the current hook; on bc898ad's hook each fails with its expected message; bite shown with HEAD's hook (the precondition refuses it)",
       "date": "2026-11-13"
     },
     "unfreezes": [
@@ -630,9 +607,15 @@
         "date": "2026-11-13",
         "step": "fix-2",
         "hash": "c5ac60e0d0909af8ca3094f1b8878254e86e012c123b3e5adfbf1e257b8e7093"
+      },
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "77c1d7f92b36d81757d4c9ecf6540321ffc970ca92f2bec903ee7a0e21f3ca00"
       }
     ],
-    "unfrozen_reason": "fix round 2: the harness Machine gained pre_commit_override (unset by default); body unchanged"
+    "unfrozen_reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened"
   },
   {
     "file": "tests/scripts/test_git_hooks_dcc.py",
@@ -640,10 +623,10 @@
     "hash_of": "test",
     "hash_scope": "test+module",
     "hash": "64621121dc8ddde6a594d8b87c41e4de7badb14f080779ba5a874cebea7c7b32",
-    "frozen_at_step": "fix-2",
+    "frozen_at_step": "fix-3",
     "frozen_at": "2026-11-13",
     "green_reason": {
-      "reason": "green on the current hook; all fail on the hook before #241 (test_every_dcc_check_fails_on_the_hook_before_241)",
+      "reason": "green on the current hook; on bc898ad's hook each fails with its expected message; bite shown with HEAD's hook (the precondition refuses it)",
       "date": "2026-11-13"
     },
     "unfreezes": [
@@ -664,9 +647,15 @@
         "date": "2026-11-13",
         "step": "fix-2",
         "hash": "64621121dc8ddde6a594d8b87c41e4de7badb14f080779ba5a874cebea7c7b32"
+      },
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "64621121dc8ddde6a594d8b87c41e4de7badb14f080779ba5a874cebea7c7b32"
       }
     ],
-    "unfrozen_reason": "fix round 2: the harness Machine gained pre_commit_override (unset by default); body unchanged"
+    "unfrozen_reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened"
   },
   {
     "file": "tests/scripts/test_git_hooks_dcc.py",
@@ -674,10 +663,10 @@
     "hash_of": "test",
     "hash_scope": "test+module",
     "hash": "8f699ce9fba9cef0529fbf07c08f85f2b3d3861aad4a944c0b508169bcc7a2f6",
-    "frozen_at_step": "fix-2",
+    "frozen_at_step": "fix-3",
     "frozen_at": "2026-11-13",
     "green_reason": {
-      "reason": "green on the current hook; all fail on the hook before #241 (test_every_dcc_check_fails_on_the_hook_before_241)",
+      "reason": "green on the current hook; on bc898ad's hook each fails with its expected message; bite shown with HEAD's hook (the precondition refuses it)",
       "date": "2026-11-13"
     },
     "unfreezes": [
@@ -692,8 +681,64 @@
         "date": "2026-11-13",
         "step": "fix-2",
         "hash": "8f699ce9fba9cef0529fbf07c08f85f2b3d3861aad4a944c0b508169bcc7a2f6"
+      },
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "8f699ce9fba9cef0529fbf07c08f85f2b3d3861aad4a944c0b508169bcc7a2f6"
       }
     ],
-    "unfrozen_reason": "fix round 2: the harness Machine gained pre_commit_override (unset by default); body unchanged"
+    "unfrozen_reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_dcc.py",
+    "test_name": "test_every_dcc_check_fails_on_the_hook_before_241",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "1e1d926a65db70bef8685e608c7313cb3c1e560ac407debd29169589356c79b6",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "green on the current hook; on bc898ad's hook each fails with its expected message; bite shown with HEAD's hook (the precondition refuses it)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "1e1d926a65db70bef8685e608c7313cb3c1e560ac407debd29169589356c79b6"
+      }
+    ],
+    "unfrozen_reason": "fix round 3: the bite test requires each check's own expected failure (OLD_HOOK_FAILURES), derives the checks from the module, verifies the override, and uses hook_override; the absent-pack assert gains a message; no assertion loosened"
+  },
+  {
+    "file": "tests/scripts/test_git_hooks_harness.py",
+    "test_name": "test_runner_reports_a_crashing_check_as_error",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "cd654f604414f6272da451911c15b0d13277ccce878f3bec7e26ed0b1b976349",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "bite shown in fix round 1 (a re-raise mutation crashed the run)",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 2 (R13): asserts the ERROR line's parts, not its exact spacing",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "ed4e9b6dad84f847ebf5b173319c8bc8e4511a442c0fad1b57874da564b64850"
+      },
+      {
+        "reason": "fix round 3 (R15): one regex pins the whole ERROR line, its format as the plan states",
+        "date": "2026-11-13",
+        "step": "fix-3",
+        "hash": "cd654f604414f6272da451911c15b0d13277ccce878f3bec7e26ed0b1b976349"
+      }
+    ],
+    "unfrozen_reason": "fix round 3 (R15): one regex pins the whole ERROR line, its format as the plan states"
   }
 ]
