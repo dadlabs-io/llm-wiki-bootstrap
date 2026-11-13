@@ -137,14 +137,21 @@
     "test_name": "mark_interrupted_closes_a_scratchpad_with_no_status_line",
     "hash_of": "test",
     "hash_scope": "test+module",
-    "hash": "636ca79abc624e5b80057a036bc5ce865f93a902522292a45c4b440e872c339e",
-    "frozen_at_step": "fix-1",
+    "hash": "231af776bfb9c2561ac662a8350ff153732635d686e93ecbfbe48bf5a7e26998",
+    "frozen_at_step": "name-review",
     "frozen_at": "2026-11-13",
-    "red": {
-      "command": "uv run python tests/scripts/test_cycle_scope.py",
-      "exit": 1,
-      "tail": "PASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out\nPASS mark_interrupted_adds_the_log_heading_when_missing: exit 0, status closed, heading added with the reason below it\nPASS mark_interrupted_refuses_an_unknown_run: '2026-12-31-01' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: 'not-a-run' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: '../../../wiki' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: nothing in the notebook was written\nPASS mark_interrupted_needs_a_reason: exit 2 and the error names --reason\nPASS mark_interrupted_needs_a_reason: nothing in the notebook was written\nFAIL mark_interrupted_closes_a_scratchpad_with_no_status_line: exit 0 and the next unfinished run leaves it out  [(0, '', 'unfinished: 2026-10-10-01 (scratchpad says in_progress) \ufffd resume: /wiki-cycle --resume 2026-10-10-01; or close it: wiki-cycle-scope.py unfinished --mark-interrupted 2026-10-10-01 --reason \"<why>\"\\nunfinished: 2026-10-11-01 (scratchpad says unknown) \ufffd resume: /wiki-cycle --resume 2026-10-11-01; or close it: wiki-cycle-scope.py unfinished --mark-interrupted 2026-10-11-01 --reason \"<why>\"\\n')]\n77/78 passed",
+    "green_reason": {
+      "reason": "the behaviour exists since fix-1; the added assertion checks what the name claimed",
       "date": "2026-11-13"
-    }
+    },
+    "unfreezes": [
+      {
+        "reason": "name review: an assertion added that reads the scratchpad (Status line and reason), so the name's 'closes' is checked",
+        "date": "2026-11-13",
+        "step": "name-review",
+        "hash": "231af776bfb9c2561ac662a8350ff153732635d686e93ecbfbe48bf5a7e26998"
+      }
+    ],
+    "unfrozen_reason": "name review: an assertion added that reads the scratchpad (Status line and reason), so the name's 'closes' is checked"
   }
 ]

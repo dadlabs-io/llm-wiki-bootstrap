@@ -493,6 +493,10 @@ with tempfile.TemporaryDirectory() as td:
         after = run("unfinished", "--run-folder", str(cur))
         check("mark_interrupted_closes_a_scratchpad_with_no_status_line: exit 0 and the next unfinished run leaves it out",
               p.returncode == 0 and "2026-10-11-01" not in after.stdout, (p.returncode, p.stderr[-200:], after.stdout))
+        sp = (d / "scratchpad.md").read_text(encoding="utf-8")
+        check("mark_interrupted_closes_a_scratchpad_with_no_status_line: the scratchpad gains a Status line saying "
+              "interrupted, and the reason under the Decisions log",
+              "**Status**: interrupted" in sp and "no status written" in sp.split("## Decisions log", 1)[-1], sp)
     mark_interrupted_closes_a_scratchpad_with_no_status_line()
 
 failed =[n for ok, n in results if not ok]
