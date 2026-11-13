@@ -352,7 +352,7 @@ with tempfile.TemporaryDirectory() as td:
         lines = [l for l in p.stdout.splitlines() if l.startswith("unfinished: ")]
         ids = [l.split()[1] for l in lines]
         by = dict(zip(ids, lines))
-        # 2026-09-10-01 and 2026-09-24-01 are the lint run and the run folder the sections above used: no report either
+        # the first two are the lint run and the run folder the sections above used: no report either
         check("unfinished_names_runs_without_report: exit 0, exactly the four unfinished folders, oldest first",
               p.returncode == 0 and ids == ["2026-09-10-01", "2026-09-24-01", "2026-10-01-01", "2026-10-02-01"],
               (p.returncode, p.stdout, p.stderr[-200:]))

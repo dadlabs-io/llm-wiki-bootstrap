@@ -89,7 +89,7 @@ first, with the two ways out (`/wiki-cycle --resume <cycle_id>`, or `--mark-inte
 and writes <rf>/unfinished-runs.txt (`<cycle_id>` tab why). Exit 0 either way. Nothing is resumed or deleted.
 `--mark-interrupted <cycle_id> --reason "<why>"` closes one: its scratchpad's Status becomes `interrupted` and the
 reason joins the Decisions log (a scratchpad is written when there is none); an unknown id is exit 2, nothing
-written (task #240, lesson #10: the 2026-07-17 cycle died before its report and nothing flagged it).
+written (task #240, lesson #10: a cycle died before its report and nothing flagged it).
 
 Entries are wiki/**/*.md except `_`-prefixed machine files, README.md and sessions/.
 (2026-09-24, task #42: C1 and C3; the 2026-09-23 cycle's findings 10 and 11.)
