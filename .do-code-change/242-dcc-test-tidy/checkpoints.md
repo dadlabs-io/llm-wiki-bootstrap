@@ -24,3 +24,5 @@ Suites: test_git_hooks.py 18/18, test_git_hooks_dcc.py 5/5; all 23 re-frozen wit
 ## Fix round 1, continued — 2026-11-13
 
 Mark (terminal, 2026-11-13) on spec-1 and spec-2: "Make them real tests" (not accepted on recorded evidence). Scope widened: `tests/scripts/test_git_hooks_harness.py`, the runner's own checks (spec-2: a crashing check reported as ERROR; an unknown name refused). spec-1 becomes `test_refusal_needs_the_hook_dcc_lines` in the dcc file: with the dcc lines stripped from the installed hook, a refusing fake no longer blocks.
+
+Ledger after the real tests: `query --cap 3` met (2 closed, 12 non-blocking); `fixed` still exit 1 on spec-1/spec-2 ("checkpoints.md did not move since round 1"), its round-1 fingerprint of the notes path never moving (skill suggestion filed). The focused round is dispatched with the fix diff, which now holds both tests.
