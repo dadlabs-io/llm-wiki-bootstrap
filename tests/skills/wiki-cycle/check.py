@@ -813,6 +813,8 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_youtube(case, ctx)
     elif case["kind"] == "size-model":
         _prepare_size_model(case, ctx)
+    elif case["kind"] == "unfinished":
+        _prepare_unfinished(case, ctx)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -2158,6 +2160,117 @@ def _check_hub(case: dict, add, ctx: dict, run_dir: Path) -> None:
         HUB_ENTRIES[HUB_MISSING][1].lower() in rtext or HUB_MISSING in rtext, rtext[-300:] or "no report")
 
 
+# ---------- kind "unfinished": Step 0 names earlier run folders without their report (task #240, lesson #10) ----------
+
+def _unfinished_ids(ctx: dict, case: dict) -> dict:
+    """The earlier run ids a case seeds: dated before today, so today's day folder holds only the new run."""
+    from datetime import date, timedelta
+    d = date.fromisoformat(ctx["cycle_id"][:10])
+    if case["earlier"] == "open":
+        return {"open": f"{(d - timedelta(days=3)).isoformat()}-01"}
+    return {"complete": f"{(d - timedelta(days=4)).isoformat()}-01",
+            "interrupted": f"{(d - timedelta(days=3)).isoformat()}-01"}
+
+
+def _prepare_unfinished(case: dict, ctx: dict) -> None:
+    """Earlier run folders in the seed notebook. 'open': two step files, no scratchpad, no report.
+    'complete-and-interrupted': one folder with its run-cycle report, one with no report whose scratchpad
+    says interrupted."""
+    nb, ids = ctx["notebook"], _unfinished_ids(ctx, case)
+
+    def folder(cid: str) -> Path:
+        f = nb / "_inbox" / "reports" / cid[:10] / cid
+        f.mkdir(parents=True, exist_ok=True)
+        return f
+
+    def step(f: Path, cid: str, name: str) -> None:
+        d = {"skill": name, "cycle_id": cid, "step": name, "timestamp": ctx["started"], "status": "completed",
+             "summary": {}, "queued": [], "skipped": [], "deferred": [], "notes": "", "errors": []}
+        (f / f"{name}.json").write_text(json.dumps(d, indent=2), encoding="utf-8")
+        (f / f"{name}.md").write_text(f"# {name} - {cid}\n\n**Status**: completed\n", encoding="utf-8")
+
+    def scratch(f: Path, cid: str, status: str) -> None:
+        (f / "scratchpad.md").write_text(
+            f"# Cycle scratchpad - {cid}\n\n**Cycle**: {cid}\n**Status**: {status}\n**Started**: {ctx['started']}\n",
+            encoding="utf-8")
+
+    if case["earlier"] == "open":
+        cid = ids["open"]
+        f = folder(cid)
+        step(f, cid, "update")
+        step(f, cid, "lint-mechanical")
+        return
+    cid = ids["complete"]
+    f = folder(cid)
+    step(f, cid, "lint-mechanical")
+    scratch(f, cid, "completed")
+    (f / f"{cid}-run-cycle-report.md").write_text(
+        f"# Run cycle report - {cid}\n\n## Needs you\n\nNothing waits on you.\n", encoding="utf-8")
+    (f / f"{cid}-run-cycle-report.json").write_text("{}", encoding="utf-8")
+    cid = ids["interrupted"]
+    f = folder(cid)
+    step(f, cid, "lint-mechanical")
+    scratch(f, cid, "interrupted")
+
+
+def _needs_you(text: str) -> str:
+    m = re.search(r"^##\s+[^\n]*needs you[^\n]*\n(.*?)(?=^##\s|\Z)", text, re.I | re.M | re.S)
+    return m.group(1) if m else ""
+
+
+def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
+    cid, ids = ctx["cycle_id"], _unfinished_ids(ctx, case)
+    # an empty-queue run: the quick-step pair and the lint counts are not what this kind is about
+    drop = {"quick steps all wrote their pair", "lint-mechanical.json counts broken links"}
+    res[:] = [x for x in res if x["name"] not in drop]
+
+    def read(p: Path) -> str:
+        return p.read_text(encoding="utf-8", errors="replace") if p.is_file() else ""
+
+    rtext = read(run_dir / f"{cid}-run-cycle-report.md")
+    utext = read(run_dir / "unfinished-runs.txt")
+    stext = read(run_dir / "scratchpad.md")
+    needs = _needs_you(rtext)
+    reply = run["text"]
+    corpus = "\n".join([reply, rtext, utext, stext])
+
+    # nothing resumed, deleted, edited, repaired or closed automatically
+    fixture, now = ctx["fixture_files"], snapshot(ctx)
+    prefixes = tuple(f"_inbox/reports/{i[:10]}/{i}/" for i in ids.values())
+    gone = [k for k in fixture if k.startswith(prefixes) and k not in now]
+    changed = [k for k in fixture if k.startswith(prefixes) and k in now and now[k] != fixture[k]]
+    added = [k for k in now if k.startswith(prefixes) and k not in fixture]
+    add("the earlier run folders are untouched (nothing deleted, edited, repaired, closed or added to)",
+        not (gone or changed or added), {"gone": gone, "changed": changed, "added": added})
+    cmds = [str((c.get("input") or {}).get("command", "")) for c in run["tool_calls"] if c["name"] == "Bash"]
+    add("no command closes an earlier run (--mark-interrupted)",
+        not [c for c in cmds if "--mark-interrupted" in c], [c[:120] for c in cmds if "--mark-interrupted" in c])
+
+    if case["earlier"] == "open":
+        oid = ids["open"]
+        add("unfinished-runs.txt is in the new run folder", bool(utext.strip()), "missing or empty")
+        add("unfinished-runs.txt names the earlier run", oid in utext, utext[:200])
+        add("the scratchpad carries the earlier run's id", oid in stext, stext[-200:])
+        add("the earlier run's line says why: no scratchpad",
+            any(oid in l and re.search("scratchpad", l, re.I) for l in utext.splitlines()), utext[:200])
+        add("both ways out given: resume with --resume <id>",
+            bool(re.search(r"--resume\s+`?" + re.escape(oid), corpus)), "not found")
+        add("both ways out given: close with --mark-interrupted <id>",
+            bool(re.search(r"--mark-interrupted\s+`?" + re.escape(oid), corpus)), "not found")
+        add("Needs you has exactly one line for the earlier run",
+            sum(1 for l in needs.splitlines() if oid in l) == 1, needs[:300] or "no Needs you section")
+    else:
+        add("the report has a Needs you section", bool(re.search(r"^##\s+[^\n]*needs you", rtext, re.I | re.M)),
+            "no Needs you heading")
+        for name, i in ids.items():
+            add(f"unfinished-runs.txt (if written) does not name the {name} run", i not in utext, utext[:200])
+            add(f"Needs you does not name the {name} run", i not in needs, needs[:300])
+            add(f"no way out is offered for the {name} run",
+                not re.search(r"--(resume|mark-interrupted)\s+`?" + re.escape(i), corpus), "found")
+        add("nothing about unfinished runs in Needs you",
+            not re.search(r"unfinished[^\n]{0,30}run", needs, re.I), needs[:300])
+
+
 # ---------- kind "youtube-batch": several videos in one batch go to one worker, fetched one at a time ----------
 
 YT_ID = re.compile(r"(?:v=|youtu\.be/)([\w-]{11})")
@@ -2644,6 +2757,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_youtube_batch(case, add, ctx, run, proposed)
     elif case["kind"] == "size-model":
         _check_size_model(case, add, ctx, run, run_dir, proposed)
+    elif case["kind"] == "unfinished":
+        _check_unfinished(case, add, res, ctx, run, run_dir)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()
