@@ -1,6 +1,6 @@
 # Plan — tidy test_git_hooks_dcc.py (task #242)
 
-Classification: wide refactor of one test file (structure of the harness), no production behaviour change, plus one added assertion.
+Classification: wide refactor of the two hook test files (a shared harness, one function per check), no production behaviour change, plus one added check.
 
 ## Problem Statement
 
@@ -14,16 +14,10 @@ runner, and one new check that a gitleaks block also ends on the owner line.
 
 ## Implementation Decisions
 
-- `fake_dcc(exit_code: int, message: str = "", ran_marker: Path | None = None)`: writes the fake; when `ran_marker` is
-  given, the fake also writes that file. The pass test calls it instead of writing the fake inline.
-- `REFUSAL = "FAKE-DCC-REFUSED: tool.py changed without a run"`, a module constant used by both refusal tests.
-- `Machine.__init__`: if the install fails, `self._td.cleanup()` runs before the assertion.
-- `repo()`: each git setup call's return code is asserted, naming the command.
-- `head()` returns `str | None` (`None` when `rev-parse` fails or prints nothing); callers assert `is not None` / `==`.
-- `main()`: an unknown name exits 2 with the known names listed; a test raising anything else is reported as
-  `ERROR <name>  [<type>: <message>]` and counted as failed.
-- The new closing-line check plants a GitHub-shaped token (built at runtime, as `test_git_hooks.py` does) so gitleaks
-  blocks, with no fake dcc present.
+- New module `tests/scripts/_git_hooks_harness.py` (searched for: an existing shared test harness under tests/scripts — found `_samples.py` and `_fake_qmd.py`, neither a git-hooks harness). It holds `Machine` (temp HOME, install, cleanup on a failed install), `Machine.fake_dcc(exit_code, message="", ran_marker=None)`, `Machine.new_repo(name)` (each git setup call's return code asserted), `Machine.commit(r, files)`, `Machine.head(r) -> str | None`, `Machine.run(args, cwd)`, `Machine.write_words(text)` (the private-words list), `github_token()`, and `run_tests(tests: dict, argv) -> int` (unknown name: exit 2 with the known names; any exception reported as `ERROR <name>  [<type>: <message>]` and counted failed).
+- `test_git_hooks.py`: each of its 18 checks becomes one `test_*` function on its own `Machine`, same assertions; the checks that relied on an earlier check's state (the allow file, the already-committed word, the local hooks) set that state up themselves. Its `--remove` check and its install checks keep their own functions.
+- `test_git_hooks_dcc.py`: imports the harness; `REFUSAL` constant for both refusal tests; the pass test uses `fake_dcc(0, ran_marker=...)`.
+- The new closing-line check plants a GitHub-shaped token so gitleaks blocks, with no fake dcc present.
 
 ## Testing Decisions
 
@@ -40,6 +34,9 @@ runner, and one new check that a gitleaks block also ends on the owner line.
 ## Scope
 
 - tests/scripts/test_git_hooks_dcc.py
+- tests/scripts/test_git_hooks.py
+- tests/scripts/_git_hooks_harness.py
+- tools/git-hooks/README.md
 
 ## Invariants
 
@@ -52,13 +49,8 @@ none (the which-findings choice is requirements Decision 1)
 
 ## Steps
 
-1. Harness edits (standards-3, -4, -8, -9, -13) — done when all four checks pass and each re-freeze carries its reason.
-   Trivial stakes: yes — test-only structure; no assertion loosened
-2. Docstring states why each check gets its own HOME (standards-6) — done when the file reads so; checks still pass.
-   Trivial stakes: yes — a docstring
-3. The runner reports any exception and refuses an unknown name (standards-10) — done when an unknown name exits 2
-   with the list, and the four checks still pass.
-   Trivial stakes: no
-4. A gitleaks block also ends on the owner line (standards-5, first half) — done when
-   `test_gitleaks_block_ends_on_the_owner_line` passes, and fails against #241's fixed point (bc898ad) hook.
-   Trivial stakes: no
+1. Shared harness, and the dcc test file moved onto it (standards-3, -4, -7, -8, -9, -13) — done when the four dcc checks pass, each re-frozen with its reason. Trivial stakes: yes — test structure; no assertion loosened
+2. `test_git_hooks.py` converted to one function per check on the harness (standards-2, -7) — done when all 18 checks pass as functions, each frozen green with the reason "existing check moved into a function". Trivial stakes: yes — test structure
+3. The runner reports any exception and refuses an unknown name (standards-10) — done when an unknown name exits 2 with the list and every check still passes (manual: shown in checkpoints.md). Trivial stakes: no
+4. A gitleaks block also ends on the owner line (standards-5, first half) — done when `test_gitleaks_block_ends_on_the_owner_line` passes, and fails against #241's fixed point (bc898ad) hook. Trivial stakes: no
+5. Docstrings say why each check gets its own HOME (standards-6), and the README's Tests paragraph names the harness — done when they read so (manual: read). Trivial stakes: yes — docs

@@ -10,10 +10,9 @@
 
 ## Exclusions
 
-- No change to `tools/git-hooks/pre-commit` (standards-11, the "NOT CHECKED -" wording, and standards-12, the one-line conditional, are the change request's text as given; changing them diverges from agent-builder's tested lines).
-- No change to `tests/scripts/test_git_hooks.py` (standards-2's shared helper would mean rewriting the sibling's import-time layout; standards-7's rename would have to touch both).
+- No change to `tools/git-hooks/pre-commit`: standards-11 (the "NOT CHECKED -" wording) and standards-12 (the one-line conditional) are agent-builder's lines as given; dropped as not worth fixing (Mark, 2026-11-13: "If they're not worth fixing then we can put them off").
 - No python-absent test (standards-5's second half): Mark ruled no special handling.
 
 ## Decisions
 
-1. **Which findings to fix.** Recommendation: fix standards-3 (the pass test uses `fake_dcc` with a body), -4 (one constant for the refusal message), -5 first half (the closing line also asserted on a gitleaks block), -6 (docstring says why a per-test HOME class), -8 (temp dir cleaned when the install fails), -9 (git setup return codes checked), -10 (`main` reports any exception per test and refuses an unknown name), -13 (`head()` returns `None` with no HEAD). Decline -2, -7, -11, -12 and -5's second half for the reasons under Exclusions. Alternative: fix all twelve, including the hook's given text and the sibling test.
+1. **Which findings to fix** — decided by Mark (Discord, 2026-11-13 00:52): "If the work's fixing, let's fix them now." Fix standards-3, -4, -5 (first half), -6, -8, -9, -10, -13 and also -2 and -7: `tests/scripts/test_git_hooks.py` is converted to one function per check, both test files share one harness module, and `repo()` becomes `new_repo()` in both. Drop -11 and -12 (Exclusions).
