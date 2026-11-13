@@ -34,6 +34,7 @@ A new `unfinished` subcommand in the cycle's step helper lists earlier run folde
 - skills/wiki-cycle/**
 - skills/wiki-report/SKILL.md
 - tests/skills/wiki-cycle/**
+- tests/skills/PENDING.md
 - CHANGELOG.md
 
 ## Invariants
