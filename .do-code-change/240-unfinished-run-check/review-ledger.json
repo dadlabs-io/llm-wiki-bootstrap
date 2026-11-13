@@ -75,6 +75,61 @@
         "tests/skills/wiki-cycle/cases.json": "02527cc03bd05da777312748ed883a540ed52da1cbff142731183279e58c7756",
         "tests/skills/wiki-cycle/check.py": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60"
       }
+    },
+    {
+      "round": 2,
+      "at": "2026-11-13T21:39:52Z",
+      "diff_sha256": "f9b7cf3954ef2f8ab61687719f18af829375524ed01da96884b200140db5e725",
+      "findings_sha256": "7ef01f7225f616235b8e39937ab6ff08012af07851f33d87d0f7fa7e3215d09a",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-15",
+        "standards-16",
+        "standards-17",
+        "standards-18",
+        "standards-19",
+        "standards-20",
+        "spec-11",
+        "spec-12",
+        "spec-13",
+        "spec-14",
+        "spec-15",
+        "spec-16",
+        "spec-17"
+      ],
+      "new": [
+        "standards-15",
+        "standards-16",
+        "standards-17",
+        "standards-18",
+        "standards-19",
+        "standards-20",
+        "spec-11",
+        "spec-12",
+        "spec-13",
+        "spec-14",
+        "spec-15",
+        "spec-16",
+        "spec-17"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "fa9ff8c8c34ea2088722c05d8d2317aca3cbc812de835caec2736afa8c73f6c5",
+        "scripts/wiki-cycle-scope.py": "53a722a0ae31be04cecfdb816d3ea2837b0036edd06b49e92db29a97259344a3",
+        "skills/wiki-cycle/SKILL.md": "9bbb442ef7bca9a923011f1160fc0a1a8a61f979a189ffe44b4a8989f0def0c3",
+        "skills/wiki-cycle/reference.md": "697a090548354a832b8d8d4077253fe09932062c280bec59005df51d9a742c40",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "7f759268511a08e170f7cadcceaefde4e4b7f9c3129b0db8ba7984e301eb3d3e",
+        "skills/wiki-report/SKILL.md": "fa409437faed306c22d52a6348a15a01b0f4aabdbdccca658f68306d8d408826",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "2fa3552b1609c12689c8e828c3d5714139c52b5e84f8904516ba797ddca945c4",
+        "tests/scripts/test_cycle_scope.py": "1d6b06d30ec3a2f7d3d4ae464e7aea82c458dee400cc82dcf1d0fc55bf99ad8a",
+        "tests/skills/PENDING.md": "c6586b4c000e67ecad7105deef79fca8968b866a71cf09ba364417842cb0ac6e",
+        "tests/skills/wiki-cycle/baseline-opus.json": "d5567ecdd356812c0b6378bb0fd1b22ecbee98de9ad71f39eb5a141a50bd1e80",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "1800426d4a22b072b805dcff3a0a398d523faf7f6ca1731e49a629ebcc0a05db",
+        "tests/skills/wiki-cycle/cases.json": "1ee503bacbcbacb2b69fb36c027f9afef6cb945f42a6818c849c14f33a5306b4",
+        "tests/skills/wiki-cycle/check.py": "7529e1ba92773dfae85d29806986d6aaa065cd425e0d0f83fe0fdcc92ac13c72"
+      }
     }
   ],
   "items": {
@@ -719,6 +774,279 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "7529e1ba92773dfae85d29806986d6aaa065cd425e0d0f83fe0fdcc92ac13c72"
+        }
+      ]
+    },
+    "standards-15": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-cycle-scope.py:524` \u2014 S2 sibling of round-1 standards-3, not converted to the helper: `for d in sorted((nb / \"_inbox\" / \"reports\").glob(\"*/*\")):` while `run_folder_of` (`:540-542`) builds `nb / \"_inbox\" / \"reports\" / cycle_id[:10] / cycle_id`. A run filed under a different date folder is listed with a close-out command that `cmd_unfinished` refuses (`:566`, exit 2). Fix: in `unfinished_runs` skip any `d` where `d != run_folder_of(nb, d.name)`, so listing and close-out use one rule.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 524,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3afb01c95049c82a5258326389c8b95240bcf085c4d0d6d106195dc7d2a6cae7",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "3afb01c95049c82a5258326389c8b95240bcf085c4d0d6d106195dc7d2a6cae7"
+        }
+      ]
+    },
+    "standards-16": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_cycle_scope.py:486` (also `:495`, `:506`) \u2014 PY9 the error assertions pass on argparse's own usage text: `p.returncode == 2 and \"--reason\" in p.stderr`, and `\"--run-folder\" in p.stderr and \"--mark-interrupted\" in p.stderr`. The subparser's usage line already prints those option names, so the checks hold if the error sentence is deleted. Fix: assert the sentences: `\"needs --reason\" in p.stderr` (script `:709`) and `\"not both and not neither\" in p.stderr` (script `:707`).",
+      "file": "tests/scripts/test_cycle_scope.py",
+      "line": 486,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "ae186d1983d93a2064614bd93c631ae54c776f7b6e62bd8eac0572c6dea8b6be",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "ae186d1983d93a2064614bd93c631ae54c776f7b6e62bd8eac0572c6dea8b6be"
+        }
+      ]
+    },
+    "standards-17": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `skills/wiki-cycle/SKILL.md:63` and `:175`, `skills/wiki-report/SKILL.md:276`, `skills/wiki-cycle/wiki-seed/wiki-cycle.md:43` \u2014 S2/S7 the ruling's rule \"resume only for a run with a scratchpad\" is now restated in four prose places plus the script (`:577`). Raised because the fix added the clause to Step 8, the report template and the usage page, which widens the duplication that standards-6 declined. Fix: state it once (Step 0) and have Step 8, the report and the usage page say \"the way out Step 0 printed\".",
+      "file": "skills/wiki-cycle/SKILL.md",
+      "line": 63,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "025ac3990adb0d3f8d35cb4e3c92bbc8263324b7d6ee57b89984d083c4b2561f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "025ac3990adb0d3f8d35cb4e3c92bbc8263324b7d6ee57b89984d083c4b2561f"
+        }
+      ]
+    },
+    "standards-18": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-cycle-scope.py:708` \u2014 G2 `--reason` given with `--run-folder` passes every check and is ignored. Fix: also refuse `args.reason and not args.mark_interrupted` with `un.error(...)`.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 708,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "635169d2ab589f5332dcba32ac87735863d25cd75a1c93b626eabb416bc7e0a1",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "635169d2ab589f5332dcba32ac87735863d25cd75a1c93b626eabb416bc7e0a1"
+        }
+      ]
+    },
+    "standards-19": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/skills/wiki-cycle/check.py:2253` [eval-case-writer] \u2014 G16/G17 `_runs_mark_interrupted` is a shell-text parser nested inside `_check_unfinished`, while the file's other helpers (`_needs_you`, `_unfinished_ids`) sit at module level. Fix: move it to module level beside `_needs_you`.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2253,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "621717665db8cffc1c5b7db52d2e5cc3622d88b94f0a346c33b9ba3b7abb16fd",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "621717665db8cffc1c5b7db52d2e5cc3622d88b94f0a346c33b9ba3b7abb16fd"
+        }
+      ]
+    },
+    "standards-20": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/skills/wiki-cycle/check.py:2168` [eval-case-writer] \u2014 R3 the `earlier` value `\"open\"` / `\"complete-and-interrupted\"` against the kind, skill and script word \"unfinished\". May predate round 1. Fix: rename the value to `\"unfinished\"` in check.py and cases.json.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2168,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "621717665db8cffc1c5b7db52d2e5cc3622d88b94f0a346c33b9ba3b7abb16fd",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "621717665db8cffc1c5b7db52d2e5cc3622d88b94f0a346c33b9ba3b7abb16fd"
+        }
+      ]
+    },
+    "spec-11": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `scripts/wiki-cycle-scope.py:577-580` and `skills/wiki-cycle/SKILL.md:63` \u2014 the printed close-out (and the resume line) omits `--topic`, so the command is not complete for a cycle on a notebook other than the project's. Note: the clause predates the fix and the plan's own sample (`plan.md:16`) omits it too; it is in lines the fix reshaped (the resume conditional) and was not raised in round 1, so the caller may treat it as new rather than a regression. Intent: docstring `:15` gives `--topic N unfinished --mark-interrupted`; SKILL.md Step 0 takes a `<notebook>`; plan Invariants, the check changes an earlier folder \"only through `--mark-interrupted` on the one named\". Implemented: `f'wiki-cycle-scope.py unfinished --mark-interrupted {cid} --reason \"<why>\"'` (`:579-580`); SKILL.md `:63` the same. The topic falls back to the project's notebook (`:710`). Affected: a user pasting the line for another notebook closes the wrong run when the same `<date>-01` exists there, otherwise gets exit 2. Fix: print `--topic <notebook>` in both lines (the script has the topic before dispatch) and in SKILL.md `:63`; amend the plan's sample.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 577,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3afb01c95049c82a5258326389c8b95240bcf085c4d0d6d106195dc7d2a6cae7",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "3afb01c95049c82a5258326389c8b95240bcf085c4d0d6d106195dc7d2a6cae7"
+        }
+      ]
+    },
+    "spec-12": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-cycle-scope.py:115` (print branch, `:577` in the file as numbered by the retry lens) \u2014 a scratchpad whose Status is `completed` (or has no Status line) and no report is still offered `--resume`; no spec text says whether that is right. This is the remaining part of round-1 spec-1; the ruling covered only the no-scratchpad case. Intent: plan Step 1, \"`resume: /wiki-cycle --resume <cycle_id>` only when the folder has a scratchpad\"; SKILL.md \"`--resume <cycle_id>`: ... continue from the phase after the last `done`\"; `completed` is set only after the Step 8 report. Implemented: `if (run_folder_of(nb, cid) / \"scratchpad.md\").is_file()`, true for `completed`. Affected: a user offered resume on a run with no phase left and no report. Fix: state in requirements Decision 2 whether `completed` with no report is resumed or only closed, and make the line match.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 115,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "53a722a0ae31be04cecfdb816d3ea2837b0036edd06b49e92db29a97259344a3",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "53a722a0ae31be04cecfdb816d3ea2837b0036edd06b49e92db29a97259344a3"
+        }
+      ]
+    },
+    "spec-13": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/check.py:2237` [eval-case-writer] \u2014 the \"Step 0 told the user\" check reads every assistant message (`reply = run[\"text\"]`), so a later mention of the id passes even when Step 0 never told the user. Intent: SKILL.md `:63`, \"tell the user each line now\". Fix: check the assistant text after the Step 0 `unfinished` call, or the final reply.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2237,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "621717665db8cffc1c5b7db52d2e5cc3622d88b94f0a346c33b9ba3b7abb16fd",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "621717665db8cffc1c5b7db52d2e5cc3622d88b94f0a346c33b9ba3b7abb16fd"
+        }
+      ]
+    },
+    "spec-14": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/check.py:2283` [eval-case-writer] \u2014 `r\"--resume\\s+`?(?:\" + re.escape(oid) + r\"|<)\"`: the `|<` alternative fails \"no resume is offered\" on any generic `--resume <cycle_id>` text in a reply, which SKILL.md `:63` itself contains. Intent: Decision 2 ruling, resume only for a folder with a scratchpad. Fix: drop the `|<` alternative and match only the earlier id.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2283,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "621717665db8cffc1c5b7db52d2e5cc3622d88b94f0a346c33b9ba3b7abb16fd",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "621717665db8cffc1c5b7db52d2e5cc3622d88b94f0a346c33b9ba3b7abb16fd"
+        }
+      ]
+    },
+    "spec-15": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-cycle-scope.py:113` \u2014 the plan invariant \"never deletes or edits an earlier run folder except through `--mark-interrupted`\" is not enforced for an earlier folder passed as `--run-folder` (`write_scope` writes into any folder named). SKILL.md always passes the current one, so this is misuse only. Round-1 spec-9 asked \"correct the pin text; guard or document\": only the pin text was done. Fix: reject a `--run-folder` under `_inbox/reports/` whose id is not the current one, or document it in the docstring.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 113,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "53a722a0ae31be04cecfdb816d3ea2837b0036edd06b49e92db29a97259344a3",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "53a722a0ae31be04cecfdb816d3ea2837b0036edd06b49e92db29a97259344a3"
+        }
+      ]
+    },
+    "spec-16": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-cycle-scope.py:555-556` \u2014 a scratchpad ending in `## Decisions log` with no trailing newline gets a second heading (`re.search(r\"^## Decisions log\\n\", ...)`). Intent: plan `:17`, \"adding the heading if missing\". Round-1 unverified item, now confirmed by reading the regex; not run. Fix: accept end-of-string as the heading match.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 555,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3afb01c95049c82a5258326389c8b95240bcf085c4d0d6d106195dc7d2a6cae7",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "3afb01c95049c82a5258326389c8b95240bcf085c4d0d6d106195dc7d2a6cae7"
+        }
+      ]
+    },
+    "spec-17": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `tests/skills/wiki-cycle/check.py:2263-2265` [eval-case-writer] \u2014 a quoted flag such as `'--mark-interrupted'` is stripped as text, so a real close can pass \"no command closes an earlier run\"; the folder-untouched check still catches a changed or added scratchpad. Fix: strip only the quoted `--reason` value.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2263,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "621717665db8cffc1c5b7db52d2e5cc3622d88b94f0a346c33b9ba3b7abb16fd",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "621717665db8cffc1c5b7db52d2e5cc3622d88b94f0a346c33b9ba3b7abb16fd"
         }
       ]
     }

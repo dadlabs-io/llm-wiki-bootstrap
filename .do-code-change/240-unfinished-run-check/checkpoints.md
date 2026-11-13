@@ -34,3 +34,9 @@ Developer: spec-1 (resume only with a scratchpad; frozen test split and re-froze
 ## Suite red then green, round 3 — 2026-11-13
 
 Run 20261113-161525-red-green-1d6b03c (~$7.4): RED THEN GREEN on all four (both cases, both models). Baselines merged per case from it; PENDING row rewritten in place.
+
+## Review round 2 — 2026-11-13
+
+Focused round: 13 findings, 1 blocking (spec-11: the printed close-out and resume lines omit `--topic`, so for a cycle on another notebook, e.g. agentic-design run from this project, a pasted close-out falls back to the project's notebook). Round-1 rulings confirmed applied; round-1 addressed items confirmed except standards-3's one sibling (standards-15).
+Size: full — second fix round. The rounds already spent count toward the full ceiling of 3.
+Fix round 2 takes: spec-11 (blocking), standards-15 (listing skips a folder not under its own date folder, one definition of a run folder), standards-16 (assert the script's own error sentences), spec-16 (no-newline heading). To the case writer: spec-14 (the `|<` alternative fails on generic text) and spec-13. Left open, non-blocking: standards-17 (one-source wording across four prose places: suite-covered text), -18, -19, -20; spec-12 (a `completed` scratchpad with no report keeps resume: the ruling covers only the no-scratchpad case; resume can still write its report), spec-15, spec-17.
