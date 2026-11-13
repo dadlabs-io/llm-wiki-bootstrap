@@ -1,0 +1,586 @@
+{
+  "schema": 1,
+  "diff_base": "08d9c6cb7db1df6d731976fc00fd326fde8e0b09",
+  "rounds": [
+    {
+      "round": 1,
+      "at": "2026-11-13T20:22:38Z",
+      "diff_sha256": "8e5b03466f3bc3b1a60d7ecf39aae405089c6beb0e25aae46a8aa736b09dd2d1",
+      "findings_sha256": "6cd86d7ffd7bad86d14f124ff5623cf728fcb1afa13bb8af6a2f783deef11397",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "standards-13",
+        "standards-14",
+        "spec-1",
+        "spec-2",
+        "spec-3",
+        "spec-4",
+        "spec-5",
+        "spec-6",
+        "spec-7",
+        "spec-8",
+        "spec-9",
+        "spec-10"
+      ],
+      "new": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "standards-13",
+        "standards-14",
+        "spec-1",
+        "spec-2",
+        "spec-3",
+        "spec-4",
+        "spec-5",
+        "spec-6",
+        "spec-7",
+        "spec-8",
+        "spec-9",
+        "spec-10"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "13af09611bd4150f944607347858df24e1011b53edf0e656d49aa09a5babf66f",
+        "scripts/wiki-cycle-scope.py": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe",
+        "skills/wiki-cycle/SKILL.md": "eb1863e13dd9cf7abff4e6be339d0e146fedfffd47c094333d77e443bec7d979",
+        "skills/wiki-cycle/reference.md": "697a090548354a832b8d8d4077253fe09932062c280bec59005df51d9a742c40",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "e5e5f9809dfdff4f9a3b6e2139eb633d5e6556ed85aee6e4543c3f21568064da",
+        "skills/wiki-report/SKILL.md": "5b9c5d3d2bab843462f107f99129fdc7f6d2fef7e012f1d65c3724dd5cd5b38b",
+        "tests/scripts/test_cycle_scope.py": "86c7bbc135b41ec5bfb5ff90095aa1a43c24a3d28b00f876ff83134694cfb314",
+        "tests/skills/PENDING.md": "a04264659e16a446b8f670283bff9054fd2229eb053a97a2a65367d7a2b822a0",
+        "tests/skills/wiki-cycle/cases.json": "02527cc03bd05da777312748ed883a540ed52da1cbff142731183279e58c7756",
+        "tests/skills/wiki-cycle/check.py": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60"
+      }
+    }
+  ],
+  "items": {
+    "standards-1": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/skills/wiki-cycle/cases.json` (whole file) \u2014 R25 cleanup past the task: the file was re-serialised from one case per line to indented JSON (509 added / 56 removed), hiding the two new cases in the diff. [eval-case-writer / saver] The two appended cases were saved unchanged by rule; the re-layout is in the saved file. Fix: restore the compact one-case-per-line layout and append only the two new case lines.",
+      "file": "tests/skills/wiki-cycle/cases.json",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "02527cc03bd05da777312748ed883a540ed52da1cbff142731183279e58c7756",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "02527cc03bd05da777312748ed883a540ed52da1cbff142731183279e58c7756"
+        }
+      ]
+    },
+    "standards-2": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `scripts/wiki-cycle-scope.py` (`unfinished_runs`, `mark_interrupted`) \u2014 G26/G2 a run another session is still writing (scratchpad `in_progress`, no report yet) is named \"unfinished\", and `mark_interrupted` does `text = pad.read_text(...)` then `atomic_write_text(pad, ...)` with no age or lock check. Overlaps the doubt log's \"marking a run still running \u2014 trade-off\"; raised here because the Standards lens did not see that log. Fix: refuse `--mark-interrupted` on a recently written scratchpad unless forced, or say in the listing line that the run may still be live.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe"
+        }
+      ]
+    },
+    "standards-3": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-cycle-scope.py` (`unfinished_runs` / `mark_interrupted` / `cmd_unfinished`) \u2014 S2/S5/S7 the `_inbox/reports/<date>/<id>` path and the `RUN_ID` check are built in more than one place. Fix: one helper `run_folder_of(nb, cid) -> Path | None` used by both callers.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe"
+        }
+      ]
+    },
+    "standards-4": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-cycle-scope.py` (`mark_interrupted`) \u2014 G16/G19/S13 status rewrite, heading insertion and section append are interleaved in regex code, and `log` / `after` hold `re.Match` objects (S1). Fix: split into `_set_status(text)` and `_append_under(text, heading, line)`; rename the matches.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe"
+        }
+      ]
+    },
+    "standards-5": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-cycle-scope.py` (`cmd_unfinished`) \u2014 S15 `out = write_scope(...)` is never read, while the sibling `promote` print ends `-> {out}`. Fix: print it or drop the assignment.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe"
+        }
+      ]
+    },
+    "standards-6": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `skills/wiki-cycle/SKILL.md` (Step 8) and `skills/wiki-report/SKILL.md` (Needs-you item) \u2014 S2 the \"nothing about earlier runs when none\" rule is stated in both. Fix: keep it in wiki-report and point to it from Step 8.",
+      "file": "skills/wiki-cycle/SKILL.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "eb1863e13dd9cf7abff4e6be339d0e146fedfffd47c094333d77e443bec7d979",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "eb1863e13dd9cf7abff4e6be339d0e146fedfffd47c094333d77e443bec7d979"
+        }
+      ]
+    },
+    "standards-7": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_cycle_scope.py` (`unfinished_names_runs_without_report`) \u2014 R14 `ids == [\"2026-09-10-01\", \"2026-09-24-01\", \"2026-10-01-01\", \"2026-10-02-01\"]` depends on folders made by earlier sections of the same script. Fix: create them inside this section or use a fresh notebook.",
+      "file": "tests/scripts/test_cycle_scope.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "86c7bbc135b41ec5bfb5ff90095aa1a43c24a3d28b00f876ff83134694cfb314",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "86c7bbc135b41ec5bfb5ff90095aa1a43c24a3d28b00f876ff83134694cfb314"
+        }
+      ]
+    },
+    "standards-8": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-cycle-scope.py` (`main`, `cmd_unfinished`) \u2014 T3 no test runs `unfinished` with neither flag, or with both `--run-folder` and `--mark-interrupted` (the second silently ignores `--run-folder`). Fix: add the two exit-2 tests, or reject the combination.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe"
+        }
+      ]
+    },
+    "standards-9": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/check.py` (`_check_unfinished`, the \"does not name the {name} run\" check) \u2014 PY9 `i not in utext` passes when no file is written, so the complete-and-interrupted case passes even if Step 0 never ran. [eval-case-writer] Fix: also assert `utext.startswith(\"#\")` in that branch.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60"
+        }
+      ]
+    },
+    "standards-10": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/check.py` (`_runs_mark_interrupted`) \u2014 G16 a 15-line command parser whose `\\$\\{?\\w+\\}?` alternative counts any shell variable as the script. [eval-case-writer] Fix: keep the variable case only if a real run needs it, and say so in one line.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60"
+        }
+      ]
+    },
+    "standards-11": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-cycle-scope.py` \u2014 R3 `RUN_ID` against `cycle_id` for the same concept. Fix: rename to `CYCLE_ID`.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe"
+        }
+      ]
+    },
+    "standards-12": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-cycle-scope.py` (`cmd_unfinished`) \u2014 R3 `cid = args.mark_interrupted` is bound, then `args.mark_interrupted` is read again. Fix: use `cid`.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe"
+        }
+      ]
+    },
+    "standards-13": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-cycle-scope.py` (`unfinished_runs`) \u2014 R24 `return sorted(out)` repeats the order of the `sorted(...glob(\"*/*\"))`. Fix: drop one sort.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe"
+        }
+      ]
+    },
+    "standards-14": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/skills/wiki-cycle/check.py` (`_unfinished_ids`) \u2014 R24 `from datetime import date, timedelta` inside a function with no reason. [eval-case-writer] Fix: move to the module top.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60"
+        }
+      ]
+    },
+    "spec-1": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `scripts/wiki-cycle-scope.py` (`unfinished_runs` no-scratchpad branch, and the printed line in `cmd_unfinished`) \u2014 the \"resume\" way out is printed for folders with no scratchpad, and `--resume` cannot continue those. Intent: plan Step 1, \"are each printed with their why and the two ways out\"; SKILL.md, \"`--resume <cycle_id>`: read that run's scratchpad and continue from the phase after the last `done`\". Implemented: `out.append((d.name, \"no scratchpad\"))`, then `resume: /wiki-cycle --resume {cid}` is printed for every found folder. A `completed`-status folder with no report has no phase left after its last `done` either. Affected: the user, on the very incident's shape (no scratchpad, 2026-07-17-01). Pinned by `test_cycle_scope.py` (\"each line gives both ways out\") and [eval-case-writer] check.py (\"both ways out given: resume\"). Fix: for a no-scratchpad folder print only the close way out, or give `--resume` a branch that reads the step JSONs; amend the plan line to match.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "71769a88de9b4c7b5ed3d7622d89e2fa3442dd47b93b6a0db7c65c98249977fe"
+        }
+      ]
+    },
+    "spec-2": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `tests/skills/wiki-cycle/baseline-sonnet.json`, `baseline-opus.json` \u2014 plan Step 3's done criterion (\"red on the installed skill and green on the changed one (Sonnet and Opus baselines)\") is not met in the diff. Intent: plan Step 3; requirements, \"installed once its new cases run red then green\". Implemented: neither new case id appears in the baseline files; the PENDING row records the run but lacks the \"Baselines merged per case\" phrase the neighbouring rows carry. Affected: the install gate. Fix: merge both case ids into both baselines after the green runs, or record why not.",
+      "file": "tests/skills/wiki-cycle/baseline-sonnet.json",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7afc0f20ef96318b4aba5d33f54a7dce853e8ecd1a4897852a9dffff2b94db55",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "7afc0f20ef96318b4aba5d33f54a7dce853e8ecd1a4897852a9dffff2b94db55"
+        }
+      ]
+    },
+    "spec-3": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/check.py` (`corpus = \"\\n\".join([reply, rtext, utext, stext])`) \u2014 the naming checks read a merged corpus, so Step 0 \"tell the user each line now\" (SKILL.md) is not tested; a run that writes the lines only into files passes. [eval-case-writer] Fix: assert the final reply names the run id separately.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60"
+        }
+      ]
+    },
+    "spec-4": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `skills/wiki-cycle/reference.md` (scratchpad template line), `skills/wiki-cycle/SKILL.md` Step 8 vs requirements Exclusions \"No change to how a run writes its report or scratchpad\" \u2014 the diff follows Decision 3 (\"a line in the scratchpad\", a Needs-you line) but the Exclusion is unamended. Fix: amend the Exclusion to \"beyond Decision 3\".",
+      "file": "skills/wiki-cycle/reference.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "697a090548354a832b8d8d4077253fe09932062c280bec59005df51d9a742c40",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "697a090548354a832b8d8d4077253fe09932062c280bec59005df51d9a742c40"
+        }
+      ]
+    },
+    "spec-5": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `skills/wiki-report/wiki-seed/wiki-report.md:22` \u2014 the usage page's Needs-you list omits the new item. Stale intent (plan Scope and Step 4 name only the wiki-cycle page), not a defect; fix: add the item to that list.",
+      "file": "skills/wiki-report/wiki-seed/wiki-report.md",
+      "line": 22,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "9dee9be46e12b688fb0f400468f226bdf81aef28eec7c2802fb91ff59ee66426",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "9dee9be46e12b688fb0f400468f226bdf81aef28eec7c2802fb91ff59ee66426"
+        }
+      ]
+    },
+    "spec-6": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/cases.json` (second new case) \u2014 plan Testing Decisions names \"one new case\"; two were added. The second is the negative case that requirements and Step 1 call for. Fix: record \"two cases\" in plan.md, or move its negative checks into `test_cycle_scope.py`. [eval-case-writer]",
+      "file": "tests/skills/wiki-cycle/cases.json",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "02527cc03bd05da777312748ed883a540ed52da1cbff142731183279e58c7756",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "02527cc03bd05da777312748ed883a540ed52da1cbff142731183279e58c7756"
+        }
+      ]
+    },
+    "spec-7": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `plan.md` format line vs `cmd_unfinished` print \u2014 the plan's `(<why>: no scratchpad | ...)` has a slot the printed `({w})` does not fill. Fix: amend the plan to the printed form.",
+      "file": "plan.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "4b53498debd926a8f3d62cd2fd0bec21599e8069dc83f0c6150eb6dd83eee0ae",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "4b53498debd926a8f3d62cd2fd0bec21599e8069dc83f0c6150eb6dd83eee0ae"
+        }
+      ]
+    },
+    "spec-8": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] requirements Decision 3 \"one line per folder\" vs the wiki-report template's one bullet \"each id, why, and the two ways out\". Fix: say \"one line per folder\" in the template.",
+      "file": null,
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "11a349c93ea2641f4d80bf15ba92f8331e1ae7bc0c04158fa7d5becd80d91da6",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "11a349c93ea2641f4d80bf15ba92f8331e1ae7bc0c04158fa7d5becd80d91da6"
+        }
+      ]
+    },
+    "spec-9": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `plan.md` Invariant \"pinned by step 2's Failures bullet\" \u2014 that bullet lists only unknown-id and missing-reason; the listing's no-edit is checked only by check.py. `write_scope(rf, ...)` writes into whatever folder is given, so an earlier folder passed as `--run-folder` is edited. Fix: correct the pin text; guard or document.",
+      "file": "plan.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "120e909f5324e65bae913bd9ed0c1fa9ced3e9f0a46320169fdb8f25bf80490b",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "120e909f5324e65bae913bd9ed0c1fa9ced3e9f0a46320169fdb8f25bf80490b"
+        }
+      ]
+    },
+    "spec-10": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `tests/skills/wiki-cycle/check.py` (`_unfinished_ids`) \u2014 `earlier` is an unvalidated free string; any value other than `\"open\"` takes the complete-and-interrupted branch. [eval-case-writer] Fix: assert it is one of the two values.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "d6b4e5759e274465fa19d43ce82c4ffb2c32c1a548346597b22ab89afeeebb60"
+        }
+      ]
+    }
+  }
+}
