@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import sys
 
-from _git_hooks_harness import HOOKS, ROOT, SH, Machine, collect_tests, github_token, machine, run_tests
+from _git_hooks_harness import HOOKS, ROOT, SH, Machine, collect_tests, github_token, machine, run_tests, write_marker_hook
 
 WORDS = "# test list\nAcme Widgets Ltd\nsecret-codename\n"
 
@@ -38,8 +38,7 @@ def test_install_writes_the_hand_over_hooks():
             stub = m.hooks / name
             assert stub.is_file(), f"{name} not written"
             marker = m.base / f"{name}-ran.txt"
-            (r / ".git" / "hooks" / name).write_text(f"#!/bin/sh\necho ran > '{marker.as_posix()}'\nexit 0\n",
-                                                     encoding="utf-8")
+            write_marker_hook(r / ".git" / "hooks" / name, marker)
             p = m.run([SH, str(stub)], r)
             assert p.returncode == 0 and marker.is_file(), f"{name} did not reach the repo's own hook: {p.stderr[-200:]}"
 
@@ -87,7 +86,7 @@ def test_no_verify_commits_anyway():
         m.write_words(WORDS)
         r = m.new_repo("a")
         blocked = m.commit(r, {"report.md": "We worked for ACME WIDGETS LTD last year.\n"})
-        assert blocked.returncode != 0, "the private word was not blocked first"
+        assert blocked.returncode != 0 and "private word" in blocked.stderr, f"the private word was not blocked first: {blocked.stderr[-300:]}"
         p = m.run(["git", "commit", "-q", "-m", "on purpose", "--no-verify"], r)
         assert p.returncode == 0, p.stderr[-200:]
         assert m.head(r) is not None, "no commit was made"
@@ -98,7 +97,7 @@ def test_committed_word_is_not_rechecked():
         m.write_words(WORDS)
         r = m.new_repo("a")
         blocked = m.commit(r, {"report.md": "We worked for ACME WIDGETS LTD last year.\n"})
-        assert blocked.returncode != 0, "the private word was not blocked first"
+        assert blocked.returncode != 0 and "private word" in blocked.stderr, f"the private word was not blocked first: {blocked.stderr[-300:]}"
         forced = m.run(["git", "commit", "-q", "-m", "on purpose", "--no-verify"], r)
         assert forced.returncode == 0, "the word was not committed"
         p = m.commit(r, {"other.md": "unrelated change\n"})
@@ -127,8 +126,7 @@ def test_repo_pre_commit_hook_still_runs():
     with machine() as m:
         r = m.new_repo("c")
         marker = m.base / "local-ran.txt"
-        (r / ".git" / "hooks" / "pre-commit").write_text(f"#!/bin/sh\necho ran > '{marker.as_posix()}'\nexit 0\n",
-                                                        encoding="utf-8")
+        write_marker_hook(r / ".git" / "hooks" / "pre-commit", marker)
         p = m.commit(r, {"x.md": "x\n"})
         assert p.returncode == 0 and marker.is_file(), p.stderr[-300:]
 

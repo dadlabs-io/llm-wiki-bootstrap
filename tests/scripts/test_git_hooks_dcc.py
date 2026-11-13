@@ -10,9 +10,10 @@ real machine. Needs git, sh, python and gitleaks.
 """
 from __future__ import annotations
 
+import subprocess
 import sys
 
-from _git_hooks_harness import collect_tests, github_token, machine, run_tests
+from _git_hooks_harness import ROOT, Machine, collect_tests, github_token, machine, run_tests
 
 REFUSAL = "FAKE-DCC-REFUSED: tool.py changed without a run"
 OWNER_LINE = "pre-commit: fix the lines above. --no-verify only when the machine's owner has said so."
@@ -73,17 +74,26 @@ def test_gitleaks_block_ends_on_the_owner_line():
         assert last == OWNER_LINE, last
 
 
-def test_refusal_needs_the_hook_dcc_lines():
-    with machine() as m:
-        hook = m.hooks / "pre-commit"
-        kept = [line for line in hook.read_text(encoding="utf-8").splitlines(keepends=True) if "dcc" not in line]
-        assert len(kept) < len(hook.read_text(encoding="utf-8").splitlines()), "the hook has no dcc lines to remove"
-        hook.write_text("".join(kept), encoding="utf-8")
-        r = m.new_repo("a")
-        m.fake_dcc(1, REFUSAL)
-        p = m.commit(r, {"tool.py": "print('hi')\n"})
-        assert p.returncode == 0, f"a commit was refused with the dcc lines removed: {p.stderr[-300:]}"
-        assert REFUSAL not in p.stderr, p.stderr[-400:]
+HOOK_BEFORE_241 = "bc898ad5696789890603485b57efffa06f85d6b7"  # the commit before task #241 changed the hook
+
+
+def test_every_dcc_check_fails_on_the_hook_before_241():
+    old = subprocess.run(["git", "show", f"{HOOK_BEFORE_241}:tools/git-hooks/pre-commit"], cwd=ROOT,
+                         capture_output=True, text=True, encoding="utf-8")
+    assert old.returncode == 0, f"cannot read the old hook: {old.stderr[-300:]}"
+    checks = [test_dcc_pass_lets_the_commit_through, test_dcc_refusal_blocks_the_commit,
+              test_absent_pack_commits_with_a_not_checked_line, test_blocked_commit_says_no_verify_needs_the_owner,
+              test_gitleaks_block_ends_on_the_owner_line]
+    Machine.pre_commit_override = old.stdout
+    try:
+        for check in checks:
+            try:
+                check()
+            except AssertionError:
+                continue
+            raise AssertionError(f"{check.__name__} passed on the hook before #241")
+    finally:
+        Machine.pre_commit_override = None
 
 
 TESTS = collect_tests(dict(globals()))

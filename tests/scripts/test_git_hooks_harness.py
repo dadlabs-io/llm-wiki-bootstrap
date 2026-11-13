@@ -32,7 +32,7 @@ def test_runner_reports_a_crashing_check_as_error():
 
     code, out = _run({"test_raises": test_raises, "test_passes": test_passes}, [])
     assert code == 1, out
-    assert "ERROR test_raises  [RuntimeError: deliberate]" in out, out
+    assert "ERROR test_raises" in out and "RuntimeError: deliberate" in out, out
     assert "PASS test_passes" in out and "1/2 passed" in out, out
 
 

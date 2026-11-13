@@ -27,8 +27,15 @@ def github_token() -> str:
     return "ghp_" + "".join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(GITHUB_TOKEN_BODY_LEN))
 
 
+def write_marker_hook(path: Path, marker: Path) -> None:
+    """A git hook script that records it ran by writing `marker`, then lets git go on."""
+    path.write_text(f"#!/bin/sh\necho ran > '{marker.as_posix()}'\nexit 0\n", encoding="utf-8")
+
+
 class Machine:
     """A temporary HOME with the hooks installed, and helpers to commit in scratch repos under it."""
+
+    pre_commit_override: str | None = None  # when set, installed over ~/.git-hooks/pre-commit (a bite check's old hook)
 
     def __init__(self):
         self._td = tempfile.TemporaryDirectory()
@@ -42,6 +49,8 @@ class Machine:
         if self.install.returncode != 0:
             self._td.cleanup()
             raise AssertionError(f"install.sh failed: {self.install.stderr[-300:]}{self.install.stdout[-300:]}")
+        if Machine.pre_commit_override is not None:
+            (self.hooks / "pre-commit").write_text(Machine.pre_commit_override, encoding="utf-8")
 
     def run(self, args, cwd) -> subprocess.CompletedProcess:
         return subprocess.run(args, cwd=cwd, env=self.env, capture_output=True, text=True,

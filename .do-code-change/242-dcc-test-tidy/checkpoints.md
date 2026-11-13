@@ -28,3 +28,7 @@ Mark (terminal, 2026-11-13) on spec-1 and spec-2: "Make them real tests" (not ac
 Ledger after the real tests: `query --cap 3` met (2 closed, 12 non-blocking); `fixed` still exit 1 on spec-1/spec-2 ("checkpoints.md did not move since round 1"), its round-1 fingerprint of the notes path never moving (skill suggestion filed). The focused round is dispatched with the fix diff, which now holds both tests.
 
 Size: full — second fix round (review round 2 found two important findings); the rounds already spent count toward the full ceiling of 3.
+
+## Fix round 2 — 2026-11-13
+
+spec-1 (round 2): `test_every_dcc_check_fails_on_the_hook_before_241` runs all five dcc checks with the hook from bc898ad installed over the new one (`Machine.pre_commit_override`) and requires each to fail; bite shown: with HEAD's hook it failed. It replaces `test_refusal_needs_the_hook_dcc_lines` (retired with that reason). standards-1 (round 2): both setup blocks assert the private-word message too. S2: `write_marker_hook` in the harness. R13: the ERROR check asserts its parts. spec-2/nit (round 2): plan's API list and the hand-over departure recorded in place. Suites 6/6, 18/18, 2/2; check-freeze PASS.
