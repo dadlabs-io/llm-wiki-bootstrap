@@ -397,6 +397,17 @@ with tempfile.TemporaryDirectory() as td:
               p.returncode == 0 and p.stdout.strip() == "unfinished: none", (p.returncode, p.stdout, p.stderr[-200:]))
     unfinished_skips_a_folder_filed_under_another_date()
 
+    def unfinished_skips_a_file_named_like_a_run():
+        # only a folder is a run; a stray file with a run id's name has no report to look for
+        stray = reports / "2026-10-16" / "2026-10-16-01"
+        stray.parent.mkdir(parents=True)
+        stray.write_text("not a run folder\n", encoding="utf-8")
+        p = run("unfinished", "--run-folder", str(cur))
+        shutil.rmtree(stray.parent)
+        check("unfinished_skips_a_file_named_like_a_run: not named, the listing stays 'unfinished: none'",
+              p.returncode == 0 and p.stdout.strip() == "unfinished: none", (p.returncode, p.stdout, p.stderr[-200:]))
+    unfinished_skips_a_file_named_like_a_run()
+
     def unfinished_without_a_reports_folder():
         away = nb / "_inbox" / "reports-away"
         reports.rename(away)
@@ -545,6 +556,24 @@ with tempfile.TemporaryDirectory() as td:
               "interrupted, and the reason under the Decisions log",
               "**Status**: interrupted" in sp and "no status written" in sp.split("## Decisions log", 1)[-1], sp)
     mark_interrupted_closes_a_scratchpad_with_no_status_line()
+
+    def unfinished_offers_resume_or_close_as_one_choice():
+        mkrun("2026-10-18-01", scratch="in_progress")
+        p = run("unfinished", "--run-folder", str(cur))
+        line = next((l for l in p.stdout.splitlines() if l.startswith("unfinished: 2026-10-18-01 ")), "")
+        check("unfinished_offers_resume_or_close_as_one_choice: the printed line is the resume or the close-out",
+              line == "unfinished: 2026-10-18-01 (scratchpad says in_progress) — resume: /wiki-cycle t --resume "
+                      '2026-10-18-01; or close it: wiki-cycle-scope.py --topic t unfinished --mark-interrupted '
+                      '2026-10-18-01 --reason "<why>"', p.stdout)
+    unfinished_offers_resume_or_close_as_one_choice()
+
+    def mark_interrupted_prints_what_it_closed():
+        mkrun("2026-10-17-01", scratch="in_progress")
+        p = run("unfinished", "--mark-interrupted", "2026-10-17-01", "--reason", "said so")
+        check("mark_interrupted_prints_what_it_closed: stdout names the run and the reason",
+              p.returncode == 0 and p.stdout.strip() == "unfinished: 2026-10-17-01 marked interrupted: said so",
+              (p.returncode, p.stdout, p.stderr[-200:]))
+    mark_interrupted_prints_what_it_closed()
 
 failed =[n for ok, n in results if not ok]
 for ok, n in results:

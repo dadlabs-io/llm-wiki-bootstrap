@@ -1,0 +1,518 @@
+[
+ {
+  "line": 518,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "64/86 passed"
+ },
+ {
+  "line": 519,
+  "mutant": "pass",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 520,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 528,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 530,
+  "mutant": "if not d.is_dir() or not CYCLE_ID.match(d.name) or d.resolve() != run_folder.resolve():",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 530,
+  "mutant": "if d.is_dir() or not CYCLE_ID.match(d.name) or d.resolve() == run_folder.resolve():",
+  "killed": true,
+  "tail": "80/86 passed"
+ },
+ {
+  "line": 530,
+  "mutant": "if not d.is_dir() and not CYCLE_ID.match(d.name) or d.resolve() == run_folder.resolve():",
+  "killed": false,
+  "tail": "86/86 passed"
+ },
+ {
+  "line": 531,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "82/86 passed"
+ },
+ {
+  "line": 531,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "82/86 passed"
+ },
+ {
+  "line": 532,
+  "mutant": "if d == run_folder_of(nb, d.name):    # filed under another date: the close-out would refuse it",
+  "killed": true,
+  "tail": "79/86 passed"
+ },
+ {
+  "line": 532,
+  "mutant": "if not d != run_folder_of(nb, d.name):    # filed under another date: the close-out would refuse it",
+  "killed": true,
+  "tail": "79/86 passed"
+ },
+ {
+  "line": 532,
+  "mutant": "pass",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 533,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "85/86 passed"
+ },
+ {
+  "line": 533,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "85/86 passed"
+ },
+ {
+  "line": 534,
+  "mutant": "if not (d / f\"{d.name}-run-cycle-report.md\").is_file():",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 534,
+  "mutant": "if (d / f\"{d.name}-run-cycle-report.md\").is_dir():",
+  "killed": true,
+  "tail": "81/86 passed"
+ },
+ {
+  "line": 535,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "81/86 passed"
+ },
+ {
+  "line": 535,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "81/86 passed"
+ },
+ {
+  "line": 536,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "76/86 passed"
+ },
+ {
+  "line": 537,
+  "mutant": "if pad.is_file():",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 537,
+  "mutant": "if not pad.is_dir():",
+  "killed": true,
+  "tail": "76/86 passed"
+ },
+ {
+  "line": 538,
+  "mutant": "pass",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 539,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "80/86 passed"
+ },
+ {
+  "line": 539,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "80/86 passed"
+ },
+ {
+  "line": 540,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "76/86 passed"
+ },
+ {
+  "line": 541,
+  "mutant": "status = m.group(1) if not m else \"unknown\"",
+  "killed": true,
+  "tail": "76/86 passed"
+ },
+ {
+  "line": 541,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "76/86 passed"
+ },
+ {
+  "line": 542,
+  "mutant": "if status == \"interrupted\":",
+  "killed": true,
+  "tail": "75/86 passed"
+ },
+ {
+  "line": 542,
+  "mutant": "if not status != \"interrupted\":",
+  "killed": true,
+  "tail": "75/86 passed"
+ },
+ {
+  "line": 542,
+  "mutant": "if status != \"xinterrupted\":",
+  "killed": true,
+  "tail": "78/86 passed"
+ },
+ {
+  "line": 543,
+  "mutant": "pass",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 549,
+  "mutant": "return nb / \"_inbox\" / \"reports\" / cycle_id[:9] / cycle_id",
+  "killed": true,
+  "tail": "71/86 passed"
+ },
+ {
+  "line": 554,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 555,
+  "mutant": "text = pad.read_text(encoding=\"utf-8\") if not pad.is_file() else (",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 555,
+  "mutant": "text = pad.read_text(encoding=\"utf-8\") if pad.is_dir() else (",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 556,
+  "mutant": "f\"# Cycle Run \u2014 {cycle_id[:9]}\\n\\n**Status**: interrupted\\n\\n{DECISIONS_HEADING}\\n\")",
+  "killed": true,
+  "tail": "85/86 passed"
+ },
+ {
+  "line": 557,
+  "mutant": "text, n = re.subn(r\"^(\\*\\*Status\\*\\*:).*$\", r\"\\1 interrupted\", text, count=0, flags=re.M)",
+  "killed": false,
+  "tail": "86/86 passed"
+ },
+ {
+  "line": 557,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 558,
+  "mutant": "if n:",
+  "killed": true,
+  "tail": "84/86 passed"
+ },
+ {
+  "line": 559,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "84/86 passed"
+ },
+ {
+  "line": 560,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "84/86 passed"
+ },
+ {
+  "line": 561,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 562,
+  "mutant": "if DECISIONS_LOG.search(text):",
+  "killed": true,
+  "tail": "82/86 passed"
+ },
+ {
+  "line": 563,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "85/86 passed"
+ },
+ {
+  "line": 564,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 565,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 566,
+  "mutant": "end = log.end() + after.start() if not after else len(text)",
+  "killed": true,
+  "tail": "73/86 passed"
+ },
+ {
+  "line": 566,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 567,
+  "mutant": "atomic_write_text(pad, text[:end].rstrip(\"\\n\") + \"\\n\" + line + (\"\\n\" + text[end:] if not after else \"\"))",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 567,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "75/86 passed"
+ },
+ {
+  "line": 571,
+  "mutant": "if not args.mark_interrupted:",
+  "killed": true,
+  "tail": "62/86 passed"
+ },
+ {
+  "line": 572,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "71/86 passed"
+ },
+ {
+  "line": 573,
+  "mutant": "if CYCLE_ID.match(cid) or not run_folder_of(nb, cid).is_dir():",
+  "killed": true,
+  "tail": "73/86 passed"
+ },
+ {
+  "line": 573,
+  "mutant": "if not CYCLE_ID.match(cid) and not run_folder_of(nb, cid).is_dir():",
+  "killed": true,
+  "tail": "83/86 passed"
+ },
+ {
+  "line": 574,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "83/86 passed"
+ },
+ {
+  "line": 575,
+  "mutant": "return 0",
+  "killed": true,
+  "tail": "83/86 passed"
+ },
+ {
+  "line": 576,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "75/86 passed"
+ },
+ {
+  "line": 577,
+  "mutant": "pass",
+  "killed": false,
+  "tail": "86/86 passed"
+ },
+ {
+  "line": 578,
+  "mutant": "return 1",
+  "killed": true,
+  "tail": "80/86 passed"
+ },
+ {
+  "line": 579,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 580,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 581,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "74/86 passed"
+ },
+ {
+  "line": 582,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "83/86 passed"
+ },
+ {
+  "line": 584,
+  "mutant": "resume = (f\"resume: /wiki-cycle {args.topic_name} --resume {cid}; and \"",
+  "killed": false,
+  "tail": "86/86 passed"
+ },
+ {
+  "line": 585,
+  "mutant": "if not (run_folder_of(nb, cid) / \"scratchpad.md\").is_file() else \"\")",
+  "killed": true,
+  "tail": "85/86 passed"
+ },
+ {
+  "line": 585,
+  "mutant": "if (run_folder_of(nb, cid) / \"scratchpad.md\").is_dir() else \"\")",
+  "killed": true,
+  "tail": "85/86 passed"
+ },
+ {
+  "line": 588,
+  "mutant": "if found:",
+  "killed": true,
+  "tail": "80/86 passed"
+ },
+ {
+  "line": 589,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "83/86 passed"
+ },
+ {
+  "line": 590,
+  "mutant": "return 1",
+  "killed": true,
+  "tail": "82/86 passed"
+ },
+ {
+  "line": 705,
+  "mutant": "pass",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 706,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "59/86 passed"
+ },
+ {
+  "line": 707,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "62/86 passed"
+ },
+ {
+  "line": 708,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "69/86 passed"
+ },
+ {
+  "line": 713,
+  "mutant": "if args.cmd != \"unfinished\" and bool(args.run_folder) == bool(args.mark_interrupted):",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 713,
+  "mutant": "if not args.cmd == \"unfinished\" and bool(args.run_folder) == bool(args.mark_interrupted):",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 713,
+  "mutant": "if args.cmd == \"unfinished\" or bool(args.run_folder) == bool(args.mark_interrupted):",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 714,
+  "mutant": "un.error(\"give --run-folder (to list) or --mark-interrupted (to close one), both and not neither\")",
+  "killed": true,
+  "tail": "84/86 passed"
+ },
+ {
+  "line": 714,
+  "mutant": "un.error(\"give --run-folder (to list) or --mark-interrupted (to close one), not both or not neither\")",
+  "killed": true,
+  "tail": "84/86 passed"
+ },
+ {
+  "line": 714,
+  "mutant": "un.error(\"give --run-folder (to list) and --mark-interrupted (to close one), not both and not neither\")",
+  "killed": false,
+  "tail": "86/86 passed"
+ },
+ {
+  "line": 714,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "83/86 passed"
+ },
+ {
+  "line": 715,
+  "mutant": "if args.cmd != \"unfinished\" and args.mark_interrupted and not args.reason:",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 715,
+  "mutant": "if args.cmd == \"unfinished\" and args.mark_interrupted and args.reason:",
+  "killed": true,
+  "tail": "69/86 passed"
+ },
+ {
+  "line": 715,
+  "mutant": "if not args.cmd == \"unfinished\" and args.mark_interrupted and not args.reason:",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 715,
+  "mutant": "if args.cmd == \"unfinished\" or args.mark_interrupted and not args.reason:",
+  "killed": true,
+  "tail": ""
+ },
+ {
+  "line": 716,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "84/86 passed"
+ },
+ {
+  "line": 729,
+  "mutant": "pass",
+  "killed": true,
+  "tail": ""
+ }
+]

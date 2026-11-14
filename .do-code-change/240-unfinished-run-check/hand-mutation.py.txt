@@ -1,0 +1,73 @@
+"""Hand-rolled mutation pass for change 240: plant one bug at a time in the lines the change added to
+scripts/wiki-cycle-scope.py (code only, not the docstring), run tests/scripts/test_cycle_scope.py against the
+mutated copy (WIKI_SCOPE_SCRIPT), and report killed / survived per mutant."""
+import os, re, shutil, subprocess, sys, json, tempfile
+from pathlib import Path
+
+REPO = Path(r"C:\github.com\llm-wiki-bootstrap")
+BASE = "08d9c6cb7db1df6d731976fc00fd326fde8e0b09"
+TARGET = "scripts/wiki-cycle-scope.py"
+OUT = Path(sys.argv[1])
+
+diff = subprocess.run(["git", "-C", str(REPO), "diff", "-U0", BASE, "--", TARGET],
+                      capture_output=True, text=True, encoding="utf-8").stdout
+added, ln = [], 0
+for line in diff.splitlines():
+    m = re.match(r"^@@ -\S+ \+(\d+)(?:,(\d+))? @@", line)
+    if m:
+        ln = int(m.group(1)); continue
+    if line.startswith("+") and not line.startswith("+++"):
+        added.append(ln); ln += 1
+
+src = (REPO / TARGET).read_text(encoding="utf-8").splitlines(keepends=True)
+import ast
+doc_lines = set()
+for node in ast.walk(ast.parse("".join(src))):
+    if isinstance(node, ast.Expr) and isinstance(getattr(node, "value", None), ast.Constant) \
+            and isinstance(node.value.value, str):
+        doc_lines.update(range(node.lineno, node.end_lineno + 1))
+
+OPS = [
+    (r" == ", " != "), (r" != ", " == "), (r"\bnot ", ""), (r"\bif (?!not )", "if not "),
+    (r"\band\b", "or"), (r"\bor\b", "and"), (r"\bcontinue\b", "pass"), (r"return 2\b", "return 0"),
+    (r"return 0\b", "return 1"), (r"count=1", "count=0"), (r'"interrupted"', '"xinterrupted"'),
+    (r"\[:10\]", "[:9]"), (r"\bTrue\b", "False"), (r"\bFalse\b", "True"), (r"is_file\(\)", "is_dir()"),
+]
+mutants = []
+for n in added:
+    if n in doc_lines:
+        continue
+    text = src[n - 1]
+    s = text.strip()
+    if not s or s.startswith("#") or s.startswith('"""') or s.startswith(("def ", "import", "from ")):
+        continue
+    for pat, rep in OPS:
+        for m in re.finditer(pat, text):
+            mutants.append((n, text[:m.start()] + re.sub(pat, rep, text[m.start():], count=1)))
+            break
+    indent = text[: len(text) - len(text.lstrip())]
+    if not s.endswith((":", ",", "(", "[", "{")) and not s.startswith(("elif", "else", "return", ")", "]", "}")) \
+            and s.count("(") == s.count(")"):
+        mutants.append((n, f"{indent}pass\n"))
+
+work = Path(tempfile.mkdtemp(prefix="mut240-"))
+shutil.copytree(REPO / "scripts", work / "scripts")
+mfile = work / "scripts" / "wiki-cycle-scope.py"
+env = dict(os.environ, WIKI_SCOPE_SCRIPT=str(mfile))
+results = []
+for i, (n, new) in enumerate(mutants, 1):
+    lines = list(src); lines[n - 1] = new
+    mfile.write_text("".join(lines), encoding="utf-8")
+    try:
+        p = subprocess.run(["uv", "run", "python", "tests/scripts/test_cycle_scope.py"], cwd=REPO, env=env,
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300)
+        tail = (p.stdout.strip().splitlines() or [""])[-1]
+        killed = p.returncode != 0 or not re.match(r"^(\d+)/\1 passed", tail)
+    except subprocess.TimeoutExpired:
+        tail, killed = "timeout", True
+    results.append({"line": n, "mutant": new.strip(), "killed": killed, "tail": tail})
+    print(f"[{i}/{len(mutants)}] line {n}: {'killed' if killed else 'SURVIVED'}  {new.strip()[:90]}", flush=True)
+shutil.rmtree(work, ignore_errors=True)
+OUT.write_text(json.dumps(results, indent=1), encoding="utf-8")
+s = sum(not r["killed"] for r in results)
+print(f"total {len(results)}, killed {len(results) - s}, survived {s}")

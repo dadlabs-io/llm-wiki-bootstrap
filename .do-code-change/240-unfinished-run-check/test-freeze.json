@@ -257,5 +257,44 @@
       "reason": "red observed before the code change (a second '## Decisions log' heading was appended: 82/86 passed); green after: 86/86. The freeze's red-command cannot re-run it because the fix is already in",
       "date": "2026-11-13"
     }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_skips_a_file_named_like_a_run",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "5df7fe30e1c16942b2cbea16091be20597c53f06a74c2799a45c065e36ea666e",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "added after a hand mutation pass (prove_tests_bite cannot see scripts/): green on the code; fails alone on the mutant 'not d.is_dir() and not CYCLE_ID.match' (88/89)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_offers_resume_or_close_as_one_choice",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "77f0c59b421405ce2ecd95c374fe05b4a06544ab5b93be4e663a445f89ca3836",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "added after a hand mutation pass: green on the code; fails alone on the mutant 'resume ...; and close it' (88/89)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_prints_what_it_closed",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "57272432530b437404b1b165ec68ec3ca5a500d6a41ddbd1bed5a34e6085115e",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "added after a hand mutation pass: green on the code; fails alone on the mutant that drops the close-out's print (88/89)",
+      "date": "2026-11-14"
+    }
   }
 ]
