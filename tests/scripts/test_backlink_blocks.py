@@ -622,7 +622,7 @@ def test_rebuild_leaves_a_real_block_above_an_unclosed_fence_holding_a_start_unt
 
 
 def test_lint_splits_lines_at_newlines_only_as_the_rebuild_does():
-    for sep in ("\x0c", " "):   # a line separator for str.splitlines() that is no newline
+    for sep in ("\x0c", "\u2028"):   # a line separator for str.splitlines() that is no newline
         pages = {"research/a.md": page("A", "lead" + sep + "```\n[B](b.md)"), "research/b.md": page("B")}
         r, texts, payload = rebuild_then_lint(pages)
         check(f"separator {sep.encode('unicode_escape').decode()}: the rebuild ran and b's block lists a",
@@ -648,7 +648,7 @@ def test_end_marker_sharing_its_line_with_inline_code_is_no_end_in_either_script
 
 
 def test_start_marker_sharing_its_line_with_inline_code_is_no_start_in_either_script():
-    b = page("B", "`note` " + STRAY + "\n\n" + blk("a.md"))
+    b = page("B", "`note` <!-- BACKLINKS-AUTO START -->\n\n" + blk("a.md"))
     r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "[B](b.md)"), "research/b.md": b})
     kept = b[: b.index("\n<!-- BACKLINKS-AUTO START -->\n") + 1]   # everything above the real block's START line
     check("the rebuild ran, b is its own text above the real block and holds one real block",

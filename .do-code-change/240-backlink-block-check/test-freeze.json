@@ -987,21 +987,6 @@
   },
   {
     "file": "tests/scripts/test_backlink_blocks.py",
-    "test_name": "test_lint_splits_lines_at_newlines_only_as_the_rebuild_does",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "dfcd5eb562a05c80e4e910b9b7c22799bf8e202e53111ec42727c8a223873b7e",
-    "frozen_at_step": "fix-6",
-    "frozen_at": "2026-11-14",
-    "red": {
-      "command": "uv run python tests/scripts/test_backlink_blocks.py test_lint_splits_lines_at_newlines_only_as_the_rebuild_does",
-      "exit": 1,
-      "tail": "PASS test_lint_splits_lines_at_newlines_only_as_the_rebuild_does: separator \\x0c: the rebuild ran and b's block lists a\nFAIL test_lint_splits_lines_at_newlines_only_as_the_rebuild_does: separator \\x0c: the lint reads the link too and lists nothing  [[{'file': 'research/b.md', 'extra': ['research/a.md'], 'missing': [], 'unclosed': False}]]\nPASS test_lint_splits_lines_at_newlines_only_as_the_rebuild_does: separator \\u2028: the rebuild ran and b's block lists a\nFAIL test_lint_splits_lines_at_newlines_only_as_the_rebuild_does: separator \\u2028: the lint reads the link too and lists nothing  [[{'file': 'research/b.md', 'extra': ['research/a.md'], 'missing': [], 'unclosed': False}]]\n2/4 passed",
-      "date": "2026-11-14"
-    }
-  },
-  {
-    "file": "tests/scripts/test_backlink_blocks.py",
     "test_name": "test_end_marker_sharing_its_line_with_inline_code_is_no_end_in_either_script",
     "hash_of": "test",
     "hash_scope": "test+module",
@@ -1012,21 +997,6 @@
       "command": "uv run python tests/scripts/test_backlink_blocks.py test_end_marker_sharing_its_line_with_inline_code_is_no_end_in_either_script",
       "exit": 1,
       "tail": "confidence: high\ntags: [x, y, z]\n---\n# C\n<!-- BACKLINKS-AUTO START -->\n## Backlinks (auto-maintained)\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\n- [B](../research/b.md)\n<!-- BACKLINKS-AUTO END -->\n]\nFAIL test_end_marker_sharing_its_line_with_inline_code_is_no_end_in_either_script: the lint lists b as not closed and nothing else  [[]]\n1/3 passed",
-      "date": "2026-11-14"
-    }
-  },
-  {
-    "file": "tests/scripts/test_backlink_blocks.py",
-    "test_name": "test_start_marker_sharing_its_line_with_inline_code_is_no_start_in_either_script",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "0a134f565138179bf6fe79dfedd67695a74768fb9deb363f2a6821d672f1575d",
-    "frozen_at_step": "fix-6",
-    "frozen_at": "2026-11-14",
-    "red": {
-      "command": "uv run python tests/scripts/test_backlink_blocks.py test_start_marker_sharing_its_line_with_inline_code_is_no_start_in_either_script",
-      "exit": 1,
-      "tail": "PASS test_start_marker_sharing_its_line_with_inline_code_is_no_start_in_either_script: the rebuild ran, b is its own text above the real block and holds one real block\nFAIL test_start_marker_sharing_its_line_with_inline_code_is_no_start_in_either_script: the lint lists nothing  [[{'file': 'research/b.md', 'extra': [], 'missing': [], 'unclosed': True}]]\n1/2 passed",
       "date": "2026-11-14"
     }
   },
@@ -1057,5 +1027,49 @@
       "reason": "green on arrival (guard from fix-5); bite shown by mutant: 'if unclosed: return True' in has_unusable_start changed to 'if False:' turns the byte-identical checks red (stale block rewritten); reverted",
       "date": "2026-11-14"
     }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_lint_splits_lines_at_newlines_only_as_the_rebuild_does",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "c8ffd0a7e0ea77df63ab09a38eb1e0d409274836a7dc80f5b17a47b4b78c8b0f",
+    "frozen_at_step": "fix-7",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "behaviour unchanged: separator written as the escape, green on the code; red on the old lint shown by the splitlines mutant",
+      "date": "2026-11-14"
+    },
+    "unfreezes": [
+      {
+        "reason": "review round 6 standards-34: the second separator was a literal U+2028, now the escape",
+        "date": "2026-11-14",
+        "step": "fix-7",
+        "hash": "c8ffd0a7e0ea77df63ab09a38eb1e0d409274836a7dc80f5b17a47b4b78c8b0f"
+      }
+    ],
+    "unfrozen_reason": "review round 6 standards-34: the second separator was a literal U+2028, now the escape"
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_start_marker_sharing_its_line_with_inline_code_is_no_start_in_either_script",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "b6b51fbc92726c96aa0a5011ff69634ba231df4ab15de06295eda3deeecabc5c",
+    "frozen_at_step": "fix-7",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "behaviour unchanged: the bare marker text inline instead of STRAY, green on the code",
+      "date": "2026-11-14"
+    },
+    "unfreezes": [
+      {
+        "reason": "review round 6 standards-35: STRAY (a START and no END) was reused where the line is asserted to be no START",
+        "date": "2026-11-14",
+        "step": "fix-7",
+        "hash": "b6b51fbc92726c96aa0a5011ff69634ba231df4ab15de06295eda3deeecabc5c"
+      }
+    ],
+    "unfrozen_reason": "review round 6 standards-35: STRAY (a START and no END) was reused where the line is asserted to be no START"
   }
 ]
