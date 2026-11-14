@@ -43,10 +43,7 @@
 ### Phase 2.6: Checker
 - **Status**: pending
 
-### Phase 3: Mechanical lint
-- **Status**: pending
-
-### Phase 3.5: Integration scripts
+### Phase 3: Integration scripts, then the mechanical lint
 - **Status**: pending
 
 ### Phase 8: Report

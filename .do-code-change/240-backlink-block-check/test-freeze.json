@@ -1,0 +1,614 @@
+[
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_block_listing_a_page_that_does_not_link_here_is_reported_as_extra",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "33f334ad4b71930e4b9ea62ceb6df722b02a3e605fcc160d118188d6024b7c75",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_block_listing_a_page_that_does_not_link_here_is_reported_as_extra",
+      "exit": 1,
+      "tail": "FAIL test_block_listing_a_page_that_does_not_link_here_is_reported_as_extra: a block listing a page that does not link here is reported with it as extra  [None]\nFAIL test_block_listing_a_page_that_does_not_link_here_is_reported_as_extra: only that page is reported  [None]\n0/2 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_linker_left_out_of_a_block_is_reported_as_missing",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "5e81dbdba2d179c958d4d02844c645455207f54c41abaf8c15ed4b9e2adfc51e",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_linker_left_out_of_a_block_is_reported_as_missing",
+      "exit": 1,
+      "tail": "FAIL test_linker_left_out_of_a_block_is_reported_as_missing: a linker the block leaves out is reported as missing  [None]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_linked_page_with_no_block_is_reported_as_missing",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "1eec9c20b5a51889676c9e6d8d2adda02554d059680567655c58cb30c71840a9",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_linked_page_with_no_block_is_reported_as_missing",
+      "exit": 1,
+      "tail": "FAIL test_linked_page_with_no_block_is_reported_as_missing: a linked page with no block is reported with its linker as missing  [None]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_matching_block_is_not_reported",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "982031eb9de2b511b86c3d352071c51c36c0b7dd9d08dd6e3bc933ff60ae1b58",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_matching_block_is_not_reported",
+      "exit": 1,
+      "tail": "FAIL test_matching_block_is_not_reported: a block that matches the links is not reported  [key absent]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_a_pages_own_block_does_not_make_it_a_linker",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "b95f4fbafcd8b9d5eda5b9beafa2a2e110b40bf4d200449f7e4089c2efea7b4e",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_a_pages_own_block_does_not_make_it_a_linker",
+      "exit": 1,
+      "tail": "FAIL test_a_pages_own_block_does_not_make_it_a_linker: the block's own lines are not links: b is not missing a, a lists b as extra  [key absent]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_summary_line_reads_pages_then_extra_then_missing_counts",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e340e73b265c05c2297b83a6ba59163d9b627518e3a40a7c2718a20909dd375d",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_summary_line_reads_pages_then_extra_then_missing_counts",
+      "exit": 1,
+      "tail": "**Retirement links (`superseded_by`)**: no such entry=0, successor does not name it back=0\n**Hubs behind their tag**: 0 (no page declares `hub_tag`)\n---\n## \ud83d\udd17 Broken Links\n_None \u2014 all internal links resolve._\n## \ud83c\udfdd\ufe0f Orphan Pages (no inbound links)\nThese pages are not linked from any other wiki entry. Either:\n- Add a backlink from a related entry, OR\n- If the page stands alone by design (a landing page, a hub), declare it in its own frontmatter: `standalone: \"<reason>\"` (frontmatter spec). A declaration needs the reason.\n- `research/a.md`\n- `]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_json_summary_carries_the_out_of_step_page_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "5c74e4bbeefe5eb78d4299f9f203d0a900496f784f7f2ad8509eff79b24f1e67",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_json_summary_carries_the_out_of_step_page_count",
+      "exit": 1,
+      "tail": "FAIL test_json_summary_carries_the_out_of_step_page_count: the cycle JSON's summary has backlink_blocks_out_of_step  [{'files_scanned': 4, 'broken_links': 0, 'orphans': 2, 'standalone': 0, 'stale_pending': 0, 'missing_frontmatter': 0, 'missing_tier': 0, 'invalid_tier': 0, 'missing_confidence': 0, 'invalid_confidence': 0, 'unquoted_yaml': 0, 'task_problems': 0, 'design_behind': 0, 'renamed_terms_left': 0, 'supersede_bad_target': 0, 'supersede_no_backlink': 0, 'hub_entries_missing': 0}]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_json_array_rows_have_file_extra_missing_unclosed_by_file",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "7fad583b310f6aa2e282f978529c41d6ee7f6ceecaa686b55517f5fbd3285f8b",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_json_array_rows_have_file_extra_missing_unclosed_by_file",
+      "exit": 1,
+      "tail": "FAIL test_json_array_rows_have_file_extra_missing_unclosed_by_file: backlink_blocks lists each page with file, extra, missing and unclosed, by file  [key absent]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_to_a_section_of_a_page_counts_as_a_link",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "062447b880a239ef0d3be7880270be1d6d61042df368ab5ba005af56e52a78b8",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_to_a_section_of_a_page_counts_as_a_link",
+      "exit": 1,
+      "tail": "FAIL test_link_to_a_section_of_a_page_counts_as_a_link: a link to b.md#part makes a a linker of b  [None]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_text_holding_brackets_counts_as_a_link",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f682268f9cb6523920cc85998aa8ad0e9472c227535ecc90cb3508ac24369e5d",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_text_holding_brackets_counts_as_a_link",
+      "exit": 1,
+      "tail": "FAIL test_link_text_holding_brackets_counts_as_a_link: a link whose text holds brackets makes a a linker of b  [None]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_with_empty_text_counts_as_a_link",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "59b7cdaa0fdfc107c175453ad63f4898568a6ba46c940de4a289e85169b7e6fa",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_with_empty_text_counts_as_a_link",
+      "exit": 1,
+      "tail": "FAIL test_link_with_empty_text_counts_as_a_link: a link with empty text makes a a linker of b  [None]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_inside_inline_code_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "9a2dfd05e69490f7038a206ed04b15553cf11d67ff4a1424223f0ce5ec13df68",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_inside_inline_code_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_link_inside_inline_code_does_not_count: only c, not the page that quotes the link in backticks, is a linker of b  [['research/a.md', 'research/c.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_inside_a_backtick_fence_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "049d7b6df9f86975798b49c50d0114df83658bfc5e480bc39356f68789da20f9",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_inside_a_backtick_fence_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_link_inside_a_backtick_fence_does_not_count: only c, not the page with the link in a ``` fence, is a linker of b  [['research/a.md', 'research/c.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_inside_a_tilde_fence_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "c3ccad6605518f1a06ce52178066b45c6c43397ff9abc6f0669f209a506f92e0",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_inside_a_tilde_fence_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_link_inside_a_tilde_fence_does_not_count: only c, not the page with the link in a ~~~ fence, is a linker of b  [['research/a.md', 'research/c.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_after_an_unclosed_fence_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "4f35df5492524845934e65cc982b24db892f1b6cc1ee41172d939471ce0cea40",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_after_an_unclosed_fence_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_link_after_an_unclosed_fence_does_not_count: only c, not the page whose fence runs to the end, is a linker of b  [['research/a.md', 'research/c.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_self_link_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f0337e170200d5d505efcc63d84715e753932bbf3259b25c907ea2291782f76f",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_self_link_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_self_link_does_not_count: b linking itself leaves b out of the report; the control is still reported  [['research/b.md', 'research/ctl.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_target_with_whitespace_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "3a597c0e1c6f6670be2f19dca02b6bfe54ec449bec9d303b3f8dc3be98242d4c",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_target_with_whitespace_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_link_target_with_whitespace_does_not_count: a target with a space makes no linker: the spaced page is not reported  [['research/ctl.md', 'research/my page.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_to_an_index_page_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "153783f31adc7c21dedaaaa1416b72aa0ae3e54f32db6950b043deba8eb16d18",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_to_an_index_page_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_link_to_an_index_page_does_not_count: _INDEX.md is no entry: it is not reported  [['research/_INDEX.md', 'research/ctl.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_to_a_sessions_page_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "3b46877b42a664c5dea415102dafb40060da454f21bbaeb8d3bb1e19dc785804",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_to_a_sessions_page_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_link_to_a_sessions_page_does_not_count: a sessions/ page is no entry: it is not reported  [['research/ctl.md', 'sessions/s.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_from_a_sessions_page_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "8fc46425f08ed4eb373c862765e2888acfb9836da939c52b92ec81bf7682908f",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_from_a_sessions_page_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_link_from_a_sessions_page_does_not_count: only c, not the sessions/ page, is a linker of b  [['research/c.md', 'sessions/s.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_to_a_task_card_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "83777c1e240fe908d6e6a1f234f1472bf57a02ea8ba088ec678cc45ade8d2401",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_to_a_task_card_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_link_to_a_task_card_does_not_count: a tasks/ card is no entry: it is not reported  [['research/ctl.md', 'tasks/t1.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_to_a_dot_file_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "6d5d664d121d8737c129e39dc0a294d2dd347137bf95d9e997353e4a67b7bdf1",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_to_a_dot_file_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_link_to_a_dot_file_does_not_count: a dot-file is no entry: it is not reported  [['research/.hidden.md', 'research/ctl.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_link_to_an_inbox_page_does_not_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "26d4f5f57f0de2b38c1dc239a037e4f51b8304d4c70041fc00785d44b10cf729",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_link_to_an_inbox_page_does_not_count",
+      "exit": 1,
+      "tail": "FAIL test_link_to_an_inbox_page_does_not_count: an _inbox/ page is no entry: it is not reported  [['_inbox/x.md', 'research/ctl.md']]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_block_with_a_start_marker_lacking_its_end_is_marked_unclosed",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "4627b79b7afb46e8438979084fe67fcef8be900c2bce298be35e55136ed3871f",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_block_with_a_start_marker_lacking_its_end_is_marked_unclosed",
+      "exit": 1,
+      "tail": "FAIL test_block_with_a_start_marker_lacking_its_end_is_marked_unclosed: b is reported unclosed, with nothing extra or missing judged  [[{'file': 'research/a.md', 'extra': [], 'missing': ['research/b.md'], 'unclosed': False}, {'file': 'research/b.md', 'extra': [], 'missing': ['research/a.md'], 'unclosed': False}]]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_block_with_a_start_marker_lacking_its_end_is_named_in_the_report",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f41c8fa0e429e3c21fecbb1e8b3467f6b6bddff493feda2cd811dbe52d6c63d1",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_block_with_a_start_marker_lacking_its_end_is_named_in_the_report",
+      "exit": 1,
+      "tail": "FAIL test_block_with_a_start_marker_lacking_its_end_is_named_in_the_report: the section lists b as block not closed  [\nA page's `BACKLINKS-AUTO` block should list exactly the entries that link to it. `extra` = the block lists a page that does not link here; `missing` = a page links here and the block leaves it out (a page with no block lists nobody). Run after the rebuild, so a page listed here means the rebuild went wrong: run `wiki-reciprocate-backlinks.py` again and, if it stays, look at the script. Warn-only.\n- `research/a.md` \u2014 missing `research/b.md`\n- `research/b.md` \u2014 missing `research/a.md`\n]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_unclosed_block_counts_as_one_page_in_the_summary_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f419b2fcef46bd9e6116db8de0eef590e6dfea25cf8f54efc025ff0061f8a79a",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_unclosed_block_counts_as_one_page_in_the_summary_line",
+      "exit": 1,
+      "tail": "**Hubs behind their tag**: 0 (no page declares `hub_tag`)\n**Backlink blocks out of step**: 2 page(s) (extra 0, missing 2)\n---\n## \ud83d\udd17 Broken Links\n_None \u2014 all internal links resolve._\n## \ud83c\udfdd\ufe0f Orphan Pages (no inbound links)\n_None \u2014 every page has an inbound link or declares itself standalone._\n## \ud83e\udded Standalone Pages (declared, no inbound link needed)\n_None \u2014 no page without inbound links declares `standalone:`._\n## \u23f3 Stale 'Pending' Mentions\nThese lines]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_lint_exits_zero_with_blocks_out_of_step",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "864e09f40027ee9defda253b3d84a4fd25aa95f0cf7f8756e11893e7be202372",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_lint_exits_zero_with_blocks_out_of_step",
+      "exit": 1,
+      "tail": "FAIL test_lint_exits_zero_with_blocks_out_of_step: two pages out of step and the lint still exits 0  [(0, '', [{'file': 'research/a.md', 'extra': [], 'missing': ['research/b.md'], 'unclosed': False}, {'file': 'research/b.md', 'extra': [], 'missing': ['research/a.md'], 'unclosed': False}, {'file': 'research/ctl.md', 'extra': ['research/ctl-x.md'], 'missing': [], 'unclosed': False}])]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_marker_quoted_in_inline_code_is_neither_a_block_nor_unclosed",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ed93087ed9dd52c3add2ff51b2972d2af8653e4d6d63bed10432b0fc7ba74de1",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_marker_quoted_in_inline_code_is_neither_a_block_nor_unclosed",
+      "exit": 1,
+      "tail": "FAIL test_marker_quoted_in_inline_code_is_neither_a_block_nor_unclosed: a is no unclosed page and still a linker: b is missing a, and only b is reported  [[{'file': 'research/a.md', 'extra': [], 'missing': [], 'unclosed': True}]]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_lists_the_linker_of_a_section_link",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "2a59a299659a67291a972d7237fdcc9e8cc2fe7110ac6c6b21da9e34a68f2e36",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_lists_the_linker_of_a_section_link",
+      "exit": 1,
+      "tail": "FAIL test_rebuild_lists_the_linker_of_a_section_link: b's block lists a  [('', '---\\ntitle: \"B\"\\ndate: 2026-09-01\\ntier: 3\\nconfidence: high\\ntags: [x, y, z]\\n---\\n\\n# B\\n\\n\\n')]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_lists_the_linker_of_a_link_text_holding_brackets",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "373d2e0fb37d50a2ee8a97da2d879f200f16d69bea1092b2d651c15a945261e0",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_lists_the_linker_of_a_link_text_holding_brackets",
+      "exit": 1,
+      "tail": "FAIL test_rebuild_lists_the_linker_of_a_link_text_holding_brackets: b's block lists a  [('', '---\\ntitle: \"B\"\\ndate: 2026-09-01\\ntier: 3\\nconfidence: high\\ntags: [x, y, z]\\n---\\n\\n# B\\n\\n\\n')]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_lists_the_linker_of_a_link_with_empty_text",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "68486178c49482f448bd87d8d70d6795c30bf01e3c2c0ceba63688d2e5ad0044",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_lists_the_linker_of_a_link_with_empty_text",
+      "exit": 1,
+      "tail": "FAIL test_rebuild_lists_the_linker_of_a_link_with_empty_text: b's block lists a  [('', '---\\ntitle: \"B\"\\ndate: 2026-09-01\\ntier: 3\\nconfidence: high\\ntags: [x, y, z]\\n---\\n\\n# B\\n\\n\\n')]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_ignores_a_link_inside_inline_code",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "40489308cce3a3b1df7857f496d2803e300b684f71273f32f188706a03e28a72",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_ignores_a_link_inside_inline_code",
+      "exit": 1,
+      "tail": "FAIL test_rebuild_ignores_a_link_inside_inline_code: c gets its block (the rebuild ran) and b gets none  [('', 'r: 3\\nconfidence: high\\ntags: [x, y, z]\\n---\\n\\n# B\\n\\n\\n\\n<!-- BACKLINKS-AUTO START -->\\n\\n## Backlinks (auto-maintained)\\n\\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\\n\\n- [A](../research/a.md)\\n\\n<!-- BACKLINKS-AUTO END -->\\n')]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_ignores_a_link_inside_a_backtick_fence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "88ac61646df34e950975c6d42ccbf777231c114537a3c658ad18fddd3ce6a9da",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_ignores_a_link_inside_a_backtick_fence",
+      "exit": 1,
+      "tail": "FAIL test_rebuild_ignores_a_link_inside_a_backtick_fence: c gets its block (the rebuild ran) and b gets none  [('', 'r: 3\\nconfidence: high\\ntags: [x, y, z]\\n---\\n\\n# B\\n\\n\\n\\n<!-- BACKLINKS-AUTO START -->\\n\\n## Backlinks (auto-maintained)\\n\\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\\n\\n- [A](../research/a.md)\\n\\n<!-- BACKLINKS-AUTO END -->\\n')]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_ignores_a_link_inside_a_tilde_fence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "2be847e4c3aab99158d1b24d7448fa44d12c0578da7ea72310720ba6ed408218",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_ignores_a_link_inside_a_tilde_fence",
+      "exit": 1,
+      "tail": "FAIL test_rebuild_ignores_a_link_inside_a_tilde_fence: c gets its block (the rebuild ran) and b gets none  [('', 'r: 3\\nconfidence: high\\ntags: [x, y, z]\\n---\\n\\n# B\\n\\n\\n\\n<!-- BACKLINKS-AUTO START -->\\n\\n## Backlinks (auto-maintained)\\n\\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\\n\\n- [A](../research/a.md)\\n\\n<!-- BACKLINKS-AUTO END -->\\n')]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_writes_no_block_into_a_page_under_inbox",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "3deabe6d1d99a6a0b4e23931d099535a64de4d8d02d688b545bfc851dee5e2b0",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_writes_no_block_into_a_page_under_inbox",
+      "exit": 1,
+      "tail": "FAIL test_rebuild_writes_no_block_into_a_page_under_inbox: b gets its block (the rebuild ran) and the staged page is left as written  [('', 'confidence: high\\ntags: [x, y, z]\\n---\\n\\n# Staged\\n\\n\\n\\n<!-- BACKLINKS-AUTO START -->\\n\\n## Backlinks (auto-maintained)\\n\\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\\n\\n- [A](../research/a.md)\\n\\n<!-- BACKLINKS-AUTO END -->\\n')]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_takes_no_linker_from_a_page_under_inbox",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "aab68b4f8f09f3ffb3c19fd58d744f677cac705664b59031cba11d915773a5b5",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_takes_no_linker_from_a_page_under_inbox",
+      "exit": 1,
+      "tail": "FAIL test_rebuild_takes_no_linker_from_a_page_under_inbox: c gets its block (the rebuild ran) and b gets none  [('', '3\\nconfidence: high\\ntags: [x, y, z]\\n---\\n\\n# B\\n\\n\\n\\n<!-- BACKLINKS-AUTO START -->\\n\\n## Backlinks (auto-maintained)\\n\\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\\n\\n- [Staged](../_inbox/x.md)\\n\\n<!-- BACKLINKS-AUTO END -->\\n')]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_lint_lists_nothing_after_one_rebuild",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f0c443a66734bcb7e2b9d542ea4e7700a9632765287fc78ed884ab3e53c7de49",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_lint_lists_nothing_after_one_rebuild",
+      "exit": 1,
+      "tail": "FAIL test_lint_lists_nothing_after_one_rebuild: the lint finds no block out of step after one rebuild, and the summary says 0  [([{'file': 'research/b.md', 'extra': [], 'missing': ['research/a.md'], 'unclosed': False}, {'file': 'research/c.md', 'extra': [], 'missing': ['research/a.md'], 'unclosed': False}], '')]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_block_text_is_byte_identical_to_the_golden_for_ordinary_links",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "c4d5e5d2ef95f73b3eecb2349099a9ce6fec1c9e401f2ce7df9104f6349298dd",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "Invariant 2 characterisation: the script's block format already produces this golden text (hand-written from the script's source); bite shown by mutating the heading in wiki-reciprocate-backlinks.py to '## Backlinks (auto)': the test failed, mutation reverted",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_report_section_names_each_out_of_step_page_with_its_pages",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ada9639c91422bc858f9a5da6a2c0a0e5c719c836322848f37f74c83d3534529",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "assertion strengthened (pairing and column) after the name review; was red before the lint section existed",
+      "date": "2026-11-14"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the assertion checked only that four paths occur, not which page each belongs to",
+        "date": "2026-11-14",
+        "step": 1,
+        "hash": "ada9639c91422bc858f9a5da6a2c0a0e5c719c836322848f37f74c83d3534529"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the assertion checked only that four paths occur, not which page each belongs to"
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_unclosed_block_page_stays_listed_after_one_rebuild",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "2b59ee83f84d2a9c1a4ee86b28d519fcc1d6e132cb562eded5de601f083f66ed",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "check label trimmed after the name review; was red before the script change",
+      "date": "2026-11-14"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the label claimed a property no assertion read",
+        "date": "2026-11-14",
+        "step": 2,
+        "hash": "2b59ee83f84d2a9c1a4ee86b28d519fcc1d6e132cb562eded5de601f083f66ed"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the label claimed a property no assertion read"
+  }
+]

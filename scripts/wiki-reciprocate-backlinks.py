@@ -56,7 +56,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 
 MARKER_START = "<!-- BACKLINKS-AUTO START -->"
 MARKER_END = "<!-- BACKLINKS-AUTO END -->"
-LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+\.md)\)")
+LINK_RE = re.compile(r"\]\(([^()\s#]+\.md)(?:#[^()\s]*)?\)")
 
 
 def iso_now() -> str:
@@ -83,14 +83,27 @@ def find_wiki_entries(wiki_root: Path) -> list[Path]:
     return sorted(
         p for p in wiki_root.rglob("*.md")
         if not p.name.startswith(".") and p.name not in skip_names
+        and "_inbox" not in p.relative_to(wiki_root).parts  # _inbox/ = staged and scratch, not entries
         and not _in_sessions(p.relative_to(wiki_root))  # sessions/ = non-curated working/episodic memory
         and not _in_tasks(p.relative_to(wiki_root))  # tasks/ = the task cards, not entries
     )
 
 
-def extract_outbound_links(entry: Path) -> list[tuple[str, Path]]:
-    """Return list of (link_text, resolved_target_path) for outbound .md links."""
-    text = entry.read_text(encoding="utf-8")
+def strip_code(text: str) -> str:
+    """``text`` without fenced code (a line starting ``` or ~~~, up to the next such line or the end) and inline code."""
+    kept: list[str] = []
+    in_fence = False
+    for line in text.splitlines():
+        if line.lstrip().startswith(("```", "~~~")):
+            in_fence = not in_fence
+        elif not in_fence:
+            kept.append(re.sub(r"`[^`\n]*`", "", line))
+    return "\n".join(kept)
+
+
+def extract_outbound_links(entry: Path) -> list[Path]:
+    """Return the resolved target path of each outbound .md link the page itself writes."""
+    text = strip_code(entry.read_text(encoding="utf-8"))
     # Strip the auto-backlinks section so we don't re-count auto links:
     text = re.sub(
         rf"{re.escape(MARKER_START)}.*?{re.escape(MARKER_END)}",
@@ -98,12 +111,11 @@ def extract_outbound_links(entry: Path) -> list[tuple[str, Path]]:
         text,
         flags=re.DOTALL,
     )
+    if MARKER_START in text:  # a START with no END: the lines after it are the stray block's, not links
+        text = text[: text.index(MARKER_START)]
     out = []
     for match in LINK_RE.finditer(text):
-        link_text = match.group(1)
-        target_rel = match.group(2)
-        target_abs = (entry.parent / target_rel).resolve()
-        out.append((link_text, target_abs))
+        out.append((entry.parent / match.group(1)).resolve())
     return out
 
 
@@ -111,7 +123,7 @@ def build_reverse_index(entries: list[Path]) -> dict[Path, set[Path]]:
     """Map target -> set of entries that link to it."""
     reverse: dict[Path, set[Path]] = defaultdict(set)
     for entry in entries:
-        for _, target in extract_outbound_links(entry):
+        for target in extract_outbound_links(entry):
             try:
                 target_resolved = target.resolve()
                 if target_resolved.exists() and target_resolved != entry.resolve():
@@ -160,7 +172,7 @@ def rewrite_backlinks_section(
         old_refs = set()
         for m in LINK_RE.finditer(existing_match.group(0)):
             try:
-                tgt = (entry.parent / m.group(2)).resolve()
+                tgt = (entry.parent / m.group(1)).resolve()
                 old_refs.add(tgt)
             except OSError:
                 pass

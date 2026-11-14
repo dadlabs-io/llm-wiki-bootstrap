@@ -277,6 +277,76 @@ def resolve_link(file_path, target):
         return None
 
 
+# Backlink blocks against the links (task #240, 2026-11-14): the check reads links by its own rule, written
+# apart from wiki-reciprocate-backlinks.py's, so a bug in that script cannot hide itself.
+BACKLINK_START = "<!-- BACKLINKS-AUTO START -->"
+BACKLINK_END = "<!-- BACKLINKS-AUTO END -->"
+BACKLINK_BLOCK_RE = re.compile(re.escape(BACKLINK_START) + r".*?" + re.escape(BACKLINK_END), re.DOTALL)
+BACKLINK_LINK_RE = re.compile(r"\]\(([^()\s#]+\.md)(?:#[^()\s]*)?\)")
+
+
+def backlink_prose(text):
+    """``text`` without fenced code (a line starting ``` or ~~~, up to the next such line or the end) and inline code."""
+    kept, in_fence = [], False
+    for line in text.splitlines():
+        if line.lstrip().startswith(("```", "~~~")):
+            in_fence = not in_fence
+        elif not in_fence:
+            kept.append(re.sub(r"`[^`\n]*`", "", line))
+    return "\n".join(kept)
+
+
+def backlink_targets(text, page):
+    """The resolved path of every page ``text`` (written in ``page``) links to."""
+    out = set()
+    for m in BACKLINK_LINK_RE.finditer(backlink_prose(text)):
+        try:
+            out.add((page.parent / m.group(1)).resolve())
+        except (OSError, ValueError):
+            continue
+    return out
+
+
+def backlink_blocks_out_of_step(wiki_root, entries):
+    """[{file, extra, missing, unclosed}] for each entry whose BACKLINKS-AUTO block does not list exactly the
+    entries that link to it, by file. ``extra`` = listed but not linking here, ``missing`` = linking but not listed
+    (a page with no block lists nobody)."""
+    wiki_resolved = Path(wiki_root).resolve()
+    rel_of = {f.resolve(): f.relative_to(wiki_root).as_posix() for f in entries}
+    linkers = {r: set() for r in rel_of}
+    listed = {}
+    unclosed = set()
+    for f in entries:
+        text = backlink_prose(f.read_text(encoding="utf-8", errors="replace"))   # a marker quoted in code is no block
+        block = BACKLINK_BLOCK_RE.search(text)
+        if text.count(BACKLINK_START) > text.count(BACKLINK_END):
+            unclosed.add(f.resolve())   # a START with no END: its lines are not the page's own links either
+        prose = BACKLINK_BLOCK_RE.sub("", text)
+        if BACKLINK_START in prose:
+            prose = prose[:prose.index(BACKLINK_START)]
+        for target in backlink_targets(prose, f):
+            if target in linkers and target != f.resolve():
+                linkers[target].add(f.resolve())
+        listed[f.resolve()] = backlink_targets(block.group(0), f) if block else set()
+
+    def name(path):
+        try:
+            return path.relative_to(wiki_resolved).as_posix()
+        except ValueError:
+            return path.as_posix()
+
+    rows = []
+    for me, rel in sorted(rel_of.items(), key=lambda kv: kv[1]):
+        if me in unclosed:
+            rows.append({"file": rel, "extra": [], "missing": [], "unclosed": True})
+            continue
+        extra = sorted(name(p) for p in listed[me] - linkers[me])
+        missing = sorted(name(p) for p in linkers[me] - listed[me])
+        if extra or missing:
+            rows.append({"file": rel, "extra": extra, "missing": missing, "unclosed": False})
+    return rows
+
+
 DESCRIBES_COMMIT_RE = re.compile(r"^(.+)@([0-9a-fA-F]{7,40})$")
 
 
@@ -344,7 +414,7 @@ def check_describes(value, rel, fm, repo):
 
 
 def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, standalone, wiki_root, report_path,
-                         not_checked=()):
+                         not_checked=(), backlink_blocks=()):
     """/wiki-cycle Step 3's pair, lint-mechanical.json + .md (cycle-step-return-format):
     the contract's counters in `summary`, the findings in sibling arrays. Until
     2026-09-24 the script had no --cycle-id / --run-folder and the orchestrator wrote
@@ -369,6 +439,7 @@ def emit_cycle_artifacts(run_folder, cycle_id, summary, broken_links, orphans, s
                          for f, text, target, _reason in broken_links],
         "orphans": [rel(f) for f in orphans],
         "standalone": [{"file": rel(f), "reason": reason} for f, reason in standalone],
+        "backlink_blocks": list(backlink_blocks),
     }
     atomic_write_text(run_folder / "lint-mechanical.json", json.dumps(payload, indent=2, ensure_ascii=False))
     counts = ", ".join(f"{k.replace('_', ' ')} {v}" for k, v in summary.items())
@@ -780,6 +851,10 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             design_behind.append((file_map[d_res], since, newer))
     design_behind.sort(key=lambda t: (-len(t[2]), t[0].relative_to(wiki_root).as_posix()))
 
+    # Pass 5: backlink blocks against the links (task #240). Warn-only.
+    backlink_blocks = backlink_blocks_out_of_step(
+        wiki_root, [f for f in collect_md_files(wiki_root) if not f.name.startswith(".")])
+
     # Render report
     installed_fm_issues, installed_fm_scanned = scan_installed_frontmatter()
     qmd_status = qmd_index_coverage(wiki_root)
@@ -865,6 +940,9 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
         hub_missing.append((hub, tag, missing_here))
     out.append(f"**Hubs behind their tag**: {sum(len(m) for _, _, m in hub_missing)}"
                + ("" if hub_pages else " (no page declares `hub_tag`)"))
+    out.append(f"**Backlink blocks out of step**: {len(backlink_blocks)} page(s) "
+               f"(extra {sum(len(r['extra']) for r in backlink_blocks)}, "
+               f"missing {sum(len(r['missing']) for r in backlink_blocks)})")
     if on_cards:
         out.append(f"**Task cards (`tasks/`)**: {len(task_problems)} rule breach(es)")
     out.append("")
@@ -1336,6 +1414,28 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                                                              for e in missing_here))
     out.append("")
 
+    # Section: backlink blocks out of step (2026-11-14, task #240)
+    out.append("## 🔗 Backlink Blocks Out of Step")
+    out.append("")
+    out.append("A page's `BACKLINKS-AUTO` block should list exactly the entries that link to it. `extra` = the block "
+               "lists a page that does not link here; `missing` = a page links here and the block leaves it out "
+               "(a page with no block lists nobody). Run after the rebuild, so a page listed here means the "
+               "rebuild went wrong: run `wiki-reciprocate-backlinks.py` again and, if it stays, look at the script. "
+               "Warn-only.")
+    out.append("")
+    if not backlink_blocks:
+        out.append("_None: every backlink block lists exactly the pages that link to it._")
+    for row in backlink_blocks:
+        parts = []
+        if row["unclosed"]:
+            parts.append("block not closed (a `BACKLINKS-AUTO START` with no `END`): fix it by hand")
+        if row["extra"]:
+            parts.append("extra " + ", ".join(f"`{p}`" for p in row["extra"]))
+        if row["missing"]:
+            parts.append("missing " + ", ".join(f"`{p}`" for p in row["missing"]))
+        out.append(f"- `{row['file']}` — " + "; ".join(parts))
+    out.append("")
+
     # Save report
     report_path = topic_root / "_inbox" / "reports" / "lint-report.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1365,7 +1465,8 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             "supersede_bad_target": len(supersede_bad_target),
             "supersede_no_backlink": len(supersede_no_backlink),
             "hub_entries_missing": sum(len(m) for _, _, m in hub_missing),
-        }, broken_links, orphans, standalone, wiki_root, report_path, not_checked)
+            "backlink_blocks_out_of_step": len(backlink_blocks),
+        }, broken_links, orphans, standalone, wiki_root, report_path, not_checked, backlink_blocks)
         print(f"Cycle step files: {Path(run_folder) / 'lint-mechanical.json'} (+ .md)")
 
     # Exit code: strict mode fails on broken links, any icarus invariant

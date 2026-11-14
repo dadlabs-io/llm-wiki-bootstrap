@@ -185,6 +185,7 @@ Pulled from `<cycle_id>/<step>.json` files. Click through to see the Queued / Sk
 |---|---|
 | Broken links | N |
 | Orphan pages | N |
+| Backlink blocks out of step | N |
 | Missing frontmatter | N |
 | Missing tier | N |
 
@@ -274,6 +275,7 @@ Everything waiting on the user, one line each, with what to do and where:
 - <N> items left for retry — each link and why, and the task card each reader got
 - <N> files left in Drive — each name and why
 - Unfinished earlier runs (from `<run-folder>/unfinished-runs.txt`) — one line per run: its id, why, and the way out: `/wiki-cycle <notebook> --resume <cycle_id>` only for a run that has a scratchpad (the file's why says `no scratchpad` when it has none), and for every run `wiki-cycle-scope.py --topic <notebook> unfinished --mark-interrupted <cycle_id> --reason "<why>"` (the notebook this cycle ran on); only for runs the file names, and when it names none the report says nothing about earlier runs (no "none" line, no mention of an interrupted or complete one)
+- Backlink blocks the rebuild left out of step: N — the first 3 pages from `lint-mechanical.json`'s `backlink_blocks` (only when its `summary.backlink_blocks_out_of_step` is above 0; nothing when 0). The cycle rebuilds the blocks right before its lint, so any page listed here is one the backlink script got wrong: run `wiki-reciprocate-backlinks.py --topic <notebook>` once, and if the lint still lists it, look at the script
 - <N> email candidates not yet approved (an unattended run) — the next reviewed run asks
 - lint fixes awaiting approval — where they are
 - Best-practices synthesis awaiting your approval (when `synthesis.json` says `awaiting_approval`): N entries, `<run-folder>/synthesis.md`

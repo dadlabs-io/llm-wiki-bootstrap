@@ -815,6 +815,8 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_size_model(case, ctx)
     elif case["kind"] == "unfinished":
         _prepare_unfinished(case, ctx)
+    elif case["kind"] == "backlinks":
+        _prepare_backlinks(case, ctx)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -2388,6 +2390,114 @@ def _check_youtube_batch(case: dict, add, ctx: dict, run: dict, proposed: list) 
     add("staged entries pass the gate", proposed and not gate_errs, gate_errs)
 
 
+# ---------- kind "backlinks": the rebuild runs before the lint, so the lint describes what the rebuild left ----------
+
+BL_DIR = "wiki/research/best-practices"
+BL_KEY = "backlink_blocks_out_of_step"
+BL_START, BL_END = "<!-- BACKLINKS-AUTO START -->", "<!-- BACKLINKS-AUTO END -->"
+BL_TITLES = {"orbit-queue-basics": "Orbit queue basics", "orbit-retry-rules": "Orbit retry rules",
+             "orbit-lease-notes": "Orbit lease notes", "orbit-naming-notes": "Orbit naming notes",
+             "orbit-clean-a": "Orbit clean page A", "orbit-clean-b": "Orbit clean page B"}
+# variant -> role -> page slug
+BL_PAGES = {
+    # linker links unblocked, which has no block (missing); stale has a block listing bystander, which does not link there (extra)
+    "dirty": {"linker": "orbit-queue-basics", "unblocked": "orbit-retry-rules",
+              "stale": "orbit-lease-notes", "bystander": "orbit-naming-notes"},
+    # linker links blocked, whose block lists linker: everything matches
+    "clean": {"linker": "orbit-clean-a", "blocked": "orbit-clean-b"},
+}
+
+
+def _bl_page(ctx: dict, slug: str, links=(), block=None) -> str:
+    """A valid test-written entry. `links`: slugs it links to in a Related list. `block`: None for no backlinks
+    block, else the slugs its block lists."""
+    day, title = _today(ctx), BL_TITLES[slug]
+    text = (f'---\ntitle: "{title}"\ndate: {day}\nsource_url: "internal://skilltest/seed/{slug}"\n'
+            f'ingested_by: skilltest-fixture\ntier: self\nconfidence: medium\nlast_reviewed: {day}\n'
+            f'review_after: 2099-01-01\ntags: [agents]\n---\n\n# {title}\n\n## TL;DR\n\n'
+            f'One short practice about {title.lower()}.\n\n## What it covers\n\n- One practice, stated briefly.\n\n')
+    if links:
+        text += "## Related\n\n" + "".join(f"- [{BL_TITLES[s]}]({s}.md)\n" for s in links) + "\n"
+    if block is not None:
+        text += f"{BL_START}\n## Linked from\n\n" + "".join(f"- [{BL_TITLES[s]}]({s}.md)\n" for s in block) + f"{BL_END}\n"
+    return text
+
+
+def _prepare_backlinks(case: dict, ctx: dict) -> None:
+    """An empty queue and a few test pages in wiki/research/best-practices/ (written before the fixture commit, so
+    none counts as new). dirty: one page another page links to but that has no block, one page whose block lists a
+    page that does not link to it. clean: every block matches the links."""
+    nb, p = ctx["notebook"], BL_PAGES[case["variant"]]
+    if case["variant"] == "dirty":
+        plan = {p["linker"]: {"links": [p["unblocked"]]}, p["unblocked"]: {},
+                p["stale"]: {"block": [p["bystander"]]}, p["bystander"]: {}}
+    else:
+        plan = {p["linker"]: {"links": [p["blocked"]]}, p["blocked"]: {"block": [p["linker"]]}}
+    (nb / BL_DIR).mkdir(parents=True, exist_ok=True)
+    for slug, kw in plan.items():
+        (nb / BL_DIR / f"{slug}.md").write_text(_bl_page(ctx, slug, **kw), encoding="utf-8")
+
+
+def _bl_lint(run_dir: Path) -> dict:
+    f = run_dir / "lint-mechanical.json"
+    try:
+        d = json.loads(f.read_text(encoding="utf-8")) if f.is_file() else {}
+    except json.JSONDecodeError:
+        d = {}
+    return d if isinstance(d, dict) else {}
+
+
+def _bl_block(text: str) -> str:
+    m = re.search(re.escape(BL_START) + r"(.*?)" + re.escape(BL_END), text, re.S)
+    return m.group(1) if m else ""
+
+
+def _check_backlink_lint_zero(add, run_dir: Path) -> None:
+    """The run folder's lint, read after the run, counts no backlink block out of step."""
+    summary = _bl_lint(run_dir).get("summary") or {}
+    add("the final lint reads backlink_blocks_out_of_step 0 (the rebuild ran before the last lint)",
+        summary.get(BL_KEY) == 0, summary.get(BL_KEY, "no backlink_blocks_out_of_step in the summary"))
+
+
+def _check_backlinks(case: dict, add, res: list, ctx: dict, run_dir: Path) -> None:
+    nb, cid, p = ctx["notebook"], ctx["cycle_id"], BL_PAGES[case["variant"]]
+    # an empty-queue run: the update pair is not what this kind is about (the unfinished kind drops it too)
+    res[:] = [x for x in res if x["name"] != "quick steps all wrote their pair"]
+    present = {q.stem for q in run_dir.glob("*.json")} if run_dir.is_dir() else set()
+    add("premise: the integration scripts ran (reciprocate-backlinks wrote its pair)",
+        "reciprocate-backlinks" in present, sorted(present))
+    lj = _bl_lint(run_dir)
+    _check_backlink_lint_zero(add, run_dir)
+    listed = [str(r.get("file")) for r in (lj.get("backlink_blocks") or []) if isinstance(r, dict)]
+    planted = [s for s in p.values()]
+    add("the lint's backlink_blocks array lists none of the test pages", not [f for f in listed if any(s in f for s in planted)],
+        listed[:6])
+
+    def page(slug: str) -> str:
+        f = nb / BL_DIR / f"{slug}.md"
+        return f.read_text(encoding="utf-8", errors="replace") if f.is_file() else ""
+
+    if case["variant"] == "dirty":
+        b = _bl_block(page(p["unblocked"]))
+        add("the linked page that had no block now has one listing the page that links to it",
+            f"{p['linker']}.md" in b, b[:300] or "no BACKLINKS-AUTO block")
+        stale = _bl_block(page(p["stale"]))
+        add("the stale block no longer lists the page that does not link there", f"{p['bystander']}.md" not in stale,
+            stale[:300])
+    else:
+        b = _bl_block(page(p["blocked"]))
+        add("the matching block still lists the page that links to it", f"{p['linker']}.md" in b,
+            b[:300] or "no BACKLINKS-AUTO block")
+
+    rep = run_dir / f"{cid}-run-cycle-report.md"
+    rtext = rep.read_text(encoding="utf-8", errors="replace") if rep.is_file() else ""
+    add("the report has a Needs you section", bool(re.search(r"^##\s+[^\n]*needs you", rtext, re.I | re.M)),
+        "no Needs you heading")
+    needs = _needs_you(rtext)
+    add("Needs you has no backlink-blocks line (the count is 0)",
+        not re.search(r"backlink[- ]blocks?|out of step", needs, re.I), needs[:300])
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     sys.path.insert(0, str(ctx["scripts"]))
     from _entry_checks import check_entry_file, split_frontmatter
@@ -2804,6 +2914,7 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_scope(case, add, res, ctx, run_dir)
     elif case["kind"] == "hub":
         _check_hub(case, add, ctx, run_dir)
+        _check_backlink_lint_zero(add, run_dir)
     elif case["kind"] == "checker-gate":
         _check_checker_gate(case, add, ctx, run, run_dir)
     elif case["kind"] == "lint-all":
@@ -2814,6 +2925,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_size_model(case, add, ctx, run, run_dir, proposed)
     elif case["kind"] == "unfinished":
         _check_unfinished(case, add, res, ctx, run, run_dir)
+    elif case["kind"] == "backlinks":
+        _check_backlinks(case, add, res, ctx, run_dir)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()
