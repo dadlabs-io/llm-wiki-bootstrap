@@ -177,6 +177,37 @@
         "tests/skills/wiki-cycle/cases.json": "1ee503bacbcbacb2b69fb36c027f9afef6cb945f42a6818c849c14f33a5306b4",
         "tests/skills/wiki-cycle/check.py": "55c34b6d5720e1b8fe3468a7ef89a18fcdcc0c3585b64f4b7b756f7c0744ebe6"
       }
+    },
+    {
+      "round": 4,
+      "at": "2026-11-14T07:11:46Z",
+      "diff_sha256": "2bfa3c3482d3919b785b8d8da38886e41b77dff4824aaa082c4458c3aa609b9a",
+      "findings_sha256": "87ee53403ef69aba672469d0391a85612f2bc002db3f62423a0b09c3858d8c51",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-26"
+      ],
+      "new": [
+        "standards-26"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "cb477806cf85f2dd014c4f200996358e6e512e58e513676e2b7d611cdc352d5e",
+        "scripts/wiki-cycle-scope.py": "c9ba4cea7deef351aa8875342870f94abfc78b43b4c4343893074c9ae0e0c814",
+        "skills/wiki-cycle/SKILL.md": "17fe4c08148bf9c55f9e6914cb3ffc9f13b95da94fb79f99951c90aca20f4d7d",
+        "skills/wiki-cycle/reference.md": "697a090548354a832b8d8d4077253fe09932062c280bec59005df51d9a742c40",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "94ef76f2ff00414e850728a251e3c763d11571f7b61c005fe4f9cdbbbdab227c",
+        "skills/wiki-report/SKILL.md": "656b4c6d4f6a16ebc343264d1e3ba9e4f3fbe20cad9cefab82e0d3ee08f78ffe",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "2fa3552b1609c12689c8e828c3d5714139c52b5e84f8904516ba797ddca945c4",
+        "tests/scripts/test_cycle_scope.py": "19b7122b0d78ea6f907a59e25f93a2f8b3dc1f8abe3fd2ce7f8edac7b3748f53",
+        "tests/skills/PENDING.md": "638d1068ca8bcb9c7bc638e533a23689aa4886a3e5d13d2d4ee489736095925f",
+        "tests/skills/wiki-cycle/baseline-opus.json": "6fb8f57eb265c3efec5514c48f3b576e1160358017dda18afa53d61738df32ce",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "d37065a9209a01263669bf3a20b6c4930d24e88ba887a7b3ca1b1f8b746991ad",
+        "tests/skills/wiki-cycle/cases.json": "1ee503bacbcbacb2b69fb36c027f9afef6cb945f42a6818c849c14f33a5306b4",
+        "tests/skills/wiki-cycle/check.py": "55c34b6d5720e1b8fe3468a7ef89a18fcdcc0c3585b64f4b7b756f7c0744ebe6"
+      }
     }
   ],
   "items": {
@@ -215,8 +246,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "df32adb5c243b426be861ef11bc03d34885ad3000537a4ca851888a8dbecd2fb",
+      "verdict_round": 4,
+      "fingerprint": "1d64069c90078504ffef054b67c502187b80b90e278db8a087667126c5cb0a4e",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -229,6 +260,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "df32adb5c243b426be861ef11bc03d34885ad3000537a4ca851888a8dbecd2fb"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "1d64069c90078504ffef054b67c502187b80b90e278db8a087667126c5cb0a4e"
         }
       ]
     },
@@ -553,8 +589,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "df32adb5c243b426be861ef11bc03d34885ad3000537a4ca851888a8dbecd2fb",
+      "verdict_round": 4,
+      "fingerprint": "1d64069c90078504ffef054b67c502187b80b90e278db8a087667126c5cb0a4e",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -567,6 +603,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "df32adb5c243b426be861ef11bc03d34885ad3000537a4ca851888a8dbecd2fb"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "1d64069c90078504ffef054b67c502187b80b90e278db8a087667126c5cb0a4e"
         }
       ]
     },
@@ -579,8 +620,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "4ec371e81668556bb525afdba2c8d666c5f521abedab4cc672a1d9ee1f88953f",
+      "verdict_round": 4,
+      "fingerprint": "d37065a9209a01263669bf3a20b6c4930d24e88ba887a7b3ca1b1f8b746991ad",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -593,6 +634,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "4ec371e81668556bb525afdba2c8d666c5f521abedab4cc672a1d9ee1f88953f"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "d37065a9209a01263669bf3a20b6c4930d24e88ba887a7b3ca1b1f8b746991ad"
         }
       ]
     },
@@ -989,8 +1035,8 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "addressed",
-      "verdict_round": 2,
-      "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e",
+      "verdict_round": 4,
+      "fingerprint": "0026d09f12d46cde2275ca2e8e01679cce55d0661969e660967e7f7cf1ccece2",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1003,6 +1049,11 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "0026d09f12d46cde2275ca2e8e01679cce55d0661969e660967e7f7cf1ccece2"
         }
       ]
     },
@@ -1301,8 +1352,8 @@
       "first_round": 3,
       "last_seen_round": 3,
       "verdict": "addressed",
-      "verdict_round": 3,
-      "fingerprint": "9efbaa932b0220ee5512ba36919adb50bd38ce0907f01d1c7148d2b3cbbfc1e0",
+      "verdict_round": 4,
+      "fingerprint": "0026d09f12d46cde2275ca2e8e01679cce55d0661969e660967e7f7cf1ccece2",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1315,6 +1366,11 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "9efbaa932b0220ee5512ba36919adb50bd38ce0907f01d1c7148d2b3cbbfc1e0"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "0026d09f12d46cde2275ca2e8e01679cce55d0661969e660967e7f7cf1ccece2"
         }
       ]
     },
@@ -1393,6 +1449,32 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "e75379a9bdf49c6bf111a739f6cf980511876ca8bf9ee1b42b42b0e347771228"
+        }
+      ]
+    },
+    "standards-26": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-cycle-scope.py:555` and `:562` \u2014 G5/S2: the heading text `## Decisions log` is still written out in both write sites (the new-scratchpad template at 555 and the append at 562) beside the new `DECISIONS_LOG` pattern at 519, so the heading lives in three places; this is the sibling of standards-24 the fix did not cover. Quote: `text = text.rstrip(\"\\n\") + \"\\n\\n## Decisions log\\n\"` (562) and `f\"# Cycle Run \u2014 {cycle_id[:10]}\\n\\n**Status**: interrupted\\n\\n## Decisions log\\n\"` (555). Failure mode: editing the pattern at 519 alone makes the search at 563 return None and `log.end()` raise AttributeError. Fix: one `DECISIONS_HEADING = \"## Decisions log\"`, `DECISIONS_LOG = re.compile(rf\"^{re.escape(DECISIONS_HEADING)}$\", re.M)`, and the heading used in both writes.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 555,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "0026d09f12d46cde2275ca2e8e01679cce55d0661969e660967e7f7cf1ccece2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "9efbaa932b0220ee5512ba36919adb50bd38ce0907f01d1c7148d2b3cbbfc1e0"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "0026d09f12d46cde2275ca2e8e01679cce55d0661969e660967e7f7cf1ccece2"
         }
       ]
     }

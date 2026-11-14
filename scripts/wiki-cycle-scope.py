@@ -516,7 +516,8 @@ def cmd_promote(nb: Path, args) -> int:
 
 
 CYCLE_ID = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{2}$")
-DECISIONS_LOG = re.compile(r"^## Decisions log$", re.M)
+DECISIONS_HEADING = "## Decisions log"
+DECISIONS_LOG = re.compile(rf"^{re.escape(DECISIONS_HEADING)}$", re.M)
 
 
 def unfinished_runs(nb: Path, run_folder: Path) -> list[tuple[str, str]]:
@@ -552,14 +553,14 @@ def mark_interrupted(nb: Path, cycle_id: str, reason: str) -> None:
     """Close one run folder by its scratchpad: Status becomes `interrupted` and the reason joins the Decisions log."""
     pad = run_folder_of(nb, cycle_id) / "scratchpad.md"
     text = pad.read_text(encoding="utf-8") if pad.is_file() else (
-        f"# Cycle Run — {cycle_id[:10]}\n\n**Status**: interrupted\n\n## Decisions log\n")
+        f"# Cycle Run — {cycle_id[:10]}\n\n**Status**: interrupted\n\n{DECISIONS_HEADING}\n")
     text, n = re.subn(r"^(\*\*Status\*\*:).*$", r"\1 interrupted", text, count=1, flags=re.M)
     if not n:
         title, _, rest = text.partition("\n")
         text = f"{title}\n\n**Status**: interrupted\n{rest}"
     line = f"- {now_stamp()} — marked interrupted: {reason}\n"
     if not DECISIONS_LOG.search(text):
-        text = text.rstrip("\n") + "\n\n## Decisions log\n"
+        text = text.rstrip("\n") + f"\n\n{DECISIONS_HEADING}\n"
     log = DECISIONS_LOG.search(text)
     after = re.search(r"^## ", text[log.end():], re.M)
     end = log.end() + after.start() if after else len(text)

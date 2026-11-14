@@ -62,3 +62,8 @@ Rulings (one each, for two lenses' opposite asks):
 - standards-23 / spec-19 (final reply vs any reply for "told the user"): kept on the final reply (spec-13's ask); the timing of "now" is untested, as spec-19 notes.
 - standards-22 (way_out re-spelled in the negative case): left open, a suggestion in eval-case-writer's file; no suite rerun for it.
 Hand fixes (orchestrator): spec-20 CHANGELOG forms carry the notebook; spec-21 docstring `--topic <notebook> unfinished --mark-interrupted`; standards-24 one `DECISIONS_LOG` constant; standards-25 docstrings name the own-date rule. test_cycle_scope.py 86/86; check-freeze PASS.
+
+## Review round 4 (past the ceiling, on Mark's word) — 2026-11-14
+
+Spec CLEAR; Standards 1 suggestion (standards-26: the heading text still written out twice beside the new pattern), none blocking. Fixed by hand: one `DECISIONS_HEADING`, the pattern built from it; test_cycle_scope.py 86/86, check-freeze PASS. The Spec lens's unverified point (are real run folders filed under their own date?) settled by a walk of every notebook's `_inbox/reports/*/*`: none filed under another date.
+Stale verdicts re-verified against round 4's report (the script moved under them): spec-1 (resume only with a scratchpad, `:583-584`), spec-11 (notebook in every printed form), spec-18 (own-date rule, Decision 1), standards-2 (one-cycle rule at SKILL.md and the docstring), spec-2 (both baselines carry both new cases). Ledger: not yet met, 1 open: standards-21, kept by Mark's ruling; it goes to verify as a named FAIL for his approval, beside the mutation-tool gap.
