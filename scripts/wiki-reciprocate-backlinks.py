@@ -56,6 +56,9 @@ from _atomic_io import atomic_write_text  # noqa: E402
 
 MARKER_START = "<!-- BACKLINKS-AUTO START -->"
 MARKER_END = "<!-- BACKLINKS-AUTO END -->"
+# A block's markers each stand alone on their own line, as this script writes them; a marker quoted mid-line is prose.
+START_LINE_RE = re.compile(rf"^{re.escape(MARKER_START)}[ \t]*$", re.MULTILINE)
+BLOCK_RE = re.compile(rf"^{re.escape(MARKER_START)}[ \t]*$.*?^{re.escape(MARKER_END)}[ \t]*$", re.MULTILINE | re.DOTALL)
 LINK_RE = re.compile(r"\]\(([^()\s#]+\.md)(?:#[^()\s]*)?\)")
 
 
@@ -105,14 +108,10 @@ def extract_outbound_links(entry: Path) -> list[Path]:
     """Return the resolved target path of each outbound .md link the page itself writes."""
     text = strip_code(entry.read_text(encoding="utf-8"))
     # Strip the auto-backlinks section so we don't re-count auto links:
-    text = re.sub(
-        rf"{re.escape(MARKER_START)}.*?{re.escape(MARKER_END)}",
-        "",
-        text,
-        flags=re.DOTALL,
-    )
-    if MARKER_START in text:  # a START with no END: the lines after it are the stray block's, not links
-        text = text[: text.index(MARKER_START)]
+    text = BLOCK_RE.sub("", text)
+    stray = START_LINE_RE.search(text)
+    if stray:  # a START with no END: the lines after it are the stray block's, not links
+        text = text[: stray.start()]
     out = []
     for match in LINK_RE.finditer(text):
         out.append((entry.parent / match.group(1)).resolve())
@@ -162,11 +161,7 @@ def rewrite_backlinks_section(
         new_block = "\n".join(lines)
 
     # Find existing block, if any
-    existing_match = re.search(
-        rf"{re.escape(MARKER_START)}.*?{re.escape(MARKER_END)}",
-        text,
-        flags=re.DOTALL,
-    )
+    existing_match = BLOCK_RE.search(text)
 
     if existing_match:
         old_refs = set()

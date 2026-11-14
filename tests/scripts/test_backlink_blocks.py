@@ -537,6 +537,22 @@ def test_rebuild_treats_a_fence_with_an_info_string_as_a_fence():
           (r.stderr[-300:], texts["research/b.md"][-300:]))
 
 
+def test_rebuild_keeps_the_prose_above_a_block_when_a_start_marker_is_quoted_inline_twice():
+    prose = "The block starts at `<!-- BACKLINKS-AUTO START -->` and ends at its END marker.\n\nOwn words, kept as written."
+    b = page("B", prose + "\n\n" + blk("a.md"))
+    pages = {"research/a.md": page("A", "[B](b.md)"), "research/b.md": b}
+    r1, once, _ = rebuild_then_lint(pages)
+    r2, twice, payload = rebuild_then_lint({**pages, "research/b.md": once["research/b.md"]})
+    kept = b[: b.index("\n<!-- BACKLINKS-AUTO START -->\n") + 1]   # everything above the real block's START line
+    check("after two rebuilds b is its own text above the block, byte for byte",
+          twice["research/b.md"].startswith(kept) and once["research/b.md"].startswith(kept),
+          (once["research/b.md"][:400], twice["research/b.md"][:400]))
+    check("b's block lists a, once and twice", "- [A](../research/a.md)" in once["research/b.md"]
+          and "- [A](../research/a.md)" in twice["research/b.md"], twice["research/b.md"][-300:])
+    check("the lint lists nothing after the rebuild", payload.get("backlink_blocks") == [],
+          payload.get("backlink_blocks", "key absent"))
+
+
 NONE_LINE = "_None: every backlink block lists exactly the pages that link to it._"
 
 

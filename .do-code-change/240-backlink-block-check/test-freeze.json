@@ -796,5 +796,20 @@
       "reason": "green on the code (hand mutation survivor): fails alone on the mutant that always prints the None line (55/56)",
       "date": "2026-11-14"
     }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_keeps_the_prose_above_a_block_when_a_start_marker_is_quoted_inline_twice",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "28817bd336d3914f69e723a1798df5031c617f2142ccbe649d57f4618ada5e40",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_keeps_the_prose_above_a_block_when_a_start_marker_is_quoted_inline_twice",
+      "exit": 1,
+      "tail": "FAIL test_rebuild_keeps_the_prose_above_a_block_when_a_start_marker_is_quoted_inline_twice: after two rebuilds b is its own text above the block, byte for byte  [('---\\ntitle: \"B\"\\ndate: 2026-09-01\\ntier: 3\\nconfidence: high\\ntags: [x, y, z]\\n---\\n\\n# B\\n\\nThe block starts at `<!-- BACKLINKS-AUTO START -->\\n\\n## Backlinks (auto-maintained)\\n\\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\\n\\n- [A](../research/a.md)\\n\\n<!-- BACKLINKS-AUTO END -->\\n', '---\\ntitle: \"B\"\\ndate: 2026-09-01\\ntier: 3\\nconfidence: high\\ntags: [x, y, z]\\n---\\n\\n# B\\n\\nThe block starts at `<!-- BACKLINKS-AUTO START -->\\n\\n## Backlinks (auto-maintained)\\n\\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\\n\\n- [A](../research/a.md)\\n\\n<!-- BACKLINKS-AUTO END -->\\n')]\nPASS test_rebuild_keeps_the_prose_above_a_block_when_a_start_marker_is_quoted_inline_twice: b's block lists a, once and twice\nPASS test_rebuild_keeps_the_prose_above_a_block_when_a_start_marker_is_quoted_inline_twice: the lint lists nothing after the rebuild\n2/3 passed",
+      "date": "2026-11-14"
+    }
   }
 ]

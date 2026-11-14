@@ -316,9 +316,10 @@ def backlink_targets(text, page):
 
 
 def backlink_blocks_out_of_step(wiki_root, entries):
-    """[{file, extra, missing, unclosed}] for each entry whose BACKLINKS-AUTO block does not list exactly the
-    entries that link to it, by file. ``extra`` = listed but not linking here, ``missing`` = linking but not listed
-    (a page with no block lists nobody)."""
+    """[{file, extra, missing, unclosed[, in_fence]}] for each entry whose BACKLINKS-AUTO block does not list exactly
+    the entries that link to it, by file. ``extra`` = listed but not linking here, ``missing`` = linking but not listed
+    (a page with no block lists nobody). A block with a START and no END is ``unclosed``; a block after a code fence
+    that is never closed carries ``in_fence: True``; neither row lists pages, since the page itself needs a hand fix."""
     wiki_resolved = Path(wiki_root).resolve()
     rel_of = {f.resolve(): f.relative_to(wiki_root).as_posix() for f in entries}
     linkers = {r: set() for r in rel_of}

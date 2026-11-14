@@ -83,6 +83,73 @@
         "tests/skills/wiki-cycle/fixtures/promote/scratchpad-full.md": "1790b401a51194138dfc189a16d47693baa8235d23819ea3025e3e6d8b312bd8",
         "tests/skills/wiki-cycle/fixtures/resume/scratchpad.md": "582ed45682be13f06f671a5f3d6501ce88fce1461095ec9580e8e0df78a5cdeb"
       }
+    },
+    {
+      "round": 2,
+      "at": "2026-11-14T22:27:23Z",
+      "diff_sha256": "cc8e82c9259eb76ac950336367f81f6f49d88d4b57c6dcf42d7f7a97038d6c35",
+      "findings_sha256": "94af0f61dfa7679cbc5c6358bb7f5094d95c985191b8d0581c1c1e33e31b937c",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-15",
+        "standards-16",
+        "standards-17",
+        "standards-18",
+        "standards-19",
+        "standards-20",
+        "standards-21",
+        "standards-22",
+        "standards-23",
+        "spec-9",
+        "spec-10",
+        "spec-11",
+        "spec-12",
+        "spec-13"
+      ],
+      "new": [
+        "standards-15",
+        "standards-16",
+        "standards-17",
+        "standards-18",
+        "standards-19",
+        "standards-20",
+        "standards-21",
+        "standards-22",
+        "standards-23",
+        "spec-9",
+        "spec-10",
+        "spec-11",
+        "spec-12",
+        "spec-13"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "ee0e9bfeb6f48ea55bea886ed4294b658079df0091c94a5c08bb1c3f548dc96e",
+        "INSTALL-INVENTORY.md": "2b5ffe0d719881e5205f7fdac679a32b8f2a2f4cd0ce3995029e5a8192922c11",
+        "framework-docs/cycle-step-return-format.md": "2f777aa152662f7161f6a9cbe076cc3a8029ea816e6506022a95c21a32df82df",
+        "scripts/wiki-lint-mechanical.py": "203cac6c2d4f5029fe84fa7c870c79cc392e4b90c5fc954c31ae0ea87eec2033",
+        "scripts/wiki-promote.py": "032d11f9c7a0dcf9535f7f12700c84a34d8bc87bc418f59321052d7e777a75f2",
+        "scripts/wiki-reciprocate-backlinks.py": "6e6bf84b1e7cc6b21adface44f868c3cbf2a0b64942a046b79cdb40fac3cc6f4",
+        "skills/wiki-cycle/SKILL.md": "f86b3fcb349ebd7174b22fdda4ec563b88ce376063b6d746f27de00be14a42ce",
+        "skills/wiki-cycle/reference.md": "bc9abfed8999d4d1892cc99f58f23ead153f6e96ab1f1635043825ebbc22a220",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "51e56f7498b6ec21af657d1484451f4a9cfed11a1ba32e8187aa4e91c45f2f0a",
+        "skills/wiki-lint/SKILL.md": "4c8534afc3d14a6aa8f67b307d591571edfd377a4133baeddf02a5caf0709468",
+        "skills/wiki-lint/wiki-seed/wiki-lint.md": "8d26c76605c8337d21f5d66739295d43880874b54028547d6c6cbd4b26a49667",
+        "skills/wiki-report/SKILL.md": "9c27c76952d401baae9192f5c6817b0a9364f43928232e9ef066a14d4bd47c14",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "ccdfe92bad0389cfd7977bfce5b01c16f89f177d4b8df80184b1c48f33de8c39",
+        "tests/scripts/test_backlink_blocks.py": "dea2d024c7f296104812c481eb65bdc2458618308dfd7d3ebd0fb3b315dc2e86",
+        "tests/skills/PENDING.md": "46367035daba5e6191f9caad0ad48dc7e6f4365af5dc4e8a661f725d4da9882f",
+        "tests/skills/wiki-cycle/baseline-opus.json": "d953cfb1d3d52c6f56d036331eb1dafd7ae15ca1366c5a40840e9980d3eca23f",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "f8924e0cc1f67176823c4a39c868ec5d7a81ab2b003914fee206ea64eb0a68b8",
+        "tests/skills/wiki-cycle/cases.json": "3d61b7248efaae29bd256104fdbedf8168abeb0374efb6e768d4ac04089d8857",
+        "tests/skills/wiki-cycle/check.py": "f5425bf884d5690eafc4bd55b0f25d3baa1f0efe3ddf4db73493870685cf7aa3",
+        "tests/skills/wiki-cycle/fixtures/checker-gate/scratchpad.md": "146480c43d9283a7826a7656c0cf111ce95f4349c6cf08c5dc482f38d7e1b720",
+        "tests/skills/wiki-cycle/fixtures/checker/scratchpad.md": "369002b41ce4ee4d2c354b090ffb58f7c59653406f6a5ee485fc69e64eddb30b",
+        "tests/skills/wiki-cycle/fixtures/promote/scratchpad-full.md": "1790b401a51194138dfc189a16d47693baa8235d23819ea3025e3e6d8b312bd8",
+        "tests/skills/wiki-cycle/fixtures/resume/scratchpad.md": "582ed45682be13f06f671a5f3d6501ce88fce1461095ec9580e8e0df78a5cdeb"
+      }
     }
   ],
   "items": {
@@ -458,9 +525,9 @@
       "line": 140,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": 1,
-      "fingerprint": "6e6bf84b1e7cc6b21adface44f868c3cbf2a0b64942a046b79cdb40fac3cc6f4",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "b97de63e98883d5f206ffcb492156abddd425a63287c8dfeb1a08b4869491d23",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -478,6 +545,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "6e6bf84b1e7cc6b21adface44f868c3cbf2a0b64942a046b79cdb40fac3cc6f4"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "b97de63e98883d5f206ffcb492156abddd425a63287c8dfeb1a08b4869491d23"
         }
       ]
     },
@@ -489,10 +561,10 @@
       "line": 86,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": 1,
-      "fingerprint": "0d3a888d9a2f1ef1f0b7cd595e6fb3a4319a64f7c6b12c2c46853c106d286090",
-      "fingerprint_kind": "hunk-diff",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "b97de63e98883d5f206ffcb492156abddd425a63287c8dfeb1a08b4869491d23",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
@@ -509,6 +581,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "0d3a888d9a2f1ef1f0b7cd595e6fb3a4319a64f7c6b12c2c46853c106d286090"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "b97de63e98883d5f206ffcb492156abddd425a63287c8dfeb1a08b4869491d23"
         }
       ]
     },
@@ -520,9 +597,9 @@
       "line": 59,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": 1,
-      "fingerprint": "14bafd2c94edceee8699586feab70b0103acf654f7e6f7c8826bb683c487658a",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "e00922bc1abce8776d3b20bb19dba65011f3d00990f078fe0c343d3f3d3aab84",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -540,6 +617,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "14bafd2c94edceee8699586feab70b0103acf654f7e6f7c8826bb683c487658a"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "e00922bc1abce8776d3b20bb19dba65011f3d00990f078fe0c343d3f3d3aab84"
         }
       ]
     },
@@ -578,7 +660,7 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": 1,
+      "verdict_round": 2,
       "fingerprint": "a59703886c878128dce90a769951e488d4bbef2a07767e92597e9fac899aee1c",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
@@ -595,6 +677,11 @@
         },
         {
           "round": 1,
+          "verdict": "open",
+          "fingerprint": "a59703886c878128dce90a769951e488d4bbef2a07767e92597e9fac899aee1c"
+        },
+        {
+          "round": 2,
           "verdict": "open",
           "fingerprint": "a59703886c878128dce90a769951e488d4bbef2a07767e92597e9fac899aee1c"
         }
@@ -635,7 +722,7 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": 1,
+      "verdict_round": 2,
       "fingerprint": "365678eb89bea261b95bfca3ee890c359279e357f1c57cb4bdb4ce200318bfe8",
       "fingerprint_kind": "text-only",
       "fp_verdict": null,
@@ -652,6 +739,11 @@
         },
         {
           "round": 1,
+          "verdict": "open",
+          "fingerprint": "365678eb89bea261b95bfca3ee890c359279e357f1c57cb4bdb4ce200318bfe8"
+        },
+        {
+          "round": 2,
           "verdict": "open",
           "fingerprint": "365678eb89bea261b95bfca3ee890c359279e357f1c57cb4bdb4ce200318bfe8"
         }
@@ -680,6 +772,380 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "18def8bca76bd671c6d7916a8dad3f603400ec73e654c0f989c940c3698fc83f"
+        }
+      ]
+    },
+    "standards-15": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] C2 `scripts/wiki-promote.py:303-304` \u2014 the reworded comment says \"Only /wiki-cycle's Step 3 runs it otherwise\", but `skills/wiki-cycle/SKILL.md` Step 5.6 (\"run Step 3's integration scripts and the mechanical lint once more\") and CHANGELOG line 16 (Steps 5.5 and 5.6 rebuild; `--lint-only` rebuilds too) show the cycle runs it in more places. Fix: `# it and the lint counts it an orphan. /wiki-cycle also runs it at Steps 5.5 and 5.6 and under --lint-only, so without it here every /wrap-up would leave its new entries orphaned.` (The lens read Step 5.6's wording as a second call site; arguably it is Step 3's script list re-run, so the comment is imprecise rather than false.)",
+      "file": "scripts/wiki-promote.py",
+      "line": 303,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "7dd4ad85b0ea208807bfc0f148a4764867d6df8acc0ab1c7b78c22fd870de886",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "422d53edd525b87767e74004cba434ab501154561bb759bb86669f5464f29eb5"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "7dd4ad85b0ea208807bfc0f148a4764867d6df8acc0ab1c7b78c22fd870de886"
+        }
+      ]
+    },
+    "standards-16": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] T5 `tests/scripts/test_backlink_blocks.py` (new tests, about 450-553) \u2014 two boundaries of the new fence logic have no test: (a) a START quoted in a closed fence, then an unclosed fence, must not be `in_fence` (only `if in_fence: opened = i` at lint :296-297 keeps it out); (b) an unclosed START in prose plus a block inside the fence must report only `unclosed` (:331-334). Fix: add `test_marker_quoted_in_a_closed_fence_before_an_unclosed_one_is_not_in_fence` (page `\"```\\n<!-- BACKLINKS-AUTO START -->\\n```\\n\\n```\\nnever closed\"`, assert `backlink_blocks == []`) and one for (b) asserting `{\"unclosed\": True}` with no `in_fence`.",
+      "file": "tests/scripts/test_backlink_blocks.py",
+      "line": null,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": 2,
+      "fingerprint": "18dbe313981731262899ce6cedd8102404c6467b82308c0e49b6edc6777f6796",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "dea2d024c7f296104812c481eb65bdc2458618308dfd7d3ebd0fb3b315dc2e86"
+        },
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "18dbe313981731262899ce6cedd8102404c6467b82308c0e49b6edc6777f6796"
+        }
+      ]
+    },
+    "standards-17": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S4/S5/PY2 `scripts/wiki-lint-mechanical.py:352, 355` read at `:1444, :1446` \u2014 the three mutually exclusive causes are carried as two keys and `in_fence` exists only on some rows (`row[\"unclosed\"]` against `row.get(\"in_fence\")`). Fix: one `cause` field, or always emit `\"in_fence\": False`; `framework-docs/cycle-step-return-format.md:175` and the test's `FENCE_ROW` would change with it (whoever owns the JSON shape decides).",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 352,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": 2,
+      "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "56ba8cbd83025d4f79fbbe8b72f7a764972e6af9dfa4cbd39390fc22fca898e5"
+        },
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55"
+        }
+      ]
+    },
+    "standards-18": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] S1/R3 `scripts/wiki-lint-mechanical.py:292, 327, 329` \u2014 `in_fence` is a bool in `backlink_split` and a set of pages in `backlink_blocks_out_of_step`; `fenced` holds only the unclosed fence's tail. Fix: rename the set `pages_in_fence` and `fenced` `unclosed_fence`.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 292,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": 2,
+      "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "56ba8cbd83025d4f79fbbe8b72f7a764972e6af9dfa4cbd39390fc22fca898e5"
+        },
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55"
+        }
+      ]
+    },
+    "standards-19": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] G16/G19 `scripts/wiki-lint-mechanical.py:300` \u2014 `return \"\\n\".join(kept), \"\\n\".join(lines[opened:]) if in_fence else \"\"` is right only because the conditional binds tighter than the comma. Fix: `return \"\\n\".join(kept), (\"\\n\".join(lines[opened:]) if in_fence else \"\")`.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 300,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": 2,
+      "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "56ba8cbd83025d4f79fbbe8b72f7a764972e6af9dfa4cbd39390fc22fca898e5"
+        },
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55"
+        }
+      ]
+    },
+    "standards-20": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] S11 `scripts/wiki-lint-mechanical.py:303-304` \u2014 `backlink_prose` forwards to `backlink_split(text)[0]`; its only caller is `:310`. Fix: call `backlink_split(text)[0]` there and delete the wrapper, or give it a docstring.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 303,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": 2,
+      "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "56ba8cbd83025d4f79fbbe8b72f7a764972e6af9dfa4cbd39390fc22fca898e5"
+        },
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55"
+        }
+      ]
+    },
+    "standards-21": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] S2 `tests/scripts/test_backlink_blocks.py:486` \u2014 `STRAY = \"<!-- BACKLINKS-AUTO START -->\"` repeats the literal in `blk()` (:40) and `UNCLOSED` (:293). Fix: one module constant.",
+      "file": "tests/scripts/test_backlink_blocks.py",
+      "line": 486,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": 2,
+      "fingerprint": "e432085d1591341f8a8b7e34f7da128a6de78d957c1d5b2ae463f1bb74349c0c",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "e821e5ad9d1f5a9891c146c639ae36202295963b61d3a423ad1574989bc17e56"
+        },
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "e432085d1591341f8a8b7e34f7da128a6de78d957c1d5b2ae463f1bb74349c0c"
+        }
+      ]
+    },
+    "standards-22": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] R13 `tests/scripts/test_backlink_blocks.py:467` \u2014 `\"missing\" not in s.split(\"Warn-only.\")[-1]` depends on the intro sentence's wording. Fix: take the page's own line (`[l for l in s.splitlines() if \"`research/b.md`\" in l]`) and test that.",
+      "file": "tests/scripts/test_backlink_blocks.py",
+      "line": 467,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": 2,
+      "fingerprint": "e432085d1591341f8a8b7e34f7da128a6de78d957c1d5b2ae463f1bb74349c0c",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "e821e5ad9d1f5a9891c146c639ae36202295963b61d3a423ad1574989bc17e56"
+        },
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "e432085d1591341f8a8b7e34f7da128a6de78d957c1d5b2ae463f1bb74349c0c"
+        }
+      ]
+    },
+    "standards-23": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-lint-mechanical.py:319` (reviewer's own check, docstring of `backlink_blocks_out_of_step`) \u2014 it still says `[{file, extra, missing, unclosed}]` while a row can now also carry `in_fence`. Fix: add `in_fence` to the docstring.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 319,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "56ba8cbd83025d4f79fbbe8b72f7a764972e6af9dfa4cbd39390fc22fca898e5"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55"
+        }
+      ]
+    },
+    "spec-9": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `skills/wiki-report/SKILL.md:278` (siblings: `framework-docs/cycle-step-return-format.md:175`, `skills/wiki-lint/wiki-seed/wiki-lint.md:28`) \u2014 the Needs-you line sends an unclosed or in-fence page to the backlink script, and a second rebuild of a stray-START page removes body text. Intent: plan Step 1 Failures: \"a page with a START and no END is listed as \"block not closed\", never a crash\"; the lint row says \"fix it by hand\" (`scripts/wiki-lint-mechanical.py:1445`) and \"close the fence by hand\" (`:1447`); requirements Exclusions: \"The lint does not rewrite blocks; it reports them.\" Implemented: SKILL.md:278 says \"any page listed here is one the backlink script got wrong: run `wiki-reciprocate-backlinks.py --topic <notebook>` once, and if the lint still lists it, look at the script\"; the contract doc says \"a page in `backlink_blocks` is one the backlink rebuild got wrong\". A rerun does not clear an in-fence row (the rebuild rewrites the same block in place, `wiki-reciprocate-backlinks.py:165-169, :180`). For an unclosed page, read from code (not run): the first rebuild appends a block after the stray START (`:188-191`); the next rebuild's `START.*?END` search runs from the stray START to the new block's END and `:180` splices over the prose between. Affected: anyone who follows the report on an unclosed or in-fence page; the script is blamed for a fence the user must close, and an unclosed page's prose is at risk on rerun. Fix: for `unclosed` and `in_fence` rows, the report line, the contract doc and the lint section say \"fix by hand, do not rerun\"; keep the rerun line for extra/missing rows only. Add a test for two rebuilds on a stray-START page.",
+      "file": "skills/wiki-report/SKILL.md",
+      "line": 278,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "5378af9db87b57291cd5ff46c821b1c1521f14cd3b7264fbe595168c510ce1b9",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "378fe62044202af624c543dbfe7be2da5ef8090a26c28044d173d8949f0f8448"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "5378af9db87b57291cd5ff46c821b1c1521f14cd3b7264fbe595168c510ce1b9"
+        }
+      ]
+    },
+    "spec-10": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `scripts/wiki-reciprocate-backlinks.py:165` \u2014 round-1 spec-1's second case is unaddressed and unrecorded. Intent: `review-findings.md` spec-1: \"Same root cause, second case (pre-existing in the rebuild): a START quoted in backticks before a real block: the raw regex at line 165 spans from the quoted START to the real END and replaces the text between\". The \"Fix round 1\" entry in `checkpoints.md` does not mention it; `parked.md` holds only an unrelated item. Implemented: the rebuild still reads raw text (`:140`) and matches `START.*?END` on it (`:165-169`); the lint strips code first (`wiki-lint-mechanical.py:299`). The only quoted-marker test is lint-only (`test_marker_quoted_in_inline_code_is_neither_a_block_nor_unclosed`, test file :323-330). Pre-existing behaviour, and the Exclusions bar changing block placement, so the way out is a ruling. Affected: notebook owners whose prose quotes the exact marker in code before a real block; the rebuild replaces the text between. (Whether a live page has this shape is unverified; a Grep of the llm-wiki-bootstrap notebook shows pages that discuss the marker, and the one checked spells it without comment brackets.) Fix: a recorded ruling (parked, outside the Exclusions) in `checkpoints.md`, or have the rebuild search the code-stripped view, with a red rebuild test.",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 165,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "b97de63e98883d5f206ffcb492156abddd425a63287c8dfeb1a08b4869491d23",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "6e6bf84b1e7cc6b21adface44f868c3cbf2a0b64942a046b79cdb40fac3cc6f4"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "b97de63e98883d5f206ffcb492156abddd425a63287c8dfeb1a08b4869491d23"
+        }
+      ]
+    },
+    "spec-11": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `plan.md` Step 1 and `requirements.md` Decision 1 \u2014 the fourth row kind (`in_fence`) is recorded only in `checkpoints.md`, the CHANGELOG and the contract doc. Intent: requirements Decision 1: \"two kinds per page: an extra backlink ... and a missing backlink\"; plan Lint-section bullet lists the array fields `file, extra, missing, unclosed`; Step 2 says only \"the unclosed-block page aside, which stays listed\". Implemented: `scripts/wiki-lint-mechanical.py:354-355` emits `\"in_fence\": True`; the plan's \"after one rebuild the lint lists nothing\" also stays unmet for such a page by design. Fix: add the in-fence case to the plan's Lint-section bullet, Step 1 Failures and Step 2 \"aside\" clause, and to requirements Decision 1.",
+      "file": "plan.md",
+      "line": null,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": 2,
+      "fingerprint": "6878955e9760c160d2179a992e6eede7f7519aeec8984ee5478e68d21e50988a",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "6878955e9760c160d2179a992e6eede7f7519aeec8984ee5478e68d21e50988a"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "6878955e9760c160d2179a992e6eede7f7519aeec8984ee5478e68d21e50988a"
+        },
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "6878955e9760c160d2179a992e6eede7f7519aeec8984ee5478e68d21e50988a"
+        }
+      ]
+    },
+    "spec-12": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `plan.md:15` \"One link rule\" \u2014 the bullet contradicts itself on order. Intent: main sentence \"with its own BACKLINKS-AUTO block removed, then fenced code ... and inline code ... removed\" against the amendment \"code is stripped before the page's own block is found\". Implemented: code first (`scripts/wiki-lint-mechanical.py:288-300`, block at `:329-335`; rebuild `extract_outbound_links`). Fix: reword the main sentence to code first, then block.",
+      "file": "plan.md",
+      "line": 15,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": 2,
+      "fingerprint": "6f42bd68ff2acda437212102a714674f6d750055cd33cde27d48c659a4139738",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "6f42bd68ff2acda437212102a714674f6d750055cd33cde27d48c659a4139738"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "6f42bd68ff2acda437212102a714674f6d750055cd33cde27d48c659a4139738"
+        },
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "6f42bd68ff2acda437212102a714674f6d750055cd33cde27d48c659a4139738"
+        }
+      ]
+    },
+    "spec-13": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] indented fences \u2014 documented in the plan, not in the CHANGELOG, not tested. Intent: plan line 15 \"a fence line may be indented\"; `CHANGELOG.md:16` \"a fence opened by a line starting with ``` or ~~~\". Implemented: `scripts/wiki-lint-mechanical.py:294` uses `line.lstrip().startswith(...)`; no test has an indented fence, and the hand mutation pass has no `lstrip()`-removal mutant. Fix: name indentation in the CHANGELOG and add one lint and one rebuild test.",
+      "file": "CHANGELOG.md",
+      "line": 16,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "0c0e5db19c17bafc5aa9c8cdf965f2ffbefb51f3e0b623f3ae3f5d0c09a61988",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "e33864bc276a0a086910ad888358a7a76447ea806145973909bbdb76e0d2a27c"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "0c0e5db19c17bafc5aa9c8cdf965f2ffbefb51f3e0b623f3ae3f5d0c09a61988"
         }
       ]
     }
