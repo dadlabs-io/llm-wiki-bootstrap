@@ -609,6 +609,62 @@ def test_rebuild_appends_one_block_to_an_unclosed_fence_page_over_three_rebuilds
           payload.get("backlink_blocks", "key absent"))
 
 
+def test_rebuild_leaves_a_real_block_above_an_unclosed_fence_holding_a_start_untouched_over_two_rebuilds():
+    b = page("B", "\n" + blk("old.md") + "\n\n```\nnever closed\n" + STRAY)   # the block is stale: any rewrite shows
+    pages = {"research/a.md": page("A", "[B](b.md)"), "research/b.md": b}
+    r1, once, _ = rebuild_then_lint(pages)
+    r2, twice, payload = rebuild_then_lint({**pages, "research/b.md": once["research/b.md"]})
+    check("both rebuilds ran and exited 0", r1.returncode == 0 and r2.returncode == 0, (r1.stderr[-200:], r2.stderr[-200:]))
+    check("after one rebuild b is byte-identical", once["research/b.md"] == b, once["research/b.md"][-400:])
+    check("after two rebuilds b is byte-identical", twice["research/b.md"] == b, twice["research/b.md"][-400:])
+    check("the lint lists b for the fence", payload.get("backlink_blocks") == [FENCE_ROW],
+          payload.get("backlink_blocks", "key absent"))
+
+
+def test_lint_splits_lines_at_newlines_only_as_the_rebuild_does():
+    for sep in ("\x0c", " "):   # a line separator for str.splitlines() that is no newline
+        pages = {"research/a.md": page("A", "lead" + sep + "```\n[B](b.md)"), "research/b.md": page("B")}
+        r, texts, payload = rebuild_then_lint(pages)
+        check(f"separator {sep.encode('unicode_escape').decode()}: the rebuild ran and b's block lists a",
+              r.returncode == 0 and "- [A](../research/a.md)" in texts["research/b.md"], (r.stderr[-300:], texts["research/b.md"][-300:]))
+        check(f"separator {sep.encode('unicode_escape').decode()}: the lint reads the link too and lists nothing",
+              payload.get("backlink_blocks") == [], payload.get("backlink_blocks", "key absent"))
+
+
+END_MARKER = "<!-- BACKLINKS-AUTO END -->"
+
+
+def test_end_marker_sharing_its_line_with_inline_code_is_no_end_in_either_script():
+    b = page("B", "\n" + STRAY + "\n\n- [A](a.md)\n\n" + END_MARKER + " `note`\n\n[C](c.md)")
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "[B](b.md)"), "research/b.md": b,
+                                           "research/c.md": page("C")})
+    check("the rebuild ran and left b byte-identical", r.returncode == 0 and texts["research/b.md"] == b,
+          (r.stderr[-300:], texts["research/b.md"][-300:]))
+    check("c got no block: the link after the open START is not read", "BACKLINKS-AUTO" not in texts["research/c.md"],
+          texts["research/c.md"][-300:])
+    check("the lint lists b as not closed and nothing else",
+          payload.get("backlink_blocks") == [{"file": "research/b.md", "extra": [], "missing": [], "unclosed": True}],
+          payload.get("backlink_blocks", "key absent"))
+
+
+def test_start_marker_sharing_its_line_with_inline_code_is_no_start_in_either_script():
+    b = page("B", "`note` " + STRAY + "\n\n" + blk("a.md"))
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "[B](b.md)"), "research/b.md": b})
+    kept = b[: b.index("\n<!-- BACKLINKS-AUTO START -->\n") + 1]   # everything above the real block's START line
+    check("the rebuild ran, b is its own text above the real block and holds one real block",
+          r.returncode == 0 and texts["research/b.md"].startswith(kept) and texts["research/b.md"].count(END_MARKER) == 1
+          and "- [A](../research/a.md)" in texts["research/b.md"], (r.stderr[-300:], texts["research/b.md"][:500]))
+    check("the lint lists nothing", payload.get("backlink_blocks") == [], payload.get("backlink_blocks", "key absent"))
+
+
+def test_link_below_a_start_marker_sharing_its_line_with_inline_code_is_read_by_both_scripts():
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "`note` " + STRAY + "\n\n[B](b.md)"),
+                                           "research/b.md": page("B")})
+    check("the rebuild ran and b's block lists a", r.returncode == 0 and "- [A](../research/a.md)" in texts["research/b.md"],
+          (r.stderr[-300:], texts["research/b.md"][-300:]))
+    check("the lint lists nothing", payload.get("backlink_blocks") == [], payload.get("backlink_blocks", "key absent"))
+
+
 QUOTED = "The block starts at <!-- BACKLINKS-AUTO START --> and ends at its END marker."
 
 

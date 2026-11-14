@@ -282,7 +282,7 @@ def resolve_link(file_path, target):
 BACKLINK_START = "<!-- BACKLINKS-AUTO START -->"
 BACKLINK_END = "<!-- BACKLINKS-AUTO END -->"
 # A marker counts only on a line holding nothing but the marker, spaces or tabs around it allowed (the rebuild reads the
-# same rule); a marker quoted mid-line is prose.
+# same rule); a marker quoted mid-line, or on a line that also holds inline code, is prose.
 BACKLINK_START_LINE_RE = re.compile(rf"^[ \t]*{re.escape(BACKLINK_START)}[ \t]*$", re.MULTILINE)
 BACKLINK_END_LINE_RE = re.compile(rf"^[ \t]*{re.escape(BACKLINK_END)}[ \t]*$", re.MULTILINE)
 BACKLINK_BLOCK_RE = re.compile(BACKLINK_START_LINE_RE.pattern + r".*?" + BACKLINK_END_LINE_RE.pattern,
@@ -291,9 +291,10 @@ BACKLINK_LINK_RE = re.compile(r"\]\(([^()\s#]+\.md)(?:#[^()\s]*)?\)")
 
 
 def backlink_split(text):
-    """(prose, fenced): ``text`` without fenced code (a line starting ``` or ~~~, up to the next such line or the end) and
-    inline code, and the lines of a fence that is never closed ("" when every fence closes)."""
-    lines = text.splitlines()
+    """(prose, fenced): ``text`` without fenced code (a line starting ``` or ~~~, up to the next such line or the end),
+    each inline code span replaced by ``x`` (so a line holding one is never a marker line), and the lines of a fence that
+    is never closed ("" when every fence closes). Lines are split at newlines only, as the rebuild splits them."""
+    lines = text.split("\n")
     kept, in_fence, opened = [], False, 0
     for i, line in enumerate(lines):
         if line.lstrip().startswith(("```", "~~~")):
@@ -301,7 +302,7 @@ def backlink_split(text):
             if in_fence:
                 opened = i
         elif not in_fence:
-            kept.append(re.sub(r"`[^`\n]*`", "", line))
+            kept.append(re.sub(r"`[^`\n]*`", "x", line))
     return "\n".join(kept), "\n".join(lines[opened:]) if in_fence else ""
 
 

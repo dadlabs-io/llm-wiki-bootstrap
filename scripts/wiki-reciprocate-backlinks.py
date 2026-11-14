@@ -4,7 +4,9 @@
 For each target entry, the script maintains a dedicated auto-managed section
 ("<!-- BACKLINKS-AUTO -->" fenced block) that holds every other wiki entry
 currently linking to it. The section is regenerated from scratch on every run
-so drift can't accumulate. Hand-curated "Related" sections are untouched.
+so drift can't accumulate, except on a page with an unusable START marker (left
+open, or inside a code fence never closed): that page is left untouched and the
+mechanical lint lists it. Hand-curated "Related" sections are untouched.
 
 Usage
 -----
@@ -57,7 +59,7 @@ from _atomic_io import atomic_write_text  # noqa: E402
 MARKER_START = "<!-- BACKLINKS-AUTO START -->"
 MARKER_END = "<!-- BACKLINKS-AUTO END -->"
 # A marker counts only on a line holding nothing but the marker, spaces or tabs around it allowed (the lint reads the
-# same rule); a marker quoted mid-line is prose.
+# same rule); a marker quoted mid-line, or on a line that also holds inline code, is prose.
 START_LINE_RE = re.compile(rf"^[ \t]*{re.escape(MARKER_START)}[ \t]*$", re.MULTILINE)
 END_LINE_RE = re.compile(rf"^[ \t]*{re.escape(MARKER_END)}[ \t]*$", re.MULTILINE)
 BLOCK_RE = re.compile(rf"{START_LINE_RE.pattern}.*?{END_LINE_RE.pattern}", re.MULTILINE | re.DOTALL)
@@ -114,8 +116,9 @@ def fence_walk(text: str) -> list[tuple[str, bool, bool]]:
 
 
 def strip_code(text: str) -> str:
-    """``text`` without fenced code (a line starting ``` or ~~~, up to the next such line or the end) and inline code."""
-    return "\n".join(re.sub(r"`[^`\n]*`", "", line) for line, fenced, _ in fence_walk(text) if not fenced)
+    """``text`` without fenced code (a line starting ``` or ~~~, up to the next such line or the end), each inline code
+    span replaced by ``x`` (so a line holding one is never a marker line, as the raw line is not either)."""
+    return "\n".join(re.sub(r"`[^`\n]*`", "x", line) for line, fenced, _ in fence_walk(text) if not fenced)
 
 
 def has_unusable_start(text: str) -> bool:
@@ -294,7 +297,7 @@ def emit_cycle_json(
         "",
         "## Skipped",
         "",
-        "_(none — script is deterministic, no skip logic)_",
+        "_(none listed; a page with an unusable START marker (left open, or inside an unclosed fence) is left untouched, and the mechanical lint lists it)_",
         "",
         "## Deferred",
         "",

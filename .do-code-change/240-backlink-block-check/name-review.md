@@ -15,3 +15,9 @@ One doubt-reviewer (haiku), briefed on the two tests' source alone.
 - test_rebuild_leaves_a_page_with_an_end_then_a_stray_start_untouched_over_two_rebuilds: over-claiming (the byte checks pass if the rebuild never ran) -- fixed: return codes asserted, re-frozen.
 - test_rebuild_appends_one_block_to_an_unclosed_fence_page_over_three_rebuilds: over-claiming (rebuilds 2 and 3 could pass without running; the block only counted) -- fixed: return codes and a closing END at the end asserted, re-frozen.
 - Lint row shapes differing between the two tests: not a name claim; the two tests ran green together.
+
+## Fix round 5 (fix-6): one doubt-reviewer over the five new frozen tests
+
+Verdict: 3 fit, 2 flagged; both flags ruled noise by the orchestrator, no test changed.
+- `test_lint_splits_lines_at_newlines_only_as_the_rebuild_does`, flagged over-claim: the reviewer traced the lint's `prose_lines` (`splitlines()`, line 70). That function feeds other checks (lines 89, 124); the backlink check reads pages only through `backlink_split` (lines 293-348), which now splits on "\n". The test is green (99/99, orchestrator's rerun) and was red before the fix. Noise.
+- `test_rebuild_leaves_a_real_block_above_an_unclosed_fence_holding_a_start_untouched_over_two_rebuilds`, flagged over-claim on "real block": the assertions hold whether the text above is a block or prose, because the page-level guard leaves the page alone. The name describes the fixture (a stale real block) and the outcome asserted (byte-identical over two rebuilds); the mutant `if unclosed: return True` -> `if False:` turns it red by rewriting that block. Fits.
