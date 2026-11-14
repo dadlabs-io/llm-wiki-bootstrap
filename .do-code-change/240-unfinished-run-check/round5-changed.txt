@@ -1,0 +1,6 @@
+scripts/wiki-cycle-scope.py
+tests/scripts/test_cycle_scope.py
+tests/skills/PENDING.md
+tests/skills/wiki-cycle/baseline-opus.json
+tests/skills/wiki-cycle/baseline-sonnet.json
+tests/skills/wiki-cycle/check.py
