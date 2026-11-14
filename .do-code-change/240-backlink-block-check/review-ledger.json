@@ -321,6 +321,53 @@
         "tests/skills/wiki-cycle/fixtures/promote/scratchpad-full.md": "1790b401a51194138dfc189a16d47693baa8235d23819ea3025e3e6d8b312bd8",
         "tests/skills/wiki-cycle/fixtures/resume/scratchpad.md": "582ed45682be13f06f671a5f3d6501ce88fce1461095ec9580e8e0df78a5cdeb"
       }
+    },
+    {
+      "round": 6,
+      "at": "2026-11-14T23:49:49Z",
+      "diff_sha256": "23d6f74a905bd6ae4731fc020d489a824256360f6269004ecb713b0f1fb3aac6",
+      "findings_sha256": "dba2416655f9b77d331e7c1d9bca7b0e7197d257ecdce505fc17ba424ff7ae56",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-34",
+        "standards-35",
+        "spec-31",
+        "spec-32"
+      ],
+      "new": [
+        "standards-34",
+        "standards-35",
+        "spec-31",
+        "spec-32"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "823221294d9e7b7d1873be81ae820a8620579bbc5788e890692f55f1df76d48d",
+        "INSTALL-INVENTORY.md": "2b5ffe0d719881e5205f7fdac679a32b8f2a2f4cd0ce3995029e5a8192922c11",
+        "framework-docs/cycle-step-return-format.md": "e54d3e810a6fbad5f73299579c6af7b40b19f5ea4889576e72206821dd8f583e",
+        "scripts/wiki-lint-mechanical.py": "097db375c78dc06d35dd64891027c02fcc618476fb3550d4bc1b0327e338f38e",
+        "scripts/wiki-promote.py": "4dd518ffc3df13fe455e53a3ea0e6fbc334b8a08b7eda5077bea38df419a5408",
+        "scripts/wiki-reciprocate-backlinks.py": "4f0b282bcdd7f8d7449252b207651edb63df19c263b6485c7fd44cfd40e46ebf",
+        "skills/wiki-cycle/SKILL.md": "b02d179496b1ca69d5bc74eccf7628b3e7ab3a0f24ebfcc93fb94a79cb44c324",
+        "skills/wiki-cycle/reference.md": "bc9abfed8999d4d1892cc99f58f23ead153f6e96ab1f1635043825ebbc22a220",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "51e56f7498b6ec21af657d1484451f4a9cfed11a1ba32e8187aa4e91c45f2f0a",
+        "skills/wiki-lint/SKILL.md": "ac64674f14c51585aa353f07767f68450b13e1d1fcd9606af7929c411252a72f",
+        "skills/wiki-lint/wiki-seed/wiki-lint.md": "c08ef8f0d4d74d1689de07b93af31d193d16a4d3dba6c0cd3553f60c402d873a",
+        "skills/wiki-report/SKILL.md": "84ca82c0332a4e842dcbc9c61247697d16250511bcab6e4fb3f080203efedfa7",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "ccdfe92bad0389cfd7977bfce5b01c16f89f177d4b8df80184b1c48f33de8c39",
+        "tests/scripts/test_backlink_blocks.py": "754529b14202707e255d693bed4944122e4bd6d8aff26a3917af061930a9b278",
+        "tests/skills/PENDING.md": "46367035daba5e6191f9caad0ad48dc7e6f4365af5dc4e8a661f725d4da9882f",
+        "tests/skills/wiki-cycle/baseline-opus.json": "d953cfb1d3d52c6f56d036331eb1dafd7ae15ca1366c5a40840e9980d3eca23f",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "f8924e0cc1f67176823c4a39c868ec5d7a81ab2b003914fee206ea64eb0a68b8",
+        "tests/skills/wiki-cycle/cases.json": "3d61b7248efaae29bd256104fdbedf8168abeb0374efb6e768d4ac04089d8857",
+        "tests/skills/wiki-cycle/check.py": "f5425bf884d5690eafc4bd55b0f25d3baa1f0efe3ddf4db73493870685cf7aa3",
+        "tests/skills/wiki-cycle/fixtures/checker-gate/scratchpad.md": "146480c43d9283a7826a7656c0cf111ce95f4349c6cf08c5dc482f38d7e1b720",
+        "tests/skills/wiki-cycle/fixtures/checker/scratchpad.md": "369002b41ce4ee4d2c354b090ffb58f7c59653406f6a5ee485fc69e64eddb30b",
+        "tests/skills/wiki-cycle/fixtures/promote/scratchpad-full.md": "1790b401a51194138dfc189a16d47693baa8235d23819ea3025e3e6d8b312bd8",
+        "tests/skills/wiki-cycle/fixtures/resume/scratchpad.md": "582ed45682be13f06f671a5f3d6501ce88fce1461095ec9580e8e0df78a5cdeb"
+      }
     }
   ],
   "items": {
@@ -697,9 +744,9 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 2,
-      "fingerprint": "b97de63e98883d5f206ffcb492156abddd425a63287c8dfeb1a08b4869491d23",
-      "fingerprint_kind": "file-diff",
+      "verdict_round": 6,
+      "fingerprint": "01ba5e85b8dce17c68c4c4d83fef1c0c1cee3bb75a517158f7802ace84d66059",
+      "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
         {
@@ -721,6 +768,11 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "b97de63e98883d5f206ffcb492156abddd425a63287c8dfeb1a08b4869491d23"
+        },
+        {
+          "round": 6,
+          "verdict": "addressed",
+          "fingerprint": "01ba5e85b8dce17c68c4c4d83fef1c0c1cee3bb75a517158f7802ace84d66059"
         }
       ]
     },
@@ -955,8 +1007,8 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "addressed",
-      "verdict_round": 2,
-      "fingerprint": "7dd4ad85b0ea208807bfc0f148a4764867d6df8acc0ab1c7b78c22fd870de886",
+      "verdict_round": 6,
+      "fingerprint": "7f2f1c413a79535f208b06d3d45b30970c3731eac7b39f76253a8df78b6fd478",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -969,6 +1021,11 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "7dd4ad85b0ea208807bfc0f148a4764867d6df8acc0ab1c7b78c22fd870de886"
+        },
+        {
+          "round": 6,
+          "verdict": "addressed",
+          "fingerprint": "7f2f1c413a79535f208b06d3d45b30970c3731eac7b39f76253a8df78b6fd478"
         }
       ]
     },
@@ -1189,8 +1246,8 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "addressed",
-      "verdict_round": 2,
-      "fingerprint": "5378af9db87b57291cd5ff46c821b1c1521f14cd3b7264fbe595168c510ce1b9",
+      "verdict_round": 6,
+      "fingerprint": "b01b3f913aba7799dbc287fe48919db084762b7bc82c0418575408c3c78dd0c8",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1203,6 +1260,11 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "5378af9db87b57291cd5ff46c821b1c1521f14cd3b7264fbe595168c510ce1b9"
+        },
+        {
+          "round": 6,
+          "verdict": "addressed",
+          "fingerprint": "b01b3f913aba7799dbc287fe48919db084762b7bc82c0418575408c3c78dd0c8"
         }
       ]
     },
@@ -1215,9 +1277,9 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "addressed",
-      "verdict_round": 2,
-      "fingerprint": "b97de63e98883d5f206ffcb492156abddd425a63287c8dfeb1a08b4869491d23",
-      "fingerprint_kind": "file-diff",
+      "verdict_round": 6,
+      "fingerprint": "0d319ed8e382fe63f009bd08084b29f0204f4a375ae8d3d7537e004bbea21c8b",
+      "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
         {
@@ -1229,6 +1291,11 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "b97de63e98883d5f206ffcb492156abddd425a63287c8dfeb1a08b4869491d23"
+        },
+        {
+          "round": 6,
+          "verdict": "addressed",
+          "fingerprint": "0d319ed8e382fe63f009bd08084b29f0204f4a375ae8d3d7537e004bbea21c8b"
         }
       ]
     },
@@ -1407,8 +1474,8 @@
       "first_round": 3,
       "last_seen_round": 3,
       "verdict": "addressed",
-      "verdict_round": 3,
-      "fingerprint": "5378af9db87b57291cd5ff46c821b1c1521f14cd3b7264fbe595168c510ce1b9",
+      "verdict_round": 6,
+      "fingerprint": "b01b3f913aba7799dbc287fe48919db084762b7bc82c0418575408c3c78dd0c8",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1421,6 +1488,11 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "5378af9db87b57291cd5ff46c821b1c1521f14cd3b7264fbe595168c510ce1b9"
+        },
+        {
+          "round": 6,
+          "verdict": "addressed",
+          "fingerprint": "b01b3f913aba7799dbc287fe48919db084762b7bc82c0418575408c3c78dd0c8"
         }
       ]
     },
@@ -1433,9 +1505,9 @@
       "first_round": 3,
       "last_seen_round": 3,
       "verdict": "addressed",
-      "verdict_round": 3,
-      "fingerprint": "acb7c4d300d9da86f6c09d68c924bbe960f8528a44807882699f397b86375384",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 6,
+      "fingerprint": "097db375c78dc06d35dd64891027c02fcc618476fb3550d4bc1b0327e338f38e",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
@@ -1447,6 +1519,11 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "acb7c4d300d9da86f6c09d68c924bbe960f8528a44807882699f397b86375384"
+        },
+        {
+          "round": 6,
+          "verdict": "addressed",
+          "fingerprint": "097db375c78dc06d35dd64891027c02fcc618476fb3550d4bc1b0327e338f38e"
         }
       ]
     },
@@ -1459,8 +1536,8 @@
       "first_round": 3,
       "last_seen_round": 3,
       "verdict": "addressed",
-      "verdict_round": 3,
-      "fingerprint": "34e0af886829cc3de0ffff427eb07e8d5adb8ade3c7aa2e8f8f0cb5cee73773f",
+      "verdict_round": 6,
+      "fingerprint": "8d06b8c07c4261ed2d1171a1e83a8e5625f222af83cd3993cf890a7c1b99eb1e",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1473,6 +1550,11 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "34e0af886829cc3de0ffff427eb07e8d5adb8ade3c7aa2e8f8f0cb5cee73773f"
+        },
+        {
+          "round": 6,
+          "verdict": "addressed",
+          "fingerprint": "8d06b8c07c4261ed2d1171a1e83a8e5625f222af83cd3993cf890a7c1b99eb1e"
         }
       ]
     },
@@ -2022,6 +2104,90 @@
         },
         {
           "round": 5,
+          "verdict": "open",
+          "fingerprint": "8d06b8c07c4261ed2d1171a1e83a8e5625f222af83cd3993cf890a7c1b99eb1e"
+        }
+      ]
+    },
+    "standards-34": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] G16 / S1 `tests/scripts/test_backlink_blocks.py:625` - the second separator in `for sep in (\"\\x0c\", ...)` is a literal U+2028 character that shows as a plain space in an editor or diff; if any tool normalises it to a space, the test goes vacuous (a space is no `str.splitlines()` separator, so the old lint would pass too), and the check label already needed `unicode_escape` to be readable. Evidence: Grep and a count of the character in the file find exactly one, at line 625; the form feed beside it is written as an escape. Fix: write the separator as the escape `\"",
+      "file": "tests/scripts/test_backlink_blocks.py",
+      "line": 625,
+      "first_round": 6,
+      "last_seen_round": 6,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "fe1e4d3ad308628e9af60b82c66c5c18c216815a51e006a9475670147e5a73c4",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 6,
+          "verdict": "open",
+          "fingerprint": "fe1e4d3ad308628e9af60b82c66c5c18c216815a51e006a9475670147e5a73c4"
+        }
+      ]
+    },
+    "standards-35": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S1 / N3 `tests/scripts/test_backlink_blocks.py:486` and `:651` - `STRAY = \"<!-- BACKLINKS-AUTO START -->\"   # a START and no END` is reused in the Trace B test as `\"`note` \" + STRAY + ...`, where the test itself asserts the line is no START at all, so the name and its comment say the opposite of the use. Fix: a second constant for the bare marker text, or inline the marker in that test.",
+      "file": "tests/scripts/test_backlink_blocks.py",
+      "line": 486,
+      "first_round": 6,
+      "last_seen_round": 6,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "fe1e4d3ad308628e9af60b82c66c5c18c216815a51e006a9475670147e5a73c4",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 6,
+          "verdict": "open",
+          "fingerprint": "fe1e4d3ad308628e9af60b82c66c5c18c216815a51e006a9475670147e5a73c4"
+        }
+      ]
+    },
+    "spec-31": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-lint-mechanical.py:305` and `scripts/wiki-reciprocate-backlinks.py:121` - a link written inside a double-backtick code span still counts, in both scripts (pre-existing: the same regex stripped to `\"\"` before; the replacement line is in this diff). Intent: `plan.md` line 63, \"a link inside inline code, inside a ``` or ~~~ fence, or after an unclosed fence does not [count]\". Implemented: `re.sub(r\"`[^`\\n]*`\", \"x\", line)` pairs the first two backticks of a double-backtick span as an empty span, so the text becomes `x[B](b.md)x` and the link regex reads `b.md`. Both scripts agree, so no lint row flags it; the target's block just gains a line. Affected: a page that shows link syntax in double-backtick code gains a backlink in the target's block. Fix: match the closing run to the opening run's length (for example `(`+)(.+?)(?<!`)\\1(?!`)`, untested; check it first) in both scripts, with a test, keeping `test_lint_reads_a_link_on_a_line_starting_with_a_double_backtick_span` green.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 305,
+      "first_round": 6,
+      "last_seen_round": 6,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "8d06b8c07c4261ed2d1171a1e83a8e5625f222af83cd3993cf890a7c1b99eb1e",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 6,
+          "verdict": "open",
+          "fingerprint": "8d06b8c07c4261ed2d1171a1e83a8e5625f222af83cd3993cf890a7c1b99eb1e"
+        }
+      ]
+    },
+    "spec-32": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-lint-mechanical.py:305` and `scripts/wiki-reciprocate-backlinks.py:121` - the placeholder `x` can turn a code span into a link target, which the old `\"\"` could not. Intent: `plan.md` line 15, inline code is \"removed\". Implemented: `[B](`b`.md)` becomes `[B](x.md)`, which the link regex reads as a link to `x.md`; with `\"\"` it was `](.md)`, which matches nothing. Affected: only a notebook with a page named `x.md` in the entry set, linked this way; contrived. Fix: a placeholder that is non-space, absent from the marker text and outside the link regex's target class `[^()\\s#]` (for example `(`); check it against the marker-equivalence trace before adopting it.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 305,
+      "first_round": 6,
+      "last_seen_round": 6,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "8d06b8c07c4261ed2d1171a1e83a8e5625f222af83cd3993cf890a7c1b99eb1e",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 6,
           "verdict": "open",
           "fingerprint": "8d06b8c07c4261ed2d1171a1e83a8e5625f222af83cd3993cf890a7c1b99eb1e"
         }
