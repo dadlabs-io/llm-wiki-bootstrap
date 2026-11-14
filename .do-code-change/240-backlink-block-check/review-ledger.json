@@ -1,0 +1,552 @@
+{
+  "schema": 1,
+  "diff_base": "f9b3aa200a86ce60716ce42dae48b6cff1022f88",
+  "rounds": [
+    {
+      "round": 1,
+      "at": "2026-11-14T22:01:13Z",
+      "diff_sha256": "ea97939204d8d08eab4a6685dcdccca9af3263c4e763cfdbf16cb6a204fd9387",
+      "findings_sha256": "aeae83a99e202a669d698ccd5c8a6fbcb679e7128438fc5ec90870054fb748d1",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "standards-13",
+        "standards-14",
+        "spec-1",
+        "spec-2",
+        "spec-3",
+        "spec-4",
+        "spec-5",
+        "spec-6",
+        "spec-7",
+        "spec-8"
+      ],
+      "new": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "standards-13",
+        "standards-14",
+        "spec-1",
+        "spec-2",
+        "spec-3",
+        "spec-4",
+        "spec-5",
+        "spec-6",
+        "spec-7",
+        "spec-8"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "165a9c5ebdff5f582324b684a2827b00822a1e6311a3c5deaaee51f52307576e",
+        "INSTALL-INVENTORY.md": "2b5ffe0d719881e5205f7fdac679a32b8f2a2f4cd0ce3995029e5a8192922c11",
+        "framework-docs/cycle-step-return-format.md": "188ca1816daf76c9c155dde8b6dddda748a1c65e749da91fbe04a837ee2d4db4",
+        "scripts/wiki-lint-mechanical.py": "3aab9c923bdc8d944aa3d23dd8483dc92ff682624995217c53bc14c76c6c33bd",
+        "scripts/wiki-promote.py": "9b8eadeb6d45a8e608f52c1fcdf7807bb919c676cec43d0d7a501fbdc5adfc51",
+        "scripts/wiki-reciprocate-backlinks.py": "6e6bf84b1e7cc6b21adface44f868c3cbf2a0b64942a046b79cdb40fac3cc6f4",
+        "skills/wiki-cycle/SKILL.md": "f86b3fcb349ebd7174b22fdda4ec563b88ce376063b6d746f27de00be14a42ce",
+        "skills/wiki-cycle/reference.md": "bc9abfed8999d4d1892cc99f58f23ead153f6e96ab1f1635043825ebbc22a220",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "51e56f7498b6ec21af657d1484451f4a9cfed11a1ba32e8187aa4e91c45f2f0a",
+        "skills/wiki-lint/wiki-seed/wiki-lint.md": "a1529bac4b599e32e018b9d4dcb807693f55bc0714c0f434229810f66e42ff34",
+        "skills/wiki-report/SKILL.md": "9c27c76952d401baae9192f5c6817b0a9364f43928232e9ef066a14d4bd47c14",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "ccdfe92bad0389cfd7977bfce5b01c16f89f177d4b8df80184b1c48f33de8c39",
+        "tests/scripts/test_backlink_blocks.py": "d3d142b339740829e3e1e34b4d0f9e9fea0df48ba49a50eb00c475b474303266",
+        "tests/skills/PENDING.md": "46367035daba5e6191f9caad0ad48dc7e6f4365af5dc4e8a661f725d4da9882f",
+        "tests/skills/wiki-cycle/baseline-opus.json": "d953cfb1d3d52c6f56d036331eb1dafd7ae15ca1366c5a40840e9980d3eca23f",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "f8924e0cc1f67176823c4a39c868ec5d7a81ab2b003914fee206ea64eb0a68b8",
+        "tests/skills/wiki-cycle/cases.json": "3d61b7248efaae29bd256104fdbedf8168abeb0374efb6e768d4ac04089d8857",
+        "tests/skills/wiki-cycle/check.py": "f5425bf884d5690eafc4bd55b0f25d3baa1f0efe3ddf4db73493870685cf7aa3",
+        "tests/skills/wiki-cycle/fixtures/checker-gate/scratchpad.md": "146480c43d9283a7826a7656c0cf111ce95f4349c6cf08c5dc482f38d7e1b720",
+        "tests/skills/wiki-cycle/fixtures/checker/scratchpad.md": "369002b41ce4ee4d2c354b090ffb58f7c59653406f6a5ee485fc69e64eddb30b",
+        "tests/skills/wiki-cycle/fixtures/promote/scratchpad-full.md": "1790b401a51194138dfc189a16d47693baa8235d23819ea3025e3e6d8b312bd8",
+        "tests/skills/wiki-cycle/fixtures/resume/scratchpad.md": "582ed45682be13f06f671a5f3d6501ce88fce1461095ec9580e8e0df78a5cdeb"
+      }
+    }
+  ],
+  "items": {
+    "standards-1": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-lint-mechanical.py:282-284` \u2014 S2: the diff adds `BACKLINK_START`, `BACKLINK_END` and `BACKLINK_BLOCK_RE` for the block marker and block regex, which `scripts/_entry_checks.py:251-253` already defines (`_BACKLINKS_START`/`_BACKLINKS_END`/`_BACKLINKS_RE`) and which the lint already imports from at line 43. The plan's \"written apart\" decision (plan.md:15) covers the link rule, not the marker. Fix: make the three names public in `_entry_checks.py`, import them, delete the new definitions (scope question: `_entry_checks.py` is outside the plan's Scope). quote: `BACKLINK_START = \"<!-- BACKLINKS-AUTO START -->\"` against `_BACKLINKS_START = \"<!-- BACKLINKS-AUTO START -->\"`",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 282,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3bee884f161889f582ce42369acb059a2c305f4e47f6805317305096a80281f5",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "3bee884f161889f582ce42369acb059a2c305f4e47f6805317305096a80281f5"
+        }
+      ]
+    },
+    "standards-2": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-reciprocate-backlinks.py:86` \u2014 S2: the `_inbox` exclusion is a raw inline test among `_wiki_config` helper calls, though the file's header says path-resolution helpers live in `_wiki_config`; the same rule is inline at `scripts/wiki-lint-mechanical.py:193` and `scripts/wiki-fix-links.py:119`. Fix: add `in_inbox(path)` beside `in_sessions` (`scripts/_wiki_config.py:152`) and use it in all three (same scope question). quote: `and \"_inbox\" not in p.relative_to(wiki_root).parts  # _inbox/ = staged and scratch, not entries`",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 86,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "0d3a888d9a2f1ef1f0b7cd595e6fb3a4319a64f7c6b12c2c46853c106d286090",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "0d3a888d9a2f1ef1f0b7cd595e6fb3a4319a64f7c6b12c2c46853c106d286090"
+        }
+      ]
+    },
+    "standards-3": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-lint-mechanical.py:416-417` (call at 1450, closing line 1469) \u2014 S14: `emit_cycle_artifacts` gains a tenth positional parameter and the call passes it positionally among same-typed lists. Fix: `}, broken_links, orphans, standalone, wiki_root, report_path, not_checked=not_checked, backlink_blocks=backlink_blocks)`. quote: `}, broken_links, orphans, standalone, wiki_root, report_path, not_checked, backlink_blocks)`",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 416,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3aab9c923bdc8d944aa3d23dd8483dc92ff682624995217c53bc14c76c6c33bd",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "3aab9c923bdc8d944aa3d23dd8483dc92ff682624995217c53bc14c76c6c33bd"
+        }
+      ]
+    },
+    "standards-4": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_backlink_blocks.py:47` and `:333` \u2014 S2: `run_lint` and `rebuild_then_lint` repeat the same notebook scaffold and `fake_qmd_env` setup. Fix: one `_make_notebook(tmp, pages)` helper returning `(nb, w, proj, env)`. quote (in both): `(tmp / \"linked-notebooks.json\").write_text(json.dumps({\"notebooks\": {\"t\": {\"root\": \"notebooks/t\"}}}),`",
+      "file": "tests/scripts/test_backlink_blocks.py",
+      "line": 47,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "5e4985344c0967fff4c93464b5417f8107b7f0d807fd30aab1e708e00a754900",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "5e4985344c0967fff4c93464b5417f8107b7f0d807fd30aab1e708e00a754900"
+        }
+      ]
+    },
+    "standards-5": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/skills/wiki-cycle/baseline-opus.json:836` (also :450, :487, :526, :573, :627, :677, :721, :762) \u2014 the key `\"run: read reference.md before writing the scratchpad\": true` appears in nine opus entries and in no sonnet entry; the same case ids in `baseline-sonnet.json` (e.g. :799-833, :315-348) lack it, so the two models' entries differ in key set. A recorded check, not a failing one: every value is `true`, and no `false`/`null` exists in either file. Fix: confirm whether the `read_before` rule (`tests/skills/wiki-cycle/trajectory_rules.py:21`) is meant to score both models; if yes, find why sonnet never records it; if no, drop it from opus. (The producer may have recorded this by design; the lens could not tell. It is a generated file.) quote: `\"run: read reference.md before writing the scratchpad\": true,`",
+      "file": "tests/skills/wiki-cycle/baseline-opus.json",
+      "line": 836,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "fe8cb9bdc400f183e074689680e14c941e3c68b823f40814d070b9f86a0c6abc",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "fe8cb9bdc400f183e074689680e14c941e3c68b823f40814d070b9f86a0c6abc"
+        }
+      ]
+    },
+    "standards-6": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-lint-mechanical.py:855-856` \u2014 S2: the new pass walks the tree again though `files = list(collect_md_files(wiki_root))` (line 490) holds the same set. Fix: `backlink_blocks_out_of_step(wiki_root, [f for f in files if not f.name.startswith(\".\")])`.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 855,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f1360fcdb4c37709d00860553413eb6f3e7456351a6005de5a3c1e31d08d35ce",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "f1360fcdb4c37709d00860553413eb6f3e7456351a6005de5a3c1e31d08d35ce"
+        }
+      ]
+    },
+    "standards-7": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-lint-mechanical.py:305` \u2014 G4: `except (OSError, ValueError): continue` swallows with no stated reason. Fix: a one-line comment naming what is skipped, or drop the `try`.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 305,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3bee884f161889f582ce42369acb059a2c305f4e47f6805317305096a80281f5",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "3bee884f161889f582ce42369acb059a2c305f4e47f6805317305096a80281f5"
+        }
+      ]
+    },
+    "standards-8": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-promote.py:303` \u2014 C1: \"Until promote ran it too, only /wiki-cycle's Step 3 ran it\" narrates a past state git holds. Fix: state the present rule or drop the clause.",
+      "file": "scripts/wiki-promote.py",
+      "line": 303,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "c001f6d514add54a2a3e2b8982a326e34789beeee55afad8028f663ec0f79dfc",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "c001f6d514add54a2a3e2b8982a326e34789beeee55afad8028f663ec0f79dfc"
+        }
+      ]
+    },
+    "standards-9": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-lint-mechanical.py:177` against `:1431` \u2014 R3: the key is `\"unclosed\": True`, the section says \"block not closed\", the usage page says \"not closed\". Fix: one word, e.g. key `not_closed`.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 177,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3aab9c923bdc8d944aa3d23dd8483dc92ff682624995217c53bc14c76c6c33bd",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "3aab9c923bdc8d944aa3d23dd8483dc92ff682624995217c53bc14c76c6c33bd"
+        }
+      ]
+    },
+    "standards-10": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] [eval-case-writer] `tests/skills/wiki-cycle/check.py:2465` \u2014 N7: `_check_backlinks` silently removes the \"quick steps all wrote their pair\" result from `res` (an established pattern at seven sites; invisible at the call site). Fix: a named `drop` tuple with a comment, as `_check_unfinished` does at line 2230.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2465,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "edf129d0213bfba8b5ed03eaae70f8cc3d26d5f7df0200b4c1c05a8c2ef58d76",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "edf129d0213bfba8b5ed03eaae70f8cc3d26d5f7df0200b4c1c05a8c2ef58d76"
+        }
+      ]
+    },
+    "standards-11": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] [eval-case-writer] `tests/skills/wiki-cycle/check.py:2441` \u2014 R9/R8: `_bl_lint` turns a missing or corrupt lint JSON into `{}`, so the zero check reports \"no backlink_blocks_out_of_step in the summary\" as the cause. Fix: return the reason with the value.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2441,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "edf129d0213bfba8b5ed03eaae70f8cc3d26d5f7df0200b4c1c05a8c2ef58d76",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "edf129d0213bfba8b5ed03eaae70f8cc3d26d5f7df0200b4c1c05a8c2ef58d76"
+        }
+      ]
+    },
+    "standards-12": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-lint-mechanical.py` (`name()` fallback `return path.as_posix()`) \u2014 T3: no test reaches it. Fix: one case with a block linking to `../../outside.md`.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3aab9c923bdc8d944aa3d23dd8483dc92ff682624995217c53bc14c76c6c33bd",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "3aab9c923bdc8d944aa3d23dd8483dc92ff682624995217c53bc14c76c6c33bd"
+        }
+      ]
+    },
+    "standards-13": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-lint-mechanical.py:280` and the test module docstring \u2014 C1: bare `(task #240)` tags. Fix: keep only where they link to the plan, or drop.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 280,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3bee884f161889f582ce42369acb059a2c305f4e47f6805317305096a80281f5",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "3bee884f161889f582ce42369acb059a2c305f4e47f6805317305096a80281f5"
+        }
+      ]
+    },
+    "standards-14": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] [eval-case-writer] `tests/skills/wiki-cycle/check.py` (`_prepare_backlinks`, `_check_backlinks`) \u2014 S6: `variant == \"dirty\"` branches in two places. Fix: one branch keyed by variant.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f5425bf884d5690eafc4bd55b0f25d3baa1f0efe3ddf4db73493870685cf7aa3",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "f5425bf884d5690eafc4bd55b0f25d3baa1f0efe3ddf4db73493870685cf7aa3"
+        }
+      ]
+    },
+    "spec-1": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `scripts/wiki-reciprocate-backlinks.py:140,165-169,189-191` against `scripts/wiki-lint-mechanical.py:288-297,320-321` \u2014 the lint and the rebuild find the block in different text, so a page with an unclosed fence before its block is listed \"missing\" for every linker on every cycle. Intent: plan Step 2: \"after one rebuild, the lint's new section lists nothing on the test notebook\"; red-team #4 kill criterion: \"any page listed after a rebuild on a real notebook\". Implemented: the lint runs `text = backlink_prose(f.read_text(...))` then `BACKLINK_BLOCK_RE.search(text)`; `backlink_prose` drops everything after an unclosed fence, so a block after that fence is invisible. The rebuild reads the raw text and, with no block found, appends one (`new_text = text + \"\\n\" + new_block + \"\\n\"`), after the fence. Affected: notebook owners; Needs you fires every cycle and points at the script though the rebuild's output is correct; the block also sits inside the fence and does not render. Fix: run the rebuild's block search and append through the same code-stripped view (or skip and report such a page); add a test: page with an unclosed fence plus one linker, one rebuild, lint lists nothing. Same root cause, second case (pre-existing in the rebuild): a START quoted in backticks before a real block: the raw regex at line 165 spans from the quoted START to the real END and replaces the text between, while the lint sees only the real block. checkpoints.md's \"code is stripped before blocks are found (both scripts\u2026)\" holds for link reading and the lint only.",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 140,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "6e6bf84b1e7cc6b21adface44f868c3cbf2a0b64942a046b79cdb40fac3cc6f4",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "6e6bf84b1e7cc6b21adface44f868c3cbf2a0b64942a046b79cdb40fac3cc6f4"
+        }
+      ]
+    },
+    "spec-2": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-reciprocate-backlinks.py:86` \u2014 `and \"_inbox\" not in p.relative_to(wiki_root).parts` changes which pages get blocks, not only which links are read. Intent: requirements Exclusion: \"No change to how `wiki-reciprocate-backlinks.py` builds or places blocks beyond which links it reads (Decision 3).\" (Plan line 16 does order the `_inbox/` exclusion.) Fix: record the exception as a ruling amending the Exclusion, or drop the exclusion.",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 86,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "0d3a888d9a2f1ef1f0b7cd595e6fb3a4319a64f7c6b12c2c46853c106d286090",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "0d3a888d9a2f1ef1f0b7cd595e6fb3a4319a64f7c6b12c2c46853c106d286090"
+        }
+      ]
+    },
+    "spec-3": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-reciprocate-backlinks.py:59,97`; `scripts/wiki-lint-mechanical.py:285` \u2014 the link rule departs from plan line 15 in three ways. (a) Plan: \"`](<target>)` where `<target>` has no whitespace\"; the code also excludes parentheses (not in plan) and drops whitespace targets the old `\\[([^\\]]+)\\]\\(([^)]+\\.md)\\)` read, so `[x](my page.md)` loses its linker. Invariant 2 (\"byte-identical blocks\") does not hold for such a notebook, and the CHANGELOG Migration line says only \"adds the backlinks the old rule never wrote\". (b) Plan: a fence is \"a line starting with ``` or ~~~\"; `line.lstrip()` makes any indented fence a fence (no test). (c) Plan order: block removed first, then code; both scripts strip code first (checkpoints.md acknowledges it; the plan was not amended). Fix: amend plan and CHANGELOG to name the whitespace and parenthesis cases, or keep reading whitespace targets; decide on indented fences.",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 59,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "14bafd2c94edceee8699586feab70b0103acf654f7e6f7c8826bb683c487658a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "14bafd2c94edceee8699586feab70b0103acf654f7e6f7c8826bb683c487658a"
+        }
+      ]
+    },
+    "spec-4": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `skills/wiki-lint/SKILL.md:26-40` \u2014 the mechanical check list omits the new section; each check there is listed with its date (e.g. \"Hubs behind their tag (added 2026-10-23)\"). The section text \"Run after the rebuild, so a page listed here means the rebuild went wrong\" is wrong for a standalone `/wiki-lint` run, which the same file calls \"Reports only\" (line 19) and runs no rebuild. Fix: add the bullet; reword the section to say it is read after a cycle's rebuild.",
+      "file": "skills/wiki-lint/SKILL.md",
+      "line": 26,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "62ab03ba6a8ae174a82040af637b47662550e51ebb51e58149543cf84dd6e76b",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "62ab03ba6a8ae174a82040af637b47662550e51ebb51e58149543cf84dd6e76b"
+        }
+      ]
+    },
+    "spec-5": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `skills/wiki-report/SKILL.md:188` \u2014 the health-count row `| Backlink blocks out of step | N |` is not in the plan (plan Report: only the Needs-you line, when above zero). Its source is the cycle's lint JSON, so it is not stale. Fix: keep it and add it to the plan, or drop it.",
+      "file": "skills/wiki-report/SKILL.md",
+      "line": 188,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a59703886c878128dce90a769951e488d4bbef2a07767e92597e9fac899aee1c",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a59703886c878128dce90a769951e488d4bbef2a07767e92597e9fac899aee1c"
+        }
+      ]
+    },
+    "spec-6": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] [eval-case-writer] `tests/skills/wiki-cycle/baseline-sonnet.json:300` \u2014 the hub case's final-lint check has no premise that the rebuild ran, so a 0 can pass with nothing rebuilt. Intent: plan Step 3 and Testing Decisions: the hub case's final lint reads 0 out of step after the rebuild. Implemented: quote `\"the final lint reads backlink_blocks_out_of_step 0 (the rebuild ran before the last lint)\": true`; the two new cases carry `\"premise: the integration scripts ran (reciprocate-backlinks wrote its pair)\"` (:780, :817), the hub case (:274-312) has none. Fix: add the same premise check to the hub case.",
+      "file": "tests/skills/wiki-cycle/baseline-sonnet.json",
+      "line": 300,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f8924e0cc1f67176823c4a39c868ec5d7a81ab2b003914fee206ea64eb0a68b8",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "f8924e0cc1f67176823c4a39c868ec5d7a81ab2b003914fee206ea64eb0a68b8"
+        }
+      ]
+    },
+    "spec-7": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] Test gaps: no rebuild test for a link after an unclosed fence (plan Step 2 \"a link in code \u2026 does not\"; the lint has one); the rule that links after a stray START are ignored (a doubt-log decision, not in the plan) has no test.",
+      "file": null,
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "365678eb89bea261b95bfca3ee890c359279e357f1c57cb4bdb4ce200318bfe8",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "365678eb89bea261b95bfca3ee890c359279e357f1c57cb4bdb4ce200318bfe8"
+        }
+      ]
+    },
+    "spec-8": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] [eval-case-writer] `tests/skills/wiki-cycle/baseline-sonnet.json:783-784` \u2014 the planted-page checks name no page (\"the linked page that had no block now has one listing the page that links to it\", \"the stale block no longer lists the page that does not link there\"). Fix: name the fixture's two page paths in the check labels.",
+      "file": "tests/skills/wiki-cycle/baseline-sonnet.json",
+      "line": 783,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "18def8bca76bd671c6d7916a8dad3f603400ec73e654c0f989c940c3698fc83f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "18def8bca76bd671c6d7916a8dad3f603400ec73e654c0f989c940c3698fc83f"
+        }
+      ]
+    }
+  }
+}
