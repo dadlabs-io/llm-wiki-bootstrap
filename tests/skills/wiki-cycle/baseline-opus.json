@@ -727,7 +727,7 @@
   "earlier-run-without-report-or-scratchpad-gets-close-out-only": {
     "session completed": true,
     "no permission denials (read-guard and the blocked Skill tool counted apart)": true,
-    "one run folder, 2026-11-13-01": true,
+    "one run folder, 2026-11-14-01": true,
     "scratchpad written": true,
     "scratchpad status: completed": true,
     "every step JSON has its .md": true,
@@ -749,7 +749,7 @@
     "the scratchpad carries the earlier run's id": true,
     "Step 0 told the user the earlier run's id (named in the final reply)": true,
     "the earlier run's line says why: no scratchpad": true,
-    "no resume is offered for the earlier run (--resume <id>)": true,
+    "no resume is offered for the earlier run (--resume <id>, or --resume on a line naming the id)": true,
     "the close-out is offered: --mark-interrupted <id>": true,
     "Needs you has exactly one line for the earlier run": true,
     "committed at the end (one commit)": true,

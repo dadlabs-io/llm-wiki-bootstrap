@@ -2245,6 +2245,15 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
         `--resume <cycle_id>` does not match: only this run's id does."""
         return r"--" + option + r"[\s=]+[`\"']?" + re.escape(i)
 
+    def resume_offers(i: str) -> list[str]:
+        """What offers resume for run `i`: a `--resume <i>` (as way_out reads it), or any line that names `i`
+        and carries `--resume` in any form (the generic `--resume <cycle_id>` included). A `--resume` on a
+        line that does not name `i` (the skill's general instructions, a description of the option) is not
+        an offer for this run."""
+        found = [m.group(0) for m in re.finditer(way_out("resume", i), corpus)]
+        found += [l.strip() for l in corpus.splitlines() if i in l and "--resume" in l]
+        return found
+
     # Step 0 ran: it writes the scratchpad first thing, so the new run's own scratchpad must exist and carry its id
     add("Step 0 ran: the new run's scratchpad exists and carries the new run's id", cid in stext,
         stext[:200] or "no scratchpad.md in the new run folder")
@@ -2288,9 +2297,9 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
         add("the earlier run's line says why: no scratchpad",
             any(oid in l and re.search("scratchpad", l, re.I) for l in utext.splitlines()), utext[:200])
         # a folder with no scratchpad has nothing to resume: only the close-out is offered
-        add("no resume is offered for the earlier run (--resume <id>)",
-            not re.search(way_out("resume", oid), corpus),
-            [m.group(0) for m in re.finditer(r"[^\n]*--resume[^\n]*", corpus)][:3])
+        offers = resume_offers(oid)
+        add("no resume is offered for the earlier run (--resume <id>, or --resume on a line naming the id)",
+            not offers, [o[:200] for o in offers][:3])
         add("the close-out is offered: --mark-interrupted <id>",
             bool(re.search(way_out("mark-interrupted", oid), corpus)), "not found")
         add("Needs you has exactly one line for the earlier run",
@@ -2306,7 +2315,7 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
             add(f"unfinished-runs.txt does not name the {name} run", i not in utext, utext[:200])
             add(f"Needs you does not name the {name} run", i not in needs, needs[:300])
             add(f"no way out is offered for the {name} run",
-                not re.search(r"--(?:resume|mark-interrupted)[\s=]+[`\"']?" + re.escape(i), corpus), "found")
+                not re.search(way_out("(?:resume|mark-interrupted)", i), corpus), "found")
         add("nothing about unfinished runs in Needs you",
             not re.search(r"unfinished[^\n]{0,30}run", needs, re.I), needs[:300])
 
