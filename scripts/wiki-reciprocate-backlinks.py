@@ -56,9 +56,11 @@ from _atomic_io import atomic_write_text  # noqa: E402
 
 MARKER_START = "<!-- BACKLINKS-AUTO START -->"
 MARKER_END = "<!-- BACKLINKS-AUTO END -->"
-# A block's markers each stand alone on their own line, as this script writes them; a marker quoted mid-line is prose.
-START_LINE_RE = re.compile(rf"^{re.escape(MARKER_START)}[ \t]*$", re.MULTILINE)
-BLOCK_RE = re.compile(rf"^{re.escape(MARKER_START)}[ \t]*$.*?^{re.escape(MARKER_END)}[ \t]*$", re.MULTILINE | re.DOTALL)
+# A marker counts only on a line holding nothing but the marker, spaces or tabs around it allowed (the lint reads the
+# same rule); a marker quoted mid-line is prose.
+START_LINE_RE = re.compile(rf"^[ \t]*{re.escape(MARKER_START)}[ \t]*$", re.MULTILINE)
+END_LINE_RE = re.compile(rf"^[ \t]*{re.escape(MARKER_END)}[ \t]*$", re.MULTILINE)
+BLOCK_RE = re.compile(rf"{START_LINE_RE.pattern}.*?{END_LINE_RE.pattern}", re.MULTILINE | re.DOTALL)
 LINK_RE = re.compile(r"\]\(([^()\s#]+\.md)(?:#[^()\s]*)?\)")
 
 
@@ -137,6 +139,10 @@ def rewrite_backlinks_section(
 ) -> tuple[bool, list[str], list[str]]:
     """Rewrite the auto-backlinks block. Returns (changed, added, removed)."""
     text = entry.read_text(encoding="utf-8")
+
+    prose = strip_code(text)
+    if len(START_LINE_RE.findall(prose)) > len(END_LINE_RE.findall(prose)):
+        return False, [], []  # a START with no END: the lint lists the page as not closed, for a hand fix
 
     # Build the new block
     if not referrers:

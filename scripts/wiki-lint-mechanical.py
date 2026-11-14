@@ -281,7 +281,12 @@ def resolve_link(file_path, target):
 # apart from wiki-reciprocate-backlinks.py's, so a bug in that script cannot hide itself.
 BACKLINK_START = "<!-- BACKLINKS-AUTO START -->"
 BACKLINK_END = "<!-- BACKLINKS-AUTO END -->"
-BACKLINK_BLOCK_RE = re.compile(re.escape(BACKLINK_START) + r".*?" + re.escape(BACKLINK_END), re.DOTALL)
+# A marker counts only on a line holding nothing but the marker, spaces or tabs around it allowed (the rebuild reads the
+# same rule); a marker quoted mid-line is prose.
+BACKLINK_START_LINE_RE = re.compile(rf"^[ \t]*{re.escape(BACKLINK_START)}[ \t]*$", re.MULTILINE)
+BACKLINK_END_LINE_RE = re.compile(rf"^[ \t]*{re.escape(BACKLINK_END)}[ \t]*$", re.MULTILINE)
+BACKLINK_BLOCK_RE = re.compile(BACKLINK_START_LINE_RE.pattern + r".*?" + BACKLINK_END_LINE_RE.pattern,
+                               re.MULTILINE | re.DOTALL)
 BACKLINK_LINK_RE = re.compile(r"\]\(([^()\s#]+\.md)(?:#[^()\s]*)?\)")
 
 
@@ -329,13 +334,14 @@ def backlink_blocks_out_of_step(wiki_root, entries):
     for f in entries:
         text, fenced = backlink_split(f.read_text(encoding="utf-8", errors="replace"))   # a marker quoted in code is no block
         block = BACKLINK_BLOCK_RE.search(text)
-        if text.count(BACKLINK_START) > text.count(BACKLINK_END):
+        if len(BACKLINK_START_LINE_RE.findall(text)) > len(BACKLINK_END_LINE_RE.findall(text)):
             unclosed.add(f.resolve())   # a START with no END: its lines are not the page's own links either
-        elif BACKLINK_START in fenced:
+        elif BACKLINK_START_LINE_RE.search(fenced):
             in_fence.add(f.resolve())   # a block the rebuild appended after a fence nobody closed: renders as code
         prose = BACKLINK_BLOCK_RE.sub("", text)
-        if BACKLINK_START in prose:
-            prose = prose[:prose.index(BACKLINK_START)]
+        stray = BACKLINK_START_LINE_RE.search(prose)
+        if stray:
+            prose = prose[:stray.start()]
         for target in backlink_targets(prose, f):
             if target in linkers and target != f.resolve():
                 linkers[target].add(f.resolve())
@@ -1434,9 +1440,10 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     out.append("A page's `BACKLINKS-AUTO` block should list exactly the entries that link to it. `extra` = the block "
                "lists a page that does not link here; `missing` = a page links here and the block leaves it out "
                "(a page with no block lists nobody). In a `/wiki-cycle` run the rebuild comes just before this lint, "
-               "so a page listed there means the rebuild went wrong; on its own, a page listed here is one whose "
-               "block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at "
-               "the script. Warn-only.")
+               "so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a "
+               "page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays "
+               "listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix "
+               "to the page (the rebuild leaves such a page alone). Warn-only.")
     out.append("")
     if not backlink_blocks:
         out.append("_None: every backlink block lists exactly the pages that link to it._")

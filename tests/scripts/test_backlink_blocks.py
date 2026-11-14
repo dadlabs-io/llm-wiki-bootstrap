@@ -553,6 +553,78 @@ def test_rebuild_keeps_the_prose_above_a_block_when_a_start_marker_is_quoted_inl
           payload.get("backlink_blocks", "key absent"))
 
 
+def test_rebuild_leaves_a_page_with_a_stray_start_untouched_over_two_rebuilds():
+    b = page("B", STRAY + "\nOwn words under a stray marker, kept as written.")
+    pages = {"research/a.md": page("A", "[B](b.md)"), "research/b.md": b}
+    r1, once, _ = rebuild_then_lint(pages)
+    r2, twice, payload = rebuild_then_lint({**pages, "research/b.md": once["research/b.md"]})
+    check("after one rebuild b is byte-identical", once["research/b.md"] == b, once["research/b.md"][-400:])
+    check("after two rebuilds b is byte-identical", twice["research/b.md"] == b, twice["research/b.md"][-400:])
+    check("the lint lists b as not closed",
+          payload.get("backlink_blocks") == [{"file": "research/b.md", "extra": [], "missing": [], "unclosed": True}],
+          payload.get("backlink_blocks", "key absent"))
+
+
+QUOTED = "The block starts at <!-- BACKLINKS-AUTO START --> and ends at its END marker."
+
+
+def test_lint_does_not_list_a_page_that_quotes_a_start_marker_mid_line_in_plain_prose():
+    p, text, payload = run_lint({"research/a.md": page("A", "[B](b.md)"),
+                                 "research/b.md": page("B", QUOTED + "\n\n" + blk("a.md"))})
+    check("b is not listed, as unclosed or otherwise", payload.get("backlink_blocks") == [],
+          payload.get("backlink_blocks", "key absent"))
+
+
+def test_rebuild_keeps_plain_prose_that_quotes_a_start_marker_mid_line():
+    b = page("B", QUOTED + "\n\n" + blk("a.md"))
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "[B](b.md)"), "research/b.md": b})
+    kept = b[: b.index("\n<!-- BACKLINKS-AUTO START -->\n") + 1]   # everything above the real block's START line
+    check("b is its own text above the block, byte for byte", texts["research/b.md"].startswith(kept),
+          texts["research/b.md"][:400])
+    check("the lint lists nothing", payload.get("backlink_blocks") == [], payload.get("backlink_blocks", "key absent"))
+
+
+def indented(block: str, pad: str = "  ") -> str:
+    return "\n".join(pad + line if line else line for line in block.split("\n"))
+
+
+def test_rebuild_finds_a_block_with_indented_markers():
+    b = page("B", "\n" + indented(blk("a.md")))
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "[B](b.md)"), "research/b.md": b})
+    check("b holds one START line", texts["research/b.md"].count("BACKLINKS-AUTO START") == 1,
+          texts["research/b.md"][-600:])
+    check("the lint lists nothing", payload.get("backlink_blocks") == [], payload.get("backlink_blocks", "key absent"))
+
+
+def test_lint_reads_a_block_whose_markers_are_indented():
+    p, text, payload = run_lint({"research/a.md": page("A", "[B](b.md)"),
+                                 "research/b.md": page("B", "\n" + indented(blk("a.md"), "\t"))})
+    check("a block with tab-indented markers listing its linker is not reported",
+          payload.get("backlink_blocks") == [], payload.get("backlink_blocks", "key absent"))
+
+
+def test_lint_reads_no_link_inside_an_indented_fence():
+    got = b_missing({"research/a.md": page("A", "  ```\n[B](b.md)\n  ```"),
+                     "research/c.md": page("C", "[B](b.md)"), "research/b.md": page("B")})
+    check("only c, not the page with the link in an indented fence, is a linker of b", got == ["research/c.md"], got)
+
+
+def test_rebuild_reads_no_link_inside_an_indented_fence():
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "  ```\n[B](b.md)\n  ```\n\n[C](c.md)"),
+                                           "research/b.md": page("B"), "research/c.md": page("C")})
+    check("c gets its block (the rebuild ran) and b gets none",
+          "BACKLINKS-AUTO START" in texts["research/c.md"] and "BACKLINKS-AUTO" not in texts["research/b.md"],
+          (r.stderr[-300:], texts["research/b.md"][-300:]))
+
+
+def test_report_scopes_the_rerun_advice_to_pages_listed_by_content():
+    p, text, payload = run_lint({"research/a.md": page("A", "[B](b.md)"), "research/b.md": page("B")})
+    s = section(text, "Backlink Blocks Out of Step")
+    check("the section sends extra and missing pages to the rerun and the others to a hand fix",
+          "a page listed with extra or missing pages means the rebuild went wrong" in s
+          and "needs a hand fix to the page (the rebuild leaves such a page alone)" in s, s)
+
+
 NONE_LINE = "_None: every backlink block lists exactly the pages that link to it._"
 
 

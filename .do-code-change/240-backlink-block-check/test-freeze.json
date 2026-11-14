@@ -811,5 +811,119 @@
       "tail": "FAIL test_rebuild_keeps_the_prose_above_a_block_when_a_start_marker_is_quoted_inline_twice: after two rebuilds b is its own text above the block, byte for byte  [('---\\ntitle: \"B\"\\ndate: 2026-09-01\\ntier: 3\\nconfidence: high\\ntags: [x, y, z]\\n---\\n\\n# B\\n\\nThe block starts at `<!-- BACKLINKS-AUTO START -->\\n\\n## Backlinks (auto-maintained)\\n\\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\\n\\n- [A](../research/a.md)\\n\\n<!-- BACKLINKS-AUTO END -->\\n', '---\\ntitle: \"B\"\\ndate: 2026-09-01\\ntier: 3\\nconfidence: high\\ntags: [x, y, z]\\n---\\n\\n# B\\n\\nThe block starts at `<!-- BACKLINKS-AUTO START -->\\n\\n## Backlinks (auto-maintained)\\n\\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\\n\\n- [A](../research/a.md)\\n\\n<!-- BACKLINKS-AUTO END -->\\n')]\nPASS test_rebuild_keeps_the_prose_above_a_block_when_a_start_marker_is_quoted_inline_twice: b's block lists a, once and twice\nPASS test_rebuild_keeps_the_prose_above_a_block_when_a_start_marker_is_quoted_inline_twice: the lint lists nothing after the rebuild\n2/3 passed",
       "date": "2026-11-14"
     }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_leaves_a_page_with_a_stray_start_untouched_over_two_rebuilds",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "8e87d3ba2fcbd242adb3a6bc481a119dd5ae3aac563ba993302de5217a08220f",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_leaves_a_page_with_a_stray_start_untouched_over_two_rebuilds",
+      "exit": 1,
+      "tail": "confidence: high\ntags: [x, y, z]\n---\n# B\n<!-- BACKLINKS-AUTO START -->\n## Backlinks (auto-maintained)\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\n- [A](../research/a.md)\n<!-- BACKLINKS-AUTO END -->\n]\nFAIL test_rebuild_leaves_a_page_with_a_stray_start_untouched_over_two_rebuilds: the lint lists b as not closed  [[]]\n0/3 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_lint_does_not_list_a_page_that_quotes_a_start_marker_mid_line_in_plain_prose",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "60bf87f3fe5d4eeb0f4232ff93ee002c88181450ad5b5f33ea36fd4faa100a03",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_lint_does_not_list_a_page_that_quotes_a_start_marker_mid_line_in_plain_prose",
+      "exit": 1,
+      "tail": "FAIL test_lint_does_not_list_a_page_that_quotes_a_start_marker_mid_line_in_plain_prose: b is not listed, as unclosed or otherwise  [[{'file': 'research/b.md', 'extra': [], 'missing': [], 'unclosed': True}]]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_keeps_plain_prose_that_quotes_a_start_marker_mid_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "39f5ecf53d3ede2c980dd3ce779b6c7cdf9dca23b68ab542f453cc9c69406c3b",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_keeps_plain_prose_that_quotes_a_start_marker_mid_line",
+      "exit": 1,
+      "tail": "PASS test_rebuild_keeps_plain_prose_that_quotes_a_start_marker_mid_line: b is its own text above the block, byte for byte\nFAIL test_rebuild_keeps_plain_prose_that_quotes_a_start_marker_mid_line: the lint lists nothing  [[{'file': 'research/b.md', 'extra': [], 'missing': [], 'unclosed': True}]]\n1/2 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_finds_a_block_with_indented_markers",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "33791aa2ad8eed27995c56b8996e81dc4427cd3945c4d8312e42e240e89a57b8",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_finds_a_block_with_indented_markers",
+      "exit": 1,
+      "tail": "  ## Backlinks (auto-maintained)\n  _Other entries linking to this one._\n  - [Title](a.md)\n  <!-- BACKLINKS-AUTO END -->\n<!-- BACKLINKS-AUTO START -->\n## Backlinks (auto-maintained)\n_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\n- [A](../research/a.md)\n<!-- BACKLINKS-AUTO END -->\n]\nFAIL test_rebuild_finds_a_block_with_indented_markers: the lint lists nothing  [[{'file': 'research/a.md', 'extra': ['research/b.md'], 'missing': [], 'unclosed': False}]]\n0/2 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_report_scopes_the_rerun_advice_to_pages_listed_by_content",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "eb875459b7984a30b643a85ca1249b7246f2c685691d41dec889373cfe06b64d",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_report_scopes_the_rerun_advice_to_pages_listed_by_content",
+      "exit": 1,
+      "tail": "FAIL test_report_scopes_the_rerun_advice_to_pages_listed_by_content: the section sends extra and missing pages to the rerun and the others to a hand fix  [\nA page's `BACKLINKS-AUTO` block should list exactly the entries that link to it. `extra` = the block lists a page that does not link here; `missing` = a page links here and the block leaves it out (a page with no block lists nobody). In a `/wiki-cycle` run the rebuild comes just before this lint, so a page listed there means the rebuild went wrong; on its own, a page listed here is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. Warn-only.\n- `research/b.md` \u2014 missing `research/a.md`\n]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_lint_reads_a_block_whose_markers_are_indented",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "8a241b89a4d44807e6ed7c545ede51bdc8fad6fbe7d1326bcbf8c119efa27105",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on arrival (the lint's old block regex was unanchored); kills the mutant that anchors BACKLINK_START_LINE_RE/END_LINE_RE without the [ \\t]* prefix",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_lint_reads_no_link_inside_an_indented_fence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ec94e0c8f33db2663b0a6de898eaa45ac6bba58992928481c4e2a9ea7c39373b",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on arrival (lstrip already in backlink_split); kills the mutant line.lstrip().startswith -> line.startswith in backlink_split",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_reads_no_link_inside_an_indented_fence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f65c6268ec625fe7294a6878ac064839ec74623f74a7f95c3a51f7494ee6d617",
+    "frozen_at_step": "fix-3",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on arrival (lstrip already in strip_code); kills the mutant line.lstrip().startswith -> line.startswith in strip_code",
+      "date": "2026-11-14"
+    }
   }
 ]
