@@ -1,0 +1,1 @@
+- wiki-cycle suite: the run rule "print the models before spawning any helper" fails a resumed run (`confirm-false-ingest-only-resume-promotes-at-end`, Sonnet 20261114-164449), which by the skill never repeats the done Step 0; that case has no baseline. Rule vs skill conflict, outside change 240 (lesson #11).
