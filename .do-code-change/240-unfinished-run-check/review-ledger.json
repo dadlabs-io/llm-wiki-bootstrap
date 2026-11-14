@@ -208,6 +208,57 @@
         "tests/skills/wiki-cycle/cases.json": "1ee503bacbcbacb2b69fb36c027f9afef6cb945f42a6818c849c14f33a5306b4",
         "tests/skills/wiki-cycle/check.py": "55c34b6d5720e1b8fe3468a7ef89a18fcdcc0c3585b64f4b7b756f7c0744ebe6"
       }
+    },
+    {
+      "round": 5,
+      "at": "2026-11-14T18:09:42Z",
+      "diff_sha256": "2ae048ec4ac96d5078952216b22ba3d1ae482eb29d964fee85bca40924473977",
+      "findings_sha256": "c82341493b38ee9b23ca9527bd28a2118664c1777d95f310a0cda15bd050dd45",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-27",
+        "standards-28",
+        "standards-29",
+        "standards-30",
+        "standards-31",
+        "standards-32",
+        "standards-33",
+        "standards-34",
+        "standards-35",
+        "spec-22",
+        "spec-23"
+      ],
+      "new": [
+        "standards-27",
+        "standards-28",
+        "standards-29",
+        "standards-30",
+        "standards-31",
+        "standards-32",
+        "standards-33",
+        "standards-34",
+        "standards-35",
+        "spec-22",
+        "spec-23"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "cb477806cf85f2dd014c4f200996358e6e512e58e513676e2b7d611cdc352d5e",
+        "scripts/wiki-cycle-scope.py": "1d64069c90078504ffef054b67c502187b80b90e278db8a087667126c5cb0a4e",
+        "skills/wiki-cycle/SKILL.md": "17fe4c08148bf9c55f9e6914cb3ffc9f13b95da94fb79f99951c90aca20f4d7d",
+        "skills/wiki-cycle/reference.md": "697a090548354a832b8d8d4077253fe09932062c280bec59005df51d9a742c40",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "94ef76f2ff00414e850728a251e3c763d11571f7b61c005fe4f9cdbbbdab227c",
+        "skills/wiki-report/SKILL.md": "656b4c6d4f6a16ebc343264d1e3ba9e4f3fbe20cad9cefab82e0d3ee08f78ffe",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "2fa3552b1609c12689c8e828c3d5714139c52b5e84f8904516ba797ddca945c4",
+        "tests/scripts/test_cycle_scope.py": "cd763b587a4c24295dd8c3ff3c0ec0d9e21e745b9c3da90c6764ea7f7f83e0cd",
+        "tests/skills/PENDING.md": "817cdc57fdca8304d3aa7f7d0d391585aabede9daec96084520d72a2398d59fe",
+        "tests/skills/wiki-cycle/baseline-opus.json": "c6c35d912b7a404b4a9267d32c7c7e2a922fbdbb8bbea8b6958c9539b2c7bdf4",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "d93166e4cf9166539d66f002bc8f2ff07c96668823b64fef24cf8890e230a4c3",
+        "tests/skills/wiki-cycle/cases.json": "1ee503bacbcbacb2b69fb36c027f9afef6cb945f42a6818c849c14f33a5306b4",
+        "tests/skills/wiki-cycle/check.py": "e11a03b1ec184f8f85066e7660cb796df52ffabd33f8a0cb87161dc0c2937ad7"
+      }
     }
   ],
   "items": {
@@ -1489,6 +1540,237 @@
         {
           "round": 4,
           "verdict": "addressed",
+          "fingerprint": "0026d09f12d46cde2275ca2e8e01679cce55d0661969e660967e7f7cf1ccece2"
+        }
+      ]
+    },
+    "standards-27": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S2 `tests/skills/wiki-cycle/check.py:2300-2302` vs `:2317-2318` \u2014 two detectors for one \"way out\" rule: the open branch uses `offers = resume_offers(oid)`, the complete/interrupted branch only `not re.search(way_out(\"(?:resume|mark-interrupted)\", i), corpus)`, so a generic `--resume` line naming that run passes there and fails here. Fix: use `resume_offers` in the else branch too. Route: the eval-case-writer agent (check.py is its file).",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2300,
+      "first_round": 5,
+      "last_seen_round": 5,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3ac21cdfe0cac349d0bb3be085c3ee9a630e8b6b727999e7349766bb5fe0b894",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 5,
+          "verdict": "open",
+          "fingerprint": "3ac21cdfe0cac349d0bb3be085c3ee9a630e8b6b727999e7349766bb5fe0b894"
+        }
+      ]
+    },
+    "standards-28": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] PY9 (reversed: fails a correct answer) `tests/skills/wiki-cycle/check.py:2254` \u2014 `found += [l.strip() for l in corpus.splitlines() if i in l and \"--resume\" in l]` counts any line naming the run and mentioning `--resume`, so a reply such as \"no resume for <id>, the scratchpad is missing\" is an offer and fails the no-resume check. Fix: exclude negated lines, or match only `--resume` directly followed by the id or `<cycle_id>`. Route: the eval-case-writer agent. (Raised by the first Standards lens; the retry dropped it only because its brief carried an over-broad ruling. The writer's own recorded limit, \"a negated mention on the id's line would count\", is a note, not a ruling on this finding, so it stays.)",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2254,
+      "first_round": 5,
+      "last_seen_round": 5,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3ac21cdfe0cac349d0bb3be085c3ee9a630e8b6b727999e7349766bb5fe0b894",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 5,
+          "verdict": "open",
+          "fingerprint": "3ac21cdfe0cac349d0bb3be085c3ee9a630e8b6b727999e7349766bb5fe0b894"
+        }
+      ]
+    },
+    "standards-29": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] R14 `tests/skills/wiki-cycle/check.py:2408` with `baseline-opus.json:730` and `baseline-sonnet.json:723` \u2014 the check name embeds the run's cycle id (`add(f\"one run folder, {cycle_id}\", folders == [cycle_id], folders)`), and `tests/skills/run_skill_test.py:581` compares only names already in the baseline (`base.get(cid, {}).get(n)`), so on any other day the name is absent and a regression on it is never reported; the sibling case still reads `\"one run folder, 2026-11-13-01\"` at `baseline-opus.json:689` and `baseline-sonnet.json:682`, and this round's diff changed the same literal's date in the other entry. Fix: name the check `\"one run folder\"` with the id in the detail, and regenerate both baselines. Route: the eval-case-writer agent.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2408,
+      "first_round": 5,
+      "last_seen_round": 5,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e11a03b1ec184f8f85066e7660cb796df52ffabd33f8a0cb87161dc0c2937ad7",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 5,
+          "verdict": "open",
+          "fingerprint": "e11a03b1ec184f8f85066e7660cb796df52ffabd33f8a0cb87161dc0c2937ad7"
+        }
+      ]
+    },
+    "standards-30": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] S2 `tests/skills/wiki-cycle/check.py:2253-2254` \u2014 the two clauses of `resume_offers` overlap: every single-line match of `re.finditer(way_out(\"resume\", i), corpus)` is also picked by the line clause, so one offer is listed twice in the detail; the first clause adds only a `--resume` split by a newline (`[\\s=]+` admits one). The verdict (`not offers`) is unaffected. Fix: keep one clause, or dedupe. Route: the eval-case-writer agent.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2253,
+      "first_round": 5,
+      "last_seen_round": 5,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3ac21cdfe0cac349d0bb3be085c3ee9a630e8b6b727999e7349766bb5fe0b894",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 5,
+          "verdict": "open",
+          "fingerprint": "3ac21cdfe0cac349d0bb3be085c3ee9a630e8b6b727999e7349766bb5fe0b894"
+        }
+      ]
+    },
+    "standards-31": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] C2 `tests/skills/wiki-cycle/check.py:2242-2246` \u2014 the `way_out` docstring says `--<option> <id>` (one option name), but `:2318` passes the alternation `\"(?:resume|mark-interrupted)\"`. Fix: say `option` may be a regex fragment. Route: the eval-case-writer agent.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2242,
+      "first_round": 5,
+      "last_seen_round": 5,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3ac21cdfe0cac349d0bb3be085c3ee9a630e8b6b727999e7349766bb5fe0b894",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 5,
+          "verdict": "open",
+          "fingerprint": "3ac21cdfe0cac349d0bb3be085c3ee9a630e8b6b727999e7349766bb5fe0b894"
+        }
+      ]
+    },
+    "standards-32": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] S1/C3 `tests/scripts/test_cycle_scope.py:564` \u2014 the label `\"unfinished_offers_resume_or_close_as_one_choice: the printed line is the resume or the close-out\"` reads as either/or while the asserted line (`:565-567`) joins both with `; or close it:`. Fix: \"the printed line offers the resume and the close-out\".",
+      "file": "tests/scripts/test_cycle_scope.py",
+      "line": 564,
+      "first_round": 5,
+      "last_seen_round": 5,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e6fa1c5d0265a038166db27659051e6906afbcec462c551d908b34f7d6bb3398",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 5,
+          "verdict": "open",
+          "fingerprint": "e6fa1c5d0265a038166db27659051e6906afbcec462c551d908b34f7d6bb3398"
+        }
+      ]
+    },
+    "standards-33": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] T6 `tests/scripts/test_cycle_scope.py:564-567` \u2014 the exact-line check covers only the scratchpad branch; the no-scratchpad branch (`resume = \"\"`, `scripts/wiki-cycle-scope.py:584-585`) has substring checks only (`:360`, `:363-365`, `:367-368`), so a doubled space or a stray `; or` there passes. Fix: add one exact-line assertion for a no-scratchpad run.",
+      "file": "tests/scripts/test_cycle_scope.py",
+      "line": 564,
+      "first_round": 5,
+      "last_seen_round": 5,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e6fa1c5d0265a038166db27659051e6906afbcec462c551d908b34f7d6bb3398",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 5,
+          "verdict": "open",
+          "fingerprint": "e6fa1c5d0265a038166db27659051e6906afbcec462c551d908b34f7d6bb3398"
+        }
+      ]
+    },
+    "standards-34": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] R14 `tests/scripts/test_cycle_scope.py:396-397` and `:407-408` \u2014 `p.stdout.strip() == \"unfinished: none\"` holds only because `unfinished_none_case` (`:378-388`) wrote reports for the four earlier runs first; the new test is order-dependent. Fix: assert `\"2026-10-16-01\" not in p.stdout`, or seed the state inside the test (the file is one sequential throwaway notebook by design, so this is a judgement call).",
+      "file": "tests/scripts/test_cycle_scope.py",
+      "line": 396,
+      "first_round": 5,
+      "last_seen_round": 5,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e6fa1c5d0265a038166db27659051e6906afbcec462c551d908b34f7d6bb3398",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 5,
+          "verdict": "open",
+          "fingerprint": "e6fa1c5d0265a038166db27659051e6906afbcec462c551d908b34f7d6bb3398"
+        }
+      ]
+    },
+    "standards-35": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] R24 `tests/skills/PENDING.md:28` \u2014 the Date cell of the Task #240 row says `2026-11-13`, but the Change cell now also carries the round-4 check change (dated 2026-11-14) and narrates earlier run ids. Fix: a separate row dated 2026-11-14 holding only the check change (judgement call).",
+      "file": "tests/skills/PENDING.md",
+      "line": 28,
+      "first_round": 5,
+      "last_seen_round": 5,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a71da116a5c479e51c077762513179217dc29d79ab13c13f04a6e46bc5584e25",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 5,
+          "verdict": "open",
+          "fingerprint": "a71da116a5c479e51c077762513179217dc29d79ab13c13f04a6e46bc5584e25"
+        }
+      ]
+    },
+    "spec-22": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/check.py:2254` \u2014 a negated mention is counted as an offer, so a correct reply can fail the open case. Intent: requirements.md:26 \"resume is offered only for a folder that has a scratchpad\"; a line saying a run has no resume is not an offer. Code: `found += [l.strip() for l in corpus.splitlines() if i in l and \"--resume\" in l]`; the negative branch (`:2317-2318`) uses only `way_out`, narrower than `resume_offers`. Affected: a false FAIL on a correct model reply; a weaker negative test than the open one. The writer's own note records the limit. Fix: keep the `way_out` match, narrow or drop the line clause, and use one `resume_offers` helper in both branches (eval-case-writer's file).",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2254,
+      "first_round": 5,
+      "last_seen_round": 5,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3ac21cdfe0cac349d0bb3be085c3ee9a630e8b6b727999e7349766bb5fe0b894",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 5,
+          "verdict": "open",
+          "fingerprint": "3ac21cdfe0cac349d0bb3be085c3ee9a630e8b6b727999e7349766bb5fe0b894"
+        }
+      ]
+    },
+    "spec-23": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-cycle-scope.py:557` \u2014 the surviving mutant `count=0` is called equivalent, which holds only for template-shaped scratchpads. Intent: checkpoints.md:76 \"`count=0` in the Status substitution (a scratchpad has one Status line: equivalent)\"; plan.md:17 \"sets the scratchpad's `**Status**:` line to `interrupted`\". Code: `text, n = re.subn(r\"^(\\*\\*Status\\*\\*:).*$\", r\"\\1 interrupted\", text, count=1, flags=re.M)`; the listing at `:540` reads only the first match; reference.md:12 is the only column-0 `**Status**:` in the template, and the phase Status lines start with `- **Status**` and do not match. Affected: a hand-edited scratchpad with a second column-0 Status line would have it rewritten too; no test pins first-only. Fix: a test with two column-0 Status lines pinning first-only, or narrow the checkpoint's claim to the reference template.",
+      "file": "scripts/wiki-cycle-scope.py",
+      "line": 557,
+      "first_round": 5,
+      "last_seen_round": 5,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "0026d09f12d46cde2275ca2e8e01679cce55d0661969e660967e7f7cf1ccece2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 5,
+          "verdict": "open",
           "fingerprint": "0026d09f12d46cde2275ca2e8e01679cce55d0661969e660967e7f7cf1ccece2"
         }
       ]
