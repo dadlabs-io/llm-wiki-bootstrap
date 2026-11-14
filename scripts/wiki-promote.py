@@ -300,7 +300,7 @@ def _regenerate_indexes(scripts_dir: Path, topic: str, vault: Path, dry_run: boo
     # did not, which is where the recurring broken-links-after-promote bug came from.
     # wiki-reciprocate-backlinks.py SECOND, once the links resolve: a promoted entry links
     # out to older ones, and until their BACKLINKS-AUTO blocks name it, nothing links to
-    # it and the lint counts it an orphan. Before 2026-09-25 only /wiki-cycle's Step 3.5
+    # it and the lint counts it an orphan. Before 2026-09-25 only /wiki-cycle's Step 3
     # ran it, so every /wrap-up left its new entries orphaned. It rebuilds every block in
     # the notebook (idempotent), so a notebook whose blocks were behind catches up here.
     for script_name in ("wiki-fix-links.py", "wiki-reciprocate-backlinks.py",

@@ -6,15 +6,15 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 8
-last_reviewed: 2026-11-10
+framework-version: 9
+last_reviewed: 2026-11-14
 review_after: 2027-02-08
 tags: [best-practice, architecture, orchestrator, wiki-cycle, schema, contract]
 ---
 
 # Cycle Step Return Format
 
-The contract between `/wiki-cycle` (orchestrator) and every step-skill it invokes — `/wiki-discover`, `/wiki-update`, `/wiki-lint`, `/wiki-refresh`, `/wiki-claims`, plus **drive-fetch** (Step 1.0), **email-fetch** (Step 1.1), **triage** (Step 1.7), the **checker** (Step 2.6), the **three integration scripts** (Step 3.5), **promote** (Step 5.5) and **synthesis** (Step 6.5). Any new step-skill joining the pipeline adheres to this format.
+The contract between `/wiki-cycle` (orchestrator) and every step-skill it invokes — `/wiki-discover`, `/wiki-update`, `/wiki-lint`, `/wiki-refresh`, `/wiki-claims`, plus **drive-fetch** (Step 1.0), **email-fetch** (Step 1.1), **triage** (Step 1.7), the **checker** (Step 2.6), the **three integration scripts** (Step 3, before the lint), **promote** (Step 5.5) and **synthesis** (Step 6.5). Any new step-skill joining the pipeline adheres to this format.
 
 ## Why this contract exists
 
@@ -58,14 +58,14 @@ _inbox/reports/
         ├── update.md
         ├── checker-scope.txt                      ← Step 2.6: the staged entries to check (wiki-checker-config.json)
         ├── checker/<slug>.json                    ← Step 2.6: one checker report per entry
-        ├── lint-mechanical.json                   ← Step 3
-        ├── lint-mechanical.md
-        ├── reciprocate-backlinks.json             ← Step 3.5 (integration scripts)
+        ├── reciprocate-backlinks.json             ← Step 3 (integration scripts, first)
         ├── reciprocate-backlinks.md
         ├── index-per-folder.json
         ├── index-per-folder.md
         ├── map-compile.json
         ├── map-compile.md
+        ├── lint-mechanical.json                   ← Step 3 (the lint, after the integration scripts)
+        ├── lint-mechanical.md
         ├── semantic-scope.txt                     ← Step 4: the entries in scope
         ├── lint-semantic.json                     ← Step 4
         ├── lint-semantic.md
@@ -172,12 +172,12 @@ The iteration number (`01`, `02`, ...) increments for same-day re-runs. The orch
 - `queued[]` is empty (mechanical lint doesn't produce items)
 - `skipped[]` is empty
 - `deferred[]` is empty
-- `summary` keys: `files_scanned`, `broken_links`, `orphans`, `standalone` (2026-09-24), `stale_pending`, `missing_frontmatter`, `missing_tier`, `invalid_tier`, `missing_confidence`, `invalid_confidence`, `unquoted_yaml` (since 2026-09-08 this counter is the frontmatter-loadability findings — unquoted `: ` / ` #` in a top-level value — over entries; the installed-skill scan and the qmd index-coverage check are report sections, not counters), and since 2026-10-14 `renamed_terms_left`, `supersede_bad_target`, `supersede_no_backlink` (warn-only: they do not make a run unclean)
+- `summary` keys: `files_scanned`, `broken_links`, `orphans`, `standalone` (2026-09-24), `stale_pending`, `missing_frontmatter`, `missing_tier`, `invalid_tier`, `missing_confidence`, `invalid_confidence`, `unquoted_yaml` (since 2026-09-08 this counter is the frontmatter-loadability findings — unquoted `: ` / ` #` in a top-level value — over entries; the installed-skill scan and the qmd index-coverage check are report sections, not counters), and since 2026-10-14 `renamed_terms_left`, `supersede_bad_target`, `supersede_no_backlink`, and since 2026-11-14 `backlink_blocks_out_of_step` (pages whose backlinks block lists a page that does not link there, leaves out one that does, or is not closed; findings in `backlink_blocks: [{file, extra, missing, unclosed}]`; task #240) (warn-only: they do not make a run unclean). The lint runs after the integration scripts (Step 3), so a page in `backlink_blocks` is one the backlink rebuild got wrong
 - The detailed findings live in sibling arrays: `broken_links: [{file, target, link_text}]`, `orphans: [file]`, `standalone: [{file, reason}]`, etc.
 - `status: "partial"` with a `not_checked: [reason]` array (2026-10-14, exit 3): part of the lint checked nothing (no entries; the search index missing, not a collection, or empty); never a clean run.
 - `status: "completed"` with `summary.broken_links == 0 && summary.orphans == 0` is a clean run. A page that stands alone by design (the wiki's HOME, a hub) declares `standalone: "<reason>"` in its own frontmatter (frontmatter spec) and is listed in `standalone[]`, not counted as an orphan. There is no allowance and no built-in list: until 2026-09-24 this line allowed one orphan, meant for HOME.
 
-### Integration scripts (Step 3.5) — `reciprocate-backlinks`, `index-per-folder`, `map-compile`
+### Integration scripts (Step 3, before the lint) — `reciprocate-backlinks`, `index-per-folder`, `map-compile`
 
 All three are deterministic Python and **all three emit cycle-contract JSON when given `--cycle-id` + `--run-folder`**, each writing its own `<script-name>.json` + `.md` pair. They are steps in the contract, not side-effects.
 
@@ -185,7 +185,7 @@ All three are deterministic Python and **all three emit cycle-contract JSON when
 - `reciprocate-backlinks` `summary` keys: `files_scanned`, `backlinks_added`, `entries_touched`
 - `index-per-folder` `summary` keys: `folders_indexed`, `entries_listed`
 - `map-compile` `summary` keys: `entries_total`, `folders`, `map_tokens`
-- ⚠️ Because these run unattended and rewrite entry bodies, a malfunction is silent — see failure mode FM#11 in the research-agent failure-modes pre-mortem *(agentic-design :: wiki/project/architecture/research-agent-failure-modes-pre-mortem.md)*. Treat a large unexplained `backlinks_added` as a signal, not a success.
+- ⚠️ Because these run unattended and rewrite entry bodies, a malfunction is silent — see failure mode FM#11 in the research-agent failure-modes pre-mortem *(agentic-design :: wiki/project/architecture/research-agent-failure-modes-pre-mortem.md)*. Treat a large unexplained `backlinks_added` as a signal, not a success. Since 2026-11-14 (task #240) they run before the mechanical lint, whose `backlink_blocks_out_of_step` checks every block against the real links, so a malfunction of the backlink rebuild is no longer silent.
 
 ### `/wiki-lint --full` (semantic)
 
@@ -203,7 +203,7 @@ Writes `promote.json` + `promote.md`. Runs only when Step 0's `promote-setting.t
 - `skipped[]` = staged entries deliberately held back
 - `deferred[]` = entries that failed to promote (destination conflict, malformed frontmatter)
 - `summary` keys: `staged_total`, `promoted`, `held`, `backlinks_added`
-- After promoting, the orchestrator re-runs Step 3.5's integration scripts, since promotion adds links
+- After promoting, the orchestrator re-runs Step 3's integration scripts and then its lint, since promotion adds links
 
 ### Synthesis (Step 6.5)
 

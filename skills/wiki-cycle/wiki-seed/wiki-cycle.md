@@ -27,7 +27,7 @@ Runs a notebook's research pipeline end to end: gather new sources, give each on
 | Pages no fetcher can get, when there are any | ✓ | ✓ | ✓ | — | ✓ |
 | Ingest, then the staging check | ✓ | ✓ | ✓ | — | ✓ |
 | Checker, when a transcript is long, a source is big, or the spot check picks an entry | ✓ | ✓ | ✓ | — | ✓ |
-| Mechanical lint, backlinks, indexes, map | ✓ | ✓ | ✓ | — | ✓ |
+| Backlinks, indexes, map, then the mechanical lint | ✓ | ✓ | ✓ | — | ✓ |
 | Semantic lint, fixes | — | ✓ | — | — | — |
 | Promote, when `confirm_before_promote` is false | ✓ | ✓ | ✓ | — | ✓ |
 | Hubs, when a hub page misses an entry carrying its tag | ✓ | ✓ | ✓ | — | ✓ |
@@ -35,7 +35,7 @@ Runs a notebook's research pipeline end to end: gather new sources, give each on
 | Best-practices synthesis, when research entries reached the wiki since the last one | ✓ | ✓ | ✓ | — | ✓ |
 | Report, one commit | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-`--lint-only` runs the mechanical lint (`--semantic` adds the semantic pass), `--claims-only` the claims step, `--refresh-only` the overdue scan, and `--report-only` rebuilds the report from the last run. Modifiers: `<notebook>` (another registered notebook), `--direct`, `--no-confirm-discovery` (no discovery pause, for unattended runs), `--since <hours>`, `--resume <cycle_id>`, `--all-topics`, and `--lint-all` (below).
+`--lint-only` rebuilds the backlink blocks, indexes and map, then runs the mechanical lint (`--semantic` adds the semantic pass). The rebuild always runs just before the lint, so the lint's check of every backlink block against the real links shows what the rebuild left wrong; a page it still lists goes in the report's Needs you. `--claims-only` runs the claims step, `--refresh-only` the overdue scan, and `--report-only` rebuilds the report from the last run. Modifiers: `<notebook>` (another registered notebook), `--direct`, `--no-confirm-discovery` (no discovery pause, for unattended runs), `--since <hours>`, `--resume <cycle_id>`, `--all-topics`, and `--lint-all` (below).
 
 ## The steps you will notice
 

@@ -28,3 +28,7 @@ Orchestrator: SKILL.md Step 3 (fix-links, rebuild/index/map, lint once), Steps 5
 ## Red-team choice 3 kill criterion — 2026-11-14
 
 Dry run of the changed backlink script on the four notebooks (read-only): llm-wiki-bootstrap +10 -0, agentic-design +20 -0, investment-agent +187 -0, agent-builder-bootstrap +3 -3. The three removals are all from one linker, agent-builder's `project/decisions/intake-build-candidates-seven-skills-built-derive-tests-folded-into-verify-2026-09-08.md`: its line 99 starts `  ```flow block is in the file ...`, which markdown reads as an unclosed fence, so everything after it (the page's Related links included) renders as code; the new rule reads it as markdown does. Not code stripping of an inline span. To be named to Mark before install, as recorded; the page's fix is agent-builder's (close or reword the fence).
+
+## Step 4 docs — 2026-11-14
+
+Usage pages (wiki-cycle: mode table and `--lint-only` line; wiki-lint: the new section; wiki-report: the Needs-you line), CHANGELOG 2026-11-14 entry, INSTALL-INVENTORY rows for both scripts, `framework-docs/cycle-step-return-format.md` (framework-version 8 -> 9: Step 3 order, the lint's new summary key and array, Step 5.5's re-run), `scripts/wiki-promote.py` comment (Step 3.5 -> Step 3). `grep -rn "Step 3\.5\|Phase 3\.5"` over skills/wiki-cycle, skills/wiki-report, framework-docs, scripts, the suite: only the two intended history mentions (reference.md history line, SKILL.md resume rule) and wrap-up's own Step 3.5 in the authoring doc.
