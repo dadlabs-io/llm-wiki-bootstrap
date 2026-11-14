@@ -83,7 +83,8 @@ true, as /wrap-up reads it). Prints one line and writes <rf>/promote-setting.txt
 2026-10-19 the cycle never read the setting: --full promoted everything and every other
 mode staged everything (task #184).
 
-`unfinished`: the earlier run folders (`_inbox/reports/<date>/<YYYY-MM-DD>-<NN>/`, not <rf>) that never got
+`unfinished`: the earlier run folders (`_inbox/reports/<date>/<YYYY-MM-DD>-<NN>/` under the id's own date, as a
+cycle files them; not <rf>) that never got
 their `<cycle_id>-run-cycle-report.md`, unless their scratchpad says `interrupted`. Prints one line each, oldest
 first, with the ways out (`/wiki-cycle <notebook> --resume <cycle_id>` only when the folder has a scratchpad, since a
 run with none has nothing to resume; always `--topic <notebook> unfinished --mark-interrupted`, the notebook the
@@ -92,7 +93,7 @@ and writes <rf>/unfinished-runs.txt (`<cycle_id>` tab why). Exit 0 either way. N
 One cycle runs on a notebook at a time (Mark's rule): the listing counts any earlier run still in progress as
 dead, and `--mark-interrupted` rewrites it; there is no lock and no age check. `--run-folder` (list) and
 `--mark-interrupted` (close) are separate commands: both together, or neither, is exit 2.
-`--mark-interrupted <cycle_id> --reason "<why>"` closes one: its scratchpad's Status becomes `interrupted` and the
+`--topic <notebook> unfinished --mark-interrupted <cycle_id> --reason "<why>"` closes one: its scratchpad's Status becomes `interrupted` and the
 reason joins the Decisions log (a scratchpad is written when there is none); an unknown id is exit 2, nothing
 written (task #240, lesson #10: a cycle died before its report and nothing flagged it).
 
@@ -515,12 +516,14 @@ def cmd_promote(nb: Path, args) -> int:
 
 
 CYCLE_ID = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{2}$")
+DECISIONS_LOG = re.compile(r"^## Decisions log$", re.M)
 
 
 def unfinished_runs(nb: Path, run_folder: Path) -> list[tuple[str, str]]:
     """(cycle_id, why) for each earlier run folder with no `<id>-run-cycle-report.md`, unless its scratchpad says
-    `interrupted`, oldest first. A run folder is `_inbox/reports/<date>/<YYYY-MM-DD>-<NN>/`; `checker/` and the
-    like are not (task #240, lesson #10: a run that died before its report was never looked at again)."""
+    `interrupted`, oldest first. A run folder is `_inbox/reports/<date>/<YYYY-MM-DD>-<NN>/` with <date> the id's own
+    date (a cycle always files it there; one moved by hand is skipped, as the close-out cannot find it); `checker/`
+    and the like are not (task #240, lesson #10: a run that died before its report was never looked at again)."""
     out = []
     for d in sorted((nb / "_inbox" / "reports").glob("*/*")):
         if not d.is_dir() or not CYCLE_ID.match(d.name) or d.resolve() == run_folder.resolve():
@@ -555,9 +558,9 @@ def mark_interrupted(nb: Path, cycle_id: str, reason: str) -> None:
         title, _, rest = text.partition("\n")
         text = f"{title}\n\n**Status**: interrupted\n{rest}"
     line = f"- {now_stamp()} — marked interrupted: {reason}\n"
-    if not re.search(r"^## Decisions log$", text, re.M):
+    if not DECISIONS_LOG.search(text):
         text = text.rstrip("\n") + "\n\n## Decisions log\n"
-    log = re.search(r"^## Decisions log$", text, re.M)
+    log = DECISIONS_LOG.search(text)
     after = re.search(r"^## ", text[log.end():], re.M)
     end = log.end() + after.start() if after else len(text)
     atomic_write_text(pad, text[:end].rstrip("\n") + "\n" + line + ("\n" + text[end:] if after else ""))

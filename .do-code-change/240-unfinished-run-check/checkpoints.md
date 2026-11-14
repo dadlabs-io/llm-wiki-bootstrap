@@ -52,3 +52,13 @@ Run 20261113-164536-red-green-1d6b03c (~$6.9): RED THEN GREEN on all four. Basel
 ## Review round 3 (the cap) — 2026-11-13
 
 9 findings, 2 blocking, each reversing an earlier round's own ask: spec-18 (a folder filed under another date is now skipped: round 2's standards-15 asked for that skip) and standards-21 (the no-resume check no longer fails on generic `--resume <cycle_id>` text: round 2's spec-14 asked for that). Ledger query: not yet met, 2 open. Round 3 is the retry ceiling: Retry-ceiling exhaustion, to Mark.
+
+## Retry-ceiling exhaustion — 2026-11-14
+
+Put to Mark: the two blocking findings each reverse an earlier round's ask; recommended continue manually, keep both behaviours, fix the CHANGELOG and docstring wording by hand. Mark (terminal): "oplease proceed and fix and do anotyher round" -> continue manually, plus one more review round (round 4, past the ceiling, on his word).
+Rulings (one each, for two lenses' opposite asks):
+- spec-18 (misfiled folder skipped): kept. A run folder is one under its own id's date (every cycle files it there); written into requirements Decision 1 and the script's docstrings (module and `unfinished_runs`).
+- standards-21 (generic `--resume <cycle_id>` text not failed): kept, as round 2's spec-14 asked; the check still fails a resume offered for the run's own id. `way_out`'s docstring already states it. check.py unchanged.
+- standards-23 / spec-19 (final reply vs any reply for "told the user"): kept on the final reply (spec-13's ask); the timing of "now" is untested, as spec-19 notes.
+- standards-22 (way_out re-spelled in the negative case): left open, a suggestion in eval-case-writer's file; no suite rerun for it.
+Hand fixes (orchestrator): spec-20 CHANGELOG forms carry the notebook; spec-21 docstring `--topic <notebook> unfinished --mark-interrupted`; standards-24 one `DECISIONS_LOG` constant; standards-25 docstrings name the own-date rule. test_cycle_scope.py 86/86; check-freeze PASS.

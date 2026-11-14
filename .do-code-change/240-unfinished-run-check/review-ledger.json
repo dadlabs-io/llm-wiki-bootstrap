@@ -1233,9 +1233,9 @@
       "line": 558,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "9efbaa932b0220ee5512ba36919adb50bd38ce0907f01d1c7148d2b3cbbfc1e0",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1243,6 +1243,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "9efbaa932b0220ee5512ba36919adb50bd38ce0907f01d1c7148d2b3cbbfc1e0"
         }
       ]
     },
@@ -1254,9 +1259,9 @@
       "line": 521,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "9efbaa932b0220ee5512ba36919adb50bd38ce0907f01d1c7148d2b3cbbfc1e0",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1264,6 +1269,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "9efbaa932b0220ee5512ba36919adb50bd38ce0907f01d1c7148d2b3cbbfc1e0"
         }
       ]
     },
@@ -1275,9 +1285,9 @@
       "line": 528,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "9efbaa932b0220ee5512ba36919adb50bd38ce0907f01d1c7148d2b3cbbfc1e0",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1285,6 +1295,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "4eb08e8d60b6c5ff5d05da6c5c1b1aa9028e288931749712c768588bdc3f836e"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "9efbaa932b0220ee5512ba36919adb50bd38ce0907f01d1c7148d2b3cbbfc1e0"
         }
       ]
     },
@@ -1317,9 +1332,9 @@
       "line": 16,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "9086ddd66579012364c0f1ab576a7e457aaf383cc276caccc4f62437c2e7c2e9",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "d17412a73e5d56dfbba5151f8f3c54bbbe2d111f62d97669f896feeded9842ee",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1327,6 +1342,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "9086ddd66579012364c0f1ab576a7e457aaf383cc276caccc4f62437c2e7c2e9"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "d17412a73e5d56dfbba5151f8f3c54bbbe2d111f62d97669f896feeded9842ee"
         }
       ]
     },
@@ -1338,9 +1358,9 @@
       "line": 95,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "816e6a0100ca5b15900e22969a6b38d5bbb21572077471e9d2197095cb884251",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "e75379a9bdf49c6bf111a739f6cf980511876ca8bf9ee1b42b42b0e347771228",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1348,6 +1368,11 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "816e6a0100ca5b15900e22969a6b38d5bbb21572077471e9d2197095cb884251"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "e75379a9bdf49c6bf111a739f6cf980511876ca8bf9ee1b42b42b0e347771228"
         }
       ]
     }
