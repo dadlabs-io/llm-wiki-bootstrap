@@ -817,5 +817,357 @@
     ],
     "unfrozen_reason": "retry-ceiling, continue manually (Mark 2026-11-13): exit code asserted before the marker; the owner-line assert has its own message and the bite test keys on it; no assertion loosened",
     "change": "242-dcc-test-tidy"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_none_case",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "4326bc33ec633a98961c80ecc0231994991cdbb3256635e7335a38c657d8b643",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS cost end with no start mark: NOT checked\nPASS session-cost: the named session's running total, said to be an estimate\nPASS session-cost with no id: the newest session in this folder\nPASS session-cost for a session with no file: NOT checked (exit 3), never a zero\nPASS unfinished_names_runs_without_report: exit 0, exactly the four unfinished folders, oldest first\nPASS unfinished_names_runs_without_report: a folder with no scratchpad says so\nPASS unfinished_names_runs_without_report: an in_progress scratchpad says so\nPASS unfinished_names_runs_without_report: each line gives both ways out\nPASS unfinished_names_runs_without_report: unfinished-runs.txt lists each folder and its why\nFAIL unfinished_none_case: the one line 'unfinished: none', exit 0  [(0, '', '')]\nPASS unfinished_none_case: the file holds only its header line, not zero bytes\n58/59 passed",
+      "date": "2026-11-13"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_without_a_reports_folder",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "13a4ddad9858a787678acac41bc99ea4959c40e287bd43f53ae41f378ff03974",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "the code walks reports with glob, which yields nothing for a missing folder, so it cannot fail first; bite proven by a one-off mutant (reports.mkdir added to cmd_unfinished) that made the 'nothing created outside the run folder' check FAIL, then reverted",
+      "date": "2026-11-13"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_closes_a_scratchpad_run",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "9392b1414532efc4571bf60abd81c0713e01f3b8445d00eb57009188a78b6410",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "## Decisions log\n- 2026-10-01T10:00:00-04:00 \ufffd started\n]\nFAIL mark_interrupted_closes_a_scratchpad_run: the reason is appended under the Decisions log, the old line kept  [# Cycle Run \ufffd 2026-10-06\n**Status**: in_progress\n**Cycle**: 2026-10-06-01\n## Decisions log\n- 2026-10-01T10:00:00-04:00 \ufffd started\n]\nFAIL mark_interrupted_closes_a_scratchpad_run: the next unfinished run leaves it out  [unfinished: 2026-10-06-01 (scratchpad says in_progress) \ufffd resume: /wiki-cycle --resume 2026-10-06-01; or close it: wiki-cycle-scope.py unfinished --mark-interrupted 2026-10-06-01 --reason \"<why>\"\n]\n61/65 passed",
+      "date": "2026-11-13"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_puts_the_reason_inside_the_log_section",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "197d415f61dcc319fcc26f5df3ffc45fcb008bd24b9b243aa66edeb98ee6e354",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS unfinished_names_runs_without_report: unfinished-runs.txt lists each folder and its why\nPASS unfinished_none_case: the one line 'unfinished: none', exit 0\nPASS unfinished_none_case: the file holds only its header line, not zero bytes\nPASS unfinished_without_a_reports_folder: exit 0 and 'unfinished: none'\nPASS unfinished_without_a_reports_folder: nothing created outside the run folder\nPASS mark_interrupted_closes_a_scratchpad_run: the folder was named before, exit 0 now\nPASS mark_interrupted_closes_a_scratchpad_run: the Status line says interrupted, in_progress is gone\nPASS mark_interrupted_closes_a_scratchpad_run: the reason is appended under the Decisions log, the old line kept\nPASS mark_interrupted_closes_a_scratchpad_run: the next unfinished run leaves it out\nFAIL mark_interrupted_puts_the_reason_inside_the_log_section: the line sits between the log heading and the next section  [(0, '', ['# Cycle Run \ufffd 2026-10-07', '', '**Status**: interrupted', '**Cycle**: 2026-10-07-02', '', '## Decisions log', '- 2026-10-01T10:00:00-04:00 \ufffd started', '', '## Unresolved for next run', '- the checker report', '- 2026-11-13T14:29:14-05:00 \ufffd marked interrupted: laptop closed'])]\nFAIL mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line  [['# Cycle Run \ufffd 2026-10-07', '', '**Status**: interrupted', '**Cycle**: 2026-10-07-02', '', '## Decisions log', '- 2026-10-01T10:00:00-04:00 \ufffd started', '', '## Unresolved for next run', '- the checker report', '- 2026-11-13T14:29:14-05:00 \ufffd marked interrupted: laptop closed']]\n65/67 passed",
+      "date": "2026-11-13"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_writes_a_scratchpad_for_a_run_with_none",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "be4901eed11e25e8d541400efdb43b6bd64ffa4750a70e1db02c7772852e1d03",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS unfinished_without_a_reports_folder: nothing created outside the run folder\nPASS mark_interrupted_closes_a_scratchpad_run: the folder was named before, exit 0 now\nPASS mark_interrupted_closes_a_scratchpad_run: the Status line says interrupted, in_progress is gone\nPASS mark_interrupted_closes_a_scratchpad_run: the reason is appended under the Decisions log, the old line kept\nPASS mark_interrupted_closes_a_scratchpad_run: the next unfinished run leaves it out\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the line sits between the log heading and the next section\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line\nFAIL mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status  [(1, \"\\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\\\\\Users\\\\\\\\mark\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\2025-05-10_Temp\\\\\\\\tmpxz1l91ha\\\\\\\\notebooks\\\\\\\\t\\\\\\\\_inbox\\\\\\\\reports\\\\\\\\2026-10-08\\\\\\\\2026-10-08-01\\\\\\\\scratchpad.md'\\n\", [])]\nFAIL mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading  [[]]\nFAIL mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out  [unfinished: 2026-10-08-01 (no scratchpad) \ufffd resume: /wiki-cycle --resume 2026-10-08-01; or close it: wiki-cycle-scope.py unfinished --mark-interrupted 2026-10-08-01 --reason \"<why>\"\n]\n67/70 passed",
+      "date": "2026-11-13"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_adds_the_log_heading_when_missing",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "85c5d7757d394be437464b74fc6cb4ee69d1409fa3e012016fc17ee962f23444",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS unfinished_without_a_reports_folder: nothing created outside the run folder\nPASS mark_interrupted_closes_a_scratchpad_run: the folder was named before, exit 0 now\nPASS mark_interrupted_closes_a_scratchpad_run: the Status line says interrupted, in_progress is gone\nPASS mark_interrupted_closes_a_scratchpad_run: the reason is appended under the Decisions log, the old line kept\nPASS mark_interrupted_closes_a_scratchpad_run: the next unfinished run leaves it out\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the line sits between the log heading and the next section\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out\nFAIL mark_interrupted_adds_the_log_heading_when_missing: exit 0, status closed, heading added with the reason below it  [(1, 'le-scope.py\", line 534, in mark_interrupted\\n    after = re.search(r\"^## \", text[log.end():], re.M)\\n                                    ^^^^^^^\\nAttributeError: \\'NoneType\\' object has no attribute \\'end\\'\\n', ['# Cycle Run \ufffd 2026-10-09', '', '**Status**: in_progress'])]\n70/71 passed",
+      "date": "2026-11-13"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_refuses_an_unknown_run",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "a43cfeadf623278e459b7be5863806a5078993158a20a6f0d374c8da61e7cfe4",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS mark_interrupted_closes_a_scratchpad_run: the next unfinished run leaves it out\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the line sits between the log heading and the next section\nPASS mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out\nPASS mark_interrupted_adds_the_log_heading_when_missing: exit 0, status closed, heading added with the reason below it\nFAIL mark_interrupted_refuses_an_unknown_run: '2026-12-31-01' exits 2 and the error names it  [(0, 'unfinished: 2026-12-31-01 marked interrupted: x\\n', '')]\nFAIL mark_interrupted_refuses_an_unknown_run: 'not-a-run' exits 2 and the error names it  [(0, 'unfinished: not-a-run marked interrupted: x\\n', '')]\nFAIL mark_interrupted_refuses_an_unknown_run: '../../../wiki' exits 2 and the error names it  [(0, 'unfinished: ../../../wiki marked interrupted: x\\n', '')]\nFAIL mark_interrupted_refuses_an_unknown_run: nothing in the notebook was written  [[('_inbox/reports/2026-12-31', None), ('_inbox/reports/2026-12-31/2026-12-31-01', None), ('_inbox/reports/2026-12-31/2026-12-31-01/scratchpad.md', b'# Cycle Run \\xe2\\x80\\x94 2026-12-31\\n\\n**Status**: interrupted\\n\\n## Decisions log\\n- 2026-11-13T14:32:17-05:00 \\xe2\\x80\\x94 marked interrupted: x\\n'), ('_inbox/reports/not-a-run', None), ('_inbox/reports/not-a-run/not-a-run', None)]]\n71/75 passed",
+      "date": "2026-11-13"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_closes_a_scratchpad_with_no_status_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "231af776bfb9c2561ac662a8350ff153732635d686e93ecbfbe48bf5a7e26998",
+    "frozen_at_step": "name-review",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "the behaviour exists since fix-1; the added assertion checks what the name claimed",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review: an assertion added that reads the scratchpad (Status line and reason), so the name's 'closes' is checked",
+        "date": "2026-11-13",
+        "step": "name-review",
+        "hash": "231af776bfb9c2561ac662a8350ff153732635d686e93ecbfbe48bf5a7e26998"
+      }
+    ],
+    "unfrozen_reason": "name review: an assertion added that reads the scratchpad (Status line and reason), so the name's 'closes' is checked",
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_names_runs_without_report",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "b4cb8f7d93aa8e2a21a370cd5bc56b5ae6c1858bdb35c27a048d250633140a5c",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "comment-only edit",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "review prescan: a comment's two run ids (dates) reworded; no code or assertion changed",
+        "date": "2026-11-13",
+        "step": "prescan",
+        "hash": "bace8510f85d5b6c5de5fd28cd72981ddf5007717a3a46714ee0f4ae9da66fbe"
+      },
+      {
+        "reason": "fix round 1, spec-1 ruled by Mark 2026-11-13: resume is offered only for a folder with a scratchpad; the check that pinned 'both ways out' for the no-scratchpad folder is split into the close-out for every line and resume for the in_progress folder only",
+        "date": "2026-11-13",
+        "step": "fix-1",
+        "hash": "01ba86020f6aa9b5ea34e7a610ce970f7a3880dfd3c2d38f74b98ae6339f7f55"
+      },
+      {
+        "reason": "review prescan: a date dropped from a comment; no code or assertion changed",
+        "date": "2026-11-13",
+        "step": "prescan-2",
+        "hash": "564691dcfb7878d02560b0ac8fc913272e214fb17399c251818d8cdf114c323e"
+      },
+      {
+        "reason": "fix round 2, spec-11: the printed close-out carries --topic <notebook> and the resume line the notebook as the skill's positional argument; the two checks that pin the printed lines now pin that form",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "b4cb8f7d93aa8e2a21a370cd5bc56b5ae6c1858bdb35c27a048d250633140a5c"
+      }
+    ],
+    "unfrozen_reason": "fix round 2, spec-11: the printed close-out carries --topic <notebook> and the resume line the notebook as the skill's positional argument; the two checks that pin the printed lines now pin that form",
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_needs_a_reason",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "04d059876ec12a47a91a730c7d633f2164a1de9d7e503cb375cca1a88cdcfe31",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS mark_interrupted_puts_the_reason_inside_the_log_section: the next section keeps its own line\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: exit 0, a scratchpad with the title and the status\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the reason sits under a Decisions log heading\nPASS mark_interrupted_writes_a_scratchpad_for_a_run_with_none: the next unfinished run leaves it out\nPASS mark_interrupted_adds_the_log_heading_when_missing: exit 0, status closed, heading added with the reason below it\nPASS mark_interrupted_refuses_an_unknown_run: '2026-12-31-01' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: 'not-a-run' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: '../../../wiki' exits 2 and the error names it\nPASS mark_interrupted_refuses_an_unknown_run: nothing in the notebook was written\nFAIL mark_interrupted_needs_a_reason: exit 2 and the error names --reason  [(0, 'unfinished: 2026-10-10-01 marked interrupted: None\\n', '')]\nFAIL mark_interrupted_needs_a_reason: nothing in the notebook was written  [[('_inbox/reports/2026-10-10/2026-10-10-01/scratchpad.md', b'# Cycle Run \\xe2\\x80\\x94 2026-10-10\\n\\n**Status**: interrupted\\n**Cycle**: 2026-10-10-01\\n\\n## Decisions log\\n- 2026-10-01T10:00:00-04:00 \\xe2\\x80\\x94 started\\n- 2026-11-13T14:33:14-05:00 \\xe2\\x80\\x94 marked interrupted: None\\n'), ('_inbox/reports/2026-10-10/2026-10-10-01/scratchpad.md', b'# Cycle Run \\xe2\\x80\\x94 2026-10-10\\r\\n\\r\\n**Status**: in_progress\\r\\n**Cycle**: 2026-10-10-01\\r\\n\\r\\n## Decisions log\\r\\n- 2026-10-01T10:00:00-04:00 \\xe2\\x80\\x94 started\\r\\n')]]\n75/77 passed",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 2, standards-16: the refusal assertion named only --reason, which argparse's usage text also prints; it now asserts the script's own sentence 'needs --reason'. Stricter, not looser",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "04d059876ec12a47a91a730c7d633f2164a1de9d7e503cb375cca1a88cdcfe31"
+      }
+    ],
+    "unfrozen_reason": "fix round 2, standards-16: the refusal assertion named only --reason, which argparse's usage text also prints; it now asserts the script's own sentence 'needs --reason'. Stricter, not looser",
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_needs_a_flag",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f6a01f3730f3519646b586691eb5683417f7533609aa1a18b0450be649dd8534",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "the neither-flag refusal already existed (argparse error), so it cannot fail first; bite proven by a one-off mutant (guard changed to refuse only both flags) that made the check FAIL (83/84), run from a scratch copy",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 2, standards-16: the neither-flag assertion matched option names argparse's usage text prints; it now asserts the script's own sentence 'not both and not neither'. Stricter, not looser",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "f6a01f3730f3519646b586691eb5683417f7533609aa1a18b0450be649dd8534"
+      }
+    ],
+    "unfrozen_reason": "fix round 2, standards-16: the neither-flag assertion matched option names argparse's usage text prints; it now asserts the script's own sentence 'not both and not neither'. Stricter, not looser",
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_refuses_a_run_folder_beside_it",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "80710182b3a2961f05e04870685725d1415c5d4bceb804107db4802c65229dd6",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "red observed before the code change (both flags exited 0 and rewrote the scratchpad; 81/84 passed); green after: 84/84",
+      "date": "2026-11-13"
+    },
+    "unfreezes": [
+      {
+        "reason": "fix round 2, standards-16: the both-flags assertion matched option names argparse's usage text prints; it now asserts the script's own sentence 'not both and not neither'. Stricter, not looser",
+        "date": "2026-11-13",
+        "step": "fix-2",
+        "hash": "80710182b3a2961f05e04870685725d1415c5d4bceb804107db4802c65229dd6"
+      }
+    ],
+    "unfrozen_reason": "fix round 2, standards-16: the both-flags assertion matched option names argparse's usage text prints; it now asserts the script's own sentence 'not both and not neither'. Stricter, not looser",
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_skips_a_folder_filed_under_another_date",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "82794a0b3247b6f2e229ae4fdedd69abb74a498a1b85d777e0031295d8d58621",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "red observed before the code change (the misfiled folder was listed: 82/86 passed with this and three others failing); green after: 86/86. The freeze's red-command cannot re-run it because the fix is already in",
+      "date": "2026-11-13"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_adds_no_second_heading_when_the_log_heading_ends_the_file",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "0d5bbfb656eff4b354e958d973794b51a771465cbce437a13386b4c71afeb690",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-13",
+    "green_reason": {
+      "reason": "red observed before the code change (a second '## Decisions log' heading was appended: 82/86 passed); green after: 86/86. The freeze's red-command cannot re-run it because the fix is already in",
+      "date": "2026-11-13"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_skips_a_file_named_like_a_run",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "5df7fe30e1c16942b2cbea16091be20597c53f06a74c2799a45c065e36ea666e",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "added after a hand mutation pass (prove_tests_bite cannot see scripts/): green on the code; fails alone on the mutant 'not d.is_dir() and not CYCLE_ID.match' (88/89)",
+      "date": "2026-11-14"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_prints_what_it_closed",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "57272432530b437404b1b165ec68ec3ca5a500d6a41ddbd1bed5a34e6085115e",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "added after a hand mutation pass: green on the code; fails alone on the mutant that drops the close-out's print (88/89)",
+      "date": "2026-11-14"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_offers_only_the_close_out_without_a_scratchpad",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "79dd901719e02a4eda12f5cb7dd940d1c0c69a5c92d54f342dc5e0f12e773986",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "review round 5 (T6): green on the code; fails on the mutant that offers resume without a scratchpad (89/91, with the older substring check)",
+      "date": "2026-11-14"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_rewrites_the_first_status_line_only",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "7bd4d5059463d5ee1e54857e9d7550c2ca51c7df6b2c8d7506c1684822e9816b",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "review round 5 (spec-23): green on the code; fails alone on the surviving mutant count=0 (90/91)",
+      "date": "2026-11-14"
+    },
+    "change": "240-unfinished-run-check"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_offers_resume_or_close_as_one_choice",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "08b7490a19581abdf9df8b7db54aaf6ba5d27981a2e9ef0ec17524f1dff15b92",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "fails alone on the mutant '; and close it' (88/89)",
+      "date": "2026-11-14"
+    },
+    "unfreezes": [
+      {
+        "reason": "review round 5 standards-32: label reworded to say the line offers resume or else the close-out; assertion unchanged",
+        "date": "2026-11-14",
+        "step": "mutation",
+        "hash": "08b7490a19581abdf9df8b7db54aaf6ba5d27981a2e9ef0ec17524f1dff15b92"
+      }
+    ],
+    "unfrozen_reason": "review round 5 standards-32: label reworded to say the line offers resume or else the close-out; assertion unchanged",
+    "change": "240-unfinished-run-check"
   }
 ]
