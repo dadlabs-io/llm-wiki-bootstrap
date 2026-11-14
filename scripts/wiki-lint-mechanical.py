@@ -277,7 +277,7 @@ def resolve_link(file_path, target):
         return None
 
 
-# Backlink blocks against the links (task #240, 2026-11-14): the check reads links by its own rule, written
+# Backlink blocks against the links (task #240): the check reads links by its own rule, written
 # apart from wiki-reciprocate-backlinks.py's, so a bug in that script cannot hide itself.
 BACKLINK_START = "<!-- BACKLINKS-AUTO START -->"
 BACKLINK_END = "<!-- BACKLINKS-AUTO END -->"
@@ -1414,7 +1414,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
                                                              for e in missing_here))
     out.append("")
 
-    # Section: backlink blocks out of step (2026-11-14, task #240)
+    # Section: backlink blocks out of step (task #240)
     out.append("## 🔗 Backlink Blocks Out of Step")
     out.append("")
     out.append("A page's `BACKLINKS-AUTO` block should list exactly the entries that link to it. `extra` = the block "
