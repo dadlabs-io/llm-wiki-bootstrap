@@ -86,3 +86,9 @@ Suite after the round-5 fix: run 20261114-131226-red-green-1d6b03c (~$8.3): both
 ## Tests-bite layer: approved exception — 2026-11-14
 
 Put to Mark (Discord): prove_tests_bite.py cannot see scripts/ (src/ only, pytest only), so the verify layer reports COULD-NOT-RUN; accept it this once with the hand mutation pass as evidence, or sign a standing on-demand setting. Mark asked whether permission could let it see the folder (no: the tool's design), then: "Yes and shuold you explain this in a suggestion for agent builder to see if we should fix this. Maybe there is a good reason not to" -> accepted this once as a named FAIL, evidence `hand-mutation-result.json` plus the four tests added from it; the skill suggestion (proving-python-tests-bite) already filed, its owner's improver weighs whether to fix.
+
+## Finishing decision — 2026-11-14
+
+keep — verify VERDICT: FAIL — tests-bite only, a named FAIL Mark approved (checkpoints "Tests-bite layer: approved exception"); every other layer PASS (verification-result.md); on the branch the run started on (main).
+Tags: put to Mark (Discord) as `code-change` + a new row, group `skills`, tag `wiki-cycle`; Mark: "I trust your judgement on tags. You are closer to the code than me" -> `code-change`, `skills`, `wiki-cycle`. Revises no earlier recorded change.
+Install (plan step 4, at the finish): `--mode status` before: stale, only this change's files (skills wiki-cycle, wiki-report; script wiki-cycle-scope.py; usage pages wiki-cycle.md, wiki-report.md), nothing held. `new-wiki.py --mode tooling --tool claude-code`: toolset wrote 0 new, 2 changed. After: "Global tooling: installed - 20/20 skills, 47/47 scripts, 2/2 agents"; `cmp` of the installed wiki-cycle-scope.py: identical. Usage pages committed in project-notebooks a10d934e.
