@@ -32,3 +32,7 @@ Dry run of the changed backlink script on the four notebooks (read-only): llm-wi
 ## Step 4 docs — 2026-11-14
 
 Usage pages (wiki-cycle: mode table and `--lint-only` line; wiki-lint: the new section; wiki-report: the Needs-you line), CHANGELOG 2026-11-14 entry, INSTALL-INVENTORY rows for both scripts, `framework-docs/cycle-step-return-format.md` (framework-version 8 -> 9: Step 3 order, the lint's new summary key and array, Step 5.5's re-run), `scripts/wiki-promote.py` comment (Step 3.5 -> Step 3). `grep -rn "Step 3\.5\|Phase 3\.5"` over skills/wiki-cycle, skills/wiki-report, framework-docs, scripts, the suite: only the two intended history mentions (reference.md history line, SKILL.md resume rule) and wrap-up's own Step 3.5 in the authoring doc.
+
+## Suite red then green — 2026-11-14
+
+Run 20261114-162044-red-green-84cdf16_6 (~$15.70; old copy f9b3aa2, before the run): RED THEN GREEN on all three cases, both models: the two `backlinks` cases and `hub-misses-one-tagged-entry-gets-one-line-others-untouched`. Each old-copy session failed only "the final lint reads backlink_blocks_out_of_step 0" (the old lint has no key / ran before the rebuild). Baselines merged per case; PENDING row added. Regression run (Sonnet) of `resume` and `confirm-false-ingest-only-resume-promotes-at-end` started.
