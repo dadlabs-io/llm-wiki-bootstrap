@@ -621,7 +621,7 @@
       "last_seen_round": 1,
       "verdict": "addressed",
       "verdict_round": 4,
-      "fingerprint": "d37065a9209a01263669bf3a20b6c4930d24e88ba887a7b3ca1b1f8b746991ad",
+      "fingerprint": "d93166e4cf9166539d66f002bc8f2ff07c96668823b64fef24cf8890e230a4c3",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -639,6 +639,11 @@
           "round": 4,
           "verdict": "addressed",
           "fingerprint": "d37065a9209a01263669bf3a20b6c4930d24e88ba887a7b3ca1b1f8b746991ad"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "d93166e4cf9166539d66f002bc8f2ff07c96668823b64fef24cf8890e230a4c3"
         }
       ]
     },
