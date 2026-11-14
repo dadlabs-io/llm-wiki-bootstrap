@@ -20,7 +20,7 @@
 
 - The lint does not rewrite blocks; it reports them.
 - Not lessons #12 or #9; not a fix of investment-agent's 98 pages (that notebook's project runs its own rebuild).
-- No change to how `wiki-reciprocate-backlinks.py` builds or places blocks beyond which links it reads (Decision 3).
+- No change to how `wiki-reciprocate-backlinks.py` builds or places blocks beyond which links it reads (Decision 3), and one entry-set change ordered by the plan: a page under `_inbox/` is not an entry (ruled after review round 1, 2026-11-14: no wiki has one; the lint skips `_inbox/` too, so the two sets agree).
 - Not the lint's own `LINK_RE` for broken links and orphans (parked).
 
 ## Decisions

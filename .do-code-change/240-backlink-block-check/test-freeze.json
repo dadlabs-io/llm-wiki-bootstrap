@@ -610,5 +610,191 @@
       }
     ],
     "unfrozen_reason": "name review round 1: the label claimed a property no assertion read"
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_block_after_an_unclosed_fence_is_named_for_the_fence_not_its_linkers_after_one_rebuild",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "2fa6266542f62f8ecd81969912e0fdd1349d6672d2d6c6eaccbbd3d337125bf1",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_block_after_an_unclosed_fence_is_named_for_the_fence_not_its_linkers_after_one_rebuild",
+      "exit": 1,
+      "tail": "PASS test_block_after_an_unclosed_fence_is_named_for_the_fence_not_its_linkers_after_one_rebuild: premise: the rebuild wrote b's block after the fence\nFAIL test_block_after_an_unclosed_fence_is_named_for_the_fence_not_its_linkers_after_one_rebuild: b is listed with the fence as its cause and no missing linker  [[{'file': 'research/b.md', 'extra': [], 'missing': ['research/a.md'], 'unclosed': False}]]\n1/2 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_report_says_a_block_sits_inside_an_unclosed_code_fence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "0afeb7f14aadbde73692d7b12277e64d7a0dd92e12b6c31f5371dafbcbc695ad",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_report_says_a_block_sits_inside_an_unclosed_code_fence",
+      "exit": 1,
+      "tail": "FAIL test_report_says_a_block_sits_inside_an_unclosed_code_fence: the section names b with the cause and no missing linker  [\nA page's `BACKLINKS-AUTO` block should list exactly the entries that link to it. `extra` = the block lists a page that does not link here; `missing` = a page links here and the block leaves it out (a page with no block lists nobody). Run after the rebuild, so a page listed here means the rebuild went wrong: run `wiki-reciprocate-backlinks.py` again and, if it stays, look at the script. Warn-only.\n- `research/b.md` \u2014 missing `research/a.md`\n]\n0/1 passed",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_block_listing_a_page_outside_the_wiki_is_extra_by_its_full_path",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "c49124c9ac649ac245a807f301a6950f4f07a1850eeae4e000ddbc52cf7e0495",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (review standards-12 coverage gap): fails alone on the mutant that returns a fixed string from the name() fallback (55/56)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_ignores_a_link_after_an_unclosed_fence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "a47124c3d188787255a028a0d8689806aec777998a61e516093d2541f7f49d34",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (review spec-7 coverage gap): the fence toggle already ended links at an unclosed fence; same toggle the strike and info-string mutants break",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_ignores_links_after_a_stray_start",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "da51587ce16a0b901b35c18a0af924c6c7e6bd29ced97515d9d05cfa8c34be2d",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (spec-7): fails with test_unclosed_block_page_stays_listed_after_one_rebuild on the mutant dropping the stray-START cut (54/56)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_lint_ignores_links_after_a_stray_start",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "54558518b8610530cef0ecaa38814432944725d2398e5198dc66153b6eeb931a",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (spec-7): fails with three older tests on the mutant dropping the stray-START cut (52/56)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_lint_reads_a_link_on_a_line_starting_with_strikethrough",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "a54d9cb3e925751c3a0fb84e4a1644fbb98249ba6ba884e04efb480745169631",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (hand mutation survivor): fails with its double-backtick twin on the mutant startswith(('``','~~')) (54/56)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_lint_reads_a_link_on_a_line_starting_with_a_double_backtick_span",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "410299b28f558acc4ba9f68e7466e5ec63a35635167d40b486f2d15995b8d431",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (hand mutation survivor): fails with its strikethrough twin on the mutant startswith(('``','~~')) (54/56)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_lint_treats_a_fence_with_an_info_string_as_a_fence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "0334673a097c090b319e13524d71b0d6863d998b7685f0105fac562114115006",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (hand mutation survivor): fails alone on the mutant matching only a bare fence line (55/56)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_reads_a_link_on_a_line_starting_with_strikethrough",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "a561c80eeab1abea870ba6d1e80202ee52a73655947bb880012af1464d211e2d",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (hand mutation survivor): fails with its twin on the mutant startswith(('``','~~')) (54/56)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_reads_a_link_on_a_line_starting_with_a_double_backtick_span",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "95c5d07d0cd8a86ce4671ff71c5bd4a7823a28fc04593e12355e4fb44a8b7158",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (hand mutation survivor): fails with its twin on the mutant startswith(('``','~~')) (54/56)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_treats_a_fence_with_an_info_string_as_a_fence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "45d44705a33b6098a8cdd5d9384365079ac8754988f9d8313ef4a389e1d5cee1",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (hand mutation survivor): fails alone on the mutant matching only a bare fence line (55/56)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_clean_notebook_report_prints_the_none_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "229871f49a85ab0709555b79cd91467546cb434359fa7dc05b8d1deb4f9a2f9b",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (hand mutation survivor): fails alone on the mutant that never prints the None line (55/56)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_dirty_notebook_report_does_not_print_the_none_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "81ef21e61affce767ec8d4b5cff4f491475a1441bd7d442c3353834e1686c394",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "green on the code (hand mutation survivor): fails alone on the mutant that always prints the None line (55/56)",
+      "date": "2026-11-14"
+    }
   }
 ]

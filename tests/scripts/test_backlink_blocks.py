@@ -447,6 +447,111 @@ def test_block_text_is_byte_identical_to_the_golden_for_ordinary_links():
           texts["research/b.md"] == page("B") + "\n" + GOLDEN_BLOCK + "\n", texts["research/b.md"][-600:])
 
 
+FENCE_ROW = {"file": "research/b.md", "extra": [], "missing": [], "unclosed": False, "in_fence": True}
+
+
+def test_block_after_an_unclosed_fence_is_named_for_the_fence_not_its_linkers_after_one_rebuild():
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "[B](b.md)"),
+                                           "research/b.md": page("B", "```\nnever closed")})
+    check("premise: the rebuild wrote b's block after the fence", "BACKLINKS-AUTO START" in texts["research/b.md"],
+          texts["research/b.md"][-300:])
+    check("b is listed with the fence as its cause and no missing linker",
+          payload.get("backlink_blocks") == [FENCE_ROW], payload.get("backlink_blocks", "key absent"))
+
+
+def test_report_says_a_block_sits_inside_an_unclosed_code_fence():
+    p, text, payload = run_lint({"research/a.md": page("A", "[B](b.md)"),
+                                 "research/b.md": page("B", "```\nnever closed\n\n" + blk("a.md"))})
+    s = section(text, "Backlink Blocks Out of Step")
+    check("the section names b with the cause and no missing linker",
+          "`research/b.md`" in s and "block inside an unclosed code fence" in s and "missing" not in s.split("Warn-only.")[-1], s)
+
+
+def test_block_listing_a_page_outside_the_wiki_is_extra_by_its_full_path():
+    p, text, payload = run_lint({"research/b.md": page("B", "\n" + blk("../../outside.md"))})
+    row = entry_for(payload, "research/b.md")
+    extra = row["extra"] if row else []
+    check("the outside page is listed by an absolute path ending in outside.md",
+          len(extra) == 1 and Path(extra[0]).is_absolute() and extra[0].endswith("/outside.md"), payload.get("backlink_blocks"))
+
+
+def test_rebuild_ignores_a_link_after_an_unclosed_fence():
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "[C](c.md)\n\n```\nnever closed\n[B](b.md)"),
+                                           "research/b.md": page("B"), "research/c.md": page("C")})
+    check("c gets its block (the rebuild ran) and b gets none",
+          "BACKLINKS-AUTO START" in texts["research/c.md"] and "BACKLINKS-AUTO" not in texts["research/b.md"],
+          (r.stderr[-300:], texts["research/b.md"][-300:]))
+
+
+STRAY = "<!-- BACKLINKS-AUTO START -->"   # a START and no END
+
+
+def test_rebuild_ignores_links_after_a_stray_start():
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "[C](c.md)\n\n" + STRAY + "\n[B](b.md)"),
+                                           "research/b.md": page("B"), "research/c.md": page("C")})
+    check("c gets its block (the rebuild ran) and b gets none",
+          "BACKLINKS-AUTO START" in texts["research/c.md"] and "BACKLINKS-AUTO" not in texts["research/b.md"],
+          (r.stderr[-300:], texts["research/b.md"][-300:]))
+
+
+def test_lint_ignores_links_after_a_stray_start():
+    p, text, payload = run_lint({"research/a.md": page("A", "[C](c.md)\n\n" + STRAY + "\n[B](b.md)"),
+                                 "research/b.md": page("B"), "research/c.md": page("C", "\n" + blk("a.md"))})
+    check("only a, as unclosed, is reported: b is missing nobody",
+          payload.get("backlink_blocks") == [{"file": "research/a.md", "extra": [], "missing": [], "unclosed": True}],
+          payload.get("backlink_blocks", "key absent"))
+
+
+def test_lint_reads_a_link_on_a_line_starting_with_strikethrough():
+    got = b_missing({"research/a.md": page("A", "~~old~~ [B](b.md)"), "research/b.md": page("B")})
+    check("a line starting ~~ is no fence: a is a linker of b", got == ["research/a.md"], got)
+
+
+def test_lint_reads_a_link_on_a_line_starting_with_a_double_backtick_span():
+    got = b_missing({"research/a.md": page("A", "``code`` [B](b.md)"), "research/b.md": page("B")})
+    check("a line starting `` is no fence: a is a linker of b", got == ["research/a.md"], got)
+
+
+def test_lint_treats_a_fence_with_an_info_string_as_a_fence():
+    got = b_missing({"research/a.md": page("A", "```text\n[B](b.md)\n```\n\n~~~md\n[B](b.md)\n~~~"),
+                     "research/c.md": page("C", "[B](b.md)"), "research/b.md": page("B")})
+    check("only c, not the page with links in fences that carry an info string, is a linker of b",
+          got == ["research/c.md"], got)
+
+
+def test_rebuild_reads_a_link_on_a_line_starting_with_strikethrough():
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "~~old~~ [B](b.md)"), "research/b.md": page("B")})
+    check("b's block lists a", "- [A](../research/a.md)" in texts["research/b.md"], texts["research/b.md"][-300:])
+
+
+def test_rebuild_reads_a_link_on_a_line_starting_with_a_double_backtick_span():
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "``code`` [B](b.md)"), "research/b.md": page("B")})
+    check("b's block lists a", "- [A](../research/a.md)" in texts["research/b.md"], texts["research/b.md"][-300:])
+
+
+def test_rebuild_treats_a_fence_with_an_info_string_as_a_fence():
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "```text\n[B](b.md)\n```\n\n~~~md\n[B](b.md)\n~~~\n\n[C](c.md)"),
+                                           "research/b.md": page("B"), "research/c.md": page("C")})
+    check("c gets its block (the rebuild ran) and b gets none",
+          "BACKLINKS-AUTO START" in texts["research/c.md"] and "BACKLINKS-AUTO" not in texts["research/b.md"],
+          (r.stderr[-300:], texts["research/b.md"][-300:]))
+
+
+NONE_LINE = "_None: every backlink block lists exactly the pages that link to it._"
+
+
+def test_clean_notebook_report_prints_the_none_line():
+    p, text, payload = run_lint({"research/a.md": page("A", "[B](b.md)"), "research/b.md": page("B", "\n" + blk("a.md"))})
+    check("the section carries the None line", NONE_LINE in section(text, "Backlink Blocks Out of Step"),
+          section(text, "Backlink Blocks Out of Step"))
+
+
+def test_dirty_notebook_report_does_not_print_the_none_line():
+    p, text, payload = run_lint({"research/a.md": page("A", "[B](b.md)"), "research/b.md": page("B")})
+    check("the section has no None line", NONE_LINE not in section(text, "Backlink Blocks Out of Step"),
+          section(text, "Backlink Blocks Out of Step"))
+
+
 def run_all(selected: list[str]) -> int:
     tests = [(n, f) for n, f in sorted(globals().items(), key=lambda kv: kv[0]) if n.startswith("test_") and callable(f)]
     names = {n for n, _ in tests}

@@ -1,0 +1,674 @@
+[
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 282,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 283,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 284,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 285,
+  "mutant": "BACKLINK_LINK_RE = re.compile(r\"\\]\\(([^()\\s#]+\\.mx)(?:#[^()\\s]*)?\\)\")",
+  "killed": true,
+  "tail": "15/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 290,
+  "mutant": "kept, in_fence = [], True",
+  "killed": true,
+  "tail": "11/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 290,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 292,
+  "mutant": "if not line.lstrip().startswith((\"```\", \"~~~\")):",
+  "killed": true,
+  "tail": "11/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 292,
+  "mutant": "if line.lstrip().startswith((\"``\", \"~~~\")):",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 292,
+  "mutant": "if line.lstrip().startswith((\"```\", \"~~\")):",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 292,
+  "mutant": "if line.lstrip().endswith((\"```\", \"~~~\")):",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 293,
+  "mutant": "in_fence = in_fence",
+  "killed": true,
+  "tail": "38/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 293,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "38/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 294,
+  "mutant": "elif in_fence:",
+  "killed": true,
+  "tail": "11/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 295,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "11/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 301,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 304,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "15/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 306,
+  "mutant": "pass",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 306,
+  "mutant": "pass",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 314,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "15/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 315,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 316,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 317,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 318,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 320,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 321,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 322,
+  "mutant": "if not text.count(BACKLINK_START) > text.count(BACKLINK_END):",
+  "killed": true,
+  "tail": "10/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 322,
+  "mutant": "if text.count(BACKLINK_START) >= text.count(BACKLINK_END):",
+  "killed": true,
+  "tail": "10/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 323,
+  "mutant": "unclosed.add(f.resolve())   # a START with no END: its lines are the page's own links either",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 323,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "37/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 324,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 325,
+  "mutant": "if not BACKLINK_START in prose:",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 326,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "38/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 328,
+  "mutant": "if target in linkers and target == f.resolve():",
+  "killed": true,
+  "tail": "23/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 328,
+  "mutant": "if not target in linkers and target != f.resolve():",
+  "killed": true,
+  "tail": "18/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 328,
+  "mutant": "if target in linkers or target != f.resolve():",
+  "killed": true,
+  "tail": "35/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 329,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "23/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 330,
+  "mutant": "listed[f.resolve()] = backlink_targets(block.group(0), f) if not block else set()",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 330,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 338,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 340,
+  "mutant": "if not me in unclosed:",
+  "killed": true,
+  "tail": "10/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 341,
+  "mutant": "rows.append({\"file\": rel, \"extra\": [], \"missing\": [], \"unclosed\": False})",
+  "killed": true,
+  "tail": "38/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 341,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "36/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 342,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "38/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 342,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "38/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 343,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 344,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 345,
+  "mutant": "if not extra or missing:",
+  "killed": true,
+  "tail": "20/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 345,
+  "mutant": "if extra and missing:",
+  "killed": true,
+  "tail": "15/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 346,
+  "mutant": "rows.append({\"file\": rel, \"extra\": extra, \"missing\": missing, \"unclosed\": True})",
+  "killed": true,
+  "tail": "38/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 346,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "15/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 856,
+  "mutant": "wiki_root, [f for f in collect_md_files(wiki_root) if f.name.startswith(\".\")])",
+  "killed": true,
+  "tail": "11/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 856,
+  "mutant": "wiki_root, [f for f in collect_md_files(wiki_root) if not f.name.endswith(\".\")])",
+  "killed": true,
+  "tail": "40/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1418,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "39/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1419,
+  "mutant": "pass",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1421,
+  "mutant": "\"lists a page that does link here; `missing` = a page links here and the block leaves it out \"",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1421,
+  "mutant": "\"lists a page that does not link here; `missing` = a page links here or the block leaves it out \"",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1421,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1422,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1423,
+  "mutant": "\"rebuild went wrong: run `wiki-reciprocate-backlinks.py` again and, if not it stays, look at the script. \"",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1423,
+  "mutant": "\"rebuild went wrong: run `wiki-reciprocate-backlinks.py` again or, if it stays, look at the script. \"",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1423,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "9/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1425,
+  "mutant": "pass",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1426,
+  "mutant": "if backlink_blocks:",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1427,
+  "mutant": "pass",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1429,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "11/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1430,
+  "mutant": "if not row[\"unclosed\"]:",
+  "killed": true,
+  "tail": "39/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1431,
+  "mutant": "parts.append(\"block closed (a `BACKLINKS-AUTO START` with no `END`): fix it by hand\")",
+  "killed": true,
+  "tail": "40/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1431,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "40/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1432,
+  "mutant": "if not row[\"extra\"]:",
+  "killed": true,
+  "tail": "40/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1433,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "40/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1434,
+  "mutant": "if not row[\"missing\"]:",
+  "killed": true,
+  "tail": "40/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1435,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "40/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1436,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "39/41 passed"
+ },
+ {
+  "file": "scripts/wiki-lint-mechanical.py",
+  "line": 1437,
+  "mutant": "pass",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 59,
+  "mutant": "LINK_RE = re.compile(r\"\\]\\(([^()\\s#]+\\.mx)(?:#[^()\\s]*)?\\)\")",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 86,
+  "mutant": "and \"_inbox\" in p.relative_to(wiki_root).parts  # _inbox/ = staged and scratch, not entries",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 86,
+  "mutant": "or \"_inbox\" not in p.relative_to(wiki_root).parts  # _inbox/ = staged and scratch, not entries",
+  "killed": true,
+  "tail": "39/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 86,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 94,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 95,
+  "mutant": "in_fence = True",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 95,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 97,
+  "mutant": "if not line.lstrip().startswith((\"```\", \"~~~\")):",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 97,
+  "mutant": "if line.lstrip().startswith((\"``\", \"~~~\")):",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 97,
+  "mutant": "if line.lstrip().startswith((\"```\", \"~~\")):",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 97,
+  "mutant": "if line.lstrip().endswith((\"```\", \"~~~\")):",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 98,
+  "mutant": "in_fence = in_fence",
+  "killed": true,
+  "tail": "39/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 98,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "39/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 99,
+  "mutant": "elif in_fence:",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 100,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 106,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 114,
+  "mutant": "if MARKER_START in text:  # a START with no END: the lines after it are the stray block's, links",
+  "killed": false,
+  "tail": "41/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 114,
+  "mutant": "if not MARKER_START in text:  # a START with no END: the lines after it are the stray block's, not links",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 114,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 115,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "40/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 118,
+  "mutant": "pass",
+  "killed": true,
+  "tail": "31/41 passed"
+ },
+ {
+  "file": "scripts/wiki-reciprocate-backlinks.py",
+  "line": 175,
+  "mutant": "pass",
+  "killed": false,
+  "tail": "41/41 passed"
+ }
+]

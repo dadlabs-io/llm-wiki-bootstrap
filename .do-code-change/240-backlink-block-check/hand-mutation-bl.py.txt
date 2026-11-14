@@ -1,0 +1,70 @@
+"""Hand mutation pass for change 240-backlink-block-check: plant one bug at a time in the lines the change added to
+the two scripts (code only, docstrings left out), run tests/scripts/test_backlink_blocks.py from a copy of scripts/ and
+tests/scripts/ (the test finds the scripts relative to itself), and report killed / survived per mutant."""
+import ast, json, re, shutil, subprocess, sys, tempfile
+from pathlib import Path
+
+REPO = Path(r"C:\github.com\llm-wiki-bootstrap")
+BASE = "f9b3aa200a86ce60716ce42dae48b6cff1022f88"
+TARGETS = ["scripts/wiki-lint-mechanical.py", "scripts/wiki-reciprocate-backlinks.py"]
+OUT = Path(sys.argv[1])
+OPS = [
+    (r" == ", " != "), (r" != ", " == "), (r"\bnot ", ""), (r"\bif (?!not )", "if not "),
+    (r"\band\b", "or"), (r"\bor\b", "and"), (r"\bcontinue\b", "pass"), (r" > ", " >= "), (r" < ", " <= "),
+    (r"\bTrue\b", "False"), (r"\bFalse\b", "True"), (r"\+= ", "-= "), (r"\[:3\]", "[:2]"),
+    (r'"```"', '"``"'), (r'"~~~"', '"~~"'), (r"\.md", ".mx"), (r"startswith", "endswith"),
+]
+
+work = Path(tempfile.mkdtemp(prefix="mutbl-"))
+shutil.copytree(REPO / "scripts", work / "scripts")
+shutil.copytree(REPO / "tests" / "scripts", work / "tests" / "scripts")
+results = []
+for target in TARGETS:
+    diff = subprocess.run(["git", "-C", str(REPO), "diff", "-U0", BASE, "--", target],
+                          capture_output=True, text=True, encoding="utf-8").stdout
+    added, ln = [], 0
+    for line in diff.splitlines():
+        m = re.match(r"^@@ -\S+ \+(\d+)(?:,(\d+))? @@", line)
+        if m:
+            ln = int(m.group(1)); continue
+        if line.startswith("+") and not line.startswith("+++"):
+            added.append(ln); ln += 1
+    src = (REPO / target).read_text(encoding="utf-8").splitlines(keepends=True)
+    doc = set()
+    for node in ast.walk(ast.parse("".join(src))):
+        if isinstance(node, ast.Expr) and isinstance(getattr(node, "value", None), ast.Constant) \
+                and isinstance(node.value.value, str):
+            doc.update(range(node.lineno, node.end_lineno + 1))
+    mutants = []
+    for n in added:
+        if n in doc:
+            continue
+        text = src[n - 1]; s = text.strip()
+        if not s or s.startswith(("#", '"""', "def ", "import", "from ")):
+            continue
+        for pat, rep in OPS:
+            m = re.search(pat, text)
+            if m:
+                mutants.append((n, text[:m.start()] + re.sub(pat, rep, text[m.start():], count=1)))
+        indent = text[: len(text) - len(text.lstrip())]
+        if not s.endswith((":", ",", "(", "[", "{", "\\")) and not s.startswith(("elif", "else", "return", ")", "]", "}")) \
+                and s.count("(") == s.count(")") and s.count("[") == s.count("]"):
+            mutants.append((n, f"{indent}pass\n"))
+    mfile = work / target
+    for i, (n, new) in enumerate(mutants, 1):
+        lines = list(src); lines[n - 1] = new
+        mfile.write_text("".join(lines), encoding="utf-8")
+        try:
+            p = subprocess.run(["uv", "run", "--project", str(REPO), "python", str(work / "tests/scripts/test_backlink_blocks.py")],
+                               cwd=work, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
+            tail = (p.stdout.strip().splitlines() or [""])[-1]
+            killed = p.returncode != 0 or not re.match(r"^(\d+)/\1 passed", tail)
+        except subprocess.TimeoutExpired:
+            tail, killed = "timeout", True
+        results.append({"file": target, "line": n, "mutant": new.strip(), "killed": killed, "tail": tail})
+        print(f"[{target.split('/')[-1]} {i}/{len(mutants)}] line {n}: {'killed' if killed else 'SURVIVED'}  {new.strip()[:90]}", flush=True)
+    mfile.write_text("".join(src), encoding="utf-8")
+shutil.rmtree(work, ignore_errors=True)
+OUT.write_text(json.dumps(results, indent=1), encoding="utf-8")
+s = sum(not r["killed"] for r in results)
+print(f"total {len(results)}, killed {len(results) - s}, survived {s}")

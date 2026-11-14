@@ -285,15 +285,23 @@ BACKLINK_BLOCK_RE = re.compile(re.escape(BACKLINK_START) + r".*?" + re.escape(BA
 BACKLINK_LINK_RE = re.compile(r"\]\(([^()\s#]+\.md)(?:#[^()\s]*)?\)")
 
 
-def backlink_prose(text):
-    """``text`` without fenced code (a line starting ``` or ~~~, up to the next such line or the end) and inline code."""
-    kept, in_fence = [], False
-    for line in text.splitlines():
+def backlink_split(text):
+    """(prose, fenced): ``text`` without fenced code (a line starting ``` or ~~~, up to the next such line or the end) and
+    inline code, and the lines of a fence that is never closed ("" when every fence closes)."""
+    lines = text.splitlines()
+    kept, in_fence, opened = [], False, 0
+    for i, line in enumerate(lines):
         if line.lstrip().startswith(("```", "~~~")):
             in_fence = not in_fence
+            if in_fence:
+                opened = i
         elif not in_fence:
             kept.append(re.sub(r"`[^`\n]*`", "", line))
-    return "\n".join(kept)
+    return "\n".join(kept), "\n".join(lines[opened:]) if in_fence else ""
+
+
+def backlink_prose(text):
+    return backlink_split(text)[0]
 
 
 def backlink_targets(text, page):
@@ -303,7 +311,7 @@ def backlink_targets(text, page):
         try:
             out.add((page.parent / m.group(1)).resolve())
         except (OSError, ValueError):
-            continue
+            continue   # a target that cannot be resolved (bad characters) is no page
     return out
 
 
@@ -316,11 +324,14 @@ def backlink_blocks_out_of_step(wiki_root, entries):
     linkers = {r: set() for r in rel_of}
     listed = {}
     unclosed = set()
+    in_fence = set()
     for f in entries:
-        text = backlink_prose(f.read_text(encoding="utf-8", errors="replace"))   # a marker quoted in code is no block
+        text, fenced = backlink_split(f.read_text(encoding="utf-8", errors="replace"))   # a marker quoted in code is no block
         block = BACKLINK_BLOCK_RE.search(text)
         if text.count(BACKLINK_START) > text.count(BACKLINK_END):
             unclosed.add(f.resolve())   # a START with no END: its lines are not the page's own links either
+        elif BACKLINK_START in fenced:
+            in_fence.add(f.resolve())   # a block the rebuild appended after a fence nobody closed: renders as code
         prose = BACKLINK_BLOCK_RE.sub("", text)
         if BACKLINK_START in prose:
             prose = prose[:prose.index(BACKLINK_START)]
@@ -339,6 +350,9 @@ def backlink_blocks_out_of_step(wiki_root, entries):
     for me, rel in sorted(rel_of.items(), key=lambda kv: kv[1]):
         if me in unclosed:
             rows.append({"file": rel, "extra": [], "missing": [], "unclosed": True})
+            continue
+        if me in in_fence:
+            rows.append({"file": rel, "extra": [], "missing": [], "unclosed": False, "in_fence": True})
             continue
         extra = sorted(name(p) for p in listed[me] - linkers[me])
         missing = sorted(name(p) for p in linkers[me] - listed[me])
@@ -852,8 +866,7 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     design_behind.sort(key=lambda t: (-len(t[2]), t[0].relative_to(wiki_root).as_posix()))
 
     # Pass 5: backlink blocks against the links (task #240). Warn-only.
-    backlink_blocks = backlink_blocks_out_of_step(
-        wiki_root, [f for f in collect_md_files(wiki_root) if not f.name.startswith(".")])
+    backlink_blocks = backlink_blocks_out_of_step(wiki_root, [f for f in files if not f.name.startswith(".")])
 
     # Render report
     installed_fm_issues, installed_fm_scanned = scan_installed_frontmatter()
@@ -1419,9 +1432,10 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
     out.append("")
     out.append("A page's `BACKLINKS-AUTO` block should list exactly the entries that link to it. `extra` = the block "
                "lists a page that does not link here; `missing` = a page links here and the block leaves it out "
-               "(a page with no block lists nobody). Run after the rebuild, so a page listed here means the "
-               "rebuild went wrong: run `wiki-reciprocate-backlinks.py` again and, if it stays, look at the script. "
-               "Warn-only.")
+               "(a page with no block lists nobody). In a `/wiki-cycle` run the rebuild comes just before this lint, "
+               "so a page listed there means the rebuild went wrong; on its own, a page listed here is one whose "
+               "block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at "
+               "the script. Warn-only.")
     out.append("")
     if not backlink_blocks:
         out.append("_None: every backlink block lists exactly the pages that link to it._")
@@ -1429,6 +1443,8 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
         parts = []
         if row["unclosed"]:
             parts.append("block not closed (a `BACKLINKS-AUTO START` with no `END`): fix it by hand")
+        if row.get("in_fence"):
+            parts.append("block inside an unclosed code fence: close the fence by hand")
         if row["extra"]:
             parts.append("extra " + ", ".join(f"`{p}`" for p in row["extra"]))
         if row["missing"]:
@@ -1466,7 +1482,8 @@ def lint(vault_root, topic, strict=False, cycle_id=None, run_folder=None):
             "supersede_no_backlink": len(supersede_no_backlink),
             "hub_entries_missing": sum(len(m) for _, _, m in hub_missing),
             "backlink_blocks_out_of_step": len(backlink_blocks),
-        }, broken_links, orphans, standalone, wiki_root, report_path, not_checked, backlink_blocks)
+        }, broken_links, orphans, standalone, wiki_root, report_path,
+                             not_checked=not_checked, backlink_blocks=backlink_blocks)
         print(f"Cycle step files: {Path(run_folder) / 'lint-mechanical.json'} (+ .md)")
 
     # Exit code: strict mode fails on broken links, any icarus invariant
