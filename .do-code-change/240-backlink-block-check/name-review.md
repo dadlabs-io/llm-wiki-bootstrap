@@ -8,3 +8,10 @@ Verdict: 33 of 40 names fit (the seven below were flagged; one more had a label 
 - label over-claim: `test_unclosed_block_page_stays_listed_after_one_rebuild`'s check label claimed a property no assertion reads. Label trimmed, re-frozen with an unfrozen reason.
 - over-claim, left as is (six): `test_link_target_with_whitespace_does_not_count`, `test_link_to_an_index_page_does_not_count`, `test_link_to_a_sessions_page_does_not_count`, `test_link_to_a_task_card_does_not_count`, `test_link_to_a_dot_file_does_not_count`, `test_link_to_an_inbox_page_does_not_count`. The reviewer: each checks that the target page is absent from the report, which holds whether the link is ignored or the target is excluded as an entry. Ruling: the plan words these expectations as "a target outside the entry set does not count", whose only observable is the target absent from the report, and each was red against the first implementation (the target was reported); each check's label says "is no entry". A rename needs a plan amendment (tdd-implementation step 5b: the plan fixes the wording), so it is named for the plan, not made here.
 - could not settle (reviewer): `test_matching_block_is_not_reported` would pass under a lint that never reads blocks; the other block tests catch that.
+
+## Step fix-5
+
+One doubt-reviewer (haiku), briefed on the two tests' source alone.
+- test_rebuild_leaves_a_page_with_an_end_then_a_stray_start_untouched_over_two_rebuilds: over-claiming (the byte checks pass if the rebuild never ran) -- fixed: return codes asserted, re-frozen.
+- test_rebuild_appends_one_block_to_an_unclosed_fence_page_over_three_rebuilds: over-claiming (rebuilds 2 and 3 could pass without running; the block only counted) -- fixed: return codes and a closing END at the end asserted, re-frozen.
+- Lint row shapes differing between the two tests: not a name claim; the two tests ran green together.

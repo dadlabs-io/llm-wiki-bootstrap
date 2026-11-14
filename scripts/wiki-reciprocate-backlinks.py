@@ -94,36 +94,61 @@ def find_wiki_entries(wiki_root: Path) -> list[Path]:
     )
 
 
+def fence_walk(text: str) -> list[tuple[str, bool, bool]]:
+    """(line, fenced, unclosed) for each line of ``text`` split at newlines: ``fenced`` = the line is a fence line (one
+    starting ``` or ~~~) or lies between two; ``unclosed`` = it belongs to a fence that is never closed."""
+    rows: list[tuple[str, bool, bool]] = []
+    in_fence = False
+    opened = 0
+    for line in text.split("\n"):
+        if line.lstrip().startswith(("```", "~~~")):
+            if not in_fence:
+                opened = len(rows)
+            in_fence = not in_fence
+            rows.append((line, True, False))
+        else:
+            rows.append((line, in_fence, False))
+    if in_fence:
+        rows[opened:] = [(line, True, True) for line, _, _ in rows[opened:]]
+    return rows
+
+
 def strip_code(text: str) -> str:
     """``text`` without fenced code (a line starting ``` or ~~~, up to the next such line or the end) and inline code."""
-    kept: list[str] = []
-    in_fence = False
-    for line in text.splitlines():
-        if line.lstrip().startswith(("```", "~~~")):
-            in_fence = not in_fence
-        elif not in_fence:
-            kept.append(re.sub(r"`[^`\n]*`", "", line))
-    return "\n".join(kept)
+    return "\n".join(re.sub(r"`[^`\n]*`", "", line) for line, fenced, _ in fence_walk(text) if not fenced)
+
+
+def has_unusable_start(text: str) -> bool:
+    """Whether the page has a START line that cannot start a block: one inside a fence that is never closed, or one
+    outside every fence with no END line of its own after it (an END pairs with the START before it, as a bracket does).
+    A START inside a closed fence is a block shown as an example, not one of these."""
+    open_starts = 0
+    for line, fenced, unclosed in fence_walk(text):
+        if START_LINE_RE.search(line):
+            if unclosed:
+                return True
+            open_starts += 0 if fenced else 1
+        elif not fenced and END_LINE_RE.search(line):
+            open_starts = max(open_starts - 1, 0)
+    return open_starts > 0
 
 
 def find_block(text: str) -> tuple[int, int] | None:
     """(start, end) of the page's own block: the first one whose START line is not inside a fenced code region (a block
     shown as an example in a fence is prose); an END is the first one after that START."""
     fenced_at: set[int] = set()  # offsets of the lines inside a fence, by the strip_code rule
-    in_fence = False
     offset = 0
-    for line in text.split("\n"):
-        if line.lstrip().startswith(("```", "~~~")):
-            in_fence = not in_fence
-        elif in_fence:
+    for line, fenced, _ in fence_walk(text):
+        if fenced:
             fenced_at.add(offset)
         offset += len(line) + 1
-    for start in START_LINE_RE.finditer(text):
-        if text.rfind("\n", 0, start.start()) + 1 in fenced_at:
+    for match in START_LINE_RE.finditer(text):
+        line_start = text.rfind("\n", 0, match.start()) + 1
+        if line_start in fenced_at:
             continue
-        end = END_LINE_RE.search(text, start.end())
+        end = END_LINE_RE.search(text, match.end())
         if end:
-            return start.start(), end.end()
+            return match.start(), end.end()
     return None
 
 
@@ -161,9 +186,8 @@ def rewrite_backlinks_section(
     """Rewrite the auto-backlinks block. Returns (changed, added, removed)."""
     text = entry.read_text(encoding="utf-8")
 
-    prose = strip_code(text)
-    if len(START_LINE_RE.findall(prose)) > len(END_LINE_RE.findall(prose)):
-        return False, [], []  # a START with no END: the lint lists the page as not closed, for a hand fix
+    if has_unusable_start(text):
+        return False, [], []  # a START with no END, or in a fence nobody closed: the lint lists the page, for a hand fix
 
     # Build the new block
     if not referrers:

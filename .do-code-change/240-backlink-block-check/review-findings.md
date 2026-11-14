@@ -16,7 +16,7 @@ Fixed point `f9b3aa200a86ce60716ce42dae48b6cff1022f88` (resolves). Change under 
 
 Unverified:
 - `find_block:124` searches the END on raw text, so a fenced END between a real START and its real END ends the block early (the checkpoints record it as known; it is only reachable with a real END elsewhere, since the guard counts prose only). Not traced through the lint, not run.
-- Whether any real page holds `\x0c` or ` ` before a fence (for the splitlines suggestion).
+- Whether any real page holds `\x0c` or `U+2028` before a fence (for the splitlines suggestion).
 - The producer's claims: test_backlink_blocks 75/75, the four invariant files green, check-freeze PASS. Nothing was run here.
 
 Checks made:
@@ -82,7 +82,7 @@ Well built: one anchored marker rule in both scripts, `find_block` skipping a cl
 
 Unverified:
 - All traces are from code, not run, including the first two findings.
-- Exotic line breaks (`\x0c`, ` `) make `splitlines` in `strip_code` and `split("\n")` in `find_block` differ; not traced.
+- Exotic line breaks (`\x0c`, `U+2028`) make `splitlines` in `strip_code` and `split("\n")` in `find_block` differ; not traced.
 - The producer's claims 75/75, the four invariant files, check-freeze PASS, and the CHANGELOG dry-run counts.
 
 Checks made:

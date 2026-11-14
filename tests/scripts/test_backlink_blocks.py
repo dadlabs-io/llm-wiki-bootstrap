@@ -580,6 +580,35 @@ def test_rebuild_leaves_a_page_with_a_stray_start_untouched_over_two_rebuilds():
           payload.get("backlink_blocks", "key absent"))
 
 
+def test_rebuild_leaves_a_page_with_an_end_then_a_stray_start_untouched_over_two_rebuilds():
+    b = page("B", "<!-- BACKLINKS-AUTO END -->\nWords above the stray marker.\n" + STRAY + "\nWords below it, kept as written.")
+    pages = {"research/a.md": page("A", "[B](b.md)"), "research/b.md": b}
+    r1, once, _ = rebuild_then_lint(pages)
+    r2, twice, payload = rebuild_then_lint({**pages, "research/b.md": once["research/b.md"]})
+    check("both rebuilds ran and exited 0", r1.returncode == 0 and r2.returncode == 0, (r1.stderr[-200:], r2.stderr[-200:]))
+    check("after one rebuild b is byte-identical", once["research/b.md"] == b, once["research/b.md"][-400:])
+    check("after two rebuilds b is byte-identical", twice["research/b.md"] == b, twice["research/b.md"][-400:])
+    check("the lint lists b as not closed",
+          payload.get("backlink_blocks") == [{"file": "research/b.md", "extra": [], "missing": [], "unclosed": True}],
+          payload.get("backlink_blocks", "key absent"))
+
+
+def test_rebuild_appends_one_block_to_an_unclosed_fence_page_over_three_rebuilds():
+    pages = {"research/a.md": page("A", "[B](b.md)"), "research/b.md": page("B", "```\nnever closed")}
+    r1, once, _ = rebuild_then_lint(pages)
+    r2, twice, _ = rebuild_then_lint({**pages, "research/b.md": once["research/b.md"]})
+    r3, thrice, payload = rebuild_then_lint({**pages, "research/b.md": twice["research/b.md"]})
+    check("all three rebuilds ran and exited 0", r1.returncode == 0 and r2.returncode == 0 and r3.returncode == 0,
+          (r1.stderr[-200:], r2.stderr[-200:], r3.stderr[-200:]))
+    check("the first rebuild appends one closed block at the end of the page",
+          once["research/b.md"].count("BACKLINKS-AUTO START") == 1
+          and once["research/b.md"].endswith("<!-- BACKLINKS-AUTO END -->\n"), once["research/b.md"][-400:])
+    check("the second rebuild changes nothing", twice["research/b.md"] == once["research/b.md"], twice["research/b.md"][-400:])
+    check("the third rebuild changes nothing", thrice["research/b.md"] == once["research/b.md"], thrice["research/b.md"][-400:])
+    check("the lint lists b for the fence", payload.get("backlink_blocks") == [FENCE_ROW],
+          payload.get("backlink_blocks", "key absent"))
+
+
 QUOTED = "The block starts at <!-- BACKLINKS-AUTO START --> and ends at its END marker."
 
 

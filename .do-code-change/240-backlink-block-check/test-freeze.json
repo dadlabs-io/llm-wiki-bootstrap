@@ -940,5 +940,49 @@
       "tail": "_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\n- [A](../research/a.md)\n<!-- BACKLINKS-AUTO END -->\n```\n<!-- BACKLINKS-AUTO START -->\n## Backlinks (auto-maintained)\n_Other entries linking to this one._\n- [Title](old.md)\n<!-- BACKLINKS-AUTO END -->\n]\nFAIL test_rebuild_replaces_the_real_block_below_a_block_example_in_a_code_fence: the lint lists nothing after the rebuild  [[{'file': 'research/b.md', 'extra': ['research/old.md'], 'missing': ['research/a.md'], 'unclosed': False}]]\n1/4 passed",
       "date": "2026-11-14"
     }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_leaves_a_page_with_an_end_then_a_stray_start_untouched_over_two_rebuilds",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "addd52157c3b5559c5c1a0a97ba7ec22270e856b40fefdf6ef550d919946840c",
+    "frozen_at_step": "fix-5",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "assertion added to a test already red-then-green at fix-5; green on the code",
+      "date": "2026-11-14"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the byte checks pass if the rebuild never ran; return codes now asserted",
+        "date": "2026-11-14",
+        "step": "fix-5",
+        "hash": "addd52157c3b5559c5c1a0a97ba7ec22270e856b40fefdf6ef550d919946840c"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the byte checks pass if the rebuild never ran; return codes now asserted"
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_appends_one_block_to_an_unclosed_fence_page_over_three_rebuilds",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "b454534c30c6819b96fbe5a4a38b54a7aa6d925f131084fcaef6284c2600824d",
+    "frozen_at_step": "fix-5",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "assertion added to a test already red-then-green at fix-5; green on the code",
+      "date": "2026-11-14"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: later rebuilds could pass without running, and the block was only counted; return codes and a closing END at the end now asserted",
+        "date": "2026-11-14",
+        "step": "fix-5",
+        "hash": "b454534c30c6819b96fbe5a4a38b54a7aa6d925f131084fcaef6284c2600824d"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: later rebuilds could pass without running, and the block was only counted; return codes and a closing END at the end now asserted"
   }
 ]

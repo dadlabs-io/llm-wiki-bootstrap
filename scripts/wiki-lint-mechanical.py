@@ -309,6 +309,18 @@ def backlink_prose(text):
     return backlink_split(text)[0]
 
 
+def backlink_start_unclosed(prose):
+    """Whether ``prose`` (fences already removed) has a START line with no END line after it: an END pairs with the
+    START before it, so ``END ... START`` leaves that START open."""
+    open_starts = 0
+    for line in prose.split("\n"):
+        if BACKLINK_START_LINE_RE.search(line):
+            open_starts += 1
+        elif BACKLINK_END_LINE_RE.search(line):
+            open_starts = max(open_starts - 1, 0)
+    return open_starts > 0
+
+
 def backlink_targets(text, page):
     """The resolved path of every page ``text`` (written in ``page``) links to."""
     out = set()
@@ -334,7 +346,7 @@ def backlink_blocks_out_of_step(wiki_root, entries):
     for f in entries:
         text, fenced = backlink_split(f.read_text(encoding="utf-8", errors="replace"))   # a marker quoted in code is no block
         block = BACKLINK_BLOCK_RE.search(text)
-        if len(BACKLINK_START_LINE_RE.findall(text)) > len(BACKLINK_END_LINE_RE.findall(text)):
+        if backlink_start_unclosed(text):
             unclosed.add(f.resolve())   # a START with no END: its lines are not the page's own links either
         elif BACKLINK_START_LINE_RE.search(fenced):
             in_fence.add(f.resolve())   # a block the rebuild appended after a fence nobody closed: renders as code

@@ -211,6 +211,65 @@
         "tests/skills/wiki-cycle/fixtures/promote/scratchpad-full.md": "1790b401a51194138dfc189a16d47693baa8235d23819ea3025e3e6d8b312bd8",
         "tests/skills/wiki-cycle/fixtures/resume/scratchpad.md": "582ed45682be13f06f671a5f3d6501ce88fce1461095ec9580e8e0df78a5cdeb"
       }
+    },
+    {
+      "round": 4,
+      "at": "2026-11-14T23:02:45Z",
+      "diff_sha256": "0ee96b9d588c6d507c02fd639871c14a4f5ac65ea55cad6df32a7bd906aa3ac2",
+      "findings_sha256": "ed100124c366e72cebc55e57ccb35954ef78e889256c5eea0e196bf5831cd774",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-27",
+        "standards-28",
+        "standards-29",
+        "standards-30",
+        "standards-31",
+        "spec-22",
+        "spec-23",
+        "spec-24",
+        "spec-25",
+        "spec-26"
+      ],
+      "new": [
+        "standards-27",
+        "standards-28",
+        "standards-29",
+        "standards-30",
+        "standards-31",
+        "spec-22",
+        "spec-23",
+        "spec-24",
+        "spec-25",
+        "spec-26"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "ad5552c87606d015cee42d3095cb93bc50acce2818e193d46fa0d13d0ad6be30",
+        "INSTALL-INVENTORY.md": "2b5ffe0d719881e5205f7fdac679a32b8f2a2f4cd0ce3995029e5a8192922c11",
+        "framework-docs/cycle-step-return-format.md": "e54d3e810a6fbad5f73299579c6af7b40b19f5ea4889576e72206821dd8f583e",
+        "scripts/wiki-lint-mechanical.py": "e86b7b41ee0455535b6a627019120e4de457c8a01331174438db270625484080",
+        "scripts/wiki-promote.py": "4dd518ffc3df13fe455e53a3ea0e6fbc334b8a08b7eda5077bea38df419a5408",
+        "scripts/wiki-reciprocate-backlinks.py": "9811191ae1d3f0fa8a98e9ee2029b26f0a23e709b55c8b22f6cfda2c06d7106a",
+        "skills/wiki-cycle/SKILL.md": "b02d179496b1ca69d5bc74eccf7628b3e7ab3a0f24ebfcc93fb94a79cb44c324",
+        "skills/wiki-cycle/reference.md": "bc9abfed8999d4d1892cc99f58f23ead153f6e96ab1f1635043825ebbc22a220",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "51e56f7498b6ec21af657d1484451f4a9cfed11a1ba32e8187aa4e91c45f2f0a",
+        "skills/wiki-lint/SKILL.md": "ac64674f14c51585aa353f07767f68450b13e1d1fcd9606af7929c411252a72f",
+        "skills/wiki-lint/wiki-seed/wiki-lint.md": "c08ef8f0d4d74d1689de07b93af31d193d16a4d3dba6c0cd3553f60c402d873a",
+        "skills/wiki-report/SKILL.md": "84ca82c0332a4e842dcbc9c61247697d16250511bcab6e4fb3f080203efedfa7",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "ccdfe92bad0389cfd7977bfce5b01c16f89f177d4b8df80184b1c48f33de8c39",
+        "tests/scripts/test_backlink_blocks.py": "cb467e373acb8a84eec042fe86aa5e032be6ad8b3fa98e43f7c5a4a577771b7e",
+        "tests/skills/PENDING.md": "46367035daba5e6191f9caad0ad48dc7e6f4365af5dc4e8a661f725d4da9882f",
+        "tests/skills/wiki-cycle/baseline-opus.json": "d953cfb1d3d52c6f56d036331eb1dafd7ae15ca1366c5a40840e9980d3eca23f",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "f8924e0cc1f67176823c4a39c868ec5d7a81ab2b003914fee206ea64eb0a68b8",
+        "tests/skills/wiki-cycle/cases.json": "3d61b7248efaae29bd256104fdbedf8168abeb0374efb6e768d4ac04089d8857",
+        "tests/skills/wiki-cycle/check.py": "f5425bf884d5690eafc4bd55b0f25d3baa1f0efe3ddf4db73493870685cf7aa3",
+        "tests/skills/wiki-cycle/fixtures/checker-gate/scratchpad.md": "146480c43d9283a7826a7656c0cf111ce95f4349c6cf08c5dc482f38d7e1b720",
+        "tests/skills/wiki-cycle/fixtures/checker/scratchpad.md": "369002b41ce4ee4d2c354b090ffb58f7c59653406f6a5ee485fc69e64eddb30b",
+        "tests/skills/wiki-cycle/fixtures/promote/scratchpad-full.md": "1790b401a51194138dfc189a16d47693baa8235d23819ea3025e3e6d8b312bd8",
+        "tests/skills/wiki-cycle/fixtures/resume/scratchpad.md": "582ed45682be13f06f671a5f3d6501ce88fce1461095ec9580e8e0df78a5cdeb"
+      }
     }
   ],
   "items": {
@@ -1498,6 +1557,266 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "5435917f750f51e73d127e47acd2d5a5c27e5e9e11f12bce3e11540334e4d00d"
+        }
+      ]
+    },
+    "standards-27": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] G2/C2 `scripts/wiki-reciprocate-backlinks.py:117-119` with `:191-214` \u2014 this round's `find_block` makes the rebuild append a new backlink block on every run to a page whose block sits inside an unclosed code fence, and three texts say the rebuild leaves such a page alone. Trace: `strip_code` drops every line after an unclosed fence opener, so the guard at `:164-166` counts 0 STARTs and 0 ENDs and passes; `find_block` marks every later line as fenced (`elif in_fence: fenced_at.add(offset)`), skips the START, returns None, and the else branch (`new_text = text + \"\\n\" + new_block + \"\\n\"`) appends another block. The removed `BLOCK_RE.search(text)` ran on raw text and replaced that block in place, so this is a regression from this fix. Read from code, not run (I traced it independently and reached the same result). False texts: `scripts/wiki-lint-mechanical.py:1445-1446` \"(the rebuild leaves such a page alone)\"; `skills/wiki-cycle/SKILL.md:141` \"the rebuild leaves it alone\"; `skills/wiki-report/SKILL.md:278` covers only the not-closed page, but its sentence on in-fence pages says \"no rebuild makes\" a fix. `wiki-promote.py` runs the rebuild on every wrap-up, so the growth also happens there. Tests: `test_backlink_blocks.py:453-459` runs one rebuild only; `:635-640` (R13) pins the false sentence by wording. Fix: return early from `rewrite_backlinks_section` when a START line sits inside an unclosed fence (as the START guard does), so the docs become true; add a two-rebuild test for an in-fence page.",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 117,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "a31ce86b1acc2a202f476cd2674815bc5523d893b99206dbb57d3a3a67641072",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "6cb362ffb0107d79d993c3cb4dc2af42517511d96ed489e58623bf02e975921e"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "a31ce86b1acc2a202f476cd2674815bc5523d893b99206dbb57d3a3a67641072"
+        }
+      ]
+    },
+    "standards-28": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] G3/G26/T5/T6 `scripts/wiki-reciprocate-backlinks.py:164-166` \u2014 the guard's comment says \"a START with no END\" but it compares line counts, so order is ignored. Page `X / END / Y / START / Z` has counts 1/1, passes, the first run appends a block, and the second run's `find_block` takes the orphan START through the appended END and deletes `Y`..`Z`; the lint (`wiki-lint-mechanical.py:337`) compares counts too and lists no row. `test_rebuild_leaves_a_page_with_a_stray_start_untouched_over_two_rebuilds` (`:571`) covers only START-before-END. Fix: guard on \"a START outside a fence with no END after it\" (`find_block` None while such a START exists), the same order-aware test in the lint, and this page in the test.",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 164,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "c4271743c659bd55c974157f577adfc0be48e9c35bfdf6c923a2c8d887f00b78",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "1388e5df15edbf75892839371e84b7f0f81ba97d7bd37286dbc4bb077171593b"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "c4271743c659bd55c974157f577adfc0be48e9c35bfdf6c923a2c8d887f00b78"
+        }
+      ]
+    },
+    "standards-29": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S2 `scripts/wiki-reciprocate-backlinks.py:101` against `:115` \u2014 `strip_code` walks `text.splitlines()`, `find_block` walks `text.split(\"\\n\")`; they disagree on fences after `\\x0c` or similar line breaks. Fix: one fence walk that yields per-line flags, used by both.",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 101,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "a31ce86b1acc2a202f476cd2674815bc5523d893b99206dbb57d3a3a67641072",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "6cb362ffb0107d79d993c3cb4dc2af42517511d96ed489e58623bf02e975921e"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "a31ce86b1acc2a202f476cd2674815bc5523d893b99206dbb57d3a3a67641072"
+        }
+      ]
+    },
+    "standards-30": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S2/S5 `scripts/_entry_checks.py:253` \u2014 `_BACKLINKS_RE` (and `body.find(_BACKLINKS_END)` at `:268`) is a third, unanchored copy of the marker rule, a sibling of the rule this round line-anchored in both scripts; `_strip_footer` (`:261`) would cut a mid-line quoted START through the real END. Fix: anchor it (or share one pattern), or record the trade-off.",
+      "file": "scripts/_entry_checks.py",
+      "line": 253,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": 4,
+      "fingerprint": "6fd490d28b66fcad94f4d4402e92484e7896c3ccaed82642111c8bab530d491d",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "6fd490d28b66fcad94f4d4402e92484e7896c3ccaed82642111c8bab530d491d"
+        },
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "6fd490d28b66fcad94f4d4402e92484e7896c3ccaed82642111c8bab530d491d"
+        }
+      ]
+    },
+    "standards-31": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] G19/N1 `scripts/wiki-reciprocate-backlinks.py:121-122` \u2014 `for start in START_LINE_RE.finditer(text)` binds a Match named `start`, and `text.rfind(\"\\n\", 0, start.start()) + 1` is an unnamed line start. Fix: `for match in ...` and `line_start = text.rfind(\"\\n\", 0, match.start()) + 1`.",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 121,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "a31ce86b1acc2a202f476cd2674815bc5523d893b99206dbb57d3a3a67641072",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "6cb362ffb0107d79d993c3cb4dc2af42517511d96ed489e58623bf02e975921e"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "a31ce86b1acc2a202f476cd2674815bc5523d893b99206dbb57d3a3a67641072"
+        }
+      ]
+    },
+    "spec-22": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `scripts/wiki-reciprocate-backlinks.py:164-166, 109-127, 209-214` \u2014 the rebuild does not leave an in-fence page alone: it appends a block each run, against the docs and the CHANGELOG. Intent: `scripts/wiki-lint-mechanical.py:1445-1446`, \"A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone)\"; the same claim at `skills/wiki-cycle/SKILL.md:141`; `CHANGELOG.md:17` \"a rerun of the rebuild clears only extra and missing rows\"; `plan.md:52` Invariant 2, \"placement ... unchanged\". Implemented: the guard counts on `strip_code(text)` (0 to 0 for this page), `find_block` skips the fenced START and returns None, and the append branch runs. Trace for page `B` = `\"```\\nnever closed\"` linked from A: before, no block; after rebuild 1, one block after the fence (the premise `test_backlink_blocks.py:453-457` asserts); after rebuild 2, a second; after rebuild 3, a third; the lint row stays `in_fence`. An unlinked in-fence page is unchanged. Read from code, not run. Affected: any linked page with an unclosed fence; it gains a block per cycle (and per wrap-up) until someone closes the fence, then holds stale duplicates. Before this fix round the old `BLOCK_RE.search(text)` replaced the block in place. Fix: extend the guard to skip a page with a START line inside an unclosed fence, or change the three sentences to say what the rebuild does; add a two-rebuild test for an in-fence page.",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 164,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "c4271743c659bd55c974157f577adfc0be48e9c35bfdf6c923a2c8d887f00b78",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "1388e5df15edbf75892839371e84b7f0f81ba97d7bd37286dbc4bb077171593b"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "c4271743c659bd55c974157f577adfc0be48e9c35bfdf6c923a2c8d887f00b78"
+        }
+      ]
+    },
+    "spec-23": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `scripts/wiki-reciprocate-backlinks.py:165` \u2014 the spec-14 guard counts lines and ignores order, so the text-loss it was written for remains for a page whose END comes before a START that has no END. Intent: `CHANGELOG.md:17`, \"a page with more start lines than end lines is left untouched by the rebuild (it once appended a block and spliced the text away on the next run)\"; `plan.md:64` \"a page with a START and no END is listed as \"block not closed\", never a crash\". Implemented: text `END ... prose ... START` has 1 START, 1 END, so the guard passes; `find_block` finds no END after the START and returns None; rebuild 1 appends a block; the page now reads START, START, END, END; rebuild 2 passes the guard (2 to 2), `find_block` takes the stray START with the appended END, and line 203 replaces everything between with the new block. The lint reads the page clean after rebuild 1. Read from code, not run. Affected: a page with a stray START after an END; its text between is deleted on the second cycle. Fix: guard on pairing (a START outside a fence with no END after it, or `find_block` None while a START line exists outside fences), and the same in the lint; add the END-then-START two-rebuild test (`:571` covers only a lone START).",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 165,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "2af4cc5edb05ccc0860be16490884bd923b0917348c31565841b6778e6c9e770",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "1388e5df15edbf75892839371e84b7f0f81ba97d7bd37286dbc4bb077171593b"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "2af4cc5edb05ccc0860be16490884bd923b0917348c31565841b6778e6c9e770"
+        }
+      ]
+    },
+    "spec-24": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_backlink_blocks.py:635-640` and `scripts/wiki-lint-mechanical.py:1443-1446` \u2014 `test_report_scopes_the_rerun_advice_to_pages_listed_by_content` pins the sentence \"(the rebuild leaves such a page alone)\", which is false for in-fence pages (first finding). Fix: update the assertion with the claim when it is corrected.",
+      "file": "tests/scripts/test_backlink_blocks.py",
+      "line": 635,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": 4,
+      "fingerprint": "2d2779263016eae7d01d0b63bfb333d6a06cc70eecf168ac5b89d0307646f3e0",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "8511254420f0a417a77ad4219c4c92d6494b12f5c9922dcb825e9e22717d131b"
+        },
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "2d2779263016eae7d01d0b63bfb333d6a06cc70eecf168ac5b89d0307646f3e0"
+        }
+      ]
+    },
+    "spec-25": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/_entry_checks.py:253, 261, 268` \u2014 a sibling of spec-16 left inconsistent with the line rule. Intent: round 3's spec-16 fix text, \"use the same line-anchored rule in the lint (and `_entry_checks.py`), or record the trade-off\". Implemented: `_BACKLINKS_RE = re.compile(re.escape(_BACKLINKS_START) + r\".*?\" + re.escape(_BACKLINKS_END), re.DOTALL)` and `body.find(_BACKLINKS_END)`; no trade-off is recorded in `checkpoints.md` and the file is outside the plan's Scope. Affected: a page that quotes a marker mid-line has prose cut from the entry checks' view and `layout_errors` can read a quoted END as the block's end; read-only checks, so no text is lost. Fix: record the trade-off, or anchor the regex and add a test.",
+      "file": "scripts/_entry_checks.py",
+      "line": 253,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": 4,
+      "fingerprint": "94b1515c62e17f502f31dac9768f8830a996b8e2448951e3c76c628f57781246",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "94b1515c62e17f502f31dac9768f8830a996b8e2448951e3c76c628f57781246"
+        },
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "94b1515c62e17f502f31dac9768f8830a996b8e2448951e3c76c628f57781246"
+        }
+      ]
+    },
+    "spec-26": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-reciprocate-backlinks.py:124` \u2014 an END inside a fence between a block's START and its END still ends the block there; `checkpoints.md` records it as known, with no test. Fix: record it as a trade-off in the plan or add a test.",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 124,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": 4,
+      "fingerprint": "a31ce86b1acc2a202f476cd2674815bc5523d893b99206dbb57d3a3a67641072",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "6cb362ffb0107d79d993c3cb4dc2af42517511d96ed489e58623bf02e975921e"
+        },
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "a31ce86b1acc2a202f476cd2674815bc5523d893b99206dbb57d3a3a67641072"
         }
       ]
     }
