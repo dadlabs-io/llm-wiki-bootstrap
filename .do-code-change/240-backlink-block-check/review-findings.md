@@ -1,142 +1,133 @@
-# Review report, round 3 (focused) — 240-backlink-block-check
+# Review report, round 4 (focused) — 240-backlink-block-check
 
-Fixed point `f9b3aa200a86ce60716ce42dae48b6cff1022f88` (resolves). The change under review for the lenses is the fix round's diff, commit `043937e` to HEAD, for the nine files in `round3-changed.txt` (`.do-code-change/` left out; about 40 changed lines: 8+/13- in the rebuild script, 4+/3- lint docstring, 2+/2- promote comment, 16+ test, 5 doc lines), plus sibling sites of each addressed round-2 finding. One part per axis, far below 3,000 lines. The lenses ran as unnamed `code-reviewer-lens` spawns on the default tier, with `run_in_background: false` written out on each; the harness returned both as launch notices, so I waited for their completion and took the reports from them. Spec source: `plan.md`, `requirements.md` (both amended), `checkpoints.md` (the entry "Review round 2 and fix round 2" read whole), `doubt-log.md`. The prescan ran clean, so the Standards lens skipped dates, review ids and width in Python comments. Items left with reasons in round 2 (standards-16..22) were not re-raised. Nothing was run: the producer's claims (59/59, four invariant files, check-freeze PASS) are unverified here.
+Fixed point `f9b3aa200a86ce60716ce42dae48b6cff1022f88` (resolves). Change under review for the lenses: the fix round's diff, commit `91d4c31` to HEAD, for the seven files in `round4-changed.txt` (CHANGELOG.md, scripts/wiki-lint-mechanical.py, scripts/wiki-promote.py, scripts/wiki-reciprocate-backlinks.py, skills/wiki-cycle/SKILL.md, skills/wiki-report/SKILL.md, tests/scripts/test_backlink_blocks.py; 142 added, 24 removed lines by `git diff --numstat`), plus sibling sites of the addressed findings (`scripts/_entry_checks.py:251-269`). One part per axis, far under 3,000 lines. `git status --short` shows no untracked files (only the run's own `readonly-review.json`). Spec source: `plan.md`, `requirements.md`, `checkpoints.md`, `doubt-log.md`, `review-findings.md` (round 3). The prescan ran clean, so the Standards lens skipped dates, review ids and width in Python comments. The lenses ran as unnamed `code-reviewer-lens` spawns with `run_in_background: false` written out; the harness returned launch notices and I waited for their reports. The Spec lens ran one tier up (sonnet) because the round turns on a hand trace of the rebuild over two runs. Items left in earlier rounds (standards-26 / spec-21, standards-16..22) were not re-raised. Nothing was run: no tests.
 
 ## Standards
 
-- [suggestion] C2 `scripts/wiki-promote.py:303-304` — standards-15 is not fixed: the comment now says "Outside a promotion only /wiki-cycle runs it (before each lint)", but `skills/wiki-verify/SKILL.md:90` runs `wiki-reciprocate-backlinks.py --topic <topic> --vault <vault>` ("re-run the integration scripts so the change propagates to backlinks/INDEX/MAP") and `skills/wiki-rollback/SKILL.md:92` runs it in its Step 5 (I re-ran the Grep over `skills/**/SKILL.md` and saw both lines). The round-2 wording had the same false "only" claim; the round only reworded it. Fix: "Outside a promotion, /wiki-cycle (before its lint), /wiki-verify and /wiki-rollback run it too."
-- [suggestion] S2/T5 `scripts/wiki-lint-mechanical.py:332, 336-338` against `scripts/wiki-reciprocate-backlinks.py:59-61` — two copies of the block rule now differ: the rebuild anchors START/END to their own line ("a marker quoted mid-line is prose"), the lint still counts `text.count(BACKLINK_START) > text.count(BACKLINK_END)` and cuts at `BACKLINK_START in prose` on text where only inline code is stripped, so an unticked mid-line START reads as "block not closed" in the lint while the rebuild ignores it. The new test (`tests/scripts/test_backlink_blocks.py:541`) backticks the marker, so the unticked case is untested. Fix: anchor the lint's START test the same way, or name the difference in the lint comment, and add a test with an unticked mid-line START. (Context, not raised: `scripts/_entry_checks.py:253` holds a third unanchored copy, untouched by this diff.)
-- [nit] S1 `tests/scripts/test_backlink_blocks.py:540` — the name `..._when_a_start_marker_is_quoted_inline_twice` suggests two quotes, but the prose quotes the START once; "twice" means two rebuilds. Fix: rename to `..._survives_two_rebuilds`.
+- [important] G2/C2 `scripts/wiki-reciprocate-backlinks.py:117-119` with `:191-214` — this round's `find_block` makes the rebuild append a new backlink block on every run to a page whose block sits inside an unclosed code fence, and three texts say the rebuild leaves such a page alone.
+    - Trace: `strip_code` drops every line after an unclosed fence opener, so the guard at `:164-166` counts 0 STARTs and 0 ENDs and passes; `find_block` marks every later line as fenced (`elif in_fence: fenced_at.add(offset)`), skips the START, returns None, and the else branch (`new_text = text + "\n" + new_block + "\n"`) appends another block. The removed `BLOCK_RE.search(text)` ran on raw text and replaced that block in place, so this is a regression from this fix. Read from code, not run (I traced it independently and reached the same result).
+    - False texts: `scripts/wiki-lint-mechanical.py:1445-1446` "(the rebuild leaves such a page alone)"; `skills/wiki-cycle/SKILL.md:141` "the rebuild leaves it alone"; `skills/wiki-report/SKILL.md:278` covers only the not-closed page, but its sentence on in-fence pages says "no rebuild makes" a fix. `wiki-promote.py` runs the rebuild on every wrap-up, so the growth also happens there.
+    - Tests: `test_backlink_blocks.py:453-459` runs one rebuild only; `:635-640` (R13) pins the false sentence by wording.
+    - Fix: return early from `rewrite_backlinks_section` when a START line sits inside an unclosed fence (as the START guard does), so the docs become true; add a two-rebuild test for an in-fence page.
+- [important] G3/G26/T5/T6 `scripts/wiki-reciprocate-backlinks.py:164-166` — the guard's comment says "a START with no END" but it compares line counts, so order is ignored. Page `X / END / Y / START / Z` has counts 1/1, passes, the first run appends a block, and the second run's `find_block` takes the orphan START through the appended END and deletes `Y`..`Z`; the lint (`wiki-lint-mechanical.py:337`) compares counts too and lists no row. `test_rebuild_leaves_a_page_with_a_stray_start_untouched_over_two_rebuilds` (`:571`) covers only START-before-END. Fix: guard on "a START outside a fence with no END after it" (`find_block` None while such a START exists), the same order-aware test in the lint, and this page in the test.
+- [suggestion] S2 `scripts/wiki-reciprocate-backlinks.py:101` against `:115` — `strip_code` walks `text.splitlines()`, `find_block` walks `text.split("\n")`; they disagree on fences after `\x0c` or similar line breaks. Fix: one fence walk that yields per-line flags, used by both.
+- [suggestion] S2/S5 `scripts/_entry_checks.py:253` — `_BACKLINKS_RE` (and `body.find(_BACKLINKS_END)` at `:268`) is a third, unanchored copy of the marker rule, a sibling of the rule this round line-anchored in both scripts; `_strip_footer` (`:261`) would cut a mid-line quoted START through the real END. Fix: anchor it (or share one pattern), or record the trade-off.
+- [nit] G19/N1 `scripts/wiki-reciprocate-backlinks.py:121-122` — `for start in START_LINE_RE.finditer(text)` binds a Match named `start`, and `text.rfind("\n", 0, start.start()) + 1` is an unnamed line start. Fix: `for match in ...` and `line_start = text.rfind("\n", 0, match.start()) + 1`.
 
 Unverified:
-- `framework-docs/cycle-step-return-format.md:175`, `CHANGELOG.md:17` and `skills/wiki-report/SKILL.md:278` give repo counts (+10, +20, +187, "three backlinks") that the diff cannot check.
-- Whether `/wiki-cycle --lint-only` runs Step 3 (affects the "before each lint" wording in the promote comment).
+- `find_block:124` searches the END on raw text, so a fenced END between a real START and its real END ends the block early (the checkpoints record it as known; it is only reachable with a real END elsewhere, since the guard counts prose only). Not traced through the lint, not run.
+- Whether any real page holds `\x0c` or ` ` before a fence (for the splitlines suggestion).
+- The producer's claims: test_backlink_blocks 75/75, the four invariant files green, check-freeze PASS. Nothing was run here.
 
 Checks made:
-- standards-23 (the lint docstring naming the row kinds): fixed. `scripts/wiki-lint-mechanical.py:319-322` names extra, missing, unclosed and `in_fence`, matching the rows built at `:352-361`.
-- Tests run: none (a review runs no test).
+- standards-24 (the `wiki-promote.py` comment): fixed. `wiki-verify` and `wiki-rollback` both call the rebuild (Grep over `skills/`); the new comment names them with `/wiki-cycle`.
+- The three anchored regexes in the diff (`START_LINE_RE`, `END_LINE_RE`, `BLOCK_RE` in the rebuild; the three `BACKLINK_*_LINE_RE` in the lint) read the same rule.
 
 | Rule / section | Verdict | Search |
 |---|---|---|
-| 1 Mysterious Name S1/N1 | found (nit) | new identifiers read in context: START_LINE_RE, BLOCK_RE, stray, kept; the test name |
-| 2 Duplicated Code S2/G5 | found (suggestion) | Grep BACKLINKS-AUTO, BACKLINK_BLOCK_RE, _BACKLINKS_RE over scripts/ and tests/ |
-| 3 Feature Envy S3/G14 | clear | diff functions read |
-| 4 Data Clumps S4 | clear | no repeated value group added |
-| 5 Primitive Obsession S5 | clear | none added |
-| 6 Repeated Switches S6/G23 | clear | none added |
-| 7 Shotgun Surgery S7 | clear | marker rule spans scripts, tests and docs; the edits are mechanical wording |
-| 8 Divergent Change S8 | clear | none added |
-| 9 Speculative Generality S9 | clear | none added |
-| 10 Message Chains S10/G36 | clear | `stray.start()` is one level |
-| 11 Middle Man S11 | clear | none added |
-| 12 Refused Bequest S12 | clear | no subclass in diff |
-| 13 Magic numbers G25 | clear | literals in added lines |
-| 14 Flag Argument F3/G15 | clear | none added |
-| 15 Answers and mutates R1 | clear | extract_outbound_links, rewrite_backlinks_section read |
-| 16 Hidden Side Effect N7/G20 | clear | same functions |
-| 17 Commented-out Code C5 | clear | added comments read |
-| 18 New code nothing uses R26 | clear | START_LINE_RE used at rebuild :112; BLOCK_RE at :111, :164 |
-| Comments and docstrings C1-C3, R2 | found (C2) | promote comment and lint docstring read; no TODO added |
-| Names N2, N3, N5, N6, R3 | clear | START_LINE_RE and BLOCK_RE read |
-| Functions and control flow | clear | extract_outbound_links read in full |
-| Tests T1, T3, T5, T6, R12-R15, T4 | found (T5, under the S2 finding) | test file 330-369, 480-569 read |
-| Python PY1-PY11 | clear | read; PY9: the `kept` slice finds the real START, not the inline one |
-| standards-15 verified | not fixed | Grep of wiki-reciprocate-backlinks over skills/: wiki-cycle:134, wiki-verify:90, wiki-rollback:92 |
-| standards-23 verified | fixed | lint :319-322 against :352-361 |
+| 1 S1/N1 | found (nit) | `start` is a Match in `find_block` |
+| 2 S2/G5 | found | fence walks in `strip_code` and `find_block`; `_entry_checks.py:253` |
+| 3 S3/G14 | clear | changed functions read |
+| 4 S4 | clear | added lines read |
+| 5 S5 | found | the marker rule validated by three regexes (the S2 sibling above) |
+| 6 S6/G23 | clear | Grep `in_fence`, `fenced` in both scripts |
+| 7 S7 | clear | edits stay in the two scripts and docs; the third copy is S2 |
+| 8 S8 | clear | read |
+| 9 S9 | clear | no new interface |
+| 10 S10 | clear | added lines read |
+| 11 S11 | clear | no new class |
+| 12 S12 | n/a | no subclass |
+| 13 G25 | clear | literals in added lines |
+| 14 F3/G15 | clear | signatures read |
+| 15 R1 | clear | `find_block` only reads; the write is pre-existing |
+| 16 N7/G20 | clear | names match bodies |
+| 17 C5 | clear | added comments read |
+| 18 R26 | clear | `find_block` has one caller (`:191`); `BLOCK_RE` still used at `:134` |
+| Comments C1-C3, R2 | found (C2) | lint `:1445-1446`, wiki-cycle `:141` |
+| Names N2-N6, R3 | clear | read in context |
+| Functions S13-G16, S15 | clear | `find_block`, guard and lint hunks read |
+| Boundary G3, G26, G2 | found | findings 1 and 2 |
+| Tests T1, T3, T5, T6, R12-R15, T4 | found (T5, T6, R13) | test file read in full |
+| Python PY1-PY11 | clear / n/a | no casts, dicts, async, third-party imports; PY9 assertions are on produced text |
 
 | File | Part | Standards read depth |
 |---|---|---|
 | `scripts/wiki-reciprocate-backlinks.py` | 1 | in full |
-| `scripts/wiki-promote.py` | 1 | in part (280-324; the changed comment at 299-305 read) |
-| `scripts/wiki-lint-mechanical.py` | 1 | in part (278-369; the changed docstring read) |
-| `tests/scripts/test_backlink_blocks.py` | 1 | in part (1-119, 330-369, 480-569; the added test read) |
-| `skills/wiki-lint/SKILL.md`, `skills/wiki-lint/wiki-seed/wiki-lint.md`, `skills/wiki-report/SKILL.md`, `framework-docs/cycle-step-return-format.md`, `CHANGELOG.md` | 1 | in part (each changed line read) |
+| `tests/scripts/test_backlink_blocks.py` | 1 | in full |
+| `scripts/wiki-lint-mechanical.py` | 1 | in part (270-345, 1425-1465; every changed line) |
+| `scripts/wiki-promote.py` | 1 | in part (295-310; the changed comment) |
+| `CHANGELOG.md`, `skills/wiki-cycle/SKILL.md`, `skills/wiki-report/SKILL.md` | 1 | in part (each changed line) |
 
-Every changed hunk of each file falls inside the ranges read; the lens read other lines only for context.
-
-Well built: the line-anchored `BLOCK_RE` and `START_LINE_RE` replace the old unanchored search, the regression test pins the prose-above-block case byte for byte, and the lint docstring now names all four row kinds.
+Well built: one anchored marker rule in both scripts, `find_block` skipping a closed fence's example, and a byte-for-byte test matrix for the fence, indent and quoted-marker cases.
 
 ## Spec
 
-- [important] `skills/wiki-report/SKILL.md:278`, `framework-docs/cycle-step-return-format.md:175`, `skills/wiki-lint/SKILL.md:37` — a page with a START and no END is not safe to leave for the cycle's next run, and the docs do not say so.
-    - Intent: `skills/wiki-report/SKILL.md:278`: "a page listed as a block not closed, or as a block inside an unclosed code fence, needs a hand fix to the page (add the end marker, or close the fence), which no rebuild makes". `plan.md:61`: "a page with a START and no END is listed as "block not closed", never a crash".
-    - Implemented: `scripts/wiki-reciprocate-backlinks.py:164` `existing_match = BLOCK_RE.search(text)`, with `BLOCK_RE` (line 61) running from a START line to the next END line. On a stray START the first run appends a block (line 186) and the next run splices from the stray line to the new END (lines 175, 179), deleting the author's text between. `skills/wiki-cycle/SKILL.md:131-135` runs the rebuild every cycle. Read from code, not run. Pre-existing: the old `START.*?END` did the same. `checkpoints.md` records this as the red-team choice 5 trade-off ("a stray START on its own line with no END can still be spliced by a second rebuild"), but the docs' "hand fix, which no rebuild makes" wording still lets the cycle's own rerun do it first.
-    - Affected: any page with a stray START; its body text is deleted on the next cycle, and the lint then reads the page as clean.
-    - Fix: have the rebuild skip a page whose START count exceeds its END count, and say "do not rerun" for those rows; add a test that two rebuilds keep the text below a stray START. Or record the ruling that the trade-off stands.
-- [important] `scripts/wiki-lint-mechanical.py:1437` and `skills/wiki-cycle/SKILL.md:141` — the rerun advice is not scoped to extra and missing rows (sibling site of spec-9).
-    - Intent: `framework-docs/cycle-step-return-format.md:175` says only extra and missing rows are "one the backlink rebuild got wrong"; `scripts/wiki-lint-mechanical.py:1446` says "block not closed (a `BACKLINKS-AUTO START` with no `END`): fix it by hand".
-    - Implemented: lint:1437 "so a page listed there means the rebuild went wrong; on its own, a page listed here is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script." The cycle SKILL line 141 says "so a page it still lists means the rebuild went wrong". Both cover every row.
-    - Affected: readers of the lint section and the cycle report for unclosed and in-fence rows.
-    - Fix: scope both sentences to extra and missing rows, and send unclosed and in-fence rows to the hand fix.
-- [important] `scripts/wiki-lint-mechanical.py:332` — the lint and the rebuild disagree on a START quoted mid-line in plain prose (spec-10, sibling site c).
-    - Intent: `doubt-log.md:13`: "keeps lint and rebuild in agreement on that page". `plan.md:67`: after one rebuild the lint "lists nothing ... (the unclosed-block page aside, which stays listed)".
-    - Implemented: the lint runs `if text.count(BACKLINK_START) > text.count(BACKLINK_END):` on text where only inline code is removed (lint:330, 299). The rebuild matches only line-anchored markers (`scripts/wiki-reciprocate-backlinks.py:60-61`). Prose such as "The block starts at <!-- BACKLINKS-AUTO START --> and ends ..." plus a real block is listed `unclosed` (`if me in unclosed:` at lint:352), which hides that page's extra and missing rows and gives a wrong hand-fix instruction. `scripts/_entry_checks.py:253, 261` uses a third, unanchored regex. The test at `tests/scripts/test_backlink_blocks.py:541` backticks the marker, which the lint strips, so this shape is untested. The trade-off is not recorded in `checkpoints.md`.
-    - Affected: a page that quotes the marker in prose; the lint's report for it.
-    - Fix: use the same line-anchored rule in the lint (and `_entry_checks.py`), or record the trade-off; add a lint test with the unticked prose.
-- [important] `scripts/wiki-reciprocate-backlinks.py:60-61, 164` — an indented block is no longer matched (spec-10, point b).
-    - Intent: `plan.md:52` (Invariant 2): "a notebook whose links use none of the newly read forms, none inside code and no target with whitespace gets byte-identical blocks". Indentation is not in its exclusions.
-    - Implemented: `BLOCK_RE` starts `^{START}[ \t]*$`, with no leading whitespace; the removed line was `START.*?END` with DOTALL. An old block whose markers are indented is no longer found, so the rebuild appends a second block, while the lint (non-anchored, `:284`) still reads the old one and the extra row survives a rerun. That contradicts `CHANGELOG.md:17` ("a rerun of the rebuild clears only extra and missing rows"). No test has an indented marker (Grep). CRLF is unchanged: `read_text` translates and `scripts/_atomic_io.py:80` writes `newline=""`, so output is LF before and after.
-    - Affected: any page whose block markers are indented; live presence unverified.
-    - Fix: allow `[ \t]*` before the markers in `BLOCK_RE` and `START_LINE_RE`, or record it as a trade-off; add a test.
-- [important] `plan.md:15` — "a marker quoted in code is no block" is not true for block placement (spec-10/12).
-    - Intent: `plan.md:15`: "code is stripped before the page's own block is found, so a marker quoted in code is no block".
-    - Implemented: `scripts/wiki-reciprocate-backlinks.py:139` reads raw text and `:164` searches it with no `strip_code`. A fenced example whose markers stand alone on their lines is matched and overwritten by the real block (`:175`). Pre-existing; this round's test covers only inline quotes.
-    - Affected: a page that shows the block format in a fence.
-    - Fix: run the placement search on the code-stripped view, or reword the plan to "for link reading"; add a fenced-example test.
-- [suggestion] `plan.md:67` — Step 2's "aside" names only the unclosed page; an in-fence page also stays listed after one rebuild (spec-11, partly addressed). Fix: add "or the in-fence page".
-- [suggestion] `scripts/wiki-lint-mechanical.py:294`, `scripts/wiki-reciprocate-backlinks.py:100` — indented fences are now in the CHANGELOG (spec-13 addressed), but no test has one (Grep for leading-space fences finds none). Fix: one lint and one rebuild test with an indented fence.
-- [nit] `tests/scripts/test_backlink_blocks.py:540` — the name `..._quoted_inline_twice` does not say it means two rebuilds. Fix: rename it (same point as the Standards nit).
+- [important] `scripts/wiki-reciprocate-backlinks.py:164-166, 109-127, 209-214` — the rebuild does not leave an in-fence page alone: it appends a block each run, against the docs and the CHANGELOG.
+    - Intent: `scripts/wiki-lint-mechanical.py:1445-1446`, "A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone)"; the same claim at `skills/wiki-cycle/SKILL.md:141`; `CHANGELOG.md:17` "a rerun of the rebuild clears only extra and missing rows"; `plan.md:52` Invariant 2, "placement ... unchanged".
+    - Implemented: the guard counts on `strip_code(text)` (0 to 0 for this page), `find_block` skips the fenced START and returns None, and the append branch runs. Trace for page `B` = `"```\nnever closed"` linked from A: before, no block; after rebuild 1, one block after the fence (the premise `test_backlink_blocks.py:453-457` asserts); after rebuild 2, a second; after rebuild 3, a third; the lint row stays `in_fence`. An unlinked in-fence page is unchanged. Read from code, not run.
+    - Affected: any linked page with an unclosed fence; it gains a block per cycle (and per wrap-up) until someone closes the fence, then holds stale duplicates. Before this fix round the old `BLOCK_RE.search(text)` replaced the block in place.
+    - Fix: extend the guard to skip a page with a START line inside an unclosed fence, or change the three sentences to say what the rebuild does; add a two-rebuild test for an in-fence page.
+- [important] `scripts/wiki-reciprocate-backlinks.py:165` — the spec-14 guard counts lines and ignores order, so the text-loss it was written for remains for a page whose END comes before a START that has no END.
+    - Intent: `CHANGELOG.md:17`, "a page with more start lines than end lines is left untouched by the rebuild (it once appended a block and spliced the text away on the next run)"; `plan.md:64` "a page with a START and no END is listed as "block not closed", never a crash".
+    - Implemented: text `END ... prose ... START` has 1 START, 1 END, so the guard passes; `find_block` finds no END after the START and returns None; rebuild 1 appends a block; the page now reads START, START, END, END; rebuild 2 passes the guard (2 to 2), `find_block` takes the stray START with the appended END, and line 203 replaces everything between with the new block. The lint reads the page clean after rebuild 1. Read from code, not run.
+    - Affected: a page with a stray START after an END; its text between is deleted on the second cycle.
+    - Fix: guard on pairing (a START outside a fence with no END after it, or `find_block` None while a START line exists outside fences), and the same in the lint; add the END-then-START two-rebuild test (`:571` covers only a lone START).
+- [suggestion] `tests/scripts/test_backlink_blocks.py:635-640` and `scripts/wiki-lint-mechanical.py:1443-1446` — `test_report_scopes_the_rerun_advice_to_pages_listed_by_content` pins the sentence "(the rebuild leaves such a page alone)", which is false for in-fence pages (first finding). Fix: update the assertion with the claim when it is corrected.
+- [suggestion] `scripts/_entry_checks.py:253, 261, 268` — a sibling of spec-16 left inconsistent with the line rule.
+    - Intent: round 3's spec-16 fix text, "use the same line-anchored rule in the lint (and `_entry_checks.py`), or record the trade-off".
+    - Implemented: `_BACKLINKS_RE = re.compile(re.escape(_BACKLINKS_START) + r".*?" + re.escape(_BACKLINKS_END), re.DOTALL)` and `body.find(_BACKLINKS_END)`; no trade-off is recorded in `checkpoints.md` and the file is outside the plan's Scope.
+    - Affected: a page that quotes a marker mid-line has prose cut from the entry checks' view and `layout_errors` can read a quoted END as the block's end; read-only checks, so no text is lost.
+    - Fix: record the trade-off, or anchor the regex and add a test.
+- [nit] `scripts/wiki-reciprocate-backlinks.py:124` — an END inside a fence between a block's START and its END still ends the block there; `checkpoints.md` records it as known, with no test. Fix: record it as a trade-off in the plan or add a test.
 
 Unverified:
-- Whether any live notebook has an indented marker or a stray START (the Grep covered this repo only).
-- That the new test fails on the pre-fix rebuild: by reading the removed `re.search(START.*?END, text, DOTALL)`, `startswith(kept)` would fail; not run.
-- The second-rebuild splice (first finding): read from `scripts/wiki-reciprocate-backlinks.py:164-186`, not run.
-- `CHANGELOG.md:17` "the old rule read one with a space": needs `git show 043937e:scripts/wiki-reciprocate-backlinks.py`.
-- The dry-run counts in CHANGELOG and checkpoints, and the suite counts (59/59 etc.): not run.
-- `scripts/_entry_checks.py:253` (unchanged): unanchored; whether it should match the rebuild is outside this diff.
+- All traces are from code, not run, including the first two findings.
+- Exotic line breaks (`\x0c`, ` `) make `splitlines` in `strip_code` and `split("\n")` in `find_block` differ; not traced.
+- The producer's claims 75/75, the four invariant files, check-freeze PASS, and the CHANGELOG dry-run counts.
 
 Checks made:
-- spec-9 wording at the four named docs now splits extra/missing (rerun) from unclosed/in_fence (hand fix): done in `skills/wiki-report/SKILL.md:278`, `framework-docs/cycle-step-return-format.md:175`, `skills/wiki-lint/SKILL.md:37`, `skills/wiki-lint/wiki-seed/wiki-lint.md:28`; the siblings left are the first two findings above.
-- spec-10 (a): a line-anchored real block is found and placed as before (`scripts/wiki-reciprocate-backlinks.py:135-198` read).
-- spec-11: `plan.md:17` and `requirements.md:28` name the `in_fence` row and match `scripts/wiki-lint-mechanical.py:352-356`.
-- spec-12: the link-rule order in `plan.md:15` (code first, then the block) matches both scripts for link reading (lint `:288-300`, rebuild `:109-111`); placement is the fifth finding above.
-- spec-13: CHANGELOG says a fence line may be indented, matching `lstrip()` in the lint (`:294`) and the rebuild (`:100`).
-- CHANGELOG lines 14-17 read sentence by sentence: all match the code except "a rerun of the rebuild clears only extra and missing rows" (fourth finding).
+- spec-15 (rerun advice scoped): the lint text names extra/missing for the rerun and the other rows for a hand fix, the cycle skill line matches; the sentence "leaves such a page alone" is false only for the in-fence row (first finding).
+- spec-16 (lint and rebuild agree): the same `[ \t]*` line rule at lint `:286-287` and rebuild `:61-62`; a mid-line START is ignored by both; closed and unclosed fence lines are dropped by both.
+- spec-17 (indented block found): `test_rebuild_finds_a_block_with_indented_markers` and the lint test read; a tab- or space-indented block is matched.
+- spec-18 (a fenced example left as written): `find_block` returns the first START outside a closed fence; a page whose only START is in a closed fence returns None, so a block is appended outside the fence; `test_rebuild_replaces_the_real_block_below_a_block_example_in_a_code_fence` checks bytes.
+- spec-19 (`plan.md:67` aside) and spec-20 (the indented-fence tests): both read as fixed.
+- Invariant 2: `GOLDEN_BLOCK` test (`:442`) and the code read; `find_block` and the guard change nothing for an ordinary block.
+- `CHANGELOG.md:17` read sentence by sentence: all match the code except the guard sentence for an END-before-START page (second finding) and the in-fence sentence "a rerun of the rebuild clears only extra and missing rows" read against the append (first finding).
 
 | Item | Verdict | Search / read |
 |---|---|---|
-| spec-9 wording (four docs) | found | Grep `hand fix`, `rerun`, `went wrong`, `got wrong`, `left out of step`, `look at the script`, `block not closed`, `in_fence`, `unclosed code fence` over skills/, framework-docs/, CHANGELOG.md; hits read |
-| spec-9 claim "a rerun clears only extra and missing rows" | found | rebuild `:164-186` read; the indented case keeps the extra row |
-| spec-10 (a) real block found and placed | clear | `:135-198` read |
-| spec-10 (b) CRLF, indentation | found (indentation); CRLF clear | `_atomic_io.py:70-98` read |
-| spec-10 (c) lint and rebuild agreement | found | Grep `BACKLINKS-AUTO`, `_BACKLINKS_RE` over scripts/ |
-| spec-10 new test, red-first | unverified | test `:540-553` read; not run |
-| second rebuild on a stray START | found | `:164-186` read; not run |
-| spec-11 | clear (lint bullet, Decision 1); Step 2 partly (suggestion) | `plan.md:17`, `requirements.md:28`, lint `:352-356, 1446-1448` |
-| spec-12 | found (placement); order clear | `plan.md:15` read |
-| spec-13 | clear (CHANGELOG, `lstrip`); test gap (suggestion) | Grep indented fences in tests: none |
-| CHANGELOG 14-17 | clear except one sentence | read `:12-17`; Grep `backlink_blocks_out_of_step`, `backlink_blocks` |
+| A extra / missing rows, two rebuilds | clear | block replaced, rebuild 2 a no-op |
+| A unclosed row, two rebuilds | clear | guard returns unchanged twice (test `:571`) |
+| A in_fence row, two rebuilds | found | `:109-127, 164-166, 209-214` traced |
+| B guard completeness (END before START) | found | traced over two rebuilds |
+| C lint and rebuild agree | clear for the two scripts; `_entry_checks` suggestion | lint `:286-287`, rebuild `:61-62`; Grep `BACKLINKS-AUTO` over `scripts/` |
+| D spec-17 / spec-18 | clear; fenced-END nit | tests `:556, :606` |
+| E spec-15, 19, 20 | clear except the "leaves alone" claim | lint `:1443`, plan `:67`, tests `:621-632` |
+| F CHANGELOG line 17 | found (two sentences) | read against the code |
+| G tests prove their claims | found | `:453` one rebuild; no END-then-START test; `:635-640` pins a false sentence |
+| H Invariant 2 | clear | `:442` and the code |
 
 | File | Part | Spec read depth |
 |---|---|---|
 | `scripts/wiki-reciprocate-backlinks.py` | 1 | in full |
-| `scripts/wiki-promote.py` | 1 | in part (298-307; the changed comment read) |
-| `scripts/wiki-lint-mechanical.py` | 1 | in part (270-362, 1415-1470; the changed docstring read) |
-| `tests/scripts/test_backlink_blocks.py` | 1 | in part (1-85, 520-569; the added test read) |
-| `CHANGELOG.md`, `skills/wiki-lint/SKILL.md`, `skills/wiki-lint/wiki-seed/wiki-lint.md`, `skills/wiki-report/SKILL.md`, `framework-docs/cycle-step-return-format.md` | 1 | in part (each changed line read) |
-| `plan.md`, `requirements.md`, `checkpoints.md`, `doubt-log.md`, `review-findings.md` | — | in full |
+| `scripts/wiki-lint-mechanical.py` | 1 | in part (270-380, 1415-1465) |
+| `scripts/_entry_checks.py` | 1 (sibling) | in part (251-275) |
+| `tests/scripts/test_backlink_blocks.py` | 1 | in part (1-120, 420-679) |
+| `CHANGELOG.md`, `skills/wiki-cycle/SKILL.md`, `skills/wiki-report/SKILL.md` | 1 | in part (changed lines; the two SKILL lines by Grep hit) |
+| `scripts/wiki-promote.py` | 1 | not read by the Spec lens (a comment only; read by Standards) |
+| `plan.md`, `requirements.md`, `doubt-log.md`, `checkpoints.md`, `review-findings.md` | — | in full |
 
-Well built: the line-anchored markers stop a quoted inline START from splicing the prose above a real block, and the lint's `in_fence` row is pinned by tests.
+Well built: the one `[ \t]*` line rule is identical in both scripts, and the stray-START and fenced-example tests check bytes across two rebuilds.
 
 ## Change risk
 
 | File | Risk | Part | Standards | Spec | Change risk |
 |---|---|---|---|---|---|
 | `scripts/wiki-reciprocate-backlinks.py` | MEDIUM (rewrites wiki pages in place; business logic) | 1 | in full | in full | — |
-| `scripts/wiki-lint-mechanical.py` | MEDIUM (docstring only in this round) | 1 | in part (changed lines read) | in part (changed lines read) | — |
-| `scripts/wiki-promote.py` | LOW (comment) | 1 | in part (changed lines read) | in part (changed lines read) | — |
-| `tests/scripts/test_backlink_blocks.py` | LOW (tests) | 1 | in part (changed lines read) | in part (changed lines read) | — |
-| `CHANGELOG.md`, `framework-docs/cycle-step-return-format.md`, `skills/wiki-lint/SKILL.md`, `skills/wiki-lint/wiki-seed/wiki-lint.md`, `skills/wiki-report/SKILL.md` | LOW (docs) | 1 | in part (changed lines read) | in part (changed lines read) | — |
+| `scripts/wiki-lint-mechanical.py` | MEDIUM (check logic and report text) | 1 | in part (changed lines) | in part (changed lines) | — |
+| `scripts/wiki-promote.py` | LOW (comment) | 1 | in part (changed lines) | not read | — |
+| `tests/scripts/test_backlink_blocks.py` | LOW (tests) | 1 | in full | in part | — |
+| `CHANGELOG.md`, `skills/wiki-cycle/SKILL.md`, `skills/wiki-report/SKILL.md` | LOW (docs) | 1 | in part (changed lines) | in part (changed lines) | — |
 
 No high-risk file (no auth, sessions, tokens, crypto, payments, external call, data migration or removed validation), so the change-risk lens was not run. Files the earlier rounds reviewed and this fix did not touch are out of the round; nothing new was raised in them.
 
@@ -146,8 +137,8 @@ none (no auth, authz, token or session handling, or production-data migration fi
 
 ## Summary
 
-Standards: 3 findings (2 suggestions, 1 nit; worst: the `wiki-promote.py` comment still names /wiki-cycle as the only other caller of the rebuild, while wiki-verify and wiki-rollback run it too, so standards-15 is not fixed). Spec: 8 findings (5 important, 2 suggestions, 1 nit; worst, in order of the report: a stray START page can still lose its text to the cycle's next rebuild while the docs say it needs a hand fix; the rerun advice in the lint report and the cycle skill is not scoped to extra and missing rows; the lint and the rebuild disagree on an unticked mid-line START; an indented block is no longer matched by the rebuild; the plan's "a marker quoted in code is no block" does not hold for placement). Change risk: not run. The axes agree on the lint/rebuild marker rule differing (Standards S2, Spec spec-10c) and on the test name. Of the addressed items, standards-23, spec-11 (lint bullet and Decision 1), spec-12 (link reading) and spec-13 (CHANGELOG) hold; spec-9 is done at its four named docs but its siblings and its claim "a rerun clears only extra and missing rows" are not; spec-10 fixes the reported inline-quote case and opens the cases above. Worth acting on the Spec important findings before the install.
+Standards: 5 findings (2 important, 2 suggestions, 1 nit; worst: this fix makes the rebuild append a new backlink block on every run to a page whose block sits inside an unclosed fence, while the lint text and the cycle skill say it leaves such a page alone). Spec: 5 findings (2 important, 2 suggestions, 1 nit; worst, in report order: the same in-fence append, which contradicts the docs and CHANGELOG; the START/END guard counts lines and ignores order, so a page with an END before a stray START still loses its text on the second rebuild). Change risk: not run. The axes agree on both important findings, on the unanchored sibling regex in `_entry_checks.py`, and on the test that pins the false sentence. Of the addressed items, standards-24, spec-15 (except the in-fence clause), spec-16 (the two scripts), spec-17, spec-18, spec-19 and spec-20 hold; spec-14 is fixed for a lone START but not for an END before it. Worth acting on both important findings before the install, with a two-rebuild test for each.
 
-Risks or assumptions: the lenses ran on the default tier and came back as launch notices that I waited out; nothing was run (no tests), so the stray-START splice, the indented-block case and the red-first claim for the new test rest on reading the code; several files are `in part` because the lenses read the changed hunks and context, not the whole file.
+Risks or assumptions: the Spec lens ran one tier above the default; the Standards lens ran on the default tier; both returned as launch notices that I waited out. Nothing was run, so every trace, including the two important ones, rests on reading the code (I traced both myself before the lenses reported and reached the same result). Several files are `in part` because the lenses read the changed hunks and context.
 
 VERDICT: Standards FINDINGS · Spec FINDINGS · Change risk NOT RUN · needs-a-human 0
