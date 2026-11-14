@@ -106,6 +106,27 @@ def strip_code(text: str) -> str:
     return "\n".join(kept)
 
 
+def find_block(text: str) -> tuple[int, int] | None:
+    """(start, end) of the page's own block: the first one whose START line is not inside a fenced code region (a block
+    shown as an example in a fence is prose); an END is the first one after that START."""
+    fenced_at: set[int] = set()  # offsets of the lines inside a fence, by the strip_code rule
+    in_fence = False
+    offset = 0
+    for line in text.split("\n"):
+        if line.lstrip().startswith(("```", "~~~")):
+            in_fence = not in_fence
+        elif in_fence:
+            fenced_at.add(offset)
+        offset += len(line) + 1
+    for start in START_LINE_RE.finditer(text):
+        if text.rfind("\n", 0, start.start()) + 1 in fenced_at:
+            continue
+        end = END_LINE_RE.search(text, start.end())
+        if end:
+            return start.start(), end.end()
+    return None
+
+
 def extract_outbound_links(entry: Path) -> list[Path]:
     """Return the resolved target path of each outbound .md link the page itself writes."""
     text = strip_code(entry.read_text(encoding="utf-8"))
@@ -167,22 +188,23 @@ def rewrite_backlinks_section(
         new_block = "\n".join(lines)
 
     # Find existing block, if any
-    existing_match = BLOCK_RE.search(text)
+    existing = find_block(text)
 
-    if existing_match:
+    if existing:
+        start, end = existing
         old_refs = set()
-        for m in LINK_RE.finditer(existing_match.group(0)):
+        for m in LINK_RE.finditer(text[start:end]):
             try:
                 tgt = (entry.parent / m.group(1)).resolve()
                 old_refs.add(tgt)
             except OSError:
                 pass
         if new_block:
-            new_text = text[: existing_match.start()] + new_block + text[existing_match.end():]
+            new_text = text[:start] + new_block + text[end:]
         else:
             # Remove block entirely (plus surrounding whitespace)
             new_text = (
-                text[: existing_match.start()].rstrip() + "\n" + text[existing_match.end():].lstrip()
+                text[:start].rstrip() + "\n" + text[end:].lstrip()
             )
     else:
         old_refs = set()

@@ -1400,7 +1400,7 @@
       "line": 15,
       "first_round": 3,
       "last_seen_round": 3,
-      "verdict": "open",
+      "verdict": "addressed",
       "verdict_round": 3,
       "fingerprint": "0627563088e66885fa5976408307f21165e6903f43fec73d90a2583694c18b5b",
       "fingerprint_kind": "text-only",
@@ -1414,6 +1414,11 @@
         {
           "round": 3,
           "verdict": "open",
+          "fingerprint": "0627563088e66885fa5976408307f21165e6903f43fec73d90a2583694c18b5b"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
           "fingerprint": "0627563088e66885fa5976408307f21165e6903f43fec73d90a2583694c18b5b"
         }
       ]

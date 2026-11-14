@@ -1,0 +1,7 @@
+CHANGELOG.md
+scripts/wiki-lint-mechanical.py
+scripts/wiki-promote.py
+scripts/wiki-reciprocate-backlinks.py
+skills/wiki-cycle/SKILL.md
+skills/wiki-report/SKILL.md
+tests/scripts/test_backlink_blocks.py

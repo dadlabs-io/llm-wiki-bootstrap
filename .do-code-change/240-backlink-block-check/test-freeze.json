@@ -925,5 +925,20 @@
       "reason": "green on arrival (lstrip already in strip_code); kills the mutant line.lstrip().startswith -> line.startswith in strip_code",
       "date": "2026-11-14"
     }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_replaces_the_real_block_below_a_block_example_in_a_code_fence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "75070c7e2bcf37275dfe30e305c6ed614c9a4b7b37e336844e7f8ac9d53340c1",
+    "frozen_at_step": "fix-4",
+    "frozen_at": "2026-11-14",
+    "red": {
+      "command": "uv run python tests/scripts/test_backlink_blocks.py test_rebuild_replaces_the_real_block_below_a_block_example_in_a_code_fence",
+      "exit": 1,
+      "tail": "_Other entries linking to this one. Managed by `wiki-reciprocate-backlinks.py`; do not hand-edit within the BACKLINKS-AUTO markers._\n- [A](../research/a.md)\n<!-- BACKLINKS-AUTO END -->\n```\n<!-- BACKLINKS-AUTO START -->\n## Backlinks (auto-maintained)\n_Other entries linking to this one._\n- [Title](old.md)\n<!-- BACKLINKS-AUTO END -->\n]\nFAIL test_rebuild_replaces_the_real_block_below_a_block_example_in_a_code_fence: the lint lists nothing after the rebuild  [[{'file': 'research/b.md', 'extra': ['research/old.md'], 'missing': ['research/a.md'], 'unclosed': False}]]\n1/4 passed",
+      "date": "2026-11-14"
+    }
   }
 ]

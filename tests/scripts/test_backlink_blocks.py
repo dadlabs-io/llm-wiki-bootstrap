@@ -553,6 +553,21 @@ def test_rebuild_keeps_the_prose_above_a_block_when_a_start_marker_is_quoted_inl
           payload.get("backlink_blocks", "key absent"))
 
 
+def test_rebuild_replaces_the_real_block_below_a_block_example_in_a_code_fence():
+    example = "```\n" + blk("x.md") + "\n```"
+    b = page("B", "A block looks like this:\n\n" + example + "\n\n" + blk("old.md"))
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "[B](b.md)"), "research/b.md": b})
+    out = texts["research/b.md"]
+    kept = b[: b.index("<!-- BACKLINKS-AUTO START -->\n", b.index(example) + len(example))]   # above the real block
+    check("b is its own text above the real block, fenced example included, byte for byte", out.startswith(kept),
+          out[:600])
+    check("the real block, after the example, lists a", "- [A](../research/a.md)" in out[len(kept):], out[-400:])
+    check("the example still lists x and the old stale link is gone",
+          "- [Title](x.md)" in out and "old.md" not in out, out[-600:])
+    check("the lint lists nothing after the rebuild", payload.get("backlink_blocks") == [],
+          payload.get("backlink_blocks", "key absent"))
+
+
 def test_rebuild_leaves_a_page_with_a_stray_start_untouched_over_two_rebuilds():
     b = page("B", STRAY + "\nOwn words under a stray marker, kept as written.")
     pages = {"research/a.md": page("A", "[B](b.md)"), "research/b.md": b}
