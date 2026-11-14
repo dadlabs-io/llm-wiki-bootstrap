@@ -273,19 +273,6 @@
   },
   {
     "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "unfinished_offers_resume_or_close_as_one_choice",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "77f0c59b421405ce2ecd95c374fe05b4a06544ab5b93be4e663a445f89ca3836",
-    "frozen_at_step": "mutation",
-    "frozen_at": "2026-11-14",
-    "green_reason": {
-      "reason": "added after a hand mutation pass: green on the code; fails alone on the mutant 'resume ...; and close it' (88/89)",
-      "date": "2026-11-14"
-    }
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
     "test_name": "mark_interrupted_prints_what_it_closed",
     "hash_of": "test",
     "hash_scope": "test+module",
@@ -296,5 +283,53 @@
       "reason": "added after a hand mutation pass: green on the code; fails alone on the mutant that drops the close-out's print (88/89)",
       "date": "2026-11-14"
     }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_offers_only_the_close_out_without_a_scratchpad",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "79dd901719e02a4eda12f5cb7dd940d1c0c69a5c92d54f342dc5e0f12e773986",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "review round 5 (T6): green on the code; fails on the mutant that offers resume without a scratchpad (89/91, with the older substring check)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "mark_interrupted_rewrites_the_first_status_line_only",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "7bd4d5059463d5ee1e54857e9d7550c2ca51c7df6b2c8d7506c1684822e9816b",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "review round 5 (spec-23): green on the code; fails alone on the surviving mutant count=0 (90/91)",
+      "date": "2026-11-14"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "unfinished_offers_resume_or_close_as_one_choice",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "08b7490a19581abdf9df8b7db54aaf6ba5d27981a2e9ef0ec17524f1dff15b92",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-14",
+    "green_reason": {
+      "reason": "fails alone on the mutant '; and close it' (88/89)",
+      "date": "2026-11-14"
+    },
+    "unfreezes": [
+      {
+        "reason": "review round 5 standards-32: label reworded to say the line offers resume or else the close-out; assertion unchanged",
+        "date": "2026-11-14",
+        "step": "mutation",
+        "hash": "08b7490a19581abdf9df8b7db54aaf6ba5d27981a2e9ef0ec17524f1dff15b92"
+      }
+    ],
+    "unfrozen_reason": "review round 5 standards-32: label reworded to say the line offers resume or else the close-out; assertion unchanged"
   }
 ]

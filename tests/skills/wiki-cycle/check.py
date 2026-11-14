@@ -2241,18 +2241,22 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
 
     def way_out(option: str, i: str) -> str:
         """`--<option> <id>` as the skill prints it: the id right after the option (a quote, backtick or `=` may
-        sit between). The notebook and --topic come before the option, so they never matter. A generic
+        sit between). `option` may be a regex fragment (e.g. "(?:resume|mark-interrupted)"); the id is escaped.
+        The notebook and --topic come before the option, so they never matter. A generic
         `--resume <cycle_id>` does not match: only this run's id does."""
         return r"--" + option + r"[\s=]+[`\"']?" + re.escape(i)
 
     def resume_offers(i: str) -> list[str]:
-        """What offers resume for run `i`: a `--resume <i>` (as way_out reads it), or any line that names `i`
-        and carries `--resume` in any form (the generic `--resume <cycle_id>` included). A `--resume` on a
-        line that does not name `i` (the skill's general instructions, a description of the option) is not
-        an offer for this run."""
+        """What offers resume for run `i`: a `--resume <i>` anywhere in the corpus (as way_out reads it), or a
+        line that names `i` and carries `--resume` directly followed (after spaces or `=` and an optional quote
+        or backtick) by `i` or by a `<...>` placeholder such as `<cycle_id>`. A bare `--resume` in prose
+        ("you didn't pass `--resume`") is not an offer, and neither is a `--resume` on a line that does not
+        name `i`. Each offer is listed once: a line already matched by way_out is not added again."""
         found = [m.group(0) for m in re.finditer(way_out("resume", i), corpus)]
-        found += [l.strip() for l in corpus.splitlines() if i in l and "--resume" in l]
-        return found
+        directly = re.compile(r"--resume[\s=]+[`\"']?(?:" + re.escape(i) + r"|<[^<>\n]*>)")
+        found += [l.strip() for l in corpus.splitlines()
+                  if i in l and directly.search(l) and not re.search(way_out("resume", i), l)]
+        return list(dict.fromkeys(found))
 
     # Step 0 ran: it writes the scratchpad first thing, so the new run's own scratchpad must exist and carry its id
     add("Step 0 ran: the new run's scratchpad exists and carries the new run's id", cid in stext,
@@ -2314,8 +2318,10 @@ def _check_unfinished(case: dict, add, res: list, ctx: dict, run: dict, run_dir:
         for name, i in ids.items():
             add(f"unfinished-runs.txt does not name the {name} run", i not in utext, utext[:200])
             add(f"Needs you does not name the {name} run", i not in needs, needs[:300])
+            offers = resume_offers(i)  # the same detector as the open case
+            closeouts = [m.group(0) for m in re.finditer(way_out("mark-interrupted", i), corpus)]
             add(f"no way out is offered for the {name} run",
-                not re.search(way_out("(?:resume|mark-interrupted)", i), corpus), "found")
+                not (offers or closeouts), {"resume": [o[:200] for o in offers][:3], "close-out": closeouts[:3]})
         add("nothing about unfinished runs in Needs you",
             not re.search(r"unfinished[^\n]{0,30}run", needs, re.I), needs[:300])
 

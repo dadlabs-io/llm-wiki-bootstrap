@@ -561,7 +561,7 @@ with tempfile.TemporaryDirectory() as td:
         mkrun("2026-10-18-01", scratch="in_progress")
         p = run("unfinished", "--run-folder", str(cur))
         line = next((l for l in p.stdout.splitlines() if l.startswith("unfinished: 2026-10-18-01 ")), "")
-        check("unfinished_offers_resume_or_close_as_one_choice: the printed line is the resume or the close-out",
+        check("unfinished_offers_resume_or_close_as_one_choice: the printed line offers the resume or else the close-out",
               line == "unfinished: 2026-10-18-01 (scratchpad says in_progress) — resume: /wiki-cycle t --resume "
                       '2026-10-18-01; or close it: wiki-cycle-scope.py --topic t unfinished --mark-interrupted '
                       '2026-10-18-01 --reason "<why>"', p.stdout)
@@ -574,6 +574,30 @@ with tempfile.TemporaryDirectory() as td:
               p.returncode == 0 and p.stdout.strip() == "unfinished: 2026-10-17-01 marked interrupted: said so",
               (p.returncode, p.stdout, p.stderr[-200:]))
     mark_interrupted_prints_what_it_closed()
+
+    def unfinished_offers_only_the_close_out_without_a_scratchpad():
+        mkrun("2026-10-19-01")
+        p = run("unfinished", "--run-folder", str(cur))
+        line = next((l for l in p.stdout.splitlines() if l.startswith("unfinished: 2026-10-19-01 ")), "")
+        check("unfinished_offers_only_the_close_out_without_a_scratchpad: the printed line is the close-out alone",
+              line == "unfinished: 2026-10-19-01 (no scratchpad) — close it: wiki-cycle-scope.py --topic t unfinished "
+                      '--mark-interrupted 2026-10-19-01 --reason "<why>"', p.stdout)
+    unfinished_offers_only_the_close_out_without_a_scratchpad()
+
+    def mark_interrupted_rewrites_the_first_status_line_only():
+        # the listing reads the first Status line; a later one (a quoted note in the log) is the user's text
+        d = mkrun("2026-10-20-01", scratch="in_progress")
+        pad = d / "scratchpad.md"
+        pad.write_text(pad.read_text(encoding="utf-8") + "**Status**: completed (copied from an old run)\n",
+                       encoding="utf-8")
+        p = run("unfinished", "--mark-interrupted", "2026-10-20-01", "--reason", "two status lines")
+        lines = pad.read_text(encoding="utf-8").splitlines()
+        status = [l for l in lines if l.startswith("**Status**:")]
+        check("mark_interrupted_rewrites_the_first_status_line_only: the later Status line is kept as written",
+              p.returncode == 0 and status == ["**Status**: interrupted",
+                                               "**Status**: completed (copied from an old run)"],
+              (p.returncode, p.stderr[-200:], lines))
+    mark_interrupted_rewrites_the_first_status_line_only()
 
 failed =[n for ok, n in results if not ok]
 for ok, n in results:
