@@ -150,6 +150,67 @@
         "tests/skills/wiki-cycle/fixtures/promote/scratchpad-full.md": "1790b401a51194138dfc189a16d47693baa8235d23819ea3025e3e6d8b312bd8",
         "tests/skills/wiki-cycle/fixtures/resume/scratchpad.md": "582ed45682be13f06f671a5f3d6501ce88fce1461095ec9580e8e0df78a5cdeb"
       }
+    },
+    {
+      "round": 3,
+      "at": "2026-11-14T22:39:20Z",
+      "diff_sha256": "97e162dd3c9d05e533caf73d22a2bf37d691e1e06b6c7f89d5d3161246ff00ef",
+      "findings_sha256": "96776be66cd435de37a64e08471fa646ab7df6c06ff1bc99b49dbfa2db5e7dc3",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-24",
+        "standards-25",
+        "standards-26",
+        "spec-14",
+        "spec-15",
+        "spec-16",
+        "spec-17",
+        "spec-18",
+        "spec-19",
+        "spec-20",
+        "spec-21"
+      ],
+      "new": [
+        "standards-24",
+        "standards-25",
+        "standards-26",
+        "spec-14",
+        "spec-15",
+        "spec-16",
+        "spec-17",
+        "spec-18",
+        "spec-19",
+        "spec-20",
+        "spec-21"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "49508a0ca59affb7be63a3c20eda1450bba30db58a031fc7fd226e4330493d3c",
+        "INSTALL-INVENTORY.md": "2b5ffe0d719881e5205f7fdac679a32b8f2a2f4cd0ce3995029e5a8192922c11",
+        "framework-docs/cycle-step-return-format.md": "e54d3e810a6fbad5f73299579c6af7b40b19f5ea4889576e72206821dd8f583e",
+        "scripts/wiki-lint-mechanical.py": "64eeb31c904a56af44277fd800d4dbad29692b8c0a7101103368ffd4c298a892",
+        "scripts/wiki-promote.py": "a87a6d66157c978c6709e9c69e4d00e9fdcc37ea7a3b471134bd11d04681d2ca",
+        "scripts/wiki-reciprocate-backlinks.py": "b97de63e98883d5f206ffcb492156abddd425a63287c8dfeb1a08b4869491d23",
+        "skills/wiki-cycle/SKILL.md": "f86b3fcb349ebd7174b22fdda4ec563b88ce376063b6d746f27de00be14a42ce",
+        "skills/wiki-cycle/reference.md": "bc9abfed8999d4d1892cc99f58f23ead153f6e96ab1f1635043825ebbc22a220",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "51e56f7498b6ec21af657d1484451f4a9cfed11a1ba32e8187aa4e91c45f2f0a",
+        "skills/wiki-lint/SKILL.md": "ac64674f14c51585aa353f07767f68450b13e1d1fcd9606af7929c411252a72f",
+        "skills/wiki-lint/wiki-seed/wiki-lint.md": "c08ef8f0d4d74d1689de07b93af31d193d16a4d3dba6c0cd3553f60c402d873a",
+        "skills/wiki-report/SKILL.md": "2cac7daa24c3d02ffa6d2e4095061cfb032ca0b2f963fc40cd2493f06d66dbe1",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "ccdfe92bad0389cfd7977bfce5b01c16f89f177d4b8df80184b1c48f33de8c39",
+        "tests/scripts/test_backlink_blocks.py": "18dbe313981731262899ce6cedd8102404c6467b82308c0e49b6edc6777f6796",
+        "tests/skills/PENDING.md": "46367035daba5e6191f9caad0ad48dc7e6f4365af5dc4e8a661f725d4da9882f",
+        "tests/skills/wiki-cycle/baseline-opus.json": "d953cfb1d3d52c6f56d036331eb1dafd7ae15ca1366c5a40840e9980d3eca23f",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "f8924e0cc1f67176823c4a39c868ec5d7a81ab2b003914fee206ea64eb0a68b8",
+        "tests/skills/wiki-cycle/cases.json": "3d61b7248efaae29bd256104fdbedf8168abeb0374efb6e768d4ac04089d8857",
+        "tests/skills/wiki-cycle/check.py": "f5425bf884d5690eafc4bd55b0f25d3baa1f0efe3ddf4db73493870685cf7aa3",
+        "tests/skills/wiki-cycle/fixtures/checker-gate/scratchpad.md": "146480c43d9283a7826a7656c0cf111ce95f4349c6cf08c5dc482f38d7e1b720",
+        "tests/skills/wiki-cycle/fixtures/checker/scratchpad.md": "369002b41ce4ee4d2c354b090ffb58f7c59653406f6a5ee485fc69e64eddb30b",
+        "tests/skills/wiki-cycle/fixtures/promote/scratchpad-full.md": "1790b401a51194138dfc189a16d47693baa8235d23819ea3025e3e6d8b312bd8",
+        "tests/skills/wiki-cycle/fixtures/resume/scratchpad.md": "582ed45682be13f06f671a5f3d6501ce88fce1461095ec9580e8e0df78a5cdeb"
+      }
     }
   ],
   "items": {
@@ -1146,6 +1207,237 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "0c0e5db19c17bafc5aa9c8cdf965f2ffbefb51f3e0b623f3ae3f5d0c09a61988"
+        }
+      ]
+    },
+    "standards-24": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] C2 `scripts/wiki-promote.py:303-304` \u2014 standards-15 is not fixed: the comment now says \"Outside a promotion only /wiki-cycle runs it (before each lint)\", but `skills/wiki-verify/SKILL.md:90` runs `wiki-reciprocate-backlinks.py --topic <topic> --vault <vault>` (\"re-run the integration scripts so the change propagates to backlinks/INDEX/MAP\") and `skills/wiki-rollback/SKILL.md:92` runs it in its Step 5 (I re-ran the Grep over `skills/**/SKILL.md` and saw both lines). The round-2 wording had the same false \"only\" claim; the round only reworded it. Fix: \"Outside a promotion, /wiki-cycle (before its lint), /wiki-verify and /wiki-rollback run it too.\"",
+      "file": "scripts/wiki-promote.py",
+      "line": 303,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7dd4ad85b0ea208807bfc0f148a4764867d6df8acc0ab1c7b78c22fd870de886",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7dd4ad85b0ea208807bfc0f148a4764867d6df8acc0ab1c7b78c22fd870de886"
+        }
+      ]
+    },
+    "standards-25": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S2/T5 `scripts/wiki-lint-mechanical.py:332, 336-338` against `scripts/wiki-reciprocate-backlinks.py:59-61` \u2014 two copies of the block rule now differ: the rebuild anchors START/END to their own line (\"a marker quoted mid-line is prose\"), the lint still counts `text.count(BACKLINK_START) > text.count(BACKLINK_END)` and cuts at `BACKLINK_START in prose` on text where only inline code is stripped, so an unticked mid-line START reads as \"block not closed\" in the lint while the rebuild ignores it. The new test (`tests/scripts/test_backlink_blocks.py:541`) backticks the marker, so the unticked case is untested. Fix: anchor the lint's START test the same way, or name the difference in the lint comment, and add a test with an unticked mid-line START. (Context, not raised: `scripts/_entry_checks.py:253` holds a third unanchored copy, untouched by this diff.)",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 332,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55"
+        }
+      ]
+    },
+    "standards-26": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] S1 `tests/scripts/test_backlink_blocks.py:540` \u2014 the name `..._when_a_start_marker_is_quoted_inline_twice` suggests two quotes, but the prose quotes the START once; \"twice\" means two rebuilds. Fix: rename to `..._survives_two_rebuilds`.",
+      "file": "tests/scripts/test_backlink_blocks.py",
+      "line": 540,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e432085d1591341f8a8b7e34f7da128a6de78d957c1d5b2ae463f1bb74349c0c",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e432085d1591341f8a8b7e34f7da128a6de78d957c1d5b2ae463f1bb74349c0c"
+        }
+      ]
+    },
+    "spec-14": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `skills/wiki-report/SKILL.md:278`, `framework-docs/cycle-step-return-format.md:175`, `skills/wiki-lint/SKILL.md:37` \u2014 a page with a START and no END is not safe to leave for the cycle's next run, and the docs do not say so. Intent: `skills/wiki-report/SKILL.md:278`: \"a page listed as a block not closed, or as a block inside an unclosed code fence, needs a hand fix to the page (add the end marker, or close the fence), which no rebuild makes\". `plan.md:61`: \"a page with a START and no END is listed as \"block not closed\", never a crash\". Implemented: `scripts/wiki-reciprocate-backlinks.py:164` `existing_match = BLOCK_RE.search(text)`, with `BLOCK_RE` (line 61) running from a START line to the next END line. On a stray START the first run appends a block (line 186) and the next run splices from the stray line to the new END (lines 175, 179), deleting the author's text between. `skills/wiki-cycle/SKILL.md:131-135` runs the rebuild every cycle. Read from code, not run. Pre-existing: the old `START.*?END` did the same. `checkpoints.md` records this as the red-team choice 5 trade-off (\"a stray START on its own line with no END can still be spliced by a second rebuild\"), but the docs' \"hand fix, which no rebuild makes\" wording still lets the cycle's own rerun do it first. Affected: any page with a stray START; its body text is deleted on the next cycle, and the lint then reads the page as clean. Fix: have the rebuild skip a page whose START count exceeds its END count, and say \"do not rerun\" for those rows; add a test that two rebuilds keep the text below a stray START. Or record the ruling that the trade-off stands.",
+      "file": "skills/wiki-report/SKILL.md",
+      "line": 278,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "5378af9db87b57291cd5ff46c821b1c1521f14cd3b7264fbe595168c510ce1b9",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "5378af9db87b57291cd5ff46c821b1c1521f14cd3b7264fbe595168c510ce1b9"
+        }
+      ]
+    },
+    "spec-15": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `scripts/wiki-lint-mechanical.py:1437` and `skills/wiki-cycle/SKILL.md:141` \u2014 the rerun advice is not scoped to extra and missing rows (sibling site of spec-9). Intent: `framework-docs/cycle-step-return-format.md:175` says only extra and missing rows are \"one the backlink rebuild got wrong\"; `scripts/wiki-lint-mechanical.py:1446` says \"block not closed (a `BACKLINKS-AUTO START` with no `END`): fix it by hand\". Implemented: lint:1437 \"so a page listed there means the rebuild went wrong; on its own, a page listed here is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script.\" The cycle SKILL line 141 says \"so a page it still lists means the rebuild went wrong\". Both cover every row. Affected: readers of the lint section and the cycle report for unclosed and in-fence rows. Fix: scope both sentences to extra and missing rows, and send unclosed and in-fence rows to the hand fix.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 1437,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "097f45ebbc9f4ce58dfdd34b99a844b68089f55f88c698130c01e3e5ed36772e",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "097f45ebbc9f4ce58dfdd34b99a844b68089f55f88c698130c01e3e5ed36772e"
+        }
+      ]
+    },
+    "spec-16": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `scripts/wiki-lint-mechanical.py:332` \u2014 the lint and the rebuild disagree on a START quoted mid-line in plain prose (spec-10, sibling site c). Intent: `doubt-log.md:13`: \"keeps lint and rebuild in agreement on that page\". `plan.md:67`: after one rebuild the lint \"lists nothing ... (the unclosed-block page aside, which stays listed)\". Implemented: the lint runs `if text.count(BACKLINK_START) > text.count(BACKLINK_END):` on text where only inline code is removed (lint:330, 299). The rebuild matches only line-anchored markers (`scripts/wiki-reciprocate-backlinks.py:60-61`). Prose such as \"The block starts at <!-- BACKLINKS-AUTO START --> and ends ...\" plus a real block is listed `unclosed` (`if me in unclosed:` at lint:352), which hides that page's extra and missing rows and gives a wrong hand-fix instruction. `scripts/_entry_checks.py:253, 261` uses a third, unanchored regex. The test at `tests/scripts/test_backlink_blocks.py:541` backticks the marker, which the lint strips, so this shape is untested. The trade-off is not recorded in `checkpoints.md`. Affected: a page that quotes the marker in prose; the lint's report for it. Fix: use the same line-anchored rule in the lint (and `_entry_checks.py`), or record the trade-off; add a lint test with the unticked prose.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 332,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55"
+        }
+      ]
+    },
+    "spec-17": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `scripts/wiki-reciprocate-backlinks.py:60-61, 164` \u2014 an indented block is no longer matched (spec-10, point b). Intent: `plan.md:52` (Invariant 2): \"a notebook whose links use none of the newly read forms, none inside code and no target with whitespace gets byte-identical blocks\". Indentation is not in its exclusions. Implemented: `BLOCK_RE` starts `^{START}[ \\t]*$`, with no leading whitespace; the removed line was `START.*?END` with DOTALL. An old block whose markers are indented is no longer found, so the rebuild appends a second block, while the lint (non-anchored, `:284`) still reads the old one and the extra row survives a rerun. That contradicts `CHANGELOG.md:17` (\"a rerun of the rebuild clears only extra and missing rows\"). No test has an indented marker (Grep). CRLF is unchanged: `read_text` translates and `scripts/_atomic_io.py:80` writes `newline=\"\"`, so output is LF before and after. Affected: any page whose block markers are indented; live presence unverified. Fix: allow `[ \\t]*` before the markers in `BLOCK_RE` and `START_LINE_RE`, or record it as a trade-off; add a test.",
+      "file": "scripts/wiki-reciprocate-backlinks.py",
+      "line": 60,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e00922bc1abce8776d3b20bb19dba65011f3d00990f078fe0c343d3f3d3aab84",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e00922bc1abce8776d3b20bb19dba65011f3d00990f078fe0c343d3f3d3aab84"
+        }
+      ]
+    },
+    "spec-18": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `plan.md:15` \u2014 \"a marker quoted in code is no block\" is not true for block placement (spec-10/12). Intent: `plan.md:15`: \"code is stripped before the page's own block is found, so a marker quoted in code is no block\". Implemented: `scripts/wiki-reciprocate-backlinks.py:139` reads raw text and `:164` searches it with no `strip_code`. A fenced example whose markers stand alone on their lines is matched and overwritten by the real block (`:175`). Pre-existing; this round's test covers only inline quotes. Affected: a page that shows the block format in a fence. Fix: run the placement search on the code-stripped view, or reword the plan to \"for link reading\"; add a fenced-example test.",
+      "file": "plan.md",
+      "line": 15,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "0627563088e66885fa5976408307f21165e6903f43fec73d90a2583694c18b5b",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "0627563088e66885fa5976408307f21165e6903f43fec73d90a2583694c18b5b"
+        }
+      ]
+    },
+    "spec-19": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `plan.md:67` \u2014 Step 2's \"aside\" names only the unclosed page; an in-fence page also stays listed after one rebuild (spec-11, partly addressed). Fix: add \"or the in-fence page\".",
+      "file": "plan.md",
+      "line": 67,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "c886f0f31177aa8df7137dfd33d5085059f6b2bbac8f61c1ec6bda6ee0cdce88",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "c886f0f31177aa8df7137dfd33d5085059f6b2bbac8f61c1ec6bda6ee0cdce88"
+        }
+      ]
+    },
+    "spec-20": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-lint-mechanical.py:294`, `scripts/wiki-reciprocate-backlinks.py:100` \u2014 indented fences are now in the CHANGELOG (spec-13 addressed), but no test has one (Grep for leading-space fences finds none). Fix: one lint and one rebuild test with an indented fence.",
+      "file": "scripts/wiki-lint-mechanical.py",
+      "line": 294,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "027f0f7ec5a203b213895c329588630e18ce7845ec6542a64b2e278429040a55"
+        }
+      ]
+    },
+    "spec-21": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_backlink_blocks.py:540` \u2014 the name `..._quoted_inline_twice` does not say it means two rebuilds. Fix: rename it (same point as the Standards nit).",
+      "file": "tests/scripts/test_backlink_blocks.py",
+      "line": 540,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e432085d1591341f8a8b7e34f7da128a6de78d957c1d5b2ae463f1bb74349c0c",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e432085d1591341f8a8b7e34f7da128a6de78d957c1d5b2ae463f1bb74349c0c"
         }
       ]
     }
