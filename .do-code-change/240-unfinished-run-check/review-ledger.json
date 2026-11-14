@@ -1171,11 +1171,16 @@
       "first_round": 3,
       "last_seen_round": 3,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 3,
       "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba"
+        },
         {
           "round": 3,
           "verdict": "open",
@@ -1192,11 +1197,16 @@
       "first_round": 3,
       "last_seen_round": 3,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 3,
       "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba"
+        },
         {
           "round": 3,
           "verdict": "open",
@@ -1213,11 +1223,16 @@
       "first_round": 3,
       "last_seen_round": 3,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 3,
       "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba"
+        },
         {
           "round": 3,
           "verdict": "open",
@@ -1312,11 +1327,16 @@
       "first_round": 3,
       "last_seen_round": 3,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 3,
       "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7f8c47ae288d3a5d8b99c86e3487e715f858e1a93c84101d4122293ab66113ba"
+        },
         {
           "round": 3,
           "verdict": "open",
