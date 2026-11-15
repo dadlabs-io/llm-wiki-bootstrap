@@ -1,0 +1,112 @@
+# Plan — the cycle's report names every fallback from the expected tool path (task #240, lesson #12)
+
+Classification: vertical slice (one user-visible behaviour: the cycle's report has a Fallbacks section that says what left its expected tool path, or says there was none). The first step already gives a user the section on a clean run; later steps add what fills it.
+
+## Problem Statement
+
+A `/wiki-cycle` step can leave its expected tool path (a different agent type, a different fetcher, a retried command, a default model after an unreadable setting file) and the report need not say so; 2026-08-01 a shell timeout was replaced by another tool and the skill's next rule was written around the substitute, not the cause ("the silence is the failure", pre-mortem #12).
+
+## Solution
+
+One general rule in `/wiki-cycle`'s `SKILL.md`: whenever a step used a substitute for its expected path, the orchestrator appends one line to `fallbacks.txt` in the run folder and one line to the scratchpad's Decisions log. Step 0 creates `fallbacks.txt` with a header line. `/wiki-report` reads it and shows a short `## Fallbacks` section just before `## ⚠️ Needs you`: one line per fallback, or the single line `Fallbacks: none`. An ingest worker names any fallback in its receipt's Notes column (told by its brief) and the orchestrator copies each into the file. No script, no agent definition and no contract doc changes.
+
+## Implementation Decisions
+
+- **The file is `fallbacks.txt`, plain text, in the run folder.** Not JSON: the suite's common checks require every run-folder `*.json` (bar three named ones) to carry the step fields and an `.md`, and the report is built from step JSONs only (contract invariant 5), which this file is not. Same family as `unfinished-runs.txt`, `promote-setting.txt` and `cost.md`, which the report already reads beside the step JSONs.
+- **Exact format** (the orchestrator, a model, writes it; a separator it writes reliably):
+  ```
+  # fallbacks from the expected tool path: step | expected path | what was used | why
+  Step 2 | wiki-ingester workers on the model in wiki-ingester-config.json | the default model, sonnet | the setting file is unreadable (warning from Step 0)
+  ```
+  Line 1 is the `#` header, written at Step 0, so the file is never empty (a zero-byte file is deleted by Step 9's junk rule and fails the suite's zero-byte check). Each later line has exactly four fields separated by ` | `; a field never holds ` | `. The step field names the step (`Step 2`). A keyword search on a machine set to full (see below) has its `why` begin with the fixed words `departure from the stop-and-report rule:`.
+- **Three states for the report**, and only these:
+  1. the file holds the header and nothing else → the section's one line `Fallbacks: none`;
+  2. the file holds fallback lines → one report line each, `- <step>: expected <expected>; used <used>; why <why>`, a departure line starting `- <step>: DEPARTURE from the stop-and-report rule: ...`;
+  3. the file is absent (a run begun before this rule, resumed, or `--report-only` on an older run folder) → the one line `Fallbacks: not checked (no fallbacks.txt in the run folder)`, never `none`. `--resume` does not repeat Step 0, so a resumed run does not create the file; a step of a resumed run that has a fallback to record creates the file with the header first, then appends. Standalone `/wiki-report` (no run folder) omits the section, as it omits the Cost line.
+- **What counts as a fallback**, stated in the rule so `none` is not ambiguous: a step used a substitute for its expected path: a different agent type (`general-purpose` for `wiki-ingester`), a different fetcher, the transcription after a subtitle 429, a re-run of a script after exit 75, a default where a setting file could not be read, a timeout worked around by another tool; and a keyword search on a machine whose mode is full. The existing specific lines (Step 2's `general-purpose`, `Fallback: transcribed`, the exit-75 re-run, the unreadable setting file) stay as written; the rule adds that each, when it fires, is also recorded. Not a fallback, so never listed: a step that failed with no substitute (already in its step JSON `errors` and the Needs-you lines), a step skipped by mode, a machine set to `search_mode: keyword` searching by keyword, the depth check's `skipped (keyword search)`.
+- **The keyword search on a full machine** (requirements Decision 1, decided): the rule names it as a departure from the stop-and-report rule in `/wiki-update` and the 2026-09-13 decision, never as an allowed fallback; that rule's text is not touched.
+- **Where each piece goes in the skill text** (no paths in the steps; the places are named): the general rule is a short paragraph beside "Every step writes `<step>.json` + `<step>.md`"; Step 0 creates the file with its header after the scratchpad; Step 2's worker briefs gain one sentence (a worker names any fallback it used in that item's Notes, as `Fallback: <expected> -> <used>, <why>`) and the orchestrator copies each to the file from the receipts; Step 8's list of what the report holds gains the Fallbacks section "just before ⚠️ Needs you"; Step 9's keep list names `fallbacks.txt`, because Step 9 deletes "a file of its own... a name no step or script writes" and this file is written by the orchestrator; `reference.md`'s "Cycle id and run folder" paragraph names it. The scratchpad line goes under the existing Decisions log, `- <now_stamp()> — fallback: <the file's line>` (no template change).
+- **`/wiki-report`'s template** gets a `## Fallbacks` section after Numbers and before `## ⚠️ Needs you`, with the three states above; the "Needs you is always the last section" rule and its Don't lines stay. The `--brief` rule is not changed.
+- **Helpers searched for, none needed**: no new function is written (the change is prose, a suite kind and cases). The suite's kind and its prepare/check functions follow `_prepare_unfinished` / `_check_unfinished` (new functions `_prepare_fallbacks`, `_check_fallbacks`, searched for: `fallback` in `check.py`, found none; `_needs_you`, `_scratch_status` and `_agent_calls` are reused, not copied).
+
+## Testing Decisions
+
+All new cases come from the `eval-case-writer`, written from requirements Decisions 1-5 and this plan's three states, never from the skill text, and saved unchanged; the session that edits the skill does not read `cases.json` while it edits (honour rule). Each runs red on the old copy and green on the new, on Sonnet and Opus (`run_skill_test.py wiki-cycle --cases <new> --red-green <ref before the change>`). Nothing more runs without Mark's yes; the cost of four cases (about $25-35 at #11's rates: $15.70 for two) waits for his go before the run.
+
+- **Seam: the cycle's report and run folder after a `--ingest-only` run**, new kind `fallbacks`, four cases (variants):
+  - `clean`: one queued source, full-mode machine, nothing falls back → report has the Fallbacks section reading `Fallbacks: none`, before Needs you; `fallbacks.txt` holds only its `#` header.
+  - `keyword-machine`: the case's `env` carries `WIKI_SEARCH_MODE=keyword` (the runner already passes a case's `env`, as wiki-search's keyword cases use it); one queued source → `Fallbacks: none`, header-only file, no line naming keyword search. Red on the old copy for the right reason: no section at all.
+  - `unreadable-ingester-config`: the fixture reuses `_prepare_models`' `ingester_config_broken` (a trailing comma in `wiki-ingester-config.json`; it runs on every case) and queues one source via the quick-run preparation; the cycle must fall back to the default model → `fallbacks.txt` has a four-field line naming Step 2 (or the models step), the ingester setting file and the default model; the scratchpad's Decisions log carries a `fallback` line; the report's Fallbacks section lists it before Needs you; the file is still in the run folder and committed at the end; the ingest workers' brief (`_agent_calls(run)`, each `wiki-ingester` prompt) tells the worker to name any fallback in its Notes. The existing `models` kind is never changed.
+  - `resumed-run-without-the-file`: the existing resume fixture's run folder (no `fallbacks.txt`) resumed to the report → `Fallbacks: not checked`, never `Fallbacks: none`.
+- **Seam avoided**: "wiki-ingester not installed, so `general-purpose`": the headless sessions run on the user's own config, where the agent is installed at user level, so a sandbox cannot make it missing without a runner change.
+- **Not provable by a test, and said so**: (1) a keyword search on a full machine listed as a departure: inducing it means testing a rule break, not a fixture; (2) the orchestrator copying a worker's `Fallback:` note into the file: no sandbox fixture makes a worker meet a host whose fetcher fallback fires (X, YouTube); (3) the standalone report's omission.
+- **Existing cases rerun on the new copy as a regression check** (Sonnet): `models-unreadable-setting-file` (its `report_names` check shares the fixture), `resume`, `earlier-complete-and-interrupted-runs-not-named` (Needs you unchanged), `empty-queue-clean-notebook-reads-zero-and-no-backlink-line-in-needs-you` (report layout). The rest of the suite is not run (red/green rule; no README trigger applies); a full run only on Mark's yes.
+- **Verify layers expected**: no production Python changes, so `prove_tests_bite.py` and the bar-unmoved check come back as named FAILs or not checked, as in lesson #11 (requirements Fact 12); red then green is the bite evidence for steps 1-4.
+- manual: step 5 — the rule's definition of a fallback read against requirements Decision 1 and Facts 30-31: the keyword departure sentence is there, the stop-and-report sentence in `skills/wiki-update/SKILL.md` and `/wiki-cycle` Step 2 is byte-identical to `HEAD`, a keyword-mode machine is excluded.
+- manual: step 6 — Step 2's brief sentence and the orchestrator's copy instruction read against requirements Decision 5; `git diff --stat` shows `agents/wiki-ingester/` untouched. The brief sentence itself is pinned by step 3's case (the `_agent_calls` check); the copy is manual.
+- manual: step 7 — the wiki-cycle and wiki-report usage pages, CHANGELOG and PENDING.md read against steps 1-6; the standalone-report omission read in `/wiki-report`'s template. The refresh and `--mode status` run at the finish, after verify.
+
+## Out of Scope
+
+- The timeout half of #12 (no new timeout, no Glob/Grep-for-`ls` rule), the concurrency half, lessons #9, #10, #11 (requirements Exclusions, Decision 6).
+- `framework-docs/cycle-step-return-format.md`: not edited. Decision 2 is "no contract change", and the run-folder tree there already omits lesson #10's `unfinished-runs.txt`; listing only `fallbacks.txt` would make the tree inconsistent, and listing both pulls lesson #10 into this change and bumps `framework-version: 9` for a side file that is not a step. The new file is named in `reference.md`'s run-folder paragraph instead.
+- Any script: none writes, lists or cleans the run folder's files (see the search below), and no output is added inside `wiki-feeds.py`, `wiki-fetch-*.py` or `wiki-qmd-query.py` (a branch a script takes without printing is not reported).
+- `agents/wiki-ingester/AGENT.md` and the receipt's columns; `/wiki-update`, `/wiki-discover`, `/wiki-triage`.
+- No script that checks a run for unreported fallbacks.
+- `--brief` mode of `/wiki-report`; the existing report lines; the missing `unfinished-runs.txt` row in the framework tree.
+
+## Scope
+
+- skills/wiki-cycle/**
+- skills/wiki-report/**
+- tests/skills/wiki-cycle/**
+- tests/skills/PENDING.md
+- CHANGELOG.md
+- INSTALL-INVENTORY.md (only if its wiki-cycle or wiki-report skill row names run-folder files or report sections; read at step 7)
+
+## Invariants
+
+- Every existing report line and step JSON is unchanged. Pinned by the suite's common checks that run in every case: "the cycle report's last section is Needs you" (`check.py`, the report-heads check), "every step JSON follows the contract", "no zero-byte stray files"; the step skeleton and `framework-version: 9` in `cycle-step-return-format.md` are untouched (`git diff` on `framework-docs/` is empty).
+- The stop-and-report rule is unchanged: `git diff` on `skills/wiki-update/` and `agents/wiki-ingester/` is empty, and the sentence in `/wiki-cycle` Step 2 about exit 75 and any other non-zero exit is byte-identical.
+- The unreadable-setting-file report line stays: `models-unreadable-setting-file`'s `report_names` check still passes on the new copy.
+- Earlier-run lines in Needs you unchanged: `earlier-complete-and-interrupted-runs-not-named` stays green on the new copy.
+- The existing wiki-cycle cases named under Testing Decisions stay green; the rest of the suite is not claimed.
+
+## Decisions needed
+
+none. Planner's calls, each with its reason, for the requester to overturn at confirmation: the file is absent → `Fallbacks: not checked`, never `none` (Decision 3: silence cannot be read as unchecked); `--resume` creates the file only when a step has a fallback to record; `framework-docs` untouched (above); the test seam is the unreadable ingester config, not a missing agent.
+
+## Steps
+
+1. A cycle's report has a Fallbacks section that reads `Fallbacks: none` when nothing left its path — done when the new `fallbacks` case `clean` is red on the old copy and green on the new (Sonnet and Opus):
+   - Expected: after a clean `--ingest-only` run, `fallbacks.txt` exists in the run folder holding only its `#` header; the report has a `## Fallbacks` section after Numbers and before `## ⚠️ Needs you` reading `Fallbacks: none`; Needs you is still the last section; the file is committed with the run (Step 9 keeps it).
+   - Failures: Step 9 deletes `fallbacks.txt` as "a file of its own" → the case fails on its committed-and-present check (so Step 9's keep list names it); the report omits the section → the case fails on the missing `Fallbacks: none`.
+   - Invariant: the report's last section is Needs you — pinned by the suite's common check.
+   - uses: the suite's `_needs_you`, `_scratch_status` (check.py); new functions `_prepare_fallbacks`, `_check_fallbacks`, searched for: `fallback` in check.py, found none. Skill edits: the general rule with its definition, Step 0's file creation, Step 8's list, Step 9's keep list, `reference.md`'s run-folder paragraph, `/wiki-report`'s template section.
+   Trivial stakes: no
+2. A run folder with no `fallbacks.txt` reads `Fallbacks: not checked`, never `none` — done when the new `fallbacks` case `resumed-run-without-the-file` is red on the old copy and green on the new (Sonnet and Opus), blocked by: 1:
+   - Expected: the existing resume fixture (no `fallbacks.txt`) resumed to the report → the Fallbacks section reads `Fallbacks: not checked`, and the file is not created by the resume.
+   - Failures: the report says `Fallbacks: none` for an absent file → the case fails; a resumed run creates a header-only file just to read `none` → the case fails on "file not created".
+   Trivial stakes: no
+3. A fallback the orchestrator made is recorded and listed — done when the new `fallbacks` case `unreadable-ingester-config` is red on the old copy and green on the new (Sonnet and Opus), blocked by: 1:
+   - Expected: with `wiki-ingester-config.json` unreadable, `fallbacks.txt` gains a four-field ` | ` line naming the step, the setting file and the default model used; the scratchpad's Decisions log carries a `fallback` line; the report's Fallbacks section lists it (one line, step, expected, used, why) before Needs you; every `wiki-ingester` worker's brief tells it to name any fallback in its Notes.
+   - Failures: the fallback is recorded in the report prose only and not in `fallbacks.txt`, or in the file only and not the report → the case fails on the missing side; a line with fewer than four fields → the case fails (the check matches field content, not exact bytes).
+   - Invariant: `models-unreadable-setting-file`'s `report_names` still matches — pinned by that existing case, rerun on the new copy.
+   Trivial stakes: no
+4. A machine set to keyword search is not listed — done when the new `fallbacks` case `keyword-machine` is red on the old copy and green on the new (Sonnet and Opus), blocked by: 1:
+   - Expected: with `WIKI_SEARCH_MODE=keyword` in the case's `env`, the report reads `Fallbacks: none`, `fallbacks.txt` holds only its header, no line names keyword search.
+   - Failures: the report lists keyword search as a fallback or departure on a keyword machine → the case fails.
+   Trivial stakes: no
+5. A keyword search on a machine set to full is listed as a departure, never as an allowed fallback — done when the rule's wording reads right against the decision (manual: step 5); no test induces a rule break.
+   Trivial stakes: no
+6. Ingest workers name their fallbacks and the orchestrator copies them into the file — done when step 3's case finds the sentence in every worker brief (test) and the copy instruction reads right (manual: step 6).
+   Trivial stakes: no
+7. Docs — the wiki-cycle and wiki-report usage pages, CHANGELOG, a PENDING.md row (cases, the red-green run id, baselines merged per case, what the tests do not show) say what changed (manual: step 7). The refresh and `--mode status` run at the finish, after verify, so nothing unreviewed is installed.
+   Trivial stakes: yes — docs only
+
+## Script and caller search (the evidence behind "no script changes")
+
+- `scripts/`: the only code that reads a run folder's files is `wiki-cycle-scope.py`: `unfinished_runs` tests only for `<id>-run-cycle-report.md` and `scratchpad.md`; `mark_interrupted` edits only the scratchpad; `last_semantic` and `last_synthesis` glob `*/*/lint-semantic.json` and `*/*/synthesis.json`; each other subcommand writes its own named file by `write_scope`. No script lists the run folder, cleans it or archives it, so a new file needs no script to know it. `wiki-lint-mechanical.py` and `wiki-promote.py` write only into a run folder given to them, by name.
+- The things that do enumerate it are prose and the suite: `/wiki-cycle` Step 9's keep list ("a name no step or script writes" is deleted; hence step 1 names the file), and `check.py`'s `run_dir.glob("*.json")` (why the file is `.txt`) and zero-byte check (why it has a header).
+- Receipt callers: the `wiki-ingester` receipt is read only by `/wiki-cycle` Step 2 (grep of `skills/` for "receipt": `wiki-cycle` SKILL.md, reference.md, its usage page, and `wiki-update/fetchers.md`'s "Raws to delete" line). `/wiki-update`, `/wiki-triage` and `/dream` do not read it (the requirements' guess that `wiki-update` does is not borne out). No `AGENT.md` change is needed.
+- `framework-docs/cycle-step-return-format.md`: its run-folder tree lists scope files and `promote-setting.txt` but not `unfinished-runs.txt`; not edited (Out of Scope).
