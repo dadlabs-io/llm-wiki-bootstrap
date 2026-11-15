@@ -9,6 +9,13 @@
 
 ---
 
+## 2026-11-15
+
+### The cycle's report names every step that left its expected tool path (task #240, lesson #12)
+- **Why**: on 2026-08-01 shell calls that timed out were quietly replaced by other tools, and the next rule was written around the substitute rather than the cause; the pre-mortem's lesson #12 says any fallback from the expected tool path is reported in the run's report.
+- **What**: `/wiki-cycle` has one rule for every step: a step that used a substitute for its expected path (a different agent type, a different fetcher, the transcription after a subtitle 429, a script run again after exit 75, a default where a setting file could not be read, a timeout worked around by another tool) appends one line to `fallbacks.txt` in the run folder (`step | expected path | what was used | why`, after a `#` header Step 0 writes) and to the scratchpad's Decisions log. A keyword search on a machine set to full is listed as a departure from the stop-and-report rule, never an allowed fallback; a machine set to keyword search is not listed. Ingest workers name a fallback in their receipt's Notes (`Fallback: expected X; used Y; why Z`) and the orchestrator copies it into the file. `/wiki-report` has a `Fallbacks` section just before ⚠️ Needs you: one line per fallback, `Fallbacks: none`, or `Fallbacks: not checked (no fallbacks.txt in the run folder)` for a run begun before this rule; `--brief` adds `Fallbacks: N — see the full report` only when N is above 0. Step 9 now sets the scratchpad to `completed` before the commit, so the commit holds the final record (Opus had committed first and left the scratchpad changed).
+- **Migration**: none. A run resumed from before this change reports `Fallbacks: not checked`.
+
 ## 2026-11-14
 
 ### The lint checks every backlink block, and the cycle rebuilds the blocks before it lints (task #240, lesson #11)
