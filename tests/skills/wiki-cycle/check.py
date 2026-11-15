@@ -783,7 +783,7 @@ def prompt(case: dict, ctx: dict) -> str:
     ctx["started"] = now_stamp()
     cycle_id = f"{_today(ctx)}-01"
     ctx["cycle_id"] = cycle_id
-    if case["kind"] in ("ingest-only", "scratch", "models", "fallbacks"):
+    if case["kind"] in ("ingest-only", "scratch", "models"):
         _prepare_quick(case, ctx)
     elif case["kind"] == "triage":
         _prepare_triage(case, ctx)
@@ -817,7 +817,7 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_unfinished(case, ctx)
     elif case["kind"] == "backlinks":
         _prepare_backlinks(case, ctx)
-    if case["kind"] == "fallbacks":  # _prepare_quick (the tuple above) already queued case["queue"]
+    elif case["kind"] == "fallbacks":
         _prepare_fallbacks(case, ctx, cycle_id)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
@@ -2500,13 +2500,16 @@ def _check_backlinks(case: dict, add, res: list, ctx: dict, run_dir: Path) -> No
         not re.search(r"backlink[- ]blocks?|out of step", needs, re.I), needs[:300])
 
 
-# ---------- kind "fallbacks": a step that used a substitute for its expected path is recorded and reported (task #240, lesson #12) ----------
+# ---------- kind "fallbacks": a step that used a substitute for its expected path is recorded and reported ----------
 
 FB_VARIANTS = ("clean", "resumed-run-without-the-file", "unreadable-ingester-config")
-FB_CONFIG = re.compile(r"wiki-ingester-config|ingester.{0,20}config", re.I)  # the suite's own 'names the setting file' idiom
-FB_DEFAULT_MODEL = re.compile(r"\bdefault\b|\bsonnet\b", re.I)
+FB_CLEAN, FB_RESUMED, FB_BROKEN = FB_VARIANTS
+FB_CONFIG = re.compile(r"wiki-ingester-config|ingester.{0,20}config", re.I)
+FB_DEFAULT_MODEL = re.compile(r"\bdefault\b|\bsonnet\b", re.I)  # tested on the line's third (used) field only
 FB_REPORT_LINE = re.compile(r"^\s*[-*]\s+[^:\n]+:\s*expected\b[^\n]*;\s*used\b[^\n]*;\s*why\b", re.I)
-FB_BRIEF = re.compile(r"fallback.{0,250}?\bnotes?\b|\bnotes?\b.{0,250}?fallback", re.I | re.S)
+# the worker sentence's own shape, `Fallback: expected X; used Y; why Z`; X, Y and Z may be letters, words or <placeholders>,
+# and Notes may or may not be mentioned next to it
+FB_BRIEF = re.compile(r"fallback[*`_]*\s*:[*`_]*\s*expected\b[^;\n]*;\s*used\b[^;\n]*;\s*why\b", re.I)
 FB_NONE = re.compile(r"Fallbacks:\**\s*none\b", re.I)
 FB_NOT_CHECKED = re.compile(r"Fallbacks:\**\s*not checked\s*\(\s*no fallbacks\.txt in the run folder\s*\)", re.I)
 
@@ -2519,10 +2522,11 @@ def _fb_variant(case: dict) -> str:
 
 
 def _prepare_fallbacks(case: dict, ctx: dict, cycle_id: str) -> None:
-    """The variant's own fixture, on top of what the dispatch did (_prepare_quick queued case["queue"];
-    _prepare_models writes the broken setting file only when the case sets ingester_config_broken).
-    The resumed variant is the existing resume fixture, whose run folder has no fallbacks.txt."""
-    if _fb_variant(case) == "resumed-run-without-the-file":
+    """The quick-run fixture (queues case["queue"]), then the variant's own: the resumed variant is the existing
+    resume fixture, whose run folder has no fallbacks.txt. _prepare_models writes the broken setting file only
+    when the case sets ingester_config_broken."""
+    _prepare_quick(case, ctx)
+    if _fb_variant(case) == FB_RESUMED:
         _prepare_resume(ctx, cycle_id)
 
 
@@ -2532,75 +2536,85 @@ def _fb_section(rtext: str):
     return m.group(1) if m else None
 
 
+def _fb_read(p: Path) -> str:
+    return p.read_text(encoding="utf-8", errors="replace") if p.is_file() else ""
+
+
 def _fb_before_needs(rtext: str) -> bool:
-    heads = [l[3:].strip().lower() for l in rtext.splitlines() if l.startswith("## ")]
-    fb = [i for i, h in enumerate(heads) if "fallbacks" in h]
-    nd = [i for i, h in enumerate(heads) if "needs you" in h]
-    return bool(fb) and bool(nd) and fb[0] < nd[0]
+    """The first Fallbacks heading sits above the first Needs you heading (same heading pattern as the Needs you checks)."""
+    fb = re.search(r"^##\s+[^\n]*\bfallbacks\b", rtext, re.I | re.M)
+    nd = re.search(r"^##\s+[^\n]*needs you", rtext, re.I | re.M)
+    return bool(fb and nd and fb.start() < nd.start())
+
+
+def _fb_fields(line: str) -> list:
+    return re.split(r"\s+\|\s+", line.strip())
 
 
 def _fb_four_fields(line: str) -> bool:
-    parts = re.split(r"\s+\|\s+", line.strip())
+    parts = _fb_fields(line)
     return len(parts) == 4 and all(p.strip() for p in parts)
 
 
-def _check_fallbacks(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
-    variant, cid = _fb_variant(case), ctx["cycle_id"]
-    if variant == "clean":  # an empty-queue run writes no update pair (as _check_backlinks)
-        res[:] = [x for x in res if x["name"] != "quick steps all wrote their pair"]
+def _fb_default_model(line: str) -> bool:
+    """The default model is named in the third field (used), not anywhere in the line."""
+    parts = _fb_fields(line)
+    return len(parts) >= 3 and bool(FB_DEFAULT_MODEL.search(parts[2]))
 
-    def read(p: Path) -> str:
-        return p.read_text(encoding="utf-8", errors="replace") if p.is_file() else ""
 
-    f = run_dir / "fallbacks.txt"
-    rtext = read(run_dir / f"{cid}-run-cycle-report.md")
-    section = _fb_section(rtext)
-    lines: list[str] = []
-
-    if variant == "resumed-run-without-the-file":
+def _fb_file_checks(variant: str, add, ctx: dict, run_dir: Path) -> list:
+    """The checks on fallbacks.txt itself; returns the file's lines (none when there is no usable file)."""
+    cid, f, lines = ctx["cycle_id"], run_dir / "fallbacks.txt", []
+    if variant == FB_RESUMED:
         add("the resume did not create fallbacks.txt", not f.exists(),
             f"{f.name} exists ({f.stat().st_size} bytes)" if f.exists() else "")
-    else:
-        add("fallbacks.txt exists in the run folder", f.is_file(),
-            sorted(p.name for p in run_dir.iterdir()) if run_dir.is_dir() else "no run folder")
-        if f.is_file():
-            data = f.read_bytes()
-            add("fallbacks.txt is not zero bytes (a zero-byte file is deleted as junk)", len(data) > 0, f"{len(data)} bytes")
-            if data:
-                lines = data.decode("utf-8", errors="replace").splitlines()
-                add("fallbacks.txt's first line is the # header", bool(lines) and lines[0].startswith("#"), lines[:2])
-                if variant == "clean":
-                    body = [l for l in lines if l.strip() and not l.lstrip().startswith("#")]
-                    add("fallbacks.txt holds only its header (nothing fell back)", not body, body[:3])
-            rel = f"notebooks/{NOTEBOOK}/_inbox/reports/{cid[:10]}/{cid}/fallbacks.txt"
-            changed = [x.strip() for x in _git(ctx, "diff", "--name-only", ctx["fixture_commit"], "HEAD").split("\n")]
-            add("fallbacks.txt is committed with the run", rel in changed, [x for x in changed if "fallbacks" in x])
+        return lines
+    add("fallbacks.txt exists in the run folder", f.is_file(),
+        sorted(p.name for p in run_dir.iterdir()) if run_dir.is_dir() else "no run folder")
+    if not f.is_file():
+        return lines
+    data = f.read_bytes()
+    add("fallbacks.txt is not zero bytes (a zero-byte file is deleted as junk)", len(data) > 0, f"{len(data)} bytes")
+    if data:
+        lines = data.decode("utf-8", errors="replace").splitlines()
+        add("fallbacks.txt's first line is the # header", bool(lines) and lines[0].startswith("#"), lines[:2])
+        if variant == FB_CLEAN:
+            body = [l for l in lines if l.strip() and not l.lstrip().startswith("#")]
+            add("fallbacks.txt holds only its header (nothing fell back)", not body, body[:3])
+    rel = f"notebooks/{NOTEBOOK}/_inbox/reports/{cid[:10]}/{cid}/fallbacks.txt"
+    changed = [x.strip() for x in _git(ctx, "diff", "--name-only", ctx["fixture_commit"], "HEAD").split("\n")]
+    add("fallbacks.txt is committed with the run", rel in changed, [x for x in changed if "fallbacks" in x])
+    return lines
 
+
+def _fb_report_checks(variant: str, add, rtext: str, section) -> None:
+    """The checks on the report's Fallbacks section (all variants)."""
     add("the report has a Fallbacks section", section is not None,
         [l for l in rtext.splitlines() if l.startswith("## ")] or "no report")
-    if section is not None:
-        if variant == "clean":
-            add("the Fallbacks section reads 'Fallbacks: none'", bool(FB_NONE.search(section)), section[:200])
-        elif variant == "resumed-run-without-the-file":
-            add("the Fallbacks section reads 'Fallbacks: not checked (no fallbacks.txt in the run folder)' "
-                "and the report never says 'Fallbacks: none'",
-                bool(FB_NOT_CHECKED.search(section)) and not FB_NONE.search(rtext), section[:200])
-        add("the Fallbacks section comes before Needs you", _fb_before_needs(rtext),
-            [l for l in rtext.splitlines() if l.startswith("## ")])
-
-    if variant != "unreadable-ingester-config":
+    if section is None:
         return
+    if variant == FB_CLEAN:
+        add("the Fallbacks section reads 'Fallbacks: none'", bool(FB_NONE.search(section)), section[:200])
+    elif variant == FB_RESUMED:
+        add("the Fallbacks section reads 'Fallbacks: not checked (no fallbacks.txt in the run folder)' "
+            "and the report never says 'Fallbacks: none'",
+            bool(FB_NOT_CHECKED.search(section)) and not FB_NONE.search(rtext), section[:200])
+    add("the Fallbacks section comes before Needs you", _fb_before_needs(rtext),
+        [l for l in rtext.splitlines() if l.startswith("## ")])
 
+
+def _fb_config_checks(add, lines: list, section, run: dict, run_dir: Path) -> None:
+    """The checks that only the unreadable-ingester-config variant has: the line, the log, the report line, the brief."""
     fb_lines = [l for l in lines if l.strip() and not l.lstrip().startswith("#")]
     conf = [l for l in fb_lines if FB_CONFIG.search(l)]
     add("fallbacks.txt has a fallback line below the header", bool(fb_lines), lines[:3])
     add("a fallback line names the ingester setting file in four non-empty ' | ' fields",
         any(_fb_four_fields(l) for l in conf), fb_lines[:3])
     add("the fallback line naming the ingester setting file names a default model",
-        any(FB_DEFAULT_MODEL.search(l) for l in conf), conf[:2])
+        any(_fb_default_model(l) for l in conf), conf[:2])
     add("no fallback line holds '>'", not [l for l in fb_lines if ">" in l], [l for l in fb_lines if ">" in l][:2])
 
-    dec = re.search(r"^##\s+Decisions\b[^\n]*\n(.*?)(?=^##\s|\Z)", read(run_dir / "scratchpad.md"), re.I | re.M | re.S)
+    dec = re.search(r"^##\s+Decisions\b[^\n]*\n(.*?)(?=^##\s|\Z)", _fb_read(run_dir / "scratchpad.md"), re.I | re.M | re.S)
     add("the scratchpad's Decisions log has a line containing 'fallback'",
         bool(dec and re.search(r"fallback", dec.group(1), re.I)), (dec.group(1) if dec else "no Decisions section")[:200])
     listed = [l for l in (section or "").splitlines() if FB_REPORT_LINE.match(l) and FB_CONFIG.search(l)]
@@ -2612,6 +2626,18 @@ def _check_fallbacks(case: dict, add, res: list, ctx: dict, run: dict, run_dir: 
     bare = [i for i, a in enumerate(workers) if not FB_BRIEF.search(str(a.get("prompt", "")))]
     add("every wiki-ingester worker's brief tells it to name any fallback in its Notes",
         bool(workers) and not bare, f"workers without the sentence: {bare}")
+
+
+def _check_fallbacks(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
+    variant = _fb_variant(case)
+    if variant == FB_CLEAN:  # an empty-queue run writes no update pair (as _check_backlinks)
+        res[:] = [x for x in res if x["name"] != "quick steps all wrote their pair"]
+    rtext = _fb_read(run_dir / f"{ctx['cycle_id']}-run-cycle-report.md")
+    section = _fb_section(rtext)
+    lines = _fb_file_checks(variant, add, ctx, run_dir)
+    _fb_report_checks(variant, add, rtext, section)
+    if variant == FB_BROKEN:
+        _fb_config_checks(add, lines, section, run, run_dir)
 
 
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
