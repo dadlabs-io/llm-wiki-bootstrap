@@ -1,0 +1,36 @@
+{
+  "slug": "240-backlink-block-check",
+  "outcome": "success",
+  "outcome_note": "Finishing decision: keep, on main. Verify VERDICT: FAIL on two named layers only, each approved by Mark: bar-unmoved (floor-guard exit 1: the INSTALL-INVENTORY row already holding 'TODO:' / 'not yet built', and '# noqa: E402' on the new test's _fake_qmd import; Mark 'Yes okay', Discord 2026-11-15) and tests-bite (prove_tests_bite.py COULD-NOT-RUN on scripts/, requirements Decision 4, Mark 2026-11-14; hand mutation pass 141 of 157 killed, 15 equivalent, gap C left as contrived). Every other layer PASS.",
+  "size": "full",
+  "size_moved_to_full": false,
+  "fixed_point": "f9b3aa200a86ce60716ce42dae48b6cff1022f88",
+  "branch": "main",
+  "stages": [
+    {"stage": "clarify and requirements", "start": "2026-11-14T15:00:44-05:00", "end": "2026-11-14T15:38:01-05:00", "retries": 0},
+    {"stage": "plan", "start": "2026-11-14T15:38:56-05:00", "end": "2026-11-14T15:38:56-05:00", "retries": 0},
+    {"stage": "red-team (8 kill-assumptions, plan revised)", "start": "2026-11-14T15:38:56-05:00", "end": "2026-11-14T15:58:23-05:00", "retries": 0},
+    {"stage": "implement steps 1-4, suite red then green", "start": "2026-11-14T15:58:23-05:00", "end": "2026-11-14T16:49:47-05:00", "retries": 0},
+    {"stage": "review rounds 1-6 with fix rounds 1-6", "start": "2026-11-14T16:49:47-05:00", "end": "2026-11-14T18:55:58-05:00", "retries": 6, "note": "6 review rounds, 6 fix rounds; ledger met after round 6"},
+    {"stage": "verify (first, FAIL: bar, coverage, tests-bite)", "start": "2026-11-14T18:55:58-05:00", "end": "2026-11-14T19:20:12-05:00", "retries": 0},
+    {"stage": "test-only round fix-8 (survivor gaps A, B, D, E)", "start": "2026-11-14T19:20:12-05:00", "end": "2026-11-14T19:39:50-05:00", "retries": 1},
+    {"stage": "verify again (named FAILs only)", "start": "2026-11-14T19:39:50-05:00", "end": "2026-11-14T20:06:14-05:00", "retries": 0},
+    {"stage": "finish: install, finishing decision (keep)", "start": "2026-11-15T10:00:00-05:00", "end": "2026-11-15T10:59:16-05:00", "retries": 0, "note": "start time approximate; the wait overnight is not counted"}
+  ],
+  "gates": {
+    "tests": "PASS (test_backlink_blocks 106/106; invariants 14/14, 44/44, 11/11, 12/12)",
+    "diff-contains-fix": "PASS",
+    "findings-addressed": "PASS (review-ledger met, 17 closed, 50 non-blocking, 6 rounds, after standards-34 re-recorded)",
+    "frozen-tests": "PASS (check-freeze exit 0)",
+    "coverage": "PASS (3c and 3d manual: step 3)",
+    "bar-unmoved": "FAIL, named, approved by Mark 2026-11-15 (two floor-guard hits)",
+    "in-scope": "PASS (scope-guard exit 0, 23 files)",
+    "tests-bite": "FAIL, named, approved by Mark 2026-11-14 (Decision 4; hand mutation pass)"
+  },
+  "run_budget_status": [
+    "minutes: 264 of 720 active minutes used, 456 left (1207 on the wall clock; a gap over 10 minutes is a wait, not counted)",
+    "turns: 961 of 2200 used (main session 263 across 2 sessions, sub-agents 698), 1239 left",
+    "cost: $63.97 of $120.00 used, $56.03 left (estimated at API list prices as of 2026-10-06)",
+    "run-budget: exit 0 - every cap that stops the run has room left"
+  ]
+}
