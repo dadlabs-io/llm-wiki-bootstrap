@@ -907,6 +907,7 @@
     "commit scoped to the notebook": true,
     "nothing left uncommitted in the notebook": true,
     "no zero-byte stray files": true,
+    "run: read reference.md before writing the scratchpad": true,
     "run: print the models before spawning any helper": true,
     "run: helpers are spawned unnamed": true,
     "run: no wake-up or loop scheduled": true,
