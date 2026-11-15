@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "captured_at": "2026-11-15T18:52:30Z",
+  "repo_root": "C:/github.com/llm-wiki-bootstrap",
+  "baseline_sha": "20039c7c18061deab4f69cc652dc071dbf55122d",
+  "head_at_capture": "90861b677e1a569cf041c1c83a68b7b85c49541a",
+  "tree_was_clean": false,
+  "untracked_at_baseline": {},
+  "untracked_capped": false,
+  "artifact_dir": ".do-code-change/240-report-fallbacks"
+}

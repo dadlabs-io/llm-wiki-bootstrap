@@ -101,7 +101,7 @@ Flag three categories:
 - `cycle_id` = `<date>-<NN>` (e.g. `2026-04-24-01`). If invoked standalone (not inside a `/wiki-cycle` run), determine `NN` by scanning the day's existing folders.
 - Also write `<cycle_id>-run-cycle-report.json` alongside it — the aggregated JSON union of per-step JSONs (see [cycle-step-return-format best practice]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md)).
 
-**Data source — when running inside `/wiki-cycle`**: read the per-step JSONs from `<run-folder>/` (`discover.json`, `update.json`, `lint-mechanical.json`, `lint-semantic.json`, `refresh.json`, `claims.json`, `synthesis.json`), `cost.md`, `unfinished-runs.txt` (earlier runs with no report), and the triage step's retry list and unmatched PDFs (`wiki-triage.py retry-list --cycle <cycle_id>`, `attach-pdfs`'s output). The report is assembled from those — don't re-run steps.
+**Data source — when running inside `/wiki-cycle`**: read the per-step JSONs from `<run-folder>/` (`discover.json`, `update.json`, `lint-mechanical.json`, `lint-semantic.json`, `refresh.json`, `claims.json`, `synthesis.json`), `cost.md`, `unfinished-runs.txt` (earlier runs with no report), `fallbacks.txt` (steps that left their expected tool path), and the triage step's retry list and unmatched PDFs (`wiki-triage.py retry-list --cycle <cycle_id>`, `attach-pdfs`'s output). The report is assembled from those — don't re-run steps.
 
 **Data source — when running standalone**: fall back to the Step 1 data-gathering commands (git log, filesystem scans). No per-step JSONs to read.
 
@@ -265,6 +265,17 @@ Based on the data above, suggest 3-5 concrete next actions:
 
 ---
 
+## Fallbacks
+
+One of three states, from `<run-folder>/fallbacks.txt`:
+- the file holds only its `#` header line: `Fallbacks: none`
+- the file holds fallback lines: one line each, in file order: for a file line `S | E | U | W`, exactly `- S: expected E; used U; why W`, the four fields copied word for word, nothing added or dropped
+- the file is absent: `Fallbacks: not checked (no fallbacks.txt in the run folder)`, never `none`
+
+Standalone (no run folder): omit this section.
+
+---
+
 ## ⚠️ Needs you
 
 Everything waiting on the user, one line each, with what to do and where:
@@ -287,7 +298,7 @@ Everything waiting on the user, one line each, with what to do and where:
 
 Print the report inline (not just a file path). The morning report is meant to be READ, not filed and forgotten. Show it directly, then mention where the file is saved.
 
-If `--brief`, just show the Numbers table, Recommendations and Needs you — skip the details.
+If `--brief`, just show the Numbers table, Recommendations and Needs you — skip the details. After Numbers, and only when `fallbacks.txt` holds N > 0 fallback lines, add one line: `Fallbacks: N — see the full report`.
 
 **`⚠️ Needs you` is always the last section**, in the file and inline: the user reads from the bottom up and looks there first.
 
