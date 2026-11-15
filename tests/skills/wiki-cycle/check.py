@@ -2505,13 +2505,15 @@ def _check_backlinks(case: dict, add, res: list, ctx: dict, run_dir: Path) -> No
 FB_VARIANTS = ("clean", "resumed-run-without-the-file", "unreadable-ingester-config")
 FB_CLEAN, FB_RESUMED, FB_BROKEN = FB_VARIANTS
 FB_CONFIG = re.compile(r"wiki-ingester-config|ingester.{0,20}config", re.I)
-# tested on the line's third (used) field only. It passes when that field holds `sonnet`, or `default` followed by `model` or
-# `sonnet` (`default model`, `default sonnet`, `default-model`). "the default setting" with no model named does not pass.
+# a model name's shape: `sonnet`, or `default` then `model`/`sonnet` (`default model`, `default-model`); _fb_default_model says which field
 FB_DEFAULT_MODEL = re.compile(r"\bsonnet\b|\bdefault[\s-]+(?:model|sonnet)\b", re.I)
 FB_REPORT_LINE = re.compile(r"^\s*[-*]\s+[^:\n]+:\s*expected\b[^\n]*;\s*used\b[^\n]*;\s*why\b", re.I)
-# the worker sentence's own shape, `Fallback: expected X; used Y; why Z`; X, Y and Z may be letters, words or <placeholders>
-FB_BRIEF = re.compile(r"fallback[*`_]*\s*:[*`_]*\s*expected\b[^;\n]*;\s*used\b[^;\n]*;\s*why\b", re.I)
-FB_NOTES = re.compile(r"\bnotes\b", re.I)  # the same brief also says Notes, where the worker writes the sentence
+# the worker sentence's own shape, `Fallback: expected X; used Y; why Z`, with X, Y and Z plain words: no `<` or `>`
+# (plan.md: the skill text writes the shape with no angle brackets, so a placeholder cannot reach the file line)
+FB_BRIEF = re.compile(r"fallback[*`_]*\s*:[*`_]*\s*expected\b[^;\n<>]*;\s*used\b[^;\n<>]*;\s*why\b[ \t]*[^\s<>]", re.I)
+FB_NOTES = re.compile(r"\bnotes?\b", re.I)  # Notes or Note; _fb_brief_ok binds it to the shape's own sentence
+FB_SENT_END = re.compile(r"[.!?](?:\s|$)|\n")  # a sentence or line end
+FB_WINDOW = 160  # characters either side of the shape that the Notes word may sit in
 FB_NONE = re.compile(r"Fallbacks:\**\s*none\b", re.I)
 FB_NOT_CHECKED = re.compile(r"Fallbacks:\**\s*not checked\s*\(\s*no fallbacks\.txt in the run folder\s*\)", re.I)
 FB_NO_PAIR = "quick steps all wrote their pair"  # the quick-run check an empty-queue run has no pair for (as _check_backlinks)
@@ -2566,8 +2568,14 @@ def _fb_default_model(line: str) -> bool:
 
 
 def _fb_brief_ok(prompt: str) -> bool:
-    """A worker's brief has the `Fallback: expected X; used Y; why Z` shape and says Notes, in the same brief."""
-    return bool(FB_BRIEF.search(prompt) and FB_NOTES.search(prompt))
+    """A worker's brief has the `Fallback: expected X; used Y; why Z` shape and says Notes in that shape's own sentence
+    or line: the text before it back to the last sentence or line end, or after it up to the next, FB_WINDOW characters at most."""
+    for m in FB_BRIEF.finditer(prompt):
+        before = FB_SENT_END.split(prompt[max(0, m.start() - FB_WINDOW):m.start()])[-1]
+        after = FB_SENT_END.split(prompt[m.end():m.end() + FB_WINDOW])[0]
+        if FB_NOTES.search(before) or FB_NOTES.search(after):
+            return True
+    return False
 
 
 def _fb_headings(rtext: str) -> list[str]:
@@ -2576,8 +2584,7 @@ def _fb_headings(rtext: str) -> list[str]:
 
 def _fb_lines(run_dir: Path) -> list[str]:
     """fallbacks.txt's lines; none when the file is missing or zero bytes."""
-    f = run_dir / "fallbacks.txt"
-    return f.read_bytes().decode("utf-8", errors="replace").splitlines() if f.is_file() else []
+    return _fb_read(run_dir / "fallbacks.txt").splitlines()
 
 
 def _fb_absent_file_check(add, run_dir: Path) -> None:
@@ -2617,7 +2624,7 @@ def _fb_has_section(add, rtext: str, section: str | None) -> None:
 
 
 def _fb_ordered(add, rtext: str, section: str | None) -> None:
-    """Without a Fallbacks section there is nothing to order, so no check is added (as before)."""
+    """Without a Fallbacks section there is nothing to order, so no check is added."""
     if section is not None:
         add("the Fallbacks section comes before Needs you", _fb_before_needs(rtext), _fb_headings(rtext))
 
@@ -2665,19 +2672,23 @@ def _fb_drop_no_pair(res: list) -> None:
 
 
 def _check_fallbacks(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
+    """Each variant's own checks, then the two report checks every variant has; the helpers know no variant."""
     rtext = _fb_read(run_dir / f"{ctx['cycle_id']}-run-cycle-report.md")
     section = _fb_section(rtext)
-    report = (lambda: _fb_has_section(add, rtext, section), lambda: _fb_ordered(add, rtext, section))
-    checks = {  # each variant's checks, chosen once here; the helpers know no variant
-        FB_CLEAN: (lambda: _fb_drop_no_pair(res), lambda: _fb_file_checks(add, ctx, run_dir),
-                   lambda: _fb_header_only_check(add, run_dir), lambda: _fb_label_none(add, section), *report),
-        FB_RESUMED: (lambda: _fb_absent_file_check(add, run_dir),
-                     lambda: _fb_label_not_checked(add, rtext, section), *report),
-        FB_BROKEN: (lambda: _fb_file_checks(add, ctx, run_dir),
-                    lambda: _fb_config_checks(add, section, run, run_dir), *report),
-    }
-    for step in checks[_fb_variant(case)]:
-        step()
+    variant = _fb_variant(case)
+    if variant == FB_CLEAN:
+        _fb_drop_no_pair(res)
+        _fb_file_checks(add, ctx, run_dir)
+        _fb_header_only_check(add, run_dir)
+        _fb_label_none(add, section)
+    elif variant == FB_RESUMED:
+        _fb_absent_file_check(add, run_dir)
+        _fb_label_not_checked(add, rtext, section)
+    else:
+        _fb_file_checks(add, ctx, run_dir)
+        _fb_config_checks(add, section, run, run_dir)
+    _fb_has_section(add, rtext, section)
+    _fb_ordered(add, rtext, section)
 
 
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
