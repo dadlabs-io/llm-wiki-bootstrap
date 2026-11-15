@@ -1,116 +1,129 @@
-# Review report, round 3 (focused): 240-report-fallbacks
+# Review report, round 4 (focused, the last the retry cap allows): 240-report-fallbacks
 
-Fixed point 1bcb08d (`git rev-parse` resolves). The working tree against it, leaving out `.do-code-change/`, is non-empty; no untracked files. This is the run's third round (cap 3). It is focused: the lenses saw the fix round's diff (`git diff a6704c0 HEAD`, 9 files) plus the sibling sites of each round-2 finding. Files round 2 reviewed and the fix left alone are out of the round and nothing new is raised in them. One Standards and one Spec lens ran as `code-reviewer-lens`, unnamed, default tier, spawned with `run_in_background: false`; the harness ran both in the background anyway and I took each report from its hand-back. No file is HIGH, so the Change risk lens was not run. The prescan was clean and the Standards lens was told not to raise review ids, dates or width in `.py` files. Round-2 ids are cited by the order of `review-findings.md` (Standards 1-10, Spec 1-6); by the checkpoints' list, spec-8 is the short-form label nit, spec-9 the `<why>` nit and standards-19 the heading-parse duplication.
+Fixed point 1bcb08d (`git rev-parse` resolved earlier in the run; the working tree against it, leaving out `.do-code-change/`, is non-empty, 12 files by `git diff --numstat`, far under 3,000 changed lines for an axis: one part). The round is focused: the lenses saw fix round 3's diff (`git diff 70f251a HEAD`: `check.py`, the wiki-cycle usage page, `PENDING.md`) plus the sibling sites of each round-3 finding, and re-verified four round-1 verdicts against the current text. Files earlier rounds reviewed and the fix left alone (`skills/wiki-cycle/SKILL.md`, `reference.md`, `skills/wiki-report/**`, `CHANGELOG.md`, `cases.json`, the baselines) are out of the round; the lenses read them only as siblings or for the re-verification. One Standards and one Spec lens ran as `code-reviewer-lens`, unnamed, default tier, spawned with `run_in_background: false`; the harness ran both in the background anyway and each report came back as a hand-back message. No file is HIGH, so the Change risk lens was not run. The prescan was clean and the Standards lens was told not to raise review ids, dates or width in `.py` comments.
 
 ## Standards
 
-- [important] PY9 / R15, `tests/skills/wiki-cycle/check.py:2514` and `:2570`: the Notes requirement is unanchored, so the check name overstates what it tests.
-  - The check is named "every wiki-ingester worker's brief tells it to name any fallback in its Notes". `FB_NOTES = re.compile(r"\bnotes\b", re.I)` is applied to the whole prompt: `return bool(FB_BRIEF.search(prompt) and FB_NOTES.search(prompt))`. A brief that drops the Notes instruction still passes if "notes" appears elsewhere in it.
-  - Fix: require the shape and `Notes` in one line or sentence (a bounded window), or rename the check (the name is pinned by the baselines).
-  - Reviewer's note: round 2 asked for "a `Notes` requirement to the same test" and this is that fix as written, so the finding is the fix's weakness, not a missed request. The lens could not tell whether a real worker brief mentions "notes" elsewhere (unverified below). The Spec lens raised the same point as a suggestion; the two labels are kept apart.
-- [suggestion] S2, `check.py:2577-2580` (`_fb_lines`) beside `:2542` (`_fb_read`): a second reader of `fallbacks.txt` with the same utf-8 `errors="replace"` decode. Fix: `_fb_lines` returns `_fb_read(run_dir / "fallbacks.txt").splitlines()`, the `is_file` guard living in `_fb_read`.
-- [suggestion] G16 / S6, `check.py:2671-2678`: the variant dispatch is a dict of tuples of lambdas with a `*report` splat; the order is set by tuple position and the lambdas only defer calls. Fix: a short `if`/`elif` on `_fb_variant(case)` calling the named helpers in order.
-- [nit] C1, `check.py:2620`: `"""Without a Fallbacks section there is nothing to order, so no check is added (as before)."""` refers to earlier code. Fix: drop "(as before)".
-- [nit] S1, `check.py:2670`: `report` names a pair of check thunks, not a report. Fix: `report_checks`.
-- [nit] C3, `check.py:2508` and `:2563`: the third-field rule for the default model is stated in both the comment and the docstring. Fix: keep the docstring, cut the comment to the regex's shape.
-- [nit] C1, `tests/skills/PENDING.md:73`: the row narrates which session broke the honour rule ("made by a session that had read `cases.json` (against the honour rule)…"); the row's columns are the change and why it was not run. Fix: keep run ids and checks not run in the row.
+- [important] PY9 / T1-adjacent correctness, `tests/skills/wiki-cycle/check.py:2513`: `FB_BRIEF` rejects a correct brief that writes placeholders.
+  - Quote: `expected\b[^;\n<>]*;`. A brief `Fallback: expected <tool>; used <substitute>; why <reason>` matches nothing, so `_fb_brief_ok` returns False and the check at `check.py:2665` fails the run.
+  - Fix: drop `<` from the pattern; the `>` test at `check.py:2654` already catches a placeholder that reaches `fallbacks.txt`.
+  - Reviewer's note: `plan.md:30` says the skill text writes the shape with no angle brackets, and fix round 3 recorded the saved briefs of run 20261115-163745 re-scored True on Sonnet and Opus, so the shipped wording passes; the defect is a stricter check than the plan's rule on the brief (the rule binds the note and the skill text, not an orchestrator's own brief wording).
+  - The lens also said the comment's pointer to `plan.md` (`check.py:2511-2512`) is unbacked because `plan.md:107` forbids only `>`. Disproved: `plan.md:30` states the no-angle-bracket rule for the shape; not a finding.
+- [important] T1, `tests/skills/wiki-cycle/check.py:2570` `_fb_brief_ok`: no test pins the round-3 window and angle-bracket rules; a grep of `tests/` finds the function only in `check.py`.
+  - Fix: add planted briefs to the free proof (a two-sentence brief, a placeholder brief, a Notes word more than 160 characters back).
+  - Reviewer's note: `plan.md:47` makes the free proof a throwaway script "never committed", so by the plan's own design the proof is not in the repository; the finding stands as the lens labelled it, and whether the plan's choice answers it is the run owner's call.
+- [important] C2, `tests/skills/PENDING.md:28`: the verification record is stale. The row says "after the two review fix rounds' check tightenings … 63/63" and "Green on the final text, both models: `20261115-163745`", but fix round 3 changed `_fb_brief_ok`'s pattern and window after that run. Fix: say the proof predates round 3 and what was re-scored, or rerun the free proof and the saved worker prompts through the new check.
+- [suggestion] `check.py:2571-2577`: a natural two-sentence brief fails. Traced by the lens: `Put any fallback in your Notes. Fallback: expected X; used Y; why Z` returns False, because the last sentence of the before-slice is empty after `. `. The docstring states the same-sentence bound on purpose, so this is a design call. Fix: accept the preceding sentence, or document the one-sentence form.
+- [nit] `check.py:2514`: `why\b[ \t]*[^\s<>]` accepts `` `…; why` `` with no reason (the backtick matches), and `Do not use Notes; Fallback: expected X; used Y; why Z` passes because `;` is not a sentence end. Fix: `why\b[ \t]+[^\s<>\`]`; the `;` wrong pass may be accepted.
+- [nit] C3, `check.py:2508` and `:2565`: both state the model-name shape; round-3 item 6 is half done. Fix: keep the shape in the docstring and make the comment name only `_fb_default_model`.
+- [nit] `check.py:2687`: `else:` silently covers `FB_BROKEN`. Fix: `elif variant == FB_BROKEN:`.
 
 Unverified:
-- Whether a real worker brief carries an unrelated word "notes" (which would make the false pass in the first finding happen in practice); it needs the brief text from a saved run.
-- The baseline key reorder was checked against the diff hunks only; the suite was not run (a review runs no test).
-- "Offline proof 63/63" and the run ids in PENDING.md: the run folders are not in the repository.
+- The saved worker prompts of run 20261115-163745 are not in the repository (a Glob found no run folder); only a re-score through `_fb_brief_ok` settles whether a real brief carries an unrelated "note".
+- R21: the old dispatch tuples are elided in the lens's diff, so it could not confirm each variant runs the same checks as before. (My own check below read the old and new hunks.)
+- The 52/52 offline proof and the saved-brief re-score are the run's own records; a review runs no test.
 
 Checks made:
-- Round-2 Standards 1 (`variant` branching): fixed. The helpers take no `variant`; `_check_fallbacks` (`check.py:2667-2680`) chooses each variant's ordered checks once. Residual style point is the dispatch finding above.
-- Round-2 Standards 2 (two Decisions-log forms): fixed. `SKILL.md:110` now reads "into the Decisions log in the general rule's form (above)", which is line 71's `- <now_stamp()> — fallback: <the file's line>`.
-- Round-2 Standards 3 (`FB_BRIEF` Notes): fixed as asked, with the anchoring weakness above.
-- Round-2 Standards 4 (default model): fixed. `FB_DEFAULT_MODEL = re.compile(r"\bsonnet\b|\bdefault[\s-]+(?:model|sonnet)\b", re.I)` on the third field rejects "the default setting".
-- Round-2 Standards 5 (drop literal): fixed inside the kind (`FB_NO_PAIR`, `_fb_drop_no_pair`). Not fixed as the finding asked: the same drop is still written out at `check.py:541`, `:2231` and `:2467` (the last identical to `_fb_drop_no_pair`'s body), so there is now one more spelling of it. Those sites are other kinds' code, which the developer left on purpose; suggestion level, not blocking.
-- Round-2 Standards 6 (`_fb_read` duplicates the read closures): not fixed. `_fb_read` (2542) still repeats the closures at about 2234 and 2478, and `_fb_lines` adds a near copy (first finding group above). Suggestion level, not blocking.
-- Round-2 Standards 7 and standards-19 (heading parse): partly fixed. The doubled `startswith("## ")` comprehension is now `_fb_headings` (2573), used at 2616 and 2622. The Needs-you pattern `r"^##\s+[^\n]*needs you"` is still at 2316, 2496 and 2549 (`_fb_before_needs`, this kind) beside `_needs_you` (2224); the sites outside the kind were left on purpose. Suggestion level, not blocking.
-- Round-2 Standards 8 (usage page states the resumed-run case): fixed in `wiki-seed/wiki-cycle.md:51`; the Spec section raises a wording point about that clause.
-- Round-2 Standards 9 (bare date): fixed; `git grep "(2026-11-15)"` finds it only in review reports. Standards 10 (`_fb_section -> str | None`): fixed; `from __future__ import annotations` is at `check.py:43`, and the lens found `requires-python = ">=3.12"`.
-- `check.py` parses; every `add(` name in the kind matches a baseline key (the Spec lens counted 8, 4 and 14 per case, equal on both models).
-- No new check was dropped: old and new per-variant check lists were compared branch by branch from the diff; the order of the report checks moved after the config checks and the baselines reflect it.
+- Round-3 Standards 1 (Notes unanchored): fixed in form. The Notes word must now sit in the shape's sentence or line within 160 characters (`check.py:2570-2578`); the lens traced `Notes:` before the shape passes, `Notes\nFallback…` fails, a Notes word further back fails. Weaknesses are the findings above.
+- Round-3 Standards 2 (`_fb_lines` duplicate decode): fixed, `_fb_read(run_dir / "fallbacks.txt").splitlines()` at `check.py:2587`.
+- Round-3 Standards 3 (dict of lambdas): fixed, an if/elif at `check.py:2679-2689`. I compared old and new hunks: the order of checks per variant is unchanged (clean: drop, file, header, none-label, then section and order; resumed: absent-file, not-checked label, then the two; broken: file, config, then the two), so the baseline key order still holds.
+- Round-3 Standards 4 ("(as before)") and 5 (the name `report`): fixed, both gone.
+- Round-3 Standards 6 (model rule in a comment and a docstring): partly fixed, see the nit.
+- Round-3 Standards 7 (PENDING narrating which session broke a rule): reworded to "Step 9's wording is by a developer that never opened the cases (review fix round 1)"; see the Spec section for what that rewording dropped.
+- Round-1 standards-1 held: the full label `Fallbacks: not checked (no fallbacks.txt in the run folder)` or "any run folder with no `fallbacks.txt`" is at `wiki-cycle.md:51`, `wiki-report.md:22`, `wiki-report/SKILL.md:273` (as "the file is absent"), `CHANGELOG.md:16-17`.
+- Round-1 standards-2 held: `SKILL.md:110` is the one copy rule; it maps `Fallback: transcribed (why)` to `Step 2 | subtitles | transcription | why`, matching `fetchers.md:36` (`Fallback: transcribed (subtitles HTTP 429)`); the YouTube bullet (line 107) names the short form without a second rule.
+- Round-1 standards-3 held for the default-model check (third field only, must hold `sonnet` or `default model/sonnet`: `Step 2 | wiki-ingester-config | default model | …` passes, `default setting` fails). The brief check is tight, tighter than its name on the points above.
+- Sibling sites of the worker-note shape (`SKILL.md:110`, `PENDING.md:28`, `CHANGELOG.md:16`, `wiki-report/SKILL.md:273`): all write plain `X; Y; Z` with Notes; none disagrees.
 
 | Rule or section | Verdict | Search |
 |---|---|---|
-| S1 | found | `report` (nit) |
-| S2 | found | `_fb_lines`; the outside-kind copies at 541, 2039, 2231, 2467, 2736 left on purpose |
-| S3, S4, S5, S7, S8, S9, S10, S11, S12 | clear | each helper reads its own inputs; the `add, rtext, section` triple is passed once per variant; every `_fb_*` name has a caller (Grep) |
-| S6 / F3 / G16 | found | `_fb_variant` branches at 2532 and 2679; the dict dispatch |
-| G25 | clear | literals at 2505-2517 read; the dropped name is a constant |
-| R1, N7, C5 | clear | `_fb_drop_no_pair` says what it does; no commented-out code |
-| R26 | clear | Grep `_fb_` and `FB_` in tests/skills: every new name is called |
-| Comments C1-C3, R2 | found | `check.py:2620`, `PENDING.md:73`, 2508 vs 2563; no TODO |
-| Names N2-N6, R3 | clear | R3 settled: `SKILL.md:110` and `:71` agree |
-| Functions (S13, G34, S14, G19, G28, G29, R4, G31, S15) | clear | `_check_fallbacks` is 14 lines; longest signature 4 parameters; nesting at most two levels |
-| Tests (T1, T3, T5, T6, R12-R14, T4) | clear | no skip added; the fallbacks cases are the coverage |
-| R15 | found | `FB_NOTES` |
-| Refactoring R21-R25 | clear | same checks per variant; the one behaviour change (Notes, model name) is named in the PENDING row |
-| Python PY1-PY8, PY10, PY11 | clear | no cast, Any, async, new import |
-| PY9 | found | `FB_NOTES` |
+| S1, S3, S8, S9, S10 | clear | names and helpers read in context |
+| S2 | clear | `_fb_lines` now reuses `_fb_read`; the copies in other kinds are outside the round |
+| S4, S5, S6 | clear | one dispatch at 2679-2689; variant validated once in `_fb_variant` |
+| S7, S11, S12 | n/a | single file; no class or subclass added |
+| G25 | clear | `FB_WINDOW` named |
+| F3, R1, N7, C5 | clear | no flag parameter; `_fb_drop_no_pair` named for its mutation; no commented code |
+| R26 | clear | `FB_SENT_END`, `FB_WINDOW`, `_fb_headings`, `FB_NONE`, `FB_REPORT_LINE` each used (2574, 2629, 2623, 2634, 2659) |
+| Comments C1-C3, R2 | found | C1 plan pointer disproved; C3 at 2508/2565; PENDING C2 above |
+| Names N2, N3, N5, N6, R3 | clear | new names read in context |
+| Functions S13, G34, S14, G19, G28, G29, G31, G16, S15 | clear | functions short; regex documented; constants used; R4 n/a (no nesting added) |
+| Tests T1 | found | `_fb_brief_ok` untested in the repo |
+| Tests T3, T5, T6, R12-R14, T4 | clear | no test behaviour beyond T1; no skip |
+| R15 | clear | the `notes?` loosening is stated in the comment |
+| Python PY1-PY3, PY7, PY8 | clear | types and imports read |
+| PY4-PY6, PY10, PY11 | n/a | no async, no unittest |
+| PY9 | found | the brief check's false fail on a placeholder brief |
+| R21-R25 | clear | R21 in part (old tuples compared by me); no test deleted |
 
-Read depth is in the file table. Well built: the variants' checks are chosen once and the helpers take no variant flag, the doubled heading comprehension is gone, and every new helper has a caller and a return annotation.
+| File | Risk | Read depth |
+|---|---|---|
+| `tests/skills/wiki-cycle/check.py` | LOW (test) | in full, 2500-2695 |
+| `tests/skills/PENDING.md` | LOW | in part (line 28, the changed row) |
+| `skills/wiki-cycle/wiki-seed/wiki-cycle.md` | LOW | in part (line 51, the changed line) |
+
+Well built: the Fallbacks checks are split into per-variant helpers with one dispatch, and the label, the file and the brief each have one definition.
 
 ## Spec
 
-- [suggestion] `tests/skills/wiki-cycle/check.py:2659`: the check name says each worker's brief tells it to name fallbacks "in its Notes", but the test needs only the shape and the word "Notes" somewhere in the prompt (`check.py:2570`).
-  - Intent: `plan.md:106`, "every `wiki-ingester` worker's brief tells it to name any fallback in its Notes"; `requirements.md:52` (Decision 5), "the worker's brief says to name any fallback it used in the receipt's Notes column".
-  - Code: `FB_NOTES = re.compile(r"\bnotes\b", re.I)` (`check.py:2514`); nothing binds Notes to the sentence. The shipped sentence at `SKILL.md:110` has both in one clause, so a false pass is narrow.
-  - Affected: the suite's only automated proof of the worker-brief step. Fix: one line or sentence for both, or rename. A partial close of round 2's Spec 4 on this point; the same defect as the Standards `important`, labelled by this lens as a suggestion.
-- [suggestion] `skills/wiki-cycle/wiki-seed/wiki-cycle.md:51` (new this round): "a resumed run where nothing fell back also reads \"not checked\", since resuming does not create the file".
-  - Intent: `plan.md:26` puts "a rule-era run resumed after its Step 0 with nothing found since" under the absent-file label, but `SKILL.md:53` has Step 0 create `fallbacks.txt`.
-  - Code: a rule-era run keeps its header-only file, and `skills/wiki-report/SKILL.md:271` reads that as `Fallbacks: none`. The clause is true only for a run begun before the rule; as written, "a resumed run" is broader.
-  - Affected: a reader interpreting a resumed run's report. Fix: limit the clause to runs begun before the rule, or cut it; reconcile `plan.md:26` with `SKILL.md:53`.
-- [nit] `check.py:2512`: the comment lets X, Y and Z be "letters, words or <placeholders>", and `FB_BRIEF` accepts angle brackets; `plan.md:30` says "X, Y and Z plain words (the skill text writes the shape with no angle brackets…)". The plan's rule is written for the note, so applying it to the brief is an inference. Fix: drop the allowance if the rule binds the brief too.
-- [suggestion] `tests/skills/PENDING.md:73`: the row says the resume and regression runs "ran on the text before the review rewordings (Step 2's copy rule, Step 9's wording)", but this round also added the `reference.md` Phase 9 `- **Status**: pending` line, which those runs lacked. Round 2's Spec 1 asked the row to state exactly what ran on which text. Fix: name the template line in that parenthetical.
+- [important] `tests/skills/PENDING.md:28` (wiki-cycle, wiki-report row): the verification record is stale.
+  - Intent: round-2 spec-4 asked the row to state exactly what ran on which text.
+  - Code: the row says "Green on the final text, both models: `20261115-163745` (the three new cases, 6/6)" and "63/63". `check.py` changed in fix round 3; `checkpoints.md` says "Offline proof 52/52 (setup part skipped: unchanged)" and "re-scored on the saved worker briefs of 20261115-163745: Sonnet True, Opus True". The row says neither, and no model run used the final `check.py`.
+  - Affected: anyone reading the row as proof of the final checker.
+  - Fix: "check.py changed in fix round 3: offline proof 52/52; the brief check re-scored on the saved briefs of 20261115-163745 (Sonnet True, Opus True); no model run on the final check.py".
+- [important] `tests/skills/PENDING.md:28`: the honour-rule deviation is no longer recorded.
+  - Intent: round-2 spec-4 asked the row to carry the honour-rule deviation (`plan.md` Testing Decisions: the session that edits the skill does not read `cases.json`).
+  - Code: round-3 Standards 7 had the row's sentence "The first Step 9 reorder was made by a session that had read `cases.json` (against the honour rule) …" cut to "Step 9's wording is by a developer that never opened the cases (review fix round 1)"; the row still says "Step 9 reordered (Mark: "Update before commit")", and `checkpoints.md` (the round-2 correction) says the first edit was made by a session that had read `cases.json`. The fix to a style nit removed a record a Spec finding had asked for.
+  - Fix: restore one clause: the first Step 9 reorder was made by a session that had read `cases.json`, and the deviation was accepted in round 2.
+- [important] `skills/wiki-cycle/SKILL.md:181` (round-1 spec-1 re-verified): the honour rule holds in form, not in substance.
+  - Intent: `plan.md` Testing Decisions, the Step 9 wording comes from a session that did not read `cases.json`.
+  - Code: current text "Before the commit, set the scratchpad's Status to `completed` and Phase 9 to `done`, so the commit holds the final record and nothing is changed after it." The first edit (commit `4f0c393`, made by the session that had read the cases) read "… before the commit, so the commit holds the final record and nothing is left uncommitted." I confirmed with `git show` that the clause "so the commit holds the final record" carries over verbatim; the order is the one the "nothing left uncommitted" check forced.
+  - Affected: the claim that fix round 1 re-owned the decision. Round 2 accepted spec-1; whether the fix-round-1 developer saw the first text is not in the repository.
+  - Fix: have a session that has not read `cases.json` restate the Step 9 order from the plan alone, or record the deviation as accepted (round 2 did) in the PENDING row (see the finding above).
+- [suggestion] `skills/wiki-cycle/SKILL.md:67` with `wiki-seed/wiki-cycle.md:51`: a pre-rule run resumed and then given a fallback writes the header first, so its report lists that fallback and never says the steps before the resume were not checked.
+  - Intent: `requirements.md` Decision 3 / `plan.md:26`, "so silence cannot be read as unchecked".
+  - Fix: say in the header or the report that steps before the resume were not checked.
+- [nit] `check.py:2514`: `FB_NOTES = re.compile(r"\bnotes?\b", re.I)` matches "Note" in "Note: …", so a brief sentence "Note: a fallback is written as `Fallback: expected X; used Y; why Z`." passes without asking for the Notes column. Fix: require "Notes" followed by "column", "cell" or "in that item's Notes".
+- [nit] `.do-code-change/240-report-fallbacks/plan.md:26` (not shipped, stale intent): "including a rule-era run resumed after its Step 0 with nothing found since" reads `not checked`; `SKILL.md:53` has Step 0 create the header-only file, which the report reads as `Fallbacks: none`. No shipped file says otherwise. Fix: correct `plan.md:26` to pre-rule runs.
 
 Unverified:
-- Whether the worker prompts of run 20261115-163745 carry the Notes instruction beside the shape (needs the saved Agent calls).
-- The "63/63" proof, the run ids and "About $48" (the checkpoints record about $30 and about $9; the 163745 cost is not recorded).
-- That `Fallback: transcribed (why)` maps to `Step 2 | subtitles | transcription | why` for every fetcher line form: `wiki-update/fetchers.md` was not read this round.
+- Whether the fix-round-1 developer saw the first Step 9 text or the failing check; only the session transcript settles it.
+- Byte-identity of the exit-75 and stop-and-report sentences to 1bcb08d, and that `framework-docs/`, `agents/wiki-ingester/`, `scripts/` and `skills/wiki-update/` are untouched: the lens had no shell. (My own check is below.)
+- The 52/52 offline proof and the saved-brief re-score; the run folders are not in the repository.
 
 Checks made:
-- Round-2 Spec 1 (PENDING row stale) and Spec 2 (checkpoints' reason for the first Step 9 edit): fixed. The row now says 63/63, cites `20261115-163745` for the green rerun and the baselines, states the honour-rule deviation, and no longer says "only by the two resume cases"; `checkpoints.md` carries "Correction (spec-5)" naming `check()`'s common tail. The row's remaining gap is the suggestion above.
-- Round-2 Spec 3 (`reference.md` Phase 9 Status line): fixed; `reference.md:65-66` now has `- **Status**: pending`. It cannot disturb the scripts: `wiki-cycle-scope.py` reads `^\*\*Status\*\*:` at line start (lines 540, 557), and the Phase 9 line starts `- `.
-- Round-2 Spec 4 (check-name over-claim): partly, see the findings above.
-- Round-2 spec-8 (short forms of the absent-file label): fixed. The full label `Fallbacks: not checked (no fallbacks.txt in the run folder)` is at `wiki-cycle.md:51`, `wiki-report.md:22`, `CHANGELOG.md:16` and `skills/wiki-report/SKILL.md:273`; `CHANGELOG.md:17` points to "the not-checked line above". The seed's later short mention is a back-reference after the full label.
-- Round-2 spec-9 (`<why>`): fixed. `SKILL.md:110` now writes `Fallback: transcribed (why)` and `Step 2 | subtitles | transcription | why`; the angle placeholders left in line 71 belong to the Decisions-log template, not to the worker note or the file line. The residual is the nit above.
-- Round-2 Spec 6 (Notes name) is the first finding. Round-2 Standards 8's design call (one "not checked" label, Mark 2026-11-15) is kept.
-- Invariants: `git diff 1bcb08d HEAD -U0 -- skills/wiki-cycle/SKILL.md` shows hunks only at lines 53, 67, 71, 110, 179 and 181, none touching the Step 2 text outside line 110; no hunk in `scripts/`, `framework-docs/` or `agents/wiki-ingester/`; Step 9's order (Status `completed` and Phase 9 `done` before the one commit) matches Mark's "Update before commit".
+- Round-3 Spec 1 (Notes word anywhere in the prompt): fixed in form; the residue is the `note` nit above.
+- Round-3 Spec 2 (seed clause on a resumed run): fixed in the shipped text. `wiki-cycle.md:51` now reads "a run begun before this rule, or resumed from one; such a run reads "not checked" even when nothing fell back after the resume, since resuming does not create the file", true for each kind of run (begun before the rule; begun after it and resumed after Step 0 reads `none`, since the file exists). The second half of that finding, reconciling `plan.md:26`, was not done (`git diff 70f251a HEAD` shows `plan.md` unchanged): the nit above.
+- Round-3 Spec 3 (placeholders): fixed, `<` and `>` now refused in the brief's shape (the Standards `important` is the side effect).
+- Round-3 Spec 4 (PENDING parenthetical): fixed, it now names "the scratchpad template's Phase 9 Status line"; the row's proof claims are the stale-record finding.
+- Round-1 standards-1, -2, -3: held (see Standards, Checks made).
+- Invariants and exclusions, by file list: `git diff 70f251a HEAD --stat` shows only the three files above moved this round; no timeout or Glob/Grep rule in the shipped text (`SKILL.md:71` lists "a timeout worked around" as reportable only); "up to 4" unchanged in `reference.md`; the exit-75 sentence at `SKILL.md:103` matches `requirements.md` Fact 13.
 
-| Plan step, decision or invariant | Verdict | Search or cite |
+| Plan step, decision or question | Verdict | Search or cite |
 |---|---|---|
-| Req D1, D2, D3, D4 | clear | `SKILL.md:71`, `reference.md:77`, `wiki-report/SKILL.md:268-273` |
-| Req D5 / plan Steps 3 and 6 (worker note, copy) | found | `SKILL.md:110`; `check.py:2568-2570`, 2658-2660 |
-| Req D6, Exclusions | clear | no timeout or Glob/Grep rule added |
-| Plan Step 0, Step 1 (file, header, keep list, section) | clear | `SKILL.md:53, 67, 181`; `wiki-report/SKILL.md:268-273` |
-| Plan Step 2 (`not checked`; resume creates no file) | found | `SKILL.md:67`; `check.py:2583-2587, 2630-2634`; the seed clause |
-| Plan Step 4, Step 5 | clear | `wiki-report/SKILL.md:301`; `SKILL.md:71` |
-| Plan Step 7 (docs, CHANGELOG, PENDING) | found | `PENDING.md:73` |
-| Invariants (stop-and-report, scripts, framework-docs, ingester agent) | clear | the diffs above |
-| Check names against baselines | clear | 8, 4 and 14 names per case equal on both models |
-| Round-2 Spec 1-6 | found / clear | see Checks made |
-
-Read depth is in the file table. Well built: each variant's checks are one ordered list and the baseline key order follows it; the full absent-file label is used at all five sites; Step 9 sets the scratchpad `completed` before the one commit as Mark ruled.
-
-## Change risk
-
-No high-risk file; the change-risk lens was not run.
+| S3-1 (i) worker brief names Notes | found (nit) | `check.py:2570-2578`, 2514 |
+| S3-1 (ii) seed clause per run kind | clear for shipped text; plan.md:26 stale | `SKILL.md:53, 67`, `wiki-cycle.md:51`, `wiki-report/SKILL.md:270-273` |
+| S3-1 (iii) no angle brackets | clear | `check.py:2511-2513` |
+| S3-1 (iv) Phase 9 template line named | clear | `PENDING.md:28` |
+| S3-2 row's 63/63 and "final text" | found | `PENDING.md:28`, `checkpoints.md` round 3 |
+| R1 standards-1 label in every doc | clear | `CHANGELOG.md:16-17`, `wiki-cycle.md:51`, `wiki-report.md:22`, `wiki-report/SKILL.md:273` |
+| R1 standards-2 one copy rule | clear | `SKILL.md:110`, `fetchers.md:36` |
+| R1 standards-3 tight checks | clear | `check.py:2505-2580` |
+| R1 spec-1 honour rule | found | `SKILL.md:181`, `git show 4f0c393`, `checkpoints.md` |
+| S3-3 exclusions and invariants | clear for the files read | Grep timeout, Glob, ls, up to 4, AGENT.md, framework-docs |
 
 | File | Risk | Part | Standards | Spec | Change risk |
 |---|---|---|---|---|---|
-| `skills/wiki-cycle/SKILL.md` | MEDIUM (behaviour rule the cycle follows) | 1 | in part (60-80, 107-110, changed lines; I read the whole file) | in full | not run |
-| `skills/wiki-cycle/reference.md` | LOW | 1 | in part (40-90) | in full | not run |
-| `skills/wiki-cycle/wiki-seed/wiki-cycle.md` | LOW | 1 | in part (the changed line) | in part (the changed lines) | not run |
-| `skills/wiki-report/wiki-seed/wiki-report.md` | LOW | 1 | in part (the changed line) | in part (the changed lines) | not run |
-| `CHANGELOG.md` | LOW | 1 | in part (the changed lines) | in part (the changed lines) | not run |
-| `tests/skills/PENDING.md` | LOW | 1 | in part (the row) | in part (the row) | not run |
-| `tests/skills/wiki-cycle/check.py` | LOW (test) | 1 | in part (2500-2690; every changed line) | in part (2480-2683) | not run |
-| `tests/skills/wiki-cycle/baseline-sonnet.json`, `baseline-opus.json` | LOW | 1 | in part (diff hunks) | in part (835-970 and hunks) | not run |
+| `tests/skills/wiki-cycle/check.py` | LOW (test) | 1 | in full (2500-2695) | in part (2480-2719, 3100-3138, 810-829) | not run |
+| `tests/skills/PENDING.md` | LOW | 1 | in part (row 28) | in part (1-92; row 28 in full) | not run |
+| `skills/wiki-cycle/wiki-seed/wiki-cycle.md` | LOW | 1 | in part (line 51) | in full | not run |
+| `skills/wiki-cycle/SKILL.md` | MEDIUM (behaviour rule), not moved this round | 1 | sibling read | in full | not run |
+| `skills/wiki-cycle/reference.md`, `skills/wiki-report/SKILL.md`, `skills/wiki-report/wiki-seed/wiki-report.md`, `CHANGELOG.md` | LOW, not moved this round | 1 | sibling read | in full / in part | not run |
 
-Every changed line of each moved file was read by both lenses; no changed line is named unread. `skills/wiki-report/SKILL.md` was a sibling-site read only, and `cases.json` and the other round-1 files the fix left alone are out of the round.
+Well built: the three report states and the one rendering rule read the same in `SKILL.md:41` and `wiki-report/SKILL.md`, the check order per variant survived the dispatch rewrite, and every new helper has a caller.
+
+## Change risk
+
+No high-risk file; the change-risk lens was not run. The table in the Spec section above is the file table.
 
 ## needs-a-human
 
@@ -118,12 +131,13 @@ Empty: no finding touches auth, authz, token or session handling, or a productio
 
 ## Summary
 
-- Standards: 7 findings (1 important, 2 suggestion, 4 nit). The worst is the unanchored Notes test under a name that says Notes.
-- Spec: 4 findings (3 suggestion, 1 nit). The worst is the same Notes test, plus the seed clause that says a resumed run reads "not checked" where a rule-era resumed run reads "none".
+- Standards: 7 findings (3 important, 1 suggestion, 3 nit). The worst: the brief check refuses a correct brief that writes placeholders, and no test pins the new window and bracket rules.
+- Spec: 6 findings (3 important, 1 suggestion, 2 nit). The worst: the PENDING row's verification record is stale and has lost the honour-rule deviation, and the Step 9 sentence keeps the first edit's clause.
 - Change risk: not run.
-- Blocking (critical or important): one, the Standards `important` on `check.py:2514`/`:2570`. It is the fix round-2 asked for, applied literally, so it is a judgement for the run's owner whether it blocks. Everything else is a suggestion or a nit.
-- Round-2 findings: all but three are confirmed fixed on the Checks made lines; Standards 5, 6 and 7 are fixed only inside the fallbacks kind, with copies left in other kinds' code (suggestion level).
-- Where the axes agree: the Notes test.
-- Not confirmed: the run results and the 63/63 proof (not in the repository), and what real worker briefs contain.
+- Blocking (critical or important): 6 labelled important, 5 distinct defects. By defect: (1) `FB_BRIEF` rejects angle brackets in a brief (Standards); (2) `_fb_brief_ok` untested in the repo (Standards, T1; `plan.md:47` makes the proof a throwaway); (3) PENDING row stale after fix round 3 (Standards and Spec, one defect on two axes); (4) PENDING row dropped the honour-rule deviation (Spec); (5) Step 9 sentence carries the first edit's clause (Spec; round 2 accepted it, so this is a re-verification, not a new fault). Everything else is a suggestion or a nit.
+- Round-3 findings: all 11 confirmed on the Checks made lines, fixed in form; two were fixed with a side effect (the bracket rule, the PENDING trim), one half done (the comment), one not done (`plan.md:26`, a pipeline note).
+- Round-1 verdicts: standards-1, -2, -3 still hold; spec-1 holds only as round 2 accepted it.
+- Where the axes agree: the PENDING row is stale.
+- Not confirmed: the run results, the 52/52 and 63/63 proofs, the saved worker briefs, and who read `cases.json` when.
 
 VERDICT: Standards FINDINGS · Spec FINDINGS · Change risk NOT RUN · needs-a-human 0

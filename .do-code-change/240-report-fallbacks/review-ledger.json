@@ -166,6 +166,59 @@
         "tests/skills/wiki-cycle/cases.json": "993f29f3eb6c8274f863172e149ee6a037a6bc5ccbd17710c23e452a9bd35213",
         "tests/skills/wiki-cycle/check.py": "15be5a969e6825405f25aa891cc3df0b7278097b9470b5400dbbd58d5210061b"
       }
+    },
+    {
+      "round": 4,
+      "at": "2026-11-15T22:22:40Z",
+      "diff_sha256": "a887b295c96e48bacce8d8b4a24c7d62049f445fa852f1437eeeca0106daa906",
+      "findings_sha256": "8c66cab5f5427a8c7bc97e54c64dc1941a7786ee356665c60f5cd37a39dd8b5d",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-30",
+        "standards-31",
+        "standards-32",
+        "standards-33",
+        "standards-34",
+        "standards-35",
+        "standards-36",
+        "spec-14",
+        "spec-15",
+        "spec-16",
+        "spec-17",
+        "spec-18",
+        "spec-19"
+      ],
+      "new": [
+        "standards-30",
+        "standards-31",
+        "standards-32",
+        "standards-33",
+        "standards-34",
+        "standards-35",
+        "standards-36",
+        "spec-14",
+        "spec-15",
+        "spec-16",
+        "spec-17",
+        "spec-18",
+        "spec-19"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "a2465c28fba44f157bd65c5c7409c43899a012fa9e35f4ea16814656f499dac1",
+        "skills/wiki-cycle/SKILL.md": "d8d464ef63f32393b8f141b1725f0364a38fb85550cd37361f64fa75cd89a1da",
+        "skills/wiki-cycle/reference.md": "92a9b5834cbbba328baf44badf4b4f2e431fa26250af21b1a6373efb595339d0",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "d0a5d00461f2b5c2fd2fb20930d4d9441a6547f0e103802fcd6bdeb34692d475",
+        "skills/wiki-report/SKILL.md": "67804e0b23468ff955bb29f5fcee18c26533b94ce684b184d79be88abdc4851e",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "a9a2f1b1640e1cefd4b3bd628c5da35f15e6995f59ab31f3e142675fe03d5103",
+        "tests/skills/PENDING.md": "d070c6de8f35fdba4239e233e61e6581b614df8bd0c3167dd40026463847858c",
+        "tests/skills/wiki-cycle/baseline-opus.json": "ecfe8827c7c2bb92363497e7d308c99623b28817c071adf0111ada6c6b8f67ab",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "d84a7690edc449cea36d55c76908a3c95919f6f21679d46fb4442fead2cf1917",
+        "tests/skills/wiki-cycle/cases.json": "993f29f3eb6c8274f863172e149ee6a037a6bc5ccbd17710c23e452a9bd35213",
+        "tests/skills/wiki-cycle/check.py": "7910851277c3de92c6bbceb41c9e3a9b1748ba33383e277ef83c1cf634497677"
+      }
     }
   ],
   "items": {
@@ -1258,6 +1311,279 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "d070c6de8f35fdba4239e233e61e6581b614df8bd0c3167dd40026463847858c"
+        }
+      ]
+    },
+    "standards-30": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] PY9 / T1-adjacent correctness, `tests/skills/wiki-cycle/check.py:2513`: `FB_BRIEF` rejects a correct brief that writes placeholders. Quote: `expected\\b[^;\\n<>]*;`. A brief `Fallback: expected <tool>; used <substitute>; why <reason>` matches nothing, so `_fb_brief_ok` returns False and the check at `check.py:2665` fails the run. Fix: drop `<` from the pattern; the `>` test at `check.py:2654` already catches a placeholder that reaches `fallbacks.txt`. Reviewer's note: `plan.md:30` says the skill text writes the shape with no angle brackets, and fix round 3 recorded the saved briefs of run 20261115-163745 re-scored True on Sonnet and Opus, so the shipped wording passes; the defect is a stricter check than the plan's rule on the brief (the rule binds the note and the skill text, not an orchestrator's own brief wording). The lens also said the comment's pointer to `plan.md` (`check.py:2511-2512`) is unbacked because `plan.md:107` forbids only `>`. Disproved: `plan.md:30` states the no-angle-bracket rule for the shape; not a finding.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2513,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a2bc515993fa9687bdab0778f6aaf9c8d37685f1acc894d46eb7cc96db79b213",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "a2bc515993fa9687bdab0778f6aaf9c8d37685f1acc894d46eb7cc96db79b213"
+        }
+      ]
+    },
+    "standards-31": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] T1, `tests/skills/wiki-cycle/check.py:2570` `_fb_brief_ok`: no test pins the round-3 window and angle-bracket rules; a grep of `tests/` finds the function only in `check.py`. Fix: add planted briefs to the free proof (a two-sentence brief, a placeholder brief, a Notes word more than 160 characters back). Reviewer's note: `plan.md:47` makes the free proof a throwaway script \"never committed\", so by the plan's own design the proof is not in the repository; the finding stands as the lens labelled it, and whether the plan's choice answers it is the run owner's call.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2570,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a2bc515993fa9687bdab0778f6aaf9c8d37685f1acc894d46eb7cc96db79b213",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "a2bc515993fa9687bdab0778f6aaf9c8d37685f1acc894d46eb7cc96db79b213"
+        }
+      ]
+    },
+    "standards-32": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] C2, `tests/skills/PENDING.md:28`: the verification record is stale. The row says \"after the two review fix rounds' check tightenings \u2026 63/63\" and \"Green on the final text, both models: `20261115-163745`\", but fix round 3 changed `_fb_brief_ok`'s pattern and window after that run. Fix: say the proof predates round 3 and what was re-scored, or rerun the free proof and the saved worker prompts through the new check.",
+      "file": "tests/skills/PENDING.md",
+      "line": 28,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "cee37917a05582783b9170251f150ffbb065a2253cf744d9d3129284589f66c5",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "cee37917a05582783b9170251f150ffbb065a2253cf744d9d3129284589f66c5"
+        }
+      ]
+    },
+    "standards-33": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `check.py:2571-2577`: a natural two-sentence brief fails. Traced by the lens: `Put any fallback in your Notes. Fallback: expected X; used Y; why Z` returns False, because the last sentence of the before-slice is empty after `. `. The docstring states the same-sentence bound on purpose, so this is a design call. Fix: accept the preceding sentence, or document the one-sentence form.",
+      "file": "check.py",
+      "line": 2571,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "376efe9c4e6f4f3e2b301fcd885ed9d2476f4c28aa657a099ca2b2932d1c9168",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "376efe9c4e6f4f3e2b301fcd885ed9d2476f4c28aa657a099ca2b2932d1c9168"
+        }
+      ]
+    },
+    "standards-34": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `check.py:2514`: `why\\b[ \\t]*[^\\s<>]` accepts `` `\u2026; why` `` with no reason (the backtick matches), and `Do not use Notes; Fallback: expected X; used Y; why Z` passes because `;` is not a sentence end. Fix: `why\\b[ \\t]+[^\\s<>\\`]`; the `;` wrong pass may be accepted.",
+      "file": "check.py",
+      "line": 2514,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3d23b203d285490d53c30b6a402370409ad5294194701149ab59cc1f364f19a8",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "3d23b203d285490d53c30b6a402370409ad5294194701149ab59cc1f364f19a8"
+        }
+      ]
+    },
+    "standards-35": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] C3, `check.py:2508` and `:2565`: both state the model-name shape; round-3 item 6 is half done. Fix: keep the shape in the docstring and make the comment name only `_fb_default_model`.",
+      "file": "check.py",
+      "line": 2508,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f157eb5befc01c8150a1847f75799ce4ed59f81ac795a23027e0be34ec7a3b23",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "f157eb5befc01c8150a1847f75799ce4ed59f81ac795a23027e0be34ec7a3b23"
+        }
+      ]
+    },
+    "standards-36": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `check.py:2687`: `else:` silently covers `FB_BROKEN`. Fix: `elif variant == FB_BROKEN:`.",
+      "file": "check.py",
+      "line": 2687,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "fb64fb85b5f47b9e35ba63a7951fb420d9c4c45f29a9acd7cd24989ac2c4b6e2",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "fb64fb85b5f47b9e35ba63a7951fb420d9c4c45f29a9acd7cd24989ac2c4b6e2"
+        }
+      ]
+    },
+    "spec-14": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `tests/skills/PENDING.md:28` (wiki-cycle, wiki-report row): the verification record is stale. Intent: round-2 spec-4 asked the row to state exactly what ran on which text. Code: the row says \"Green on the final text, both models: `20261115-163745` (the three new cases, 6/6)\" and \"63/63\". `check.py` changed in fix round 3; `checkpoints.md` says \"Offline proof 52/52 (setup part skipped: unchanged)\" and \"re-scored on the saved worker briefs of 20261115-163745: Sonnet True, Opus True\". The row says neither, and no model run used the final `check.py`. Affected: anyone reading the row as proof of the final checker. Fix: \"check.py changed in fix round 3: offline proof 52/52; the brief check re-scored on the saved briefs of 20261115-163745 (Sonnet True, Opus True); no model run on the final check.py\".",
+      "file": "tests/skills/PENDING.md",
+      "line": 28,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "cee37917a05582783b9170251f150ffbb065a2253cf744d9d3129284589f66c5",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "cee37917a05582783b9170251f150ffbb065a2253cf744d9d3129284589f66c5"
+        }
+      ]
+    },
+    "spec-15": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `tests/skills/PENDING.md:28`: the honour-rule deviation is no longer recorded. Intent: round-2 spec-4 asked the row to carry the honour-rule deviation (`plan.md` Testing Decisions: the session that edits the skill does not read `cases.json`). Code: round-3 Standards 7 had the row's sentence \"The first Step 9 reorder was made by a session that had read `cases.json` (against the honour rule) \u2026\" cut to \"Step 9's wording is by a developer that never opened the cases (review fix round 1)\"; the row still says \"Step 9 reordered (Mark: \"Update before commit\")\", and `checkpoints.md` (the round-2 correction) says the first edit was made by a session that had read `cases.json`. The fix to a style nit removed a record a Spec finding had asked for. Fix: restore one clause: the first Step 9 reorder was made by a session that had read `cases.json`, and the deviation was accepted in round 2.",
+      "file": "tests/skills/PENDING.md",
+      "line": 28,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "cee37917a05582783b9170251f150ffbb065a2253cf744d9d3129284589f66c5",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "cee37917a05582783b9170251f150ffbb065a2253cf744d9d3129284589f66c5"
+        }
+      ]
+    },
+    "spec-16": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `skills/wiki-cycle/SKILL.md:181` (round-1 spec-1 re-verified): the honour rule holds in form, not in substance. Intent: `plan.md` Testing Decisions, the Step 9 wording comes from a session that did not read `cases.json`. Code: current text \"Before the commit, set the scratchpad's Status to `completed` and Phase 9 to `done`, so the commit holds the final record and nothing is changed after it.\" The first edit (commit `4f0c393`, made by the session that had read the cases) read \"\u2026 before the commit, so the commit holds the final record and nothing is left uncommitted.\" I confirmed with `git show` that the clause \"so the commit holds the final record\" carries over verbatim; the order is the one the \"nothing left uncommitted\" check forced. Affected: the claim that fix round 1 re-owned the decision. Round 2 accepted spec-1; whether the fix-round-1 developer saw the first text is not in the repository. Fix: have a session that has not read `cases.json` restate the Step 9 order from the plan alone, or record the deviation as accepted (round 2 did) in the PENDING row (see the finding above).",
+      "file": "skills/wiki-cycle/SKILL.md",
+      "line": 181,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "83d4e01cff908def81ecf078067fbd16a02d5f2725f15fe290a65328c709c903",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "83d4e01cff908def81ecf078067fbd16a02d5f2725f15fe290a65328c709c903"
+        }
+      ]
+    },
+    "spec-17": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `skills/wiki-cycle/SKILL.md:67` with `wiki-seed/wiki-cycle.md:51`: a pre-rule run resumed and then given a fallback writes the header first, so its report lists that fallback and never says the steps before the resume were not checked. Intent: `requirements.md` Decision 3 / `plan.md:26`, \"so silence cannot be read as unchecked\". Fix: say in the header or the report that steps before the resume were not checked.",
+      "file": "skills/wiki-cycle/SKILL.md",
+      "line": 67,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "ff8c92a01b0047cc423d4c91603cf35992577bdb8a1a1a78c1c839412bde26d8",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "ff8c92a01b0047cc423d4c91603cf35992577bdb8a1a1a78c1c839412bde26d8"
+        }
+      ]
+    },
+    "spec-18": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `check.py:2514`: `FB_NOTES = re.compile(r\"\\bnotes?\\b\", re.I)` matches \"Note\" in \"Note: \u2026\", so a brief sentence \"Note: a fallback is written as `Fallback: expected X; used Y; why Z`.\" passes without asking for the Notes column. Fix: require \"Notes\" followed by \"column\", \"cell\" or \"in that item's Notes\".",
+      "file": "check.py",
+      "line": 2514,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "89ad0c8ba306929b5ca33f9c3318813b3263fcaa1bcbf4fd781c066a23c102eb",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "89ad0c8ba306929b5ca33f9c3318813b3263fcaa1bcbf4fd781c066a23c102eb"
+        }
+      ]
+    },
+    "spec-19": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `.do-code-change/240-report-fallbacks/plan.md:26` (not shipped, stale intent): \"including a rule-era run resumed after its Step 0 with nothing found since\" reads `not checked`; `SKILL.md:53` has Step 0 create the header-only file, which the report reads as `Fallbacks: none`. No shipped file says otherwise. Fix: correct `plan.md:26` to pre-rule runs.",
+      "file": ".do-code-change/240-report-fallbacks/plan.md",
+      "line": 26,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "4227110ab6d4baded9db6b5e2c9c7bacde0b1eab7d83c9fed10b66c46a56f4e7",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "4227110ab6d4baded9db6b5e2c9c7bacde0b1eab7d83c9fed10b66c46a56f4e7"
         }
       ]
     }
