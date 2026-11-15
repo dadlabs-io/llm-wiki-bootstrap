@@ -1,0 +1,1448 @@
+{
+ "base": "f9b3aa200a86ce60716ce42dae48b6cff1022f88",
+ "skipped_syntax": 8,
+ "baseline": {
+  "test_backlink_blocks.py": "99/99 passed",
+  "test_promote_backlinks.py": "14/14 passed",
+  "test_cycle_script_fixes.py": "44/44 passed",
+  "test_lint_spec_values.py": "11/11 passed",
+  "test_hub_tag.py": "12/12 passed"
+ },
+ "results": [
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 282,
+   "original": "BACKLINK_START = \"<!-- BACKLINKS-AUTO START -->\"",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 283,
+   "original": "BACKLINK_END = \"<!-- BACKLINKS-AUTO END -->\"",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 286,
+   "original": "BACKLINK_START_LINE_RE = re.compile(rf\"^[ \\t]*{re.escape(BACKLINK_START)}[ \\t]*$\", re.MULTILINE)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 287,
+   "original": "BACKLINK_END_LINE_RE = re.compile(rf\"^[ \\t]*{re.escape(BACKLINK_END)}[ \\t]*$\", re.MULTILINE)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 290,
+   "original": "BACKLINK_LINK_RE = re.compile(r\"\\]\\(([^()\\s#]+\\.md)(?:#[^()\\s]*)?\\)\")",
+   "mutant": "BACKLINK_LINK_RE = re.compile(r\"\\]\\(([^()\\s#]+\\.mx)(?:#[^()\\s]*)?\\)\")",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "67/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 297,
+   "original": "lines = text.split(\"\\n\")",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 298,
+   "original": "kept, in_fence, opened = [], False, 0",
+   "mutant": "kept, in_fence, opened = [], True, 0",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "52/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 298,
+   "original": "kept, in_fence, opened = [], False, 0",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 300,
+   "original": "if line.lstrip().startswith((\"```\", \"~~~\")):",
+   "mutant": "if not line.lstrip().startswith((\"```\", \"~~~\")):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "55/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 300,
+   "original": "if line.lstrip().startswith((\"```\", \"~~~\")):",
+   "mutant": "if line.lstrip().startswith((\"``\", \"~~~\")):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 300,
+   "original": "if line.lstrip().startswith((\"```\", \"~~~\")):",
+   "mutant": "if line.lstrip().startswith((\"```\", \"~~\")):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 300,
+   "original": "if line.lstrip().startswith((\"```\", \"~~~\")):",
+   "mutant": "if line.lstrip().endswith((\"```\", \"~~~\")):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "96/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 301,
+   "original": "in_fence = not in_fence",
+   "mutant": "in_fence = in_fence",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "89/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 301,
+   "original": "in_fence = not in_fence",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "89/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 302,
+   "original": "if in_fence:",
+   "mutant": "if not in_fence:",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "REAL GAP A: no test has a closed block above a later unclosed fence; the lint then lists a clean page as in_fence (shown by experiment)"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 303,
+   "original": "opened = i",
+   "mutant": "pass",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "REAL GAP A: no test has a closed block above a later unclosed fence; the lint then lists a clean page as in_fence (shown by experiment)"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 304,
+   "original": "elif not in_fence:",
+   "mutant": "elif in_fence:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "58/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 305,
+   "original": "kept.append(re.sub(r\"`[^`\\n]*`\", \"x\", line))",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "59/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 306,
+   "original": "return \"\\n\".join(kept), \"\\n\".join(lines[opened:]) if in_fence else \"\"",
+   "mutant": "return \"\\n\".join(kept), \"\\n\".join(lines[opened:]) if not in_fence else \"\"",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "73/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 316,
+   "original": "open_starts = 0",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 318,
+   "original": "if BACKLINK_START_LINE_RE.search(line):",
+   "mutant": "if not BACKLINK_START_LINE_RE.search(line):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "44/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 319,
+   "original": "open_starts += 1",
+   "mutant": "open_starts -= 1",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "92/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 319,
+   "original": "open_starts += 1",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "92/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 321,
+   "original": "open_starts = max(open_starts - 1, 0)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "76/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 322,
+   "original": "return open_starts > 0",
+   "mutant": "return open_starts >= 0",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "44/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 327,
+   "original": "out = set()",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 330,
+   "original": "out.add((page.parent / m.group(1)).resolve())",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "67/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 332,
+   "original": "continue   # a target that cannot be resolved (bad characters) is no page",
+   "mutant": "pass   # a target that cannot be resolved (bad characters) is no page",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent: continue at the end of the loop body"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 332,
+   "original": "continue   # a target that cannot be resolved (bad characters) is no page",
+   "mutant": "pass",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent: continue at the end of the loop body"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 341,
+   "original": "wiki_resolved = Path(wiki_root).resolve()",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "67/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 342,
+   "original": "rel_of = {f.resolve(): f.relative_to(wiki_root).as_posix() for f in entries}",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 343,
+   "original": "linkers = {r: set() for r in rel_of}",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 344,
+   "original": "listed = {}",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 345,
+   "original": "unclosed = set()",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 346,
+   "original": "in_fence = set()",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 348,
+   "original": "text, fenced = backlink_split(f.read_text(encoding=\"utf-8\", errors=\"replace\"))   # a marker quoted in code is no block",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 349,
+   "original": "block = BACKLINK_BLOCK_RE.search(text)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 350,
+   "original": "if backlink_start_unclosed(text):",
+   "mutant": "if not backlink_start_unclosed(text):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "44/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 351,
+   "original": "unclosed.add(f.resolve())   # a START with no END: its lines are not the page's own links either",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "92/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 353,
+   "original": "in_fence.add(f.resolve())   # a block the rebuild appended after a fence nobody closed: renders as code",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "95/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 354,
+   "original": "prose = BACKLINK_BLOCK_RE.sub(\"\", text)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 355,
+   "original": "stray = BACKLINK_START_LINE_RE.search(prose)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 356,
+   "original": "if stray:",
+   "mutant": "if not stray:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 357,
+   "original": "prose = prose[:stray.start()]",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "93/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 359,
+   "original": "if target in linkers and target != f.resolve():",
+   "mutant": "if target in linkers and target == f.resolve():",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 359,
+   "original": "if target in linkers and target != f.resolve():",
+   "mutant": "if not target in linkers and target != f.resolve():",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "59/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 359,
+   "original": "if target in linkers and target != f.resolve():",
+   "mutant": "if target in linkers or target != f.resolve():",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "93/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 360,
+   "original": "linkers[target].add(f.resolve())",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 361,
+   "original": "listed[f.resolve()] = backlink_targets(block.group(0), f) if block else set()",
+   "mutant": "listed[f.resolve()] = backlink_targets(block.group(0), f) if not block else set()",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 361,
+   "original": "listed[f.resolve()] = backlink_targets(block.group(0), f) if block else set()",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 369,
+   "original": "rows = []",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 371,
+   "original": "if me in unclosed:",
+   "mutant": "if not me in unclosed:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "44/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 372,
+   "original": "rows.append({\"file\": rel, \"extra\": [], \"missing\": [], \"unclosed\": True})",
+   "mutant": "rows.append({\"file\": rel, \"extra\": [], \"missing\": [], \"unclosed\": False})",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "93/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 372,
+   "original": "rows.append({\"file\": rel, \"extra\": [], \"missing\": [], \"unclosed\": True})",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "90/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 373,
+   "original": "continue",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "92/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 374,
+   "original": "if me in in_fence:",
+   "mutant": "if not me in in_fence:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "44/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 375,
+   "original": "rows.append({\"file\": rel, \"extra\": [], \"missing\": [], \"unclosed\": False, \"in_fence\": True})",
+   "mutant": "rows.append({\"file\": rel, \"extra\": [], \"missing\": [], \"unclosed\": False, \"in_fence\": False})",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "95/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 375,
+   "original": "rows.append({\"file\": rel, \"extra\": [], \"missing\": [], \"unclosed\": False, \"in_fence\": True})",
+   "mutant": "rows.append({\"file\": rel, \"extra\": [], \"missing\": [], \"unclosed\": True, \"in_fence\": True})",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "96/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 375,
+   "original": "rows.append({\"file\": rel, \"extra\": [], \"missing\": [], \"unclosed\": False, \"in_fence\": True})",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "95/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 376,
+   "original": "continue",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "95/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 377,
+   "original": "extra = sorted(name(p) for p in listed[me] - linkers[me])",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 378,
+   "original": "missing = sorted(name(p) for p in linkers[me] - listed[me])",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 379,
+   "original": "if extra or missing:",
+   "mutant": "if not extra or missing:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "59/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 379,
+   "original": "if extra or missing:",
+   "mutant": "if extra and missing:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "67/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 380,
+   "original": "rows.append({\"file\": rel, \"extra\": extra, \"missing\": missing, \"unclosed\": False})",
+   "mutant": "rows.append({\"file\": rel, \"extra\": extra, \"missing\": missing, \"unclosed\": True})",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "96/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 380,
+   "original": "rows.append({\"file\": rel, \"extra\": extra, \"missing\": missing, \"unclosed\": False})",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "67/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 889,
+   "original": "backlink_blocks = backlink_blocks_out_of_step(wiki_root, [f for f in files if not f.name.startswith(\".\")])",
+   "mutant": "backlink_blocks = backlink_blocks_out_of_step(wiki_root, [f for f in files if f.name.startswith(\".\")])",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "55/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 889,
+   "original": "backlink_blocks = backlink_blocks_out_of_step(wiki_root, [f for f in files if not f.name.startswith(\".\")])",
+   "mutant": "backlink_blocks = backlink_blocks_out_of_step(wiki_root, [f for f in files if not f.name.endswith(\".\")])",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 889,
+   "original": "backlink_blocks = backlink_blocks_out_of_step(wiki_root, [f for f in files if not f.name.startswith(\".\")])",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "42/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1451,
+   "original": "out.append(\"## \ud83d\udd17 Backlink Blocks Out of Step\")",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1452,
+   "original": "out.append(\"\")",
+   "mutant": "pass",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent: a blank line in the report"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1454,
+   "original": "\"lists a page that does not link here; `missing` = a page links here and the block leaves it out \"",
+   "mutant": "\"lists a page that does link here; `missing` = a page links here and the block leaves it out \"",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent for behaviour: report prose wording, not pinned"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1454,
+   "original": "\"lists a page that does not link here; `missing` = a page links here and the block leaves it out \"",
+   "mutant": "\"lists a page that does not link here; `missing` = a page links here or the block leaves it out \"",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent for behaviour: report prose wording, not pinned"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1456,
+   "original": "\"so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a \"",
+   "mutant": "\"so a page listed with extra and missing pages means the rebuild went wrong; run on its own, such a \"",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1457,
+   "original": "\"page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays \"",
+   "mutant": "\"page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if not it stays \"",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent for behaviour: report prose wording, not pinned"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1457,
+   "original": "\"page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays \"",
+   "mutant": "\"page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, or if it stays \"",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent for behaviour: report prose wording, not pinned"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1458,
+   "original": "\"listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix \"",
+   "mutant": "\"listed, look at the script. A block closed, or inside an unclosed code fence, needs a hand fix \"",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent for behaviour: report prose wording, not pinned"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1458,
+   "original": "\"listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix \"",
+   "mutant": "\"listed, look at the script. A block not closed, and inside an unclosed code fence, needs a hand fix \"",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent for behaviour: report prose wording, not pinned"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1460,
+   "original": "out.append(\"\")",
+   "mutant": "pass",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent: a blank line in the report"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1461,
+   "original": "if not backlink_blocks:",
+   "mutant": "if backlink_blocks:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "97/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1462,
+   "original": "out.append(\"_None: every backlink block lists exactly the pages that link to it._\")",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1464,
+   "original": "parts = []",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "55/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1465,
+   "original": "if row[\"unclosed\"]:",
+   "mutant": "if not row[\"unclosed\"]:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1466,
+   "original": "parts.append(\"block not closed (a `BACKLINKS-AUTO START` with no `END`): fix it by hand\")",
+   "mutant": "parts.append(\"block closed (a `BACKLINKS-AUTO START` with no `END`): fix it by hand\")",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "REAL GAP B: test_block_with_a_start_marker_lacking_its_end_is_named_in_the_report checks \"block not closed\" in the section, which the section prose always holds, so the row text is unpinned"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1466,
+   "original": "parts.append(\"block not closed (a `BACKLINKS-AUTO START` with no `END`): fix it by hand\")",
+   "mutant": "pass",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "REAL GAP B: test_block_with_a_start_marker_lacking_its_end_is_named_in_the_report checks \"block not closed\" in the section, which the section prose always holds, so the row text is unpinned"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1467,
+   "original": "if row.get(\"in_fence\"):",
+   "mutant": "if not row.get(\"in_fence\"):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "97/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1468,
+   "original": "parts.append(\"block inside an unclosed code fence: close the fence by hand\")",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1469,
+   "original": "if row[\"extra\"]:",
+   "mutant": "if not row[\"extra\"]:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1470,
+   "original": "parts.append(\"extra \" + \", \".join(f\"`{p}`\" for p in row[\"extra\"]))",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1471,
+   "original": "if row[\"missing\"]:",
+   "mutant": "if not row[\"missing\"]:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "97/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1472,
+   "original": "parts.append(\"missing \" + \", \".join(f\"`{p}`\" for p in row[\"missing\"]))",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1473,
+   "original": "out.append(f\"- `{row['file']}` \u2014 \" + \"; \".join(parts))",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "96/99 passed"
+  },
+  {
+   "file": "scripts/wiki-lint-mechanical.py",
+   "line": 1474,
+   "original": "out.append(\"\")",
+   "mutant": "pass",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent: a blank line in the report"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 63,
+   "original": "START_LINE_RE = re.compile(rf\"^[ \\t]*{re.escape(MARKER_START)}[ \\t]*$\", re.MULTILINE)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 64,
+   "original": "END_LINE_RE = re.compile(rf\"^[ \\t]*{re.escape(MARKER_END)}[ \\t]*$\", re.MULTILINE)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 65,
+   "original": "BLOCK_RE = re.compile(rf\"{START_LINE_RE.pattern}.*?{END_LINE_RE.pattern}\", re.MULTILINE | re.DOTALL)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 66,
+   "original": "LINK_RE = re.compile(r\"\\]\\(([^()\\s#]+\\.md)(?:#[^()\\s]*)?\\)\")",
+   "mutant": "LINK_RE = re.compile(r\"\\]\\(([^()\\s#]+\\.mx)(?:#[^()\\s]*)?\\)\")",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "61/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 93,
+   "original": "and \"_inbox\" not in p.relative_to(wiki_root).parts  # _inbox/ = staged and scratch, not entries",
+   "mutant": "and \"_inbox\" in p.relative_to(wiki_root).parts  # _inbox/ = staged and scratch, not entries",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "68/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 93,
+   "original": "and \"_inbox\" not in p.relative_to(wiki_root).parts  # _inbox/ = staged and scratch, not entries",
+   "mutant": "or \"_inbox\" not in p.relative_to(wiki_root).parts  # _inbox/ = staged and scratch, not entries",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "97/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 102,
+   "original": "rows: list[tuple[str, bool, bool]] = []",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 103,
+   "original": "in_fence = False",
+   "mutant": "in_fence = True",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "68/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 103,
+   "original": "in_fence = False",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 104,
+   "original": "opened = 0",
+   "mutant": "pass",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent: dead initial value (opened is set before any use)"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 106,
+   "original": "if line.lstrip().startswith((\"```\", \"~~~\")):",
+   "mutant": "if not line.lstrip().startswith((\"```\", \"~~~\")):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "68/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 106,
+   "original": "if line.lstrip().startswith((\"```\", \"~~~\")):",
+   "mutant": "if line.lstrip().startswith((\"``\", \"~~~\")):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 106,
+   "original": "if line.lstrip().startswith((\"```\", \"~~~\")):",
+   "mutant": "if line.lstrip().startswith((\"```\", \"~~\")):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 106,
+   "original": "if line.lstrip().startswith((\"```\", \"~~~\")):",
+   "mutant": "if line.lstrip().endswith((\"```\", \"~~~\")):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 107,
+   "original": "if not in_fence:",
+   "mutant": "if in_fence:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 108,
+   "original": "opened = len(rows)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 109,
+   "original": "in_fence = not in_fence",
+   "mutant": "in_fence = in_fence",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "91/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 109,
+   "original": "in_fence = not in_fence",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "91/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 110,
+   "original": "rows.append((line, True, False))",
+   "mutant": "rows.append((line, False, False))",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "REAL GAP C: a link on a fence line counts in the rebuild (the lint drops it); contrived, shown by experiment"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 110,
+   "original": "rows.append((line, True, False))",
+   "mutant": "rows.append((line, True, True))",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent: the unclosed flag of a fence line is read only on START lines, which a fence line never is"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 110,
+   "original": "rows.append((line, True, False))",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "96/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 112,
+   "original": "rows.append((line, in_fence, False))",
+   "mutant": "rows.append((line, in_fence, True))",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 112,
+   "original": "rows.append((line, in_fence, False))",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "58/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 113,
+   "original": "if in_fence:",
+   "mutant": "if not in_fence:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "67/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 114,
+   "original": "rows[opened:] = [(line, True, True) for line, _, _ in rows[opened:]]",
+   "mutant": "rows[opened:] = [(line, False, True) for line, _, _ in rows[opened:]]",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "98/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 114,
+   "original": "rows[opened:] = [(line, True, True) for line, _, _ in rows[opened:]]",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "95/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 121,
+   "original": "return \"\\n\".join(re.sub(r\"`[^`\\n]*`\", \"x\", line) for line, fenced, _ in fence_walk(text) if not fenced)",
+   "mutant": "return \"\\n\".join(re.sub(r\"`[^`\\n]*`\", \"x\", line) for line, fenced, _ in fence_walk(text) if fenced)",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "61/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 128,
+   "original": "open_starts = 0",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 130,
+   "original": "if START_LINE_RE.search(line):",
+   "mutant": "if not START_LINE_RE.search(line):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "68/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 131,
+   "original": "if unclosed:",
+   "mutant": "if not unclosed:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "92/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 132,
+   "original": "return True",
+   "mutant": "return False",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "95/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 133,
+   "original": "open_starts += 0 if fenced else 1",
+   "mutant": "open_starts += 0 if not fenced else 1",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "92/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 133,
+   "original": "open_starts += 0 if fenced else 1",
+   "mutant": "open_starts -= 0 if fenced else 1",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "92/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 133,
+   "original": "open_starts += 0 if fenced else 1",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "92/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 134,
+   "original": "elif not fenced and END_LINE_RE.search(line):",
+   "mutant": "elif fenced and END_LINE_RE.search(line):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 134,
+   "original": "elif not fenced and END_LINE_RE.search(line):",
+   "mutant": "elif not fenced or END_LINE_RE.search(line):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "92/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 135,
+   "original": "open_starts = max(open_starts - 1, 0)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 136,
+   "original": "return open_starts > 0",
+   "mutant": "return open_starts >= 0",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "68/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 142,
+   "original": "fenced_at: set[int] = set()  # offsets of the lines inside a fence, by the strip_code rule",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "84/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 143,
+   "original": "offset = 0",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 145,
+   "original": "if fenced:",
+   "mutant": "if not fenced:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 146,
+   "original": "fenced_at.add(offset)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "96/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 147,
+   "original": "offset += len(line) + 1",
+   "mutant": "offset -= len(line) + 1",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "96/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 147,
+   "original": "offset += len(line) + 1",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "96/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 149,
+   "original": "line_start = text.rfind(\"\\n\", 0, match.start()) + 1",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 150,
+   "original": "if line_start in fenced_at:",
+   "mutant": "if not line_start in fenced_at:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 151,
+   "original": "continue",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "96/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 152,
+   "original": "end = END_LINE_RE.search(text, match.end())",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 153,
+   "original": "if end:",
+   "mutant": "if not end:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "95/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 160,
+   "original": "text = strip_code(entry.read_text(encoding=\"utf-8\"))",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 162,
+   "original": "text = BLOCK_RE.sub(\"\", text)",
+   "mutant": "pass",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "REAL GAP D: a link written below the real block is lost (the stray-START cut then takes the block with all that follows); shown by experiment"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 163,
+   "original": "stray = START_LINE_RE.search(text)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 164,
+   "original": "if stray:  # a START with no END: the lines after it are the stray block's, not links",
+   "mutant": "if not stray:  # a START with no END: the lines after it are the stray block's, not links",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 165,
+   "original": "text = text[: stray.start()]",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "95/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 168,
+   "original": "out.append((entry.parent / match.group(1)).resolve())",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "61/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 192,
+   "original": "if has_unusable_start(text):",
+   "mutant": "if not has_unusable_start(text):",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "59/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 193,
+   "original": "return False, [], []  # a START with no END, or in a fence nobody closed: the lint lists the page, for a hand fix",
+   "mutant": "return True, [], []  # a START with no END, or in a fence nobody closed: the lint lists the page, for a hand fix",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "REAL GAP E: a skipped page is counted as updated in the rebuild summary; shown by experiment"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 218,
+   "original": "existing = find_block(text)",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 220,
+   "original": "if existing:",
+   "mutant": "if not existing:",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "64/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 221,
+   "original": "start, end = existing",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 225,
+   "original": "tgt = (entry.parent / m.group(1)).resolve()",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 230,
+   "original": "new_text = text[:start] + new_block + text[end:]",
+   "mutant": "pass",
+   "killed": true,
+   "killed_by": "test_backlink_blocks.py",
+   "tail": "94/99 passed"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 300,
+   "original": "\"_(none listed; a page with an unusable START marker (left open, or inside an unclosed fence) is left untouched, and the mechanical lint lists it)_\",",
+   "mutant": "\"_(none listed; a page with an unusable START marker (left open, or inside an unclosed fence) is left untouched, or the mechanical lint lists it)_\",",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent for behaviour: report prose wording, not pinned"
+  },
+  {
+   "file": "scripts/wiki-reciprocate-backlinks.py",
+   "line": 300,
+   "original": "\"_(none listed; a page with an unusable START marker (left open, or inside an unclosed fence) is left untouched, and the mechanical lint lists it)_\",",
+   "mutant": "\"_(none listed; a page with an unusable START marker (left open, and inside an unclosed fence) is left untouched, and the mechanical lint lists it)_\",",
+   "killed": false,
+   "killed_by": null,
+   "tail": "99/99 passed",
+   "classification": "equivalent for behaviour: report prose wording, not pinned"
+  }
+ ]
+}
