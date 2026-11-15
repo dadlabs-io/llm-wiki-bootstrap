@@ -740,6 +740,45 @@ def test_dirty_notebook_report_does_not_print_the_none_line():
           section(text, "Backlink Blocks Out of Step"))
 
 
+def test_lint_lists_nothing_for_a_matching_block_above_a_later_unclosed_fence():
+    p, text, payload = run_lint({"research/a.md": page("A", "[B](b.md)"),
+                                 "research/b.md": page("B", "\n" + blk("a.md") + "\n\n```\nnever closed")})
+    check("b's block matches its linker and sits above the fence: no row of any kind",
+          payload.get("backlink_blocks") == [], payload.get("backlink_blocks", "key absent"))
+
+
+def test_report_row_for_an_unclosed_block_names_the_page_with_the_cause():
+    p, text, payload = run_lint({"research/a.md": page("A", "[B](b.md)"), "research/b.md": page("B", "\n" + UNCLOSED)})
+    rows = [ln for ln in section(text, "Backlink Blocks Out of Step").splitlines() if ln.startswith("- `research/b.md`")]
+    check("one row line names b and says its block is not closed",
+          len(rows) == 1 and rows[0].startswith("- `research/b.md` — block not closed (a `BACKLINKS-AUTO START` with no `END`)"),
+          rows)
+
+
+def test_rebuild_keeps_a_link_written_below_the_real_block():
+    below = "\n\n[C](c.md)\n"
+    b = page("B", "\n" + blk("a.md") + below.rstrip("\n"))
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "[B](b.md)"), "research/b.md": b,
+                                           "research/c.md": page("C")})
+    out = texts["research/b.md"]
+    kept = b[: b.index("\n<!-- BACKLINKS-AUTO START -->\n") + 1]   # everything above the real block's START line
+    check("the rebuild ran and c's block lists b, the page that links to it below its own block",
+          r.returncode == 0 and "- [B](../research/b.md)" in texts["research/c.md"], (r.stderr[-300:], texts["research/c.md"][-300:]))
+    check("b is its own text above the block and the text below the block, byte for byte",
+          out.startswith(kept) and out.endswith("<!-- BACKLINKS-AUTO END -->" + below), out[-400:])
+    check("the lint lists nothing after the rebuild", payload.get("backlink_blocks") == [],
+          payload.get("backlink_blocks", "key absent"))
+
+
+def test_rebuild_summary_does_not_count_a_skipped_page_as_updated():
+    r, texts, payload = rebuild_then_lint({"research/a.md": page("A", "[B](b.md) and [C](c.md)"),
+                                           "research/b.md": page("B", "\n" + STRAY), "research/c.md": page("C")})
+    check("the summary line counts three entries, one updated (c), one backlink added",
+          "Processed 3 entries; updated 1; +1 backlinks, -0." in r.stdout.splitlines(), (r.stdout[-300:], r.stderr[-300:]))
+    check("b, the skipped page, is left as written", texts["research/b.md"] == page("B", "\n" + STRAY),
+          texts["research/b.md"][-300:])
+
+
 def run_all(selected: list[str]) -> int:
     tests = [(n, f) for n, f in sorted(globals().items(), key=lambda kv: kv[0]) if n.startswith("test_") and callable(f)]
     names = {n for n, _ in tests}

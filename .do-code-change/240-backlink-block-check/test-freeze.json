@@ -1071,5 +1071,57 @@
       }
     ],
     "unfrozen_reason": "review round 6 standards-35: STRAY (a START and no END) was reused where the line is asserted to be no START"
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_lint_lists_nothing_for_a_matching_block_above_a_later_unclosed_fence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e122e56a1c81019c90808d612a79a0139eb2959d112f65d59732893153fd612b",
+    "frozen_at_step": "fix-8",
+    "frozen_at": "2026-11-15",
+    "green_reason": {
+      "reason": "green on arrival (a survivor gap, not a new behaviour); kills the lint mutants backlink_split 'if in_fence:' to 'if not in_fence:' (line 302) and 'opened = i' to 'pass' (line 303), each run and reverted: the page gets an in_fence row, 0/1 passed",
+      "date": "2026-11-15"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_report_row_for_an_unclosed_block_names_the_page_with_the_cause",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "6b83ea3ba7cf50d388d120f4e3e7e62da75836e801f56135969fd7d937b4b612",
+    "frozen_at_step": "fix-8",
+    "frozen_at": "2026-11-15",
+    "green_reason": {
+      "reason": "green on arrival (a survivor gap: the old assertion matched the section's prose); kills the lint mutants line 1466 'block not closed (' to 'block closed (' and the whole parts.append to 'pass', each run and reverted: the row line reads 'block closed' or ends at the dash, 0/1 passed",
+      "date": "2026-11-15"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_keeps_a_link_written_below_the_real_block",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "7a8696c0e6d86aa8a64ea74e8febe03550cec75f85c0fa992aaca03e37cfe63f",
+    "frozen_at_step": "fix-8",
+    "frozen_at": "2026-11-15",
+    "green_reason": {
+      "reason": "green on arrival (a survivor gap); kills the rebuild mutant line 162 'text = BLOCK_RE.sub(\"\", text)' to 'pass', run and reverted: the stray-START cut drops the link below the block, c gets no block, 1/3 passed",
+      "date": "2026-11-15"
+    }
+  },
+  {
+    "file": "tests/scripts/test_backlink_blocks.py",
+    "test_name": "test_rebuild_summary_does_not_count_a_skipped_page_as_updated",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f54d9a9ecd068d7ce67f55f05110e6b3344be803a7cb654c947047b492d0965a",
+    "frozen_at_step": "fix-8",
+    "frozen_at": "2026-11-15",
+    "green_reason": {
+      "reason": "green on arrival (a survivor gap); kills the rebuild mutant line 193 'return False, [], []' to 'return True, [], []', run and reverted: the summary reads 'updated 2' for 'updated 1', 1/2 passed",
+      "date": "2026-11-15"
+    }
   }
 ]
