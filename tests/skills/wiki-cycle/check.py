@@ -2508,9 +2508,9 @@ FB_CONFIG = re.compile(r"wiki-ingester-config|ingester.{0,20}config", re.I)
 # a model name's shape: `sonnet`, or `default` then `model`/`sonnet` (`default model`, `default-model`); _fb_default_model says which field
 FB_DEFAULT_MODEL = re.compile(r"\bsonnet\b|\bdefault[\s-]+(?:model|sonnet)\b", re.I)
 FB_REPORT_LINE = re.compile(r"^\s*[-*]\s+[^:\n]+:\s*expected\b[^\n]*;\s*used\b[^\n]*;\s*why\b", re.I)
-# the worker sentence's own shape, `Fallback: expected X; used Y; why Z`, with X, Y and Z plain words: no `<` or `>`
-# (plan.md: the skill text writes the shape with no angle brackets, so a placeholder cannot reach the file line)
-FB_BRIEF = re.compile(r"fallback[*`_]*\s*:[*`_]*\s*expected\b[^;\n<>]*;\s*used\b[^;\n<>]*;\s*why\b[ \t]*[^\s<>]", re.I)
+# the worker sentence's own shape, `Fallback: expected X; used Y; why Z`: X, Y and Z may be plain words or <placeholders>
+# (the brief is the orchestrator's wording and may write the shape with angle brackets; the file line's no-'>' rule is checked separately on fallbacks.txt)
+FB_BRIEF = re.compile(r"fallback[*`_]*\s*:[*`_]*\s*expected\b[^;\n]*;\s*used\b[^;\n]*;\s*why\b[ \t]*[*`_]*[<\w]", re.I)
 FB_NOTES = re.compile(r"\bnotes?\b", re.I)  # Notes or Note; _fb_brief_ok binds it to the shape's own sentence
 FB_SENT_END = re.compile(r"[.!?](?:\s|$)|\n")  # a sentence or line end
 FB_WINDOW = 160  # characters either side of the shape that the Notes word may sit in
