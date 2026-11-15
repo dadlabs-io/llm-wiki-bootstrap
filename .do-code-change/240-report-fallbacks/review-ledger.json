@@ -1,0 +1,380 @@
+{
+  "schema": 1,
+  "diff_base": "1bcb08d",
+  "rounds": [
+    {
+      "round": 1,
+      "at": "2026-11-15T20:19:35Z",
+      "diff_sha256": "19503d729b2bdfd5bd770f4bd785eb2cadda7a6671c64590a92b68ed10144aca",
+      "findings_sha256": "e391f329e71aefe25c3c476b1bab50a493444bfb14f8c63d582594f73ecf50cd",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "spec-1",
+        "spec-2",
+        "spec-3"
+      ],
+      "new": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "spec-1",
+        "spec-2",
+        "spec-3"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "f2a269af69efdf3705a2f971174a0a1a71b7d7f873f91162a8f5627411c3475f",
+        "skills/wiki-cycle/SKILL.md": "980fb387eede0a754453a0100c3a9ee1fd41a5e35600406661f4cea98afb359b",
+        "skills/wiki-cycle/reference.md": "17710f8edd49906798b836dfc153447d6a8078728954fcb3980b3c8a921af326",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "2a63c3d151a762ea18a4dd07b8ef230eeb636c34262003569c78ad70361fe263",
+        "skills/wiki-report/SKILL.md": "67804e0b23468ff955bb29f5fcee18c26533b94ce684b184d79be88abdc4851e",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "373a43c120c8b865768726a35be5a6f5307be25d6082e803ac64fd791299025b",
+        "tests/skills/PENDING.md": "f213c2b6ad389839d0ac816073c02547c6f837ed1ab638606ec8a8ef5d594414",
+        "tests/skills/wiki-cycle/baseline-opus.json": "6b66362301b77813bb19088f4528d40fd19e53fc59fece6ae6c32d37fb47a484",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "ba411354ebea9734c65dabe989ffc93cf27b017133d80e6d9c0c68843bb40433",
+        "tests/skills/wiki-cycle/cases.json": "993f29f3eb6c8274f863172e149ee6a037a6bc5ccbd17710c23e452a9bd35213",
+        "tests/skills/wiki-cycle/check.py": "c80dab810c4c94b19a6688f12ca69e5fb2440cee8a06fda809d430ead7943304"
+      }
+    }
+  ],
+  "items": {
+    "standards-1": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `skills/wiki-cycle/SKILL.md` (the `--resume` paragraph), `skills/wiki-report/SKILL.md` (`## Fallbacks`), `skills/wiki-report/wiki-seed/wiki-report.md` and `CHANGELOG.md` (the 2026-11-15 entry): the docs say different things about when `not checked` appears. SKILL.md says \"A resumed run does not create `fallbacks.txt` unless a step has a fallback to record\". The report SKILL says \"the file is absent: `Fallbacks: not checked (no fallbacks.txt in the run folder)`, never `none`\". The seed says \"or \"Fallbacks: not checked\" for a run begun before the rule\". The CHANGELOG says \"A run resumed from before this change reports `Fallbacks: not checked`\". Under the SKILL rules, any resumed run after this change with nothing to record also reads `not checked`, so the seed and CHANGELOG narrow the label to runs \"begun before the rule\". The wording is Mark's choice (plan confirmation, 2026-11-15), so only the docs are wrong. Fix: make the seed and CHANGELOG say \"any run folder with no `fallbacks.txt`\" (a resumed run included). Rule: doc accuracy, no rule code.",
+      "file": "skills/wiki-cycle/SKILL.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "980fb387eede0a754453a0100c3a9ee1fd41a5e35600406661f4cea98afb359b",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "980fb387eede0a754453a0100c3a9ee1fd41a5e35600406661f4cea98afb359b"
+        }
+      ]
+    },
+    "standards-2": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `skills/wiki-cycle/SKILL.md` (the YouTube bullet and the worker-note bullet): two note forms exist for a worker's fallback. The YouTube bullet names \"`Fallback: transcribed`\". `skills/wiki-update/fetchers.md` prints `Fallback: transcribed (subtitles HTTP 429)`. The worker rule asks for \"`Fallback: expected X; used Y; why Z`\", and the orchestrator copies only that form. The one fetcher fallback the skill names does not fit the copy rule, which is the miss lesson #12 is about. Fix: state one note form in SKILL.md and say how the fetcher's printed line maps to it. Rule: skill-prose contradiction.",
+      "file": "skills/wiki-cycle/SKILL.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "980fb387eede0a754453a0100c3a9ee1fd41a5e35600406661f4cea98afb359b",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "980fb387eede0a754453a0100c3a9ee1fd41a5e35600406661f4cea98afb359b"
+        }
+      ]
+    },
+    "standards-3": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] PY9, `tests/skills/wiki-cycle/check.py`: `FB_BRIEF = re.compile(r\"fallback.{0,250}?\\bnotes?\\b|\\bnotes?\\b.{0,250}?fallback\", re.I | re.S)`, used by \"every wiki-ingester worker's brief tells it to name any fallback in its Notes\". It passes any brief where the words \"fallback\" and \"notes\" sit within 250 characters, without the `expected` / `used` / `why` sentence. Fix: match `Fallback: expected` plus `used` and `why`. Same family: `FB_DEFAULT_MODEL = re.compile(r\"\\bdefault\\b|\\bsonnet\\b\", re.I)` passes on the word \"default\" anywhere in the setting-file line, including the why field. Fix: test the model field only. The Spec lens raised the `FB_BRIEF` point separately; the two lenses agree.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "c80dab810c4c94b19a6688f12ca69e5fb2440cee8a06fda809d430ead7943304",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "c80dab810c4c94b19a6688f12ca69e5fb2440cee8a06fda809d430ead7943304"
+        }
+      ]
+    },
+    "standards-4": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S2, `check.py`: `_check_fallbacks` repeats code already in the file. The `res[:] = [x for x in res if x[\"name\"] != \"quick steps all wrote their pair\"]` filter appears in `_check_backlinks` and again here. `_fb_before_needs` rebuilds the `heads = [l[3:].strip()...]` list the existing Needs-you check builds. The `read` closure copies the one in `_check_backlinks`. Fix: a shared `_report_headings(rtext)` and a shared drop helper.",
+      "file": "check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "831ed37adceeb2351e1654fd8a8a03d111921b95eb69b82c26415da9570bccb1",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "831ed37adceeb2351e1654fd8a8a03d111921b95eb69b82c26415da9570bccb1"
+        }
+      ]
+    },
+    "standards-5": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S13 / F3 / R4, `check.py` `_check_fallbacks`: about 70 lines that mix the file, report and unreadable-config checks. It branches on `variant` in four places and nests `if data:` under `if f.is_file():` inside an `else`. Fix: one function per variant, or a helper for the file checks.",
+      "file": "check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "6bdf44fee8b0ddc13f220365a396b37c7739db69d9f4af38f50034d6e513a19e",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "6bdf44fee8b0ddc13f220365a396b37c7739db69d9f4af38f50034d6e513a19e"
+        }
+      ]
+    },
+    "standards-6": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S8 / S6, rule drift: the three Fallbacks states appear in SKILL.md Step 8 and again in the report SKILL's `## Fallbacks`. The fallback definition is restated in `wiki-seed/wiki-cycle.md`. Fix: Step 8 points at the report section, and the seed points at SKILL.md.",
+      "file": "wiki-seed/wiki-cycle.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "4a76fbca0ddc4d9074fa6d326bc90d02ef1b8395d280634ad46133482e24c7fc",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "4a76fbca0ddc4d9074fa6d326bc90d02ef1b8395d280634ad46133482e24c7fc"
+        }
+      ]
+    },
+    "standards-7": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `skills/wiki-cycle/SKILL.md` worker-note bullet: \"The orchestrator copies each such note \u2026 as `Step 2 | X | Y | Z`\" omits the Decisions-log line the general rule requires for every fallback. Fix: say the copied line also goes to the Decisions log.",
+      "file": "skills/wiki-cycle/SKILL.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "980fb387eede0a754453a0100c3a9ee1fd41a5e35600406661f4cea98afb359b",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "980fb387eede0a754453a0100c3a9ee1fd41a5e35600406661f4cea98afb359b"
+        }
+      ]
+    },
+    "standards-8": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] C1, `check.py` header comment `(task #240, lesson #12)`: a ticket reference in a comment. The file already does this at \"task #84 (Mark, 2026-10-06)\", so the repo's own precedent may override. Fix: keep or drop per that precedent.",
+      "file": "check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d39add5fb610a1bd6e3ce0610d8464f696f82259d4caa256e96528b3c3873be4",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "d39add5fb610a1bd6e3ce0610d8464f696f82259d4caa256e96528b3c3873be4"
+        }
+      ]
+    },
+    "standards-9": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] C3, `check.py` `FB_CONFIG = \u2026 # the suite's own 'names the setting file' idiom`: no such idiom exists under `tests/skills`; the phrase appears only in new check names. Fix: name the function it copies, or drop the comment.",
+      "file": "check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "93b81f7e10dcacc3f69efd04455420f68d1225c62257896cae12790f10caaa73",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "93b81f7e10dcacc3f69efd04455420f68d1225c62257896cae12790f10caaa73"
+        }
+      ]
+    },
+    "standards-10": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `check.py` dispatch: `if case[\"kind\"] == \"fallbacks\":` follows the `elif` chain, and `_prepare_fallbacks` is a one-branch forwarder to `_prepare_resume`. Fix: add it to the chain as an `elif`.",
+      "file": "check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "ebd248260ab0f07c1e5858a516b7e4473c52252da9260b84e2afe25162282b63",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "ebd248260ab0f07c1e5858a516b7e4473c52252da9260b84e2afe25162282b63"
+        }
+      ]
+    },
+    "standards-11": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] G25, `check.py`: the literals `\"clean\"` and `\"resumed-run-without-the-file\"` repeat although `FB_VARIANTS` exists. Fix: name them as constants.",
+      "file": "check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e32c7382448bd07d885c55eebf6b18d0b763068b392b9c65aa73965857c5d01e",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "e32c7382448bd07d885c55eebf6b18d0b763068b392b9c65aa73965857c5d01e"
+        }
+      ]
+    },
+    "standards-12": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `skills/wiki-cycle/wiki-seed/wiki-cycle.md` Fallbacks paragraph: carries dated incident history (\"on 2026-08-01 shell timeouts were quietly worked around\"), but the seed is a usage page for a developer who never saw the repo. Fix: keep the history in the CHANGELOG.",
+      "file": "skills/wiki-cycle/wiki-seed/wiki-cycle.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "2a63c3d151a762ea18a4dd07b8ef230eeb636c34262003569c78ad70361fe263",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "2a63c3d151a762ea18a4dd07b8ef230eeb636c34262003569c78ad70361fe263"
+        }
+      ]
+    },
+    "spec-1": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `tests/skills/wiki-cycle/` (process, the Step 9 edit): the plan's honour rule was broken for the Step 9 reorder, and the reason given for the edit does not hold. Intent: plan.md:41, \"the session that edits the skill does not read `cases.json` while it edits (honour rule)\". Implemented: checkpoints.md:35, \"this edit was made by a session that had read cases.json\", justified as touching \"only the Step 9 order, which no new case's check reads\". The check that drove the edit was \"nothing left uncommitted in the notebook\", which every new case carries (baseline-opus.json:863 and :919, and the same key in older cases). Affected: the claim that the reorder fixed the resumed case on Opus (run 20261115-145233) rests on an edit by a session that had read the case file, and the claim that it is test-neutral is unsupported. Fix: record the deviation in the PENDING.md row and in checkpoints.md, then re-run the resumed case on Opus after an edit by a session that has not read cases.json, or have Mark accept the deviation in writing.",
+      "file": "tests/skills/wiki-cycle/",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "38b1721fd0a20f46f8b11927c304ef7a4b7fae8580e0923b12d7eb2e0aa74836",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "38b1721fd0a20f46f8b11927c304ef7a4b7fae8580e0923b12d7eb2e0aa74836"
+        }
+      ]
+    },
+    "spec-2": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `skills/wiki-report/wiki-seed/wiki-report.md:139` and `CHANGELOG.md:13-14` narrow the absent-file label to \"a run begun before the rule\". SKILL.md:113 says \"the file is absent\" in general, and plan.md:26 lists three cases (a run begun before the rule, a resumed run, `--report-only` on an older folder). The docs are incomplete, not false. Fix: \"for any run folder with no `fallbacks.txt`\". The Standards lens raised the same text as its first finding.",
+      "file": "skills/wiki-report/wiki-seed/wiki-report.md",
+      "line": 139,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "373a43c120c8b865768726a35be5a6f5307be25d6082e803ac64fd791299025b",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "373a43c120c8b865768726a35be5a6f5307be25d6082e803ac64fd791299025b"
+        }
+      ]
+    },
+    "spec-3": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/check.py:201-202, 305`: plan.md:107 says the brief sentence is pinned by the `FB_BRIEF` check, but a two-word proximity match passes any brief that mentions both words near each other. Fix: match the instruction's own words (`Fallback: expected`, or \"name any fallback it used in that item's Notes\"). Whether a real brief passes falsely is unverified. The Standards lens raised it as PY9.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 201,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "c80dab810c4c94b19a6688f12ca69e5fb2440cee8a06fda809d430ead7943304",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "c80dab810c4c94b19a6688f12ca69e5fb2440cee8a06fda809d430ead7943304"
+        }
+      ]
+    }
+  }
+}
