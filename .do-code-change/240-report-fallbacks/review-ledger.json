@@ -117,6 +117,55 @@
         "tests/skills/wiki-cycle/cases.json": "993f29f3eb6c8274f863172e149ee6a037a6bc5ccbd17710c23e452a9bd35213",
         "tests/skills/wiki-cycle/check.py": "1fc85520e842b2423de9916bdbd92cb8220e64f95d302e277499eb90fc2bd6fc"
       }
+    },
+    {
+      "round": 3,
+      "at": "2026-11-15T22:08:20Z",
+      "diff_sha256": "0d853e525da409c9c0a1c358e663e460dc8d8b82c36d3844f7b16d28704c4eec",
+      "findings_sha256": "fded25a4f3905924c617eed92536893efb14e9eb618b4f27b953d90d2cb6c00e",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-23",
+        "standards-24",
+        "standards-25",
+        "standards-26",
+        "standards-27",
+        "standards-28",
+        "standards-29",
+        "spec-10",
+        "spec-11",
+        "spec-12",
+        "spec-13"
+      ],
+      "new": [
+        "standards-23",
+        "standards-24",
+        "standards-25",
+        "standards-26",
+        "standards-27",
+        "standards-28",
+        "standards-29",
+        "spec-10",
+        "spec-11",
+        "spec-12",
+        "spec-13"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "a2465c28fba44f157bd65c5c7409c43899a012fa9e35f4ea16814656f499dac1",
+        "skills/wiki-cycle/SKILL.md": "d8d464ef63f32393b8f141b1725f0364a38fb85550cd37361f64fa75cd89a1da",
+        "skills/wiki-cycle/reference.md": "92a9b5834cbbba328baf44badf4b4f2e431fa26250af21b1a6373efb595339d0",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "33a793b614fcd1ccd6ca5c589c27b137f0b2d045144009dd7053d86bd58ff0a6",
+        "skills/wiki-report/SKILL.md": "67804e0b23468ff955bb29f5fcee18c26533b94ce684b184d79be88abdc4851e",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "a9a2f1b1640e1cefd4b3bd628c5da35f15e6995f59ab31f3e142675fe03d5103",
+        "tests/skills/PENDING.md": "67f6500dff6f9d7a8ecb0406abae6d8ae92f7272a2ba7ee3a0942822adfab470",
+        "tests/skills/wiki-cycle/baseline-opus.json": "ecfe8827c7c2bb92363497e7d308c99623b28817c071adf0111ada6c6b8f67ab",
+        "tests/skills/wiki-cycle/baseline-sonnet.json": "d84a7690edc449cea36d55c76908a3c95919f6f21679d46fb4442fead2cf1917",
+        "tests/skills/wiki-cycle/cases.json": "993f29f3eb6c8274f863172e149ee6a037a6bc5ccbd17710c23e452a9bd35213",
+        "tests/skills/wiki-cycle/check.py": "15be5a969e6825405f25aa891cc3df0b7278097b9470b5400dbbd58d5210061b"
+      }
     }
   ],
   "items": {
@@ -923,6 +972,237 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "9b1191f739a690ceac4ae547f505580c839d7cb8b17e0ea468550c21b8dbbcaa"
+        }
+      ]
+    },
+    "standards-23": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] PY9 / R15, `tests/skills/wiki-cycle/check.py:2514` and `:2570`: the Notes requirement is unanchored, so the check name overstates what it tests. The check is named \"every wiki-ingester worker's brief tells it to name any fallback in its Notes\". `FB_NOTES = re.compile(r\"\\bnotes\\b\", re.I)` is applied to the whole prompt: `return bool(FB_BRIEF.search(prompt) and FB_NOTES.search(prompt))`. A brief that drops the Notes instruction still passes if \"notes\" appears elsewhere in it. Fix: require the shape and `Notes` in one line or sentence (a bounded window), or rename the check (the name is pinned by the baselines). Reviewer's note: round 2 asked for \"a `Notes` requirement to the same test\" and this is that fix as written, so the finding is the fix's weakness, not a missed request. The lens could not tell whether a real worker brief mentions \"notes\" elsewhere (unverified below). The Spec lens raised the same point as a suggestion; the two labels are kept apart.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2514,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "c388b83044aaa0898fe9abac58533a09657db0d2447ec1b63d2ea86b25ed6fd0",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "c388b83044aaa0898fe9abac58533a09657db0d2447ec1b63d2ea86b25ed6fd0"
+        }
+      ]
+    },
+    "standards-24": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S2, `check.py:2577-2580` (`_fb_lines`) beside `:2542` (`_fb_read`): a second reader of `fallbacks.txt` with the same utf-8 `errors=\"replace\"` decode. Fix: `_fb_lines` returns `_fb_read(run_dir / \"fallbacks.txt\").splitlines()`, the `is_file` guard living in `_fb_read`.",
+      "file": "check.py",
+      "line": 2577,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "efcbd0312a6b1227389787f65d9c8a2da4782237b095d97921123086467c57d0",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "efcbd0312a6b1227389787f65d9c8a2da4782237b095d97921123086467c57d0"
+        }
+      ]
+    },
+    "standards-25": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] G16 / S6, `check.py:2671-2678`: the variant dispatch is a dict of tuples of lambdas with a `*report` splat; the order is set by tuple position and the lambdas only defer calls. Fix: a short `if`/`elif` on `_fb_variant(case)` calling the named helpers in order.",
+      "file": "check.py",
+      "line": 2671,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "432aa47a1f2e31e924cf173ddf49e4ee42e3b88751cf948be11f15f3685d5739",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "432aa47a1f2e31e924cf173ddf49e4ee42e3b88751cf948be11f15f3685d5739"
+        }
+      ]
+    },
+    "standards-26": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] C1, `check.py:2620`: `\"\"\"Without a Fallbacks section there is nothing to order, so no check is added (as before).\"\"\"` refers to earlier code. Fix: drop \"(as before)\".",
+      "file": "check.py",
+      "line": 2620,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e32ea1a798ba41613c0dd5c9f30aaa4b76cb07b9714befcea06c7f541312ac9f",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e32ea1a798ba41613c0dd5c9f30aaa4b76cb07b9714befcea06c7f541312ac9f"
+        }
+      ]
+    },
+    "standards-27": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] S1, `check.py:2670`: `report` names a pair of check thunks, not a report. Fix: `report_checks`.",
+      "file": "check.py",
+      "line": 2670,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "ed4a980c6e77828f7e6469b2ed7fb3594d2815c9dddefadd7ded5f0bc155a693",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "ed4a980c6e77828f7e6469b2ed7fb3594d2815c9dddefadd7ded5f0bc155a693"
+        }
+      ]
+    },
+    "standards-28": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] C3, `check.py:2508` and `:2563`: the third-field rule for the default model is stated in both the comment and the docstring. Fix: keep the docstring, cut the comment to the regex's shape.",
+      "file": "check.py",
+      "line": 2508,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "4bfed5d8dd550326344d9016aa534b273abc6e0e0d32b24a2b9a17d93943efda",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "4bfed5d8dd550326344d9016aa534b273abc6e0e0d32b24a2b9a17d93943efda"
+        }
+      ]
+    },
+    "standards-29": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] C1, `tests/skills/PENDING.md:73`: the row narrates which session broke the honour rule (\"made by a session that had read `cases.json` (against the honour rule)\u2026\"); the row's columns are the change and why it was not run. Fix: keep run ids and checks not run in the row.",
+      "file": "tests/skills/PENDING.md",
+      "line": 73,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "67f6500dff6f9d7a8ecb0406abae6d8ae92f7272a2ba7ee3a0942822adfab470",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "67f6500dff6f9d7a8ecb0406abae6d8ae92f7272a2ba7ee3a0942822adfab470"
+        }
+      ]
+    },
+    "spec-10": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/wiki-cycle/check.py:2659`: the check name says each worker's brief tells it to name fallbacks \"in its Notes\", but the test needs only the shape and the word \"Notes\" somewhere in the prompt (`check.py:2570`). Intent: `plan.md:106`, \"every `wiki-ingester` worker's brief tells it to name any fallback in its Notes\"; `requirements.md:52` (Decision 5), \"the worker's brief says to name any fallback it used in the receipt's Notes column\". Code: `FB_NOTES = re.compile(r\"\\bnotes\\b\", re.I)` (`check.py:2514`); nothing binds Notes to the sentence. The shipped sentence at `SKILL.md:110` has both in one clause, so a false pass is narrow. Affected: the suite's only automated proof of the worker-brief step. Fix: one line or sentence for both, or rename. A partial close of round 2's Spec 4 on this point; the same defect as the Standards `important`, labelled by this lens as a suggestion.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 2659,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "c388b83044aaa0898fe9abac58533a09657db0d2447ec1b63d2ea86b25ed6fd0",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "c388b83044aaa0898fe9abac58533a09657db0d2447ec1b63d2ea86b25ed6fd0"
+        }
+      ]
+    },
+    "spec-11": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `skills/wiki-cycle/wiki-seed/wiki-cycle.md:51` (new this round): \"a resumed run where nothing fell back also reads \\\"not checked\\\", since resuming does not create the file\". Intent: `plan.md:26` puts \"a rule-era run resumed after its Step 0 with nothing found since\" under the absent-file label, but `SKILL.md:53` has Step 0 create `fallbacks.txt`. Code: a rule-era run keeps its header-only file, and `skills/wiki-report/SKILL.md:271` reads that as `Fallbacks: none`. The clause is true only for a run begun before the rule; as written, \"a resumed run\" is broader. Affected: a reader interpreting a resumed run's report. Fix: limit the clause to runs begun before the rule, or cut it; reconcile `plan.md:26` with `SKILL.md:53`.",
+      "file": "skills/wiki-cycle/wiki-seed/wiki-cycle.md",
+      "line": 51,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e6dd8e0eb818c8ada6b61ecc4fed15a8dead46a05848dd31662ef20670fb1cbb",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e6dd8e0eb818c8ada6b61ecc4fed15a8dead46a05848dd31662ef20670fb1cbb"
+        }
+      ]
+    },
+    "spec-12": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `check.py:2512`: the comment lets X, Y and Z be \"letters, words or <placeholders>\", and `FB_BRIEF` accepts angle brackets; `plan.md:30` says \"X, Y and Z plain words (the skill text writes the shape with no angle brackets\u2026)\". The plan's rule is written for the note, so applying it to the brief is an inference. Fix: drop the allowance if the rule binds the brief too.",
+      "file": "check.py",
+      "line": 2512,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "977ddf8e2f736357a6d49fb81ba42dad13cf83539f4727726da3dc64c6e98a9c",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "977ddf8e2f736357a6d49fb81ba42dad13cf83539f4727726da3dc64c6e98a9c"
+        }
+      ]
+    },
+    "spec-13": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/PENDING.md:73`: the row says the resume and regression runs \"ran on the text before the review rewordings (Step 2's copy rule, Step 9's wording)\", but this round also added the `reference.md` Phase 9 `- **Status**: pending` line, which those runs lacked. Round 2's Spec 1 asked the row to state exactly what ran on which text. Fix: name the template line in that parenthetical.",
+      "file": "tests/skills/PENDING.md",
+      "line": 73,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "67f6500dff6f9d7a8ecb0406abae6d8ae92f7272a2ba7ee3a0942822adfab470",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "67f6500dff6f9d7a8ecb0406abae6d8ae92f7272a2ba7ee3a0942822adfab470"
         }
       ]
     }
