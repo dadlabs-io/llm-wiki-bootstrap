@@ -2144,7 +2144,7 @@
       "last_seen_round": 6,
       "verdict": "addressed",
       "verdict_round": 6,
-      "fingerprint": "9d026012cf064a1393097a6f06ea794a471bfc29bd9526c06fbaf545f605f0d1",
+      "fingerprint": "25c21e8481d27756a56ff4f6d589dc23cdfdab4c0518f93ded0ab1615e8e168f",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -2157,6 +2157,11 @@
           "round": 6,
           "verdict": "addressed",
           "fingerprint": "9d026012cf064a1393097a6f06ea794a471bfc29bd9526c06fbaf545f605f0d1"
+        },
+        {
+          "round": 6,
+          "verdict": "addressed",
+          "fingerprint": "25c21e8481d27756a56ff4f6d589dc23cdfdab4c0518f93ded0ab1615e8e168f"
         }
       ]
     },
