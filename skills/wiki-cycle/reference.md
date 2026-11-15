@@ -63,6 +63,7 @@ Created at Step 0 as `<run-folder>/scratchpad.md` and updated after every phase;
 ### Phase 7: Refresh scan
 ### Phase 8: Report
 ### Phase 9: Commit
+- **Status**: pending
 
 ## Decisions log
 - <timestamp> — <decision and why>
