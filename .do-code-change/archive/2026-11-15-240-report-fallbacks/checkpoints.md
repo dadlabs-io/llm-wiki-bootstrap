@@ -74,3 +74,9 @@ Orchestrator, ledger after the cap: standards-30, -32, spec-14, -15 set addresse
 
 Put to Mark (Discord): A accept the verify layers as recorded (tests by run 20261115-163745 plus the brief re-score and the offline proof; findings-addressed with standards-31 and spec-16 open by his rulings; frozen-tests and tests-bite not checked, nothing to check) and finish; B one more paid run first (~$10). Mark: "A" (Discord). Completion: on main, step commits kept; install by the SOP; push only on Mark's word.
 Install (SOP): `new-wiki.py --mode tooling` installed 20 skills; toolset 2 docs changed; `--mode status` installed, current, toolset current; installed wiki-cycle carries the rule (6 `fallbacks.txt` lines); toolset docs committed in project-notebooks bfae9aaa.
+
+## Finishing decision (the finish step) — 2026-11-15
+
+keep — verify VERDICT: FAIL on four named layers only, each accepted by Mark ("A", Discord, at the Finishing decision above): tests (not checked: run 20261115-163745 on the final skill text, the brief re-score and the offline proof stand as evidence), findings-addressed (review-ledger exit 3, the cap itself; standards-31 and spec-16 open by his rulings), frozen-tests (not checked: no frozen Python test) and tests-bite (not checked: no `src/` change). Every other layer PASS (diff-contains-fix, coverage, bar-unmoved, in-scope). On the branch the run started on (main), step commits kept, no push (asked separately).
+Record tags: code-change, group skills, specific tags wiki-cycle and wiki-report. This change revises no earlier record; its predecessor on task #240 is 2026-11-15-240-backlink-block-check.
+Freeze merge: `.do-code-change/240-report-fallbacks/test-freeze.json` does not exist (no Python test frozen). `check-freeze.py merge` refused, exit 2: "nothing to merge — .do-code-change/240-report-fallbacks/test-freeze.json not found". `archive-change.py --dry-run` did not refuse (exit 0), so nothing was merged and the archive went on.
