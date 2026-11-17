@@ -1,80 +1,107 @@
-# Red-team: plan.md (240-loud-backlogs, round 1)
+# Red-team: plan.md revision 1 (240-loud-backlogs, round 2)
 
-Written by the orchestrator from the red-team's report (fresh architect, strategy-red-team, one red-team-reviewer spawn). readonly-guard check: PASS (638 files, HEAD unchanged). Neither the architect nor the reviewer read check.py in full: the architect read lines 2223-2760 plus greps, the reviewer about 100 lines.
+Written by the orchestrator from the red-team's report: a fresh architect running strategy-red-team, with one red-team-reviewer (haiku) spawn. readonly-guard check: PASS (638 files, HEAD unchanged). Round 1 is in plan-red-team-round1.md.
+
+## Round-1 kill-assumptions: resolved or turned into a Decision?
+- **KA1:** mostly resolved. Three holes remain: attacks 4, 5 and 6.
+- **KA2:** resolved.
+- **KA3:** became Decision 1. Attack 7 covers the fixture holes.
+- **KA4:** became Decision 2. Attack 3 finds a new defect in it.
+- **KA5:** partly resolved. Decision 3 has a new defect (attack 3), and Decision 4 is pre-empted by the plan (attack 8).
 
 ## Kill-assumptions (ranked)
 
-### 1. The counter reports nothing after a `--full` run ("count equals what the step would read")
-**Fails if:** after a `--full` run the counter reports "not semantically linted" or "no claims" entries the run covered. Four mechanisms:
-- `added_since` counts git-added and untracked files (`wiki-cycle-scope.py:175-179`). Staged entries linted at Step 4, then promoted at Step 5.5, are uncommitted `wiki/` files at Step 8.
-- `revised_since` uses `last_reviewed[:10] >= day` (`:184-187`). An entry bumped today counts as revised since a lint stamped today.
-- `entries()` keeps `tasks/` (`:132-140`), but the semantic lint skips task cards (`skills/wiki-lint/SKILL.md:41,71`). That gives a permanent count on a notebook with 180 cards. `in_tasks` wants a wiki-relative path (`_wiki_config.py:177-180`).
-- `last_semantic` and `last_synthesis` call `run_folder.resolve()` (`:207`), so "no run folder" crashes unless the signature changes.
+### 1. Mechanical findings read as "awaiting your approval" after Step 5 fixed them
+The plan counts the mechanical kinds from `lint-mechanical.json`'s summary and subtracts nothing.
+- **Fails if:** a `--full` run has `confirm_before_promote: true` and the user approves mechanical fixes at Step 5. The JSON is re-run only in Step 5.5, and only when promotion is automatic (`SKILL.md:156,163`). The stale JSON then lists fixed findings as awaiting approval.
+- **Kill criterion:** any path where a fixed finding stays in a Left undone line.
+- **Cheapest test:** a `--full` run with the setting true, the JSON showing 2 broken links, and `lint-fixes.txt` at `applied: 2`.
+- **Fix class:** choice. Re-run the mechanical lint after Step 5, or make `applied`/`declined` per category, or word the line "found by the lint, fixes not confirmed".
 
-**Evidence to get now:** run the counter read-only on a sandbox after a simulated `--full` run with one promotion and one entry refreshed today, and on llm-wiki-bootstrap's notebook.
-**Kill criterion:** any queue the run just covered, or any `tasks/` page, shows a non-zero count.
-**Cheapest test:** harness cases for same-day `last_reviewed`, an entry promoted after the lint, and a `wiki/tasks/` card.
-**Fix class:** plan error. Exact covered-set rule; exclude `tasks/` and this run's promotions; strict comparison; name the signature change.
+### 2. `--report-only` reads each input from a different place
+- **Fails if (a):** the counts read `lint-fixes.txt` from the last run, but the "did it run" check looks for it in the current folder, so the line reads `no fix step in this mode`.
+- **Fails if (b):** "last run folder" is never defined, and an unfinished run with no step JSONs has no stated line.
+- **Cheapest test:** a last-run folder holding `lint-fixes.txt`, with an empty current folder.
+- **Fix class:** plan error. The "did it run" checks read the same folder as the counts. Define "last run" as the newest earlier folder holding a run-cycle report, or state the line when none exists.
 
-### 2. A missing `left-undone.txt` has no stated behaviour
-**Fails if:** the run folder exists without `left-undone.txt` (a `--resume` of a run started before the install, a skipped Step 8 command, `/wiki-report --from-json` of an old run). Fallbacks has three states (`skills/wiki-report/SKILL.md:268-273`); the plan has two. Plan line 30 (every unreadable input → `not checked`) contradicts line 127 (an absent step file adds no line). Under `--report-only`, last run's dropped sources are never named.
-**Kill criterion:** any report-writing mode ends with no Left undone line and no `not checked` line.
-**Cheapest test:** run folder with no `left-undone.txt` → `Left undone: not checked (no left-undone.txt in the run folder)`.
-**Fix class:** plan error. Add the third state to the template and `--brief`; reconcile lines 30/127; one rule for `--report-only` sources.
+### 3. The two model-written files make a silent failure the default
+Both `tier4-deferred.txt` (Step 1.5) and `lint-fixes.txt` (Step 5) are files the model has to remember to write.
+- **Fails if:** the model skips a write. The scope script's docstring says a sentence asking the model to do a step was skipped in 21 of 22 runs (`wiki-cycle-scope.py:55-58`, task #99). Steps 1.5 and 5 carry no write instruction today (`SKILL.md:93-97,154`).
+- **Kill criterion:** no test where the file is absent and the section still says something true.
+- **Cheapest test:** a `--full` folder with `lint-semantic.json` and no `lint-fixes.txt` must read `not checked`, not `no fix step`.
+- **Fix class:** plan error for the `--full` case: a missing `lint-fixes.txt` after a `--full`-class step reads `not checked (no lint-fixes.txt)`. Tier-4 stays a choice inside Decision 2, which gains a third option: take tier-4 from the checklist's "(NEEDS HUMAN REVIEW)" labels (`wiki-discover/SKILL.md:273`), with no new model-written file.
 
-### 3. One paid red-green run of 2 cases proves D3-D6
-**Fails if:** the cases cannot reach the rules credited to them.
-- Scenario A (`--lint-only`, steps 0, 3 and 8) has no update.json, discover.json or lint-fixes.txt. That makes D4 and D5 unreachable and leaves lint lines tested only as absent.
-- Scenario B ("nothing") cannot read `nothing` on a notebook with entries and no prior lint, claims or synthesis history. The fixture history isn't in the plan.
-- Red on the old copy proves only that the section exists.
-- The extraction of `cmd_semantic`/`cmd_claims`/`cmd_synthesis` is not additive, and old cases that use them are not re-run. `wiki-triage.py` is named by 11 skill files, and `tests/skills/README.md:9` lists "a script many skills call" as a trigger, which the plan doesn't discuss.
+### 4. A partial or failed step has its whole scope subtracted
+- **Fails if:** the step's JSON has `status: partial` or `failed` (`cycle-step-return-format.md:119`; a failed step does not block later steps, `SKILL.md:69`), or one lint slice failed with no per-slice status in the merged JSON (`SKILL.md:152`). The line then reads `nothing`. Stems can also collide across folders.
+- **Cheapest test:** `lint-semantic.json` with `status: partial` and a scope file of 3 entries must read `not checked (the step did not complete)`.
+- **Fix class:** plan error. Subtract only when the status is `completed`, else print `not checked`. Compare full relative paths, using stems only to bridge the move from `_inbox/proposed/` to `wiki/`.
 
-**Kill criterion:** a rule has no case that can make its output appear.
-**Cheapest test:** keep the two paid cases. Name D4/D5 as unit-tested only. Add one scripted (unpaid) `--full` fixture asserting nothing left.
-**Fix class:** choice (Mark). Widen the paid run (a third `--ingest-only` case) or accept D4/D5 as unit-tested; state Scenario B's fixture either way.
+### 5. Day granularity reports linted entries as not linted
+- **Fails if:** an entry has `last_reviewed` = D (the ingest stamps today, per the reviewer, `wiki-update.py:822`) and a lint on day D covered it. Every later cycle that skips the lint counts it as not linted, until the next lint. That is a false count, against requirements line 75.
+- **Cheapest test:** a lint on 2026-09-10 whose scope file lists an entry with `last_reviewed` 2026-09-10 should count 0.
+- **Fix class:** choice. Label the line "may include entries linted that day", or also subtract the previous run's scope file, or compare by timestamp (which changes the step's own behaviour).
 
-### 4. Tier-4 deferrals in `discover.json`'s `deferred[]` need no contract change
-**Fails if:** the contract does not say that. `cycle-step-return-format.md:123` defines `deferred[]` as "Items blocked on recoverable error (retry next cycle)", and `:133` gives fetch-failure examples. A tier-4 item waiting on the user is not a retry. `framework-docs/` and `skills/wiki-discover/**` are not in Scope. Not read: whether wiki-discover already defers tier 4.
-**Evidence to get now:** read `skills/wiki-discover/SKILL.md` for tier 4; grep the `discover.json` consumers for `deferred`.
-**Kill criterion:** a reader treats `deferred[]` as retries, or the contract needs a line to stay true.
-**Fix class:** choice. Edit the contract (framework-version bump, `framework-docs/` in Scope) or put tier-4 elsewhere (`notes` or a separate array).
+### 6. Entries with zero claims stay "no claims" forever
+- **Fails if:** an entry yields no claims. The index has one record per claim, so it never names that entry (`wiki-cycle-scope.py:249-251`), and no mode can clear the count.
+- **Cheapest test:** a read-only claims-scope run on the live notebooks.
+- **Fix class:** choice. Accept it with reason text, or record claim-less entries in the index, or keep the line out of modes other than `--full`.
 
-### 5. Decisions needed 1-4 and the skip/default/exempt rules
-**Fails if:**
-- **D1 (discovery checklists).** Posed as open, but Mark's rule is "every queue it owns that is not empty". `skills/wiki-discover/SKILL.md:220` moves checklists to `_inbox/done/` (reviewer's citation, not re-read).
-- **D2 (lint-fixes.txt).** The file is written only after approved fixes are applied, so in an unanswered `--full` run it is absent and "no fix step in this mode" is false. Counting all findings mislabels declined ones as awaiting.
-- **D3.** Mark's Decision 4 says "dropped, failed or deferred", and the contract calls LOW-tier items "drops" (`:132`). Leaving them out narrows a confirmed decision. Dedup hits can be left out.
-- **D4.** The premise that a filter needs a reason-text match is wrong: `wiki-triage.py` has structured `save_as_pdf:` and `retry:` keys (`:222-231`, `:316-320`). Plan line 46 contradicts the repeat, and the Exclusions say no change to queues Needs you already names.
-- **Skipped as covered.** `wiki-dequeue.py:113-128` dequeues on a `source_url` match. Only concept-level matches stay, so "named every cycle" is overstated, and such a line has no way out.
-- **Date test.** wiki-report Step 1G uses `awk '{print $2}'`, which keeps quotes, so quoted or invalid dates compare differently.
-- **Reason text.** The "No usable review_after" reason claims the lint lists these, but the lint flags only an absent key (`wiki-lint-mechanical.py:727-730`).
-- **Standalone report.** Omitting the section reverses requirements line 66 ("every mode that writes a report"). It is a trade-off, and Fallbacks does the same.
-- **Staged entries.** Leaving them out when the setting is true holds only while the Needs you line stays (plan line 46 says it does).
+### 7. The seeded resume case is under-specified
+- **(a)** A resume continues from the phase after the last `done` (`SKILL.md:67`). The existing `fixtures/resume/scratchpad.md` is interrupted with phases 2.5-9 pending, so unless every earlier phase is seeded `done`, the model re-runs them.
+- **(b)** Without seeded `semantic-scope.txt`, `claims-scope.txt` and `promote-setting.txt`, the counter prints `not checked`. Case B also depends on git state: untracked files look added after any cut-off (`scope.py:172-177`), so it needs the orphan-branch backdating helper at `check.py:1815-1834` and far-future `review_after` dates.
+- **(c)** A seeded `lint-semantic.json` trips the presence-keyed guards in `check.py:546-547,1163,1307,1548`.
+- **Fix class:** plan error. State the fixture contents, and have an unpaid test run the fixture builder first.
 
-**Fix class:**
-- Plan error: D1 (include the line, drop the decision), the date test, the reason text, the skipped-as-covered wording.
-- Choice for Mark: D2, D3 and D4 (D4 with the corrected premise).
+### 8. The settled sources decision is applied before it is asked
+The counting rule drops "already covered" items whatever Mark answers.
+- **Fix class:** plan error. Move the exclusion into the Decision's recommended form, and say what steps 4 and 5 do under each answer.
+
+### 9. Smaller points
+- **Script tests left out (plan error):** the extraction's script tests miss `test_synthesis_scope.py`, `test_checker_hold.py` and `test_promote_setting.py`. Add them to "run at every step".
+- **Lint within 24 hours (plan error):** Step 4 is skipped when a lint ran in the last 24 hours (`SKILL.md:146`). The reason and the way out are then wrong, so add a "ran within 24 hours" reason.
+- **Tickets with no `source:` (choice):** they are not counted (`wiki-dequeue.py:25`), but D6 asks for the count still to be processed.
+
+## Skip, drop, exempt and default rules
+**Hold:**
+- `sessions/` and `tasks/` not counted.
+- Strict `review_after < today`.
+- Standalone pages excluded.
+- Staged entries, Drive, held, retry, PDF and unfinished-run items left to Needs you.
+
+**Conflict:**
+- "Already covered" drops left out (attack 8).
+- Absent events files add no line (attack 3).
+- Day granularity (attack 5).
+- Subtracting a partial or failed step (attack 4).
+- Rows 15, 22 and 23 excluded: requirements line 54 excludes them, but line 66 says every queue that can be non-empty. That is a conflict inside the requirements.
+
+**No standing rule found:**
+- A missing bucket folder counts 0.
+- `--report-only` reasons.
+- The `Sources: not checked` and `(no reason recorded)` defaults.
+- A malformed `review_after` getting its own line.
+
+## The README trigger claim
+- The extraction of `cmd_semantic`, `cmd_claims` and `cmd_synthesis` is not additive. Only wiki-cycle calls those three subcommands.
+- `tests/skills/README.md:9` says "a script many skills call", and the plan reads that as not firing here. That reading is defensible, but it is Mark's judgement. Either run the full wiki-cycle suite, or accept the targeted cases plus the script tests.
 
 ## What holds up
-- A `.txt` run-folder file needs no step-contract change. `promote-setting.txt` is in the contract tree, `fallbacks.txt` and `unfinished-runs.txt` are unlisted, and `check.py:2726` reads only `*.json` as steps.
-- The old ordering checks pass with a section between Fallbacks and Needs you (`check.py:2757` tests only `heads[-1]`; `:2549-2552`, `:2629`; `_needs_you` `:2223` ends at the next `##`; `FB_NONE` does not match "Left undone: nothing"). Not re-running old cases follows the tests README.
-- Cost: about 4 reads per entry on a git notebook, with no subprocess per entry.
-- The wiki-dequeue keep rule; the `tasks/` filter for the review-date counts; `not checked`, never silence; dedup hits left out; bucket reuse through `buckets()`/`me()`; framework-docs and lint output untouched.
+- The `.txt` file needs no contract edit.
+- The marker filter (`retry:`, `save_as_pdf:`).
+- The live-data arithmetic.
+- The claims cut-off moving does not hide entries.
+- The three-state template, and the old ordering checks.
+- Reusing `buckets()`/`me()`.
+- Dedup hits left out.
+- Only `left-undone.txt` is written.
 
 ## Could not assess
-- No standing rule found:
-  - staged entries left out when `confirm_before_promote: true` (beyond requirements 18 and 68);
-  - a malformed `review_after` counted under "No usable" rather than "Past";
-  - the `Sources: not checked (update.json unreadable)` and `(no reason recorded)` defaults.
-- Not read:
-  - whether /wiki-discover already defers tier 4 into `deferred[]`;
-  - whether update.json lists retry and Save-as-PDF tickets;
-  - the rest of check.py (about 2,000 lines);
-  - wiki-lint-mechanical.py beyond lines 577 and 727-730.
-- Not checked:
-  - whether PyYAML is installed in the scripts environment (`wiki-triage.py:106-112` catches only ImportError);
-  - whether agentic-design is a git repo (the non-git `added_since` reads each entry again);
-  - wall time on the live 1,731 entries.
-- Not re-read by the architect: the reviewer's claims about `wiki-discover:220`, the `save_as_pdf`/`retry` keys, and the wiki-refresh bump of `last_reviewed`.
+- Live counts not measured: duplicate basenames, zero-claim entries, and entries whose `last_reviewed` equals the lint day.
+- Whether the semantic lint writes `last_reviewed`.
+- Whether `buckets()`/`me()` import unchanged by importlib.
+- The `lint-mechanical.json` summary keys (`:1487-1505`), not read.
+- `trajectory_rules.py`, not read.
+- Whether the model copies the lines: only the paid run shows that.
+- The scope script's skill-file count (4 or 11).
 
 VERDICT: KILL-ASSUMPTIONS FOUND
