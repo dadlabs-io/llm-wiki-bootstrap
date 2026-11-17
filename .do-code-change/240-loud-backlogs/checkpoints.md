@@ -55,3 +55,10 @@ Asked: A, stay on main (as lessons #10-#12 did); or B, features/240-loud-backlog
 Mark (terminal): "A"
 
 Branch: main
+
+## Scope question after red-team round 2 — 2026-11-16
+Asked: A, build half 1 (disk-state counts) now and half 2 (what a step that ran left behind) as its own change; or B, keep everything and work through the ~10 decisions.
+
+Mark (terminal): "No lets fix the plan solidly first, we can still decide to do it in 2 parts, but lets make sure the plan is complete before we start"
+
+Read as: revise the whole plan (both halves) until it holds; the split stays open and is decided once the plan is complete.
