@@ -12,7 +12,7 @@ Created at Step 0 as `<run-folder>/scratchpad.md` and updated after every phase;
 **Status**: in_progress | completed | interrupted
 **Started**: <timestamp>
 **Topic**: <notebook>
-**Cycle**: <cycle_id> (<mode>)
+**Cycle**: <cycle_id> (<mode>[, <modifiers>])
 
 ## Run config
 - Mode: <mode and flags>

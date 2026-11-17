@@ -101,7 +101,7 @@ Flag three categories:
 - `cycle_id` = `<date>-<NN>` (e.g. `2026-04-24-01`). If invoked standalone (not inside a `/wiki-cycle` run), determine `NN` by scanning the day's existing folders.
 - Also write `<cycle_id>-run-cycle-report.json` alongside it — the aggregated JSON union of per-step JSONs (see [cycle-step-return-format best practice]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md)).
 
-**Data source — when running inside `/wiki-cycle`**: read the per-step JSONs from `<run-folder>/` (`discover.json`, `update.json`, `lint-mechanical.json`, `lint-semantic.json`, `refresh.json`, `claims.json`, `synthesis.json`), `cost.md`, `unfinished-runs.txt` (earlier runs with no report), `fallbacks.txt` (steps that left their expected tool path), and the triage step's retry list and unmatched PDFs (`wiki-triage.py retry-list --cycle <cycle_id>`, `attach-pdfs`'s output). The report is assembled from those — don't re-run steps.
+**Data source — when running inside `/wiki-cycle`**: read the per-step JSONs from `<run-folder>/` (`discover.json`, `update.json`, `lint-mechanical.json`, `lint-semantic.json`, `refresh.json`, `claims.json`, `synthesis.json`), `cost.md`, `unfinished-runs.txt` (earlier runs with no report), `fallbacks.txt` (steps that left their expected tool path), `left-undone.txt` (what the cycle left undone), and the triage step's retry list and unmatched PDFs (`wiki-triage.py retry-list --cycle <cycle_id>`, `attach-pdfs`'s output). The report is assembled from those — don't re-run steps.
 
 **Data source — when running standalone**: fall back to the Step 1 data-gathering commands (git log, filesystem scans). No per-step JSONs to read.
 
@@ -263,6 +263,8 @@ Based on the data above, suggest 3-5 concrete next actions:
 | Last semantic lint | <date or "never"> |
 | Last claims extraction | <date or "never"> |
 
+Stale (past review_after) is Left undone's `Past review_after` count when that file has the line, `0` when `left-undone.txt` exists with no such line, and `not checked` when the report has no `left-undone.txt` (the two no-file states below). The Stale entries table is refresh's own list and is not changed.
+
 ---
 
 ## Fallbacks
@@ -273,6 +275,15 @@ One of three states, from `<run-folder>/fallbacks.txt`:
 - the file is absent: `Fallbacks: not checked (no fallbacks.txt in the run folder)`, never `none`
 
 Standalone (no run folder): omit this section.
+
+---
+
+## Left undone
+
+One of three states, from `<run-folder>/left-undone.txt` (written by `wiki-cycle-scope.py left-undone`, which counts and words every line; its docstring is the one source):
+- the file exists: its text word for word, header line first, nothing counted, reworded, added or dropped by you
+- the file is absent: `Left undone: not checked (no left-undone.txt in the run folder)`, never `nothing`
+- standalone (no run folder): `Left undone: not checked (standalone report: no run folder)`
 
 ---
 
@@ -298,7 +309,7 @@ Everything waiting on the user, one line each, with what to do and where:
 
 Print the report inline (not just a file path). The morning report is meant to be READ, not filed and forgotten. Show it directly, then mention where the file is saved.
 
-If `--brief`, just show the Numbers table, Recommendations and Needs you — skip the details. After Numbers, and only when `fallbacks.txt` holds N > 0 fallback lines, add one line: `Fallbacks: N — see the full report`.
+If `--brief`, just show the Numbers table, Recommendations and Needs you — skip the details. After Numbers, and only when `fallbacks.txt` holds N > 0 fallback lines, add one line: `Fallbacks: N — see the full report`. Then, also after Numbers, the Left undone line: line 1 of `left-undone.txt` verbatim, followed by ` — see the full report` only when that line reads `Left undone: <N> queue(s)` (not after `Left undone: nothing`, `Left undone (disk-state queues): none`, or the two `not checked` states, which are complete as they stand); the line is the file's own, so compose no count.
 
 **`⚠️ Needs you` is always the last section**, in the file and inline: the user reads from the bottom up and looks there first.
 
