@@ -647,6 +647,7 @@ with tempfile.TemporaryDirectory() as td:
     PAST_RAN = "refresh ran; this count is from the dates now (refreshing them is your call: /wiki-refresh)"
     INTERIM_LAST = ("Not counted yet: leftovers of steps that ran (lint findings, dropped sources, "
                     "entries not linted, claimed or synthesised)")
+    LINT_NONE = "- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)"
 
     def left_undone_counts_review_dates():
         root = mknb("lu1")
@@ -665,7 +666,7 @@ with tempfile.TemporaryDirectory() as td:
         p, lines = lu("lu1", rf)
         after = tree(root)
         check("left_undone_counts_review_dates: exit 0 and the header counts the three queue lines",
-              p.returncode == 0 and lines[:1] == ["Left undone: 5 queue(s)"], (p.returncode, p.stderr[-300:], lines))
+              p.returncode == 0 and lines[:1] == ["Left undone: 6 queue(s)"], (p.returncode, p.stderr[-300:], lines))
         check("left_undone_counts_review_dates: past review_after counts 2 (the quoted date too), today and the future not",
               f"- Past review_after: 2 — {PAST_NOT_RUN}" in lines, lines)
         check("left_undone_counts_review_dates: no review_after counts 1, a task card and a session page not",
@@ -675,7 +676,7 @@ with tempfile.TemporaryDirectory() as td:
               "- review_after not a date: 1 — refresh cannot read it; correct the date "
               "(the lint lists them under Dates not in ISO form)" in lines, lines)
         check("left_undone_counts_review_dates: exactly three queue lines, and the interim line last, not a queue",
-              len([l for l in lines if l.startswith("- ")]) == 5 and lines[-1:] == [INTERIM_LAST], lines)
+              len([l for l in lines if l.startswith("- ")]) == 6 and lines[-1:] == [INTERIM_LAST], lines)
         rel = "_inbox/reports/2026-06-15/2026-06-15-01/left-undone.txt"
         check("left_undone_counts_review_dates: only left-undone.txt is new, nothing else changed, no scope file",
               set(after) - set(before) == {rel} and all(after.get(k) == v for k, v in before.items())
@@ -943,7 +944,7 @@ with tempfile.TemporaryDirectory() as td:
         p, lines = step3_run("lu6", cycle="--lint-only")
         check("left_undone_counts_bucket_tickets: --lint-only names this session's bucket once and the others once, "
               "and counts both in the header",
-              p.returncode == 0 and lines == ["Left undone: 2 queue(s)", OWN_NO_INGEST, OTHERS, INTERIM_LAST],
+              p.returncode == 0 and lines == ["Left undone: 3 queue(s)", LINT_NONE, OWN_NO_INGEST, OTHERS, INTERIM_LAST],
               (p.stderr[-300:], lines))
         p, lines = step3_run("lu6", cycle="--full")
         check("left_undone_counts_bucket_tickets: --full gives the ran reason on this session's bucket, the others unchanged",
@@ -966,7 +967,8 @@ with tempfile.TemporaryDirectory() as td:
         late = f"{head} — not triaged: arrived after triage, or triage did not complete"
         p, lines = step3_run("lu7", cycle="--lint-only")
         check("left_undone_counts_pending_tickets: --lint-only counts the three (one with no source:) and says it does not triage",
-              p.returncode == 0 and lines == ["Left undone: 1 queue(s)", no_triage, INTERIM_LAST], (p.stderr[-300:], lines))
+              p.returncode == 0 and lines == ["Left undone: 2 queue(s)", LINT_NONE, no_triage, INTERIM_LAST],
+              (p.stderr[-300:], lines))
         p, lines = step3_run("lu7", cycle="--prompt-for-urls")
         check("left_undone_counts_pending_tickets: a mode that ingests and does not triage says it does not triage",
               no_triage in lines, lines)
@@ -988,19 +990,19 @@ with tempfile.TemporaryDirectory() as td:
         for name in ("s1.md", "s2.md", "_x.md", "README.md"):
             (prop / name).write_text("---\ntitle: s\n---\n", encoding="utf-8")
         (prop / "s1.proposed_metadata.json").write_text("{}", encoding="utf-8")
-        none = ["Left undone (disk-state queues): none", INTERIM_LAST]
+        none = ["Left undone: 1 queue(s)", LINT_NONE, INTERIM_LAST]
         p, lines = step3_run("lu8", cycle="--lint-only", setting="false")
         check("left_undone_counts_staged_entries: with confirm_before_promote false the two staged entries are one queue line",
-              p.returncode == 0 and lines == ["Left undone: 1 queue(s)", "- Staged entries: 2 — staged before this run, "
-                                              "or held by the checker; /wiki-promote", INTERIM_LAST],
+              p.returncode == 0 and lines == ["Left undone: 2 queue(s)", LINT_NONE, "- Staged entries: 2 — staged before "
+                                              "this run, or held by the checker; /wiki-promote", INTERIM_LAST],
               (p.stderr[-300:], lines))
         p, lines = step3_run("lu8", cycle="--lint-only", setting="true")
         check("left_undone_counts_staged_entries: with confirm_before_promote true Needs you has them, so no line",
               lines == none, lines)
         p, lines = step3_run("lu8", cycle="--lint-only")
         check("left_undone_counts_staged_entries: with no promote-setting.txt the count is kept and not checked is said",
-              lines == ["Left undone: 1 queue(s)", "- Staged entries: 2, not checked (no promote-setting.txt: whether "
-                                                   "they wait for you is not known)", INTERIM_LAST], lines)
+              lines == ["Left undone: 2 queue(s)", LINT_NONE, "- Staged entries: 2, not checked (no promote-setting.txt: "
+                                                              "whether they wait for you is not known)", INTERIM_LAST], lines)
         mknb("lu8b")
         p, lines = step3_run("lu8b", cycle="--lint-only", setting="false")
         check("left_undone_counts_staged_entries: no staged entries add nothing, with the setting false or absent",
@@ -1016,13 +1018,13 @@ with tempfile.TemporaryDirectory() as td:
         p, lines = step3_run("lu9", cycle="--lint-only")
         check("left_undone_counts_discovery_checklists: one checklist is one queue line, a README and a _-file are not counted",
               p.returncode == 0 and lines == [
-                  "Left undone: 1 queue(s)", "- Discovery checklists: 1 — still in _inbox/discovered/ (discovery files a "
-                  "processed one in _inbox/done/); whether it was reviewed is not recorded", INTERIM_LAST],
+                  "Left undone: 2 queue(s)", LINT_NONE, "- Discovery checklists: 1 — still in _inbox/discovered/ "
+                  "(discovery files a processed one in _inbox/done/); whether it was reviewed is not recorded", INTERIM_LAST],
               (p.stderr[-300:], lines))
         mknb("lu9b")
         p, lines = step3_run("lu9b", cycle="--lint-only")
         check("left_undone_counts_discovery_checklists: no _inbox/discovered/ adds nothing",
-              lines == ["Left undone (disk-state queues): none", INTERIM_LAST], lines)
+              lines == ["Left undone: 1 queue(s)", LINT_NONE, INTERIM_LAST], lines)
     left_undone_counts_discovery_checklists()
 
     def left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme():
@@ -1033,7 +1035,7 @@ with tempfile.TemporaryDirectory() as td:
         lu_tickets(intake / "main", "m", 2)
         p, lines = step3_run("lu10", cycle="--lint-only")
         check("left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme: exit 0 and the main bucket is this session's",
-              p.returncode == 0 and lines == ["Left undone: 1 queue(s)", OWN_NO_INGEST, INTERIM_LAST],
+              p.returncode == 0 and lines == ["Left undone: 2 queue(s)", LINT_NONE, OWN_NO_INGEST, INTERIM_LAST],
               (p.returncode, p.stderr[-300:], lines))
     left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme()
 
@@ -1351,6 +1353,320 @@ with tempfile.TemporaryDirectory() as td:
         check("left_undone_counts_entries_not_synthesised: with no best-practices page there is nothing to synthesise into, no line",
               s4_line(lines, SYN) is None, lines)
     left_undone_counts_entries_not_synthesised()
+
+    # ── left-undone step 5: lint findings, semantic findings, the fixes record, earlier runs' findings ──
+    S5_LINT, S5_EARLY, S5_LATE = "2026-10-04T12:00:00-04:00", "2026-10-04T10:00:00-04:00", "2026-10-04T14:00:00-04:00"
+    S5_KINDS = {"files_scanned": 9, "broken_links": 2, "orphans": 0, "unquoted_yaml": 1, "standalone": 3,
+                "backlink_blocks_out_of_step": 4}
+    NO_FIX = "no fix step in this mode"
+    STILL = "still present after the cycle Step 5 fixes (not approved, declined, or no fix step covers this kind)"
+    GUARD = "- Lint findings: not checked (the lint predates cycle Step 5; re-run the mechanical lint)"
+    SEMF = "- Semantic findings: "
+    S5_WAY = "the findings are in lint-semantic.md and no later cycle step shows them again"
+    NO_USABLE = f"{SEMF}not checked (lint-semantic.json has no usable findings list)"
+
+    def s5_file(name, content):
+        return dict(name=name, status="", text=content if isinstance(content, str) else json.dumps(content))
+
+    def s5_lint(summary=S5_KINDS, status="completed", not_checked=(), stamp=S5_LINT):
+        return s5_file("lint-mechanical.json", {"status": status, "timestamp": stamp, "not_checked": list(not_checked),
+                                                "summary": summary})
+
+    def s5_fixes(applied="", declined="", at=S5_EARLY):
+        return s5_file("lint-fixes.txt", f"applied: {applied}\ndeclined: {declined}\nat: {at}\n")
+
+    def s5_findings(n):
+        return [{"file": f"wiki/research/x/f{i}.md", "category": "drift", "severity": "high", "detail": f"detail {i}",
+                 "evidence": "e", "suggested_fix": "s", "agent": "a"} for i in range(1, n + 1)]
+
+    def s5_sem_rec(n, status="completed", not_checked=(), stamp=S5_LINT):
+        return {"status": status, "timestamp": stamp, "not_checked": list(not_checked), "summary": {"findings": n},
+                "findings": s5_findings(n)}
+
+    def s5_sem(n, status="completed", not_checked=(), stamp=S5_LINT):
+        return s5_file("lint-semantic.json", s5_sem_rec(n, status, not_checked, stamp))
+
+    def left_undone_names_lint_findings():
+        s5a = mknb("s5a")
+        p, lines, (new, edited) = s4_lu("s5a", "--lint-only", [s5_lint()])
+        check("left_undone_names_lint_findings: a lint of 2 broken links and 1 unquoted yaml gives those two lines and "
+              "none for files_scanned, standalone, backlink_blocks_out_of_step or the zero kind, in a mode with no fix step",
+              p.returncode == 0 and lines == ["Left undone: 2 queue(s)", f"- Lint broken links: 2 — {NO_FIX}",
+                                              f"- Lint unquoted yaml: 1 — {NO_FIX}", INTERIM_LAST], (p.stderr[-300:], lines))
+        check("left_undone_names_lint_findings: only left-undone.txt is new and nothing changed",
+              [k.rsplit("/", 1)[-1] for k in new] == ["left-undone.txt"] and edited == [], (new, edited))
+        p, lines, _ = s4_lu("s5a", "--full", [s5_lint(), s5_fixes()])
+        check("left_undone_names_lint_findings: --full with a fixes record and a lint stamped after it says each kind is "
+              "still present after the Step 5 fixes",
+              f"- Lint broken links: 2 — {STILL}" in lines and f"- Lint unquoted yaml: 1 — {STILL}" in lines, lines)
+        p, lines, _ = s4_lu("s5a", "--full", [s5_lint()])
+        check("left_undone_names_lint_findings: --full with no lint-fixes.txt keeps the counts and says the fix step left none",
+              "- Lint broken links: 2, not checked (the fix step left no lint-fixes.txt)" in lines
+              and "- Lint unquoted yaml: 1, not checked (the fix step left no lint-fixes.txt)" in lines, lines)
+        p, lines, _ = s4_lu("s5a", "--full", [s5_lint(), s5_fixes(at=S5_LATE)])
+        check("left_undone_names_lint_findings: a fixes record with zero ids and a lint stamped before it gives one guard "
+              "line and no counts",
+              GUARD in lines and not [l for l in lines if l.startswith("- Lint broken") or l.startswith("- Lint unquoted")],
+              lines)
+        p, lines, _ = s4_lu("s5a", "--full", [s5_lint(), s5_fixes(at="not a time")])
+        check("left_undone_names_lint_findings: a fixes record whose at: cannot be read cannot prove the lint is later, so the guard fires",
+              GUARD in lines, lines)
+        p, lines, _ = s4_lu("s5a", "--lint-only", [s5_lint(), s5_fixes(at=S5_LATE)])
+        check("left_undone_names_lint_findings: the guard fires whenever lint-fixes.txt exists, in any mode",
+              GUARD in lines, lines)
+        p, lines, _ = s4_lu("s5a", "--lint-only", [s5_lint({"files_scanned": 4, "broken_links": 2}, status="partial",
+                                                           not_checked=["no entries", "qmd is not on PATH"])])
+        check("left_undone_names_lint_findings: a partial lint gives one not-checked line per part, no counts, never nothing",
+              "- Lint: not checked — no entries" in lines and "- Lint: not checked — qmd is not on PATH" in lines
+              and not [l for l in lines if l.startswith("- Lint broken")] and lines[:1] == ["Left undone: 2 queue(s)"], lines)
+        p, lines, _ = s4_lu("s5a", "--lint-only", [s5_lint({"files_scanned": 4, "broken_links": 0}, status="partial",
+                                                           not_checked=["no entries"])])
+        check("left_undone_names_lint_findings: a partial lint with all-zero counts still names what it did not check",
+              "- Lint: not checked — no entries" in lines, lines)
+        p, lines, _ = s4_lu("s5a", "--lint-only")
+        check("left_undone_names_lint_findings: a mode that lints and left no lint-mechanical.json: not checked",
+              "- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)" in lines, lines)
+        p, lines, _ = s4_lu("s5a", "--discover-only")
+        check("left_undone_names_lint_findings: a mode that does not lint says no lint ran this cycle",
+              "- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)" in lines, lines)
+        p, lines, _ = s4_lu("s5a", None)
+        check("left_undone_names_lint_findings: an unknown mode with no lint adds no lint line (the Mode line covers it)",
+              not [l for l in lines if l.startswith("- Lint")] and lines[:1] == ["Left undone: 1 queue(s)"], lines)
+        p, lines, _ = s4_lu("s5a", None, [s5_lint()])
+        check("left_undone_names_lint_findings: an unknown mode with a lint keeps the counts and says not checked",
+              "- Lint broken links: 2, not checked (cannot read the mode from scratchpad.md)" in lines, lines)
+        p, lines, _ = s4_lu("s5a", "--lint-only", [s5_lint({"files_scanned": 9, "broken_links": 0, "standalone": 3})])
+        check("left_undone_names_lint_findings: a completed lint of all zeros adds no lint line",
+              not [l for l in lines if l.startswith("- Lint")], lines)
+        p, lines, _ = s4_lu("s5a", "--lint-only", [s5_file("lint-mechanical.json", "{not json")])
+        check("left_undone_names_lint_findings: a lint-mechanical.json that does not parse is not checked, no crash",
+              p.returncode == 0 and "- Lint findings: not checked (lint-mechanical.json unreadable)" in lines,
+              (p.stderr[-300:], lines))
+        p, lines, _ = s4_lu("s5a", "--lint-only", [s5_lint(status="failed")])
+        check("left_undone_names_lint_findings: a lint that ended failed is not checked",
+              "- Lint findings: not checked (the mechanical lint ended failed)" in lines, lines)
+    left_undone_names_lint_findings()
+
+    def left_undone_does_not_read_a_lint_with_no_summary_as_clean():
+        mknb("s5a2")
+        for what, summary in (("no summary key", None), ("a summary that is not an object", [1, 2])):
+            rec = {"status": "completed", "timestamp": S5_LINT, "not_checked": []}
+            if summary is not None:
+                rec["summary"] = summary
+            p, lines, _ = s4_lu("s5a2", "--lint-only", [s5_file("lint-mechanical.json", rec)])
+            check(f"left_undone_does_not_read_a_lint_with_no_summary_as_clean: a completed lint with {what} reads not "
+                  "checked, never clean",
+                  p.returncode == 0 and "- Lint findings: not checked (lint-mechanical.json has no usable summary)" in lines,
+                  (p.returncode, p.stderr[-200:], lines))
+    left_undone_does_not_read_a_lint_with_no_summary_as_clean()
+
+    def lint_fixes_prints_the_numbered_findings():
+        root = mknb("s5b0")
+        rf = lu_run(root, "2026-10-05-05", cycle="--full")
+        finds = s5_findings(5)
+        finds[0]["detail"] = "abcdefghij" * 15
+        finds[1]["detail"] = "line one\nline two"
+        (rf / "lint-semantic.json").write_text(json.dumps({**s5_sem_rec(5), "findings": finds}), encoding="utf-8")
+        bare = lu_run(root, "2026-10-05-06", cycle="--full")
+        before = tree(root)
+        p = run_on("s5b0", "lint-fixes", "--run-folder", str(rf), "--show")
+        want = [f"1. [drift] wiki/research/x/f1.md — {'abcdefghij' * 10}", "2. [drift] wiki/research/x/f2.md — line one line two"] \
+            + [f"{i}. [drift] wiki/research/x/f{i}.md — detail {i}" for i in (3, 4, 5)]
+        check("lint_fixes_prints_the_numbered_findings: --show prints one numbered line per finding, 100 characters of "
+              "detail at most, a newline in it flattened, and records nothing",
+              p.returncode == 0 and p.stdout.splitlines() == want and tree(root) == before, (p.returncode, p.stdout, p.stderr[-200:]))
+        p = run_on("s5b0", "lint-fixes", "--run-folder", str(bare), "--show")
+        check("lint_fixes_prints_the_numbered_findings: --show with no lint-semantic.json says so and exits 0",
+              p.returncode == 0 and "no lint-semantic.json" in p.stdout, (p.returncode, p.stdout))
+    lint_fixes_prints_the_numbered_findings()
+
+    def lint_fixes_writes_the_fixes_record():
+        root = mknb("s5b")
+        rf = lu_run(root, "2026-10-05-01", cycle="--full")
+        (rf / "lint-semantic.json").write_text(json.dumps(s5_sem_rec(5)), encoding="utf-8")
+
+        def lf(*a, folder=rf):
+            return run_on("s5b", "lint-fixes", "--run-folder", str(folder), *a)
+        before = tree(root)
+        p = lf("--applied", "2,1,1", "--declined", "3")
+        txt = (rf / "lint-fixes.txt").read_text(encoding="utf-8").splitlines() if (rf / "lint-fixes.txt").is_file() else []
+        from datetime import datetime
+        at = None
+        try:
+            at = datetime.fromisoformat(txt[2][len("at: "):]) if len(txt) == 3 and txt[2].startswith("at: ") else None
+        except ValueError:
+            pass
+        after = tree(root)
+        check("lint_fixes_writes_the_fixes_record: --applied and --declined write the ids sorted and once each, "
+              "with a tz-aware at: stamp, in lint-fixes.txt, and nothing else is new",
+              p.returncode == 0 and txt[:2] == ["applied: 1,2", "declined: 3"] and at is not None and at.tzinfo is not None
+              and [k.rsplit("/", 1)[-1] for k in after if k not in before] == ["lint-fixes.txt"]
+              and [k for k, v in before.items() if after.get(k) != v] == [], (p.returncode, p.stderr[-200:], txt))
+        (rf / "lint-fixes.txt").unlink(missing_ok=True)
+        p = lf()
+        txt = (rf / "lint-fixes.txt").read_text(encoding="utf-8").splitlines() if (rf / "lint-fixes.txt").is_file() else []
+        check("lint_fixes_writes_the_fixes_record: no ids at all writes two empty lists and the stamp",
+              p.returncode == 0 and txt[:2] == ["applied:", "declined:"] and len(txt) == 3, (p.returncode, txt))
+        bare = lu_run(root, "2026-10-05-02", cycle="--full")
+        p = lf(folder=bare)
+        txt = (bare / "lint-fixes.txt").read_text(encoding="utf-8").splitlines() if (bare / "lint-fixes.txt").is_file() else []
+        check("lint_fixes_writes_the_fixes_record: with no lint-semantic.json it writes empty lists and exits 0",
+              p.returncode == 0 and txt[:2] == ["applied:", "declined:"], (p.returncode, p.stderr[-200:], txt))
+    lint_fixes_writes_the_fixes_record()
+
+    def lint_fixes_refuses_ids_it_cannot_place():
+        root = mknb("s5c0")
+        rf = lu_run(root, "2026-10-05-03", cycle="--full")
+        (rf / "lint-semantic.json").write_text(json.dumps(s5_sem_rec(5)), encoding="utf-8")
+        bare = lu_run(root, "2026-10-05-04", cycle="--full")
+        p = run_on("s5c0", "lint-fixes", "--run-folder", str(rf), "--applied", "5", "--declined", "1")
+        check("lint_fixes_refuses_ids_it_cannot_place: control: ids inside 1..5 and in one list each are accepted",
+              p.returncode == 0 and (rf / "lint-fixes.txt").is_file(), (p.returncode, p.stderr[-200:]))
+        (rf / "lint-fixes.txt").unlink(missing_ok=True)
+        cases = [("an id of 0", rf, ["--applied", "0"]), ("an id past the list", rf, ["--declined", "6"]),
+                 ("a non-numeric id", rf, ["--applied", "1,x"]), ("a negative id", rf, ["--declined", "-1"]),
+                 ("an id in both lists", rf, ["--applied", "1,2", "--declined", "2"]),
+                 ("--show with ids", rf, ["--show", "--applied", "1"]),
+                 ("an id with no lint-semantic.json", bare, ["--applied", "1"])]
+        for what, folder, extra in cases:
+            p = run_on("s5c0", "lint-fixes", "--run-folder", str(folder), *extra)
+            check(f"lint_fixes_refuses_ids_it_cannot_place: {what} exits 2, says why and writes no lint-fixes.txt",
+                  p.returncode == 2 and p.stderr.strip() != "" and not (folder / "lint-fixes.txt").exists(),
+                  (p.returncode, p.stderr[-200:]))
+        p = run_on("s5c0", "lint-fixes", "--run-folder", str(root / "nowhere"), "--applied", "1")
+        check("lint_fixes_refuses_ids_it_cannot_place: a run folder that is not there exits 2 and creates nothing",
+              p.returncode == 2 and not (root / "nowhere").exists(), (p.returncode, p.stderr[-200:]))
+    lint_fixes_refuses_ids_it_cannot_place()
+
+    def left_undone_counts_semantic_findings():
+        mknb("s5c")
+        p, lines, _ = s4_lu("s5c", "--full", [s5_sem(5), s5_fixes("1,2", "3")])
+        rid = f"{D3}-{s4_runs[0]:02d}"
+        check("left_undone_counts_semantic_findings: --full, 5 findings, 2 applied and 1 declined: 2 awaiting, with the "
+              "truthful way out naming this run",
+              f"{SEMF}2 — awaiting your approval; the findings are in lint-semantic.md (run {rid}); no later cycle step "
+              "shows them again" in lines, lines)
+        p, lines, _ = s4_lu("s5c", "--lint-only --semantic", [s5_sem(5)])
+        check("left_undone_counts_semantic_findings: --lint-only --semantic counts all 5 with no fix step in this mode",
+              f"{SEMF}5 — {NO_FIX}; {S5_WAY}" in lines, lines)
+        p, lines, _ = s4_lu("s5c", "--full", [s5_sem(5)])
+        check("left_undone_counts_semantic_findings: --full with 5 findings and no lint-fixes.txt keeps the count and says "
+              "applied and declined were not recorded",
+              f"{SEMF}5, not checked (the fix step left no lint-fixes.txt: applied and declined were not recorded)" in lines,
+              lines)
+        p, lines, _ = s4_lu("s5c", "--full", [s5_sem(0), s5_fixes()])
+        none_empty = not [l for l in lines if l.startswith(SEMF)]
+        p, lines, _ = s4_lu("s5c", "--full", [s5_sem(5), s5_fixes("1,2,3", "4,5,9")])
+        check("left_undone_counts_semantic_findings: 0 findings, or a record covering every finding (one id beyond the "
+              "list too), gives no line and never a negative count",
+              none_empty and not [l for l in lines if l.startswith(SEMF)], lines)
+        p, lines, _ = s4_lu("s5c", "--full", [s5_sem(5, status="partial"), s5_fixes("1", "")])
+        check("left_undone_counts_semantic_findings: a partial semantic lint with a usable list prints the figure the "
+              "complete line would print, with not checked",
+              f"{SEMF}4, not checked (the semantic lint ended partial)" in lines, lines)
+        p, lines, _ = s4_lu("s5c", "--full", [s5_sem(5, status="partial")])
+        check("left_undone_counts_semantic_findings: a partial lint with no fixes record prints all 5, with not checked",
+              f"{SEMF}5, not checked (the semantic lint ended partial)" in lines, lines)
+        p, lines, _ = s4_lu("s5c", "--full", [s5_sem(5, not_checked=["two entries unread", "no scope"]), s5_fixes()])
+        check("left_undone_counts_semantic_findings: a top-level not_checked of 2 gives one parts-not-checked line",
+              "- Semantic lint, parts not checked: 2 — two entries unread; no scope" in lines, lines)
+        bad = {"status": "completed", "timestamp": S5_LINT, "summary": {"findings": 5}}
+        for what, rec in (("no findings key", bad), ("a findings value that is not a list", {**bad, "findings": "x"}),
+                          ("a length that disagrees with summary.findings", {**s5_sem_rec(5), "summary": {"findings": 4}})):
+            p, lines, _ = s4_lu("s5c", "--full", [s5_file("lint-semantic.json", rec), s5_fixes()])
+            check(f"left_undone_counts_semantic_findings: {what} reads not checked, never zero", NO_USABLE in lines, lines)
+        p, lines, _ = s4_lu("s5c", "--full", [s5_file("lint-semantic.json", "{not json")])
+        check("left_undone_counts_semantic_findings: a lint-semantic.json that does not parse is not checked, no crash",
+              p.returncode == 0 and f"{SEMF}not checked (lint-semantic.json unreadable)" in lines, (p.stderr[-300:], lines))
+        p, lines, _ = s4_lu("s5c", "--full")
+        p2, lines2, _ = s4_lu("s5c", "--lint-only")
+        check("left_undone_counts_semantic_findings: a mode that runs the lint and left no lint-semantic.json says so; one "
+              "that does not run it adds no line",
+              f"{SEMF}not checked (the semantic lint left no lint-semantic.json)" in lines
+              and not [l for l in lines2 if l.startswith(SEMF)], (lines, lines2))
+        p, lines, _ = s4_lu("s5c", "--full", [s5_sem(5), s5_file("lint-fixes.txt", "garbage\n")])
+        check("left_undone_counts_semantic_findings: a lint-fixes.txt with no applied and declined lines is unreadable",
+              f"{SEMF}5, not checked (lint-fixes.txt unreadable)" in lines, lines)
+        p, lines, _ = s4_lu("s5c", None, [s5_sem(5), s5_fixes("1", "")])
+        check("left_undone_counts_semantic_findings: an unknown mode keeps the figure and says not checked",
+              f"{SEMF}4, not checked (cannot read the mode from scratchpad.md)" in lines, lines)
+    left_undone_counts_semantic_findings()
+
+    def s5_hist(root, day, nth, n, status="completed", note=None):
+        """An earlier run folder holding a semantic lint of `n` findings (and, with `note` = (applied, declined), its
+        fixes record); returns the run id."""
+        d = root / "_inbox" / "reports" / day / f"{day}-{nth:02d}"
+        d.mkdir(parents=True)
+        (d / "lint-semantic.json").write_text(json.dumps(s5_sem_rec(n, status, stamp=f"{day}T09:00:00-04:00")),
+                                              encoding="utf-8")
+        if note is not None:
+            (d / "lint-fixes.txt").write_text(f"applied: {note[0]}\ndeclined: {note[1]}\nat: {day}T10:00:00-04:00\n",
+                                              encoding="utf-8")
+        return d.name
+
+    def left_undone_names_semantic_findings_from_earlier_runs():
+        import ast
+        root = mknb("s5d")
+        l0 = s5_hist(root, "2026-09-20", 1, 0, note=("", ""))
+        l1 = s5_hist(root, "2026-09-21", 1, 5, note=("1,2", "3"))
+        part = s5_hist(root, "2026-09-22", 1, 5, status="partial")
+        l2 = s5_hist(root, "2026-09-22", 2, 3)
+        l3 = s5_hist(root, "2026-09-23", 1, 2)
+        l4 = s5_hist(root, "2026-09-24", 1, 0, note=("", ""))
+        SUP = (f"- Semantic findings from {l1}: 2, superseded by a newer lint; no longer shown in full; the findings are "
+               f"in lint-semantic.md (run {l1}); no later cycle step shows them again")
+        COLL = "- 2 earlier lints recorded no applied or declined findings; no longer shown in full"
+
+        def old_lines(lines):
+            return [l for l in lines if l.startswith("- Semantic findings from ") or "earlier lint" in l]
+        p, lines, _ = s4_lu("s5d", "--ingest-only")
+        check("left_undone_names_semantic_findings_from_earlier_runs: an older lint with unresolved findings gets a "
+              "superseded line though the newest lint found nothing, the two older ones with no fixes record collapse into "
+              "one line, and an empty list, the newest and a partial lint add nothing",
+              old_lines(lines) == [SUP, COLL] and not [l for l in lines if part in l or l0 in l or l4 in l],
+              old_lines(lines))
+        n = len([l for l in lines if l.startswith("- ")])
+        check("left_undone_names_semantic_findings_from_earlier_runs: the header counts those lines",
+              lines[:1] == [f"Left undone: {n} queue(s)"], lines[:1])
+        p, lines, _ = s4_lu("s5d", "--full", [s5_sem(1), s5_fixes("1", "")])
+        check("left_undone_names_semantic_findings_from_earlier_runs: a --full run whose own lint is the newest still "
+              "prints the older lints' lines", old_lines(lines) == [SUP, COLL], old_lines(lines))
+        p, lines, _ = s4_lu("s5d", "--lint-only --semantic", [s5_sem(5)])
+        check("left_undone_names_semantic_findings_from_earlier_runs: so does a --lint-only --semantic run, beside its own line",
+              old_lines(lines) == [SUP, COLL] and f"{SEMF}5 — {NO_FIX}; {S5_WAY}" in lines, lines)
+        doc = ast.get_docstring(ast.parse(SCRIPT.read_text(encoding="utf-8"))) or ""
+        check("left_undone_names_semantic_findings_from_earlier_runs: the docstring says only completed lints are read, "
+              "so an older partial lint is not",
+              "only completed lints are read" in doc and "partial" in doc[doc.find("only completed lints are read") - 300:][:600],
+              doc[doc.find("only completed lints"):][:200])
+        one = mknb("s5e")
+        x = s5_hist(one, "2026-09-21", 1, 5, note=("1,2", "3"))
+        p, lines, _ = s4_lu("s5e", "--ingest-only")
+        check("left_undone_names_semantic_findings_from_earlier_runs: a run with no lint of its own names the newest lint's "
+              "unresolved findings, with where they are and that fixes made by hand are not seen",
+              f"- Semantic findings from {x}: 2 — awaiting your approval; the findings are in lint-semantic.md (run {x}); "
+              "no later cycle step shows them again; fixes made by hand since are not seen" in lines, lines)
+        none = mknb("s5f")
+        y = s5_hist(none, "2026-09-21", 1, 4)
+        p, lines, _ = s4_lu("s5f", "--ingest-only")
+        check("left_undone_names_semantic_findings_from_earlier_runs: an earlier lint with no fixes record is not checked, count kept",
+              f"- Semantic findings from {y}: 4, not checked (that run recorded no applied or declined findings)" in lines,
+              lines)
+        un = mknb("s5g")
+        z = "2026-09-21-01"
+        d = un / "_inbox" / "reports" / "2026-09-21" / z
+        d.mkdir(parents=True)
+        (d / "lint-semantic.json").write_text(json.dumps({"status": "completed", "timestamp": "2026-09-21T09:00:00-04:00"}),
+                                              encoding="utf-8")
+        p, lines, _ = s4_lu("s5g", "--ingest-only")
+        check("left_undone_names_semantic_findings_from_earlier_runs: an earlier lint with no usable findings list is not checked",
+              f"- Semantic findings from {z}: not checked (lint-semantic.json has no usable findings list)" in lines, lines)
+        done = mknb("s5h")
+        s5_hist(done, "2026-09-21", 1, 5, note=("1,2,3", "4,5"))
+        p, lines, _ = s4_lu("s5h", "--ingest-only")
+        check("left_undone_names_semantic_findings_from_earlier_runs: an earlier lint every finding of which was answered adds nothing",
+              old_lines(lines) == [], lines)
+    left_undone_names_semantic_findings_from_earlier_runs()
 
 failed =[n for ok, n in results if not ok]
 for ok, n in results:

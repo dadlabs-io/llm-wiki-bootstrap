@@ -15,6 +15,7 @@ What a /wiki-cycle step reads, decided by a script instead of by the model.
     wiki-cycle-scope.py --topic N unfinished --mark-interrupted <cycle_id> --reason "<why>"
     wiki-cycle-scope.py --topic N writer <raw> [<raw> ...] [--ingester <config.json>]
     wiki-cycle-scope.py --topic N left-undone --run-folder <rf> [--today YYYY-MM-DD]
+    wiki-cycle-scope.py --topic N lint-fixes --run-folder <rf> [--show | --applied <ids> --declined <ids>]
 
 `semantic`: the entries added or revised since the last semantic lint (the newest
 earlier run folder holding lint-semantic.json; its `timestamp` is the cut-off), plus
@@ -104,8 +105,9 @@ undone is named, with the count and why). Exit 2, nothing written, for a `--toda
 (YYYY-MM-DD), a run folder or notebook that is not there. It changes no entry and writes no `*-scope.txt`. Run it from
 the project whose notebook is counted: a working folder whose .claude/wiki-config.json names another notebook is
 not a supported case (this session's bucket is read from that file, so it would label the wrong bucket as this
-session's). This is Part 1, the disk-state counts, and the first of Part 2, the entries not linted, without claims and
-not synthesised; the rest of Part 2 (lint findings, sources) is not counted yet.
+session's). This is Part 1, the disk-state counts, and most of Part 2: the entries not linted, without claims and not
+synthesised, the lint findings, the semantic findings and the earlier runs' semantic findings; the sources are not
+counted yet.
 
   File shape. Line 1 is a header the script writes: `Left undone: <N> queue(s)`, N the number of queue lines below
   it, `Mode: not checked` lines and `, not checked` lines included (each is something not known to be empty), or
@@ -188,6 +190,63 @@ not synthesised; the rest of Part 2 (lint findings, sources) is not counted yet.
   unknown)`, completed the ran wording. The newest completed result with no scope file reads `<count>, not checked (no
   <scope file> in the run folder)` in every mode (what it covered is not known, nothing is subtracted). A synthesis of
   status awaiting_approval adds no line (Needs you has it). The command reads the scope files and writes none.
+
+  Lint findings (lint-mechanical.json). One line per `summary` key above 0 except files_scanned (not a finding),
+  standalone (pages that declare themselves standalone by design) and backlink_blocks_out_of_step (Needs you has it):
+  `- Lint <key, underscores as spaces>: <N> — <reason>`, the reason `no fix step in this mode` or, in --full,
+  `still present after the cycle Step 5 fixes (not approved, declined, or no fix step covers this kind)`; "awaiting your
+  approval" is used for semantic findings only. A partial lint (`status: partial`, the `not_checked` list it writes at
+  exit 3) gives one `- Lint: not checked — <reason>` line per entry of `not_checked` and no counts, whatever its summary
+  says (unchecked parts report 0); a lint that ended any other status gives `- Lint findings: not checked (the
+  mechanical lint ended <status>)`, one that does not parse `(lint-mechanical.json unreadable)`, a completed one with no
+  summary object `(lint-mechanical.json has no usable summary)`. No result in a mode that lints: `- Lint findings: not
+  checked (the mechanical lint left no lint-mechanical.json)`; in a mode that does not: `- Lint findings: not checked (no
+  lint ran this cycle; /wiki-cycle --lint-only)`; with an unknown mode or a contradiction and no result the Mode line
+  says it, so this line is left out. An unknown mode or a contradiction with a result keeps the counts and reads `<N>,
+  not checked (<problem>)`. Staleness guard: whenever lint-fixes.txt exists in the run folder (cycle Step 5 writes it
+  with `lint-fixes`, zero ids included), a lint stamped earlier than its `at:` (or when either stamp cannot be read, so
+  the order cannot be proved) gives the one line `- Lint findings: not checked (the lint predates cycle Step 5; re-run
+  the mechanical lint)` and no counts, because mechanical-only fixes leave no id; a lint stamped later is counted.
+
+  Semantic findings (lint-semantic.json, this run's, in the modes that run it: full, lint-only-semantic). The count is
+  the length of the flat `findings` list, usable only when it is a list whose length equals `summary.findings`;
+  otherwise `- Semantic findings: not checked (lint-semantic.json has no usable findings list)`, never read as zero. A
+  non-empty top-level `not_checked` adds `- Semantic lint, parts not checked: <N> — <the items>`. Awaiting is the
+  count minus the distinct ids of `applied` and `declined` in lint-fixes.txt that lie inside 1..N (never negative); with no
+  fixes record it is the whole count. Nothing prints for 0 findings or awaiting 0. The line is `- Semantic findings: <N>
+  — awaiting your approval; the findings are in lint-semantic.md (run <id>); no later cycle step shows them again`; in
+  lint-only-semantic `<N> — no fix step in this mode; the findings are in lint-semantic.md and no later cycle step
+  shows them again`; in --full with no lint-fixes.txt `<N>, not checked (the fix step left no lint-fixes.txt: applied and
+  declined were not recorded)`, with one that has no applied and declined lines `(lint-fixes.txt unreadable)`; a lint of
+  status partial `<N>, not checked (the semantic lint ended partial)`, N the figure the complete line would print; an
+  unknown mode or a contradiction `<N>, not checked (<problem>)`. A mode that runs the lint and left no result:
+  `- Semantic findings: not checked (the semantic lint left no lint-semantic.json)` (also when a lint ran within 24
+  hours and the step was skipped: the earlier run's findings below carry the numbers); an unparseable file
+  `(lint-semantic.json unreadable)`. Needs you copies this N, never a count of the model's own.
+
+  Semantic findings from earlier runs (every run folder's lint-semantic.json and the lint-fixes.txt beside it, this
+  run's own included; only completed lints are read, so an older lint of status partial with unresolved findings is not
+  read and prints nothing). The newest completed lint, when it is not this run's own, gets `- Semantic findings from
+  <id>: <N> — awaiting your approval; the findings are in lint-semantic.md (run <id>); no later cycle step shows them
+  again; fixes made by hand since are not seen` (N counted from that lint's own fixes record), `<N>, not checked (that
+  run recorded no applied or declined findings)` when it has none, or `not checked (lint-semantic.json has no usable
+  findings list)`. In every run, whatever it ran, each completed lint older than the newest (this run's own never
+  counted twice) with unresolved findings gets `- Semantic findings from <id>: <N>, superseded by a newer lint; no
+  longer shown in full; the findings are in lint-semantic.md (run <id>); no later cycle step shows them again`, also when
+  the newest lint found nothing; older lints with a non-empty findings list and no fixes record collapse into one
+  line, `- <N> earlier lints recorded no applied or declined findings; no longer shown in full`, and a lint with an
+  empty or unusable list prints and counts nothing. These lines are counted in the header and are never added to an
+  awaiting figure.
+
+`lint-fixes`: the fixes record of cycle Step 5, the one fact no step file holds (which semantic findings the user
+applied or declined). `--show` prints the findings of <rf>/lint-semantic.json from its `findings` list, one per line,
+`<id>. [<category>] <file> — <first 100 characters of detail>` (a newline in the detail becomes a space), the id the
+1-based position in that list, so the model copies ids the script printed and never counts; it writes nothing, and with
+no lint-semantic.json says so and exits 0. `--applied <ids> --declined <ids>` (comma-separated, either may be left out)
+writes <rf>/lint-fixes.txt, `applied: <ids>`, `declined: <ids>` and `at: <now_stamp()>`, the ids sorted and each once.
+With no ids at all it writes two empty lists, which is how cycle Step 5 records a run whose lint was skipped. Exit 2 and
+nothing written for an id that is not a whole number, outside 1..N (N is 0 when there is no usable lint-semantic.json),
+in both lists, or for `--show` together with ids, and for a run folder that is not there.
 
 Entries are wiki/**/*.md except `_`-prefixed machine files, README.md and sessions/.
 (2026-09-24, task #42: C1 and C3; the 2026-09-23 cycle's findings 10 and 11.)
@@ -293,13 +352,13 @@ def _index_written(nb: Path, idx_path: Path) -> datetime:
     return datetime.fromtimestamp(idx_path.stat().st_mtime).astimezone()
 
 
-def newest_step(nb: Path, json_name: str, status: str | None = None,
-                skip: Path | None = None) -> tuple[datetime, Path] | None:
-    """(timestamp, run folder) of the newest run folder holding `json_name`, newest by the file's own `timestamp`
+def step_results(nb: Path, json_name: str, status: str | None = None,
+                 skip: Path | None = None) -> list[tuple[datetime, Path]]:
+    """(timestamp, run folder) of every run folder holding `json_name`, newest first by the file's own `timestamp`
     (never by folder name); a file that does not parse or has no timestamp is left out. `status` keeps only results
     of that status (None: any), `skip` leaves out one run folder. The one walk over the run folders' step results:
-    last_semantic, last_synthesis and the left-undone counter read through it."""
-    best = None
+    newest_step (so last_semantic and last_synthesis) and the left-undone counter read through it."""
+    found = []
     for p in (nb / "_inbox" / "reports").glob(f"*/*/{json_name}"):
         if skip is not None and p.parent.resolve() == skip.resolve():
             continue
@@ -308,9 +367,16 @@ def newest_step(nb: Path, json_name: str, status: str | None = None,
         except (json.JSONDecodeError, OSError):
             continue
         t = _parse_time(d.get("timestamp", "")) if status is None or d.get("status") == status else None
-        if t and (best is None or t > best[0]):
-            best = (t, p.parent)
-    return best
+        if t:
+            found.append((t, p.parent))
+    return sorted(found, key=lambda f: f[0], reverse=True)
+
+
+def newest_step(nb: Path, json_name: str, status: str | None = None,
+                skip: Path | None = None) -> tuple[datetime, Path] | None:
+    """(timestamp, run folder) of the newest of step_results, or None."""
+    found = step_results(nb, json_name, status, skip)
+    return found[0] if found else None
 
 
 def last_semantic(nb: Path, run_folder: Path) -> datetime | None:
@@ -1066,6 +1132,237 @@ def last_run_id(nb: Path, rf: Path) -> str | None:
     return max(found, default=None)
 
 
+def step_data(folder: Path, name: str) -> dict:
+    """The JSON object of a step result, {} when it is absent, does not parse or is not an object."""
+    try:
+        data = json.loads((folder / name).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def usable_findings(data: dict) -> list | None:
+    """The `findings` list of a semantic lint result (agentic-design's 2026-10-30 file: one flat list, its length in
+    `summary.findings`), or None when it cannot be trusted: no list, not a list, or a length that disagrees."""
+    findings, summary = data.get("findings"), data.get("summary")
+    if isinstance(findings, list) and isinstance(summary, dict) and summary.get("findings") == len(findings):
+        return findings
+    return None
+
+
+def fixes_record(folder: Path) -> dict | None:
+    """The run folder's lint-fixes.txt (`lint-fixes` writes it at cycle Step 5): None when absent, else `ok` (both id
+    lines read), `answered` (the distinct ids of applied and declined) and `at` (when it was written, tz-aware or None)."""
+    f = folder / "lint-fixes.txt"
+    if not f.is_file():
+        return None
+    text = f.read_text(encoding="utf-8", errors="replace")
+
+    def ids(key: str) -> set[int] | None:
+        m = re.search(rf"^{key}:[ \t]*(.*)$", text, re.M)
+        return parse_ids(m.group(1)) if m else None
+    applied, declined, at = ids("applied"), ids("declined"), re.search(r"^at:[ \t]*(\S+)[ \t]*$", text, re.M)
+    return {"ok": applied is not None and declined is not None, "answered": (applied or set()) | (declined or set()),
+            "at": _parse_time(at.group(1)) if at else None}
+
+
+def awaiting(n: int, record: dict | None) -> int:
+    """Findings still unanswered: all `n` with no readable fixes record, else n minus the distinct answered ids that lie
+    inside 1..n (never negative)."""
+    if record is None or not record["ok"]:
+        return n
+    return n - len({i for i in record["answered"] if 1 <= i <= n})
+
+
+LINT_NOT_FINDINGS = ("files_scanned", "standalone", "backlink_blocks_out_of_step")
+LINT_GUARD = "- Lint findings: not checked (the lint predates cycle Step 5; re-run the mechanical lint)"
+LINT_STILL = "still present after the cycle Step 5 fixes (not approved, declined, or no fix step covers this kind)"
+
+
+def lint_lines(rf: Path, mode: str | None, problem: str | None) -> list[str]:
+    """The mechanical lint's findings, one line per kind above 0, or why they cannot be counted (the third state, the
+    partial lint, the staleness guard against lint-fixes.txt)."""
+    name = "lint-mechanical.json"
+    status = step_status(rf, name)
+    if status is None:
+        if problem:
+            return []
+        if mode not in STEP_MODES["lint"]:
+            return ["- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)"]
+        return [f"- Lint findings: not checked (the mechanical lint left no {name})"]
+    if status == "unreadable":
+        return [f"- Lint findings: not checked ({name} unreadable)"]
+    data = step_data(rf, name)
+    reasons = [str(r) for r in data.get("not_checked") or []] if isinstance(data.get("not_checked"), list) else []
+    if status == "partial" and reasons:
+        return [f"- Lint: not checked — {r}" for r in reasons]
+    if status != "completed":
+        return [f"- Lint findings: not checked (the mechanical lint ended {status})"]
+    summary = data.get("summary")
+    if not isinstance(summary, dict):
+        return [f"- Lint findings: not checked ({name} has no usable summary)"]
+    record = fixes_record(rf)
+    if record is not None:
+        lint_at = _parse_time(data.get("timestamp", ""))
+        if not (lint_at and record["at"] and lint_at >= record["at"]):
+            return [LINT_GUARD]
+    out = []
+    for key, count in summary.items():
+        if key in LINT_NOT_FINDINGS or isinstance(count, bool) or not isinstance(count, int) or count <= 0:
+            continue
+        if problem:
+            why = f", not checked ({problem})"
+        elif mode not in STEP_MODES["fix"]:
+            why = " — no fix step in this mode"
+        elif record is None:
+            why = ", not checked (the fix step left no lint-fixes.txt)"
+        else:
+            why = f" — {LINT_STILL}"
+        out.append(f"- Lint {key.replace('_', ' ')}: {count}{why}")
+    return out
+
+
+def where_findings(run_id: str) -> str:
+    return f"the findings are in lint-semantic.md (run {run_id}); no later cycle step shows them again"
+
+
+def semantic_lines(rf: Path, mode: str | None, problem: str | None) -> list[str]:
+    """This run's semantic findings: what is awaiting the user's approval by the fixes record, or why that cannot be
+    said, and the parts the lint did not check."""
+    name = "lint-semantic.json"
+    status = step_status(rf, name)
+    if status is None:
+        if problem or mode not in STEP_MODES["semantic"]:
+            return []
+        return [f"- Semantic findings: not checked (the semantic lint left no {name})"]
+    if status == "unreadable":
+        return [f"- Semantic findings: not checked ({name} unreadable)"]
+    data = step_data(rf, name)
+    findings, out = usable_findings(data), []
+    if findings is None:
+        out.append(f"- Semantic findings: not checked ({name} has no usable findings list)")
+    else:
+        record = fixes_record(rf)
+        left = awaiting(len(findings), record)
+        if left:
+            if problem:
+                why = f", not checked ({problem})"
+            elif status != "completed":
+                why = f", not checked (the semantic lint ended {status})"
+            elif mode not in STEP_MODES["fix"]:
+                why = " — no fix step in this mode; the findings are in lint-semantic.md and no later cycle step shows them again"
+            elif record is None:
+                why = ", not checked (the fix step left no lint-fixes.txt: applied and declined were not recorded)"
+            elif not record["ok"]:
+                why = ", not checked (lint-fixes.txt unreadable)"
+            else:
+                why = f" — awaiting your approval; {where_findings(rf.name)}"
+            out.append(f"- Semantic findings: {left}{why}")
+    parts = data.get("not_checked")
+    if isinstance(parts, list) and parts:
+        out.append(f"- Semantic lint, parts not checked: {len(parts)} — {'; '.join(str(p) for p in parts)}")
+    return out
+
+
+def lint_backlog(folder: Path) -> tuple[str, int]:
+    """What an earlier run's semantic lint left: ('unusable', 0) for a findings list that cannot be trusted, ('empty', 0)
+    for one with no finding, ('unrecorded', N) with no readable fixes record, else ('open', unresolved) or ('answered', 0)."""
+    findings = usable_findings(step_data(folder, "lint-semantic.json"))
+    if findings is None:
+        return "unusable", 0
+    if not findings:
+        return "empty", 0
+    record = fixes_record(folder)
+    if record is None or not record["ok"]:
+        return "unrecorded", len(findings)
+    left = awaiting(len(findings), record)
+    return ("open", left) if left else ("answered", 0)
+
+
+def earlier_semantic_lines(nb: Path, rf: Path) -> list[str]:
+    """Semantic findings of earlier runs, in every run: the newest completed lint when it is not this run's own, and a
+    line for each older completed lint that still has unresolved findings (so a newer lint never silences them). Only
+    completed lints are read; this run's own lint is semantic_lines' and is never counted twice."""
+    lints = [f for _t, f in step_results(nb, "lint-semantic.json", "completed")]
+    mine, out, unrecorded = rf.resolve(), [], 0
+    for i, folder in enumerate(lints):
+        if folder.resolve() == mine:
+            continue
+        kind, n = lint_backlog(folder)
+        if i == 0:
+            if kind == "open":
+                out.append(f"- Semantic findings from {folder.name}: {n} — awaiting your approval; "
+                           f"{where_findings(folder.name)}; fixes made by hand since are not seen")
+            elif kind == "unrecorded":
+                out.append(f"- Semantic findings from {folder.name}: {n}, not checked "
+                           "(that run recorded no applied or declined findings)")
+            elif kind == "unusable":
+                out.append(f"- Semantic findings from {folder.name}: not checked (lint-semantic.json has no usable findings list)")
+        elif kind == "open":
+            out.append(f"- Semantic findings from {folder.name}: {n}, superseded by a newer lint; no longer shown in "
+                       f"full; {where_findings(folder.name)}")
+        elif kind == "unrecorded":
+            unrecorded += 1
+    if unrecorded:
+        out.append(f"- {unrecorded} earlier lints recorded no applied or declined findings; no longer shown in full")
+    return out
+
+
+def parse_ids(text: str | None) -> set[int] | None:
+    """A comma-separated list of whole numbers as a set (empty or None: the empty set); None when a part is not one."""
+    ids = set()
+    for part in (text or "").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if not re.fullmatch(r"[0-9]+", part):
+            return None
+        ids.add(int(part))
+    return ids
+
+
+def cmd_lint_fixes(nb: Path, args) -> int:
+    """Cycle Step 5's record of which semantic findings the user applied or declined (see the docstring)."""
+    rf = Path(args.run_folder)
+    if not rf.is_dir():
+        print(f"error: no run folder at {rf}", file=sys.stderr)
+        return 2
+    present = (rf / "lint-semantic.json").is_file()
+    findings = usable_findings(step_data(rf, "lint-semantic.json")) if present else []
+    if args.show:
+        if args.applied is not None or args.declined is not None:
+            print("error: --show only prints; give --applied and --declined in a second call", file=sys.stderr)
+            return 2
+        if not present:
+            print("no lint-semantic.json in the run folder: nothing to show")
+            return 0
+        if findings is None:
+            print("error: lint-semantic.json has no usable findings list", file=sys.stderr)
+            return 2
+        for i, f in enumerate(findings, 1):
+            detail = " ".join(str(f.get("detail", "")).split())[:100]
+            print(f"{i}. [{f.get('category', '')}] {f.get('file', '')} — {detail}")
+        return 0
+    applied, declined = parse_ids(args.applied), parse_ids(args.declined)
+    if applied is None or declined is None:
+        print("error: --applied and --declined take whole numbers separated by commas", file=sys.stderr)
+        return 2
+    n = len(findings or [])
+    outside = sorted(i for i in applied | declined if not 1 <= i <= n)
+    if outside:
+        print(f"error: finding id(s) {', '.join(map(str, outside))} are not in 1..{n} (the ids --show printed)", file=sys.stderr)
+        return 2
+    if applied & declined:
+        print(f"error: id(s) {', '.join(map(str, sorted(applied & declined)))} are in both --applied and --declined", file=sys.stderr)
+        return 2
+    fmt = lambda s: ",".join(map(str, sorted(s)))  # noqa: E731
+    out = rf / "lint-fixes.txt"
+    atomic_write_text(out, f"applied: {fmt(applied)}".rstrip() + f"\ndeclined: {fmt(declined)}".rstrip()
+                      + f"\nat: {now_stamp()}\n")
+    print(f"lint-fixes: applied {fmt(applied) or 'none'}; declined {fmt(declined) or 'none'} -> {out}")
+    return 0
+
+
 def cmd_left_undone(nb: Path, args) -> int:
     rf = Path(args.run_folder)
     today = _iso_date(args.today or today_label())
@@ -1100,6 +1397,9 @@ def cmd_left_undone(nb: Path, args) -> int:
         queues.append(f"- review_after not a date: {len(bad)} — refresh cannot read it; correct the date "
                       "(the lint lists them under Dates not in ISO form)")
     queues += entry_backlog_lines(nb, rf, mode, problem)
+    queues += lint_lines(rf, mode, problem)
+    queues += semantic_lines(rf, mode, problem)
+    queues += earlier_semantic_lines(nb, rf)
     queues += bucket_ticket_lines(nb, mode, problem)
     queues += staged_lines(nb, rf)
     queues += checklist_lines(nb)
@@ -1156,6 +1456,11 @@ def main() -> int:
     ld = sub.add_parser("left-undone")
     ld.add_argument("--run-folder", required=True)
     ld.add_argument("--today", default=None, help="YYYY-MM-DD, for tests (default: the local date)")
+    lf = sub.add_parser("lint-fixes")
+    lf.add_argument("--run-folder", required=True)
+    lf.add_argument("--show", action="store_true", help="print the findings with their ids; write nothing")
+    lf.add_argument("--applied", default=None, help="ids of the findings applied, comma-separated")
+    lf.add_argument("--declined", default=None, help="ids of the findings declined, comma-separated")
     args = ap.parse_args()
     if args.cmd == "unfinished" and bool(args.run_folder) == bool(args.mark_interrupted):
         un.error("give --run-folder (to list) or --mark-interrupted (to close one), not both and not neither")
@@ -1174,7 +1479,7 @@ def main() -> int:
             "checker-log": cmd_checker_log, "checker-corrected": cmd_checker_corrected, "models": cmd_models,
             "cost": cmd_cost, "session-cost": cmd_session_cost,
             "promote": cmd_promote, "unfinished": cmd_unfinished, "writer": cmd_writer,
-            "left-undone": cmd_left_undone}[args.cmd](nb, args)
+            "left-undone": cmd_left_undone, "lint-fixes": cmd_lint_fixes}[args.cmd](nb, args)
 
 
 if __name__ == "__main__":

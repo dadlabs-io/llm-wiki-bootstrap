@@ -33,3 +33,15 @@ Reconciliation: the names are the developer's own; renaming a frozen test needs 
 - The reviewer also noted the `names` output lists only `check` and `results` as module-level names for tests 2-4 (the helpers sit in the enclosing `with` block), so it judged from source alone.
 
 Reconciliation: names are the developer's own; the over-claims are check labels and count-only assertions, not the names. Left as is; the test-run budget is spent; named for the code-reviewer.
+
+## Step 5 (one doubt-reviewer, haiku, foreground; briefed with the `check-freeze.py names --step 5` output file, contract: each test's name claims nothing its assertions do not check)
+
+- left_undone_names_lint_findings: name does not over-claim; three check labels do ("all zeros" with standalone 3, "in any mode" run in --lint-only only, "the Mode line covers it" not asserted).
+- lint_fixes_refuses_ids_it_cannot_place: name holds; labels "says why" (stderr non-empty only) and "creates nothing" (one path) are loose.
+- left_undone_counts_semantic_findings: name holds; labels "never zero" / "never a negative count" are presence or absence checks.
+- left_undone_names_semantic_findings_from_earlier_runs: name holds.
+- lint_fixes_prints_the_numbered_findings: name holds.
+- lint_fixes_writes_the_fixes_record: name holds; the no-id label's stamp is only a line count of 3.
+- left_undone_does_not_read_a_lint_with_no_summary_as_clean: over-claims (asserts the not-checked line is present, not that no other Lint line is).
+
+Reconciliation: names are the developer's own; the test-run budget is spent, so no strengthen-and-refreeze round. Left as is, named for the code-reviewer; the one over-claiming name is the last.
