@@ -1,0 +1,90 @@
+[
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_counts_review_dates",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "75ebfb4990ef288ef13cea8f39907f4ef4c8b14b2d01203b5c3d1817de9059c4",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS unfinished_offers_resume_or_close_as_one_choice: the printed line offers the resume or else the close-out\nPASS mark_interrupted_prints_what_it_closed: stdout names the run and the reason\nPASS unfinished_offers_only_the_close_out_without_a_scratchpad: the printed line is the close-out alone\nPASS mark_interrupted_rewrites_the_first_status_line_only: the later Status line is kept as written\nFAIL left_undone_counts_review_dates: exit 0 and the header counts the three queue lines  [(1, '~~~~~~~~~~~~~~~~~~~~~\\n            \"left-undone\": cmd_left_undone}[args.cmd](nb, args)\\n            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\\n  File \"C:\\\\github.com\\\\llm-wiki-bootstrap\\\\scripts\\\\wiki-cycle-scope.py\", line 674, in cmd_left_undone\\n    raise NotImplementedError\\nNotImplementedError\\n', [])]\nFAIL left_undone_counts_review_dates: past review_after counts 2 (the quoted date too), today and the future not  [[]]\nFAIL left_undone_counts_review_dates: no review_after counts 1, a task card and a session page not  [[]]\nFAIL left_undone_counts_review_dates: a review_after that is not a date counts 1  [[]]\nFAIL left_undone_counts_review_dates: exactly three queue lines, and the interim line last, not a queue  [[]]\nFAIL left_undone_counts_review_dates: only left-undone.txt is new, nothing else changed, no scope file  [[]]\nFAIL left_undone_counts_review_dates: a --full run with a completed refresh.json says refresh ran  [('~~~~~~~~~~~~~~~~~~~~~\\n            \"left-undone\": cmd_left_undone}[args.cmd](nb, args)\\n            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\\n  File \"C:\\\\github.com\\\\llm-wiki-bootstrap\\\\scripts\\\\wiki-cycle-scope.py\", line 674, in cmd_left_undone\\n    raise NotImplementedError\\nNotImplementedError\\n', [])]\n91/98 passed",
+      "date": "2026-11-17"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_reads_the_mode",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "77e3196c0f7ab605c0d3ca21fe823f42988dfa0051589963588cadb209647cd4",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "FAIL left_undone_reads_the_mode: '--report-only' on the Cycle line reads report-only  [('left-undone: Left undone (disk-state queues): none -> C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpnz6n9dcz\\\\notebooks\\\\lu2\\\\_inbox\\\\reports\\\\2026-06-16\\\\2026-06-16-21\\\\left-undone.txt\\n', '')]\nFAIL left_undone_reads_the_mode: '--report-only' on the Mode line alone reads report-only  [('left-undone: Left undone (disk-state queues): none -> C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpnz6n9dcz\\\\notebooks\\\\lu2\\\\_inbox\\\\reports\\\\2026-06-16\\\\2026-06-16-22\\\\left-undone.txt\\n', '')]\nFAIL left_undone_reads_the_mode: '--refresh-only' on the Cycle line reads refresh-only  [('left-undone: Left undone (disk-state queues): none -> C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpnz6n9dcz\\\\notebooks\\\\lu2\\\\_inbox\\\\reports\\\\2026-06-16\\\\2026-06-16-23\\\\left-undone.txt\\n', '')]\nFAIL left_undone_reads_the_mode: '--refresh-only' on the Mode line alone reads refresh-only  [('left-undone: Left undone (disk-state queues): none -> C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpnz6n9dcz\\\\notebooks\\\\lu2\\\\_inbox\\\\reports\\\\2026-06-16\\\\2026-06-16-24\\\\left-undone.txt\\n', '')]\nFAIL left_undone_reads_the_mode: '--claims-only' on the Cycle line reads claims-only  [('left-undone: Left undone (disk-state queues): none -> C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpnz6n9dcz\\\\notebooks\\\\lu2\\\\_inbox\\\\reports\\\\2026-06-16\\\\2026-06-16-25\\\\left-undone.txt\\n', '')]\nFAIL left_undone_reads_the_mode: '--claims-only' on the Mode line alone reads claims-only  [('left-undone: Left undone (disk-state queues): none -> C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpnz6n9dcz\\\\notebooks\\\\lu2\\\\_inbox\\\\reports\\\\2026-06-16\\\\2026-06-16-26\\\\left-undone.txt\\n', '')]\nFAIL left_undone_reads_the_mode: --semantic on the Mode line makes a --lint-only Cycle line semantic  [('left-undone: Left undone (disk-state queues): none -> C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpnz6n9dcz\\\\notebooks\\\\lu2\\\\_inbox\\\\reports\\\\2026-06-16\\\\2026-06-16-27\\\\left-undone.txt\\n', '')]\nFAIL left_undone_reads_the_mode: --semantic changes no other mode  [('left-undone: Left undone (disk-state queues): none -> C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpnz6n9dcz\\\\notebooks\\\\lu2\\\\_inbox\\\\reports\\\\2026-06-16\\\\2026-06-16-28\\\\left-undone.txt\\n', '')]\nFAIL left_undone_reads_the_mode: a modifier on the Cycle line is reported  [('left-undone: Left undone (disk-state queues): none -> C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpnz6n9dcz\\\\notebooks\\\\lu2\\\\_inbox\\\\reports\\\\2026-06-16\\\\2026-06-16-29\\\\left-undone.txt\\n', '')]\nFAIL left_undone_reads_the_mode: a modifier only on the Mode line is reported  [('left-undone: Left undone (disk-state queues): none -> C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpnz6n9dcz\\\\notebooks\\\\lu2\\\\_inbox\\\\reports\\\\2026-06-16\\\\2026-06-16-30\\\\left-undone.txt\\n', '')]\nFAIL left_undone_reads_the_mode: the four modifiers together, sorted, whatever else is written  [('left-undone: Left undone (disk-state queues): none -> C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpnz6n9dcz\\\\notebooks\\\\lu2\\\\_inbox\\\\reports\\\\2026-06-16\\\\2026-06-16-31\\\\left-undone.txt\\n', '')]\n98/129 passed",
+      "date": "2026-11-17"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_names_what_it_cannot_check",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "5b53e2f9781e4bc48f23d9561209c3a1871e1030c18f61241f67ea7d371ae59d",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "FAIL left_undone_names_what_it_cannot_check: --ingest-only with discover.json is a contradiction  [['Left undone: 2 queue(s)', '- Past review_after: 2 \ufffd this mode does not run refresh; /wiki-cycle --refresh-only lists them', '- No review_after: 1 \ufffd refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_what_it_cannot_check: --discover-only with lint-mechanical.json is a contradiction  [['Left undone: 2 queue(s)', '- Past review_after: 2 \ufffd this mode does not run refresh; /wiki-cycle --refresh-only lists them', '- No review_after: 1 \ufffd refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_names_what_it_cannot_check: --full with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --lint-only with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --lint-only-semantic with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --prompt-for-urls with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --claims-only with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --discover-only with the steps it runs is no contradiction\nFAIL left_undone_names_what_it_cannot_check: --report-only names the last full run on its second line, uncounted  [('', ['Left undone: 2 queue(s)', '- Past review_after: 2 \ufffd this mode does not run refresh; /wiki-cycle --refresh-only lists them', '- No review_after: 1 \ufffd refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_names_what_it_cannot_check: --report-only with no earlier report says there is none  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_names_what_it_cannot_check: a run that is not --report-only has no such line\n137/155 passed",
+      "date": "2026-11-17"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_refuses_bad_input",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "a8fcb8e0505e34d658b3574983361597b02b7136a14f08745e870bf70a57703d",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS left_undone_names_what_it_cannot_check: --prompt-for-urls with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --claims-only with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --discover-only with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --report-only names the last full run on its second line, uncounted\nPASS left_undone_names_what_it_cannot_check: --report-only with no earlier report says there is none\nPASS left_undone_names_what_it_cannot_check: a run that is not --report-only has no such line\nFAIL left_undone_refuses_bad_input: --today 2026-13-40 exits 2, names --today and writes no file  [(1, '^^^^\\n  File \"C:\\\\github.com\\\\llm-wiki-bootstrap\\\\scripts\\\\wiki-cycle-scope.py\", line 798, in cmd_left_undone\\n    today = date.fromisoformat(args.today or today_label())\\nValueError: month must be in 1..12\\n')]\nFAIL left_undone_refuses_bad_input: --today 20260101 exits 2, names --today and writes no file  [(0, '')]\nFAIL left_undone_refuses_bad_input: --today tomorrow exits 2, names --today and writes no file  [(1, ':\\\\github.com\\\\llm-wiki-bootstrap\\\\scripts\\\\wiki-cycle-scope.py\", line 798, in cmd_left_undone\\n    today = date.fromisoformat(args.today or today_label())\\nValueError: Invalid isoformat string: \\'tomorrow\\'\\n')]\nFAIL left_undone_refuses_bad_input: a run folder that is not there exits 2, names it and creates nothing  [(0, '')]\nFAIL left_undone_refuses_bad_input: a notebook with no wiki/ exits 2 and writes no file  [(2, 'error: no wiki at C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpmf38_b7l\\\\notebooks\\\\lu5\\n')]\n155/160 passed",
+      "date": "2026-11-17"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_mode_table_matches_skill",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "cd412d756fbe19848c03204698f4689af72c1906134a0c069acf154fc80ea55d",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-17",
+    "green_reason": {
+      "reason": "the script's table already existed (the cross-check, test left_undone_names_what_it_cannot_check) so this cannot fail first; bite is inside the test: a skill cell flipped in a copy of the skill text and a step moved in a copy of the script's table are each asserted to be drift, with the step named",
+      "date": "2026-11-17"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_reads_a_quoted_mode_before_punctuation",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "2ff0d4aeef26c01aab5dab7b3ed634b9d44b27c31377195d3189ddbd82a6cfcd",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS left_undone_refuses_bad_input: a notebook with no wiki/ exits 2 and writes no file\nPASS left_undone_mode_table_matches_skill: the skill's table has the five modes and all nine steps\nPASS left_undone_mode_table_matches_skill: the script's table agrees with it for those five modes\nPASS left_undone_mode_table_matches_skill: a cell flipped in the skill's table is drift\nPASS left_undone_mode_table_matches_skill: a step moved in the script's table is drift, and named\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: '`--full`.' on the Cycle line reads full  [('unknown', 'none')]\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: '`--full`.' on the Mode line reads full  [('unknown', 'none')]\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: \"'quick':\" on the Cycle line reads quick  [('unknown', 'none')]\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: \"'quick':\" on the Mode line reads quick  [('unknown', 'none')]\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: '\"--lint-only\" `--semantic`!' on the Cycle line reads lint-only-semantic  [('lint-only', 'none')]\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: '\"--lint-only\" `--semantic`!' on the Mode line reads lint-only-semantic  [('lint-only', 'none')]\n164/170 passed",
+      "date": "2026-11-17"
+    }
+  }
+]

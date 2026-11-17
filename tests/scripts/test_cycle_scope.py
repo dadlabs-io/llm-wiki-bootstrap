@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -598,6 +599,307 @@ with tempfile.TemporaryDirectory() as td:
                                                "**Status**: completed (copied from an old run)"],
               (p.returncode, p.stderr[-200:], lines))
     mark_interrupted_rewrites_the_first_status_line_only()
+
+    # ── left-undone (task #240, lesson #9, step 1): what a cycle leaves undone, written by the script ──
+    TODAY = "2026-06-15"
+
+    def mknb(name):
+        root = tmp / "notebooks" / name
+        (root / "wiki" / "research" / "x").mkdir(parents=True)
+        reg = json.loads((tmp / "linked-notebooks.json").read_text(encoding="utf-8"))
+        reg["notebooks"][name] = {"root": f"notebooks/{name}"}
+        (tmp / "linked-notebooks.json").write_text(json.dumps(reg), encoding="utf-8")
+        return root
+
+    def run_on(topic, *a):
+        return subprocess.run([sys.executable, str(SCRIPT), "--topic", topic, *a], cwd=proj, capture_output=True,
+                              text=True, encoding="utf-8", env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+
+    def page(root, rel, review=None):
+        f = root / rel
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text("---\ntitle: \"x\"\ndate: 2026-01-01\ntier: 3\nlast_reviewed: 2026-01-01\n"
+                     + (f"review_after: {review}\n" if review is not None else "") + "tags: [a]\n---\n\n# x\n",
+                     encoding="utf-8")
+
+    def lu_run(root, cid, cycle=None, mode=None, files=()):
+        """A run folder with a scratchpad: `cycle` is the text in parentheses on the **Cycle** line, `mode` the
+        `- Mode:` line; `files` are (name, status) step results."""
+        rf = root / "_inbox" / "reports" / cid[:10] / cid
+        rf.mkdir(parents=True, exist_ok=True)
+        pad = ["# Cycle Run", "", "**Status**: in_progress"]
+        if cycle is not None:
+            pad.append(f"**Cycle**: {cid} ({cycle})")
+        if mode is not None:
+            pad.append(f"- Mode: {mode}")
+        if cycle is not None or mode is not None:
+            (rf / "scratchpad.md").write_text("\n".join(pad) + "\n", encoding="utf-8")
+        for name, status in files:
+            (rf / name).write_text(json.dumps({"status": status}), encoding="utf-8")
+        return rf
+
+    def lu(topic, rf, *extra):
+        p = run_on(topic, "left-undone", "--run-folder", str(rf), "--today", TODAY, *extra)
+        f = rf / "left-undone.txt"
+        return p, (f.read_text(encoding="utf-8").splitlines() if f.is_file() else [])
+
+    PAST_NOT_RUN = "this mode does not run refresh; /wiki-cycle --refresh-only lists them"
+    PAST_RAN = "refresh ran; this count is from the dates now (refreshing them is your call: /wiki-refresh)"
+    INTERIM_LAST = ("Not counted yet: leftovers of steps that ran (lint findings, dropped sources, "
+                    "entries not linted, claimed or synthesised)")
+
+    def left_undone_counts_review_dates():
+        root = mknb("lu1")
+        page(root, "wiki/research/x/past-a.md", "2026-01-01")
+        page(root, "wiki/research/x/past-q.md", '"2026-02-01"')
+        page(root, "wiki/research/x/due-today.md", TODAY)
+        page(root, "wiki/research/x/future.md", "2026-12-01")
+        page(root, "wiki/research/x/none-a.md")
+        page(root, "wiki/research/x/bad-a.md", "soon")
+        page(root, "wiki/tasks/card.md")
+        page(root, "wiki/sessions/journal.md")
+        (root / "wiki" / "_MAP.md").write_text("# map\n", encoding="utf-8")
+        (root / "wiki" / "README.md").write_text("# readme\n", encoding="utf-8")
+        rf = lu_run(root, "2026-06-15-01", cycle="--lint-only")
+        before = tree(root)
+        p, lines = lu("lu1", rf)
+        after = tree(root)
+        check("left_undone_counts_review_dates: exit 0 and the header counts the three queue lines",
+              p.returncode == 0 and lines[:1] == ["Left undone: 3 queue(s)"], (p.returncode, p.stderr[-300:], lines))
+        check("left_undone_counts_review_dates: past review_after counts 2 (the quoted date too), today and the future not",
+              f"- Past review_after: 2 — {PAST_NOT_RUN}" in lines, lines)
+        check("left_undone_counts_review_dates: no review_after counts 1, a task card and a session page not",
+              "- No review_after: 1 — refresh cannot see an entry with no review_after; add the date "
+              "(the lint lists them under Missing lifecycle fields)" in lines, lines)
+        check("left_undone_counts_review_dates: a review_after that is not a date counts 1",
+              "- review_after not a date: 1 — refresh cannot read it; correct the date "
+              "(the lint lists them under Dates not in ISO form)" in lines, lines)
+        check("left_undone_counts_review_dates: exactly three queue lines, and the interim line last, not a queue",
+              len([l for l in lines if l.startswith("- ")]) == 3 and lines[-1:] == [INTERIM_LAST], lines)
+        rel = "_inbox/reports/2026-06-15/2026-06-15-01/left-undone.txt"
+        check("left_undone_counts_review_dates: only left-undone.txt is new, nothing else changed, no scope file",
+              set(after) - set(before) == {rel} and all(after.get(k) == v for k, v in before.items())
+              and not [k for k in after if k.endswith("-scope.txt")], sorted(set(after) ^ set(before)))
+        rf = lu_run(root, "2026-06-15-02", cycle="--full", files=[("refresh.json", "completed")])
+        p, lines = lu("lu1", rf)
+        check("left_undone_counts_review_dates: a --full run with a completed refresh.json says refresh ran",
+              f"- Past review_after: 2 — {PAST_RAN}" in lines, (p.stderr[-300:], lines))
+    left_undone_counts_review_dates()
+
+    mode_runs = [0]
+
+    def mode_of(cycle=None, mode=None):
+        """(mode, modifiers) the command reports for a scratchpad with these two lines, as it prints them."""
+        mode_runs[0] += 1
+        rf = lu_run(mknb_once("lu2"), f"2026-06-16-{mode_runs[0]:02d}", cycle=cycle, mode=mode)
+        p = run_on("lu2", "left-undone", "--run-folder", str(rf), "--today", TODAY)
+        m = re.search(r"; mode (\S+); modifiers (\S+) ->", p.stdout)
+        return (m.group(1), m.group(2)) if m else (p.stdout + p.stderr[-200:], "")
+
+    def mknb_once(name):
+        return tmp / "notebooks" / name if (tmp / "notebooks" / name).is_dir() else mknb(name)
+
+    def left_undone_reads_the_mode():
+        texts = [("--full", "full"), ("--ingest-only, staged; this session's bucket drained", "ingest-only"),
+                 ("--prompt-for-urls (17 URLs…), staged", "prompt-for-urls"),
+                 ('quick (ingest pass; the user asked for "a full ingest"…)', "quick"),
+                 ("--quick (default)", "quick"), ("full", "full"), ("lint-only", "lint-only"),
+                 ("`--full`", "full"), ("--lint-only --semantic", "lint-only-semantic"),
+                 ("--discover-only", "discover-only"), ("--report-only", "report-only"),
+                 ("--refresh-only", "refresh-only"), ("--claims-only", "claims-only")]
+        for text, want in texts:
+            got = mode_of(cycle=text)
+            check(f"left_undone_reads_the_mode: {text!r} on the Cycle line reads {want}", got == (want, "none"), got)
+            got = mode_of(mode=text)
+            check(f"left_undone_reads_the_mode: {text!r} on the Mode line alone reads {want}",
+                  got == (want, "none"), got)
+        got = mode_of(cycle="--lint-only", mode="--lint-only --semantic")
+        check("left_undone_reads_the_mode: --semantic on the Mode line makes a --lint-only Cycle line semantic",
+              got == ("lint-only-semantic", "none"), got)
+        got = mode_of(cycle="--full --semantic")
+        check("left_undone_reads_the_mode: --semantic changes no other mode", got == ("full", "none"), got)
+        got = mode_of(cycle="--full, --no-confirm-discovery")
+        check("left_undone_reads_the_mode: a modifier on the Cycle line is reported",
+              got == ("full", "--no-confirm-discovery"), got)
+        got = mode_of(cycle="--full", mode="--full --lint-all")
+        check("left_undone_reads_the_mode: a modifier only on the Mode line is reported",
+              got == ("full", "--lint-all"), got)
+        got = mode_of(cycle="--quick, --since 6, --direct, --lint-all, --no-confirm-discovery")
+        check("left_undone_reads_the_mode: the four modifiers together, sorted, whatever else is written",
+              got == ("quick", "--direct,--lint-all,--no-confirm-discovery,--since"), got)
+    left_undone_reads_the_mode()
+
+    unclear_runs = [0]
+
+    def unclear_run(topic, cycle=None, mode=None, files=()):
+        unclear_runs[0] += 1
+        rf = lu_run(tmp / "notebooks" / topic, f"2026-06-17-{unclear_runs[0]:02d}", cycle=cycle, mode=mode, files=files)
+        return (rf, *lu(topic, rf))
+
+    def left_undone_names_what_it_cannot_check():
+        root = mknb("lu3")
+        page(root, "wiki/research/x/past-a.md", "2026-01-01")
+        page(root, "wiki/research/x/past-b.md", "2026-02-01")
+        page(root, "wiki/research/x/none-a.md")
+        page(root, "wiki/research/x/future.md", "2026-12-01")
+        none_line = ("- No review_after: 1 — refresh cannot see an entry with no review_after; add the date "
+                     "(the lint lists them under Missing lifecycle fields)")
+        no_mode = "Mode: not checked (cannot read the mode from scratchpad.md); steps that left no file are not known"
+        # the third state: a mode that runs refresh, whose result is missing or not completed
+        _, p, lines = unclear_run("lu3", cycle="--full")
+        check("left_undone_names_what_it_cannot_check: --full with no refresh.json keeps the count and says so",
+              "- Past review_after: 2, not checked (refresh left no refresh.json)" in lines
+              and not [l for l in lines if l.startswith("- Past review_after: 2 —")], (p.stderr[-200:], lines))
+        _, p, lines = unclear_run("lu3", cycle="--full", files=[("refresh.json", "partial")])
+        check("left_undone_names_what_it_cannot_check: a partial refresh.json keeps the count and says it ended partial",
+              "- Past review_after: 2, not checked (the refresh ended partial)" in lines, lines)
+        # a mode the run folder contradicts: the counts stay, the mode-dependent line says so, the Mode line is added
+        _, p, lines = unclear_run("lu3", cycle="--quick", files=[("refresh.json", "completed")])
+        why = "the mode in scratchpad.md is quick but the run folder holds refresh.json"
+        check("left_undone_names_what_it_cannot_check: a mismatch keeps the count on the refresh line only",
+              f"- Past review_after: 2, not checked ({why})" in lines and none_line in lines, lines)
+        check("left_undone_names_what_it_cannot_check: a mismatch adds the Mode line and the header counts all three",
+              f"- Mode: not checked ({why}); steps that left no file are not known" in lines
+              and lines[:1] == ["Left undone: 3 queue(s)"], lines)
+        # a mode that cannot be read: no scratchpad, two lines that disagree
+        for label, kw in (("no scratchpad", {}), ("two lines naming different modes", {"cycle": "--full", "mode": "--quick"})):
+            _, p, lines = unclear_run("lu3", **kw)
+            check(f"left_undone_names_what_it_cannot_check: {label} keeps the count, the other lines and adds the Mode line",
+                  "- Past review_after: 2, not checked (cannot read the mode from scratchpad.md)" in lines
+                  and none_line in lines and f"- {no_mode}" in lines and lines[:1] == ["Left undone: 3 queue(s)"], lines)
+        # no mode token at all, an empty run folder, nothing else to count: the header is never "nothing"
+        clean = mknb("lu4")
+        page(clean, "wiki/research/x/future.md", "2026-12-01")
+        _, p, lines = unclear_run("lu4", cycle="see the notes")
+        check("left_undone_names_what_it_cannot_check: no mode token and nothing else gives one queue, never nothing",
+              lines[:2] == ["Left undone: 1 queue(s)", f"- {no_mode}"], lines)
+        # step files that are not steps never contradict a mode
+        _, p, lines = unclear_run("lu3", cycle="--quick", files=[(n, "completed") for n in (
+            "models.json", "cost.json", "email-review.json")])
+        check("left_undone_names_what_it_cannot_check: models.json, cost.json and email-review.json are not steps",
+              not [l for l in lines if l.startswith("- Mode:")]
+              and "- Past review_after: 2 — this mode does not run refresh; /wiki-cycle --refresh-only lists them" in lines, lines)
+        # the cross-check covers each named step file
+        every = ["refresh.json", "lint-semantic.json", "claims.json", "synthesis.json", "update.json", "triage.json",
+                 "discover.json", "lint-mechanical.json"]
+        for mode, name in (("quick", "refresh.json"), ("quick", "lint-semantic.json"), ("quick", "claims.json"),
+                           ("refresh-only", "synthesis.json"), ("refresh-only", "update.json"),
+                           ("refresh-only", "triage.json"), ("prompt-for-urls", "triage.json"),
+                           ("ingest-only", "discover.json"), ("discover-only", "lint-mechanical.json")):
+            _, p, lines = unclear_run("lu3", cycle=f"--{mode}", files=[(name, "completed")])
+            check(f"left_undone_names_what_it_cannot_check: --{mode} with {name} is a contradiction",
+                  any(l.startswith(f"- Mode: not checked (the mode in scratchpad.md is {mode} but the run folder "
+                                   f"holds {name})") for l in lines), lines)
+        for mode, names in (("full", every), ("lint-only", ["lint-mechanical.json"]),
+                            ("lint-only-semantic", ["lint-semantic.json", "lint-mechanical.json"]),
+                            ("prompt-for-urls", ["update.json", "synthesis.json", "lint-mechanical.json"]),
+                            ("claims-only", ["claims.json"]), ("discover-only", ["discover.json"])):
+            cyc = "--lint-only --semantic" if mode == "lint-only-semantic" else f"--{mode}"
+            _, p, lines = unclear_run("lu3", cycle=cyc, files=[(n, "completed") for n in names])
+            check(f"left_undone_names_what_it_cannot_check: --{mode} with the steps it runs is no contradiction",
+                  not [l for l in lines if l.startswith("- Mode:")], lines)
+        # --report-only: the second line names the last run, which is never a report-only run or an unreported one
+        for cid, cyc, report in (("2026-06-14-01", "--full", True), ("2026-06-14-02", "--report-only", True),
+                                 ("2026-06-14-03", "--full", False), ("2026-06-16-01", "--full", True)):
+            rf = lu_run(root, cid, cycle=cyc)
+            if report:
+                (rf / f"{cid}-run-cycle-report.md").write_text("# report\n", encoding="utf-8")
+        rf = lu_run(root, "2026-06-15-09", cycle="--report-only")
+        p, lines = lu("lu3", rf)
+        check("left_undone_names_what_it_cannot_check: --report-only names the last full run on its second line, uncounted",
+              lines[1:2] == ["Disk-state queues are counted now; event lines are from the last run (2026-06-14-01)"]
+              and lines[:1] == [f"Left undone: {len([l for l in lines if l.startswith('- ')])} queue(s)"], (p.stderr[-200:], lines))
+        rf = lu_run(clean, "2026-06-15-09", cycle="--report-only")
+        p, lines = lu("lu4", rf)
+        check("left_undone_names_what_it_cannot_check: --report-only with no earlier report says there is none",
+              lines[1:2] == ["Disk-state queues are counted now; event lines are from the last run "
+                             "(none: no earlier run with a report)"], lines)
+        _, p, lines = unclear_run("lu3", cycle="--full", files=[("refresh.json", "completed")])
+        check("left_undone_names_what_it_cannot_check: a run that is not --report-only has no such line",
+              not [l for l in lines if l.startswith("Disk-state queues")], lines)
+    left_undone_names_what_it_cannot_check()
+
+    def left_undone_refuses_bad_input():
+        root = tmp / "notebooks" / "lu1"
+        rf = lu_run(root, "2026-06-18-01", cycle="--lint-only")
+        for bad in ("2026-13-40", "20260101", "tomorrow"):
+            p = run_on("lu1", "left-undone", "--run-folder", str(rf), "--today", bad)
+            check(f"left_undone_refuses_bad_input: --today {bad} exits 2, names --today and writes no file",
+                  p.returncode == 2 and "--today" in p.stderr and not (rf / "left-undone.txt").exists(),
+                  (p.returncode, p.stderr[-200:]))
+        gone = root / "_inbox" / "reports" / "2026-06-18" / "2026-06-18-02"
+        p = run_on("lu1", "left-undone", "--run-folder", str(gone), "--today", TODAY)
+        check("left_undone_refuses_bad_input: a run folder that is not there exits 2, names it and creates nothing",
+              p.returncode == 2 and "2026-06-18-02" in p.stderr and not gone.exists(), (p.returncode, p.stderr[-200:]))
+        (tmp / "notebooks" / "lu5").mkdir()
+        reg = json.loads((tmp / "linked-notebooks.json").read_text(encoding="utf-8"))
+        reg["notebooks"]["lu5"] = {"root": "notebooks/lu5"}
+        (tmp / "linked-notebooks.json").write_text(json.dumps(reg), encoding="utf-8")
+        p = run_on("lu5", "left-undone", "--run-folder", str(rf), "--today", TODAY)
+        check("left_undone_refuses_bad_input: a notebook with no wiki/ exits 2 and writes no file",
+              p.returncode == 2 and "no wiki" in p.stderr and not (rf / "left-undone.txt").exists(),
+              (p.returncode, p.stderr[-200:]))
+    left_undone_refuses_bad_input()
+
+    def left_undone_mode_table_matches_skill():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("wiki_cycle_scope_under_test", SCRIPT)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        script_table = {step: set(modes) for step, modes in getattr(mod, "STEP_MODES", {}).items()}
+        skill = Path(__file__).resolve().parents[2] / "skills" / "wiki-cycle" / "SKILL.md"
+        skill_text = skill.read_text(encoding="utf-8")
+        # each row of the skill's five-mode table, and the script's steps it covers
+        rows = (("1 Discover", ("discover",)), ("1.7 Triage", ("triage",)), ("2 Ingest", ("ingest",)),
+                ("3 Integration scripts", ("lint",)), ("4 Semantic lint", ("semantic", "fix")),
+                ("6 Claims", ("claims", "refresh")), ("6.5 Best-practices", ("synthesis",)))
+
+        def skill_runs(text):
+            lines = text.splitlines()
+            start = next((i for i, l in enumerate(lines) if l.startswith("| Step | quick |")), None)
+            if start is None:
+                return [], {}
+            table = []
+            for l in lines[start:]:
+                if not l.startswith("|"):
+                    break
+                table.append([c.strip() for c in l.strip().strip("|").split("|")])
+            modes = [c.removeprefix("--") for c in table[0][1:]]
+            runs = {}
+            for prefix, steps in rows:
+                row = next((r for r in table if r[0].startswith(prefix)), None)
+                for step in steps:
+                    runs[step] = {m for m, cell in zip(modes, row[1:], strict=True) if cell.startswith("✓")} if row else set()
+            return modes, runs
+
+        def drift(table, text):
+            modes, runs = skill_runs(text)
+            return [f"{step}: script {sorted(table.get(step, set()) & set(modes))} skill {sorted(want)}"
+                    for step, want in runs.items() if table.get(step, set()) & set(modes) != want]
+
+        modes, runs = skill_runs(skill_text)
+        check("left_undone_mode_table_matches_skill: the skill's table has the five modes and all nine steps",
+              modes == ["quick", "full", "ingest-only", "discover-only", "prompt-for-urls"] and len(runs) == 9
+              and all(runs[s] for s in runs), (modes, runs))
+        check("left_undone_mode_table_matches_skill: the script's table agrees with it for those five modes",
+              drift(script_table, skill_text) == [], drift(script_table, skill_text))
+        flipped = skill_text.replace("| 6 Claims, 7 refresh | — |", "| 6 Claims, 7 refresh | ✓ |", 1)
+        check("left_undone_mode_table_matches_skill: a cell flipped in the skill's table is drift",
+              flipped != skill_text and len(drift(script_table, flipped)) == 2, drift(script_table, flipped))
+        moved = {**script_table, "triage": script_table.get("triage", set()) | {"discover-only"}}
+        check("left_undone_mode_table_matches_skill: a step moved in the script's table is drift, and named",
+              [d.split(":")[0] for d in drift(moved, skill_text)] == ["triage"], drift(moved, skill_text))
+    left_undone_mode_table_matches_skill()
+
+    def left_undone_reads_a_quoted_mode_before_punctuation():
+        for text, want in (("`--full`.", "full"), ("'quick':", "quick"), ('"--lint-only" `--semantic`!', "lint-only-semantic")):
+            got = mode_of(cycle=text)
+            check(f"left_undone_reads_a_quoted_mode_before_punctuation: {text!r} on the Cycle line reads {want}",
+                  got == (want, "none"), got)
+            got = mode_of(mode=text)
+            check(f"left_undone_reads_a_quoted_mode_before_punctuation: {text!r} on the Mode line reads {want}",
+                  got == (want, "none"), got)
+    left_undone_reads_a_quoted_mode_before_punctuation()
 
 failed =[n for ok, n in results if not ok]
 for ok, n in results:

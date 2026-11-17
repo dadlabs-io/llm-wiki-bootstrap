@@ -1,0 +1,7 @@
+# Doubt log
+
+## Step 1: cycle_mode, _tokens, _mode_name, mode_problem, STEP_MODES/STEP_FILES (one doubt-reviewer, haiku, foreground)
+
+CLAIM: "cycle_mode reads the mode and modifiers from a scratchpad as the plan's rules say, and mode_problem reports an unknown mode or a step result the mode does not run."
+Cycle 1: backticked/quoted mode followed by punctuation (`--full`.) keeps its backtick, mode unreadable, and a backticked `--semantic`. is missed — actionable (test left_undone_reads_a_quoted_mode_before_punctuation red, then _tokens strips the punctuation set from both ends, green 170/170); only the first "(" on the Cycle line is read — trade-off (the plan says "the first token inside the parentheses"; the plan's reading kept, named for the plan); a mode outside any parentheses on the Cycle line is not read — trade-off (same plan sentence); "-quick", upper case, and an explicit `lint-only-semantic` are not accepted — trade-off (the plan fixes nine names, dashes optional, nothing on case); UTF-8 BOM on the first line hides the Cycle line — noise (unsettled whether live scratchpads carry one; reported, not changed); I/O errors raise out of cycle_mode — noise (contract covers content); only the first contradiction is named — trade-off (plan words one line); prose such as "no --semantic pass" reads as the flag — trade-off (plan: token present in either line).
+STOP: trivial findings (one cycle; no second spawn on the fixed artifact, as the test pins the fix).

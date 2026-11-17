@@ -14,6 +14,7 @@ What a /wiki-cycle step reads, decided by a script instead of by the model.
     wiki-cycle-scope.py --topic N unfinished --run-folder <rf>
     wiki-cycle-scope.py --topic N unfinished --mark-interrupted <cycle_id> --reason "<why>"
     wiki-cycle-scope.py --topic N writer <raw> [<raw> ...] [--ingester <config.json>]
+    wiki-cycle-scope.py --topic N left-undone --run-folder <rf> [--today YYYY-MM-DD]
 
 `semantic`: the entries added or revised since the last semantic lint (the newest
 earlier run folder holding lint-semantic.json; its `timestamp` is the cut-off), plus
@@ -97,6 +98,57 @@ dead, and `--mark-interrupted` rewrites it; there is no lock and no age check. `
 reason joins the Decisions log (a scratchpad is written when there is none); an unknown id is exit 2, nothing
 written (task #240, lesson #10: a cycle died before its report and nothing flagged it).
 
+`left-undone`: what the cycle leaves undone, counted fresh from the notebook and the run folder's step files, written
+to <rf>/left-undone.txt and read by /wiki-report (task #240, lesson #9; Mark, 2026-11-16: after a run, anything left
+undone is named, with the count and why). Exit 2, nothing written, for a `--today` that is not a calendar date
+(YYYY-MM-DD), a run folder or notebook that is not there. It changes no entry and writes no `*-scope.txt`. Run it from
+the project whose notebook is counted: another project's working folder is not a supported case (a later step reads
+this session's bucket from the working folder's .claude/wiki-config.json). This is Part 1, the disk-state counts; the
+leftovers of steps that ran (lint findings, sources, entries not linted, claimed or synthesised) are Part 2.
+
+  File shape. Line 1 is a header the script writes: `Left undone: <N> queue(s)`, N the number of queue lines below
+  it, `Mode: not checked` lines and `, not checked` lines included (each is something not known to be empty), or
+  `Left undone (disk-state queues): none` when there are none. A `--report-only` file has a second line, `Disk-state
+  queues are counted now; event lines are from the last run (<id>)`, which is not a queue line and not counted in N;
+  the last run is the newest earlier run folder that holds a `<id>-run-cycle-report.md` and whose scratchpad mode is
+  not report-only (`none: no earlier run with a report` when there is none). Then the queue lines,
+  `- <queue>: <N> — <reason and way out>`. The file always ends with the interim line `Not counted yet: leftovers of
+  steps that ran (...)`; it is not a queue line and does not count toward N (it goes when Part 2 is built; until then
+  `Left undone: nothing` is never written).
+
+  Mode and modifiers, read from the run folder's scratchpad.md, never typed. Tokens are split on whitespace, commas,
+  semicolons and parentheses, with backticks, quotes and trailing punctuation stripped. The mode is the first token
+  inside the parentheses of the `**Cycle**: <id> (<mode>[, <modifiers>])` line, one of nine names, each accepted with
+  or without its leading dashes: quick, full, ingest-only, discover-only, prompt-for-urls, lint-only, report-only,
+  refresh-only, claims-only. With no mode there, the first token of the `- Mode:` line is tried; two lines that name
+  different modes, no mode on either, or no scratchpad leave the mode unknown. `lint-only` with `--semantic` among the
+  tokens of either line is `lint-only-semantic`. Modifiers are the tokens `--no-confirm-discovery`, `--lint-all`,
+  `--direct` and `--since` found anywhere on either line. The command prints `mode <mode|unknown>; modifiers <list>`.
+
+  Cross-check, STEP_MODES (which modes run each step; the five modes of the cycle skill's mode table are held equal to
+  it by the drift test in tests/scripts/test_cycle_scope.py, the other four by this table alone) against STEP_FILES
+  (the named step results: refresh.json, lint-semantic.json, claims.json, synthesis.json, update.json, triage.json,
+  discover.json, lint-mechanical.json; never a `*.json` glob, as models.json, cost.json and email-review.json are not
+  steps). A step result in the run folder that the mode does not run, or an unknown mode, keeps every count and
+  changes only the mode-dependent reasons: `<count>, not checked (cannot read the mode from scratchpad.md)` or
+  `<count>, not checked (the mode in scratchpad.md is <mode> but the run folder holds <file>)`, and adds one queue
+  line, `Mode: not checked (<same text>); steps that left no file are not known`, so the header never reads nothing
+  while the mode is not known.
+
+  Third state, for every step a mode runs: the mode does not run it, "does not run" wording; its result is present and
+  `completed`, the "ran" wording; absent, `<count>, not checked (<step> left no <file>)`; present and not completed,
+  `<count>, not checked (the <step> ended <status>)` (`unreadable` for a file that does not parse). The count is
+  printed before `not checked`.
+
+  Review dates. Entries are wiki/ pages without `_`-prefixed files, README.md, sessions/ and the top-level tasks/
+  cards. Past: `review_after` is a YYYY-MM-DD calendar date strictly before `--today` (default the local date), quotes
+  stripped. No review_after: the key is absent. Not a date: present and not a calendar date.
+
+  | Queue (step it depends on)    | Mode does not run it                                                   | Ran (completed)                                                                      |
+  | Past review_after (refresh)   | this mode does not run refresh; /wiki-cycle --refresh-only lists them  | refresh ran; this count is from the dates now (refreshing them is your call: /wiki-refresh) |
+  | No review_after               | refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields) | same in every mode |
+  | review_after not a date       | refresh cannot read it; correct the date (the lint lists them under Dates not in ISO form) | same in every mode |
+
 Entries are wiki/**/*.md except `_`-prefixed machine files, README.md and sessions/.
 (2026-09-24, task #42: C1 and C3; the 2026-09-23 cycle's findings 10 and 11.)
 """
@@ -109,13 +161,14 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _entry_checks import split_frontmatter  # noqa: E402
 from _atomic_io import atomic_write_text  # noqa: E402
-from _wiki_config import confirm_before_promote, load_config, now_stamp, topic_root  # noqa: E402
+from _wiki_config import (  # noqa: E402
+    confirm_before_promote, in_sessions, in_tasks, load_config, now_stamp, today_label, topic_root)
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -670,6 +723,172 @@ def cmd_cost(nb: Path, args) -> int:
     return 0
 
 
+MODES = ("quick", "full", "ingest-only", "discover-only", "prompt-for-urls", "lint-only", "report-only",
+         "refresh-only", "claims-only")
+# which modes run each step (the cycle skill's mode table, and its prose for the modes the table leaves out)
+STEP_MODES = {
+    "discover": ("quick", "full", "discover-only"),
+    "triage": ("quick", "full", "ingest-only"),
+    "ingest": ("quick", "full", "ingest-only", "prompt-for-urls"),
+    "lint": ("quick", "full", "ingest-only", "prompt-for-urls", "lint-only", "lint-only-semantic"),
+    "semantic": ("full", "lint-only-semantic"),
+    "fix": ("full",),
+    "claims": ("full", "claims-only"),
+    "refresh": ("full", "refresh-only"),
+    "synthesis": ("quick", "full", "ingest-only", "prompt-for-urls"),
+}
+# the step results the cross-check looks for (never a `*.json` glob: models.json, cost.json and email-review.json
+# are not steps); the fix step leaves no JSON
+STEP_FILES = {"discover": "discover.json", "triage": "triage.json", "ingest": "update.json",
+              "lint": "lint-mechanical.json", "semantic": "lint-semantic.json", "claims": "claims.json",
+              "refresh": "refresh.json", "synthesis": "synthesis.json"}
+ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+INTERIM_LAST = ("Not counted yet: leftovers of steps that ran (lint findings, dropped sources, "
+                "entries not linted, claimed or synthesised)")
+
+
+MODIFIERS = ("--no-confirm-discovery", "--lint-all", "--direct", "--since")
+
+
+def _tokens(text: str) -> list[str]:
+    """Split on whitespace, commas, semicolons and parentheses; backticks, quotes and trailing punctuation off."""
+    return [t for t in (x.strip("`'\"….:!?") for x in re.split(r"[\s,;()]+", text)) if t]
+
+
+def _mode_name(tokens: list[str]) -> str | None:
+    """The first token as one of the nine mode names, with or without its leading dashes."""
+    first = tokens[0] if tokens else ""
+    name = first[2:] if first.startswith("--") else first
+    return name if name in MODES else None
+
+
+def cycle_mode(run_folder: Path) -> tuple[str | None, list[str]]:
+    """(mode, modifiers) from the run's scratchpad. The mode is the first token inside the parentheses of the
+    `**Cycle**` line, else the first token of the `- Mode:` line; two lines that name different modes read as no
+    mode (None). The modifiers are the `--` tokens of either line that are one of MODIFIERS."""
+    pad = run_folder / "scratchpad.md"
+    if not pad.is_file():
+        return None, []
+    text = pad.read_text(encoding="utf-8", errors="replace")
+    cycle_m = re.search(r"^\*\*Cycle\*\*:(.*)$", text, re.M)
+    mode_m = re.search(r"^- Mode:(.*)$", text, re.M)
+    cycle_text, mode_text = cycle_m.group(1) if cycle_m else "", mode_m.group(1) if mode_m else ""
+    named = {m for m in (_mode_name(_tokens(cycle_text.partition("(")[2])[:1]), _mode_name(_tokens(mode_text)[:1]))
+             if m}
+    tokens = _tokens(cycle_text) + _tokens(mode_text)
+    modifiers = sorted({t for t in tokens if t in MODIFIERS})
+    if len(named) != 1:
+        return None, modifiers
+    mode = named.pop()
+    return ("lint-only-semantic" if mode == "lint-only" and "--semantic" in tokens else mode), modifiers
+
+
+def _iso_date(value: str) -> date | None:
+    if not ISO_DATE.match(value):
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def review_date_counts(nb: Path, today: date) -> tuple[list[str], list[str], list[str]]:
+    """The entries (wiki/ pages, tasks/ and sessions/ left out) whose `review_after` is strictly before `today`,
+    absent, and present but not a calendar date."""
+    past, none, bad = [], [], []
+    for e in entries(nb):
+        rel = Path(e).relative_to("wiki")
+        if in_tasks(rel) or in_sessions(rel):
+            continue
+        front = _front((nb / e).read_text(encoding="utf-8", errors="replace"))
+        if "review_after" not in front:
+            none.append(e)
+            continue
+        due = _iso_date(front["review_after"])
+        if due is None:
+            bad.append(e)
+        elif due < today:
+            past.append(e)
+    return past, none, bad
+
+
+def mode_problem(mode: str | None, rf: Path) -> str | None:
+    """Why the mode cannot be trusted: not readable from the scratchpad, or the run folder holds the result of a
+    step the mode does not run."""
+    if mode is None:
+        return "cannot read the mode from scratchpad.md"
+    for step, name in STEP_FILES.items():
+        if (rf / name).is_file() and mode not in STEP_MODES[step]:
+            return f"the mode in scratchpad.md is {mode} but the run folder holds {name}"
+    return None
+
+
+def step_status(rf: Path, name: str) -> str | None:
+    """None when the step left no file, else its `status` (`unreadable` when the file does not parse)."""
+    f = rf / name
+    if not f.is_file():
+        return None
+    try:
+        data = json.loads(f.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "unreadable"
+    return str(data.get("status") or "unknown") if isinstance(data, dict) else "unreadable"
+
+
+def last_run_id(nb: Path, rf: Path) -> str | None:
+    """The newest earlier run folder with a `<id>-run-cycle-report.md` whose scratchpad mode is not report-only."""
+    found = []
+    for d in (nb / "_inbox" / "reports").glob("*/*"):
+        if (d.is_dir() and CYCLE_ID.match(d.name) and d.name < rf.name
+                and (d / f"{d.name}-run-cycle-report.md").is_file() and cycle_mode(d)[0] != "report-only"):
+            found.append(d.name)
+    return max(found, default=None)
+
+
+def cmd_left_undone(nb: Path, args) -> int:
+    rf = Path(args.run_folder)
+    today = _iso_date(args.today or today_label())
+    if today is None:
+        print(f"error: --today must be a YYYY-MM-DD date, not {args.today!r}", file=sys.stderr)
+        return 2
+    if not rf.is_dir():
+        print(f"error: no run folder at {rf}", file=sys.stderr)
+        return 2
+    mode, modifiers = cycle_mode(rf)
+    problem = mode_problem(mode, rf)
+    past, none, bad = review_date_counts(nb, today)
+    queues = []
+    if past:
+        refresh = step_status(rf, STEP_FILES["refresh"])
+        if problem:
+            queues.append(f"- Past review_after: {len(past)}, not checked ({problem})")
+        elif mode not in STEP_MODES["refresh"]:
+            queues.append(f"- Past review_after: {len(past)} — this mode does not run refresh; "
+                          "/wiki-cycle --refresh-only lists them")
+        elif refresh is None:
+            queues.append(f"- Past review_after: {len(past)}, not checked (refresh left no refresh.json)")
+        elif refresh != "completed":
+            queues.append(f"- Past review_after: {len(past)}, not checked (the refresh ended {refresh})")
+        else:
+            queues.append(f"- Past review_after: {len(past)} — refresh ran; this count is from the dates now "
+                          "(refreshing them is your call: /wiki-refresh)")
+    if none:
+        queues.append(f"- No review_after: {len(none)} — refresh cannot see an entry with no review_after; "
+                      "add the date (the lint lists them under Missing lifecycle fields)")
+    if bad:
+        queues.append(f"- review_after not a date: {len(bad)} — refresh cannot read it; correct the date "
+                      "(the lint lists them under Dates not in ISO form)")
+    if problem:
+        queues.append(f"- Mode: not checked ({problem}); steps that left no file are not known")
+    head = f"Left undone: {len(queues)} queue(s)" if queues else "Left undone (disk-state queues): none"
+    second = ([f"Disk-state queues are counted now; event lines are from the last run "
+               f"({last_run_id(nb, rf) or 'none: no earlier run with a report'})"] if mode == "report-only" else [])
+    out = rf / "left-undone.txt"
+    atomic_write_text(out, "\n".join([head, *second, *queues, INTERIM_LAST]) + "\n")
+    print(f"left-undone: {head}; mode {mode or 'unknown'}; modifiers {','.join(modifiers) or 'none'} -> {out}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[1].strip())
     ap.add_argument("--topic", default=None, help="notebook (default: this project's)")
@@ -709,6 +928,9 @@ def main() -> int:
     wr = sub.add_parser("writer")
     wr.add_argument("raws", nargs="+", help="raw files (absolute, or relative to the notebook)")
     wr.add_argument("--ingester", default=str(HOME_CLAUDE / "agents" / "wiki-ingester-config.json"))
+    ld = sub.add_parser("left-undone")
+    ld.add_argument("--run-folder", required=True)
+    ld.add_argument("--today", default=None, help="YYYY-MM-DD, for tests (default: the local date)")
     args = ap.parse_args()
     if args.cmd == "unfinished" and bool(args.run_folder) == bool(args.mark_interrupted):
         un.error("give --run-folder (to list) or --mark-interrupted (to close one), not both and not neither")
@@ -726,7 +948,8 @@ def main() -> int:
     return {"semantic": cmd_semantic, "claims": cmd_claims, "synthesis": cmd_synthesis, "checker": cmd_checker,
             "checker-log": cmd_checker_log, "checker-corrected": cmd_checker_corrected, "models": cmd_models,
             "cost": cmd_cost, "session-cost": cmd_session_cost,
-            "promote": cmd_promote, "unfinished": cmd_unfinished, "writer": cmd_writer}[args.cmd](nb, args)
+            "promote": cmd_promote, "unfinished": cmd_unfinished, "writer": cmd_writer,
+            "left-undone": cmd_left_undone}[args.cmd](nb, args)
 
 
 if __name__ == "__main__":
