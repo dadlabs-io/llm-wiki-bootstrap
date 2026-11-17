@@ -62,3 +62,80 @@ Asked: A, build half 1 (disk-state counts) now and half 2 (what a step that ran 
 Mark (terminal): "No lets fix the plan solidly first, we can still decide to do it in 2 parts, but lets make sure the plan is complete before we start"
 
 Read as: revise the whole plan (both halves) until it holds; the split stays open and is decided once the plan is complete.
+
+## Plan confirmation — 2026-11-17
+Plan revision 7; red-team round 8: VERDICT NONE FOUND (375bcf7). The twelve Decisions needed, asked one at a time.
+
+### Decision 1 (lint findings fixed at cycle Step 5)
+Asked: A, re-run the mechanical lint once after Step 5 (show, apply, record with lint-fixes, re-run), with the staleness guard; or B, no re-run, lines worded "found before the fix step; approved fixes are not subtracted".
+
+Mark (terminal): "A"
+
+### Decision 2 (tier-4 deferrals in an unattended run)
+Asked: A, the checklist's tier field, only for a run whose folder holds discover.json and whose scratchpad lists --no-confirm-discovery (silent miss accepted and stated); or B, no flag gate (any run that ran discovery names its unticked tier-4 candidates). Other options (label, new text file, contract edit) named, not recommended.
+
+Mark (terminal): "A"
+
+### Decision 3 (how far the paid test reaches)
+Asked: A, case A a seeded resume at cycle Step 8 plus case B a clean --lint-only (8 sessions, unpaid fixture test first); or B, case A as a plain --lint-only, the event lines proved by script tests only.
+
+Mark (terminal): "A -- but shouldnt we run the linter first? wont it show some standard issues we can fix and thats mechanical and doesnt require tokens?"
+
+Answered: yes, already in the plan. test_left_undone_fixture.py (unpaid, no model tokens) runs the real mechanical lint on case B's built notebook before any paid session; the builder repairs the seed's known issues (6 orphans, 1 entry missing frontmatter/tier/confidence, past review_after dates) in code, and the backlink blocks are rebuilt by the integration scripts; no paid session runs until that lint reads completed with zero findings.
+
+### Decision 4 (the "script many skills call" trigger)
+Asked: A, the trigger does not fire (targeted cases + the six script tests, logged in PENDING.md, no full suite); or B, a full suite once after the targeted cases on Mark's yes. Third option (no extraction) named, not recommended.
+
+Mark (terminal): "A"
+
+### Decision 5 (discovery's own drops)
+Asked: A, name each discovery drop with its reason except "already covered"; or B, one line with a count and a pointer to discover.md.
+
+Mark (terminal): "A" (also: "we can just chat here... Im back for some time." — questions move to the terminal)
+
+### Decision 6 (tickets already in Needs you, in the sources list)
+Asked: A, leave out any source whose ticket carries retry: or save_as_pdf: (each item in one place); or B, list everything, repeats included.
+
+Mark (terminal): "shouldnt I know about them if they need me? I need notification as part of the run."
+Answered: under both answers they are in the run's report; Needs you (the report's last section) names every retry and Save-as-PDF ticket; A names each once there, B also in Left undone; no ping either way (settled earlier).
+
+Mark (terminal): "A"
+
+### Decision 7 (bucket tickets)
+Asked: A, count only bucket files with a source: line; or B, every .md except README, triage-log.md and _-prefixed files.
+
+Mark (terminal): "A"
+
+### Decision 8 (same-day under-count)
+Asked: A, accept the under-count and label it in the line; or B, compare by time with one git log call.
+
+Mark (terminal): "A"
+
+### Decision 9 (concept gaps)
+Asked: A, leave them out (Pending-work row already carries count and action); or B, add a Concept gaps line to Left undone.
+
+Mark (terminal): "A"
+
+### Decision 10 (earlier-run semantic findings)
+Asked: A, the newest lint's unresolved findings plus a "superseded by a newer lint; no longer shown in full" line per older lint with unresolved findings, in every run; B, newest only (older ones silenced); C, every lint back to the last answered one, summed.
+
+Mark (terminal): "A"
+
+### Decision 11 (the Numbers row's Stale count)
+Asked: A, the Numbers row takes the Left undone past count (0 with no past line, not checked with no file); or B, leave it (two numbers).
+
+Mark (terminal): "A"
+
+### Decision 12 (a paid case for --brief)
+Asked: A, no third case (case A grades Needs you and the Numbers row; the --brief string read by hand once); or B, a third paid case for --brief.
+
+Mark (terminal): "A"
+
+All twelve answered with the recommended form.
+
+### Build in one go or two parts
+Asked: A, one go (all seven steps, one paid red-green run of 8 sessions, one install); or B, two parts (Part 1 installed first; 16 sessions, two installs, an interim "Not counted yet" line).
+
+Mark (terminal): "A"
+
+Build: one go.

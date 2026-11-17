@@ -171,13 +171,13 @@ The plan is written whole; each part stands alone.
 
 ## Decisions needed
 
-Twelve; each stands alone. Folded away by the design or the evidence, so not asked: the `_inbox/discovered/` line (included: discovery files a processed checklist away, so one still there has not been filed as processed; whether it was reviewed is not recorded, and the line says only that); the date-granularity method (the scope-file subtraction removes 94 of 209 wrong counts; only the same-day residue is Decision 8); claim-less entries (at most 2 of 123, covered by the same rule); the fixes record (finding ids the script itself prints and validates, because a typed count can be wrong); where the mode and modifiers come from (the scratchpad's `**Cycle**` line and `- Mode:` line, cross-checked); `pending/` and the `source:` rule (the dequeue counts a pending file with no `source:`, so `pending/` reuses the existing `_tickets`); leaving `cmd_retry_list` alone; and the Stale table's heading (it carries no number).
+Twelve, all answered by Mark 2026-11-17 with the recommended option (ticked below; verbatim in checkpoints.md, with "build in one go"). Round 8's four minor items are applied in implementation. Folded away by the design or the evidence, so not asked: the `_inbox/discovered/` line (included: discovery files a processed checklist away, so one still there has not been filed as processed; whether it was reviewed is not recorded, and the line says only that); the date-granularity method (the scope-file subtraction removes 94 of 209 wrong counts; only the same-day residue is Decision 8); claim-less entries (at most 2 of 123, covered by the same rule); the fixes record (finding ids the script itself prints and validates, because a typed count can be wrong); where the mode and modifiers come from (the scratchpad's `**Cycle**` line and `- Mode:` line, cross-checked); `pending/` and the `source:` rule (the dequeue counts a pending file with no `source:`, so `pending/` reuses the existing `_tickets`); leaving `cmd_retry_list` alone; and the Stale table's heading (it carries no number).
 
 1. **How should a lint finding that you fixed at cycle Step 5 stop showing as still there?**
    Plain background: in a `--full` run where nothing is promoted automatically (the setting is `true`), the mechanical lint runs once, before Step 5. If you approve fixes at Step 5, the lint's saved result still lists the old findings, so the report would name findings you already fixed. Step 5's fixers also do not cover every kind of finding, so the report cannot say "awaiting your approval" for all of them.
    Recommendation: Step 5 ends with a fixed order (show the findings, apply what you approve, record it, re-run the mechanical lint once more, the command Step 3 runs, seconds), so the lint's result describes the fixed notebook, and a finding still listed is worded "still present after the cycle Step 5 fixes (not approved, declined, or no fix step covers this kind)". If the lint result is older than the fixes note, the lines read "not checked (the lint predates cycle Step 5)".
    Alternative: do not re-run the lint; word the lint lines "found by the lint before the fix step; approved fixes are not subtracted". Risk: the lines name findings you already fixed, until the next cycle's lint.
-   [ ] re-run the lint after Step 5  [ ] reword the lines
+   [x] re-run the lint after Step 5  [ ] reword the lines
 
 2. **How are tier-4 sources deferred in an unattended run found, and what if the run does not record that it was unattended?**
    Plain background: when a cycle runs without you present (`--no-confirm-discovery`), it queues discovery's tier 1-3 sources and defers tier 4, but nothing records the deferral, and no script, skill or test reads `discover.json`'s `deferred` list (the contract defines it as items to retry). Discovery's checklist template puts "tier N" on every candidate line; "(NEEDS HUMAN REVIEW)" appears only in a rule telling discovery not to include tier 4 without it. **None of the 32 live scratchpads records `--no-confirm-discovery`, so if an unattended run does not write the flag into its scratchpad, the tier-4 line is silently missing: no line and no "not checked".** That is the one place in this plan where a miss is silent.
@@ -186,69 +186,69 @@ Twelve; each stands alone. Folded away by the design or the evidence, so not ask
    Alternative 2: key on the "(NEEDS HUMAN REVIEW)" label instead of the field. Risk: a model that omits the label produces no line, which cannot be told from "none".
    Alternative 3: cycle Step 1.5 writes a new text file of the deferred sources. Risk: a file that can be skipped, so its absence could only ever read "not checked".
    Alternative 4: put them in `discover.json`'s `deferred` list and edit the contract to say it also holds items waiting on you, with a framework version bump. Risk: a framework-contract change every install refreshes, for one reason string.
-   [ ] tier field + checklist, flag gate  [ ] tier field, no flag gate  [ ] label  [ ] new text file  [ ] edit the contract
+   [x] tier field + checklist, flag gate  [ ] tier field, no flag gate  [ ] label  [ ] new text file  [ ] edit the contract
 
 3. **How far should the paid test run reach?**
    Plain background: the report section is copied by the model, so a paid run proves the copying. A plain `--lint-only` run has no ingest result, no discovery result and no fix step, so the lines for dropped sources, lint findings and fixes awaiting approval can never appear in it. A resumed run that starts at the report step is the only cheap way to have them; whether the model goes straight to the report step on a seeded folder is not known until the first paid session.
    Recommendation: case A (kind `left-undone-planted`) is a resumed run starting at the report step, with the earlier steps' result files already in the run folder (fixture above, refresh left out on purpose), and case B (kind `left-undone-clean`) a clean `--lint-only` run reading "nothing" on a notebook the builder has made lint-clean. 8 short sessions, no workers: two cases, both models, old copy and new copy; an unpaid test of the fixture builder, including the real lint and the common checks, runs first.
    Alternative: case A as a plain `--lint-only` run, accepting that the dropped-source, lint-finding and fixes lines are proved only by the unpaid script tests. Risk: the model has never been shown to copy those lines. A third paid case (a real `--ingest-only` run with a failing source) is not recommended: 4 more sessions and workers.
-   [ ] resumed case A  [ ] plain `--lint-only`, script tests only
+   [x] resumed case A  [ ] plain `--lint-only`, script tests only
 
 4. **How do you read the "script many skills call" rule for this change?**
    Plain background: the tests README says a full wiki-cycle suite run (about $40-90) is recommended when a change touches "a script many skills call" (it names `_entry_checks.py`, `_wiki_config.py` and the search helper). The change pulls the list-building out of three scope subcommands into shared functions and adds one function to `wiki-triage.py`. Only `/wiki-cycle` calls the three subcommands; four skills name the scope script and four name `wiki-triage.py` (counted from the `SKILL.md` files). The extraction is not purely additive.
    Recommendation: the trigger does not fire; run the targeted cases and the six script tests, which pin each command's output and files, and log the decision in PENDING.md. No full suite.
    Alternative 1: run the full wiki-cycle suite once after the targeted cases, on your yes. Risk: the $40-90 cost, for a result that has come back "0 regressions" run after run.
    Alternative 2: skip the extraction; the counter gets its own scope functions beside the unchanged commands, and a script test fails when their results differ. Risk: two copies of the scope rule that can drift apart, which the shared-helper rule says not to write.
-   [ ] trigger does not fire  [ ] full suite  [ ] no extraction
+   [x] trigger does not fire  [ ] full suite  [ ] no extraction
 
 5. **Should the sources list name what discovery itself dropped?**
    Plain background: discovery drops candidates as "LOW relevance" or "already covered by <slug>" and records each in its Skipped table. Your Decision 4 said each source the run dropped, failed or deferred is named. An already-covered source was never queued, so nothing is left undone for it. (A source the ingest step skipped as already covered is different: its ticket is still in the bucket, so it is listed.)
    Recommendation: name each discovery drop except the "already covered" ones, each with its reason. Step 6 and the counting rule are written this way. Risk: on agentic-design that can be many lines per cycle.
    Alternative: one line, `Discovery dropped N sources, listed in discover.md`, no per-source lines. Risk: a count with a pointer, which Decision 4 said was not enough. A third answer, name all of them including "already covered", changes the counting rule and step 6 by one clause.
-   [ ] list them, not "already covered"  [ ] one line with a pointer
+   [x] list them, not "already covered"  [ ] one line with a pointer
 
 6. **Should a ticket that is already in "Needs you" also appear in the sources list?**
    Plain background: tickets left for retry and pages to save as PDF are in Needs you with their task card or folder. A failed source may be one of them. Each such ticket carries its own marker (`retry:` or `save_as_pdf:` in its frontmatter), so no reason-text matching is needed.
    Recommendation: leave out of the sources list any source whose ticket carries either marker, so each item sits in one place. Risk: if a source's URL differs in form from its ticket's, the filter misses it and it appears twice, which is harmless.
    Alternative: list every dropped, failed or deferred source, repeats included: the list is the inventory, Needs you is the action. Risk: one item twice on the page.
-   [ ] leave them out  [ ] list everything
+   [x] leave them out  [ ] list everything
 
 7. **Which files in another reader's bucket count as tickets still to be processed?**
    Plain background: other readers' buckets are named once, each with the count still to be processed. Buckets also hold a README, a triage log and handoff notes (the note each other reader is told once), and a file you drop in a bucket may have no `source:` line. The dequeue script treats only files with a `source:` line in a bucket as tickets. (`_inbox/pending/` is different: the dequeue counts every file there, and the plan reuses the existing pending loop.)
    Recommendation: count only bucket files with a `source:` line, so handoff notes, READMEs and the log are not counted. Risk: a file dropped in with no `source:` line is not counted.
    Alternative: count every `.md` except `README.md`, `triage-log.md` and `_`-prefixed files. Risk: every handoff note is counted as a ticket.
-   [ ] files with `source:`  [ ] every `.md`
+   [x] files with `source:`  [ ] every `.md`
 
 8. **What should happen to an entry that was re-reviewed later on the same day as the semantic lint?**
    Plain background: the semantic lint's scope is worked out by day, not by time of day. An entry the lint read and that was re-reviewed again later that same day is treated as covered, so it is not counted as "not linted" (an under-count). Cycle Step 6.5's synthesis can bump a page's review date after the lint in the same run, so this happens in `--full` runs.
    Recommendation: accept the under-count and say so in the line (the reason text carries "an entry re-reviewed later on the lint's own day is not counted"), because no extra data is read and the error is in the quiet direction.
    Alternative: compare by time: one `git log` call lists the files changed after the lint's timestamp, and an entry read by the lint and changed after it is counted. Risk: machine edits (backlink blocks, promotions) change files too, so the count gets noisier, and the counter then disagrees with what the step itself would read.
-   [ ] accept and label  [ ] compare by time
+   [x] accept and label  [ ] compare by time
 
 9. **Should open concept gaps be named in Left undone?**
    Plain background: the report's Pending-work table already shows the count of open concept gaps and its action. Concept gaps are non-empty in every mode, but they are things the wiki mentions and does not cover, not a queue the cycle works down. Requirements line 54 says that row is not changed; your rule says anything left undone is named.
    Recommendation: leave them out; the Pending-work row already carries the count and the action, and a permanent line in every report would hide the real ones.
    Alternative: add `Concept gaps: N open — ingest or mark as not needed` to Part 1. Risk: a line in every cycle report that is never cleared by running any mode.
-   [ ] leave out  [ ] add the line
+   [x] leave out  [ ] add the line
 
 10. **How far back should semantic lint findings left over from an earlier run be named?**
     Plain background: a `--full` run records which semantic findings you applied or declined, and names the rest as awaiting your approval. A later run with no semantic lint of its own (a quick or ingest-only run) reads only its own run folder, so those findings (193 on agentic-design's last lint) appear in no report after the run that found them. No cycle step shows them again: the next semantic lint looks only at entries added or revised since the last one. A later lint, even of one new entry, produces a newer lint file.
     Recommendation: name the newest completed lint's unresolved findings (`Semantic findings from <run id>: N — awaiting your approval; the findings are in lint-semantic.md (run <id>); no later cycle step shows them again; fixes made by hand since are not seen`) **and, in every run, give every older completed lint that still has unresolved findings its own line**, `Semantic findings from <older id>: N, superseded by a newer lint; not shown again`, counted from that lint's fixes note and never added to "awaiting". The lint files read are the ones in `_inbox/reports/*/*/`, this run's own included. Nothing is ever silent: a newer lint with 0 findings, or one that covered a single new entry, no longer hides an older run's findings. Cost: the script reads each earlier lint file (3 in agentic-design today) and its fixes note; lints with findings and no fixes note collapse into one line, "N earlier lints recorded no applied or declined findings; not shown again". Risk: standing lines for as long as any lint has findings nobody answered, and the "fixes by hand are not seen" limit.
     Alternative 1: name the **newest completed lint only**, with the line saying only the newest is read. Risk, stated plainly: once any later lint exists, even one with 0 findings or one that covered a single new entry, an older run's unresolved findings are silenced and nothing prints that; the only warning is the words "only the newest lint is read" on a line that may not be printed.
     Alternative 2: read every completed lint back to the last one with nothing left awaiting, and name the sum, each with its run id. Risk: more to read and to label (each lint can hold hundreds of findings), one number that mixes runs, and the same "fixes by hand are not seen" limit.
-    [ ] newest plus a "superseded" line per older lint  [ ] newest lint only  [ ] every lint back to the last answered one
+    [x] newest plus a "superseded" line per older lint  [ ] newest lint only  [ ] every lint back to the last answered one
 
 11. **Should the report's "Stale" count in the Numbers table be redefined?**
     Plain background: today the report counts stale entries with a shell snippet that includes every page under `wiki/`, task cards and session pages too, and reads a quoted date as past. On llm-wiki-bootstrap that gives 186 where excluding task cards gives 6. If the Numbers row keeps that snippet, a `--full` report shows 186 in Numbers and 6 in Left undone. No test checks the Numbers row today.
     Recommendation: when Left undone exists, the Numbers row "Stale (past review_after)" is the Left undone past count (task cards and session pages excluded, dates parsed), 0 when the Left undone file has no past line, and "not checked" when the report has no Left undone file. The Stale entries table is not touched. Case A checks the two agree.
     Alternative: leave the Numbers row and the table as they are and show the Left undone count only in its own section. Risk: two different past-due numbers in one report.
-    [ ] Numbers row takes the Left undone number  [ ] leave it, two numbers
+    [x] Numbers row takes the Left undone number  [ ] leave it, two numbers
 
 12. **Should the brief report get its own paid test?**
     Plain background: the `--brief` line and the reworded Needs-you line are report text a model writes. Case A already checks the Needs-you line and the Numbers row in the full report. The `--brief` line is the file's own first line plus a fixed suffix, so there is little for a model to get wrong; testing it needs a third paid case that runs `/wiki-report --brief` on the seeded folder (4 more sessions).
     Recommendation: no third case; case A grades the Needs-you line and the Numbers row, and the `--brief` string is read by hand once against the script's file.
     Alternative: add the third case for `--brief`. Risk: 4 more paid sessions, and a report mode (`--brief`) the cycle suite has never run.
-    [ ] case A grades the rest, read brief by hand  [ ] third paid case
+    [x] case A grades the rest, read brief by hand  [ ] third paid case
 
 ## Steps
 
