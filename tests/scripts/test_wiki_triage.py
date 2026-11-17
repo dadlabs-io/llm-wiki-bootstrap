@@ -276,6 +276,41 @@ with tempfile.TemporaryDirectory() as td:
     p = run("--topic", "research", "save-list")
     check("save-list: a retry is not a page to save", "watch?v=aaa" not in p.stdout, p.stdout[-300:])
 
+    # ── intake_tickets (task #240, step 3): the tickets in the configured buckets, for the left-undone counts ──
+    def intake_tickets_lists_source_carrying_tickets_once():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("wiki_triage_under_test", SCRIPT)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        it = tmp / "notebooks" / "itnb"
+        (it / "wiki").mkdir(parents=True)
+        (it / "_inbox" / "intake").mkdir(parents=True)
+        (it / "_inbox" / "intake" / "README.md").write_text(README, encoding="utf-8")
+        files = {"main/a.md": ticket("https://x.test/a"), "main/README.md": ticket("https://x.test/readme"),
+                 "main/_draft.md": ticket("https://x.test/draft"), "main/triage-log.md": ticket("https://x.test/log"),
+                 "main/handoff-note.md": "# a note with no source line\n\nread this once\n",
+                 "other/b.md": ticket("https://x.test/b"), "other/c.md": ticket("https://x.test/c"),
+                 "proj/notes.txt": ticket("https://x.test/not-markdown")}
+        for rel, text in files.items():
+            (it / "_inbox" / "intake" / rel).parent.mkdir(parents=True, exist_ok=True)
+            (it / "_inbox" / "intake" / rel).write_text(text, encoding="utf-8")
+        try:
+            got = [(f, Path(p).name, s, fm) for f, p, s, fm in mod.intake_tickets(it)]
+        except Exception as e:  # noqa: BLE001 - a missing function must be a failed check, not a crashed script
+            got = f"{type(e).__name__}: {e}"
+        check("intake_tickets_lists_source_carrying_tickets_once: each ticket once, with its bucket and source",
+              isinstance(got, list) and sorted((f, n, s) for f, n, s, _ in got) == [
+                  ("main", "a.md", "https://x.test/a"), ("other", "b.md", "https://x.test/b"),
+                  ("other", "c.md", "https://x.test/c")], got)
+        check("intake_tickets_lists_source_carrying_tickets_once: the frontmatter comes with it",
+              isinstance(got, list) and bool(got) and all(fm.get("priority") == "3" and fm.get("source") == s
+                                                          for _, _, s, fm in got), got)
+        check("intake_tickets_lists_source_carrying_tickets_once: a README, a log, a _-file, a note with no source: "
+              "and a bucket with no folder add nothing",
+              isinstance(got, list) and not {n for _, n, _, _ in got} & {"README.md", "triage-log.md", "_draft.md",
+                                                                           "handoff-note.md", "notes.txt"}, got)
+    intake_tickets_lists_source_carrying_tickets_once()
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

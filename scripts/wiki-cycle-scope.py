@@ -102,9 +102,10 @@ written (task #240, lesson #10: a cycle died before its report and nothing flagg
 to <rf>/left-undone.txt and read by /wiki-report (task #240, lesson #9; Mark, 2026-11-16: after a run, anything left
 undone is named, with the count and why). Exit 2, nothing written, for a `--today` that is not a calendar date
 (YYYY-MM-DD), a run folder or notebook that is not there. It changes no entry and writes no `*-scope.txt`. Run it from
-the project whose notebook is counted: another project's working folder is not a supported case (a later step reads
-this session's bucket from the working folder's .claude/wiki-config.json). This is Part 1, the disk-state counts; the
-leftovers of steps that ran (lint findings, sources, entries not linted, claimed or synthesised) are Part 2.
+the project whose notebook is counted: a working folder whose .claude/wiki-config.json names another notebook is
+not a supported case (this session's bucket is read from that file, so it would label the wrong bucket as this
+session's). This is Part 1, the disk-state counts; the leftovers of steps that ran (lint findings, sources, entries
+not linted, claimed or synthesised) are Part 2.
 
   File shape. Line 1 is a header the script writes: `Left undone: <N> queue(s)`, N the number of queue lines below
   it, `Mode: not checked` lines and `, not checked` lines included (each is something not known to be empty), or
@@ -148,6 +149,23 @@ leftovers of steps that ran (lint findings, sources, entries not linted, claimed
   | Past review_after (refresh)   | this mode does not run refresh; /wiki-cycle --refresh-only lists them  | refresh ran; this count is from the dates now (refreshing them is your call: /wiki-refresh) |
   | No review_after               | refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields) | same in every mode |
   | review_after not a date       | refresh cannot read it; correct the date (the lint lists them under Dates not in ISO form) | same in every mode |
+  | Tickets in _inbox/pending/    | this mode does not triage; /wiki-cycle --ingest-only gives each an owner | not triaged: arrived after triage, or triage did not complete |
+  | Tickets in this session's bucket | this mode does not ingest; /wiki-cycle --ingest-only                 | left in the bucket after ingest: dropped, failed, deferred or not reached |
+  | Staged entries                | staged before this run, or held by the checker; /wiki-promote          | same |
+  | Discovery checklists          | still in _inbox/discovered/ (discovery files a processed one in _inbox/done/); whether it was reviewed is not recorded | same |
+
+  Tickets, staged entries, checklists. The tickets lines are facts about the folders and never read a step's result
+  (triage.json, update.json): the mode alone picks the wording, and an unknown mode or a mismatch reads `<count>, not
+  checked (<problem>)`. Pending: every .md in _inbox/pending/ that is not `_`-prefixed or README (wiki-triage.py's
+  `_tickets`; the dequeue counts a file with no `source:` there too). Buckets: wiki-triage.py's `intake_tickets`, the
+  .md files of the configured buckets (`buckets()`; an intake README whose frontmatter does not parse reads as the
+  one-bucket default, `main` read by this session) that are not `_`-prefixed, README or triage-log.md and carry a
+  `source:` line. One line per bucket this session reads (`me()`), `- Tickets in this session's bucket <folder>: N`;
+  one line for every other reader's bucket, `mark`'s included, `- Other readers' buckets, still to process: <folder> N,
+  <folder> N`, with no owner, reason or items and no folder with 0. Staged entries (_inbox/proposed/) only when the
+  run's promote-setting.txt says `confirm_before_promote: false` (with true Needs you has them, so no line); with no
+  promote-setting.txt: `Staged entries: <N>, not checked (no promote-setting.txt: whether they wait for you is not
+  known)`. Checklists: each .md in _inbox/discovered/ that is not `_`-prefixed or README. A queue with 0 adds no line.
 
 Entries are wiki/**/*.md except `_`-prefixed machine files, README.md and sessions/.
 (2026-09-24, task #42: C1 and C3; the 2026-09-23 cycle's findings 10 and 11.)
@@ -156,6 +174,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -835,6 +854,80 @@ def step_status(rf: Path, name: str) -> str | None:
     return str(data.get("status") or "unknown") if isinstance(data, dict) else "unreadable"
 
 
+def _triage():
+    """wiki-triage.py's module (its file name has a dash), loaded as _install_tooling.py loads its helpers."""
+    spec = importlib.util.spec_from_file_location("_wiki_triage_pkg", Path(__file__).resolve().parent / "wiki-triage.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def bucket_ticket_lines(nb: Path, mode: str | None, problem: str | None) -> list[str]:
+    """This session's bucket tickets (one line per bucket it reads) and, once, the other readers' (the `mark`
+    bucket included); a folder with no ticket adds nothing."""
+    tri = _triage()
+    waiting = len(tri._tickets(nb))
+    if not waiting:
+        pending = []
+    elif problem:
+        pending = [f"- Tickets in _inbox/pending/: {waiting}, not checked ({problem})"]
+    elif mode not in STEP_MODES["triage"]:
+        pending = [f"- Tickets in _inbox/pending/: {waiting} — this mode does not triage; "
+                   "/wiki-cycle --ingest-only gives each an owner"]
+    else:
+        pending = [f"- Tickets in _inbox/pending/: {waiting} — not triaged: arrived after triage, "
+                   "or triage did not complete"]
+    me, lines, others = tri.me(), [], []
+    try:
+        bs = tri.buckets(nb)[0]
+    except Exception:  # noqa: BLE001 - frontmatter that does not parse: the one-bucket default, as no README gives
+        bs = [{"folder": "main", "reader": me}]
+    counts: dict[str, int] = {}
+    for folder, _path, _source, _front_ in tri.intake_tickets(nb, bs):
+        counts[folder] = counts.get(folder, 0) + 1
+    for b in bs:
+        folder = str(b.get("folder"))
+        n = counts.get(folder, 0)
+        if not n:
+            continue
+        if b.get("reader") != me:
+            others.append(f"{folder} {n}")
+        elif problem:
+            lines.append(f"- Tickets in this session's bucket {folder}: {n}, not checked ({problem})")
+        elif mode not in STEP_MODES["ingest"]:
+            lines.append(f"- Tickets in this session's bucket {folder}: {n} — this mode does not ingest; "
+                         "/wiki-cycle --ingest-only")
+        else:
+            lines.append(f"- Tickets in this session's bucket {folder}: {n} — left in the bucket after ingest: "
+                         "dropped, failed, deferred or not reached")
+    return pending + lines + ([f"- Other readers' buckets, still to process: {', '.join(others)}"] if others else [])
+
+
+def staged_lines(nb: Path, rf: Path) -> list[str]:
+    """The staged entries, only when the run's promote-setting.txt says `confirm_before_promote: false` (with true,
+    Needs you has them); no promote-setting.txt, or none that says true or false, keeps the count and says not checked."""
+    n = len(staged(nb))
+    if not n:
+        return []
+    f = rf / "promote-setting.txt"
+    m = re.search(r"^confirm_before_promote:\s*(true|false)\s*$", f.read_text(encoding="utf-8", errors="replace"),
+                  re.M) if f.is_file() else None
+    if m is None:
+        why = "no promote-setting.txt" if not f.is_file() else "no confirm_before_promote in promote-setting.txt"
+        return [f"- Staged entries: {n}, not checked ({why}: whether they wait for you is not known)"]
+    if m.group(1) == "true":
+        return []
+    return [f"- Staged entries: {n} — staged before this run, or held by the checker; /wiki-promote"]
+
+
+def checklist_lines(nb: Path) -> list[str]:
+    """Discovery checklists still in _inbox/discovered/ (discovery files a processed one in _inbox/done/)."""
+    disc = nb / "_inbox" / "discovered"
+    n = len([p for p in disc.glob("*.md") if not p.name.startswith(("_", "README"))]) if disc.is_dir() else 0
+    return [f"- Discovery checklists: {n} — still in _inbox/discovered/ (discovery files a processed one in "
+            "_inbox/done/); whether it was reviewed is not recorded"] if n else []
+
+
 def last_run_id(nb: Path, rf: Path) -> str | None:
     """The newest earlier run folder with a `<id>-run-cycle-report.md` whose scratchpad mode is not report-only."""
     found = []
@@ -878,6 +971,9 @@ def cmd_left_undone(nb: Path, args) -> int:
     if bad:
         queues.append(f"- review_after not a date: {len(bad)} — refresh cannot read it; correct the date "
                       "(the lint lists them under Dates not in ISO form)")
+    queues += bucket_ticket_lines(nb, mode, problem)
+    queues += staged_lines(nb, rf)
+    queues += checklist_lines(nb)
     if problem:
         queues.append(f"- Mode: not checked ({problem}); steps that left no file are not known")
     head = f"Left undone: {len(queues)} queue(s)" if queues else "Left undone (disk-state queues): none"

@@ -86,5 +86,110 @@
       "tail": "PASS left_undone_refuses_bad_input: a notebook with no wiki/ exits 2 and writes no file\nPASS left_undone_mode_table_matches_skill: the skill's table has the five modes and all nine steps\nPASS left_undone_mode_table_matches_skill: the script's table agrees with it for those five modes\nPASS left_undone_mode_table_matches_skill: a cell flipped in the skill's table is drift\nPASS left_undone_mode_table_matches_skill: a step moved in the script's table is drift, and named\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: '`--full`.' on the Cycle line reads full  [('unknown', 'none')]\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: '`--full`.' on the Mode line reads full  [('unknown', 'none')]\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: \"'quick':\" on the Cycle line reads quick  [('unknown', 'none')]\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: \"'quick':\" on the Mode line reads quick  [('unknown', 'none')]\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: '\"--lint-only\" `--semantic`!' on the Cycle line reads lint-only-semantic  [('lint-only', 'none')]\nFAIL left_undone_reads_a_quoted_mode_before_punctuation: '\"--lint-only\" `--semantic`!' on the Mode line reads lint-only-semantic  [('lint-only', 'none')]\n164/170 passed",
       "date": "2026-11-17"
     }
+  },
+  {
+    "file": "tests/scripts/test_wiki_triage.py",
+    "test_name": "intake_tickets_lists_source_carrying_tickets_once",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "95df879ef7cd81754d6e836345c9c74271e0633c3f12de54d5469cc2d4666453",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_wiki_triage.py",
+      "exit": 1,
+      "tail": "PASS retry-list: exit 0\nPASS retry-list: counts the three items\nPASS retry-list: each item's link and reason\nPASS retry-list: the owner's task list per bucket (the reader's notebook)\nPASS retry-list: names each bucket's reader\nPASS retry-list --cycle: only that cycle's items\nPASS save-list: a retry is not a page to save\nFAIL intake_tickets_lists_source_carrying_tickets_once: each ticket once, with its bucket and source  [NotImplementedError: ]\nFAIL intake_tickets_lists_source_carrying_tickets_once: the frontmatter comes with it  [NotImplementedError: ]\nFAIL intake_tickets_lists_source_carrying_tickets_once: a README, a log, a _-file, a note with no source: and a bucket with no folder add nothing  [NotImplementedError: ]\n64/67 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_counts_bucket_tickets",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "007fc7275eb532f4b7d94b3a08d2e9aafe52bb54e167105e6398d1a260698825",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS left_undone_mode_table_matches_skill: a step moved in the script's table is drift, and named\nPASS left_undone_reads_a_quoted_mode_before_punctuation: '`--full`.' on the Cycle line reads full\nPASS left_undone_reads_a_quoted_mode_before_punctuation: '`--full`.' on the Mode line reads full\nPASS left_undone_reads_a_quoted_mode_before_punctuation: \"'quick':\" on the Cycle line reads quick\nPASS left_undone_reads_a_quoted_mode_before_punctuation: \"'quick':\" on the Mode line reads quick\nPASS left_undone_reads_a_quoted_mode_before_punctuation: '\"--lint-only\" `--semantic`!' on the Cycle line reads lint-only-semantic\nPASS left_undone_reads_a_quoted_mode_before_punctuation: '\"--lint-only\" `--semantic`!' on the Mode line reads lint-only-semantic\nFAIL left_undone_counts_bucket_tickets: --lint-only names this session's bucket once and the others once, and counts both in the header  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_counts_bucket_tickets: --full gives the ran reason on this session's bucket, the others unchanged  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_counts_bucket_tickets: an unreadable mode keeps the count and says so, the other readers' line unchanged  [['Left undone: 1 queue(s)', '- Mode: not checked (cannot read the mode from scratchpad.md); steps that left no file are not known', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\n170/173 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_counts_pending_tickets",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d0a2ba0e32bf0325c55630d07242e4838ecc3b7ad39f3c796db4f7c401aaa182",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS left_undone_reads_a_quoted_mode_before_punctuation: '\"--lint-only\" `--semantic`!' on the Cycle line reads lint-only-semantic\nPASS left_undone_reads_a_quoted_mode_before_punctuation: '\"--lint-only\" `--semantic`!' on the Mode line reads lint-only-semantic\nPASS left_undone_counts_bucket_tickets: --lint-only names this session's bucket once and the others once, and counts both in the header\nPASS left_undone_counts_bucket_tickets: --full gives the ran reason on this session's bucket, the others unchanged\nPASS left_undone_counts_bucket_tickets: an unreadable mode keeps the count and says so, the other readers' line unchanged\nFAIL left_undone_counts_pending_tickets: --lint-only counts the three (one with no source:) and says it does not triage  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_counts_pending_tickets: a mode that ingests and does not triage says it does not triage  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_counts_pending_tickets: --full says they arrived after triage or triage did not complete  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_counts_pending_tickets: a completed triage.json changes nothing on the line  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_counts_pending_tickets: an unreadable mode keeps the count and says so  [['Left undone: 1 queue(s)', '- Mode: not checked (cannot read the mode from scratchpad.md); steps that left no file are not known', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\n173/178 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_counts_staged_entries",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "9b676b0e09a5d5e75296b55f17f2bd08620c1573259232aecbde8155eb9fcc7f",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS left_undone_counts_bucket_tickets: an unreadable mode keeps the count and says so, the other readers' line unchanged\nPASS left_undone_counts_pending_tickets: --lint-only counts the three (one with no source:) and says it does not triage\nPASS left_undone_counts_pending_tickets: a mode that ingests and does not triage says it does not triage\nPASS left_undone_counts_pending_tickets: --full says they arrived after triage or triage did not complete\nPASS left_undone_counts_pending_tickets: a completed triage.json changes nothing on the line\nPASS left_undone_counts_pending_tickets: an unreadable mode keeps the count and says so\nFAIL left_undone_counts_staged_entries: with confirm_before_promote false the two staged entries are one queue line  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nPASS left_undone_counts_staged_entries: with confirm_before_promote true Needs you has them, so no line\nFAIL left_undone_counts_staged_entries: with no promote-setting.txt the count is kept and not checked is said  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_counts_staged_entries: no staged entries add nothing, with the setting false or absent\n180/182 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_counts_discovery_checklists",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ee17f13c9fbc86582f18eba22feb084b69116e070a0b3ff232839f6c3578132d",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS left_undone_counts_pending_tickets: a mode that ingests and does not triage says it does not triage\nPASS left_undone_counts_pending_tickets: --full says they arrived after triage or triage did not complete\nPASS left_undone_counts_pending_tickets: a completed triage.json changes nothing on the line\nPASS left_undone_counts_pending_tickets: an unreadable mode keeps the count and says so\nPASS left_undone_counts_staged_entries: with confirm_before_promote false the two staged entries are one queue line\nPASS left_undone_counts_staged_entries: with confirm_before_promote true Needs you has them, so no line\nPASS left_undone_counts_staged_entries: with no promote-setting.txt the count is kept and not checked is said\nPASS left_undone_counts_staged_entries: no staged entries add nothing, with the setting false or absent\nFAIL left_undone_counts_discovery_checklists: one checklist is one queue line, a README and a _-file are not counted  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nPASS left_undone_counts_discovery_checklists: no _inbox/discovered/ adds nothing\n183/184 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "51ee8dbcfe31acbf49d0a4e66ff9eca1654b518bc063d5be8d025bd2eae5fb25",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS left_undone_counts_discovery_checklists: one checklist is one queue line, a README and a _-file are not counted\nPASS left_undone_counts_discovery_checklists: no _inbox/discovered/ adds nothing\nFAIL left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme: exit 0 and the main bucket is this session's  [(1, 'token.id, token.start_mark)\\nyaml.parser.ParserError: while parsing a flow sequence\\n  in \"<unicode string>\", line 1, column 10:\\n    buckets: [unclosed\\n             ^\\nexpected \\',\\' or \\']\\', but got \\'<stream end>\\'\\n  in \"<unicode string>\", line 1, column 19:\\n    buckets: [unclosed\\n                      ^\\n', [])]\nFAIL left_undone_docstring_names_the_unsupported_working_folder: the docstring says a working folder whose .claude/wiki-config.json names another notebook is not supported  [`left-undone`: what the cycle leaves undone, counted fresh from the notebook and the run folder's step files, written\nto <rf>/left-undone.txt and read by /wiki-report (task #240, lesson #9; Mark, 2026-11-16: after a run, anything left\nundone is named, with the count and why). Exit 2, nothing written, for a `--today` that is not a calendar date\n(YYYY-MM-DD), a run folder or notebook that is not there. It changes no entry and writes no `*-scope.txt`. Run it from\nthe project whose notebook is counted: another project's working folder is not a supported case (a later step reads\nthis session's bucket from the working folder's .claude/wiki-config.json). This is Part 1, the disk-state counts; the\nl]\n184/186 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_docstring_names_the_unsupported_working_folder",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "145f25ce0858b08a0bf779bc63c1f97c8700e9e5ed7901d55d72ce0b52b64792",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-17",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS left_undone_counts_discovery_checklists: one checklist is one queue line, a README and a _-file are not counted\nPASS left_undone_counts_discovery_checklists: no _inbox/discovered/ adds nothing\nFAIL left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme: exit 0 and the main bucket is this session's  [(1, 'token.id, token.start_mark)\\nyaml.parser.ParserError: while parsing a flow sequence\\n  in \"<unicode string>\", line 1, column 10:\\n    buckets: [unclosed\\n             ^\\nexpected \\',\\' or \\']\\', but got \\'<stream end>\\'\\n  in \"<unicode string>\", line 1, column 19:\\n    buckets: [unclosed\\n                      ^\\n', [])]\nFAIL left_undone_docstring_names_the_unsupported_working_folder: the docstring says a working folder whose .claude/wiki-config.json names another notebook is not supported  [`left-undone`: what the cycle leaves undone, counted fresh from the notebook and the run folder's step files, written\nto <rf>/left-undone.txt and read by /wiki-report (task #240, lesson #9; Mark, 2026-11-16: after a run, anything left\nundone is named, with the count and why). Exit 2, nothing written, for a `--today` that is not a calendar date\n(YYYY-MM-DD), a run folder or notebook that is not there. It changes no entry and writes no `*-scope.txt`. Run it from\nthe project whose notebook is counted: another project's working folder is not a supported case (a later step reads\nthis session's bucket from the working folder's .claude/wiki-config.json). This is Part 1, the disk-state counts; the\nl]\n184/186 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    }
   }
 ]

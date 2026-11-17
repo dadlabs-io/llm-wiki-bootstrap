@@ -901,6 +901,147 @@ with tempfile.TemporaryDirectory() as td:
                   got == (want, "none"), got)
     left_undone_reads_a_quoted_mode_before_punctuation()
 
+    # ── left-undone step 3: tickets in buckets, pending, staged entries and discovery checklists ──
+    step3_runs = [0]
+
+    def step3_run(topic, cycle=None, files=(), setting=None):
+        """A fresh run folder on notebook `topic` (cycle id from a counter), its left-undone lines."""
+        step3_runs[0] += 1
+        rf = lu_run(tmp / "notebooks" / topic, f"2026-06-18-{step3_runs[0]:02d}", cycle=cycle, files=files)
+        if setting is not None:
+            (rf / "promote-setting.txt").write_text(f"confirm_before_promote: {setting}\nfrom: test\n", encoding="utf-8")
+        p, lines = lu(topic, rf)
+        return p, lines
+
+    def lu_tickets(folder, tag, n):
+        folder.mkdir(parents=True, exist_ok=True)
+        for i in range(n):
+            (folder / f"{tag}-{i}.md").write_text(f"---\nsource: https://x.test/{tag}/{i}\n---\n\n# t\n", encoding="utf-8")
+
+    NO_MODE = "cannot read the mode from scratchpad.md"
+    OWN_NO_INGEST = "- Tickets in this session's bucket main: 2 — this mode does not ingest; /wiki-cycle --ingest-only"
+    OWN_RAN = ("- Tickets in this session's bucket main: 2 — left in the bucket after ingest: dropped, failed, "
+               "deferred or not reached")
+    OTHERS = "- Other readers' buckets, still to process: other 4, money 15"
+
+    def left_undone_counts_bucket_tickets():
+        root = mknb("lu6")
+        intake = root / "_inbox" / "intake"
+        intake.mkdir(parents=True)
+        (intake / "README.md").write_text(
+            "---\nbuckets:\n  - folder: main\n    purpose: Anything\n    reader: t\n  - folder: other\n"
+            "    purpose: Agents\n    reader: other-bot\n  - folder: money\n    purpose: Money\n    reader: mark\n"
+            "  - folder: ghost\n    purpose: No folder on disk\n    reader: other-bot\n---\n\n# Intake\n", encoding="utf-8")
+        lu_tickets(intake / "main", "m", 2)
+        lu_tickets(intake / "other", "o", 4)
+        lu_tickets(intake / "money", "k", 15)
+        (intake / "other" / "handoff-note.md").write_text("# a note, no source line\n", encoding="utf-8")
+        (intake / "other" / "README.md").write_text("---\nsource: https://x.test/readme\n---\n", encoding="utf-8")
+        p, lines = step3_run("lu6", cycle="--lint-only")
+        check("left_undone_counts_bucket_tickets: --lint-only names this session's bucket once and the others once, "
+              "and counts both in the header",
+              p.returncode == 0 and lines == ["Left undone: 2 queue(s)", OWN_NO_INGEST, OTHERS, INTERIM_LAST],
+              (p.stderr[-300:], lines))
+        p, lines = step3_run("lu6", cycle="--full")
+        check("left_undone_counts_bucket_tickets: --full gives the ran reason on this session's bucket, the others unchanged",
+              OWN_RAN in lines and OTHERS in lines, lines)
+        p, lines = step3_run("lu6")
+        check("left_undone_counts_bucket_tickets: an unreadable mode keeps the count and says so, the other readers' line unchanged",
+              f"- Tickets in this session's bucket main: 2, not checked ({NO_MODE})" in lines and OTHERS in lines,
+              lines)
+    left_undone_counts_bucket_tickets()
+
+    def left_undone_counts_pending_tickets():
+        root = mknb("lu7")
+        pend = root / "_inbox" / "pending"
+        lu_tickets(pend, "p", 2)
+        (pend / "p-nosource.md").write_text("---\nadded_by: test\n---\n\n# a ticket the dequeue counts too\n", encoding="utf-8")
+        (pend / "_held.md").write_text("---\nsource: https://x.test/held\n---\n", encoding="utf-8")
+        (pend / "README.md").write_text("# pending\n", encoding="utf-8")
+        head = "- Tickets in _inbox/pending/: 3"
+        no_triage = f"{head} — this mode does not triage; /wiki-cycle --ingest-only gives each an owner"
+        late = f"{head} — not triaged: arrived after triage, or triage did not complete"
+        p, lines = step3_run("lu7", cycle="--lint-only")
+        check("left_undone_counts_pending_tickets: --lint-only counts the three (one with no source:) and says it does not triage",
+              p.returncode == 0 and lines == ["Left undone: 1 queue(s)", no_triage, INTERIM_LAST], (p.stderr[-300:], lines))
+        p, lines = step3_run("lu7", cycle="--prompt-for-urls")
+        check("left_undone_counts_pending_tickets: a mode that ingests and does not triage says it does not triage",
+              no_triage in lines, lines)
+        p, lines = step3_run("lu7", cycle="--full")
+        check("left_undone_counts_pending_tickets: --full says they arrived after triage or triage did not complete",
+              late in lines, lines)
+        p, lines = step3_run("lu7", cycle="--full", files=[("triage.json", "completed")])
+        check("left_undone_counts_pending_tickets: a completed triage.json changes nothing on the line",
+              late in lines, lines)
+        p, lines = step3_run("lu7")
+        check("left_undone_counts_pending_tickets: an unreadable mode keeps the count and says so",
+              f"{head}, not checked ({NO_MODE})" in lines, lines)
+    left_undone_counts_pending_tickets()
+
+    def left_undone_counts_staged_entries():
+        root = mknb("lu8")
+        prop = root / "_inbox" / "proposed"
+        prop.mkdir(parents=True)
+        for name in ("s1.md", "s2.md", "_x.md", "README.md"):
+            (prop / name).write_text("---\ntitle: s\n---\n", encoding="utf-8")
+        (prop / "s1.proposed_metadata.json").write_text("{}", encoding="utf-8")
+        none = ["Left undone (disk-state queues): none", INTERIM_LAST]
+        p, lines = step3_run("lu8", cycle="--lint-only", setting="false")
+        check("left_undone_counts_staged_entries: with confirm_before_promote false the two staged entries are one queue line",
+              p.returncode == 0 and lines == ["Left undone: 1 queue(s)", "- Staged entries: 2 — staged before this run, "
+                                              "or held by the checker; /wiki-promote", INTERIM_LAST],
+              (p.stderr[-300:], lines))
+        p, lines = step3_run("lu8", cycle="--lint-only", setting="true")
+        check("left_undone_counts_staged_entries: with confirm_before_promote true Needs you has them, so no line",
+              lines == none, lines)
+        p, lines = step3_run("lu8", cycle="--lint-only")
+        check("left_undone_counts_staged_entries: with no promote-setting.txt the count is kept and not checked is said",
+              lines == ["Left undone: 1 queue(s)", "- Staged entries: 2, not checked (no promote-setting.txt: whether "
+                                                   "they wait for you is not known)", INTERIM_LAST], lines)
+        mknb("lu8b")
+        p, lines = step3_run("lu8b", cycle="--lint-only", setting="false")
+        check("left_undone_counts_staged_entries: no staged entries add nothing, with the setting false or absent",
+              lines == none and step3_run("lu8b", cycle="--lint-only")[1] == none, lines)
+    left_undone_counts_staged_entries()
+
+    def left_undone_counts_discovery_checklists():
+        root = mknb("lu9")
+        disc = root / "_inbox" / "discovered"
+        disc.mkdir(parents=True)
+        for name in ("2026-06-14-discovery.md", "README.md", "_old.md"):
+            (disc / name).write_text("# Discovery\n\n- [ ] **1.** [T](https://x.test/t) — tier 2\n", encoding="utf-8")
+        p, lines = step3_run("lu9", cycle="--lint-only")
+        check("left_undone_counts_discovery_checklists: one checklist is one queue line, a README and a _-file are not counted",
+              p.returncode == 0 and lines == [
+                  "Left undone: 1 queue(s)", "- Discovery checklists: 1 — still in _inbox/discovered/ (discovery files a "
+                  "processed one in _inbox/done/); whether it was reviewed is not recorded", INTERIM_LAST],
+              (p.stderr[-300:], lines))
+        mknb("lu9b")
+        p, lines = step3_run("lu9b", cycle="--lint-only")
+        check("left_undone_counts_discovery_checklists: no _inbox/discovered/ adds nothing",
+              lines == ["Left undone (disk-state queues): none", INTERIM_LAST], lines)
+    left_undone_counts_discovery_checklists()
+
+    def left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme():
+        root = mknb("lu10")
+        intake = root / "_inbox" / "intake"
+        intake.mkdir(parents=True)
+        (intake / "README.md").write_text("---\nbuckets: [unclosed\n---\n\n# Intake\n", encoding="utf-8")
+        lu_tickets(intake / "main", "m", 2)
+        p, lines = step3_run("lu10", cycle="--lint-only")
+        check("left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme: exit 0 and the main bucket is this session's",
+              p.returncode == 0 and lines == ["Left undone: 1 queue(s)", OWN_NO_INGEST, INTERIM_LAST],
+              (p.returncode, p.stderr[-300:], lines))
+    left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme()
+
+    def left_undone_docstring_names_the_unsupported_working_folder():
+        import ast
+        doc = ast.get_docstring(ast.parse(SCRIPT.read_text(encoding="utf-8"))) or ""
+        check("left_undone_docstring_names_the_unsupported_working_folder: the docstring says a working folder whose "
+              ".claude/wiki-config.json names another notebook is not supported",
+              "names another notebook" in doc and "not a supported case" in doc, doc[doc.find("`left-undone`"):][:700])
+    left_undone_docstring_names_the_unsupported_working_folder()
+
 failed =[n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

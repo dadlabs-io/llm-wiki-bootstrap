@@ -11,3 +11,15 @@ Contract: each test's name claims nothing its assertions do not check.
 - left_undone_mode_table_matches_skill: over-claims (agreement is asserted for the skill's five modes only, which is what the plan says the drift test covers).
 
 Reconciliation: the names are the developer's own, not fixed by the plan. Renaming a frozen test needs a retire and a new freeze, which the step's test-run budget did not allow after the final run. Left as named; the five-mode limit and the enumerated cases are stated in the test source and in the script docstring. Named in the hand-back for the code-reviewer.
+
+## Step 3 (one doubt-reviewer, haiku, foreground; briefed with the `check-freeze.py names` output file, contract: each test's name claims nothing its assertions do not check)
+
+- intake_tickets_lists_source_carrying_tickets_once: does not over-claim.
+- left_undone_counts_bucket_tickets: does not over-claim.
+- left_undone_counts_pending_tickets: does not over-claim.
+- left_undone_counts_staged_entries: does not over-claim (a check label says "Needs you has them", which only the absence of a line pins).
+- left_undone_counts_discovery_checklists: does not over-claim (its label names which files are excluded; the count of 1 does not show which was counted).
+- left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme: over-claims (the fixture holds only main/, so "one bucket" as a rule is not told apart from other fallbacks).
+- left_undone_docstring_names_the_unsupported_working_folder: over-claims (two substring checks on the docstring, not behaviour).
+
+Reconciliation: the names are the developer's own; renaming a frozen test needs a retire and a re-freeze and the step's test-run budget is spent. Left as named, for the code-reviewer. The weak check labels are named, not changed.

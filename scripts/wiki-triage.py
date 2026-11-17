@@ -161,6 +161,22 @@ def _front(text: str) -> dict:
     return split_frontmatter(text, flat=True)[0]
 
 
+def intake_tickets(nb: Path, bs: list[dict] | None = None):
+    """(folder, path, source, frontmatter) for every ticket in a configured bucket (`bs`, else `buckets(nb)`): a `.md`
+    that is not `_`-prefixed, not README or triage-log.md, and has a `source:` line (task #240, step 3; the dequeue
+    treats only such files as tickets). Used by wiki-cycle-scope.py's left-undone counts; `_tickets`, `cmd_retry_list`
+    and the dequeue loop keep their own filters."""
+    for b in buckets(nb)[0] if bs is None else bs:
+        folder = str(b.get("folder"))
+        d = nb / "_inbox" / "intake" / folder
+        for p in sorted(d.glob("*.md")) if d.is_dir() else []:
+            if p.name.startswith(("_", "README")) or p.name == "triage-log.md":
+                continue
+            front = _front(p.read_text(encoding="utf-8", errors="replace"))
+            if front.get("source"):
+                yield folder, p, front["source"], front
+
+
 def cmd_buckets(nb: Path, args) -> int:
     bs, configured = buckets(nb)
     mine = me()
