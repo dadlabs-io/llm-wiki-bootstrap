@@ -104,8 +104,8 @@ undone is named, with the count and why). Exit 2, nothing written, for a `--toda
 (YYYY-MM-DD), a run folder or notebook that is not there. It changes no entry and writes no `*-scope.txt`. Run it from
 the project whose notebook is counted: a working folder whose .claude/wiki-config.json names another notebook is
 not a supported case (this session's bucket is read from that file, so it would label the wrong bucket as this
-session's). This is Part 1, the disk-state counts; the leftovers of steps that ran (lint findings, sources, entries
-not linted, claimed or synthesised) are Part 2.
+session's). This is Part 1, the disk-state counts, and the first of Part 2, the entries not linted, without claims and
+not synthesised; the rest of Part 2 (lint findings, sources) is not counted yet.
 
   File shape. Line 1 is a header the script writes: `Left undone: <N> queue(s)`, N the number of queue lines below
   it, `Mode: not checked` lines and `, not checked` lines included (each is something not known to be empty), or
@@ -153,6 +153,9 @@ not linted, claimed or synthesised) are Part 2.
   | Tickets in this session's bucket | this mode does not ingest; /wiki-cycle --ingest-only                 | left in the bucket after ingest: dropped, failed, deferred or not reached |
   | Staged entries                | staged before this run, or held by the checker; /wiki-promote          | same |
   | Discovery checklists          | still in _inbox/discovered/ (discovery files a processed one in _inbox/done/); whether it was reviewed is not recorded | same |
+  | Not semantically linted (semantic lint) | this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full | the semantic lint ran and did not read them (lint-semantic.md); an entry re-reviewed later on the lint's own day is not counted |
+  | No claims, or revised since the index (claims) | this mode does not run claims; /wiki-cycle --claims-only or --full | the claims step ran and did not read them (claims.md); an entry re-reviewed later on that day is not counted |
+  | Not yet synthesised (synthesis) | this mode does not synthesise (only modes that ingest do); /wiki-cycle --ingest-only | synthesis ran and did not read them (synthesis.md) |
 
   Tickets, staged entries, checklists. The tickets lines are facts about the folders and never read a step's result
   (triage.json, update.json): the mode alone picks the wording, and an unknown mode or a mismatch reads `<count>, not
@@ -167,6 +170,25 @@ not linted, claimed or synthesised) are Part 2.
   promote-setting.txt: `Staged entries: <N>, not checked (no promote-setting.txt: whether they wait for you is not
   known)`. Checklists: each .md in _inbox/discovered/ that is not `_`-prefixed or README. A queue with 0 adds no line.
 
+  Entries not linted, without claims, not synthesised: one covered-set rule for the three, whether the step ran in this
+  run or an earlier one. The cut-off C is the timestamp of the newest completed result of the step in any run folder,
+  this one included (newest_step; claims: C is when claims-index.json was last written), and S is the scope file
+  (semantic-scope.txt, claims-scope.txt, synthesis-scope.txt) in that folder, the exact list the step read. What a
+  step run now would read, from the scope functions the semantic, claims and synthesis commands share (semantic_scope,
+  claims_scope, synthesis_scope), is the scope-now at C; of it only live wiki entries count (task cards, sessions and
+  staged pages never), and an entry is covered, so not counted, when its full path is in S, or its stem is that of an S
+  line under _inbox/proposed/ (a staged page read before it was promoted; the stem bridges only when exactly one live
+  entry has that name), and its last_reviewed day is not after C's day: a step compares days, so an entry re-reviewed
+  later on C's own day is covered (a stated under-count), one re-reviewed on a later day is counted whatever S says.
+  With no completed result anywhere, nothing is covered and scope-now is every entry (synthesis: every research entry
+  when a best-practices page exists, else none). The wording by mode and this run's own result: the mode does not run
+  the step, the table; the mode runs it and its result is absent `<count>, not checked (<step> left no <file>)`
+  (semantic lint only: with the newest completed lint under 24 hours old, `the semantic lint was skipped: one ran
+  within 24 hours (<id>)`), unreadable `(<file> unreadable)`, not completed `(<step> ended <status>; what it covered is
+  unknown)`, completed the ran wording. The newest completed result with no scope file reads `<count>, not checked (no
+  <scope file> in the run folder)` in every mode (what it covered is not known, nothing is subtracted). A synthesis of
+  status awaiting_approval adds no line (Needs you has it). The command reads the scope files and writes none.
+
 Entries are wiki/**/*.md except `_`-prefixed machine files, README.md and sessions/.
 (2026-09-24, task #42: C1 and C3; the 2026-09-23 cycle's findings 10 and 11.)
 """
@@ -180,7 +202,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -271,19 +293,30 @@ def _index_written(nb: Path, idx_path: Path) -> datetime:
     return datetime.fromtimestamp(idx_path.stat().st_mtime).astimezone()
 
 
-def last_semantic(nb: Path, run_folder: Path) -> datetime | None:
-    """The timestamp of the newest earlier run's lint-semantic.json."""
+def newest_step(nb: Path, json_name: str, status: str | None = None,
+                skip: Path | None = None) -> tuple[datetime, Path] | None:
+    """(timestamp, run folder) of the newest run folder holding `json_name`, newest by the file's own `timestamp`
+    (never by folder name); a file that does not parse or has no timestamp is left out. `status` keeps only results
+    of that status (None: any), `skip` leaves out one run folder. The one walk over the run folders' step results:
+    last_semantic, last_synthesis and the left-undone counter read through it."""
     best = None
-    for p in (nb / "_inbox" / "reports").glob("*/*/lint-semantic.json"):
-        if p.parent.resolve() == run_folder.resolve():
+    for p in (nb / "_inbox" / "reports").glob(f"*/*/{json_name}"):
+        if skip is not None and p.parent.resolve() == skip.resolve():
             continue
         try:
-            t = _parse_time(json.loads(p.read_text(encoding="utf-8")).get("timestamp", ""))
+            d = json.loads(p.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
-            t = None
-        if t and (best is None or t > best):
-            best = t
+            continue
+        t = _parse_time(d.get("timestamp", "")) if status is None or d.get("status") == status else None
+        if t and (best is None or t > best[0]):
+            best = (t, p.parent)
     return best
+
+
+def last_semantic(nb: Path, run_folder: Path) -> datetime | None:
+    """The timestamp of the newest earlier run's lint-semantic.json."""
+    found = newest_step(nb, "lint-semantic.json", skip=run_folder)
+    return found[0] if found else None
 
 
 def write_scope(run_folder: Path, name: str, paths: list[str], why: str) -> Path:
@@ -295,36 +328,48 @@ def write_scope(run_folder: Path, name: str, paths: list[str], why: str) -> Path
     return out
 
 
+def semantic_scope(nb: Path, cutoff: datetime | None, forced: bool = False) -> tuple[list[str], list[str], str]:
+    """(the entries the semantic lint reads, every entry, why) for a lint whose cut-off is `cutoff` (None: no earlier
+    lint, so every entry; `forced` is the user's --all, which only changes the why). Staged entries are the caller's."""
+    all_entries = entries(nb)
+    if cutoff is None:
+        return all_entries, all_entries, ("--all" if forced else "no earlier semantic lint: every entry")
+    picked = sorted(set(added_since(nb, cutoff, all_entries)) | set(revised_since(nb, cutoff, all_entries)))
+    return picked, all_entries, f"added or revised since {cutoff.isoformat()} + staged"
+
+
 def cmd_semantic(nb: Path, args) -> int:
     rf = Path(args.run_folder)
-    all_entries, st = entries(nb), staged(nb)
-    cutoff = None if args.all else last_semantic(nb, rf)
-    if cutoff is None:
-        scope, why = all_entries + st, ("--all" if args.all else "no earlier semantic lint: every entry")
-    else:
-        picked = sorted(set(added_since(nb, cutoff, all_entries)) | set(revised_since(nb, cutoff, all_entries)))
-        scope, why = picked + st, f"added or revised since {cutoff.isoformat()} + staged"
+    picked, all_entries, why = semantic_scope(nb, None if args.all else last_semantic(nb, rf), args.all)
+    st = staged(nb)
+    scope = picked + st
     out = write_scope(rf, "semantic-scope.txt", scope, why)
     print(f"semantic scope: {len(scope)} of {len(all_entries)} entries + {len(st)} staged ({why}) -> {out}")
     return 0
 
 
+def claims_scope(nb: Path, forced: bool = False) -> tuple[list[str], list[str], str, datetime | None]:
+    """(the entries the claims step reads, every entry, why, when the index was written) : the entries no claim in
+    the claims index comes from plus those revised since it was written; every entry with no index or `forced`
+    (the user's --all). The index time is None when the index was not read."""
+    all_entries = entries(nb)
+    idx_path = nb / "_inbox" / "claims-index.json"
+    if forced or not idx_path.is_file():
+        return all_entries, all_entries, ("--all" if forced else "no claims index: every entry"), None
+    idx = json.loads(idx_path.read_text(encoding="utf-8"))
+    known = {Path(str(c.get("source_entry", ""))).name for c in idx.get("claims", [])}
+    missing = [e for e in all_entries if Path(e).name not in known]
+    written = _index_written(nb, idx_path)
+    revised = revised_since(nb, written, all_entries)
+    why = (f"{len(missing)} with no claims in the index, {len(set(revised) - set(missing))} revised since "
+           f"the index was written ({written.date().isoformat()})")
+    return sorted(set(missing) | set(revised)), all_entries, why, written
+
+
 def cmd_claims(nb: Path, args) -> int:
     rf = Path(args.run_folder)
-    all_entries, st = entries(nb), staged(nb)
-    idx_path = nb / "_inbox" / "claims-index.json"
-    if args.all or not idx_path.is_file():
-        scope = all_entries
-        why = "--all" if args.all else "no claims index: every entry"
-    else:
-        idx = json.loads(idx_path.read_text(encoding="utf-8"))
-        known = {Path(str(c.get("source_entry", ""))).name for c in idx.get("claims", [])}
-        missing = [e for e in all_entries if Path(e).name not in known]
-        written = _index_written(nb, idx_path)
-        revised = revised_since(nb, written, all_entries)
-        scope = sorted(set(missing) | set(revised))
-        why = (f"{len(missing)} with no claims in the index, {len(set(revised) - set(missing))} revised since "
-               f"the index was written ({written.date().isoformat()})")
+    scope, all_entries, why, _written = claims_scope(nb, args.all)
+    st = staged(nb)
     out = write_scope(rf, "claims-scope.txt", scope, why)
     print(f"claims scope: {len(scope)} of {len(all_entries)} entries ({why}); {len(st)} staged left out -> {out}")
     return 0
@@ -333,35 +378,30 @@ def cmd_claims(nb: Path, args) -> int:
 def last_synthesis(nb: Path, run_folder: Path) -> datetime | None:
     """The timestamp of the newest earlier synthesis the user answered (status completed). One nobody
     could answer (awaiting_approval) leaves the cut-off where it was, so its entries come round again."""
-    best = None
-    for p in (nb / "_inbox" / "reports").glob("*/*/synthesis.json"):
-        if p.parent.resolve() == run_folder.resolve():
-            continue
-        try:
-            d = json.loads(p.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            continue
-        t = _parse_time(d.get("timestamp", "")) if d.get("status") == "completed" else None
-        if t and (best is None or t > best):
-            best = t
-    return best
+    found = newest_step(nb, "synthesis.json", "completed", run_folder)
+    return found[0] if found else None
+
+
+def synthesis_scope(nb: Path, cutoff: datetime | None, forced: bool = False) -> tuple[list[str], list[str], str]:
+    """(the research entries synthesis reads, every live research entry, why) for a synthesis whose cut-off is
+    `cutoff` (None: no earlier answered synthesis, so every research entry; `forced` is the user's --all, which only
+    changes the why). Empty when there is no best-practices page to synthesise into."""
+    canon = [p for p in (nb / "wiki" / "project" / "best-practices").glob("*.md")
+             if not p.name.startswith("_") and p.name.lower() != "readme.md"]
+    research = [e for e in entries(nb) if e.startswith("wiki/research/")
+                and not _front((nb / e).read_text(encoding="utf-8", errors="replace")).get("superseded_by")]
+    if not canon:
+        return [], research, "no best-practices pages: nothing to synthesise into"
+    if cutoff is None:
+        return research, research, ("--all" if forced else "no earlier synthesis: every research entry")
+    return added_since(nb, cutoff, research), research, f"research entries added since {cutoff.isoformat()}"
 
 
 def cmd_synthesis(nb: Path, args) -> int:
     """Research entries promoted since the last answered synthesis (task #176, 2026-10-19): synthesis runs in
     every cycle that ingests, so it covers what the user promoted between cycles, never only this run's batch."""
     rf = Path(args.run_folder)
-    canon = [p for p in (nb / "wiki" / "project" / "best-practices").glob("*.md")
-             if not p.name.startswith("_") and p.name.lower() != "readme.md"]
-    research = [e for e in entries(nb) if e.startswith("wiki/research/")
-                and not _front((nb / e).read_text(encoding="utf-8", errors="replace")).get("superseded_by")]
-    cutoff = None if args.all else last_synthesis(nb, rf)
-    if not canon:
-        scope, why = [], "no best-practices pages: nothing to synthesise into"
-    elif cutoff is None:
-        scope, why = research, ("--all" if args.all else "no earlier synthesis: every research entry")
-    else:
-        scope, why = added_since(nb, cutoff, research), f"research entries added since {cutoff.isoformat()}"
+    scope, research, why = synthesis_scope(nb, None if args.all else last_synthesis(nb, rf), args.all)
     out = write_scope(rf, "synthesis-scope.txt", scope, why)
     print(f"synthesis scope: {len(scope)} of {len(research)} research entries ({why}) -> {out}")
     return 0
@@ -928,6 +968,94 @@ def checklist_lines(nb: Path) -> list[str]:
             "_inbox/done/); whether it was reviewed is not recorded"] if n else []
 
 
+def read_scope_file(folder: Path, name: str) -> set[str] | None:
+    """The paths a step's scope file lists (the `#` header left out); None when the folder has no such file."""
+    f = folder / name
+    if not f.is_file():
+        return None
+    return {l.strip() for l in f.read_text(encoding="utf-8", errors="replace").splitlines()
+            if l.strip() and not l.startswith("#")}
+
+
+def uncovered(nb: Path, scope: list[str], read: set[str], cutoff: datetime | None) -> list[str]:
+    """The covered-set rule: the live entries of `scope` (what a step run now would read) that the step run at
+    `cutoff` did not cover. Covered is: the full path is in `read` (its scope file), or the stem is that of a staged
+    page `read` lists under _inbox/proposed/ (a page read before it was promoted) and exactly one live entry has that
+    name; and its last_reviewed day is not after the cut-off's day. Task cards and sessions are never counted."""
+    live = [e for e in entries(nb)
+            if not (in_tasks(Path(e).relative_to("wiki")) or in_sessions(Path(e).relative_to("wiki")))]
+    names: dict[str, int] = {}
+    for e in live:
+        names[Path(e).stem] = names.get(Path(e).stem, 0) + 1
+    staged_stems = {Path(l).stem for l in read if l.startswith("_inbox/proposed/")}
+    day = cutoff.date().isoformat() if cutoff else None
+    left = []
+    for e in sorted(set(scope) & set(live)):
+        seen = e in read or (Path(e).stem in staged_stems and names[Path(e).stem] == 1)
+        if seen and (day is None or _front((nb / e).read_text(encoding="utf-8", errors="replace"))
+                     .get("last_reviewed", "")[:10] <= day):
+            continue
+        left.append(e)
+    return left
+
+
+# label, result file, scope file, the step's name in a reason, the mode-table key, "mode does not run it", "ran"
+ENTRY_BACKLOGS = (
+    ("Not semantically linted", "lint-semantic.json", "semantic-scope.txt", "the semantic lint", "semantic",
+     "this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full",
+     "the semantic lint ran and did not read them (lint-semantic.md); an entry re-reviewed later on the lint's own "
+     "day is not counted"),
+    ("No claims, or revised since the index", "claims.json", "claims-scope.txt", "the claims step", "claims",
+     "this mode does not run claims; /wiki-cycle --claims-only or --full",
+     "the claims step ran and did not read them (claims.md); an entry re-reviewed later on that day is not counted"),
+    ("Not yet synthesised", "synthesis.json", "synthesis-scope.txt", "synthesis", "synthesis",
+     "this mode does not synthesise (only modes that ingest do); /wiki-cycle --ingest-only",
+     "synthesis ran and did not read them (synthesis.md)"),
+)
+
+
+def entry_backlog_lines(nb: Path, rf: Path, mode: str | None, problem: str | None) -> list[str]:
+    """Entries not semantically linted, without claims, not synthesised, by the covered-set rule: the cut-off is the
+    newest completed result of the step in any run folder (this one included) and the entries it read are that
+    folder's scope file, so a step run in this run and one run earlier read alike. The wording follows the mode
+    and this run's own result (the third state); a synthesis awaiting approval adds no line (Needs you has it)."""
+    lines = []
+    for label, result, scope_file, name, key, off, ran in ENTRY_BACKLOGS:
+        found = newest_step(nb, result, "completed")
+        cutoff = found[0] if found else None
+        if key == "semantic":
+            scope = semantic_scope(nb, cutoff)[0]
+        elif key == "claims":
+            scope, _all, _why, cutoff = claims_scope(nb)
+        else:
+            scope = synthesis_scope(nb, cutoff)[0]
+        read = read_scope_file(found[1], scope_file) if found else set()
+        own = step_status(rf, result)
+        if key == "synthesis" and own == "awaiting_approval":
+            continue
+        n = len(uncovered(nb, scope, read or set(), cutoff))
+        if not n:
+            continue
+        if problem:
+            why = f", not checked ({problem})"
+        elif read is None:
+            why = f", not checked (no {scope_file} in the run folder)"
+        elif mode not in STEP_MODES[key]:
+            why = f" — {off}"
+        elif own is None and key == "semantic" and found and datetime.now().astimezone() - cutoff < timedelta(hours=24):
+            why = f" — the semantic lint was skipped: one ran within 24 hours ({found[1].name})"
+        elif own is None:
+            why = f", not checked ({name} left no {result})"
+        elif own == "unreadable":
+            why = f", not checked ({result} unreadable)"
+        elif own != "completed":
+            why = f", not checked ({name} ended {own}; what it covered is unknown)"
+        else:
+            why = f" — {ran}"
+        lines.append(f"- {label}: {n}{why}")
+    return lines
+
+
 def last_run_id(nb: Path, rf: Path) -> str | None:
     """The newest earlier run folder with a `<id>-run-cycle-report.md` whose scratchpad mode is not report-only."""
     found = []
@@ -971,6 +1099,7 @@ def cmd_left_undone(nb: Path, args) -> int:
     if bad:
         queues.append(f"- review_after not a date: {len(bad)} — refresh cannot read it; correct the date "
                       "(the lint lists them under Dates not in ISO form)")
+    queues += entry_backlog_lines(nb, rf, mode, problem)
     queues += bucket_ticket_lines(nb, mode, problem)
     queues += staged_lines(nb, rf)
     queues += checklist_lines(nb)

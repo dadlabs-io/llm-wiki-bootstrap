@@ -139,3 +139,8 @@ Asked: A, one go (all seven steps, one paid red-green run of 8 sessions, one ins
 Mark (terminal): "A"
 
 Build: one go.
+
+## Frozen step-1 tests and step 4 — 2026-11-17
+Step 4 adds the Not semantically linted and No claims lines to a never-linted notebook (the plan's rule), so 6 checks in two frozen step-1 tests (left_undone_counts_review_dates, left_undone_names_what_it_cannot_check) expect 3 lines and now see 5. Asked: update the two tests (3 → 5, the new lines named), re-freeze each with the reason recorded, and the same for any later frozen test of this run that changes only because a later step adds lines as planned (step 6 removing the interim line).
+
+Mark (terminal): "yes updated tests"

@@ -23,3 +23,13 @@ Reconciliation: the names are the developer's own, not fixed by the plan. Renami
 - left_undone_docstring_names_the_unsupported_working_folder: over-claims (two substring checks on the docstring, not behaviour).
 
 Reconciliation: the names are the developer's own; renaming a frozen test needs a retire and a re-freeze and the step's test-run budget is spent. Left as named, for the code-reviewer. The weak check labels are named, not changed.
+
+## Step 4 (one doubt-reviewer, haiku, foreground; briefed with the `check-freeze.py names` output file, contract: each test's name claims nothing its assertions do not check)
+
+- newest_step_returns_the_newest_matching_result: does not over-claim.
+- left_undone_counts_entries_not_linted: over-claims in two check labels (the "no line" label says the scope lists "both" while the call passes both plus new-d; the same-day check asserts only the count 1, which an inverted date rule could also give).
+- left_undone_counts_entries_without_claims: over-claims in one check (the index check asserts the count 3 only, so which three are not shown).
+- left_undone_counts_entries_not_synthesised: over-claims in one label (the "Needs you has it" parenthesis is not asserted).
+- The reviewer also noted the `names` output lists only `check` and `results` as module-level names for tests 2-4 (the helpers sit in the enclosing `with` block), so it judged from source alone.
+
+Reconciliation: names are the developer's own; the over-claims are check labels and count-only assertions, not the names. Left as is; the test-run budget is spent; named for the code-reviewer.

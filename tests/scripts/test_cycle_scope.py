@@ -665,7 +665,7 @@ with tempfile.TemporaryDirectory() as td:
         p, lines = lu("lu1", rf)
         after = tree(root)
         check("left_undone_counts_review_dates: exit 0 and the header counts the three queue lines",
-              p.returncode == 0 and lines[:1] == ["Left undone: 3 queue(s)"], (p.returncode, p.stderr[-300:], lines))
+              p.returncode == 0 and lines[:1] == ["Left undone: 5 queue(s)"], (p.returncode, p.stderr[-300:], lines))
         check("left_undone_counts_review_dates: past review_after counts 2 (the quoted date too), today and the future not",
               f"- Past review_after: 2 — {PAST_NOT_RUN}" in lines, lines)
         check("left_undone_counts_review_dates: no review_after counts 1, a task card and a session page not",
@@ -675,7 +675,7 @@ with tempfile.TemporaryDirectory() as td:
               "- review_after not a date: 1 — refresh cannot read it; correct the date "
               "(the lint lists them under Dates not in ISO form)" in lines, lines)
         check("left_undone_counts_review_dates: exactly three queue lines, and the interim line last, not a queue",
-              len([l for l in lines if l.startswith("- ")]) == 3 and lines[-1:] == [INTERIM_LAST], lines)
+              len([l for l in lines if l.startswith("- ")]) == 5 and lines[-1:] == [INTERIM_LAST], lines)
         rel = "_inbox/reports/2026-06-15/2026-06-15-01/left-undone.txt"
         check("left_undone_counts_review_dates: only left-undone.txt is new, nothing else changed, no scope file",
               set(after) - set(before) == {rel} and all(after.get(k) == v for k, v in before.items())
@@ -760,19 +760,22 @@ with tempfile.TemporaryDirectory() as td:
               f"- Past review_after: 2, not checked ({why})" in lines and none_line in lines, lines)
         check("left_undone_names_what_it_cannot_check: a mismatch adds the Mode line and the header counts all three",
               f"- Mode: not checked ({why}); steps that left no file are not known" in lines
-              and lines[:1] == ["Left undone: 3 queue(s)"], lines)
+              and lines[:1] == ["Left undone: 5 queue(s)"], lines)
         # a mode that cannot be read: no scratchpad, two lines that disagree
         for label, kw in (("no scratchpad", {}), ("two lines naming different modes", {"cycle": "--full", "mode": "--quick"})):
             _, p, lines = unclear_run("lu3", **kw)
             check(f"left_undone_names_what_it_cannot_check: {label} keeps the count, the other lines and adds the Mode line",
                   "- Past review_after: 2, not checked (cannot read the mode from scratchpad.md)" in lines
-                  and none_line in lines and f"- {no_mode}" in lines and lines[:1] == ["Left undone: 3 queue(s)"], lines)
+                  and none_line in lines and f"- {no_mode}" in lines and lines[:1] == ["Left undone: 5 queue(s)"], lines)
         # no mode token at all, an empty run folder, nothing else to count: the header is never "nothing"
         clean = mknb("lu4")
         page(clean, "wiki/research/x/future.md", "2026-12-01")
         _, p, lines = unclear_run("lu4", cycle="see the notes")
         check("left_undone_names_what_it_cannot_check: no mode token and nothing else gives one queue, never nothing",
-              lines[:2] == ["Left undone: 1 queue(s)", f"- {no_mode}"], lines)
+              lines[:4] == ["Left undone: 3 queue(s)",
+                            "- Not semantically linted: 1, not checked (cannot read the mode from scratchpad.md)",
+                            "- No claims, or revised since the index: 1, not checked (cannot read the mode from scratchpad.md)",
+                            f"- {no_mode}"], lines)
         # step files that are not steps never contradict a mode
         _, p, lines = unclear_run("lu3", cycle="--quick", files=[(n, "completed") for n in (
             "models.json", "cost.json", "email-review.json")])
@@ -1041,6 +1044,313 @@ with tempfile.TemporaryDirectory() as td:
               ".claude/wiki-config.json names another notebook is not supported",
               "names another notebook" in doc and "not a supported case" in doc, doc[doc.find("`left-undone`"):][:700])
     left_undone_docstring_names_the_unsupported_working_folder()
+
+    # ── left-undone step 4: newest_step, the one walk over the run folders' step results ──
+    def newest_step_returns_the_newest_matching_result():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("wiki_cycle_scope_newest_step", SCRIPT)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        root = mknb("ns1")
+
+        def put(day, text):
+            d = root / "_inbox" / "reports" / day / f"{day}-01"
+            d.mkdir(parents=True)
+            (d / "lint-semantic.json").write_text(text, encoding="utf-8")
+            return d
+
+        done = put("2026-10-02", json.dumps({"status": "completed", "timestamp": "2026-10-02T09:00:00-04:00"}))
+        put("2026-10-04", json.dumps({"timestamp": "2026-10-04T09:00:00-04:00"}))
+        part = put("2026-10-05", json.dumps({"status": "partial", "timestamp": "2026-10-05T09:00:00-04:00"}))
+        put("2026-10-06", "{not json")
+        put("2026-10-07", json.dumps({"status": "completed"}))
+        put("2026-10-09", json.dumps({"status": "completed", "timestamp": "2026-10-01T08:00:00-04:00"}))
+
+        def got(*a, at=root, **k):
+            try:
+                r = mod.newest_step(at, "lint-semantic.json", *a, **k)
+            except NotImplementedError as e:
+                return f"NotImplementedError {e}"
+            return None if r is None else (r[0].isoformat(), r[1].name)
+
+        check("newest_step_returns_the_newest_matching_result: with no filter the newest timestamp wins, whatever its "
+              "status, and a later folder name, a file that does not parse and one with no timestamp do not",
+              got() == ("2026-10-05T09:00:00-04:00", "2026-10-05-01"), got())
+        check("newest_step_returns_the_newest_matching_result: status completed leaves out the partial and the one with no status",
+              got("completed") == ("2026-10-02T09:00:00-04:00", "2026-10-02-01"), got("completed"))
+        check("newest_step_returns_the_newest_matching_result: skip leaves out one run folder, and a result with no status "
+              "is still found when no status is asked for",
+              got(skip=part) == ("2026-10-04T09:00:00-04:00", "2026-10-04-01"), got(skip=part))
+        check("newest_step_returns_the_newest_matching_result: status and skip together fall back to the next older completed one",
+              got("completed", skip=done) == ("2026-10-01T08:00:00-04:00", "2026-10-09-01"), got("completed", skip=done))
+        bare = mknb("ns2")
+        check("newest_step_returns_the_newest_matching_result: a notebook with no run folders gives None",
+              got(at=bare) is None, got(at=bare))
+    newest_step_returns_the_newest_matching_result()
+
+    # ── left-undone step 4: entries not linted, without claims, not synthesised (the covered-set rule) ──
+    D0, D1, D2, D3 = "2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04"
+    SEM, CLM, SYN = "- Not semantically linted: ", "- No claims, or revised since the index: ", "- Not yet synthesised: "
+    SEM_OFF = "this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full"
+    SEM_RAN = ("the semantic lint ran and did not read them (lint-semantic.md); an entry re-reviewed later on the "
+               "lint's own day is not counted")
+    CLM_OFF = "this mode does not run claims; /wiki-cycle --claims-only or --full"
+    CLM_RAN = ("the claims step ran and did not read them (claims.md); an entry re-reviewed later on that day "
+               "is not counted")
+    SYN_OFF = "this mode does not synthesise (only modes that ingest do); /wiki-cycle --ingest-only"
+    SYN_RAN = "synthesis ran and did not read them (synthesis.md)"
+    s4_runs = [0]
+
+    def s4_stamp(day):
+        return f"{day}T12:00:00-04:00"
+
+    def s4_entry(root, rel, reviewed, extra=""):
+        f = root / rel
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(f"---\ntitle: \"x\"\ndate: 2026-01-01\ntier: 3\nlast_reviewed: {reviewed}\nreview_after: 2099-01-01\n"
+                     f"tags: [a]\n{extra}---\n\n# x\n", encoding="utf-8")
+
+    def s4_commit(day):
+        git("add", "-A")
+        git("commit", "-q", "--allow-empty", "-m", "s4", date=f"{day}T10:00:00-04:00")
+
+    def s4_step(rf, name, status, stamp=None, scope=None, text=None):
+        """A step result in a run folder (`stamp` its timestamp; `text` its raw content) and, with `scope`
+        (file name, paths), the scope file that step read."""
+        rec = {"status": status, **({"timestamp": stamp} if stamp else {})}
+        (rf / name).write_text(text if text is not None else json.dumps(rec), encoding="utf-8")
+        if scope:
+            (rf / scope[0]).write_text(f"# {scope[0]}: {len(scope[1])} (test)\n" + "".join(p + "\n" for p in scope[1]),
+                                       encoding="utf-8")
+
+    def s4_lu(topic, cycle, steps=()):
+        """(process, left-undone lines, (files new, files changed)) for a fresh run folder with these step results."""
+        s4_runs[0] += 1
+        root = tmp / "notebooks" / topic
+        rf = lu_run(root, f"{D3}-{s4_runs[0]:02d}", cycle=cycle)
+        for step in steps:
+            s4_step(rf, **step)
+        before = tree(root)
+        p, lines = lu(topic, rf)
+        after = tree(root)
+        shutil.rmtree(rf)     # a scenario's run folder would be an earlier run (and a cut-off) for the next one
+        return p, lines, ([k for k in after if k not in before], [k for k, v in before.items() if after.get(k) != v])
+
+    def s4_line(lines, prefix):
+        return next((l for l in lines if l.startswith(prefix)), None)
+
+    def s4_sem_history(name):
+        """old-a and old-b committed D0, a completed lint on D1 that read both, then new-d added (untracked) and
+        old-a re-reviewed on D2: the harness's own history, in a notebook of its own."""
+        root = mknb(name)
+        s4_entry(root, "wiki/research/x/old-a.md", D0)
+        s4_entry(root, "wiki/research/x/old-b.md", D0)
+        s4_commit(D0)
+        hist = root / "_inbox" / "reports" / D1 / f"{D1}-01"
+        hist.mkdir(parents=True)
+        s4_step(hist, "lint-semantic.json", "completed", s4_stamp(D1),
+                ("semantic-scope.txt", ["wiki/research/x/old-a.md", "wiki/research/x/old-b.md"]))
+        s4_entry(root, "wiki/research/x/new-d.md", D2)
+        s4_entry(root, "wiki/research/x/old-a.md", D2)
+        return root
+
+    def s4_lint(day, paths, status="completed"):
+        return [dict(name="lint-semantic.json", status=status, stamp=s4_stamp(day), scope=("semantic-scope.txt", paths))]
+
+    def left_undone_counts_entries_not_linted():
+        from datetime import datetime, timedelta
+        both = ["wiki/research/x/old-a.md", "wiki/research/x/old-b.md"]
+        new_d = "wiki/research/x/new-d.md"
+        s4_sem_history("s4a")
+        p, lines, (new, edited) = s4_lu("s4a", "--lint-only")
+        n = len([l for l in lines if l.startswith("- ")])
+        check("left_undone_counts_entries_not_linted: --lint-only counts the entry added and the one re-reviewed since "
+              "the last lint, gives the does-not-run reason, a header of the line count (never nothing) and the interim line last",
+              p.returncode == 0 and f"{SEM}2 — {SEM_OFF}" in lines and lines[:1] == [f"Left undone: {n} queue(s)"]
+              and lines[-1:] == [INTERIM_LAST], (p.stderr[-300:], lines))
+        check("left_undone_counts_entries_not_linted: only left-undone.txt is new, nothing changed, no scope file written",
+              [k.rsplit("/", 1)[-1] for k in new] == ["left-undone.txt"] and edited == [], (new, edited))
+        p, lines, _ = s4_lu("s4a", "--full")
+        check("left_undone_counts_entries_not_linted: --full with no lint-semantic.json keeps the count and says the lint left none",
+              f"{SEM}2, not checked (the semantic lint left no lint-semantic.json)" in lines, lines)
+        p, lines, _ = s4_lu("s4a", "--full", s4_lint(D3, both + [new_d]))
+        check("left_undone_counts_entries_not_linted: this run's completed lint and a scope file listing both: no line",
+              s4_line(lines, SEM) is None, lines)
+        p, lines, _ = s4_lu("s4a", "--full", s4_lint(D3, both))
+        check("left_undone_counts_entries_not_linted: a lint that did not read the new entry counts it, with the ran reason",
+              f"{SEM}1 — {SEM_RAN}" in lines, lines)
+        p, lines, _ = s4_lu("s4a", "--full", s4_lint(D3, both + [new_d], status="partial"))
+        check("left_undone_counts_entries_not_linted: a partial lint with a 3-entry scope file is not subtracted, the line says not checked",
+              f"{SEM}2, not checked (the semantic lint ended partial; what it covered is unknown)" in lines
+              and lines[:1] != ["Left undone: nothing"], lines)
+        p, lines, _ = s4_lu("s4a", "--full", [dict(name="lint-semantic.json", status="completed", text="{not json")])
+        check("left_undone_counts_entries_not_linted: a lint-semantic.json that does not parse is not checked, no crash",
+              p.returncode == 0 and f"{SEM}2, not checked (lint-semantic.json unreadable)" in lines, (p.stderr[-300:], lines))
+        p, lines, _ = s4_lu("s4a", "--full", [dict(name="lint-semantic.json", status="completed", stamp=s4_stamp(D3))])
+        check("left_undone_counts_entries_not_linted: a completed lint with no scope file is not checked, the count kept",
+              f"{SEM}1, not checked (no semantic-scope.txt in the run folder)" in lines, lines)
+        p, lines, _ = s4_lu("s4a", None)
+        check("left_undone_counts_entries_not_linted: a mode that cannot be read keeps the count and says so",
+              f"{SEM}2, not checked (cannot read the mode from scratchpad.md)" in lines, lines)
+        # the labelled under-count: a step compares days
+        root = mknb("s4b")
+        for nm, rev in (("same-in", D2), ("same-out", D2), ("after-in", D3)):
+            s4_entry(root, f"wiki/research/x/{nm}.md", rev)
+        s4_commit(D0)
+        p, lines, _ = s4_lu("s4b", "--full", s4_lint(D2, [f"wiki/research/x/{n}.md" for n in ("same-in", "same-out", "after-in")]))
+        check("left_undone_counts_entries_not_linted: read and re-reviewed on the lint's own day is not counted, one "
+              "re-reviewed on a later day is, whatever the scope file says",
+              f"{SEM}1 — {SEM_RAN}" in lines, lines)
+        p, lines, _ = s4_lu("s4b", "--full", s4_lint(D2, [f"wiki/research/x/{n}.md" for n in ("same-in", "after-in")]))
+        check("left_undone_counts_entries_not_linted: re-reviewed on the lint's day and not in the scope file is counted",
+              f"{SEM}2 — {SEM_RAN}" in lines, lines)
+        # a staged entry linted and then promoted is bridged by its stem; a task card is never counted
+        root = mknb("s4c")
+        s4_entry(root, "wiki/research/x/old-a.md", D0)
+        s4_commit(D0)
+        s4_entry(root, "wiki/research/x/promo.md", D1)
+        s4_entry(root, "wiki/tasks/card.md", D1)
+        p, lines, _ = s4_lu("s4c", "--full", s4_lint(D2, ["wiki/research/x/old-a.md", "_inbox/proposed/promo.md"]))
+        check("left_undone_counts_entries_not_linted: a staged entry linted then promoted is not counted, nor is a task card",
+              s4_line(lines, SEM) is None, lines)
+        root = mknb("s4d")
+        s4_entry(root, "wiki/research/x/old-a.md", D0)
+        s4_commit(D0)
+        s4_entry(root, "wiki/research/x/dup.md", D1)
+        s4_entry(root, "wiki/research/y/dup.md", D1)
+        p, lines, _ = s4_lu("s4d", "--full", s4_lint(D2, ["wiki/research/x/old-a.md", "_inbox/proposed/dup.md"]))
+        check("left_undone_counts_entries_not_linted: a name present twice under wiki/ is not bridged, both are counted",
+              f"{SEM}2 — {SEM_RAN}" in lines, lines)
+        # the lint skipped because one ran within 24 hours (cycle Step 4)
+        root = mknb("s4e")
+        s4_entry(root, "wiki/research/x/old-a.md", D0)
+        s4_commit(D0)
+        now = datetime.now().astimezone()
+        prior = f"{now.strftime('%Y-%m-%d')}-01"
+        hist = root / "_inbox" / "reports" / prior[:10] / prior
+        hist.mkdir(parents=True)
+        s4_step(hist, "lint-semantic.json", "completed", (now - timedelta(hours=1)).isoformat(),
+                ("semantic-scope.txt", ["wiki/research/x/old-a.md"]))
+        s4_entry(root, "wiki/research/x/new-e.md", D1)
+        p, lines, _ = s4_lu("s4e", "--full")
+        check("left_undone_counts_entries_not_linted: no lint in a mode that runs it, one under 24 hours old: says it was skipped",
+              f"{SEM}1 — the semantic lint was skipped: one ran within 24 hours ({prior})" in lines, lines)
+    left_undone_counts_entries_not_linted()
+
+    def s4_claims_nb(name, index_day, index_recopy=None):
+        """old-a, old-b, old-c committed D0; an index of old-a and old-b committed `index_day`; new-d added and old-a
+        re-reviewed D2. With `index_recopy` they are committed D2 and the index is written again on that day (a
+        claims step that found no claims in old-c and new-d)."""
+        root = mknb(name)
+        for nm in ("old-a", "old-b", "old-c"):
+            s4_entry(root, f"wiki/research/x/{nm}.md", D0)
+        s4_commit(D0)
+        idx = root / "_inbox" / "claims-index.json"
+        idx.parent.mkdir(parents=True, exist_ok=True)
+        idx.write_text(json.dumps({"generated": index_day, "claims": [
+            {"source_entry": "research/x/old-a.md"}, {"source_entry": "research/x/old-b.md"}]}), encoding="utf-8")
+        s4_commit(index_day)
+        s4_entry(root, "wiki/research/x/new-d.md", D2)
+        s4_entry(root, "wiki/research/x/old-a.md", D2)
+        s4_entry(root, "wiki/tasks/card.md", D2)
+        if index_recopy:
+            s4_commit(D2)
+            idx.write_text(json.dumps({"generated": index_recopy, "claims": [
+                {"source_entry": "research/x/old-a.md"}, {"source_entry": "research/x/old-b.md"}]}), encoding="utf-8")
+            s4_commit(index_recopy)
+        return root
+
+    def s4_claims(paths, status="completed"):
+        return [dict(name="claims.json", status=status, stamp=s4_stamp(D3), scope=("claims-scope.txt", paths))]
+
+    def left_undone_counts_entries_without_claims():
+        old_c, new_d = "wiki/research/x/old-c.md", "wiki/research/x/new-d.md"
+        root = mknb("s4f")
+        for nm in ("old-a", "old-b", "old-c"):
+            s4_entry(root, f"wiki/research/x/{nm}.md", D0)
+        s4_entry(root, "wiki/tasks/card.md", D0)
+        p, lines, (new, edited) = s4_lu("s4f", "--lint-only")
+        check("left_undone_counts_entries_without_claims: with no claims index every entry is counted, a task card is not, "
+              "with the does-not-run reason, and no scope file is written",
+              p.returncode == 0 and f"{CLM}3 — {CLM_OFF}" in lines
+              and [k.rsplit("/", 1)[-1] for k in new] == ["left-undone.txt"] and edited == [], (p.stderr[-300:], lines, new))
+        s4_claims_nb("s4g", D1)
+        p, lines, _ = s4_lu("s4g", "--lint-only")
+        check("left_undone_counts_entries_without_claims: with an index only the unindexed and the revised entries are counted",
+              f"{CLM}3 — {CLM_OFF}" in lines, lines)
+        p, lines, _ = s4_lu("s4g", "--full")
+        check("left_undone_counts_entries_without_claims: --full with no claims.json keeps the count and says the step left none",
+              f"{CLM}3, not checked (the claims step left no claims.json)" in lines, lines)
+        p, lines, _ = s4_lu("s4g", "--full", s4_claims([old_c, new_d], status="partial"))
+        check("left_undone_counts_entries_without_claims: a partial claims step is not subtracted, the line says not checked",
+              f"{CLM}3, not checked (the claims step ended partial; what it covered is unknown)" in lines, lines)
+        p, lines, _ = s4_lu("s4g", "--full", [dict(name="claims.json", status="completed", text="{not json")])
+        check("left_undone_counts_entries_without_claims: a claims.json that does not parse is not checked, no crash",
+              p.returncode == 0 and f"{CLM}3, not checked (claims.json unreadable)" in lines, (p.stderr[-300:], lines))
+        p, lines, _ = s4_lu("s4g", "--full", [dict(name="claims.json", status="completed", stamp=s4_stamp(D3))])
+        check("left_undone_counts_entries_without_claims: a completed claims step with no scope file is not checked, the count kept",
+              f"{CLM}3, not checked (no claims-scope.txt in the run folder)" in lines, lines)
+        s4_claims_nb("s4h", D1, index_recopy=D3)
+        p, lines, _ = s4_lu("s4h", "--full", s4_claims([old_c, new_d]))
+        check("left_undone_counts_entries_without_claims: entries the claims step read and found no claims in are not counted",
+              s4_line(lines, CLM) is None, lines)
+        p, lines, _ = s4_lu("s4h", "--full", s4_claims([old_c]))
+        check("left_undone_counts_entries_without_claims: one the step did not read is counted, with the ran reason",
+              f"{CLM}1 — {CLM_RAN}" in lines, lines)
+    left_undone_counts_entries_without_claims()
+
+    def s4_synth_nb(name, canon=True):
+        """A best-practices page, research entry r-old committed D0 and read by a synthesis completed D1; then r-new
+        and a superseded r-super added (untracked) on D2."""
+        root = mknb(name)
+        if canon:
+            s4_entry(root, "wiki/project/best-practices/bp.md", D0)
+        s4_entry(root, "wiki/research/x/r-old.md", D0)
+        s4_commit(D0)
+        hist = root / "_inbox" / "reports" / D1 / f"{D1}-01"
+        hist.mkdir(parents=True)
+        s4_step(hist, "synthesis.json", "completed", s4_stamp(D1), ("synthesis-scope.txt", ["wiki/research/x/r-old.md"]))
+        s4_entry(root, "wiki/research/x/r-new.md", D2)
+        s4_entry(root, "wiki/research/x/r-super.md", D2, "superseded_by: r-new\n")
+        return root
+
+    def s4_synth(paths, status="completed"):
+        return [dict(name="synthesis.json", status=status, stamp=s4_stamp(D3), scope=("synthesis-scope.txt", paths))]
+
+    def left_undone_counts_entries_not_synthesised():
+        r_old, r_new = "wiki/research/x/r-old.md", "wiki/research/x/r-new.md"
+        s4_synth_nb("s4i")
+        p, lines, (new, edited) = s4_lu("s4i", "--lint-only")
+        check("left_undone_counts_entries_not_synthesised: the research entries added since the last synthesis are counted, "
+              "a superseded one is not, with the does-not-run reason and no scope file written",
+              p.returncode == 0 and f"{SYN}1 — {SYN_OFF}" in lines
+              and [k.rsplit("/", 1)[-1] for k in new] == ["left-undone.txt"] and edited == [], (p.stderr[-300:], lines, new))
+        p, lines, _ = s4_lu("s4i", "--ingest-only", s4_synth([r_new]))
+        check("left_undone_counts_entries_not_synthesised: this run's completed synthesis and a scope file listing the new "
+              "entry: no line", s4_line(lines, SYN) is None, lines)
+        p, lines, _ = s4_lu("s4i", "--ingest-only", s4_synth([r_old]))
+        check("left_undone_counts_entries_not_synthesised: a synthesis that did not read the new entry counts it, with the ran reason",
+              f"{SYN}1 — {SYN_RAN}" in lines, lines)
+        p, lines, _ = s4_lu("s4i", "--ingest-only", s4_synth([r_new], status="awaiting_approval"))
+        check("left_undone_counts_entries_not_synthesised: a synthesis awaiting approval adds no line (Needs you has it)",
+              s4_line(lines, SYN) is None, lines)
+        p, lines, _ = s4_lu("s4i", "--ingest-only")
+        check("left_undone_counts_entries_not_synthesised: a mode that synthesises, no synthesis.json: not checked, count kept",
+              f"{SYN}1, not checked (synthesis left no synthesis.json)" in lines, lines)
+        p, lines, _ = s4_lu("s4i", "--ingest-only", s4_synth([r_new], status="partial"))
+        check("left_undone_counts_entries_not_synthesised: a partial synthesis is not subtracted, the line says not checked",
+              f"{SYN}1, not checked (synthesis ended partial; what it covered is unknown)" in lines, lines)
+        p, lines, _ = s4_lu("s4i", "--ingest-only", [dict(name="synthesis.json", status="completed", text="{not json")])
+        check("left_undone_counts_entries_not_synthesised: a synthesis.json that does not parse is not checked, no crash",
+              p.returncode == 0 and f"{SYN}1, not checked (synthesis.json unreadable)" in lines, (p.stderr[-300:], lines))
+        p, lines, _ = s4_lu("s4i", "--ingest-only", [dict(name="synthesis.json", status="completed", stamp=s4_stamp(D3))])
+        check("left_undone_counts_entries_not_synthesised: a completed synthesis with no scope file is not checked, count kept",
+              f"{SYN}1, not checked (no synthesis-scope.txt in the run folder)" in lines, lines)
+        s4_synth_nb("s4j", canon=False)
+        p, lines, _ = s4_lu("s4j", "--lint-only")
+        check("left_undone_counts_entries_not_synthesised: with no best-practices page there is nothing to synthesise into, no line",
+              s4_line(lines, SYN) is None, lines)
+    left_undone_counts_entries_not_synthesised()
 
 failed =[n for ok, n in results if not ok]
 for ok, n in results:
