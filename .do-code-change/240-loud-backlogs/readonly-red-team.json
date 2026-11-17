@@ -1,9 +1,9 @@
 {
  "schema": 1,
  "step": "red-team",
- "captured_at": "2026-11-17T00:39:11Z",
+ "captured_at": "2026-11-17T00:55:47Z",
  "repo_root": "C:/github.com/llm-wiki-bootstrap",
- "head": "4ff205b368846ae1e1bff1008186a1327413e195",
+ "head": "bd4ca097ef25cf326d902a4c8cad00ca3b6ce3b1",
  "files": {
   ".claude/do-code-change.json": "sha256:a47a947a2b378cb9138116132e665b949dd512d44a8fe9062dd842ed16428c3c",
   ".claude/hooks/enforce_uv.py": "sha256:fc843a1ced65d6c785ad1fec03a933157bd0d6932cb7a51d8d4b26559b46b579",
@@ -11,7 +11,8 @@
   ".claude/wiki-config.json": "sha256:2b36d6b14a12e3e8f1376f51e98ed26e176747288565a3b30184dc753f66e710",
   ".do-code-change/240-loud-backlogs/budget.json": "sha256:3a1efc835bc854d14246e0c385d0a17fbdcc01a805a968434a9ff8f912245699",
   ".do-code-change/240-loud-backlogs/plan-red-team-round1.md": "sha256:e446374ff5e0d9f12315f0b3a78cf8eeec838b67c411020f0f7a15874cc7c4e3",
-  ".do-code-change/240-loud-backlogs/plan.md": "sha256:383080abe3119cb48b44d8d48ad238178b719fb0d4d938713dd8a4e2cfb3e51b",
+  ".do-code-change/240-loud-backlogs/plan-red-team-round2.md": "sha256:5141ffe3b45ccfa70d8e36955c98e6fcce59d768b7f4fb292a6681b501e26851",
+  ".do-code-change/240-loud-backlogs/plan.md": "sha256:d94a7aa186f6f9c8d8df49b4dc8b0684262d84e63cee3c8204b51d01cee621f3",
   ".do-code-change/240-loud-backlogs/requirements.md": "sha256:40faefacbad7fcfb019cc3f54e843741a07256f11882e324885e62267fbb2cea",
   ".do-code-change/archive/2026-11-12-241-pre-commit-dcc-check/budget.json": "sha256:ab7918689969d433a7b72c15db08dbdaf370dd630e2176eab64ef2cb1b7c8529",
   ".do-code-change/archive/2026-11-12-241-pre-commit-dcc-check/checkpoints.md": "sha256:8c5958c1d594536d44eef2f246feca997d1e04eb067e36c5d98fbbd61293cdf7",
