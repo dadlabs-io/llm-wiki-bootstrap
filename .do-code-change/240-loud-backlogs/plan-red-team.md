@@ -1,195 +1,165 @@
-# Red-team: plan.md revision 3 (240-loud-backlogs, round 4)
+# Red-team: plan.md revision 4 (240-loud-backlogs, round 5)
 
-The orchestrator wrote this from the red-team's report. The red-team was a fresh architect running strategy-red-team, with one red-team-reviewer (haiku) spawn. The readonly-guard check passed: 640 files, HEAD unchanged. Rounds 1-3 are in plan-red-team-round1/2/3.md.
+Written by the orchestrator from the red-team's report. The red-team was a fresh architect running strategy-red-team, with one red-team-reviewer (haiku) spawn. The readonly-guard check passed (641 files, HEAD unchanged). Rounds 1-4 are in plan-red-team-round1..4.md.
 
-The architect read:
-- check.py 2694-2851
-- wiki-triage.py 1-190 and 290-360
-- wiki-cycle-scope.py 100-340
-- the SKILL.md of wiki-report, wiki-cycle and wiki-discover
-- wiki-cycle reference.md
-- wiki-feeds.py `known`
-- the framework-docs step contract
-- tests/skills/README.md
+What the architect read:
+- the plan, the requirements, the checkpoints and the round-4 report;
+- the text of the wiki-cycle, wiki-report and wiki-discover skills, and reference.md;
+- check.py 60-250, 471-520, 779-840, 2223-2330 and 2529-2860;
+- wiki-lint-mechanical.py, wiki-feeds.py `known`, and tests/skills/README.md.
 
-## Round-3 kill-assumptions: resolved, or turned into a Decision?
-- **KA1:** resolved in substance, with gaps:
-  - The table stops at 2781, which misses the kind-gated check at 2788-2790 (it needs triage-log.md and applies to `ingest-only` and `triage`).
-  - check.py has no `--lint-only` case yet, so B would be the suite's first.
-  - The Step-8 resume is still unproven, and is rightly deferred to the first paid session.
-- **KA2:** the cross-check is resolved. Reading the mode has new problems (KA2 below).
-- **KA3:** partly resolved.
-  - The partial lint and the `findings` shape are resolved.
-  - The ids have no source (KA3 below).
-  - Same-day is Decision 8.
+It also checked the live agentic-design run folders and ran the real lint on a scratchpad copy of the test seed. No repo file was written.
+
+## Round-4 kill-assumptions: resolved, or turned into a Decision?
+- **KA1 (third state):** resolved in the design. It will fire often (rank 5). The fix-step lines still have one unstated case (rank 3).
+- **KA2 (mode read from free text):** mostly resolved. No reader or eval parses the `**Cycle**` line today (check.py:2201 and the fixtures only write it). Two wording gaps remain (minor list).
+- **KA3:** partly resolved. `--show` and the existence guard work. Decision 10's recommended form has a silent-drop flaw (rank 2).
 - **KA4:** resolved.
 - **KA5:** partly resolved.
-  - The cmd_retry_list migration is not behaviour-preserving (KA4 below).
-  - Two tier-4 holes remain (KA7).
-- **Contract gaps:**
-  - The interim form and the Part 1 step-file wording are resolved.
-  - The single past-due number names a heading that has no N, and it redefines the Numbers row (KA5).
-  - The Needs-you wording contradicts the plan's invariant.
-  - Concept gaps are Decision 9.
+  - The Needs-you rewording regresses (rank 1).
+  - The Numbers row and `--brief` have no value when line 1 is `not checked` (rank 4).
+- **KA6:** resolved in the table. B's fixture has a new gap (rank 3).
+- **KA7:** resolved. A silent miss remains when the flag is unrecorded. Decision 2 discloses it, so it is a choice (rank 6).
+- **KA8:** now Decision 12.
 
 ## Kill-assumptions (ranked)
 
-### 1. No third state: the mode runs the step, but its JSON is absent or not completed
-The wording table (plan:54-69) has two columns, "Mode does not run it" and "Ran".
+### 1. The "awaiting approval" line vanishes from Needs you exactly when the model skips a command
+Plan line 82 says that when the semantic line reads `not checked`, Needs you prints nothing. The semantic line reads `not checked` when lint-fixes.txt is absent (line 56).
 
 **Fails if:**
-- `--full` with no refresh.json, which is exactly case A as planted (plan:114). The only wording available is "this mode does not run refresh", which is false.
-- The same gap applies to:
-  - triage (A seeds no triage.json);
-  - the ingest-based ticket lines;
-  - the lint kinds;
-  - three Part 1 rows that have a "Ran" column.
-- A resumed or interrupted `--full` run gets a confident false reason, against plan:154.
+- Step 5 skips the new `lint-fixes` command. The scope script's own docstring records a model skipping a sentence in 21 of 22 runs (wiki-cycle-scope.py:58).
+- Left undone then prints `Semantic findings: 193, not checked`, and Needs you prints nothing. Today's "lint fixes awaiting approval" line is lost, which contradicts the invariant at plan line 166. The likeliest case is an unattended `--full` run.
 
-**Kill criterion:** any row whose mode runs the step but whose JSON is missing prints "does not run" or "ran".
+**Kill criterion:** findings in lint-semantic.json and no Needs-you line about them.
 
-**Cheapest test:** a `--full` scratchpad with no refresh.json or triage.json. Every such line must read `not checked (<step> left no <file>)`.
+**Cheapest test:** a `--full` fixture with 5 findings and no lint-fixes.txt must keep a Needs-you line.
 
-**Fix class:** plan error. Add the third state to every row that has a "Ran" column, and reword A's expected lines.
+**Fix class:** plan error. When the semantic lint ran and found something, Needs you keeps a line:
+- `<N> semantic lint findings awaiting your approval`, or
+- `<N> semantic lint findings, applied or declined not recorded — <path>`.
 
-### 2. The mode and its modifiers are read from free text
-**Fails if:**
-- reference.md:15 gives only `(<mode>)`, while :18 has a separate `- Mode: <mode and flags>` line. A run that puts `--no-confirm-discovery` only on that line gets no tier-4 line and no "not checked".
-- SKILL.md:19 allows `/wiki-cycle full`, but the plan's token list has `--full` only with dashes.
-- "12 of 12 parse" doesn't show that the modifiers get copied.
-- plan:50: a missing update.json or discover.json, in a mode that runs that step, reads as "none".
+It prints nothing only for 0 findings or no lint.
 
-**Kill criterion:** a live run with the flag only on the `Mode:` line, or a mode word the tokenizer misses.
+### 2. False statements in the semantic lines: the way out, and what clears a standing backlog
+**Fails if (way out):** Step 4's scope is "added or revised since the last semantic lint" (SKILL.md:152), and Step 5 shows only this run's findings. A later `--full` never re-presents an earlier run's findings. So "/wiki-cycle --full applies approved ones" (line 74) and "(approve them in a --full run)" (line 82) promise something no step does.
 
-**Cheapest test:**
-- `(full)`
-- `(--full, --no-confirm-discovery)`
-- the flag only on `- Mode:`
-- `--ingest-only` with no update.json
+**Fails if (what clears it):** Decision 10 reads only the newest completed lint-semantic.json (line 57). Once a later run lints one new entry, the older run's unresolved findings leave Left undone without a word. A `--full` doesn't clear them; it silently supersedes them.
 
-**Fix class:** plan error.
-- Read the mode from `**Cycle**` and the modifiers from both lines.
-- Accept bare `full`.
-- Change the reference.md template to `(<mode>[, <modifiers>])`.
-- A step the mode runs that left no file reads `not checked`.
-
-### 3. `lint-fixes` ids are unreachable, and mechanical-only fixes leave no record
-**Fails if:**
-- Step 4 merges findings without numbering (SKILL.md:152), and Step 5 approves fixes by category (:154). Nobody is shown a position, so the model counts positions in a list of up to 193. A wrong id that is still in range passes validation silently.
-- Mechanical-only approvals record no id, so the staleness guard ("records fixes applied") doesn't fire. If the lint re-run is skipped, already-fixed broken links are still named.
-- An earlier run's unfixed semantic findings (agentic-design's 193 from 2026-10-30) appear in no later Left undone: the entries count as covered, and only this run folder is read.
-
-**Kill criterion:** the lint .md has no position numbers, or a `--full` run with mechanical-only fixes prints the pre-fix counts.
+**Cheapest test:** run A has 5 unresolved findings and a newer run B has 0. The output must say it reads the newest lint only.
 
 **Fix class:**
-- Plan error:
-  - The guard fires whenever lint-fixes.txt exists, with zero ids included and an `at:` stamp.
-  - The lint report shows the ids, so the model copies them.
-  - State the order of lint-fixes and the re-run.
-- Choice for Mark: whether a standing semantic backlog from an earlier run is named in later runs (read the newest completed lint-semantic.json minus the fix record), or the limit is stated.
+- Plan error: true way-out text, e.g. "findings are in lint-semantic.md; no cycle step re-presents them outside the run that found them". Drop "(approve them in a --full run)".
+- Choice for Mark: restate Decision 10 as either "newest lint only, labelled `from <id>; older lints are not read`" or "read every completed lint back to the last fully answered one".
 
-### 4. The cmd_retry_list migration changes behaviour, and the tests can't see it
+### 3. Case B ("Left undone: nothing") cannot pass as planned
 **Fails if:**
-- Today it walks every .md in a bucket, filters on `retry:`, and falls back to the file name when there is no `source:` (wiki-triage.py:316-320). `intake_tickets` skips `_`-prefixed files and files with no `source:`, so a retry ticket with no source vanishes from Needs you's retry line.
-- The fixtures in test_wiki_triage.py:234-277 all carry a source, so the tests stay green regardless.
-- "Named by seven skills" is wrong: the reviewer counted four SKILL.md files.
+- **The seed isn't lint-clean.** The real lint on the `_seed()` notebook (fixtures/seed-notebook plus extra-seed, run on a scratchpad copy) gives:
+  - orphans 6;
+  - missing_frontmatter 1, missing_tier 1, missing_confidence 1;
+  - backlink_blocks_out_of_step 6;
+  - status partial, because the copy had no qmd collection.
 
-**Fix class:** plan error. Leave cmd_retry_list alone and list it under Out of Scope. Or keep the migration, add a no-source fixture, and give `intake_tickets` a `require_source` flag.
+  All 12 seed entries also have review_after dates in 2026-04 or 2026-05.
+- B's earlier lint must hold zero findings, or else carry a lint-fixes.txt. Otherwise Decision 10 prints a semantic line.
+- The unpaid test runs no model, so it has no lint JSON unless it runs the lint script. That gives the third state, not `nothing`. A partial lint also never gives `nothing`.
 
-### 5. The one past-due number changes a contract, and Needs you and `--brief` are undefined
-**Fails if:**
-- The `### Stale entries (review_after passed)` heading (wiki-report:163) carries no N.
-- Step 1G's awk counts tasks/ and sessions/. The Numbers row would be filtered and the table unfiltered: on llm-wiki-bootstrap, 6 against 186 rows.
-- Every other mode's Numbers row is redefined without a Decision, and no eval check covers the Numbers row.
-- plan:75 rewords a Needs-you line, against "keeps every line it has today", and doesn't say what Needs you prints for `not checked` or `0`.
-- The `--brief` content is never stated. Its precedent (wiki-report:301) is silent at zero, and a line the model composes would be a computed count.
+**Kill criterion:** the real lint on B's built notebook returns `partial` or any count above 0.
 
-**Fix class:**
-- Plan error:
-  - Drop the heading claim.
-  - Fix the brief to a stated string, e.g. `Left undone: <first line of the file> — see the full report`.
-  - Rewrite the invariant.
-  - Define Needs you for `not checked` and `0`.
-- Choice for Mark: redefine the Numbers row (excluding task cards), or leave it and show the Left undone count separately.
-
-### 6. Gaps in the common-check table and the fixture
-**Fails if:**
-- The table omits 2788-2790.
-- `me()` reads load_config() from the cwd (wiki-triage.py:87-92; _wiki_config.py:205), so a live run from another project labels the wrong bucket. The harness sets the cwd, so the tests pass anyway.
-- B's earlier folders need a run-cycle report each, or Step 0 lists them as unfinished.
-- B needs the backdating helper.
+**Cheapest test:** build B with the suite's own setup and prepare function, run the real lint, and read lint-mechanical.json.
 
 **Fix class:** plan error.
-- Name the new case kinds.
-- Add 2788-2790.
-- State the live cwd.
+- B's builder repairs or replaces the defective seed entries.
+- The earlier lint holds zero findings.
+- The unpaid test runs the real lint, and the plan states the qmd and installed-skills conditions for `status: completed`.
 
-### 7. The tier-4 line can name sources this run didn't defer
+### 4. The output is undefined or conflicting when line 1 is `not checked`
 **Fails if:**
-- `--ingest-only --no-confirm-discovery` runs no discovery (SKILL.md:32), so an earlier checklist in `_inbox/done/` produces false lines.
-- Two cycles on the same day share the file name.
-- wiki-feeds.py `known` reads only the first 30 lines of a ticket (:106).
+- The whole-file mismatch case (line 37) has no queue lines and no past line, so the Numbers row (line 44) has no N.
+- Line 37 drops the disk-state counts, while lines 35 and 39 keep them: two behaviours for one situation.
+- `Left undone: nothing` has no past line either, and the plan doesn't say that means 0.
 
-**Fix class:** plan error. Gate the tier-4 read on discover.json existing in this run folder.
+**Kill criterion:** the Numbers stale row has no defined source.
 
-### 8. Behavioural text is checked by manual reading only
-The Needs-you rewording, the Numbers rule, the `--brief` line and Step 5's text all change the report with no red-then-green case. tests/skills/README.md:20 asks for "two fresh cases".
+**Fix class:** plan error.
+- On a mismatch, write the disk-state counts, with the reason only on the mode-dependent lines.
+- With no past line and a line 1 that isn't `not checked`, the Numbers row reads 0. Otherwise it reads `not checked`.
 
-**Fix class:** choice for Mark. Add a third case, or accept manual reading.
+### 5. The third state will fire constantly for pending tickets
+**Fails if:** only 3 of 32 live run folders have triage.json (2026-10-11-01, 2026-10-12-02, 2026-10-30-01). The newest `--ingest-only` run (2026-11-10-01) has none. The pending line would then read `not checked` almost every time, although the ticket count is certain. Triage moves every ticket out of pending/, so a ticket still there after a triaging mode was never triaged or arrived later.
+
+**Fix class:** plan error, in the wording. The pending line doesn't need the JSON: `not triaged: <N> arrived after triage or triage did not run`.
+
+### 6. The tier-4 line is silent when the flag isn't recorded
+**Fails if:** an unattended run defers tier-4 sources without writing `--no-confirm-discovery` into the scratchpad. Nothing is named and nothing says `not checked`, against requirements lines 18 and 20. Zero of 32 live scratchpads record the flag.
+
+**Fix class:** choice (Decision 2). Decision 2 should say plainly that the miss is silent.
+
+### 7. Step 1 is too large, and its done criteria miss the report side
+**Fails if:** Step 1 builds the subcommand, the header, the mode and modifiers, the mode table with its cross-check and drift test, the third state, the report section, the Numbers rule, `--brief`, the reference.md line and the Step 8 call. Its done-when (lines 253-256) holds only script checks, and the report side is manual until Step 6's paid run.
+
+**Fix class:** plan error. Split it:
+- **1a, the script, unit-tested:** subcommand, header, mode and modifiers, table, cross-check, drift test, review-date lines, third state.
+- **1b, the prose, with its manual-read criterion named:** wiki-report section, Numbers rule, `--brief`, Step 8 call, reference line.
+
+Renumber the steps, the Part lists and the "blocked by" lines.
+
+## Minor: fixable during implementation without re-planning
+- **"First token of the `**Cycle**` text":** say "first token inside the parentheses".
+- **Mode names:** strip backticks and quotes, and accept dashless names for all nine modes (e.g. `(lint-only)`).
+- **`lint-fixes` with no lint-semantic.json** (Step 4 skipped within 24 hours): write empty lists and exit 0.
+- **Mechanical-lint reason in `--full` with no lint-fixes.txt:** follow the third state explicitly.
+- **Header's `N queue(s)`:** say whether `not checked` lines count.
+- **`standalone` excluded from the lint kinds:** state why in the docstring. It lists declared-standalone pages, not findings.
+- **`--report-only` counts disk-state queues fresh:** say so in the section's text (requirements line 75).
 
 ## What holds up
-- **Contract and order:** no contract change, and the section order is fine.
-- **Scope counting:** the covered-set rule, the newest_step migration (exactly two walkers), and the tasks/ filter.
-- **Mode table:** the cross-check table matches SKILL.md:28-45.
-- **Discovery:** `known` and the checklist template.
-- **Errors and last run:** the update.json errors shape, and the report-only last-run rule.
-- **Existing tests:** the last_semantic and last_synthesis tests.
-- **Decision 4:** its reading is arguable.
-- **Lint design:** the partial-lint handling and the id validation.
+- The mode cross-check table and its drift test, which match SKILL.md:28-45.
+- Leaving cmd_retry_list alone.
+- check.py:
+  - the citations (2704-2790), with the kind-gated row right;
+  - the `res[:]` precedent (`_check_unfinished`, 2232);
+  - B as the first `--lint-only` case.
+- Section order: the Fallbacks and ordering checks still hold (2540, 2548-2552, 2629, 2757).
+- The covered-set rule and the labelled same-day under-count.
+- `known` reads the notebook, so `mark-seen` doesn't hide a tier-4 URL.
+- The lint JSON timestamp is tz-aware (`now_stamp()`), so the guard's comparison is sound.
+- The tier-4 gate on this run's discover.json.
 
-## Skip, drop, exempt and default rules against the standing rules
-**Holds:**
-- tasks/ and sessions/ are not counted.
-- No repeats of what Needs you already shows.
-- Staged entries are counted only when the setting is false. That is a reasoned reading of requirements:68.
-- Rows 15, 22 and 23 (Decision 9).
-- Other buckets on one line (D6).
-- A mode mismatch reads `not checked`.
+## Skip, drop, exempt and default rules changed in revision 4
+**Hold:**
+- An unreadable mode reads `not checked` and keeps the disk counts (apart from the line 37 conflict, rank 4).
+- The tier-4 gate.
+- `--brief` always prints line 1, even `nothing`. That differs from the Fallbacks precedent but follows requirements line 18.
+- No full suite (Decision 4).
+- Staged entries named only when the setting is false: with `true`, Needs you names them.
 
-**Open or conflicting:**
-- Decision 5, the "already covered" drops: update.json's "already covered" skips are listed every cycle while discovery's are not. State the difference.
-- Decision 8, the same-day under-count.
-- KA8, behavioural wording checked by hand.
+**Conflict:** Needs you prints nothing for 0 or `not checked` (rank 1).
 
 **No standing rule found:**
-- a missing bucket folder counts 0
-- a non-date review_after gets its own line
-- bucket files with no source: are not counted (D7)
-- the regex fallback is not exercised
-- the drift test covers 5 of 9 modes
-- Part 1 never writes "nothing"
-- the `not checked` and `(no reason recorded)` defaults
-- the lint keys left out
-- the `--today` default
-- the first-token mode rule
+- the `--today` default;
+- the `not checked` and `(no reason recorded)` defaults;
+- the regex fallback not exercised;
+- the drift test covering 5 of 9 modes;
+- a missing bucket folder counting 0;
+- `standalone` excluded.
 
 ## Complete enough to build?
-No, but it is close. A revision 4 can settle every plan error without a new question. KA1, KA2 and KA5 sit in Part 1's step 1.
-
-**Plan errors (7):** KA1-KA7, each with one correct fix as above.
-
-**Choices for Mark:**
-- a standing semantic backlog from earlier runs
-- the Numbers row
-- a third paid case for the brief and Needs you
-- the nine existing Decisions
+Not yet, but it is one revision away.
+- **Plan errors (none needs Mark):** ranks 1, 2 (the text), 3, 4, 5 (the wording) and 7, plus the minor list.
+- **Choices for Mark:**
+  - Decision 10, restated truthfully (rank 2);
+  - Decision 2's silent-miss wording (rank 6);
+  - the other ten Decisions, as written.
+- **Settle before building:** ranks 1, 2 and 4, which would print a false or silent line, and rank 3, which means case B can't pass.
 
 ## Could not assess
-- Whether the session resumes at Step 8.
-- How lint-semantic.md presents findings.
-- The live counts in agentic-design.
-- Whether /wiki-refresh changes entries.
-- PyYAML in the scripts environment.
-- check.py past line 3113, and test_wiki_triage.py past line 277.
+- Whether the session resumes at Step 8 (needs the first paid session).
+- Whether the sandbox lint returns `completed` for B (the scratch copy had no qmd collection).
+- The live counts at plan lines 90-91 and 130.
+- How often models record `--no-confirm-discovery`.
+- How the Numbers row and `--brief` render.
+- check.py past 3113, and test_wiki_triage.py past 277.
+- That wiki-update sets last_reviewed on new entries (the reviewer's claim, unverified).
 
 VERDICT: KILL-ASSUMPTIONS FOUND
