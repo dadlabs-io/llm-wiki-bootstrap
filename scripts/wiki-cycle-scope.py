@@ -1002,10 +1002,17 @@ def _triage():
 
 def session_buckets(tri, nb: Path) -> list[dict]:
     """The notebook's configured buckets; frontmatter that does not parse reads as the one-bucket default, as no README
-    gives."""
+    gives. Only a README that does not parse into buckets falls back (a YAML syntax error, or YAML of the wrong shape:
+    not a mapping, `buckets` not a list of mappings); a read error or any other failure surfaces."""
+    parse_errors: tuple[type[BaseException], ...] = (AttributeError, TypeError, ValueError)
+    try:
+        from yaml import YAMLError  # optional: without PyYAML buckets() reads a regex fallback that raises none
+        parse_errors += (YAMLError,)
+    except ImportError:
+        pass
     try:
         return tri.buckets(nb)[0]
-    except Exception:  # noqa: BLE001
+    except parse_errors:
         return [{"folder": "main", "reader": tri.me()}]
 
 

@@ -1,9 +1,9 @@
 {
  "schema": 1,
  "step": "review",
- "captured_at": "2026-11-18T15:56:36Z",
+ "captured_at": "2026-11-18T15:57:36Z",
  "repo_root": "C:/github.com/llm-wiki-bootstrap",
- "head": "1913d55bd249024683cfcca369077fdf09605e1f",
+ "head": "f7759e1be7433ed8a71bf23c7b7eeb5e6a7bae0c",
  "files": {
   ".claude/do-code-change.json": "sha256:a47a947a2b378cb9138116132e665b949dd512d44a8fe9062dd842ed16428c3c",
   ".claude/hooks/enforce_uv.py": "sha256:fc843a1ced65d6c785ad1fec03a933157bd0d6932cb7a51d8d4b26559b46b579",
@@ -187,7 +187,7 @@
   "scripts/new-wiki.py": "sha256:8977536e988f17ac7df2578a3e53612a46b1a69f901531a6f2ec0b53c43e9f9a",
   "scripts/read-guard.py": "sha256:e1862b1f71dc2aa81f9c429920e0f5251c9f6b8df72ed68c4c8c86466f6ea5fd",
   "scripts/wiki-claims-corroborate.py": "sha256:10cd5ac5d79f4bce9379fadda2cc74f915afad81bf54fa25c5ac819d8231bd4a",
-  "scripts/wiki-cycle-scope.py": "sha256:0b47a32c430aa4281e0ce3ba64038bf0d82534459c84bcb5372818a83a32492d",
+  "scripts/wiki-cycle-scope.py": "sha256:32ccc48d7fd7471caf98b00beb6b884d64b76e07bef81398c137f118a16d68f3",
   "scripts/wiki-dequeue.py": "sha256:a6727907cc2d01f4ee2acfd85ca704805dec5ad3134ed7a92ab12d9f9df4eb91",
   "scripts/wiki-feeds.py": "sha256:4e684d765da811290819f21728b4e8eaf266ec24d283a8677d5a59b2d8d2484c",
   "scripts/wiki-fetch-drive-folder.py": "sha256:8284c607dd0c4fe69f17367363afaf4906e2f2636a4823feeb685d6e1d1c3b48",

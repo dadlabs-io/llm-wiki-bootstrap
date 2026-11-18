@@ -1,6 +1,6 @@
 # Plan: a cycle names everything it leaves undone (task #240, lesson #9)
 
-Revision 7, after the round-7 narrow check (`plan-red-team.md`); it changes only what that report names. Mark's ruling: the plan is complete and solid before building, whole scope, and still splits into two parts. The revision history is in `checkpoints.md`.
+Revision 8, after code review round 1: step 8 added (the run-state reporting moves to its own module; finding standards-1, Mark 2026-11-18, `checkpoints.md` "Module question, corrected"), with the Scope and the "one source" sentence it changes. Revision 7 was after the round-7 narrow check (`plan-red-team.md`). Mark's ruling: the plan is complete and solid before building, whole scope, and still splits into two parts. The revision history is in `checkpoints.md`.
 
 Classification: **vertical slice**. Each step adds queues to one section end to end: the script's line, the run-folder file, the report's copy of it, and the test that pins both. Not a wide refactor: nothing is renamed; the existing code touched is a shared "newest completed step" walker and three list-returning extractions in the scope script (step 4). Lowercase "step N" below is a step of this plan; "cycle Step N" is a step of the cycle skill.
 
@@ -85,7 +85,7 @@ The plan is written whole; each part stands alone.
 **The skill and report text** (step 2 carries the Part 1 text; step 5 carries the Needs-you wording and cycle Step 5's order):
 - `wiki-report`'s template gets `## Left undone` between Fallbacks and Needs you with the three states, the Numbers-row rule (Decisions needed 11) and the `--brief` string above; in Part 2 the Needs-you wording above.
 - `wiki-cycle` cycle Step 8 runs the command first and says Fallbacks and Left undone come just before Needs you, in that order; the `--report-only` sentence points to the last-run definition above; cycle Step 5 gets the order above (`--show`, apply, `lint-fixes`, re-run the lint); cycle Step 1.5 names the modifiers line; `reference.md`'s template line changes to `(<mode>[, <modifiers>])`.
-- Skill text grows as little as that takes; the tables and rules live in the script's docstring, the one source.
+- Skill text grows as little as that takes; the tables and rules live in the docstring of the run-state module, `scripts/_run_state.py` (step 8), the one source.
 
 **Live evidence, read-only, 2026-11-16** (probes printing only; nothing written into any notebook or run folder).
 - agentic-design: 1,713 entries (no `wiki/tasks/` cards); 0 duplicate basenames; last semantic lint 2026-10-30 (completed), `semantic-scope.txt` of 363 paths; 106 entries have `last_reviewed` = that day: bridged by stem 94 are in that scope file, 12 are not; 103 have `last_reviewed` after it. 123 entries are absent from `claims-index.json`, 121 of them dated on or after the index's date, so at most 2 can be claim-less entries the step read.
@@ -146,6 +146,10 @@ The plan is written whole; each part stands alone.
 ## Scope
 
 - scripts/wiki-cycle-scope.py
+- scripts/_run_state.py
+- scripts/_cycle_common.py
+- scripts/_install_tooling.py
+- INSTALL-INVENTORY.md
 - scripts/wiki-triage.py
 - skills/wiki-cycle/**
 - skills/wiki-report/**
@@ -292,6 +296,12 @@ Every step also ends with the six script tests of Testing Decisions green. **Par
    - Failures: a case that passes on the old copy goes back to the writer (`replay`), not counted; a session that repeats earlier phases fails case A and goes back to the writer; a B whose lint reads `partial` fails as an environment failure, not a pass; a red-green exit 1 stops the run, the sessions not repeated.
    - manual: the live run and the docs (Testing Decisions).
    Trivial stakes: no (the cases); the docs lines are wording only.
+
+8. **The run-state reporting in its own module** (code review round 1, finding standards-1; Mark 2026-11-18) — a pure move, no behaviour change. `wiki-cycle-scope.py` grew a second tool; the code that reports on what a run left (lesson #10's `unfinished` and lesson #9's `left-undone` and `lint-fixes`, with their helpers, constants and docstring sections) moves to a new module `scripts/_run_state.py`. The helpers both the remaining scope commands and the moved code use (at least `entries`, `staged`, `_parse_time`, `step_results`, `newest_step`, `write_scope`, `_front`; the developer lists the exact set from the code) move to a second new module `scripts/_cycle_common.py`, so the import runs one way: `wiki-cycle-scope.py` imports both, `_run_state.py` imports `_cycle_common.py`, and neither new module imports `wiki-cycle-scope.py` (no circular import; plain `from _x import …`, as the script already imports `_wiki_config`). `wiki-cycle-scope.py` keeps the scope commands, the bookkeeping commands and the `main()` dispatch; **every command name, flag, output line, file and exit code is unchanged**, and the printed way-out lines still read `wiki-cycle-scope.py --topic … unfinished …`. Its module docstring keeps the usage lines and points to `_run_state.py` for the three moved commands; any skill or usage page that names "the script's docstring" as the source of these rules names the new module instead. Both new files join `SHARED_HELPER_SCRIPTS` and `TOOLING_HELPER_SCRIPTS` in `_install_tooling.py` and `INSTALL-INVENTORY.md`, as `_feeds.py` does. **Blocked by: the fix round's other items** (one writer of the file at a time). Done when:
+   - Expected: **baseline, move, compare.** Before the move: the unpaid suites (the six script tests of Testing Decisions plus `test_left_undone_fixture.py`) green with their counts recorded, and the read-only outputs saved to scratch folders: `left-undone` on agentic-design and on llm-wiki-bootstrap (each from its own project folder, as step 7's live run), `unfinished --run-folder` on both, `lint-fixes --show` on a fixture run folder. After the move: the same suites green with the same counts, and every saved output byte-identical. **Every moved function's body is unchanged**: a throwaway check in the artifact directory compares each moved function's and constant's `ast.dump` before (at the commit before the move) and after (in its new module), and every one matches. `uv run python scripts/new-wiki.py --mode status` is not part of this step (the install is the finish step).
+   - Failures: the in-process tests that load the script by path (`test_cycle_scope.py`'s mode-table drift test and the `newest_step` test) load the module where the name now lives, and **the drift test must fail, not pass, when the table it reads is empty** (today it reads `getattr(mod, "STEP_MODES", {})`, so a move could leave it comparing against an empty table): tightened, never loosened, red on an empty table first; an import of `wiki-cycle-scope.py` from a folder other than `scripts/` still works as it does today (the installed copy runs from `~/.claude/wiki-scripts/`, with both new files beside it).
+   - Invariant: no line of logic changes; the six script tests and the fixture test pass unchanged apart from where a test loads a name; no paid run is needed for this step (the outputs are byte-identical, so the red-then-green already run in step 7 still describes the copy).
+   Trivial stakes: no
 
 ## Paid runs the plan expects
 

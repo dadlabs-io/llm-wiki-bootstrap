@@ -811,7 +811,7 @@ with tempfile.TemporaryDirectory() as td:
         p, lines = lu("lu3", rf)
         check("left_undone_names_what_it_cannot_check: --report-only names the last full run on its second line, uncounted",
               lines[1:2] == ["Disk-state queues are counted now; event lines are from the last run (2026-06-14-01)"]
-              and lines[:1] == [f"Left undone: {len([l for l in lines if l.startswith('- ')])} queue(s)"], (p.stderr[-200:], lines))
+              and lines[:1] == ["Left undone: 5 queue(s)"], (p.stderr[-200:], lines))
         rf = lu_run(clean, "2026-06-15-09", cycle="--report-only")
         p, lines = lu("lu4", rf)
         check("left_undone_names_what_it_cannot_check: --report-only with no earlier report says there is none",
@@ -1046,6 +1046,41 @@ with tempfile.TemporaryDirectory() as td:
               "names another notebook" in doc and "not a supported case" in doc, doc[doc.find("`left-undone`"):][:700])
     left_undone_docstring_names_the_unsupported_working_folder()
 
+    def left_undone_session_buckets_lets_an_unexpected_error_surface():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("wiki_cycle_scope_session_buckets", SCRIPT)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        class Raises:
+            def __init__(self, exc):
+                self.exc = exc
+
+            def buckets(self, nb):
+                raise self.exc
+
+            def me(self):
+                return "me"
+
+        for exc in (OSError("disk gone"), RuntimeError("bug in buckets")):
+            try:
+                got = mod.session_buckets(Raises(exc), tmp)
+            except type(exc):
+                got = "raised"
+            check(f"left_undone_session_buckets_lets_an_unexpected_error_surface: a {type(exc).__name__} from buckets() "
+                  "is raised, not counted as the main bucket", got == "raised", got)
+        root = mknb("lu10b")
+        intake = root / "_inbox" / "intake"
+        intake.mkdir(parents=True)
+        tri = mod._triage()
+        for label, front in (("a YAML syntax error", "buckets: [unclosed"), ("buckets that is not a list", "buckets: 5"),
+                             ("a top-level list", "- a"), ("a bucket that is not a mapping", "buckets: [a]")):
+            (intake / "README.md").write_text(f"---\n{front}\n---\n\n# Intake\n", encoding="utf-8")
+            got = [b["folder"] for b in mod.session_buckets(tri, root)]
+            check(f"left_undone_session_buckets_lets_an_unexpected_error_surface: {label} in the intake README reads as "
+                  "the one-bucket default", got == ["main"], got)
+    left_undone_session_buckets_lets_an_unexpected_error_surface()
+
     # ── left-undone step 4: newest_step, the one walk over the run folders' step results ──
     def newest_step_returns_the_newest_matching_result():
         import importlib.util
@@ -1164,10 +1199,9 @@ with tempfile.TemporaryDirectory() as td:
         new_d = "wiki/research/x/new-d.md"
         s4_sem_history("s4a")
         p, lines, (new, edited) = s4_lu("s4a", "--lint-only")
-        n = len([l for l in lines if l.startswith("- ")])
         check("left_undone_counts_entries_not_linted: --lint-only counts the entry added and the one re-reviewed since "
               "the last lint, gives the does-not-run reason and a header of the line count (never nothing)",
-              p.returncode == 0 and f"{SEM}2 — {SEM_OFF}" in lines and lines[:1] == [f"Left undone: {n} queue(s)"]
+              p.returncode == 0 and f"{SEM}2 — {SEM_OFF}" in lines and lines[:1] == ["Left undone: 4 queue(s)"]
               and lines[-1].startswith("- "), (p.stderr[-300:], lines))
         check("left_undone_counts_entries_not_linted: only left-undone.txt and its events file are new, nothing changed, no scope file written",
               sorted(k.rsplit("/", 1)[-1] for k in new) == ["left-undone-events.txt", "left-undone.txt"] and edited == [],
@@ -1628,9 +1662,8 @@ with tempfile.TemporaryDirectory() as td:
               "one line, and an empty list, the newest and a partial lint add nothing",
               old_lines(lines) == [SUP, COLL] and not [l for l in lines if part in l or l0 in l or l4 in l],
               old_lines(lines))
-        n = len([l for l in lines if l.startswith("- ")])
         check("left_undone_names_semantic_findings_from_earlier_runs: the header counts those lines",
-              lines[:1] == [f"Left undone: {n} queue(s)"], lines[:1])
+              lines[:1] == ["Left undone: 4 queue(s)"], lines[:1])
         p, lines, _ = s4_lu("s5d", "--full", [s5_sem(1), s5_fixes("1", "")])
         check("left_undone_names_semantic_findings_from_earlier_runs: a --full run whose own lint is the newest still "
               "prints the older lints' lines", old_lines(lines) == [SUP, COLL], old_lines(lines))
@@ -1716,7 +1749,7 @@ with tempfile.TemporaryDirectory() as td:
               "carries retry: or save_as_pdf: left out", sorted(got) == sorted(want), got)
         n = len([l for l in lines if l.startswith("- ")])
         check("left_undone_names_each_source_the_run_left: the header counts them",
-              lines[:1] == [f"Left undone: {n} queue(s)"] and n >= len(want), lines[:1])
+              lines[:1] == ["Left undone: 9 queue(s)"] and n == 9, (lines[:1], n))
         ev = rf / "left-undone-events.txt"
         events = ev.read_text(encoding="utf-8").splitlines() if ev.is_file() else []
         check("left_undone_names_each_source_the_run_left: the events file holds the same source lines under a # header",
@@ -1803,7 +1836,7 @@ with tempfile.TemporaryDirectory() as td:
               "(from <id>), counts them in the header, and skips an unreported run",
               lines_b[1:2] == ["Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)"]
               and f"{src} (from 2026-10-07-01)" in lines_b
-              and lines_b[:1] == [f"Left undone: {len([l for l in lines_b if l.startswith('- ')])} queue(s)"], lines_b)
+              and lines_b[:1] == ["Left undone: 5 queue(s)"], lines_b)
         check("left_undone_repeats_the_last_runs_events_when_only_reporting: its own run says no lint ran and counts "
               "the disk-state queues fresh",
               not [l for l in lines_b if l.startswith("- Lint findings: not checked (no lint ran")]
@@ -1821,7 +1854,7 @@ with tempfile.TemporaryDirectory() as td:
         _, p, lines = s6_run("s6g", "--report-only", cid="2026-10-09-02")
         check("left_undone_repeats_the_last_runs_events_when_only_reporting: a last run with no events file is not checked",
               "- Events of the last run: not checked (that run left no left-undone-events.txt)" in lines
-              and lines[:1] == [f"Left undone: {len([l for l in lines if l.startswith('- ')])} queue(s)"], lines)
+              and lines[:1] == ["Left undone: 1 queue(s)"], lines)
     left_undone_repeats_the_last_runs_events_when_only_reporting()
 
     def left_undone_drops_the_interim_form():
@@ -1891,7 +1924,7 @@ with tempfile.TemporaryDirectory() as td:
         check("left_undone_names_an_older_lint_with_no_usable_findings_list: an older completed lint whose findings list "
               "cannot be trusted is not checked, never silent, and the header counts the line",
               f"- Semantic findings from {old}: not checked (lint-semantic.json has no usable findings list)" in lines
-              and lines[:1] == [f"Left undone: {len([l for l in lines if l.startswith('- ')])} queue(s)"], lines)
+              and lines[:1] == ["Left undone: 3 queue(s)"], lines)
     left_undone_names_an_older_lint_with_no_usable_findings_list()
 
     # ── hand mutation pass (task #240): tests that kill the real survivors ──

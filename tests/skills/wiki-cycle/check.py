@@ -3076,6 +3076,16 @@ def _check_left_undone_planted(case: dict, add, res: list, ctx: dict, run: dict,
     lines = _lu_lines(section)
     add("the section does not read 'Left undone: nothing'", not any(re.match(r"left undone\W*nothing", l, re.I) for l in lines),
         lines[:3])
+    # the report pastes left-undone.txt word for word: the section is the file's non-blank lines, nothing else
+    lu_file = run_dir / "left-undone.txt"
+    file_lines = _lu_lines(lu_file.read_text(encoding="utf-8", errors="replace")) if lu_file.is_file() else None
+    section_lines = [l for l in lines if not re.fullmatch(r"-{3,}", l)]  # a rule between sections is not content
+    add("the section equals left-undone.txt (non-blank lines, markdown stripped)",
+        file_lines is not None and section_lines == file_lines,
+        {"file": file_lines, "section": section_lines})
+    add("the section holds no queue line that left-undone.txt does not",
+        file_lines is not None and not [l for l in section_lines if l.startswith("- ") and l not in file_lines],
+        [l for l in section_lines if l.startswith("- ") and l not in (file_lines or [])])
     wanted = [
         ("past review_after: 2, third state (refresh left no refresh.json)",
          (r"past review_after\b[^\d\n]{0,25}\b2\b", r"not checked", r"refresh"), None),

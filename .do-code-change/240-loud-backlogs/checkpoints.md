@@ -175,3 +175,15 @@ Asked (one question): hand pass of ~100 bugs on the new left-undone and lint-fix
 Mark: "Hand pass, ~100 bugs (Recommended)". tests-bite is recorded as a named exception with the hand pass as evidence.
 Hand pass result (developer, harness `hand-mutation-lu.py.txt`, results `hand-mutation-lu-result.json`): 119 mutants (M000 a canary), 111 killed, 6 real survivors each killed by a new test in `test_cycle_scope.py` (red against its mutant on a scratch copy, frozen at step `mutation-1`: M018, M034, M059, M063, M078, M103), 2 equivalent (M042 a 24 h boundary to the microsecond, M046 unreachable for a report-only folder), 0 timeouts; no implementation bug found, no implementation code changed. Checked by the orchestrator: `test_cycle_scope.py` 310/310, check-freeze PASS, `git diff -- scripts/` empty.
 Next (morning session): code review (code-reviewer, cap 3), verify (architect; tests-bite a named exception with this pass as evidence), the finishing decision, finish, the install SOP, card 240 step 4.
+
+## Review round 1 — 2026-11-18
+Verdict: not yet met, 10 open blocking items (review-findings.md, ledger round 1). Back to implement: fix round 1, the first of the 3 retries; the next review is round 2.
+
+## Module question — 2026-11-18
+Asked: move the counter out of wiki-cycle-scope.py into its own module, or keep it and move only the file-shape docstring out.
+Mark (terminal): "ok sounds good, lets do that" — read as: finish this change first with the docstring move and the fixes, keep the counter in place; the split is a separate later run (its own clarify, baseline-move-compare testing; it would take `left-undone` and `unfinished` together, the run-state reporting block).
+
+## Module question, corrected — 2026-11-18
+The orchestrator misread Mark's question ("we want to test this as is and then do the change after? that seems excessive? doesnt it make more sense to do it right from the start?"): he meant doing the split inside this change rather than testing and installing lesson #9 and then reopening the code. The docstring-only move was also wrong on its own terms: the script's docstring is the one source of the rules (CHANGELOG), so moving the file-shape part out would split the spec. The developer was told to skip the docstring move (item 1).
+Asked: put the split (left-undone, lint-fixes and unfinished into their own module) into this change before verify, or keep it a separate run after install.
+Mark (terminal): "yes please" — the split goes into this change, as the fix for standards-1, tested by baseline-move-compare (unpaid script suite before and after, byte-compare of left-undone output on both notebooks); the docstring moves with its code.

@@ -304,7 +304,7 @@ Everything waiting on the user, one line each, with what to do and where:
   - `<N> semantic lint findings, applied or declined not recorded (no fix step in this mode) — <run-folder>/lint-semantic.md` when it says `no fix step in this mode` (`--lint-only --semantic`)
   - `<N> semantic lint findings, applied or declined not recorded — <run-folder>/lint-semantic.md` when it says `not checked (the fix step left no lint-fixes.txt` or `(lint-fixes.txt unreadable)`; and for any other `<N>, not checked (…)` line (a partial lint, an unreadable mode) when the run folder holds no `lint-fixes.txt` (with one, the first wording)
 
-  Nothing for 0 findings, a record that covers every finding, no semantic lint, or a `Semantic findings: not checked (…)` line with no count (an unusable findings list, an unreadable file: Left undone carries it). With no `left-undone.txt` in the run folder there is no N: write `lint fixes awaiting approval — <run-folder>/lint-semantic.md` with no count. This line is about semantic findings only: mechanical lint findings are named in Left undone alone (cycle Step 5's fixes cover both, so the old generic line is narrowed on purpose).
+  Nothing for 0 findings, a record that covers every finding, no semantic lint, or a `Semantic findings: not checked (…)` line with no count (an unusable findings list, an unreadable file: Left undone carries it). With no `left-undone.txt` in the run folder there is no N: write `lint fixes awaiting approval — <run-folder>/lint-semantic.md` with no count. This line is about semantic findings only: mechanical lint findings are named in Left undone alone.
 - Best-practices synthesis awaiting your approval (when `synthesis.json` says `awaiting_approval`): N entries, `<run-folder>/synthesis.md`
 
 (If nothing waits: "Nothing.")
@@ -314,7 +314,7 @@ Everything waiting on the user, one line each, with what to do and where:
 
 Print the report inline (not just a file path). The morning report is meant to be READ, not filed and forgotten. Show it directly, then mention where the file is saved.
 
-If `--brief`, just show the Numbers table, Recommendations and Needs you — skip the details. After Numbers, and only when `fallbacks.txt` holds N > 0 fallback lines, add one line: `Fallbacks: N — see the full report`. Then, also after Numbers, the Left undone line: line 1 of `left-undone.txt` verbatim, followed by ` — see the full report` only when that line reads `Left undone: <N> queue(s)` (not after `Left undone: nothing` or the two `not checked` states, which are complete as they stand); the line is the file's own, so compose no count.
+If `--brief`, just show the Numbers table, Recommendations and Needs you — skip the details. After Numbers, and only when `fallbacks.txt` holds N > 0 fallback lines, add one line: `Fallbacks: N — see the full report`. Then, also after Numbers, the Left undone line: line 1 of `left-undone.txt` verbatim, followed by ` — see the full report` only when that line reads `Left undone: <N> queue(s)` (not after `Left undone: nothing` or the two `not checked` states, which are complete as they stand); the line is the file's own, so compose no count. When `left-undone.txt` is absent, print that no-file state's line instead (`Left undone: not checked (no left-undone.txt in the run folder)`, or for a standalone report `Left undone: not checked (standalone report: no run folder)`), never nothing.
 
 **`⚠️ Needs you` is always the last section**, in the file and inline: the user reads from the bottom up and looks there first.
 

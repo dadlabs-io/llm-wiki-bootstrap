@@ -13,6 +13,11 @@ Builds each case's sandbox with the suite's own `setup` and `prompt()` (needs `q
   Decisions-needed-11 rule, Left undone verbatim, Needs you last, its semantic line as the wiki-report skill words
   it), the scratchpad's Phase 8 and 9 set to done, then `check()` with an empty session.
 
+The Numbers row and the Needs-you line of that report are written by this test from left-undone.txt, so the two
+checks that read them (names in COMPOSED) cannot fail here: they print "PASS (composed)", and what /wiki-report
+writes there is graded only by a paid session. The wiki-report skill's own text is checked directly (every Needs-you
+wording, the no-file lines, the --brief rule) and the Left undone section check is shown to fail a tampered report.
+
 Checks that read the model's session (completed, denials, workers spawned, Phase 8 and 9 done) cannot be graded
 here: they are listed apart as "needs the paid session" and are not failures. The sandbox is torn down at the end.
 The case files are the eval-case-writer's and are read, never edited, by this test.
@@ -43,6 +48,21 @@ NEEDS_SESSION = (
 # plan, Testing Decisions common-check table: the branch drops these
 DROPPED = {"left-undone-planted": ("no --full-only step ran", "pending queue empty", "triage ran: one log row"),
            "left-undone-clean": ("quick steps all wrote their pair", "triage ran: one log row")}
+
+# Checks that read a line this test composed itself from left-undone.txt (compose_report): they cannot fail on a
+# model's wording here, so a pass is printed as "PASS (composed)", never as proof of what /wiki-report writes. The
+# section's own lines are not in this list: the section is the script's file verbatim, so those checks do bite.
+COMPOSED = ("the Numbers row's stale count equals", "Needs you carries")
+
+SKILL_TEXT = REPO / "skills" / "wiki-report" / "SKILL.md"
+# the Needs-you wordings and the no-file lines of the wiki-report skill, as the skill text writes them
+NEEDS_AWAITING = "<N> semantic lint findings awaiting your approval — <run-folder>/lint-semantic.md"
+NEEDS_NO_FIX = ("<N> semantic lint findings, applied or declined not recorded (no fix step in this mode)"
+                " — <run-folder>/lint-semantic.md")
+NEEDS_NOT_RECORDED = "<N> semantic lint findings, applied or declined not recorded — <run-folder>/lint-semantic.md"
+NEEDS_GENERIC = "lint fixes awaiting approval — <run-folder>/lint-semantic.md"
+NO_FILE = "Left undone: not checked (no left-undone.txt in the run folder)"
+NO_FILE_STANDALONE = "Left undone: not checked (standalone report: no run folder)"
 
 failures: list[str] = []
 
@@ -102,7 +122,8 @@ def report(label: str, results: list[dict], kind: str) -> None:
     print(f"\n=== {label} ({kind}) ===", flush=True)
     for r in results:
         apart = r["name"].startswith(NEEDS_SESSION)
-        tag = "NEEDS-PAID-SESSION" if apart else ("PASS" if r["ok"] else "FAIL")
+        passed = "PASS (composed)" if r["name"].startswith(COMPOSED) else "PASS"
+        tag = "NEEDS-PAID-SESSION" if apart else (passed if r["ok"] else "FAIL")
         if not apart and not r["ok"]:
             failures.append(f"{label}: {r['name']}  [{r['detail']}]")
         print(f"  {tag:18} {r['name']}" + ("" if r["ok"] or apart else f"\n{'':21}detail: {r['detail']}"), flush=True)
@@ -121,6 +142,65 @@ def own(label: str, name: str, ok: bool, detail: object = "") -> None:
         failures.append(f"{label}: {name}  [{detail}]")
 
 
+def needs_you_wordings(skill: str) -> None:
+    """The wiki-report skill text carries each Needs-you wording and each no-file line compose_report writes, and
+    compose_report writes each branch from the left-undone.txt line the skill says picks it (no model, no sandbox)."""
+    label = "T"
+    for name, wording in (("awaiting", NEEDS_AWAITING), ("no fix step", NEEDS_NO_FIX),
+                          ("not recorded", NEEDS_NOT_RECORDED), ("generic, no left-undone.txt", NEEDS_GENERIC)):
+        own(label, f"wiki-report SKILL.md carries the '{name}' Needs-you wording", f"`{wording}`" in skill, wording)
+    for name, line in (("no left-undone.txt", NO_FILE), ("standalone report", NO_FILE_STANDALONE)):
+        own(label, f"wiki-report SKILL.md names the '{name}' state's line", f"`{line}`" in skill, line)
+    brief = next((l for l in skill.splitlines() if l.startswith("If `--brief`")), "")
+    own(label, "the --brief rule prints the no-file state's line when left-undone.txt is absent",
+        f"`{NO_FILE}`" in brief and f"`{NO_FILE_STANDALONE}`" in brief, brief[-400:])
+    own(label, "wiki-report SKILL.md prints nothing for 0 findings, no semantic lint or an unusable list",
+        "Nothing for 0 findings" in skill, "")
+    sem = {"awaiting": ("- Semantic findings: 2 — awaiting your approval; the findings are in lint-semantic.md (run x)",
+                        NEEDS_AWAITING, "2"),
+           "no fix step": ("- Semantic findings: 5 — no fix step in this mode; the findings are in lint-semantic.md",
+                           NEEDS_NO_FIX, "5"),
+           "not recorded": ("- Semantic findings: 5, not checked (the fix step left no lint-fixes.txt: applied and "
+                            "declined were not recorded)", NEEDS_NOT_RECORDED, "5")}
+    with tempfile.TemporaryDirectory(prefix="lu-needs-") as td:
+        rf = Path(td)
+        for name, (line, wording, n) in sem.items():
+            (rf / "left-undone.txt").write_text(f"Left undone: 1 queue(s)\n{line}\n", encoding="utf-8")
+            tail = compose_report(rf, "x").split("## ⚠️ Needs you")[-1].split()
+            want = "- " + wording.replace("<N>", n).replace("<run-folder>", rf.as_posix())
+            got = " ".join(tail)
+            own(label, f"compose_report words the '{name}' branch as the skill does", got == want, (got, want))
+        (rf / "left-undone.txt").write_text("Left undone: nothing\n", encoding="utf-8")
+        tail = compose_report(rf, "x").split("## ⚠️ Needs you")[-1].split()
+        own(label, "compose_report writes 'Nothing.' when the file has no semantic line", tail == ["Nothing."], tail)
+
+
+def tamper_checks(suite, case, ctx, cid, rf, before) -> None:
+    """The case-A check must fail a section that is not the file word for word: an invented queue line, a reworded
+    line, a dropped line. Each is run through check() and put back."""
+    lu = (rf / "left-undone.txt").read_text(encoding="utf-8")
+    first = next(l for l in lu.splitlines() if l.startswith("- "))
+    base = compose_report(rf, cid)
+    needs = "## ⚠️ Needs you"
+    variants = {"an invented queue line": base.replace(needs, f"- Invented queue: 9 — not in the file\n\n{needs}", 1),
+                "a reworded queue line": base.replace(first, first + " (reworded)", 1),
+                "a dropped queue line": base.replace(first + "\n", "", 1)}
+    report_path = rf / f"{cid}-run-cycle-report.md"
+    try:
+        for name, text in variants.items():
+            report_path.write_text(text, encoding="utf-8")
+            res = suite.check(case, before, before, empty_session(), ctx)
+            same = next((r for r in res if r["name"].startswith("the section equals left-undone.txt")), None)
+            own("A", f"the section-equals-file check fails {name}", same is not None and not same["ok"],
+                "check absent" if same is None else "passed")
+            if name == "an invented queue line":
+                extra = next((r for r in res if r["name"].startswith("the section holds no queue line")), None)
+                own("A", "the no-extra-queue-line check fails an invented queue line",
+                    extra is not None and not extra["ok"], "check absent" if extra is None else "passed")
+    finally:
+        report_path.write_text(base, encoding="utf-8")
+
+
 def build(suite, tmp: Path, kind: str):
     case = case_of(kind)
     ctx = suite.setup("lutest", tmp / kind / "sandbox", REPO)
@@ -136,19 +216,57 @@ def empty_session() -> dict:
             "text": "", "error_texts": {}, "stderr_tail": "", "wall_s": 0}
 
 
+def case_a_expected(cid: str) -> list[str]:
+    """left-undone.txt for case A's planted notebook: the plan's Case A list (2 past with refresh.json deliberately
+    absent, 1 with no review_after, 1 malformed, the lint's two kinds, 2 of 5 semantic findings awaiting, the four
+    sources with 'already covered' left out, the tickets, the staged entry, the checklist), worded as the script words
+    them. Written out in full so a changed count or reason fails here, before a paid session."""
+    still = "still present after the cycle Step 5 fixes (not approved, declined, or no fix step covers this kind)"
+    src = "https://example.com/skilltest/"
+    return [
+        "Left undone: 15 queue(s)",
+        "- Past review_after: 2, not checked (refresh left no refresh.json)",
+        "- No review_after: 1 — refresh cannot see an entry with no review_after; add the date (the lint lists them "
+        "under Missing lifecycle fields)",
+        "- review_after not a date: 1 — refresh cannot read it; correct the date (the lint lists them under Dates not "
+        "in ISO form)",
+        f"- Lint broken links: 2 — {still}",
+        f"- Lint unquoted yaml: 1 — {still}",
+        f"- Semantic findings: 2 — awaiting your approval; the findings are in lint-semantic.md (run {cid}); no later "
+        "cycle step shows them again",
+        f"- Source {src}lu-skipped-page: skipped — near-duplicate of an entry already in the wiki (duplicate gate)",
+        f"- Source {src}lu-deferred-page: deferred — worker ran out of its turn budget; deferred to the next run",
+        f"- Source {src}lu-failed-page: failed — fetch returned 404 not found",
+        f"- Source {src}lu-low-tier-page: skipped — tier LOW: promotional page, not queued",
+        "- Tickets in _inbox/pending/: 3 — not triaged: arrived after triage, or triage did not complete",
+        "- Tickets in this session's bucket main: 2 — left in the bucket after ingest: dropped, failed, deferred or "
+        "not reached",
+        "- Other readers' buckets, still to process: security 2, mark 1",
+        "- Staged entries: 1 — staged before this run, or held by the checker; /wiki-promote",
+        "- Discovery checklists: 1 — still in _inbox/discovered/ (discovery files a processed one in _inbox/done/); "
+        "whether it was reviewed is not recorded",
+    ]
+
+
 def grade(suite, case, ctx, cid, rf, label) -> None:
     p = run_script(suite, ctx, "wiki-cycle-scope.py", "--topic", suite.NOTEBOOK, "left-undone", "--run-folder", str(rf))
     own(label, "left-undone exits 0", p.returncode == 0, p.stdout + p.stderr)
     if p.returncode != 0:
         return
-    print("  left-undone.txt:\n" + "".join(f"      | {l}\n" for l in (rf / "left-undone.txt").read_text(encoding="utf-8").splitlines()),
-          end="", flush=True)
+    written = (rf / "left-undone.txt").read_text(encoding="utf-8").splitlines()
+    print("  left-undone.txt:\n" + "".join(f"      | {l}\n" for l in written), end="", flush=True)
+    if case["kind"] == "left-undone-planted":
+        want = case_a_expected(cid)
+        own(label, "left-undone.txt equals the case-A expected lines", written == want,
+            {"missing": [l for l in want if l not in written], "unexpected": [l for l in written if l not in want]})
     (rf / f"{cid}-run-cycle-report.md").write_text(compose_report(rf, cid), encoding="utf-8")
     (rf / f"{cid}-run-cycle-report.json").write_text("{}", encoding="utf-8")
     finish_scratchpad(rf)
     before = suite.snapshot(ctx)
     results = suite.check(case, before, before, empty_session(), ctx)
     report(label, results, case["kind"])
+    if case["kind"] == "left-undone-planted":
+        tamper_checks(suite, case, ctx, cid, rf, before)
 
 
 def case_a(suite, tmp: Path) -> None:
@@ -210,6 +328,8 @@ def case_b(suite, tmp: Path) -> None:
 def main() -> int:
     suite = load_suite()
     t0 = time.time()
+    print("\n=== wiki-report skill text and the composer's Needs-you branches ===", flush=True)
+    needs_you_wordings(SKILL_TEXT.read_text(encoding="utf-8"))
     with tempfile.TemporaryDirectory(prefix="lu-fixture-") as td:
         tmp = Path(td)
         for name, fn in (("A", case_a), ("B", case_b)):
