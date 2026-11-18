@@ -199,3 +199,7 @@ Verdict: 25 findings, 5 blocking (standards-40, -41, -42, -43, spec-19), all in 
 ## Budget — 2026-11-18
 Asked: raise the run's cost cap from $120 to $150 ($98.29 used; fix round 2, the case-writer, review round 3 and verify estimated at $25-30).
 Mark (terminal): "yes please contninue" — read as yes to the raise only; the re-freeze question stays open and is asked again before verify.
+
+## The strict section check (standards-40) — 2026-11-18
+The case writer stopped (no mode named), and its rules showed the first plan was wrong too: an existing kind's check is never changed, so it could not rewrite the hand-written checks inside `left-undone-planted`. Asked: A, remove the hand-written checks and have eval-case-writer (mode `fresh`) write new cases for the strict check, then a small paid red-then-green; or B, remove them and record that no paid case compares the section to the file.
+Mark (terminal): "A sounds better I think eh" — A. check.py restored to 1913d55 (the version both paid runs used); the writer's answer is saved unchanged; the fixture's tamper lookups and COMPOSED names follow its new names; the paid run waits for Mark's go.

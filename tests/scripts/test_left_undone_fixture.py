@@ -44,19 +44,24 @@ NEEDS_SESSION = (
     "scratchpad: Phase 9 done",
     "committed at the end",  # cycle Step 9's commit is the session's
     "nothing left uncommitted",  # the same: only the session commits the integration scripts' and the report's files
+    "the session did not write left-undone.txt itself",  # reads the session's tool calls: empty here
 )
 # plan, Testing Decisions common-check table: the branch drops these
 DROPPED = {"left-undone-planted": ("no --full-only step ran", "pending queue empty", "triage ran: one log row"),
-           "left-undone-clean": ("quick steps all wrote their pair", "triage ran: one log row")}
+           "left-undone-clean": ("quick steps all wrote their pair", "triage ran: one log row"),
+           "left-undone-verbatim": ("no --full-only step ran", "pending queue empty", "triage ran: one log row")}
 
 # Checks that read a line this test composed itself from left-undone.txt (compose_report), or grade the composer
 # itself: they cannot fail on a model's wording here, so a pass is printed as "PASS (composed)", never as proof of what
 # /wiki-report writes. The Left undone section is composed too: compose_report writes the file's text, so the checks
 # on it pass by construction in grade() and bite only in tamper_checks, where the report is altered first. Each entry
-# is a name prefix of check.py's checks (or of this test's own composer checks); extend it when check.py's
-# case-A section checks are renamed.
+# is a name prefix of check.py's checks (or of this test's own composer checks); the two section-against-file prefixes
+# are the left-undone-verbatim kind's (eval-case-writer's), run here over case A's built folder.
+SECTION_EQUALS_FILE = "the section's lines are the file's lines"
+NO_FOREIGN_QUEUE_LINE = "no queue line (a line starting '- ') in the section that the file does not hold"
 COMPOSED = ("the Numbers row's stale count equals", "Needs you carries", "compose_report words",
-            "the section equals left-undone.txt", "the section reads 'Left undone: nothing'", "no queue line under")
+            SECTION_EQUALS_FILE, NO_FOREIGN_QUEUE_LINE, "the section reads 'Left undone: nothing'",
+            "no queue line under")
 
 SKILL_TEXT = REPO / "skills" / "wiki-report" / "SKILL.md"
 # the Needs-you wordings and the no-file lines of the wiki-report skill, as the skill text writes them
@@ -181,8 +186,8 @@ def needs_you_wordings(skill: str) -> None:
 
 
 def tamper_checks(suite, case, ctx, cid, rf, before) -> None:
-    """The case-A check must fail a section that is not the file word for word: an invented queue line, a reworded
-    line, a dropped line. Each is run through check() and put back."""
+    """The left-undone-verbatim checks, run over case A's built folder, must fail a section that is not the file word
+    for word: an invented queue line, a reworded line, a dropped line. Each is run through check() and put back."""
     lu = (rf / "left-undone.txt").read_text(encoding="utf-8")
     first = next(l for l in lu.splitlines() if l.startswith("- "))
     base = compose_report(rf, cid)
@@ -195,11 +200,11 @@ def tamper_checks(suite, case, ctx, cid, rf, before) -> None:
         for name, text in variants.items():
             report_path.write_text(text, encoding="utf-8")
             res = suite.check(case, before, before, empty_session(), ctx)
-            same = next((r for r in res if r["name"].startswith("the section equals left-undone.txt")), None)
+            same = next((r for r in res if r["name"].startswith(SECTION_EQUALS_FILE)), None)
             own("A", f"the section-equals-file check fails {name}", same is not None and not same["ok"],
                 "check absent" if same is None else "passed")
             if name == "an invented queue line":
-                extra = next((r for r in res if r["name"].startswith("the section holds no queue line")), None)
+                extra = next((r for r in res if r["name"].startswith(NO_FOREIGN_QUEUE_LINE)), None)
                 own("A", "the no-extra-queue-line check fails an invented queue line",
                     extra is not None and not extra["ok"], "check absent" if extra is None else "passed")
     finally:
@@ -271,7 +276,9 @@ def grade(suite, case, ctx, cid, rf, label) -> None:
     results = suite.check(case, before, before, empty_session(), ctx)
     report(label, results, case["kind"])
     if case["kind"] == "left-undone-planted":
-        tamper_checks(suite, case, ctx, cid, rf, before)
+        verbatim = case_of("left-undone-verbatim")  # the same seeded folder, graded by the section-against-file kind
+        report(f"{label} (verbatim)", suite.check(verbatim, before, before, empty_session(), ctx), verbatim["kind"])
+        tamper_checks(suite, verbatim, ctx, cid, rf, before)
 
 
 def case_a(suite, tmp: Path) -> None:

@@ -823,6 +823,8 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_left_undone_planted(case, ctx, cycle_id)
     elif case["kind"] == "left-undone-clean":
         _prepare_left_undone_clean(case, ctx, cycle_id)
+    elif case["kind"] == "left-undone-verbatim":
+        _prepare_left_undone_planted(case, ctx, cycle_id)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -3076,16 +3078,6 @@ def _check_left_undone_planted(case: dict, add, res: list, ctx: dict, run: dict,
     lines = _lu_lines(section)
     add("the section does not read 'Left undone: nothing'", not any(re.match(r"left undone\W*nothing", l, re.I) for l in lines),
         lines[:3])
-    # the report pastes left-undone.txt word for word: the section is the file's non-blank lines, nothing else
-    lu_file = run_dir / "left-undone.txt"
-    file_lines = _lu_lines(lu_file.read_text(encoding="utf-8", errors="replace")) if lu_file.is_file() else None
-    section_lines = [l for l in lines if not re.fullmatch(r"-{3,}", l)]  # a rule between sections is not content
-    add("the section equals left-undone.txt (non-blank lines, markdown stripped)",
-        file_lines is not None and section_lines == file_lines,
-        {"file": file_lines, "section": section_lines})
-    add("the section holds no queue line that left-undone.txt does not",
-        file_lines is not None and not [l for l in section_lines if l.startswith("- ") and l not in file_lines],
-        [l for l in section_lines if l.startswith("- ") and l not in (file_lines or [])])
     wanted = [
         ("past review_after: 2, third state (refresh left no refresh.json)",
          (r"past review_after\b[^\d\n]{0,25}\b2\b", r"not checked", r"refresh"), None),
@@ -3149,6 +3141,101 @@ def _check_left_undone_clean(case: dict, add, res: list, ctx: dict, run: dict, r
         section[:300])
     bullets = [l for l in section.splitlines() if re.match(r"\s*[-*]\s+\S", l)]
     add("no queue line under 'Left undone: nothing'", not bullets, bullets[:3])
+
+
+# ---------- kinds "left-undone-verbatim" / "left-undone-resumed": the section is the script's file, copied (task #240) ----------
+
+def _lu_norm_line(line: str) -> str:
+    """One line reduced to its words. What counts as FORMATTING a markdown report may put around a pasted line
+    (allowed, applied to the file and the section alike): a leading '> ', a leading list marker (- * +, removed
+    before emphasis so '* x' and '- x' agree), '*' and backtick emphasis, backslash escapes before punctuation,
+    whitespace runs, and an em or en dash written as a hyphen (punctuation, not a word). Anything else is a change
+    to the text: a reworded, added, dropped or reordered line, joined or split lines, a table rendering."""
+    s = line.strip()
+    while s.startswith(">"):
+        s = s[1:].lstrip()
+    s = re.sub(r"^[-*+]\s+", "", s)
+    s = re.sub(r"\\([^\w\s])", r"\1", s)
+    s = re.sub(r"[*`]", "", s)
+    s = s.replace("\u2014", "-").replace("\u2013", "-")
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _lu_norm_lines(text: str) -> list:
+    """The normalised lines of a text; blank lines, code-fence lines and horizontal rules are layout and are dropped."""
+    out = []
+    for raw in text.splitlines():
+        s = raw.strip()
+        if not s or s.startswith("```") or re.fullmatch(r"(?:[-*_]\s*){3,}", s):
+            continue
+        n = _lu_norm_line(s)
+        if n:
+            out.append(n)
+    return out
+
+
+def _lu_section_lines(rtext: str):
+    """(section text, normalised lines) of the report's Left undone section, or (None, []). When the heading itself
+    carries line 1 ('## Left undone: 3 queue(s)') that text counts as the section's first line: the heading is
+    formatting around the pasted line, not a reword (a lenient reading of 'word for word')."""
+    m = re.search(r"^##\s+([^\n]*left undone[^\n]*)\n(.*?)(?=^##\s|\Z)", rtext, re.I | re.M | re.S)
+    if not m:
+        return None, []
+    lines = _lu_norm_lines(m.group(2))
+    head = _lu_norm_line(re.sub(r"^[^\w]+", "", m.group(1)))
+    if re.match(r"left undone\s*:", head, re.I):
+        lines = [head] + lines
+    return m.group(2), lines
+
+
+def _lu_model_wrote_file(run: dict) -> list:
+    """Calls in which the session itself wrote left-undone.txt (Write, Edit, or a shell redirect or tee into it)."""
+    hits = []
+    for c in run["tool_calls"]:
+        inp = c.get("input") or {}
+        if c["name"] in ("Write", "Edit") and str(inp.get("file_path", "")).replace("\\", "/").endswith("left-undone.txt"):
+            hits.append(c["name"])
+        elif c["name"] == "Bash" and re.search(r"(?:>>?|\btee\b(?:\s+-a)?)\s*[\"']?[^\s\"'|;&]*left-undone\.txt",
+                                               str(inp.get("command", ""))):
+            hits.append("Bash: " + str(inp.get("command", ""))[:120])
+    return hits
+
+
+def _lu_copy_checks(add, ctx: dict, run: dict, rtext: str, ftext: str) -> None:
+    """The section against the file: same lines, same order, nothing added, reworded or dropped; and no queue line
+    the file does not hold."""
+    section, got = _lu_section_lines(rtext)
+    want = _lu_norm_lines(ftext)
+    add("the session did not write left-undone.txt itself (one script writes it; the model composes no count)",
+        not _lu_model_wrote_file(run), _lu_model_wrote_file(run))
+    missing = [l for l in want if l not in got]
+    extra = [l for l in got if l not in want]
+    add("the section's lines are the file's lines, in order, none added, reworded or dropped",
+        got == want, {"missing": missing[:3], "extra": extra[:3], "section": got[:4], "file": want[:4]})
+    queue_in_section = [_lu_norm_line(l) for l in (section or "").splitlines() if re.match(r"\s*[>\s]*[-*+]\s+\S", l)]
+    foreign = [l for l in queue_in_section if l not in want]
+    add("no queue line (a line starting '- ') in the section that the file does not hold", not foreign, foreign[:3])
+
+
+def _check_left_undone_verbatim(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
+    cid = ctx["cycle_id"]
+    # the same two common checks the planted kind drops: a resumed --full run with --full-only step files seeded
+    # and a pending queue that is meant to stay
+    res[:] = [x for x in res if x["name"] not in ("no --full-only step ran", "pending queue empty")]
+    f = run_dir / "left-undone.txt"
+    ftext = _fb_read(f)
+    add("left-undone.txt is in the run folder", f.is_file() and bool(ftext.strip()),
+        sorted(p.name for p in run_dir.iterdir()) if run_dir.is_dir() else "no run folder")
+    queue_raw = [l for l in ftext.splitlines() if l.startswith("- ")]
+    add("premise: left-undone.txt holds at least one queue line (a line starting '- ')", bool(queue_raw),
+        ftext.splitlines()[:3])
+    rtext = _fb_read(run_dir / f"{cid}-run-cycle-report.md")
+    section, _ = _lu_section_lines(rtext)
+    add("the report has a Left undone section", section is not None, [l for l in rtext.splitlines() if l.startswith("## ")])
+    if section is None:
+        return
+    _lu_position(add, rtext)
+    _lu_copy_checks(add, ctx, run, rtext, ftext)
 
 
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
@@ -3586,6 +3673,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_left_undone_planted(case, add, res, ctx, run, run_dir)
     elif case["kind"] == "left-undone-clean":
         _check_left_undone_clean(case, add, res, ctx, run, run_dir)
+    elif case["kind"] == "left-undone-verbatim":
+        _check_left_undone_verbatim(case, add, res, ctx, run, run_dir)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()
