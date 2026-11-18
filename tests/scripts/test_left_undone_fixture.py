@@ -13,10 +13,12 @@ Builds each case's sandbox with the suite's own `setup` and `prompt()` (needs `q
   Decisions-needed-11 rule, Left undone verbatim, Needs you last, its semantic line as the wiki-report skill words
   it), the scratchpad's Phase 8 and 9 set to done, then `check()` with an empty session.
 
-The Numbers row and the Needs-you line of that report are written by this test from left-undone.txt, so the two
-checks that read them (names in COMPOSED) cannot fail here: they print "PASS (composed)", and what /wiki-report
-writes there is graded only by a paid session. The wiki-report skill's own text is checked directly (every Needs-you
-wording, the no-file lines, the --brief rule) and the Left undone section check is shown to fail a tampered report.
+That report is written by this test, so the checks that read only its shape (its sections and their order, the Left
+undone section as the file's text, the Numbers row, the Needs-you line; names in COMPOSED) cannot fail here: they print
+"PASS (composed)", and what /wiki-report writes is graded only by a paid session. The wiki-report skill's own text is
+checked directly (every Needs-you wording, the no-file lines, the --brief rule), case A's folder is also graded by the
+left-undone-verbatim kind, and its section-against-file checks are shown to fail an invented, a reworded and a dropped
+queue line. The left-undone-old-run case is not run here (an unpaid smoke of it was run by hand, checkpoints.md).
 
 Checks that read the model's session (completed, denials, workers spawned, Phase 8 and 9 done) cannot be graded
 here: they are listed apart as "needs the paid session" and are not failures. The sandbox is torn down at the end.
@@ -51,17 +53,19 @@ DROPPED = {"left-undone-planted": ("no --full-only step ran", "pending queue emp
            "left-undone-clean": ("quick steps all wrote their pair", "triage ran: one log row"),
            "left-undone-verbatim": ("no --full-only step ran", "pending queue empty", "triage ran: one log row")}
 
-# Checks that read a line this test composed itself from left-undone.txt (compose_report), or grade the composer
-# itself: they cannot fail on a model's wording here, so a pass is printed as "PASS (composed)", never as proof of what
-# /wiki-report writes. The Left undone section is composed too: compose_report writes the file's text, so the checks
-# on it pass by construction in grade() and bite only in tamper_checks, where the report is altered first. Each entry
-# is a name prefix of check.py's checks (or of this test's own composer checks); the two section-against-file prefixes
-# are the left-undone-verbatim kind's (eval-case-writer's), run here over case A's built folder.
+# Checks that read only what this test composed itself (compose_report writes the report: its sections, their order,
+# the Left undone section as the file's own text, the Numbers row, the Needs-you line) or grade the composer itself:
+# they pass by construction in grade(), so a pass is printed as "PASS (composed)", never as proof of what /wiki-report
+# writes. The section-against-file checks bite only in tamper_checks, where the report is altered first. The
+# "Left undone line: ..." checks are not here: they read the script's own wording in the file, which can fail in
+# grade(). Each entry is a name prefix of check.py's checks (or of this test's own composer checks); the two
+# section-against-file prefixes are the left-undone-verbatim kind's (eval-case-writer's), run over case A's folder.
 SECTION_EQUALS_FILE = "the section's lines are the file's lines"
 NO_FOREIGN_QUEUE_LINE = "no queue line (a line starting '- ') in the section that the file does not hold"
 COMPOSED = ("the Numbers row's stale count equals", "Needs you carries", "compose_report words",
             SECTION_EQUALS_FILE, NO_FOREIGN_QUEUE_LINE, "the section reads 'Left undone: nothing'",
-            "no queue line under")
+            "no queue line under", "the report has a Left undone section", "Left undone is the second-to-last section",
+            "the section does not read 'Left undone: nothing'")
 
 SKILL_TEXT = REPO / "skills" / "wiki-report" / "SKILL.md"
 # the Needs-you wordings and the no-file lines of the wiki-report skill, as the skill text writes them
@@ -182,7 +186,7 @@ def needs_you_wordings(skill: str) -> None:
             own(label, f"compose_report words the '{name}' branch as the skill does", got == want, (got, want))
         (rf / "left-undone.txt").write_text("Left undone: nothing\n", encoding="utf-8")
         tail = compose_report(rf, "x").split("## ⚠️ Needs you")[-1].split()
-        own(label, "compose_report writes 'Nothing.' when the file has no semantic line", tail == ["Nothing."], tail)
+        own(label, "compose_report words 'Nothing.' when the file has no semantic line", tail == ["Nothing."], tail)
 
 
 def tamper_checks(suite, case, ctx, cid, rf, before) -> None:

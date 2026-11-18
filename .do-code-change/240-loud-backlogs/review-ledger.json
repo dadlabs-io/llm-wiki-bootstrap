@@ -217,6 +217,80 @@
         "tests/skills/wiki-cycle/cases.json": "cc81de01f23b59b4a1b7096fbeb7142a059d3031950782215f16544b58e4bca9",
         "tests/skills/wiki-cycle/check.py": "631e5f8a907b405ee7afa8aaeacb8a1d7722761f1a5c46d40dc26c1e9b61c79e"
       }
+    },
+    {
+      "round": 3,
+      "at": "2026-11-18T21:14:40Z",
+      "diff_sha256": "d75d27f68db269013751f61ed1e1b1891b2c349711b1e7ddfced3c90c33fd020",
+      "findings_sha256": "0e48112955a3c599bc8423076fea2e5365c4355f25378335e0fedee18103cf6a",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-50",
+        "standards-51",
+        "standards-52",
+        "standards-53",
+        "standards-54",
+        "standards-55",
+        "standards-56",
+        "standards-57",
+        "standards-58",
+        "standards-59",
+        "standards-60",
+        "standards-61",
+        "standards-62",
+        "spec-28",
+        "spec-29",
+        "spec-30",
+        "spec-31",
+        "spec-32",
+        "spec-33",
+        "spec-34"
+      ],
+      "new": [
+        "standards-50",
+        "standards-51",
+        "standards-52",
+        "standards-53",
+        "standards-54",
+        "standards-55",
+        "standards-56",
+        "standards-57",
+        "standards-58",
+        "standards-59",
+        "standards-60",
+        "standards-61",
+        "standards-62",
+        "spec-28",
+        "spec-29",
+        "spec-30",
+        "spec-31",
+        "spec-32",
+        "spec-33",
+        "spec-34"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "7f65e63c77097b2e7ea7828795115ead8d69ce8e80dd9158d5d613eecd1c7b59",
+        "INSTALL-INVENTORY.md": "291d617164798d977ada6044c0e1945fbf70ca1376385773edbbf2087e3f3d4e",
+        "scripts/_cycle_common.py": "e02449cc25452f80f96d5a6aca5b2fb287d556a88f271aaeead651c9fe8ad66c",
+        "scripts/_install_tooling.py": "9f57072106e0930f3dc92027a04c8583cd645bfcb9aa196bd85a359a41c06fb2",
+        "scripts/_run_state.py": "62d841703bef3a4ec61db935aeac9d0699bee9354e6dad77544ce482bb7928ac",
+        "scripts/wiki-cycle-scope.py": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+        "scripts/wiki-triage.py": "547c616fdd68a55cfc1f39280245f80be2f7f7bca4eb60bddf4414a6cb536d89",
+        "skills/wiki-cycle/SKILL.md": "86604e8c6067e58defe0bcfe93eb5faccd2b0123e04dd640d35ad14dcdde2fc4",
+        "skills/wiki-cycle/reference.md": "7b115845387f1e8cb725d3548b8d2bf62cdf7d43446505c8d65570c008f127e8",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "74b48949973c34e75a930d52b41049f9f1f9bf68d3c35d2f679b10ec39ea13aa",
+        "skills/wiki-report/SKILL.md": "cd5a9acae97176bc8f411c2fe2c81b4bfcce90e8c45b12474171e7a1ceeb2beb",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "6cd21d25e82a3df01ac34627f9b2adb4c0b8bdaee647ea06c8747f716c36c2bb",
+        "tests/scripts/test_cycle_scope.py": "1f5ebcf57cfa1e5270168013c5d0c5046e71021804cd97e8203f1089d93f3c0b",
+        "tests/scripts/test_left_undone_fixture.py": "a18dea65238e20887cb100577fed7bf38260644a0e9ec74521e7fc31f182554c",
+        "tests/scripts/test_wiki_triage.py": "abc0e40c6c6a2ac3e0c6a73498f432d4e2ce795a9b2f18be29d49c2e66714b5a",
+        "tests/skills/PENDING.md": "c0de3f43fb5cdb960157904abab2f863cd7d96f67af27f0f52e542a56d0bb35a",
+        "tests/skills/wiki-cycle/cases.json": "0f8f887f994b70778269074a0cc809313e196b3bd5c52e463df2966efefbdd8a",
+        "tests/skills/wiki-cycle/check.py": "3644a0f7f45f8695d61f98a8d650286c2b4f3df21f04ddee07e65f77213fdb80"
+      }
     }
   ],
   "items": {
@@ -567,8 +641,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af",
+      "verdict_round": 3,
+      "fingerprint": "c4ffd40b2fe1286c7ec2b0472fe944499488cadeaf6725e578b25036d8cf4a60",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -581,6 +655,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "c4ffd40b2fe1286c7ec2b0472fe944499488cadeaf6725e578b25036d8cf4a60"
         }
       ]
     },
@@ -593,8 +672,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a",
+      "verdict_round": 3,
+      "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -607,6 +686,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f"
         }
       ]
     },
@@ -1139,8 +1223,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a",
+      "verdict_round": 3,
+      "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1153,6 +1237,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f"
         }
       ]
     },
@@ -1165,8 +1254,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4",
+      "verdict_round": 3,
+      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1179,6 +1268,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
         }
       ]
     },
@@ -1191,8 +1285,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4",
+      "verdict_round": 3,
+      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1205,6 +1299,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
         }
       ]
     },
@@ -2198,6 +2297,526 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f"
+        }
+      ]
+    },
+    "standards-50": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] PY11 `tests/scripts/test_left_undone_fixture.py:185`: the composer's own check prints as proof. Quote: `own(label, \"compose_report writes 'Nothing.' when the file has no semantic line\", tail == [\"Nothing.\"], tail)`. It grades the test's own composer, but its name misses the COMPOSED prefix \"compose_report words\" (line 182 matches), so it prints a plain PASS. Sibling of standards-42. Fix: rename it to start \"compose_report words ...\" or add \"compose_report writes\" to COMPOSED.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 185,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e17b9a57639e4921c3a49782a7c9894a90ed7974d1ca558d896dc8899ae68e56"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
+        }
+      ]
+    },
+    "standards-51": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] C2 `tests/scripts/test_left_undone_fixture.py:56-57`: the new COMPOSED comment is wrong both ways. It says the section checks \"pass by construction in grade() and bite only in tamper_checks\". \"the report has a Left undone section\" (check.py:3076) and \"Left undone is the second-to-last section\" (check.py:3052, via `_lu_position`) pass by construction and print plain PASS because neither is in COMPOSED, while \"Left undone line: ...\" (check.py:3105) reads the script's own wording and can fail in grade(). Fix: add the composed names to COMPOSED and reword the comment to name which checks grade script output.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 56,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e17b9a57639e4921c3a49782a7c9894a90ed7974d1ca558d896dc8899ae68e56"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
+        }
+      ]
+    },
+    "standards-52": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] PY9 (writer's text) `tests/skills/wiki-cycle/check.py:3198-3200`: the write detector misses routes. Quote: `elif c[\"name\"] == \"Bash\" and re.search(r\"(?:>>?|\\btee\\b(?:\\s+-a)?)...left-undone\\.txt\", ...)`. It backs \"the session did not write left-undone.txt itself\" (:3211) and the old-run check (:3279) but misses `cp`, `mv`, `sed -i` and `python -c \"open('left-undone.txt','w')\"`; a model-written file would then make \"the section's lines are the file's lines\" pass against the model's own file. Fix: widen the pattern, or add a positive check that a call ran `wiki-cycle-scope.py ... left-undone`, or compare the file with the script's own output.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 3198,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f"
+        }
+      ]
+    },
+    "standards-53": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] R9 `scripts/_run_state.py:426`: the re-raised error carries no path. Quote: `raise  # an undecodable README is a read error, though UnicodeDecodeError is a ValueError`. The error gives a byte offset but not the README path; callers at :447 and :610 add none in their windows. Fix: re-raise with the path (for example `raise OSError(f\"{readme}: not UTF-8: {e}\") from e`) and update the test at test_cycle_scope.py:1086-1092, which catches UnicodeDecodeError.",
+      "file": "scripts/_run_state.py",
+      "line": 426,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "dc69989d10c61a401c0a309307232685c665c11457c80384a49be8fe3969bcd9",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "dc69989d10c61a401c0a309307232685c665c11457c80384a49be8fe3969bcd9"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "dc69989d10c61a401c0a309307232685c665c11457c80384a49be8fe3969bcd9"
+        }
+      ]
+    },
+    "standards-54": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] R3 `scripts/_run_state.py:676` (`step_data`: `except (OSError, ValueError): return {}`) and `:400` (`step_status`: `return \"unreadable\"`): sibling of standards-38. An undecodable file now raises for the README (:426) but is classed as `{}` or \"unreadable\" for step files. Both docstrings are truthful. Fix: pick one classification for undecodable files and state it in each docstring.",
+      "file": "scripts/_run_state.py",
+      "line": 676,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "dc69989d10c61a401c0a309307232685c665c11457c80384a49be8fe3969bcd9",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "dc69989d10c61a401c0a309307232685c665c11457c80384a49be8fe3969bcd9"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "dc69989d10c61a401c0a309307232685c665c11457c80384a49be8fe3969bcd9"
+        }
+      ]
+    },
+    "standards-55": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S14/S15 (writer's text) `check.py` `_lu_copy_checks(add, ctx: dict, run: dict, rtext: str, ftext: str)`: `ctx` is never used in the body. Fix: drop the parameter and its argument.",
+      "file": "check.py",
+      "line": null,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "ea67d13eaae6d6cbb763152f9b4a441e4ce80d7c025a4617ac30ccdede6fd9a5",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "ea67d13eaae6d6cbb763152f9b4a441e4ce80d7c025a4617ac30ccdede6fd9a5"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "ea67d13eaae6d6cbb763152f9b4a441e4ce80d7c025a4617ac30ccdede6fd9a5"
+        }
+      ]
+    },
+    "standards-56": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S2 (writer's text) `check.py:3030` `_lu_section` and `_lu_section_lines`: `re.search(r\"^##\\s+([^\\n]*left undone[^\\n]*)\\n(.*?)(?=^##\\s|\\Z)\", ...)` repeats `_lu_section`'s regex. Fix: `_lu_section_lines` calls `_lu_section`.",
+      "file": "check.py",
+      "line": 3030,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "76fc04fdd31daf3abcae4d9c9db9b37274dadf7b3101e06956cb72c917364ee1",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "76fc04fdd31daf3abcae4d9c9db9b37274dadf7b3101e06956cb72c917364ee1"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "76fc04fdd31daf3abcae4d9c9db9b37274dadf7b3101e06956cb72c917364ee1"
+        }
+      ]
+    },
+    "standards-57": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] C2/R3 (writer's text) `check.py:3148`: the header names `\"left-undone-resumed\"`, a kind `check()` never dispatches (dispatch at :3726 and :3728 uses `left-undone-verbatim` and `left-undone-old-run`). Fix: correct the header.",
+      "file": "check.py",
+      "line": 3148,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "2c9bf83a06268c0d6c08690a4b508d7a8063b3c41c01080cd3fbc2d734cbc69e",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "2c9bf83a06268c0d6c08690a4b508d7a8063b3c41c01080cd3fbc2d734cbc69e"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "2c9bf83a06268c0d6c08690a4b508d7a8063b3c41c01080cd3fbc2d734cbc69e"
+        }
+      ]
+    },
+    "standards-58": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] PY9 (writer's text) `_lu_report_text` in check.py: the fallback `sorted(run_dir.glob(\"*report*.md\"))` can grade a different file as the report. \"the report never says 'Left undone: nothing'\" (check.py:3280) passes on empty text when no report exists; the section check still fails, so the case stays red. Fix: drop the fallback and skip the empty-text check.",
+      "file": null,
+      "line": null,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "bb3d4cb45f7f90d7167fd732186fd147cea992b607d4bd834ca65f560c309f5e",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "bb3d4cb45f7f90d7167fd732186fd147cea992b607d4bd834ca65f560c309f5e"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "bb3d4cb45f7f90d7167fd732186fd147cea992b607d4bd834ca65f560c309f5e"
+        }
+      ]
+    },
+    "standards-59": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] C2 `tests/scripts/test_left_undone_fixture.py:16-19`: \"the two checks that read them (names in COMPOSED) cannot fail here\" and \"the Left undone section check is shown to fail a tampered report\" are stale; COMPOSED now has seven prefixes and `tamper_checks` runs three checks. Fix: update the docstring.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 16,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e17b9a57639e4921c3a49782a7c9894a90ed7974d1ca558d896dc8899ae68e56"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
+        }
+      ]
+    },
+    "standards-60": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] T5 `tests/scripts/test_left_undone_fixture.py:188-211` (`tamper_checks`): the variants are invented, reworded and dropped lines only. The `_lu_norm_line` docstring promises that reordered and joined or split lines are caught, and no variant shows allowed formatting still passes. PENDING says the criterion \"is shown by ... the unpaid fixture's tampered reports\". Fix: add a reorder variant and a formatting-only variant that must pass.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 188,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e17b9a57639e4921c3a49782a7c9894a90ed7974d1ca558d896dc8899ae68e56"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
+        }
+      ]
+    },
+    "standards-61": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] PY9 `tests/scripts/test_left_undone_fixture.py:52`: `\"left-undone-verbatim\": (..., \"triage ran: one log row\")`. check.py emits that check only for ingest-only and triage (check.py:3385), so the \"dropped by the branch\" entry is vacuous here. Fix: remove the entry.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 52,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e17b9a57639e4921c3a49782a7c9894a90ed7974d1ca558d896dc8899ae68e56"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
+        }
+      ]
+    },
+    "standards-62": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/skills/PENDING.md` (the added 2026-11-17 row): \"keeping the first wording) the no-file `--brief` line and the standalone-report Left undone line\" lost its \"and\", so two list items run together. Fix: restore \"and\".",
+      "file": "tests/skills/PENDING.md",
+      "line": null,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "3d83a84d8fe439375858d2d316d13efb804447b461455f31f80dfba5605b7ce6",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "c0de3f43fb5cdb960157904abab2f863cd7d96f67af27f0f52e542a56d0bb35a"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "3d83a84d8fe439375858d2d316d13efb804447b461455f31f80dfba5605b7ce6"
+        }
+      ]
+    },
+    "spec-28": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] S1 `scripts/_run_state.py:425-426`: plan step 3 still promises the default for a bad README, but the code now raises for a non-UTF-8 one. Intent, plan.md:272: \"an unparseable intake README falls to `buckets()`'s one-bucket default (its existing behaviour) without a crash\". Code: `except UnicodeDecodeError:` / `raise  # an undecodable README is a read error, though UnicodeDecodeError is a ValueError`, over `scripts/wiki-triage.py:129` `read_text(encoding=\"utf-8\")`. Affected: cycle Step 8 and `--report-only` on any notebook whose intake README is not UTF-8; the command exits with a traceback (`wiki-cycle-scope.py:509-531` has no try around dispatch), writes no file, and the report reads the not-checked state. The invariant \"A false line is never written\" holds, and the test bytes do reach the read error. The defect is that the ruling lives only in a code comment: plan step 3 and checkpoints 196-215 do not record it, and \"unparseable\" is not defined to cover \"undecodable\". Fix: amend the plan step 3 Failures bullet (a README whose frontmatter does not parse falls to the default; one that is not UTF-8 raises, exits non-zero, writes no file) and record the ruling in checkpoints; or, if the default is wanted, remove the `raise` and the new test case.",
+      "file": "scripts/_run_state.py",
+      "line": 425,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "dc69989d10c61a401c0a309307232685c665c11457c80384a49be8fe3969bcd9",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "dc69989d10c61a401c0a309307232685c665c11457c80384a49be8fe3969bcd9"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "dc69989d10c61a401c0a309307232685c665c11457c80384a49be8fe3969bcd9"
+        }
+      ]
+    },
+    "spec-29": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] S2/S7 `tests/skills/wiki-cycle/check.py:3268-3288` (`_check_left_undone_old_run`) and the PENDING row: the old-run case does not grade the Numbers row's `not checked` state. Intent, plan.md:83: \"With no `left-undone.txt` in the run folder there is no N to copy, so Needs you keeps today's generic line ... with no count\"; Decisions needed 11: the Numbers row is \"`not checked` when there is no file\". The branch has no Numbers or Needs-you check; the row's \"not shown by any case\" list names the generic line but omits the Numbers `not checked` state. Fix: add the Numbers-row check to the old-run branch (writer's text), or add that state to the row's not-shown list.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 3268,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f"
+        }
+      ]
+    },
+    "spec-30": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] S6 (writer's text) `check.py:3193-3204` (`_lu_model_wrote_file`): it sees only Write, Edit and Bash redirect or tee. In the verbatim kind the only file test is \"left-undone.txt is in the run folder\" (check.py:3229), so a model-written file lets \"the section's lines are the file's lines\" (:3215) pass against the model's own file (`python -c open(...)`, `cp`, a PowerShell tool). Fix: a positive check that a call ran `wiki-cycle-scope.py ... left-undone`, or compare the file with the script's own output. Same root as the Standards PY9 finding above.",
+      "file": "check.py",
+      "line": 3193,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "8ce934e0b811930a626f55b613241993b53c3aa65ea0c0c1cc5bec2748552fd0",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "8ce934e0b811930a626f55b613241993b53c3aa65ea0c0c1cc5bec2748552fd0"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "8ce934e0b811930a626f55b613241993b53c3aa65ea0c0c1cc5bec2748552fd0"
+        }
+      ]
+    },
+    "spec-31": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] S3 `tests/skills/wiki-cycle/check.py:3052, 3076, 3138, 3236, 3274, 3081` and `tests/scripts/test_left_undone_fixture.py:185`: checks the composer satisfies by construction print as plain PASS. The fixture's own rule (docstring 16-19, 54-61) says such passes read \"PASS (composed)\". Affected: \"Left undone is the second-to-last section\", \"the report has a Left undone section\", \"the section does not read 'Left undone: nothing'\", and the `compose_report writes 'Nothing.'` check, which does not match the `\"compose_report words\"` prefix. Fix: add these prefixes to COMPOSED and rename the fixture:185 text to \"compose_report words ...\". Same root as the two Standards PY11 and C2 findings above.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 3052,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f"
+        }
+      ]
+    },
+    "spec-32": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] (writer's text) `check.py:3148`: the header names `left-undone-resumed`, a kind that does not exist (checkpoints 207-210: held, not saved). Fix: name `left-undone-verbatim` / `left-undone-old-run`.",
+      "file": "check.py",
+      "line": 3148,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "8af8103816593c0a347ade68178f258311e6cfca911257bb5ba1ad940dcebb63",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "8af8103816593c0a347ade68178f258311e6cfca911257bb5ba1ad940dcebb63"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "8af8103816593c0a347ade68178f258311e6cfca911257bb5ba1ad940dcebb63"
+        }
+      ]
+    },
+    "spec-33": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] (writer's text) `_lu_norm_line` (check.py:3150-3163): it maps em and en dashes to hyphens, so a section that changes \"\u2014\" to \"-\" passes \"word for word\". Fix: drop the mapping, or say in the plan that dash changes are allowed.",
+      "file": null,
+      "line": null,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": 3,
+      "fingerprint": "e0bc987aea6e46da443176281adb78f8b7c6c93d2f311aa5a2bc047d6bd124ea",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e0bc987aea6e46da443176281adb78f8b7c6c93d2f311aa5a2bc047d6bd124ea"
+        },
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e0bc987aea6e46da443176281adb78f8b7c6c93d2f311aa5a2bc047d6bd124ea"
+        }
+      ]
+    },
+    "spec-34": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_left_undone_fixture.py:2, 9-14`: the docstring describes \"two Left undone cases\" (A and B); the verbatim kind is now graded in the same test and the old-run kind is not run by the fixture at all (checkpoints 210: scratch smoke only). Fix: say so.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 2,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "e17b9a57639e4921c3a49782a7c9894a90ed7974d1ca558d896dc8899ae68e56"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
         }
       ]
     }
