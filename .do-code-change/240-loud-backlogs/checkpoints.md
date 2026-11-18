@@ -208,3 +208,7 @@ Mark (terminal): "A sounds better I think eh" — A. check.py restored to 1913d5
 The writer's first answer saved only in part: case 1 (`left-undone-verbatim`) saved unchanged; case 2 (`left-undone-resumed`) held, because a resumed run reaches cycle Step 8 and writes the file, so its no-file branch would likely never run (the writer's own question 1). Asked: A, re-brief case 2 as `/wiki-report` on an old run folder with no `left-undone.txt`; B, keep it as written; C, drop it.
 Mark (terminal): "A". Mode `fresh` returns two cases, so the brief pairs it with the third state (a standalone report, no run folder); Mark can drop that one at the paid-run go.
 Writer's answer: one case, `left-undone-old-run` (`/wiki-report` on a finished run folder with no left-undone.txt), saved unchanged. The standalone state was not written: every case's common checks need a run folder and a commit, and an existing check may not change, so it has no paid case (writer's question 1, carried to the finish as a gap). Unpaid smoke (scratchpad `smoke_old_run.py`, built with the suite's own setup and prompt): the correct no-file report passes; "nothing", computed queue lines and a missing section each fail.
+
+## Paid red-green run of the two new cases — 2026-11-18
+Asked: go for `run_skill_test.py wiki-cycle --cases <verbatim>,<old-run> --red-green b7401bb` (8 sessions, about $7-8).
+Mark (terminal): "proceed"
