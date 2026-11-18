@@ -144,16 +144,21 @@
       "line": 1484,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542",
-      "fingerprint_kind": "hunk-diff",
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -165,16 +170,21 @@
       "line": 1008,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542",
-      "fingerprint_kind": "hunk-diff",
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -187,15 +197,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -208,15 +223,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -229,15 +249,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -250,15 +275,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -271,15 +301,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -292,15 +327,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -313,15 +353,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a7032a0a5f658fdb6b10805648d5d662d6c4480d133fd9fb895a81ae7b832e51",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "a7032a0a5f658fdb6b10805648d5d662d6c4480d133fd9fb895a81ae7b832e51"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -334,15 +379,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "3a6d2951a8a44f0d20917c300edeff9a54b7831f25a0697193db5c9ea94429fe",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "3a6d2951a8a44f0d20917c300edeff9a54b7831f25a0697193db5c9ea94429fe"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -355,15 +405,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -376,15 +431,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -397,15 +457,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "2153ee099264b258ba2ae5da2c5cb1d40ce9ad4e598c7684eddf25b42d447542"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -417,9 +482,9 @@
       "line": 814,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef",
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -427,6 +492,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af"
         }
       ]
     },
@@ -438,9 +508,9 @@
       "line": 3112,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a65a6415ca8890bc54550e8e8bf0aef65fbde1c06c20aadf2cd5c3425df8d4f8",
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -448,6 +518,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a65a6415ca8890bc54550e8e8bf0aef65fbde1c06c20aadf2cd5c3425df8d4f8"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a"
         }
       ]
     },
@@ -460,8 +535,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef",
+      "verdict_round": 1,
+      "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -469,6 +544,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af"
         }
       ]
     },
@@ -481,8 +561,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "224d463c0b8de0e7b05dc80325ddb4764aec70dc7e52d6716e5ee6987d0905d1",
+      "verdict_round": 1,
+      "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -490,6 +570,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "224d463c0b8de0e7b05dc80325ddb4764aec70dc7e52d6716e5ee6987d0905d1"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4"
         }
       ]
     },
@@ -502,8 +587,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef",
+      "verdict_round": 1,
+      "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -511,6 +596,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af"
         }
       ]
     },
@@ -523,8 +613,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef",
+      "verdict_round": 1,
+      "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -532,6 +622,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af"
         }
       ]
     },
@@ -544,8 +639,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a65a6415ca8890bc54550e8e8bf0aef65fbde1c06c20aadf2cd5c3425df8d4f8",
+      "verdict_round": 1,
+      "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -553,6 +648,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a65a6415ca8890bc54550e8e8bf0aef65fbde1c06c20aadf2cd5c3425df8d4f8"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a"
         }
       ]
     },
@@ -565,8 +665,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef",
+      "verdict_round": 1,
+      "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -574,6 +674,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af"
         }
       ]
     },
@@ -586,8 +691,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef",
+      "verdict_round": 1,
+      "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -595,6 +700,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af"
         }
       ]
     },
@@ -607,8 +717,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef",
+      "verdict_round": 1,
+      "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -616,6 +726,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af"
         }
       ]
     },
@@ -628,8 +743,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "224d463c0b8de0e7b05dc80325ddb4764aec70dc7e52d6716e5ee6987d0905d1",
+      "verdict_round": 1,
+      "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -637,6 +752,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "224d463c0b8de0e7b05dc80325ddb4764aec70dc7e52d6716e5ee6987d0905d1"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4"
         }
       ]
     },
@@ -649,8 +769,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef",
+      "verdict_round": 1,
+      "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -658,6 +778,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a4797aad5673408a27d496dc388ab514360b992a76273d76b7d05eba44dadeef"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af"
         }
       ]
     },
@@ -670,8 +795,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a65a6415ca8890bc54550e8e8bf0aef65fbde1c06c20aadf2cd5c3425df8d4f8",
+      "verdict_round": 1,
+      "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -679,6 +804,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a65a6415ca8890bc54550e8e8bf0aef65fbde1c06c20aadf2cd5c3425df8d4f8"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a"
         }
       ]
     },
@@ -690,16 +820,21 @@
       "line": 51,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "d72b275cc54046201dcbec54856e68a7029f8fcd1e1ab81fa94fdc0293d8cb0b",
-      "fingerprint_kind": "file-diff",
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "dfea68a222060ce8b1726494f8e5c047d4248eedbd08c091eaa9ccb62476d30f",
+      "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "d72b275cc54046201dcbec54856e68a7029f8fcd1e1ab81fa94fdc0293d8cb0b"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "dfea68a222060ce8b1726494f8e5c047d4248eedbd08c091eaa9ccb62476d30f"
         }
       ]
     },
@@ -711,9 +846,9 @@
       "line": 307,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "c7275e237c2cbc14008013c2fc467dfcc2762e490472ab328eca95137b5189d1",
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "98dfbd76b77764afa81dd8deb90dab3be85c520c24b03203bef3aa844ee23da6",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -721,6 +856,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "c7275e237c2cbc14008013c2fc467dfcc2762e490472ab328eca95137b5189d1"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "98dfbd76b77764afa81dd8deb90dab3be85c520c24b03203bef3aa844ee23da6"
         }
       ]
     },
@@ -733,8 +873,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "7e95aaaffa89ea33f68e3f99eb892361bc00fdb8366b801c6c3419cd4b3c8fd8",
+      "verdict_round": 1,
+      "fingerprint": "86604e8c6067e58defe0bcfe93eb5faccd2b0123e04dd640d35ad14dcdde2fc4",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -742,6 +882,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "7e95aaaffa89ea33f68e3f99eb892361bc00fdb8366b801c6c3419cd4b3c8fd8"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "86604e8c6067e58defe0bcfe93eb5faccd2b0123e04dd640d35ad14dcdde2fc4"
         }
       ]
     },
@@ -754,11 +899,16 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 1,
       "fingerprint": "a9b4f3887c0907869cfdcd7e5b414229701ac35acf07ac9d6ca64bdd8a97a8c1",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a9b4f3887c0907869cfdcd7e5b414229701ac35acf07ac9d6ca64bdd8a97a8c1"
+        },
         {
           "round": 1,
           "verdict": "open",
@@ -775,8 +925,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "c7275e237c2cbc14008013c2fc467dfcc2762e490472ab328eca95137b5189d1",
+      "verdict_round": 1,
+      "fingerprint": "98dfbd76b77764afa81dd8deb90dab3be85c520c24b03203bef3aa844ee23da6",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -784,6 +934,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "c7275e237c2cbc14008013c2fc467dfcc2762e490472ab328eca95137b5189d1"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "98dfbd76b77764afa81dd8deb90dab3be85c520c24b03203bef3aa844ee23da6"
         }
       ]
     },
@@ -796,8 +951,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "bdac4b86c32e732fd6b4a20815c7b9da0e88974bd2d9c26916aa0c87e4616925",
+      "verdict_round": 1,
+      "fingerprint": "9550a6fda19ee1435a957e83322d300d638e2487f0d59e28ea6b4d19fb91d737",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -805,6 +960,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "bdac4b86c32e732fd6b4a20815c7b9da0e88974bd2d9c26916aa0c87e4616925"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "9550a6fda19ee1435a957e83322d300d638e2487f0d59e28ea6b4d19fb91d737"
         }
       ]
     },
@@ -817,8 +977,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "0dd8673b8e16b37fa2dc2531795ab8c1fc8bb925c0402179e3d2fd6dceee5739",
+      "verdict_round": 1,
+      "fingerprint": "6cd21d25e82a3df01ac34627f9b2adb4c0b8bdaee647ea06c8747f716c36c2bb",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -826,6 +986,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "0dd8673b8e16b37fa2dc2531795ab8c1fc8bb925c0402179e3d2fd6dceee5739"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "6cd21d25e82a3df01ac34627f9b2adb4c0b8bdaee647ea06c8747f716c36c2bb"
         }
       ]
     },
@@ -838,8 +1003,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "8d4b248d0946b6786a5d0020c1baea4dc38102882d476a9669c1229cb8b6e840",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -847,6 +1012,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "8d4b248d0946b6786a5d0020c1baea4dc38102882d476a9669c1229cb8b6e840"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -859,11 +1029,16 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 1,
       "fingerprint": "af5f7c083cc95d94c575c85e540c37b5ea20c39ebfcdcfe84cba2b11875ce138",
       "fingerprint_kind": "text-only",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "af5f7c083cc95d94c575c85e540c37b5ea20c39ebfcdcfe84cba2b11875ce138"
+        },
         {
           "round": 1,
           "verdict": "open",
@@ -879,9 +1054,9 @@
       "line": 3052,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a65a6415ca8890bc54550e8e8bf0aef65fbde1c06c20aadf2cd5c3425df8d4f8",
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -889,6 +1064,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "a65a6415ca8890bc54550e8e8bf0aef65fbde1c06c20aadf2cd5c3425df8d4f8"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a"
         }
       ]
     },
@@ -900,9 +1080,9 @@
       "line": 139,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "224d463c0b8de0e7b05dc80325ddb4764aec70dc7e52d6716e5ee6987d0905d1",
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -910,6 +1090,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "224d463c0b8de0e7b05dc80325ddb4764aec70dc7e52d6716e5ee6987d0905d1"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4"
         }
       ]
     },
@@ -921,9 +1106,9 @@
       "line": 72,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "224d463c0b8de0e7b05dc80325ddb4764aec70dc7e52d6716e5ee6987d0905d1",
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -931,6 +1116,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "224d463c0b8de0e7b05dc80325ddb4764aec70dc7e52d6716e5ee6987d0905d1"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4"
         }
       ]
     },
@@ -943,15 +1133,20 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "a7032a0a5f658fdb6b10805648d5d662d6c4480d133fd9fb895a81ae7b832e51",
-      "fingerprint_kind": "hunk-diff",
+      "verdict_round": 1,
+      "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+      "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
         {
           "round": 1,
           "verdict": "open",
           "fingerprint": "a7032a0a5f658fdb6b10805648d5d662d6c4480d133fd9fb895a81ae7b832e51"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f"
         }
       ]
     },
@@ -964,11 +1159,16 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 1,
       "fingerprint": "0e0e19cee4e308623cb082eab75bb576b5dcc353efe0549d2cdcb7a963bf7d1d",
       "fingerprint_kind": "text-only",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "0e0e19cee4e308623cb082eab75bb576b5dcc353efe0549d2cdcb7a963bf7d1d"
+        },
         {
           "round": 1,
           "verdict": "open",
@@ -985,11 +1185,16 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 1,
       "fingerprint": "80c350999d5ff95f2739bd867ee5c57d6906a63fa7a5fb2a3b228a22eafc39d5",
       "fingerprint_kind": "text-only",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "80c350999d5ff95f2739bd867ee5c57d6906a63fa7a5fb2a3b228a22eafc39d5"
+        },
         {
           "round": 1,
           "verdict": "open",
@@ -1006,11 +1211,16 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 1,
       "fingerprint": "ad3956cf3defea1bdbb478ea818f3c5738342958268bab782d4087542cfec769",
       "fingerprint_kind": "text-only",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "ad3956cf3defea1bdbb478ea818f3c5738342958268bab782d4087542cfec769"
+        },
         {
           "round": 1,
           "verdict": "open",
@@ -1027,11 +1237,16 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 1,
       "fingerprint": "7e04306199d1515ce2e6ab20726b4426a82fbb218bdc06cbefef79469dce52b8",
       "fingerprint_kind": "text-only",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "7e04306199d1515ce2e6ab20726b4426a82fbb218bdc06cbefef79469dce52b8"
+        },
         {
           "round": 1,
           "verdict": "open",
@@ -1048,11 +1263,16 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 1,
       "fingerprint": "fec4cb8c725cc66da8108a72f96ce1613351ca69691f156d43214aa5945d2d7e",
       "fingerprint_kind": "text-only",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "fec4cb8c725cc66da8108a72f96ce1613351ca69691f156d43214aa5945d2d7e"
+        },
         {
           "round": 1,
           "verdict": "open",
@@ -1068,9 +1288,9 @@
       "line": 317,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "c4e058d3a3a5e1f02543e4642574e6746d4ff793aad6da9e96faf439d431ad45",
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "6517219be9f6d774891595636e506ec550744f5194f11673ebc041b2590a9e10",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1078,6 +1298,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "c4e058d3a3a5e1f02543e4642574e6746d4ff793aad6da9e96faf439d431ad45"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "6517219be9f6d774891595636e506ec550744f5194f11673ebc041b2590a9e10"
         }
       ]
     },
@@ -1090,8 +1315,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "c7275e237c2cbc14008013c2fc467dfcc2762e490472ab328eca95137b5189d1",
+      "verdict_round": 1,
+      "fingerprint": "98dfbd76b77764afa81dd8deb90dab3be85c520c24b03203bef3aa844ee23da6",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1099,6 +1324,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "c7275e237c2cbc14008013c2fc467dfcc2762e490472ab328eca95137b5189d1"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "98dfbd76b77764afa81dd8deb90dab3be85c520c24b03203bef3aa844ee23da6"
         }
       ]
     },
@@ -1111,8 +1341,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "c7275e237c2cbc14008013c2fc467dfcc2762e490472ab328eca95137b5189d1",
+      "verdict_round": 1,
+      "fingerprint": "98dfbd76b77764afa81dd8deb90dab3be85c520c24b03203bef3aa844ee23da6",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1120,6 +1350,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "c7275e237c2cbc14008013c2fc467dfcc2762e490472ab328eca95137b5189d1"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "98dfbd76b77764afa81dd8deb90dab3be85c520c24b03203bef3aa844ee23da6"
         }
       ]
     },
@@ -1132,11 +1367,16 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 1,
       "fingerprint": "efe8afc78d8419d8a1c53a1880ae0e83311a6b140b854b4961d2bbe3393da068",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "efe8afc78d8419d8a1c53a1880ae0e83311a6b140b854b4961d2bbe3393da068"
+        },
         {
           "round": 1,
           "verdict": "open",
@@ -1153,8 +1393,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "d72b275cc54046201dcbec54856e68a7029f8fcd1e1ab81fa94fdc0293d8cb0b",
+      "verdict_round": 1,
+      "fingerprint": "74b48949973c34e75a930d52b41049f9f1f9bf68d3c35d2f679b10ec39ea13aa",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -1162,6 +1402,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "d72b275cc54046201dcbec54856e68a7029f8fcd1e1ab81fa94fdc0293d8cb0b"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "74b48949973c34e75a930d52b41049f9f1f9bf68d3c35d2f679b10ec39ea13aa"
         }
       ]
     },
@@ -1174,8 +1419,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "dd5e1a830f07ff49566ca8485e5588dde37c4dba97ba52056beb8fc5964e3885",
+      "verdict_round": 1,
+      "fingerprint": "05017b892181d84b391a835b37aecf625b26878bdb4a5560b4ba27f069f8c012",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1183,6 +1428,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "dd5e1a830f07ff49566ca8485e5588dde37c4dba97ba52056beb8fc5964e3885"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "05017b892181d84b391a835b37aecf625b26878bdb4a5560b4ba27f069f8c012"
         }
       ]
     },
@@ -1195,8 +1445,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "0dd8673b8e16b37fa2dc2531795ab8c1fc8bb925c0402179e3d2fd6dceee5739",
+      "verdict_round": 1,
+      "fingerprint": "6cd21d25e82a3df01ac34627f9b2adb4c0b8bdaee647ea06c8747f716c36c2bb",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -1204,6 +1454,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "0dd8673b8e16b37fa2dc2531795ab8c1fc8bb925c0402179e3d2fd6dceee5739"
+        },
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "6cd21d25e82a3df01ac34627f9b2adb4c0b8bdaee647ea06c8747f716c36c2bb"
         }
       ]
     }
