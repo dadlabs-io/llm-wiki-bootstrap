@@ -167,3 +167,9 @@ Result: red then green on both models ($3.31; report tests/skills/.results/wiki-
 - Wall time: agentic-design 2.4 s (1,713 entries), llm-wiki-bootstrap 0.4 s.
 - Past review_after: agentic-design 615 today; 605 with `--today 2026-11-16` against requirements' 607: the 2 are folder READMEs (`research/interesting-docs/README.md`, `research/skills/README.md`, review_after 2026-11-04) that the entries rule leaves out (tasks/ holds no review_after, so it is not the difference the plan guessed); the 10 between 605 and 615 are entries whose review_after is 2026-11-16. llm-wiki-bootstrap 6 on both days, equal to requirements' 6.
 - agentic-design, 12 queues: also not semantically linted 116, no claims 163, synthesis 7 not checked, semantic findings from 2026-10-30-01 193 with no fixes record, two older lints without a usable findings list, 2 pending tickets, other readers' buckets agent-builder 50 and ai-money 15. llm-wiki-bootstrap, 7 queues: no review_after 1, not semantically linted 281, no claims 281. The lint and sources lines read not checked because the scratch folder holds no step files, as a quick run with none would.
+
+## Mutation pass — 2026-11-17
+
+`prove_tests_bite.py --base 6f23c8c --files scripts/wiki-cycle-scope.py scripts/wiki-triage.py` → "note: ignoring paths outside src/**/*.py … FAIL no changed source file under src/ to mutate (exit 2) VERDICT: COULD-NOT-RUN" (developer hand-back; suite on clean code ~134 s, all seven files green). Skill suggestion written: `_inbox/skill-suggestions/proving-python-tests-bite--prove-tests-bite-py-mutates-only.md`.
+Asked (one question): hand pass of ~100 bugs on the new left-undone and lint-fixes code like lesson #11, skip, or mutation on-demand for the repo.
+Mark: "Hand pass, ~100 bugs (Recommended)". tests-bite is recorded as a named exception with the hand pass as evidence.
