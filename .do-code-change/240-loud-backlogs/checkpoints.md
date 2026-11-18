@@ -154,3 +154,8 @@ Mark (terminal): "yes updated tests"
 Unpaid fixture test green (24 s) after the writer's three builder fixes. Asked: go for the red-green run of cases A and B, both models, --red-green b7401bb (8 sessions, ~$10-15).
 
 Mark (terminal): "go"
+
+## Paid re-run of case A — 2026-11-17
+
+Asked: "go for the test A re-run (about $3.60)?" (case full-run-resumed-at-report-names-every-planted-backlog-in-left-undone, red-green against b7401bb, both models, after the writer's Numbers-row check fix 8b9cd93).
+Mark: "yes"
