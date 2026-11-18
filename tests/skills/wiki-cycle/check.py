@@ -3107,8 +3107,8 @@ def _check_left_undone_planted(case: dict, add, res: list, ctx: dict, run: dict,
     past = _lu_find(lines, r"past review_after\b")
     m = re.search(r"past review_after\b[^\d\n]{0,25}\b(\d+)\b", past or "", re.I)
     row = next((l for l in rtext.replace(section, "").splitlines()
-                if re.search(r"stale", l, re.I) and "review_after" in l.lower()), None)
-    rm = re.search(r"stale[^\d\n]*(\d+)", row or "", re.I)
+                if re.match(r"\s*\|\s*[*`]*\s*stale\b[^|]*review_after", l, re.I)), None)
+    rm = re.match(r"\s*\|[^|]*\|\s*[*`]*\s*(\d+)\b", row or "")
     add("the Numbers row's stale count equals Left undone's past count",
         bool(m and rm) and int(m.group(1)) == int(rm.group(1)), {"left_undone": past, "numbers_row": row})
 

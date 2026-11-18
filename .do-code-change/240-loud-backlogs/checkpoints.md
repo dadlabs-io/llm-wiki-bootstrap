@@ -149,3 +149,8 @@ Mark (terminal): "yes updated tests"
 - Re-freezing tests whose "only left-undone.txt is new" assertion now allows left-undone-events.txt: covered by Mark's approval above (plan Invariant: a non-report-only Part 2 run writes left-undone-events.txt as planned).
 - `Past review_after: 0, not checked (refresh left no refresh.json)` in a mode that runs refresh: follows the plan (third state: "the count is still printed in the line, before not checked"; Testing Decisions: the fixture with refresh.json removed "must give the third state on the past-due line, and not nothing"). Accepted as the plan's rule; the reviewer may weigh it.
 - Gaps named by the developer for review: discover.json deferred/errors not read; update.json/discover.json status not read (a partial step with no items prints nothing).
+
+## Paid red-green run — 2026-11-17
+Unpaid fixture test green (24 s) after the writer's three builder fixes. Asked: go for the red-green run of cases A and B, both models, --red-green b7401bb (8 sessions, ~$10-15).
+
+Mark (terminal): "go"
