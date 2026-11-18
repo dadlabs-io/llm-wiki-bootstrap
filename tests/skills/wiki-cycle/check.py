@@ -2961,14 +2961,15 @@ def _prepare_left_undone_planted(case: dict, ctx: dict, cycle_id: str) -> None:
     _lu_step(run, cycle_id, "wiki-lint", "lint-mechanical", st(minutes=45),
              summary={"broken_links": 2, "unquoted_yaml": 1, "backlink_blocks_out_of_step": 0,
                       "files_scanned": len(rels), "standalone": 0})
-    findings = [{"id": f"SL-{i}", "entry": rels[i % len(rels)], "type": "contradiction",
-                 "description": f"Planted finding {i}", "suggested_fix": "reword the line"} for i in range(1, 6)]
+    findings = [{"file": rels[i % len(rels)], "category": "contradiction", "severity": "warn",
+                 "detail": f"Planted finding {i}", "evidence": f"planted evidence {i}",
+                 "suggested_fix": "reword the line", "agent": "skilltest"} for i in range(1, 6)]
     _lu_step(run, cycle_id, "wiki-lint", "lint-semantic", st(minutes=30),
              summary={"entries_in_scope": len(rels), "findings": 5}, findings=findings)
     _lu_scope_file(run / "semantic-scope.txt", "semantic lint scope", rels)
     (run / "lint-fixes.txt").write_text(
         f"# lint-fixes: the semantic findings the user applied or declined at cycle Step 5\n"
-        f"at: {st(minutes=60)}\napplied: SL-1, SL-2\ndeclined: SL-3\n", encoding="utf-8")
+        f"at: {st(minutes=60)}\napplied: 1,2\ndeclined: 3\n", encoding="utf-8")
     _lu_step(run, cycle_id, "wiki-claims", "claims", st(minutes=20), summary={"entries_in_scope": len(rels)})
     _lu_scope_file(run / "claims-scope.txt", "claims scope", rels)
     _lu_step(run, cycle_id, "wiki-cycle", "synthesis", st(minutes=15), summary={"entries_in_scope": 0})
@@ -2987,7 +2988,8 @@ def _prepare_left_undone_clean(case: dict, ctx: dict, cycle_id: str) -> None:
     nb = ctx["notebook"]
     started = datetime.fromisoformat(ctx["started"])
     _lu_complete_all(nb)
-    hub = nb / "wiki" / "project" / "lu-notebook-hub.md"
+    _lu_complete(nb / "wiki" / "README.md")  # the real lint counts it for frontmatter, tier and confidence
+    hub =nb / "wiki" / "project" / "lu-notebook-hub.md"
     hub.parent.mkdir(parents=True, exist_ok=True)
     targets = _lu_entries(nb) + ["wiki/README.md"]
     links = "\n".join(f"- [{Path(r).stem}]({posixpath.relpath(r, 'wiki/project')})" for r in targets)
