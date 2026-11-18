@@ -31,19 +31,6 @@
   },
   {
     "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "left_undone_mode_table_matches_skill",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "cd412d756fbe19848c03204698f4689af72c1906134a0c069acf154fc80ea55d",
-    "frozen_at_step": 1,
-    "frozen_at": "2026-11-17",
-    "green_reason": {
-      "reason": "the script's table already existed (the cross-check, test left_undone_names_what_it_cannot_check) so this cannot fail first; bite is inside the test: a skill cell flipped in a copy of the skill text and a step moved in a copy of the script's table are each asserted to be drift, with the step named",
-      "date": "2026-11-17"
-    }
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
     "test_name": "left_undone_reads_a_quoted_mode_before_punctuation",
     "hash_of": "test",
     "hash_scope": "test+module",
@@ -74,60 +61,6 @@
   },
   {
     "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "left_undone_docstring_names_the_unsupported_working_folder",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "145f25ce0858b08a0bf779bc63c1f97c8700e9e5ed7901d55d72ce0b52b64792",
-    "frozen_at_step": 3,
-    "frozen_at": "2026-11-17",
-    "red": {
-      "command": "uv run python tests/scripts/test_cycle_scope.py",
-      "exit": 1,
-      "tail": "PASS left_undone_counts_discovery_checklists: one checklist is one queue line, a README and a _-file are not counted\nPASS left_undone_counts_discovery_checklists: no _inbox/discovered/ adds nothing\nFAIL left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme: exit 0 and the main bucket is this session's  [(1, 'token.id, token.start_mark)\\nyaml.parser.ParserError: while parsing a flow sequence\\n  in \"<unicode string>\", line 1, column 10:\\n    buckets: [unclosed\\n             ^\\nexpected \\',\\' or \\']\\', but got \\'<stream end>\\'\\n  in \"<unicode string>\", line 1, column 19:\\n    buckets: [unclosed\\n                      ^\\n', [])]\nFAIL left_undone_docstring_names_the_unsupported_working_folder: the docstring says a working folder whose .claude/wiki-config.json names another notebook is not supported  [`left-undone`: what the cycle leaves undone, counted fresh from the notebook and the run folder's step files, written\nto <rf>/left-undone.txt and read by /wiki-report (task #240, lesson #9; Mark, 2026-11-16: after a run, anything left\nundone is named, with the count and why). Exit 2, nothing written, for a `--today` that is not a calendar date\n(YYYY-MM-DD), a run folder or notebook that is not there. It changes no entry and writes no `*-scope.txt`. Run it from\nthe project whose notebook is counted: another project's working folder is not a supported case (a later step reads\nthis session's bucket from the working folder's .claude/wiki-config.json). This is Part 1, the disk-state counts; the\nl]\n184/186 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
-      "date": "2026-11-17"
-    }
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "newest_step_returns_the_newest_matching_result",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "3e06cf18c8f86f8e2d81cbb574bcef49d6c5d23c7fe7a7b066bf5745c664fe0a",
-    "frozen_at_step": 4,
-    "frozen_at": "2026-11-17",
-    "red": {
-      "command": "uv run python tests/scripts/test_cycle_scope.py",
-      "exit": 1,
-      "tail": "PASS left_undone_counts_staged_entries: no staged entries add nothing, with the setting false or absent\nPASS left_undone_counts_discovery_checklists: one checklist is one queue line, a README and a _-file are not counted\nPASS left_undone_counts_discovery_checklists: no _inbox/discovered/ adds nothing\nPASS left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme: exit 0 and the main bucket is this session's\nPASS left_undone_docstring_names_the_unsupported_working_folder: the docstring says a working folder whose .claude/wiki-config.json names another notebook is not supported\nFAIL newest_step_returns_the_newest_matching_result: with no filter the newest timestamp wins, whatever its status, and a later folder name, a file that does not parse and one with no timestamp do not  [NotImplementedError ]\nFAIL newest_step_returns_the_newest_matching_result: status completed leaves out the partial and the one with no status  [NotImplementedError ]\nFAIL newest_step_returns_the_newest_matching_result: skip leaves out one run folder, and a result with no status is still found when no status is asked for  [NotImplementedError ]\nFAIL newest_step_returns_the_newest_matching_result: status and skip together fall back to the next older completed one  [NotImplementedError ]\nFAIL newest_step_returns_the_newest_matching_result: a notebook with no run folders gives None  [NotImplementedError ]\n186/191 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
-      "date": "2026-11-17"
-    }
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "left_undone_names_what_it_cannot_check",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "dc1b7fc2c5525c486da86b829dd58e84bb6d7e718d3663ed5c4d1bfd6657bb62",
-    "frozen_at_step": 1,
-    "frozen_at": "2026-11-17",
-    "red": {
-      "command": "uv run python tests/scripts/test_cycle_scope.py",
-      "exit": 1,
-      "tail": "FAIL left_undone_names_what_it_cannot_check: --ingest-only with discover.json is a contradiction  [['Left undone: 2 queue(s)', '- Past review_after: 2 \ufffd this mode does not run refresh; /wiki-cycle --refresh-only lists them', '- No review_after: 1 \ufffd refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_what_it_cannot_check: --discover-only with lint-mechanical.json is a contradiction  [['Left undone: 2 queue(s)', '- Past review_after: 2 \ufffd this mode does not run refresh; /wiki-cycle --refresh-only lists them', '- No review_after: 1 \ufffd refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_names_what_it_cannot_check: --full with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --lint-only with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --lint-only-semantic with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --prompt-for-urls with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --claims-only with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --discover-only with the steps it runs is no contradiction\nFAIL left_undone_names_what_it_cannot_check: --report-only names the last full run on its second line, uncounted  [('', ['Left undone: 2 queue(s)', '- Past review_after: 2 \ufffd this mode does not run refresh; /wiki-cycle --refresh-only lists them', '- No review_after: 1 \ufffd refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_names_what_it_cannot_check: --report-only with no earlier report says there is none  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_names_what_it_cannot_check: a run that is not --report-only has no such line\n137/155 passed",
-      "date": "2026-11-17"
-    },
-    "unfreezes": [
-      {
-        "reason": "step 4 adds the semantic and claims lines to a notebook with entries and no completed lint or index (Mark approved 2026-11-17, checkpoints.md)",
-        "date": "2026-11-17",
-        "step": 1,
-        "hash": "dc1b7fc2c5525c486da86b829dd58e84bb6d7e718d3663ed5c4d1bfd6657bb62"
-      }
-    ],
-    "unfrozen_reason": "step 4 adds the semantic and claims lines to a notebook with entries and no completed lint or index (Mark approved 2026-11-17, checkpoints.md)"
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
     "test_name": "lint_fixes_refuses_ids_it_cannot_place",
     "hash_of": "test",
     "hash_scope": "test+module",
@@ -147,21 +80,6 @@
     "hash_of": "test",
     "hash_scope": "test+module",
     "hash": "c469534007e30657d33be6328b82937fc63fab051921431fe75b2a2a220718e3",
-    "frozen_at_step": 5,
-    "frozen_at": "2026-11-17",
-    "red": {
-      "command": "uv run python tests/scripts/test_cycle_scope.py",
-      "exit": 1,
-      "tail": "FAIL left_undone_counts_semantic_findings: an unknown mode keeps the figure and says not checked  [['Left undone: 1 queue(s)', '- Mode: not checked (cannot read the mode from scratchpad.md); steps that left no file are not known', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: an older lint with unresolved findings gets a superseded line though the newest lint found nothing, the two older ones with no fixes record collapse into one line, and an empty list, the newest and a partial lint add nothing  [[]]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: the header counts those lines  [['Left undone (disk-state queues): none']]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: a --full run whose own lint is the newest still prints the older lints' lines  [[]]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: so does a --lint-only --semantic run, beside its own line  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: the docstring says only completed lints are read, so an older partial lint is not  [)]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: a run with no lint of its own names the newest lint's unresolved findings, with where they are and that fixes made by hand are not seen  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: an earlier lint with no fixes record is not checked, count kept  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: an earlier lint with no usable findings list is not checked  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_names_semantic_findings_from_earlier_runs: an earlier lint every finding of which was answered adds nothing\n235/275 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
-      "date": "2026-11-17"
-    }
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "left_undone_names_semantic_findings_from_earlier_runs",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "fb67cfc75d07f990725b0efdf34bf3c4ad00a60153cbe717ab42f0bb0709f332",
     "frozen_at_step": 5,
     "frozen_at": "2026-11-17",
     "red": {
@@ -218,79 +136,10 @@
   },
   {
     "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "left_undone_names_each_source_the_run_left",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "2a3131b7dcbf8a06bb9e633f5f23125671d8151fee005d34d7c272c8ba2a0e10",
-    "frozen_at_step": 6,
-    "frozen_at": "2026-11-17",
-    "red": {
-      "command": "uv run python tests/scripts/test_cycle_scope.py",
-      "exit": 1,
-      "tail": "    events = (rf / \"left-undone-events.txt\").read_text(encoding=\"utf-8\").splitlines()\n             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\mark\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\pathlib\\_local.py\", line 546, in read_text\n    return PathBase.read_text(self, encoding, errors, newline)\n           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\mark\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\pathlib\\_abc.py\", line 632, in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:\n         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\mark\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\pathlib\\_local.py\", line 537, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpzznsvphb\\\\notebooks\\\\s6a\\\\_inbox\\\\reports\\\\2026-10-06\\\\2026-10-06-01\\\\left-undone-events.txt'",
-      "date": "2026-11-17"
-    },
-    "unfreezes": [
-      {
-        "reason": "step 6, before any production code: the events-file read guarded so a missing file fails the check instead of crashing the whole file (a crash would hide the other new tests' red)",
-        "date": "2026-11-17",
-        "step": 6,
-        "hash": "2a3131b7dcbf8a06bb9e633f5f23125671d8151fee005d34d7c272c8ba2a0e10"
-      }
-    ],
-    "unfrozen_reason": "step 6, before any production code: the events-file read guarded so a missing file fails the check instead of crashing the whole file (a crash would hide the other new tests' red)"
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "left_undone_repeats_the_last_runs_events_when_only_reporting",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "59d1978190c198d7dada577c0174a21333f9414e86ff18d31a305c31a47819f1",
-    "frozen_at_step": 6,
-    "frozen_at": "2026-11-17",
-    "red": {
-      "command": "uv run python tests/scripts/test_cycle_scope.py",
-      "exit": 1,
-      "tail": "FAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run copies them with (from <id>), counts them in the header, and skips an unreported run  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: its own run says no lint ran and counts the disk-state queues fresh  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run writes no events file, and another report-only run after it still cites the last full run  [(['2026-10-07-03-run-cycle-report.md', 'left-undone.txt', 'scratchpad.md'], ['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: no earlier run with a report is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (none: no earlier run with a report)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a last run with no events file is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-09-01)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_drops_the_interim_form: a run with nothing counted is exactly Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_drops_the_interim_form: with queues the header counts them and no Not counted yet line or disk-state header is written  [['Left undone: 4 queue(s)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: every step completed with its scope file, a staged entry linted then promoted, an entry re-reviewed on the lint's day, a task card, a claim-less entry, every finding accounted for and a lint after the fixes: the file is Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: the same run with refresh.json removed gives the third state on the past-due line and is not nothing  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_an_older_lint_with_no_usable_findings_list: an older completed lint whose findings list cannot be trusted is not checked, never silent, and the header counts the line  [['Left undone: 1 queue(s)', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\n281/302 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
-      "date": "2026-11-17"
-    }
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "left_undone_drops_the_interim_form",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "0cd9fa36a56a6fe634dd039aa19b14c888a338f20081dd3570926e0b51bff5ca",
-    "frozen_at_step": 6,
-    "frozen_at": "2026-11-17",
-    "red": {
-      "command": "uv run python tests/scripts/test_cycle_scope.py",
-      "exit": 1,
-      "tail": "FAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run copies them with (from <id>), counts them in the header, and skips an unreported run  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: its own run says no lint ran and counts the disk-state queues fresh  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run writes no events file, and another report-only run after it still cites the last full run  [(['2026-10-07-03-run-cycle-report.md', 'left-undone.txt', 'scratchpad.md'], ['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: no earlier run with a report is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (none: no earlier run with a report)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a last run with no events file is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-09-01)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_drops_the_interim_form: a run with nothing counted is exactly Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_drops_the_interim_form: with queues the header counts them and no Not counted yet line or disk-state header is written  [['Left undone: 4 queue(s)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: every step completed with its scope file, a staged entry linted then promoted, an entry re-reviewed on the lint's day, a task card, a claim-less entry, every finding accounted for and a lint after the fixes: the file is Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: the same run with refresh.json removed gives the third state on the past-due line and is not nothing  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_an_older_lint_with_no_usable_findings_list: an older completed lint whose findings list cannot be trusted is not checked, never silent, and the header counts the line  [['Left undone: 1 queue(s)', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\n281/302 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
-      "date": "2026-11-17"
-    }
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
     "test_name": "left_undone_reads_nothing_after_a_fully_answered_full_run",
     "hash_of": "test",
     "hash_scope": "test+module",
     "hash": "dcd83357aef96c80a6d0c276c09fcf982bfe572b6d40d66b2eb294471bfd837b",
-    "frozen_at_step": 6,
-    "frozen_at": "2026-11-17",
-    "red": {
-      "command": "uv run python tests/scripts/test_cycle_scope.py",
-      "exit": 1,
-      "tail": "FAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run copies them with (from <id>), counts them in the header, and skips an unreported run  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: its own run says no lint ran and counts the disk-state queues fresh  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run writes no events file, and another report-only run after it still cites the last full run  [(['2026-10-07-03-run-cycle-report.md', 'left-undone.txt', 'scratchpad.md'], ['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: no earlier run with a report is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (none: no earlier run with a report)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a last run with no events file is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-09-01)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_drops_the_interim_form: a run with nothing counted is exactly Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_drops_the_interim_form: with queues the header counts them and no Not counted yet line or disk-state header is written  [['Left undone: 4 queue(s)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: every step completed with its scope file, a staged entry linted then promoted, an entry re-reviewed on the lint's day, a task card, a claim-less entry, every finding accounted for and a lint after the fixes: the file is Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: the same run with refresh.json removed gives the third state on the past-due line and is not nothing  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_an_older_lint_with_no_usable_findings_list: an older completed lint whose findings list cannot be trusted is not checked, never silent, and the header counts the line  [['Left undone: 1 queue(s)', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\n281/302 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
-      "date": "2026-11-17"
-    }
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "left_undone_names_an_older_lint_with_no_usable_findings_list",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "0f949672991772194119d70319f42086efc0d204e59098843421e821a2b8eb1f",
     "frozen_at_step": 6,
     "frozen_at": "2026-11-17",
     "red": {
@@ -488,36 +337,6 @@
   },
   {
     "file": "tests/scripts/test_cycle_scope.py",
-    "test_name": "left_undone_counts_entries_not_linted",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "638242b7baee90d1029be80cebfffe327760b7584b83d79e9c15418c6ea29448",
-    "frozen_at_step": 4,
-    "frozen_at": "2026-11-17",
-    "red": {
-      "command": "uv run python tests/scripts/test_cycle_scope.py",
-      "exit": 1,
-      "tail": "FAIL left_undone_counts_entries_without_claims: one the step did not read is counted, with the ran reason  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_counts_entries_not_synthesised: the research entries added since the last synthesis are counted, a superseded one is not, with the does-not-run reason and no scope file written  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'], ['_inbox/reports/2026-10-04/2026-10-04-22/left-undone.txt'])]\nPASS left_undone_counts_entries_not_synthesised: this run's completed synthesis and a scope file listing the new entry: no line\nFAIL left_undone_counts_entries_not_synthesised: a synthesis that did not read the new entry counts it, with the ran reason  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_counts_entries_not_synthesised: a synthesis awaiting approval adds no line (Needs you has it)\nFAIL left_undone_counts_entries_not_synthesised: a mode that synthesises, no synthesis.json: not checked, count kept  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_counts_entries_not_synthesised: a partial synthesis is not subtracted, the line says not checked  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_counts_entries_not_synthesised: a synthesis.json that does not parse is not checked, no crash  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_counts_entries_not_synthesised: a completed synthesis with no scope file is not checked, count kept  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_counts_entries_not_synthesised: with no best-practices page there is nothing to synthesise into, no line\n198/222 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
-      "date": "2026-11-17"
-    },
-    "unfreezes": [
-      {
-        "reason": "step 4 fixture bug found at green: scenario run folders leaked into the shared notebook and became the next scenario's cut-off; s4_lu now removes its run folder",
-        "date": "2026-11-17",
-        "step": 4,
-        "hash": "a21c874645c7af88c802a719dc8af26a166927aaf4d33baa1152ba1f9b8f1548"
-      },
-      {
-        "reason": "step 6 removes Part 1's interim last line and adds left-undone-events.txt as a second new file, planned in the plan's Invariants (Mark approved 2026-11-17, checkpoints.md)",
-        "date": "2026-11-17",
-        "step": 4,
-        "hash": "638242b7baee90d1029be80cebfffe327760b7584b83d79e9c15418c6ea29448"
-      }
-    ],
-    "unfrozen_reason": "step 6 removes Part 1's interim last line and adds left-undone-events.txt as a second new file, planned in the plan's Invariants (Mark approved 2026-11-17, checkpoints.md)"
-  },
-  {
-    "file": "tests/scripts/test_cycle_scope.py",
     "test_name": "left_undone_counts_entries_without_claims",
     "hash_of": "test",
     "hash_scope": "test+module",
@@ -701,5 +520,267 @@
       "reason": "hand mutation pass M103: code existed; red against the mutant (last_semantic without skip): 309/310, this test the one failure",
       "date": "2026-11-18"
     }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_names_what_it_cannot_check",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "c8187e9558c98d6b68a51b7b74e56c89385213f828a11a609c1830868d317cbb",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-18",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "FAIL left_undone_names_what_it_cannot_check: --ingest-only with discover.json is a contradiction  [['Left undone: 2 queue(s)', '- Past review_after: 2 \ufffd this mode does not run refresh; /wiki-cycle --refresh-only lists them', '- No review_after: 1 \ufffd refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_what_it_cannot_check: --discover-only with lint-mechanical.json is a contradiction  [['Left undone: 2 queue(s)', '- Past review_after: 2 \ufffd this mode does not run refresh; /wiki-cycle --refresh-only lists them', '- No review_after: 1 \ufffd refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_names_what_it_cannot_check: --full with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --lint-only with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --lint-only-semantic with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --prompt-for-urls with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --claims-only with the steps it runs is no contradiction\nPASS left_undone_names_what_it_cannot_check: --discover-only with the steps it runs is no contradiction\nFAIL left_undone_names_what_it_cannot_check: --report-only names the last full run on its second line, uncounted  [('', ['Left undone: 2 queue(s)', '- Past review_after: 2 \ufffd this mode does not run refresh; /wiki-cycle --refresh-only lists them', '- No review_after: 1 \ufffd refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_names_what_it_cannot_check: --report-only with no earlier report says there is none  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_names_what_it_cannot_check: a run that is not --report-only has no such line\n137/155 passed",
+      "date": "2026-11-17"
+    },
+    "unfreezes": [
+      {
+        "reason": "step 4 adds the semantic and claims lines to a notebook with entries and no completed lint or index (Mark approved 2026-11-17, checkpoints.md)",
+        "date": "2026-11-17",
+        "step": 1,
+        "hash": "dc1b7fc2c5525c486da86b829dd58e84bb6d7e718d3663ed5c4d1bfd6657bb62"
+      },
+      {
+        "reason": "review fix rounds (standards-14): the header count pinned to a literal worked out from the scenario instead of recomputed from the output; stricter, Mark's word 2026-11-18",
+        "date": "2026-11-18",
+        "step": "fix-1",
+        "hash": "c8187e9558c98d6b68a51b7b74e56c89385213f828a11a609c1830868d317cbb"
+      }
+    ],
+    "unfrozen_reason": "review fix rounds (standards-14): the header count pinned to a literal worked out from the scenario instead of recomputed from the output; stricter, Mark's word 2026-11-18"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_names_semantic_findings_from_earlier_runs",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "18f77cb59043f8016e3a2e80213e88ca6c147c7425a8cd5c753e3965cd85e242",
+    "frozen_at_step": 8,
+    "frozen_at": "2026-11-18",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "FAIL left_undone_counts_semantic_findings: an unknown mode keeps the figure and says not checked  [['Left undone: 1 queue(s)', '- Mode: not checked (cannot read the mode from scratchpad.md); steps that left no file are not known', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: an older lint with unresolved findings gets a superseded line though the newest lint found nothing, the two older ones with no fixes record collapse into one line, and an empty list, the newest and a partial lint add nothing  [[]]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: the header counts those lines  [['Left undone (disk-state queues): none']]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: a --full run whose own lint is the newest still prints the older lints' lines  [[]]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: so does a --lint-only --semantic run, beside its own line  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: the docstring says only completed lints are read, so an older partial lint is not  [)]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: a run with no lint of its own names the newest lint's unresolved findings, with where they are and that fixes made by hand are not seen  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: an earlier lint with no fixes record is not checked, count kept  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_semantic_findings_from_earlier_runs: an earlier lint with no usable findings list is not checked  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_names_semantic_findings_from_earlier_runs: an earlier lint every finding of which was answered adds nothing\n235/275 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    },
+    "unfreezes": [
+      {
+        "reason": "review fix round 1 (standards-14) pinned its header count to a literal, and step 8 reads its docstring check from _run_state.py where the docstring now lives; stricter, Mark's word 2026-11-18",
+        "date": "2026-11-18",
+        "step": 8,
+        "hash": "18f77cb59043f8016e3a2e80213e88ca6c147c7425a8cd5c753e3965cd85e242"
+      }
+    ],
+    "unfrozen_reason": "review fix round 1 (standards-14) pinned its header count to a literal, and step 8 reads its docstring check from _run_state.py where the docstring now lives; stricter, Mark's word 2026-11-18"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_names_each_source_the_run_left",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "42656ed38f5368ff45009eb5127b6f81da0c5fbdfec87425654c1d04a5cbd1be",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-18",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "    events = (rf / \"left-undone-events.txt\").read_text(encoding=\"utf-8\").splitlines()\n             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\mark\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\pathlib\\_local.py\", line 546, in read_text\n    return PathBase.read_text(self, encoding, errors, newline)\n           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\mark\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\pathlib\\_abc.py\", line 632, in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:\n         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\mark\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\pathlib\\_local.py\", line 537, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpzznsvphb\\\\notebooks\\\\s6a\\\\_inbox\\\\reports\\\\2026-10-06\\\\2026-10-06-01\\\\left-undone-events.txt'",
+      "date": "2026-11-17"
+    },
+    "unfreezes": [
+      {
+        "reason": "step 6, before any production code: the events-file read guarded so a missing file fails the check instead of crashing the whole file (a crash would hide the other new tests' red)",
+        "date": "2026-11-17",
+        "step": 6,
+        "hash": "2a3131b7dcbf8a06bb9e633f5f23125671d8151fee005d34d7c272c8ba2a0e10"
+      },
+      {
+        "reason": "review fix round 1 (standards-14): the header count pinned to a literal and n == 9 exact instead of n >= len(want); stricter, Mark's word 2026-11-18",
+        "date": "2026-11-18",
+        "step": "fix-1",
+        "hash": "42656ed38f5368ff45009eb5127b6f81da0c5fbdfec87425654c1d04a5cbd1be"
+      }
+    ],
+    "unfrozen_reason": "review fix round 1 (standards-14): the header count pinned to a literal and n == 9 exact instead of n >= len(want); stricter, Mark's word 2026-11-18"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_repeats_the_last_runs_events_when_only_reporting",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "3522243e0b9b11eacc3dd7580b639db0519b4289c7f8d01be55148a04079502f",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-18",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "FAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run copies them with (from <id>), counts them in the header, and skips an unreported run  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: its own run says no lint ran and counts the disk-state queues fresh  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run writes no events file, and another report-only run after it still cites the last full run  [(['2026-10-07-03-run-cycle-report.md', 'left-undone.txt', 'scratchpad.md'], ['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: no earlier run with a report is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (none: no earlier run with a report)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a last run with no events file is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-09-01)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_drops_the_interim_form: a run with nothing counted is exactly Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_drops_the_interim_form: with queues the header counts them and no Not counted yet line or disk-state header is written  [['Left undone: 4 queue(s)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: every step completed with its scope file, a staged entry linted then promoted, an entry re-reviewed on the lint's day, a task card, a claim-less entry, every finding accounted for and a lint after the fixes: the file is Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: the same run with refresh.json removed gives the third state on the past-due line and is not nothing  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_an_older_lint_with_no_usable_findings_list: an older completed lint whose findings list cannot be trusted is not checked, never silent, and the header counts the line  [['Left undone: 1 queue(s)', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\n281/302 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    },
+    "unfreezes": [
+      {
+        "reason": "review fix round 1 (standards-14): the header counts pinned to literals instead of recomputed from the output; stricter, Mark's word 2026-11-18",
+        "date": "2026-11-18",
+        "step": "fix-1",
+        "hash": "3522243e0b9b11eacc3dd7580b639db0519b4289c7f8d01be55148a04079502f"
+      }
+    ],
+    "unfrozen_reason": "review fix round 1 (standards-14): the header counts pinned to literals instead of recomputed from the output; stricter, Mark's word 2026-11-18"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_drops_the_interim_form",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "6eca8ebc312fea4804f535b1d32c65947c64d8c32c2cc878c21e8672f0b3f804",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-18",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "FAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run copies them with (from <id>), counts them in the header, and skips an unreported run  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: its own run says no lint ran and counts the disk-state queues fresh  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run writes no events file, and another report-only run after it still cites the last full run  [(['2026-10-07-03-run-cycle-report.md', 'left-undone.txt', 'scratchpad.md'], ['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: no earlier run with a report is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (none: no earlier run with a report)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a last run with no events file is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-09-01)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_drops_the_interim_form: a run with nothing counted is exactly Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_drops_the_interim_form: with queues the header counts them and no Not counted yet line or disk-state header is written  [['Left undone: 4 queue(s)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: every step completed with its scope file, a staged entry linted then promoted, an entry re-reviewed on the lint's day, a task card, a claim-less entry, every finding accounted for and a lint after the fixes: the file is Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: the same run with refresh.json removed gives the third state on the past-due line and is not nothing  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_an_older_lint_with_no_usable_findings_list: an older completed lint whose findings list cannot be trusted is not checked, never silent, and the header counts the line  [['Left undone: 1 queue(s)', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\n281/302 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    },
+    "unfreezes": [
+      {
+        "reason": "review fix round 2 (standards-43): the header check pinned to 'Left undone: 4 queue(s)', counted from the scenario, instead of checking only its shape; stricter, Mark's word 2026-11-18",
+        "date": "2026-11-18",
+        "step": "fix-2",
+        "hash": "6eca8ebc312fea4804f535b1d32c65947c64d8c32c2cc878c21e8672f0b3f804"
+      }
+    ],
+    "unfrozen_reason": "review fix round 2 (standards-43): the header check pinned to 'Left undone: 4 queue(s)', counted from the scenario, instead of checking only its shape; stricter, Mark's word 2026-11-18"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_names_an_older_lint_with_no_usable_findings_list",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "3af4c2a38c74699d4ba71adc684bc5826d678a8d27efc143de204d467ca97ee2",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-18",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "FAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run copies them with (from <id>), counts them in the header, and skips an unreported run  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: its own run says no lint ran and counts the disk-state queues fresh  [['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run writes no events file, and another report-only run after it still cites the last full run  [(['2026-10-07-03-run-cycle-report.md', 'left-undone.txt', 'scratchpad.md'], ['Left undone: 4 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: no earlier run with a report is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (none: no earlier run with a report)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a last run with no events file is not checked  [['Left undone: 1 queue(s)', 'Disk-state queues are counted now; event lines are from the last run (2026-10-09-01)', '- Lint findings: not checked (no lint ran this cycle; /wiki-cycle --lint-only)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_drops_the_interim_form: a run with nothing counted is exactly Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_drops_the_interim_form: with queues the header counts them and no Not counted yet line or disk-state header is written  [['Left undone: 4 queue(s)', '- No review_after: 1 \u2014 refresh cannot see an entry with no review_after; add the date (the lint lists them under Missing lifecycle fields)', '- Not semantically linted: 1 \u2014 this mode does not run the semantic lint; /wiki-cycle --lint-only --semantic or --full', '- No claims, or revised since the index: 1 \u2014 this mode does not run claims; /wiki-cycle --claims-only or --full', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: every step completed with its scope file, a staged entry linted then promoted, an entry re-reviewed on the lint's day, a task card, a claim-less entry, every finding accounted for and a lint after the fixes: the file is Left undone: nothing  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_reads_nothing_after_a_fully_answered_full_run: the same run with refresh.json removed gives the third state on the past-due line and is not nothing  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_names_an_older_lint_with_no_usable_findings_list: an older completed lint whose findings list cannot be trusted is not checked, never silent, and the header counts the line  [['Left undone: 1 queue(s)', '- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\n281/302 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    },
+    "unfreezes": [
+      {
+        "reason": "review fix round 1 (standards-14): the header count pinned to a literal instead of recomputed from the output; stricter, Mark's word 2026-11-18",
+        "date": "2026-11-18",
+        "step": "fix-1",
+        "hash": "3af4c2a38c74699d4ba71adc684bc5826d678a8d27efc143de204d467ca97ee2"
+      }
+    ],
+    "unfrozen_reason": "review fix round 1 (standards-14): the header count pinned to a literal instead of recomputed from the output; stricter, Mark's word 2026-11-18"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_counts_entries_not_linted",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "918b1a6c944d82deefc865f9825c74fb8aaa8bca19f3055729a7fbf8f7f0c5f2",
+    "frozen_at_step": "fix-1",
+    "frozen_at": "2026-11-18",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "FAIL left_undone_counts_entries_without_claims: one the step did not read is counted, with the ran reason  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_counts_entries_not_synthesised: the research entries added since the last synthesis are counted, a superseded one is not, with the does-not-run reason and no scope file written  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'], ['_inbox/reports/2026-10-04/2026-10-04-22/left-undone.txt'])]\nPASS left_undone_counts_entries_not_synthesised: this run's completed synthesis and a scope file listing the new entry: no line\nFAIL left_undone_counts_entries_not_synthesised: a synthesis that did not read the new entry counts it, with the ran reason  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_counts_entries_not_synthesised: a synthesis awaiting approval adds no line (Needs you has it)\nFAIL left_undone_counts_entries_not_synthesised: a mode that synthesises, no synthesis.json: not checked, count kept  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_counts_entries_not_synthesised: a partial synthesis is not subtracted, the line says not checked  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nFAIL left_undone_counts_entries_not_synthesised: a synthesis.json that does not parse is not checked, no crash  [('', ['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)'])]\nFAIL left_undone_counts_entries_not_synthesised: a completed synthesis with no scope file is not checked, count kept  [['Left undone (disk-state queues): none', 'Not counted yet: leftovers of steps that ran (lint findings, dropped sources, entries not linted, claimed or synthesised)']]\nPASS left_undone_counts_entries_not_synthesised: with no best-practices page there is nothing to synthesise into, no line\n198/222 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    },
+    "unfreezes": [
+      {
+        "reason": "step 4 fixture bug found at green: scenario run folders leaked into the shared notebook and became the next scenario's cut-off; s4_lu now removes its run folder",
+        "date": "2026-11-17",
+        "step": 4,
+        "hash": "a21c874645c7af88c802a719dc8af26a166927aaf4d33baa1152ba1f9b8f1548"
+      },
+      {
+        "reason": "step 6 removes Part 1's interim last line and adds left-undone-events.txt as a second new file, planned in the plan's Invariants (Mark approved 2026-11-17, checkpoints.md)",
+        "date": "2026-11-17",
+        "step": 4,
+        "hash": "638242b7baee90d1029be80cebfffe327760b7584b83d79e9c15418c6ea29448"
+      },
+      {
+        "reason": "review fix round 1 (standards-14): the header count pinned to a literal instead of recomputed from the output; stricter, Mark's word 2026-11-18",
+        "date": "2026-11-18",
+        "step": "fix-1",
+        "hash": "918b1a6c944d82deefc865f9825c74fb8aaa8bca19f3055729a7fbf8f7f0c5f2"
+      }
+    ],
+    "unfrozen_reason": "review fix round 1 (standards-14): the header count pinned to a literal instead of recomputed from the output; stricter, Mark's word 2026-11-18"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_mode_table_matches_skill",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "0865773542745eb0f5677e0dfd0453ab2e3b6e4a809abf03e24726e5b1fd2ed8",
+    "frozen_at_step": 8,
+    "frozen_at": "2026-11-18",
+    "green_reason": {
+      "reason": "the script's table already existed (the cross-check, test left_undone_names_what_it_cannot_check) so this cannot fail first; bite is inside the test: a skill cell flipped in a copy of the skill text and a step moved in a copy of the script's table are each asserted to be drift, with the step named",
+      "date": "2026-11-17"
+    },
+    "unfreezes": [
+      {
+        "reason": "step 8 (the run-state module split): reads STEP_MODES from _run_state.py where it now lives, and fails on an empty table (red shown before the repoint); stricter, Mark's word 2026-11-18",
+        "date": "2026-11-18",
+        "step": 8,
+        "hash": "0865773542745eb0f5677e0dfd0453ab2e3b6e4a809abf03e24726e5b1fd2ed8"
+      }
+    ],
+    "unfrozen_reason": "step 8 (the run-state module split): reads STEP_MODES from _run_state.py where it now lives, and fails on an empty table (red shown before the repoint); stricter, Mark's word 2026-11-18"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_docstring_names_the_unsupported_working_folder",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "58992a8f05dc6daa3f9037d88459283f6f6c1c34330ad452ab35c3c68a8bdea8",
+    "frozen_at_step": 8,
+    "frozen_at": "2026-11-18",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS left_undone_counts_discovery_checklists: one checklist is one queue line, a README and a _-file are not counted\nPASS left_undone_counts_discovery_checklists: no _inbox/discovered/ adds nothing\nFAIL left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme: exit 0 and the main bucket is this session's  [(1, 'token.id, token.start_mark)\\nyaml.parser.ParserError: while parsing a flow sequence\\n  in \"<unicode string>\", line 1, column 10:\\n    buckets: [unclosed\\n             ^\\nexpected \\',\\' or \\']\\', but got \\'<stream end>\\'\\n  in \"<unicode string>\", line 1, column 19:\\n    buckets: [unclosed\\n                      ^\\n', [])]\nFAIL left_undone_docstring_names_the_unsupported_working_folder: the docstring says a working folder whose .claude/wiki-config.json names another notebook is not supported  [`left-undone`: what the cycle leaves undone, counted fresh from the notebook and the run folder's step files, written\nto <rf>/left-undone.txt and read by /wiki-report (task #240, lesson #9; Mark, 2026-11-16: after a run, anything left\nundone is named, with the count and why). Exit 2, nothing written, for a `--today` that is not a calendar date\n(YYYY-MM-DD), a run folder or notebook that is not there. It changes no entry and writes no `*-scope.txt`. Run it from\nthe project whose notebook is counted: another project's working folder is not a supported case (a later step reads\nthis session's bucket from the working folder's .claude/wiki-config.json). This is Part 1, the disk-state counts; the\nl]\n184/186 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    },
+    "unfreezes": [
+      {
+        "reason": "step 8 (the run-state module split): reads the left-undone docstring from _run_state.py where it now lives; same assertions, Mark's word 2026-11-18",
+        "date": "2026-11-18",
+        "step": 8,
+        "hash": "58992a8f05dc6daa3f9037d88459283f6f6c1c34330ad452ab35c3c68a8bdea8"
+      }
+    ],
+    "unfrozen_reason": "step 8 (the run-state module split): reads the left-undone docstring from _run_state.py where it now lives; same assertions, Mark's word 2026-11-18"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "newest_step_returns_the_newest_matching_result",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "8ec106607c1af5bb3970c986cc2deee9088a8f5556dea977469518e8581f0795",
+    "frozen_at_step": 8,
+    "frozen_at": "2026-11-18",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS left_undone_counts_staged_entries: no staged entries add nothing, with the setting false or absent\nPASS left_undone_counts_discovery_checklists: one checklist is one queue line, a README and a _-file are not counted\nPASS left_undone_counts_discovery_checklists: no _inbox/discovered/ adds nothing\nPASS left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme: exit 0 and the main bucket is this session's\nPASS left_undone_docstring_names_the_unsupported_working_folder: the docstring says a working folder whose .claude/wiki-config.json names another notebook is not supported\nFAIL newest_step_returns_the_newest_matching_result: with no filter the newest timestamp wins, whatever its status, and a later folder name, a file that does not parse and one with no timestamp do not  [NotImplementedError ]\nFAIL newest_step_returns_the_newest_matching_result: status completed leaves out the partial and the one with no status  [NotImplementedError ]\nFAIL newest_step_returns_the_newest_matching_result: skip leaves out one run folder, and a result with no status is still found when no status is asked for  [NotImplementedError ]\nFAIL newest_step_returns_the_newest_matching_result: status and skip together fall back to the next older completed one  [NotImplementedError ]\nFAIL newest_step_returns_the_newest_matching_result: a notebook with no run folders gives None  [NotImplementedError ]\n186/191 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    },
+    "unfreezes": [
+      {
+        "reason": "step 8 (the run-state module split): loads newest_step from _cycle_common.py where it now lives; same assertions, Mark's word 2026-11-18",
+        "date": "2026-11-18",
+        "step": 8,
+        "hash": "8ec106607c1af5bb3970c986cc2deee9088a8f5556dea977469518e8581f0795"
+      }
+    ],
+    "unfrozen_reason": "step 8 (the run-state module split): loads newest_step from _cycle_common.py where it now lives; same assertions, Mark's word 2026-11-18"
   }
 ]
