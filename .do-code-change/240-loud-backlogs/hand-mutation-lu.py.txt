@@ -1,0 +1,273 @@
+"""Hand mutation pass for change 240-loud-backlogs (Mark, 2026-11-17: about 100 bugs, about 4 at a time, on scratch
+copies; prove_tests_bite.py cannot run on scripts/). One bug per mutant, planted in a scratch copy of the repo's tracked
+files (never the repo itself); each mutant's `orig` text must match exactly ONE place in its file (asserted by
+--check before anything runs). The tests run in this order, stopping at the first one that fails (killed):
+  wiki-cycle-scope.py mutants: test_cycle_scope, test_left_undone_fixture, test_synthesis_scope, test_checker_hold,
+                               test_promote_setting
+  wiki-triage.py mutants:      test_wiki_triage, test_dequeue_intake, test_cycle_scope, test_left_undone_fixture
+Verdicts written here: killed / survived / timeout / syntax-error (a mutant that does not import; reported, not
+counted as a real kill). 'equivalent' is assigned afterwards by hand, in the result file, with the reason.
+
+    python hand-mutation-lu.py --check
+    python hand-mutation-lu.py --run <result.json> [--jobs 4] [--only M001,M002] [--timeout 400]
+"""
+import argparse, json, re, shutil, subprocess, sys, time
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+REPO = Path(r"C:\github.com\llm-wiki-bootstrap")
+SCRATCH = Path(r"C:\Users\mark\AppData\Local\Temp\2025-05-10_Temp\claude\10c13c95e6a1fa3b\607a9186-a23a-4f21-88bf-7b394f93c13b\scratchpad\mutation")
+C = "scripts/wiki-cycle-scope.py"
+T = "scripts/wiki-triage.py"
+TESTS_C = ["test_cycle_scope", "test_left_undone_fixture", "test_synthesis_scope", "test_checker_hold", "test_promote_setting"]
+TESTS_T = ["test_wiki_triage", "test_dequeue_intake", "test_cycle_scope", "test_left_undone_fixture"]
+
+MUTANTS = []  # (file, orig, new)
+
+
+def M(file, orig, new):
+    MUTANTS.append((file, orig, new))
+
+
+# canary: proves the tests run the scratch copy (a deliberately broken cycle_mode helper; must be killed)
+M(C, "    return name if name in MODES else None\n", "    return None\n")
+# --- cycle_mode and its helpers
+M(C, 'name = first[2:] if first.startswith("--") else first', 'name = first[1:] if first.startswith("--") else first')
+M(C, "return name if name in MODES else None", "return name if name not in MODES else None")
+M(C, "    pad = run_folder / \"scratchpad.md\"\n    if not pad.is_file():", "    pad = run_folder / \"scratchpad.md\"\n    if pad.is_file():")
+M(C, 'cycle_text.partition("(")[2]', 'cycle_text.partition("(")[0]')
+M(C, "    if len(named) != 1:\n        return None, modifiers", "    if len(named) == 1:\n        return None, modifiers")
+M(C, "modifiers = sorted({t for t in tokens if t in MODIFIERS})", "modifiers = sorted({t for t in tokens if t not in MODIFIERS})")
+M(C, 'if mode == "lint-only" and "--semantic" in tokens else mode', 'if mode == "lint-only" or "--semantic" in tokens else mode')
+M(C, "    if not ISO_DATE.match(value):\n        return None", "    if ISO_DATE.match(value):\n        return None")
+# --- review_date_counts
+M(C, 'if "review_after" not in front:', 'if "review_after" in front:')
+M(C, "        if due is None:\n            bad.append(e)", "        if due is not None:\n            bad.append(e)")
+M(C, "elif due < today:", "elif due <= today:")
+# --- mode_problem and the mode table
+M(C, "    if mode is None:\n        return \"cannot read the mode", "    if mode is not None:\n        return \"cannot read the mode")
+M(C, "if (rf / name).is_file() and mode not in STEP_MODES[step]:", "if (rf / name).is_file() or mode not in STEP_MODES[step]:")
+M(C, '"semantic": ("full", "lint-only-semantic"),', '"semantic": ("full",),')
+M(C, '"synthesis": ("quick", "full", "ingest-only", "prompt-for-urls"),', '"synthesis": ("quick", "full", "ingest-only"),')
+M(C, '"claims": ("full", "claims-only"),', '"claims": ("full",),')
+M(C, '"refresh": ("full", "refresh-only"),', '"refresh": ("refresh-only",),')
+# --- step_status
+M(C, 'str(data.get("status") or "unknown") if isinstance(data, dict) else "unreadable"', 'str(data.get("status") or "completed") if isinstance(data, dict) else "unreadable"')
+# --- session_buckets and bucket_ticket_lines
+M(C, 'return [{"folder": "main", "reader": tri.me()}]', 'return [{"folder": "default", "reader": tri.me()}]')
+M(C, "    if not waiting:\n        pending = []", "    if waiting:\n        pending = []")
+M(C, 'elif mode not in STEP_MODES["triage"]:', 'elif mode in STEP_MODES["triage"]:')
+M(C, '"/wiki-cycle --ingest-only gives each an owner"', '"/wiki-cycle --quick gives each an owner"')
+M(C, "counts[folder] = counts.get(folder, 0) + 1", "counts[folder] = counts.get(folder, 0)")
+M(C, "        n = counts.get(folder, 0)\n        if not n:\n            continue", "        n = counts.get(folder, 0)\n        if n:\n            continue")
+M(C, 'if b.get("reader") != me:', 'if b.get("reader") == me:')
+M(C, 'elif mode not in STEP_MODES["ingest"]:', 'elif mode in STEP_MODES["ingest"]:')
+M(C, "if others else [])", "if not others else [])")
+M(C, 'tri.intake_tickets(nb, bs)', 'tri.intake_tickets(nb)')
+# --- staged_lines, checklist_lines
+M(C, "    if m is None:\n        why = ", "    if m is not None:\n        why = ")
+M(C, 'if m.group(1) == "true":', 'if m.group(1) == "false":')
+M(C, 'if not p.name.startswith(("_", "README"))]', 'if not p.name.startswith(("_",))]')
+M(C, "if disc.is_dir() else 0", "if not disc.is_dir() else 0")
+# --- read_scope_file and uncovered
+M(C, "    f = folder / name\n    if not f.is_file():\n        return None", "    f = folder / name\n    if f.is_file():\n        return None")
+M(C, 'if l.startswith("_inbox/proposed/")}', 'if l.startswith("_inbox/")}')
+M(C, "for e in sorted(set(scope) & set(live)):", "for e in sorted(set(scope) | set(live)):")
+M(C, "seen = e in read or (Path(e).stem in staged_stems and names[Path(e).stem] == 1)", "seen = e in read and (Path(e).stem in staged_stems and names[Path(e).stem] == 1)")
+M(C, '.get("last_reviewed", "")[:10] <= day):', '.get("last_reviewed", "")[:10] < day):')
+# --- entry_backlog_lines
+M(C, 'found = newest_step(nb, result, "completed")', "found = newest_step(nb, result)")
+M(C, 'if key == "synthesis" and own == "awaiting_approval":', 'if key == "synthesis" or own == "awaiting_approval":')
+M(C, "        n = len(uncovered(nb, scope, read or set(), cutoff))\n        if not n:", "        n = len(uncovered(nb, scope, read or set(), cutoff))\n        if n:")
+M(C, "elif mode not in STEP_MODES[key]:", "elif mode in STEP_MODES[key]:")
+M(C, "datetime.now().astimezone() - cutoff < timedelta(hours=24)", "datetime.now().astimezone() - cutoff <= timedelta(hours=24)")
+M(C, 'elif own is None and key == "semantic" and found and', 'elif own is None and key == "semantic" or found and')
+M(C, '        elif own != "completed":\n            why = f", not checked ({name} ended', '        elif own == "completed":\n            why = f", not checked ({name} ended')
+M(C, '("Not semantically linted",', '("Not linted",')
+# --- last_run, copied_event_lines
+M(C, "and d.name < rf.name", "and d.name <= rf.name")
+M(C, 'and cycle_mode(d)[0] != "report-only"]', 'and cycle_mode(d)[0] == "report-only"]')
+M(C, "    f = last / EVENTS_FILE\n    if not f.is_file():", "    f = last / EVENTS_FILE\n    if f.is_file():")
+# --- ticket_marked_sources, source_lines
+M(C, 'if "retry" in front or "save_as_pdf" in front}', 'if "retry" in front and "save_as_pdf" in front}')
+M(C, "            if not problem and mode in STEP_MODES[step]:", "            if not problem or mode in STEP_MODES[step]:")
+M(C, 'rec.get("reason") or rec.get("message")', 'rec.get("reason")')
+M(C, "marked = ticket_marked_sources(nb) if marked is None else marked", "marked = ticket_marked_sources(nb) if marked is not None else marked")
+M(C, "                if src not in marked:", "                if src in marked:")
+# --- tier4_lines
+M(C, 'if not (rf / "discover.json").is_file() or "--no-confirm-discovery" not in modifiers:', 'if not (rf / "discover.json").is_file() and "--no-confirm-discovery" not in modifiers:')
+M(C, "    if not found:\n        return [f\"- Tier-4 sources", "    if found:\n        return [f\"- Tier-4 sources")
+M(C, "    if not urls:\n        return []", "    if urls:\n        return []")
+# --- usable_findings, fixes_record, awaiting
+M(C, 'summary.get("findings") == len(findings)', 'summary.get("findings") != len(findings)')
+M(C, "return parse_ids(m.group(1)) if m else None", "return parse_ids(m.group(1)) if not m else None")
+M(C, 'return {"ok": applied is not None and declined is not None,', 'return {"ok": applied is not None or declined is not None,')
+M(C, '"at": _parse_time(at.group(1)) if at else None}', '"at": _parse_time(at.group(1)) if not at else None}')
+M(C, "return n - len({i for i in record[\"answered\"] if 1 <= i <= n})", "return n - len({i for i in record[\"answered\"] if 1 < i <= n})")
+# --- lint_lines
+M(C, 'if mode not in STEP_MODES["lint"]:', 'if mode in STEP_MODES["lint"]:')
+M(C, 'if status == "partial" and reasons:', 'if status == "partial" or reasons:')
+M(C, '    if status != "completed":\n        return [f"- Lint findings: not checked (the mechanical lint ended', '    if status == "completed":\n        return [f"- Lint findings: not checked (the mechanical lint ended')
+M(C, "    record = fixes_record(rf)\n    if record is not None:\n        lint_at", "    record = fixes_record(rf)\n    if record is None:\n        lint_at")
+M(C, 'if not (lint_at and record["at"] and lint_at >= record["at"]):', 'if not (lint_at and record["at"] and lint_at <= record["at"]):')
+M(C, "or not isinstance(count, int) or count <= 0:", "or not isinstance(count, int) or count < 0:")
+M(C, '        elif mode not in STEP_MODES["fix"]:\n            why = " — no fix step in this mode"\n', '        elif mode in STEP_MODES["fix"]:\n            why = " — no fix step in this mode"\n')
+M(C, "{key.replace('_', ' ')}: {count}{why}", "{key}: {count}{why}")
+# --- semantic_lines
+M(C, '    findings, out = usable_findings(data), []\n    if findings is None:', '    findings, out = usable_findings(data), []\n    if findings is not None:')
+M(C, "        left = awaiting(len(findings), record)\n        if left:", "        left = awaiting(len(findings), record)\n        if not left:")
+M(C, '    if isinstance(parts, list) and parts:', '    if isinstance(parts, list) or parts:')
+# --- lint_backlog, earlier_semantic_lines
+M(C, '    if not findings:\n        return "empty", 0', '    if findings:\n        return "empty", 0')
+M(C, 'return ("open", left) if left else ("answered", 0)', 'return ("open", left) if not left else ("answered", 0)')
+M(C, "if folder.resolve() == mine:", "if folder.resolve() != mine:")
+M(C, "        elif i == 0:", "        elif i == 1:")
+M(C, "    if unrecorded:\n        out.append", "    if not unrecorded:\n        out.append")
+# --- parse_ids
+M(C, '        if not part:\n            continue', '        if not part:\n            break')
+# --- cmd_lint_fixes
+M(C, 'present = (rf / "lint-semantic.json").is_file()', 'present = not (rf / "lint-semantic.json").is_file()')
+M(C, '        if not present:\n            print("no lint-semantic.json', '        if present:\n            print("no lint-semantic.json')
+M(C, "for i, f in enumerate(findings, 1):", "for i, f in enumerate(findings):")
+M(C, "if applied is None or declined is None:", "if applied is None and declined is None:")
+M(C, "outside = sorted(i for i in applied | declined if not 1 <= i <= n)", "outside = sorted(i for i in applied | declined if not 1 < i <= n)")
+M(C, "n = len(findings or [])", "n = len(findings or []) + 1")
+M(C, '+ f"\\nat: {now_stamp()}\\n")', '+ "\\n")')
+# --- cmd_left_undone
+M(C, "    today = _iso_date(args.today or today_label())\n    if today is None:", "    today = _iso_date(args.today or today_label())\n    if today is not None:")
+M(C, 'if past or (not problem and mode in STEP_MODES["refresh"] and refresh != "completed"):', 'if past and (not problem and mode in STEP_MODES["refresh"] and refresh != "completed"):')
+M(C, '        elif mode not in STEP_MODES["refresh"]:\n            queues.append', '        elif mode in STEP_MODES["refresh"]:\n            queues.append')
+M(C, '        elif refresh != "completed":\n            queues.append', '        elif refresh == "completed":\n            queues.append')
+M(C, "    if none:\n        queues.append", "    if not none:\n        queues.append")
+M(C, '    reporting = mode == "report-only"', '    reporting = mode != "report-only"')
+M(C, "lint_lines(rf, mode, problem) + semantic_lines(rf, mode, problem) + source_lines(nb, rf, mode, problem)", "lint_lines(rf, mode, problem) + semantic_lines(rf, mode, problem)")
+M(C, "    queues += bucket_ticket_lines(nb, mode, problem)\n", "")
+M(C, "    queues += staged_lines(nb, rf)\n", "")
+M(C, "    queues += entry_backlog_lines(nb, rf, mode, problem)\n", "")
+M(C, '    if problem:\n        queues.append(f"- Mode: not checked', '    if not problem:\n        queues.append(f"- Mode: not checked')
+M(C, 'head = f"Left undone: {len(queues)} queue(s)" if queues else "Left undone: nothing"', 'head = f"Left undone: {len(queues)} queue(s)" if not queues else "Left undone: nothing"')
+M(C, '    if not reporting:\n        atomic_write_text(rf / EVENTS_FILE', '    if reporting:\n        atomic_write_text(rf / EVENTS_FILE')
+# --- step_results, newest_step, scopes
+M(C, "if skip is not None and p.parent.resolve() == skip.resolve():", "if skip is not None and p.parent.resolve() != skip.resolve():")
+M(C, 'if status is None or d.get("status") == status else None', 'if status is None and d.get("status") == status else None')
+M(C, "return sorted(found, key=lambda f: f[0], reverse=True)", "return sorted(found, key=lambda f: f[0])")
+M(C, "    return found[0] if found else None\n\n\ndef last_semantic", "    return found[-1] if found else None\n\n\ndef last_semantic")
+M(C, 'found = newest_step(nb, "lint-semantic.json", skip=run_folder)', 'found = newest_step(nb, "lint-semantic.json")')
+M(C, "picked = sorted(set(added_since(nb, cutoff, all_entries)) | set(revised_since(nb, cutoff, all_entries)))", "picked = sorted(set(added_since(nb, cutoff, all_entries)) & set(revised_since(nb, cutoff, all_entries)))")
+M(C, "if forced or not idx_path.is_file():", "if forced and not idx_path.is_file():")
+M(C, "    return sorted(set(missing) | set(revised)), all_entries, why, written", "    return sorted(set(missing) & set(revised)), all_entries, why, written")
+M(C, '    if not canon:\n        return [], research', '    if canon:\n        return [], research')
+M(C, '("--all" if forced else "no earlier synthesis: every research entry")', '("--all" if not forced else "no earlier synthesis: every research entry")')
+M(C, '"left-undone": cmd_left_undone, "lint-fixes": cmd_lint_fixes}', '"left-undone": cmd_lint_fixes, "lint-fixes": cmd_left_undone}')
+# --- wiki-triage.py intake_tickets
+M(T, 'if p.name.startswith(("_", "README")) or p.name == "triage-log.md":', 'if p.name.startswith(("_", "README")) and p.name == "triage-log.md":')
+M(T, 'if p.name.startswith(("_", "README")) or p.name == "triage-log.md":', 'if p.name.startswith(("README",)) or p.name == "triage-log.md":')
+M(T, 'if p.name.startswith(("_", "README")) or p.name == "triage-log.md":', 'if p.name.startswith(("_", "README")):')
+M(T, '            if front.get("source"):\n                yield', '            if not front.get("source"):\n                yield')
+M(T, "for b in buckets(nb)[0] if bs is None else bs:", "for b in buckets(nb)[0] if bs is not None else bs:")
+M(T, 'for p in sorted(d.glob("*.md")) if d.is_dir() else []:\n            if p.name.startswith(("_", "README"))', 'for p in sorted(d.glob("*.txt")) if d.is_dir() else []:\n            if p.name.startswith(("_", "README"))')
+M(T, "yield folder, p, front[\"source\"], front", "yield folder, p, front[\"source\"], {}")
+M(T, 'd = nb / "_inbox" / "intake" / folder\n        for p in sorted', 'd = nb / "_inbox" / "pending" / folder\n        for p in sorted')
+M(T, 'folder = str(b.get("folder"))\n        d = nb', 'folder = str(b.get("name"))\n        d = nb')
+
+
+def plant(text, orig, new):
+    n = text.count(orig)
+    assert n == 1, f"matched {n} places: {orig[:80]!r}"
+    i = text.index(orig)
+    return text[:i] + new + text[i + len(orig):], text.count("\n", 0, i) + 1
+
+
+def check():
+    texts = {f: (REPO / f).read_text(encoding="utf-8") for f in (C, T)}
+    bad = 0
+    for k, (f, orig, new) in enumerate(MUTANTS):
+        try:
+            assert orig != new
+            plant(texts[f], orig, new)
+        except AssertionError as e:
+            bad += 1
+            print(f"M{k:03d} {f}: {e}")
+    print(f"{len(MUTANTS)} mutants, {bad} without exactly one match")
+    return bad
+
+
+def build_base():
+    base = SCRATCH / "base"
+    if base.exists():
+        shutil.rmtree(base)
+    files = subprocess.run(["git", "-C", str(REPO), "ls-files", "-z"], capture_output=True, text=True,
+                           encoding="utf-8").stdout.split("\0")
+    for f in files:
+        if not f or f.startswith((".do-code-change/", "archive/", "graphify-out/")):
+            continue
+        src = REPO / f
+        if src.is_file():
+            (base / f).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, base / f)
+    return base
+
+
+def run_one(k, base, timeout):
+    f, orig, new = MUTANTS[k]
+    text = (REPO / f).read_text(encoding="utf-8")
+    mutated, line = plant(text, orig, new)
+    work = SCRATCH / f"m{k:03d}"
+    if work.exists():
+        shutil.rmtree(work, ignore_errors=True)
+    shutil.copytree(base, work)
+    (work / f).write_text(mutated, encoding="utf-8")
+    rec = {"id": f"M{k:03d}", "file": f, "line": line, "original": orig.strip("\n"), "mutant": new.strip("\n"),
+           "verdict": "survived", "killing_test": None, "detail": ""}
+    t0 = time.time()
+    for tname in (TESTS_T if f == T else TESTS_C):
+        try:
+            p = subprocess.run(["uv", "run", "--project", str(REPO), "python", str(work / "tests" / "scripts" / f"{tname}.py")],
+                               cwd=work, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
+        except subprocess.TimeoutExpired:
+            rec.update(verdict="timeout", killing_test=f"{tname}.py", detail=f"timeout {timeout}s")
+            break
+        out = p.stdout + p.stderr
+        if p.returncode != 0:
+            syntax = "SyntaxError" in out or "IndentationError" in out
+            tail = [l for l in out.strip().splitlines() if l.strip()][-1:] or [""]
+            rec.update(verdict="syntax-error" if syntax else "killed", killing_test=f"{tname}.py", detail=tail[0][:200])
+            break
+        rec["detail"] = ([l for l in p.stdout.strip().splitlines() if l.strip()][-1:] or [""])[0][:120]
+    rec["secs"] = round(time.time() - t0)
+    shutil.rmtree(work, ignore_errors=True)
+    return rec
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--check", action="store_true")
+    ap.add_argument("--run")
+    ap.add_argument("--jobs", type=int, default=4)
+    ap.add_argument("--only")
+    ap.add_argument("--timeout", type=int, default=400)
+    a = ap.parse_args()
+    if a.check or not a.run:
+        sys.exit(1 if check() else 0)
+    if check():
+        sys.exit(1)
+    SCRATCH.mkdir(parents=True, exist_ok=True)
+    base = build_base()
+    ids = [int(x[1:]) for x in a.only.split(",")] if a.only else list(range(len(MUTANTS)))
+    results, out = {}, Path(a.run)
+    with ThreadPoolExecutor(a.jobs) as ex:
+        futs = {ex.submit(run_one, k, base, a.timeout): k for k in ids}
+        for fut in futs:
+            pass
+        from concurrent.futures import as_completed
+        for fut in as_completed(futs):
+            r = fut.result()
+            results[r["id"]] = r
+            print(f"[{len(results)}/{len(ids)}] {r['id']} {r['file'].split('/')[-1]}:{r['line']} {r['verdict'].upper()} "
+                  f"{r['killing_test'] or ''} ({r['secs']}s)  {r['mutant'][:70]!r}", flush=True)
+            out.write_text(json.dumps(sorted(results.values(), key=lambda r: r["id"]), indent=1), encoding="utf-8")
+    vs = [r["verdict"] for r in results.values()]
+    print({v: vs.count(v) for v in sorted(set(vs))}, "total", len(vs))
+
+
+main()

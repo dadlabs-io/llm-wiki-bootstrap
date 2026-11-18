@@ -1894,6 +1894,73 @@ with tempfile.TemporaryDirectory() as td:
               and lines[:1] == [f"Left undone: {len([l for l in lines if l.startswith('- ')])} queue(s)"], lines)
     left_undone_names_an_older_lint_with_no_usable_findings_list()
 
+    # ── hand mutation pass (task #240): tests that kill the real survivors ──
+    def left_undone_reads_a_step_result_with_no_status_as_unknown():
+        mknb("mut1")
+        rec = {"timestamp": S5_LINT, "not_checked": [], "summary": {"files_scanned": 4, "broken_links": 2}}
+        p, lines, _ = s4_lu("mut1", "--lint-only", [s5_file("lint-mechanical.json", rec)])
+        check("left_undone_reads_a_step_result_with_no_status_as_unknown: a lint result with no status field reads "
+              "ended unknown, never completed",
+              "- Lint findings: not checked (the mechanical lint ended unknown)" in lines
+              and not [l for l in lines if l.startswith("- Lint broken")], (p.stderr[-200:], lines))
+    left_undone_reads_a_step_result_with_no_status_as_unknown()
+
+    def left_undone_bridges_a_promoted_stem_only_from_inbox_proposed():
+        root = mknb("mut2")
+        s4_entry(root, "wiki/research/x/old-a.md", D0)
+        s4_commit(D0)
+        s4_entry(root, "wiki/research/x/promo.md", D1)
+        p, lines, _ = s4_lu("mut2", "--full", s4_lint(D2, ["wiki/research/x/old-a.md", "_inbox/done/promo.md"]))
+        check("left_undone_bridges_a_promoted_stem_only_from_inbox_proposed: a scope file naming the stem under "
+              "_inbox/done/ does not cover the live entry",
+              f"{SEM}1 — {SEM_RAN}" in lines, (p.stderr[-200:], lines))
+    left_undone_bridges_a_promoted_stem_only_from_inbox_proposed()
+
+    def left_undone_reads_a_fixes_record_missing_one_line_as_unreadable():
+        mknb("mut3")
+        for what, text in (("no declined line", f"applied: 1\nat: {S5_EARLY}\n"),
+                           ("no applied line", f"declined: 1\nat: {S5_EARLY}\n")):
+            p, lines, _ = s4_lu("mut3", "--full", [s5_sem(3), s5_file("lint-fixes.txt", text)])
+            check(f"left_undone_reads_a_fixes_record_missing_one_line_as_unreadable: a record with {what} counts all "
+                  "3 findings as not checked",
+                  f"{SEMF}3, not checked (lint-fixes.txt unreadable)" in lines, (p.stderr[-200:], lines))
+    left_undone_reads_a_fixes_record_missing_one_line_as_unreadable()
+
+    def left_undone_names_a_partial_lint_that_lists_no_reason():
+        mknb("mut4")
+        p, lines, _ = s4_lu("mut4", "--lint-only", [s5_lint({"files_scanned": 4, "broken_links": 2}, status="partial")])
+        check("left_undone_names_a_partial_lint_that_lists_no_reason: a partial lint with an empty not_checked list "
+              "reads ended partial, never nothing",
+              "- Lint findings: not checked (the mechanical lint ended partial)" in lines, (p.stderr[-200:], lines))
+        p, lines, _ = s4_lu("mut4", "--lint-only", [s5_lint({"files_scanned": 4, "broken_links": 2}, not_checked=["stale"])])
+        check("left_undone_names_a_partial_lint_that_lists_no_reason: a completed lint that lists a reason still gives "
+              "its counts",
+              f"- Lint broken links: 2 — {NO_FIX}" in lines and "- Lint: not checked — stale" not in lines,
+              (p.stderr[-200:], lines))
+    left_undone_names_a_partial_lint_that_lists_no_reason()
+
+    def lint_fixes_skips_an_empty_id_between_commas():
+        root = mknb("mut5")
+        rf = lu_run(root, "2026-10-06-01", cycle="--full")
+        (rf / "lint-semantic.json").write_text(json.dumps(s5_sem_rec(5)), encoding="utf-8")
+        p = run_on("mut5", "lint-fixes", "--run-folder", str(rf), "--applied", "1,,2", "--declined", ",3")
+        txt = (rf / "lint-fixes.txt").read_text(encoding="utf-8").splitlines() if (rf / "lint-fixes.txt").is_file() else []
+        check("lint_fixes_skips_an_empty_id_between_commas: 1,,2 and ,3 read as the ids 1, 2 and 3",
+              p.returncode == 0 and txt[:2] == ["applied: 1,2", "declined: 3"], (p.returncode, p.stderr[-200:], txt))
+    lint_fixes_skips_an_empty_id_between_commas()
+
+    def semantic_scope_takes_its_cut_off_from_an_earlier_run_only():
+        root = mknb("mut6")
+        earlier = lu_run(root, "2026-10-04-01", cycle="--full")
+        (earlier / "lint-semantic.json").write_text(json.dumps({"status": "completed", "timestamp": S5_LINT}), encoding="utf-8")
+        own = lu_run(root, "2026-10-06-01", cycle="--full")
+        (own / "lint-semantic.json").write_text(json.dumps({"status": "completed", "timestamp": S5_LATE}), encoding="utf-8")
+        p = run_on("mut6", "semantic", "--run-folder", str(own))
+        check("semantic_scope_takes_its_cut_off_from_an_earlier_run_only: a lint result already in this run's folder is "
+              "not the cut-off, the earlier run's is",
+              p.returncode == 0 and f"since {S5_LINT} " in p.stdout and S5_LATE not in p.stdout, (p.returncode, p.stdout))
+    semantic_scope_takes_its_cut_off_from_an_earlier_run_only()
+
 failed =[n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

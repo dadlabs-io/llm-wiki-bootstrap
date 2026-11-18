@@ -623,5 +623,83 @@
       }
     ],
     "unfrozen_reason": "step 6 fixture bug found at green: --quick runs ingest, so the run folder needs an update.json or a not-checked Sources line is expected"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_reads_a_step_result_with_no_status_as_unknown",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d4a9f4c5826cfb91291e7d1f207448da205bdbc9a4a78223e1f0990de1c5d9e1",
+    "frozen_at_step": "mutation-1",
+    "frozen_at": "2026-11-18",
+    "green_reason": {
+      "reason": "hand mutation pass M018 (hand-mutation-lu.py.txt): the code already existed; red against the planted mutant (step_status default 'completed' for a missing status): 309/310, this test the one failure",
+      "date": "2026-11-18"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_bridges_a_promoted_stem_only_from_inbox_proposed",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "4d33ed2d644461b107a13be7602f205cae221ce84a37bb7424997e0d3c9b6a58",
+    "frozen_at_step": "mutation-1",
+    "frozen_at": "2026-11-18",
+    "green_reason": {
+      "reason": "hand mutation pass M034: code existed; red against the mutant (stem bridge reads any _inbox/ path): 309/310, this test the one failure",
+      "date": "2026-11-18"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_reads_a_fixes_record_missing_one_line_as_unreadable",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e65b33fe3ea371b7d869a833320dc3b34ccf49124314d5f8440e820431270a22",
+    "frozen_at_step": "mutation-1",
+    "frozen_at": "2026-11-18",
+    "green_reason": {
+      "reason": "hand mutation pass M059: code existed; red against the mutant (fixes record ok when one id line is read): 308/310, both checks of this test fail",
+      "date": "2026-11-18"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_names_a_partial_lint_that_lists_no_reason",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "df8286d7c886141cbe8ee404dae15413302feae02b2a945bf6e9fa6ac1db46de",
+    "frozen_at_step": "mutation-1",
+    "frozen_at": "2026-11-18",
+    "green_reason": {
+      "reason": "hand mutation pass M063: code existed; red against the mutant (partial or reasons): 308/310, both checks of this test fail",
+      "date": "2026-11-18"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "lint_fixes_skips_an_empty_id_between_commas",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e962a45711e53d960149a7851c024b04cc4b9270d91dffc7c9afc1d65053493a",
+    "frozen_at_step": "mutation-1",
+    "frozen_at": "2026-11-18",
+    "green_reason": {
+      "reason": "hand mutation pass M078: code existed; red against the mutant (an empty id part ends the list): 309/310, this test the one failure",
+      "date": "2026-11-18"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "semantic_scope_takes_its_cut_off_from_an_earlier_run_only",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "9495f71643a6c566e149ed8a4e6757cdbb6a9bd03cc5f79acc12b2114031d31c",
+    "frozen_at_step": "mutation-1",
+    "frozen_at": "2026-11-18",
+    "green_reason": {
+      "reason": "hand mutation pass M103: code existed; red against the mutant (last_semantic without skip): 309/310, this test the one failure",
+      "date": "2026-11-18"
+    }
   }
 ]
