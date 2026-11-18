@@ -218,6 +218,12 @@ Round 3: 20 findings, 3 blocking (standards-50, standards-51: the fixture's comp
 Asked: A, override the gate and dispatch review round 4 with the five items named for the reviewer to confirm; or B, stop and continue manually.
 Mark (terminal): "A" — the `fixed` gate overridden for these five items only; review round 4 is the last within the cap.
 
+## Mark's standing word — 2026-11-18
+Mark (terminal): "dont worry about retry cap etc for now. Just get 'er done". Read as: finish the run without stopping on the retry cap or similar process gates, the calls stated and recorded here; it covers re-freezing the tightened tests (stricter, not looser) and the install at the finish; it does not cover a paid run or a push.
+
+## Review round 4 and fix round 4 — 2026-11-18
+Round 4: 6 findings, 3 blocking, all the fixture's composed labelling (standards-63, spec-35, spec-36); the five overridden items confirmed (spec-3, standards-14, spec-28, spec-31 confirmed; standards-15 confirmed in part, its residue being the same labelling). Fix round 4, inline: one rule, "PASS (composed)" only for a check that cannot fail in grade() whatever the script writes; the 'Left undone: nothing' checks, the Numbers row and the Needs-you line leave COMPOSED (they read the script's wording), "the cycle report's last section is Needs you" joins it; main() fails a COMPOSED prefix that names no emitted check (standards-64); plan step 3 names `session_buckets` (spec-37). Fixture test: every check passed. Seven earlier verdicts went stale on the fixture and PENDING edits and were re-verified against the fixture's output. Ledger: met (21 closed, 81 non-blocking open, 4 rounds). No review round 5, on Mark's standing word.
+
 ## Paid red-green run of the two new cases — 2026-11-18
 Asked: go for `run_skill_test.py wiki-cycle --cases <verbatim>,<old-run> --red-green b7401bb` (8 sessions, about $7-8).
 Mark (terminal): "proceed"

@@ -291,6 +291,52 @@
         "tests/skills/wiki-cycle/cases.json": "0f8f887f994b70778269074a0cc809313e196b3bd5c52e463df2966efefbdd8a",
         "tests/skills/wiki-cycle/check.py": "3644a0f7f45f8695d61f98a8d650286c2b4f3df21f04ddee07e65f77213fdb80"
       }
+    },
+    {
+      "round": 4,
+      "at": "2026-11-18T21:29:16Z",
+      "diff_sha256": "492d45a5761bfacd2224cbb2781e52824e00273431daeca24ecebcfe97a9feff",
+      "findings_sha256": "134870b4aacd753675188b60f9979f7cac4d14c314f03c2f32a47b5538366a4d",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-63",
+        "standards-64",
+        "spec-35",
+        "spec-36",
+        "spec-37",
+        "spec-38"
+      ],
+      "new": [
+        "standards-63",
+        "standards-64",
+        "spec-35",
+        "spec-36",
+        "spec-37",
+        "spec-38"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "7f65e63c77097b2e7ea7828795115ead8d69ce8e80dd9158d5d613eecd1c7b59",
+        "INSTALL-INVENTORY.md": "291d617164798d977ada6044c0e1945fbf70ca1376385773edbbf2087e3f3d4e",
+        "scripts/_cycle_common.py": "e02449cc25452f80f96d5a6aca5b2fb287d556a88f271aaeead651c9fe8ad66c",
+        "scripts/_install_tooling.py": "9f57072106e0930f3dc92027a04c8583cd645bfcb9aa196bd85a359a41c06fb2",
+        "scripts/_run_state.py": "62d841703bef3a4ec61db935aeac9d0699bee9354e6dad77544ce482bb7928ac",
+        "scripts/wiki-cycle-scope.py": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+        "scripts/wiki-triage.py": "547c616fdd68a55cfc1f39280245f80be2f7f7bca4eb60bddf4414a6cb536d89",
+        "skills/wiki-cycle/SKILL.md": "86604e8c6067e58defe0bcfe93eb5faccd2b0123e04dd640d35ad14dcdde2fc4",
+        "skills/wiki-cycle/reference.md": "7b115845387f1e8cb725d3548b8d2bf62cdf7d43446505c8d65570c008f127e8",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "74b48949973c34e75a930d52b41049f9f1f9bf68d3c35d2f679b10ec39ea13aa",
+        "skills/wiki-report/SKILL.md": "cd5a9acae97176bc8f411c2fe2c81b4bfcce90e8c45b12474171e7a1ceeb2beb",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "6cd21d25e82a3df01ac34627f9b2adb4c0b8bdaee647ea06c8747f716c36c2bb",
+        "tests/scripts/test_cycle_scope.py": "1f5ebcf57cfa1e5270168013c5d0c5046e71021804cd97e8203f1089d93f3c0b",
+        "tests/scripts/test_left_undone_fixture.py": "b2d8ea0b9680d9f27795fbb8befd0484d817db76c9688a7af0daa4c86da2d6d9",
+        "tests/scripts/test_wiki_triage.py": "abc0e40c6c6a2ac3e0c6a73498f432d4e2ce795a9b2f18be29d49c2e66714b5a",
+        "tests/skills/PENDING.md": "3d83a84d8fe439375858d2d316d13efb804447b461455f31f80dfba5605b7ce6",
+        "tests/skills/wiki-cycle/cases.json": "0f8f887f994b70778269074a0cc809313e196b3bd5c52e463df2966efefbdd8a",
+        "tests/skills/wiki-cycle/check.py": "3644a0f7f45f8695d61f98a8d650286c2b4f3df21f04ddee07e65f77213fdb80"
+      }
     }
   ],
   "items": {
@@ -1254,8 +1300,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 3,
-      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
+      "verdict_round": 4,
+      "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1273,6 +1319,11 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a"
         }
       ]
     },
@@ -1285,8 +1336,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 3,
-      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
+      "verdict_round": 4,
+      "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1304,6 +1355,11 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a"
         }
       ]
     },
@@ -1836,8 +1892,8 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "addressed",
-      "verdict_round": 2,
-      "fingerprint": "d4f440e411baf9695cdb6c82ff8183048043a851ab454477f6ab1fffebc5be08",
+      "verdict_round": 4,
+      "fingerprint": "95d8e033ecd59e7e6695b78131a3a93026cc24e77477324850e4336c0b8a1d62",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1850,6 +1906,11 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "d4f440e411baf9695cdb6c82ff8183048043a851ab454477f6ab1fffebc5be08"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "95d8e033ecd59e7e6695b78131a3a93026cc24e77477324850e4336c0b8a1d62"
         }
       ]
     },
@@ -1862,8 +1923,8 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "addressed",
-      "verdict_round": 2,
-      "fingerprint": "e17b9a57639e4921c3a49782a7c9894a90ed7974d1ca558d896dc8899ae68e56",
+      "verdict_round": 4,
+      "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -1876,6 +1937,11 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "e17b9a57639e4921c3a49782a7c9894a90ed7974d1ca558d896dc8899ae68e56"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a"
         }
       ]
     },
@@ -2070,8 +2136,8 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "addressed",
-      "verdict_round": 2,
-      "fingerprint": "d4f440e411baf9695cdb6c82ff8183048043a851ab454477f6ab1fffebc5be08",
+      "verdict_round": 4,
+      "fingerprint": "95d8e033ecd59e7e6695b78131a3a93026cc24e77477324850e4336c0b8a1d62",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -2084,6 +2150,11 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "d4f440e411baf9695cdb6c82ff8183048043a851ab454477f6ab1fffebc5be08"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "95d8e033ecd59e7e6695b78131a3a93026cc24e77477324850e4336c0b8a1d62"
         }
       ]
     },
@@ -2309,8 +2380,8 @@
       "first_round": 3,
       "last_seen_round": 3,
       "verdict": "addressed",
-      "verdict_round": 3,
-      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
+      "verdict_round": 4,
+      "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -2323,6 +2394,11 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a"
         }
       ]
     },
@@ -2335,8 +2411,8 @@
       "first_round": 3,
       "last_seen_round": 3,
       "verdict": "addressed",
-      "verdict_round": 3,
-      "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa",
+      "verdict_round": 4,
+      "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -2349,6 +2425,11 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a"
         }
       ]
     },
@@ -2817,6 +2898,162 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "6c0df44c8439246a5c4c1951c4f894373f955649543bee6ac65cbec6292d8caa"
+        }
+      ]
+    },
+    "standards-63": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] C2 / PY11 `tests/scripts/test_left_undone_fixture.py:16-18` (docstring) and `:56-62` (comment): the new wording says the COMPOSED checks \"cannot fail here\", but several entries read the script's own wording and can fail in grade(). Quote: \"the checks that read only its shape (its sections and their order, the Left undone section as the file's text, the Numbers row, the Needs-you line; names in COMPOSED) cannot fail here\". `check.py:3110-3111` reads the script's \"awaiting your approval\" wording and its `past review_after` line, and `compose_report` line 110 branches on `\"awaiting your approval\" in rest`; a reworded script line gives a FAIL (`report()` line 139). `check.py:3142` and `:3081` (\"the section reads / does not read 'Left undone: nothing'\", COMPOSED lines 66 and 68) read the same file wording as the excluded \"Left undone line: ...\" checks. Fix: move the wording-reading entries (Numbers row, Needs you carries, the two 'Left undone: nothing' checks) out of COMPOSED, or reword the docstring and comment to say they pass by construction only while the script keeps its wording.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 16,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a"
+        }
+      ]
+    },
+    "standards-64": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S5 `tests/scripts/test_left_undone_fixture.py:65-68` and `report()` line 138: a check's name is carried as a raw prefix string in two files and nothing validates it. `startswith(COMPOSED)` silently falls back to plain \"PASS\" when a check.py name changes; the round-3 rename at line 189 shows the drift already happened once. Fix: after the run, assert that every COMPOSED prefix matches at least one emitted check name, and fail otherwise.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 65,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a"
+        }
+      ]
+    },
+    "spec-35": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `tests/skills/wiki-cycle/check.py:3354` and COMPOSED (fixture lines 65-68): the check \"the cycle report's last section is Needs you\" is satisfied by construction yet prints a plain PASS. Intent: fixture docstring lines 16-18, \"the checks that read only its shape (its sections and their order, ... the Needs-you line ...) cannot fail here: they print \"PASS (composed)\"\" (spec-31's own criterion). Code: `add(\"the cycle report's last section is Needs you\", bool(heads) and \"needs you\" in heads[-1].lower(),` (check.py:3354); the composer always ends with `\"## \u26a0\ufe0f Needs you\", \"\", *needs, \"\"` (fixture line 121); no COMPOSED prefix matches it. Affected: a reader of the fixture output takes the plain PASS as a graded /wiki-report result. A sibling site of spec-31 that the fix missed. Fix: add \"the cycle report's last section is Needs you\" to COMPOSED.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 3354,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "3644a0f7f45f8695d61f98a8d650286c2b4f3df21f04ddee07e65f77213fdb80",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "3644a0f7f45f8695d61f98a8d650286c2b4f3df21f04ddee07e65f77213fdb80"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "3644a0f7f45f8695d61f98a8d650286c2b4f3df21f04ddee07e65f77213fdb80"
+        }
+      ]
+    },
+    "spec-36": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `tests/skills/wiki-cycle/check.py:3142`, `:3081`, `:3145`: \"the section reads 'Left undone: nothing'\", \"the section does not read ...\", \"no queue line under 'Left undone: nothing'\" read the script's own line 1 and bullets, yet COMPOSED (fixture lines 66, 67-68) prints them \"PASS (composed)\". Intent: fixture comment lines 60-61, \"The 'Left undone line: ...' checks are not here: they read the script's own wording in the file, which can fail in grade()\". Code: the composer copies the file verbatim (`\"## Left undone\", \"\", lu.rstrip()`, fixture line 121) and the script writes the wording (`head = f\"Left undone: {len(queues)} queue(s)\" if queues else \"Left undone: nothing\"`, `scripts/_run_state.py:949`), so these checks depend on the script, not the composer. Affected: a script wording change would print \"PASS (composed)\" and be read as not graded here. Same root as the Standards finding 1. Fix: remove those prefixes from COMPOSED so they print plain PASS.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 3142,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "aeb7fca35bd756dfe96d5f3fdc6628a8a029af0602542079fecb4b6de873018f"
+        }
+      ]
+    },
+    "spec-37": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `.do-code-change/240-loud-backlogs/plan.md:272`: the amended bullet says an unparseable-frontmatter README \"falls to `buckets()`'s one-bucket default\", but the default lives in `session_buckets`. Code: `except parse_errors:` / `return [{\"folder\": \"main\", \"reader\": tri.me()}]` (`scripts/_run_state.py:427-428`); `buckets()` (`scripts/wiki-triage.py:125-132`) raises on a YAML syntax error. The behaviour matches the code and the test (`test_cycle_scope.py:1037-1043`, `1080-1085`); only the function name is wrong (the phrase predates the amendment). Fix: write \"`session_buckets`' one-bucket default\".",
+      "file": ".do-code-change/240-loud-backlogs/plan.md",
+      "line": 272,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "9b9c1332f1c8f06921cdc10eb9acaf9323eabed7eb85931017116c348433074b",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "9b9c1332f1c8f06921cdc10eb9acaf9323eabed7eb85931017116c348433074b"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "9b9c1332f1c8f06921cdc10eb9acaf9323eabed7eb85931017116c348433074b"
+        }
+      ]
+    },
+    "spec-38": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_left_undone_fixture.py:45-46`: \"scratchpad: Phase 8 done\" and \"Phase 9 done\" are listed NEEDS-PAID-SESSION although the fixture sets both itself (`finish_scratchpad`, lines 125-131). Fix: say so in the docstring, or move them to COMPOSED.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 45,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": 4,
+      "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a"
+        },
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "cef2309eca3a17945cd60f54a1d9fdd502b8fa479f6c50de70005042cd2e9c3a"
         }
       ]
     }

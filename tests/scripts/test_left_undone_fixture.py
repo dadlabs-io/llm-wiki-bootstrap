@@ -13,9 +13,9 @@ Builds each case's sandbox with the suite's own `setup` and `prompt()` (needs `q
   Decisions-needed-11 rule, Left undone verbatim, Needs you last, its semantic line as the wiki-report skill words
   it), the scratchpad's Phase 8 and 9 set to done, then `check()` with an empty session.
 
-That report is written by this test, so the checks that read only its shape (its sections and their order, the Left
-undone section as the file's text, the Numbers row, the Needs-you line; names in COMPOSED) cannot fail here: they print
-"PASS (composed)", and what /wiki-report writes is graded only by a paid session. The wiki-report skill's own text is
+That report is written by this test, so the checks it decides alone (its sections and their order, the Left undone
+section as the file's text; names in COMPOSED) cannot fail here and print "PASS (composed)"; checks that read the
+script's wording can fail and print a plain PASS. What /wiki-report itself writes is graded only by a paid session. The wiki-report skill's own text is
 checked directly (every Needs-you wording, the no-file lines, the --brief rule), case A's folder is also graded by the
 left-undone-verbatim kind, and its section-against-file checks are shown to fail an invented, a reworded and a dropped
 queue line. The left-undone-old-run case is not run here (an unpaid smoke of it was run by hand, checkpoints.md).
@@ -53,19 +53,19 @@ DROPPED = {"left-undone-planted": ("no --full-only step ran", "pending queue emp
            "left-undone-clean": ("quick steps all wrote their pair", "triage ran: one log row"),
            "left-undone-verbatim": ("no --full-only step ran", "pending queue empty", "triage ran: one log row")}
 
-# Checks that read only what this test composed itself (compose_report writes the report: its sections, their order,
-# the Left undone section as the file's own text, the Numbers row, the Needs-you line) or grade the composer itself:
-# they pass by construction in grade(), so a pass is printed as "PASS (composed)", never as proof of what /wiki-report
-# writes. The section-against-file checks bite only in tamper_checks, where the report is altered first. The
-# "Left undone line: ..." checks are not here: they read the script's own wording in the file, which can fail in
-# grade(). Each entry is a name prefix of check.py's checks (or of this test's own composer checks); the two
-# section-against-file prefixes are the left-undone-verbatim kind's (eval-case-writer's), run over case A's folder.
+# "PASS (composed)" marks a check that cannot fail in grade() whatever the script writes: compose_report decides it
+# alone (the report's sections and their order, the Left undone section being the file's own text) or it grades the
+# composer itself. A check that reads the script's wording (the 'Left undone: nothing' and 'Left undone line: ...'
+# checks, the Numbers row, the Needs-you line, which compose_report words from the file's own lines) can fail here
+# and prints a plain PASS. Either way, what /wiki-report itself writes is graded only by a paid session. The
+# section-against-file checks bite in tamper_checks, where the report is altered first. Each entry is a name prefix
+# of check.py's checks (or of this test's own composer checks), and main() fails a prefix that names no check this run
+# emitted; the two section-against-file prefixes are the left-undone-verbatim kind's (eval-case-writer's).
 SECTION_EQUALS_FILE = "the section's lines are the file's lines"
 NO_FOREIGN_QUEUE_LINE = "no queue line (a line starting '- ') in the section that the file does not hold"
-COMPOSED = ("the Numbers row's stale count equals", "Needs you carries", "compose_report words",
-            SECTION_EQUALS_FILE, NO_FOREIGN_QUEUE_LINE, "the section reads 'Left undone: nothing'",
-            "no queue line under", "the report has a Left undone section", "Left undone is the second-to-last section",
-            "the section does not read 'Left undone: nothing'")
+COMPOSED = ("compose_report words", SECTION_EQUALS_FILE, NO_FOREIGN_QUEUE_LINE, "the report has a Left undone section",
+            "Left undone is the second-to-last section", "the cycle report's last section is Needs you")
+emitted: set[str] = set()  # every check name this run printed, for the COMPOSED prefix check in main()
 
 SKILL_TEXT = REPO / "skills" / "wiki-report" / "SKILL.md"
 # the Needs-you wordings and the no-file lines of the wiki-report skill, as the skill text writes them
@@ -134,6 +134,7 @@ def finish_scratchpad(rf: Path) -> None:
 def report(label: str, results: list[dict], kind: str) -> None:
     print(f"\n=== {label} ({kind}) ===", flush=True)
     for r in results:
+        emitted.add(r["name"])
         apart = r["name"].startswith(NEEDS_SESSION)
         passed = "PASS (composed)" if r["name"].startswith(COMPOSED) else "PASS"
         tag = "NEEDS-PAID-SESSION" if apart else (passed if r["ok"] else "FAIL")
@@ -150,6 +151,7 @@ def report(label: str, results: list[dict], kind: str) -> None:
 
 
 def own(label: str, name: str, ok: bool, detail: object = "") -> None:
+    emitted.add(name)
     passed = "PASS (composed)" if name.startswith(COMPOSED) else "PASS"
     print(f"  {passed if ok else 'FAIL':18} {name}" + ("" if ok else f"\n{'':21}detail: {detail}"), flush=True)
     if not ok:
@@ -358,6 +360,9 @@ def main() -> int:
                 failures.append(f"{name}: raised {type(e).__name__}: {e}")
             print(f"\n[{name}] wall {time.time() - t:.0f}s", flush=True)
     print(f"\nwall total {time.time() - t0:.0f}s")
+    for prefix in COMPOSED:  # a renamed check must not drop silently out of the composed label
+        if not any(n.startswith(prefix) for n in emitted):
+            failures.append(f"COMPOSED prefix names no check this run emitted: '{prefix}'")
     if failures:
         print(f"\n{len(failures)} FAILED:")
         for f in failures:
