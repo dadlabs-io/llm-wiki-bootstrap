@@ -9,6 +9,13 @@
 
 ---
 
+## 2026-11-17
+
+### The cycle's report names everything the run left undone, with the count and why (task #240, lesson #9)
+- **Why**: backlogs grew silently: entries past `review_after` (607 on agentic-design, 6 here on 2026-11-16), tickets left in buckets, semantic findings no later step showed again; the pre-mortem's lesson #9 and Mark's rule (2026-11-16): after a run, anything left undone is named, with the count and why.
+- **What**: `wiki-cycle-scope.py left-undone --run-folder <rf>` counts, fresh from the notebook and the run folder's step files, the review-date queues (past, missing, not a date), the tickets in `_inbox/pending/`, in this session's bucket and in other readers' buckets, staged entries (only when `confirm_before_promote: false`), discovery checklists, the entries not semantically linted, without claims or not synthesised, the mechanical lint's findings, this run's and earlier runs' semantic findings, the dropped, failed and deferred sources and the tier-4 deferrals of an unattended run, and writes `left-undone.txt` (header `Left undone: <N> queue(s)` or `Left undone: nothing`) and `left-undone-events.txt`. Every queue has three states: a count with its reason and way out, nothing, or `not checked (<why>)`; a step that left no result is never read as empty. The mode is read from the scratchpad's `**Cycle**` line and cross-checked against the step files present. `--report-only` counts the disk-state queues now and copies the last run's event lines with its id. New `lint-fixes --show` / `--applied --declined` records which semantic findings cycle Step 5 applied or declined, by the ids the script prints, and Step 5 re-runs the mechanical lint after it. `/wiki-report` has a `## Left undone` section between Fallbacks and ⚠️ Needs you (the file word for word, or a not-checked line), the Numbers row's Stale count comes from it, `--brief` carries its first line, and the Needs-you semantic line copies its N in one of three wordings. `wiki-triage.py` gains `intake_tickets`. The rules live once, in the script's docstring.
+- **Migration**: none. A run folder with no `left-undone.txt` (a run before this change, or resumed from one before Step 8 ran) reports `Left undone: not checked (no left-undone.txt in the run folder)`.
+
 ## 2026-11-15
 
 ### The cycle's report names every step that left its expected tool path (task #240, lesson #12)
