@@ -280,7 +280,7 @@ Standalone (no run folder): omit this section.
 
 ## Left undone
 
-One of three states, from `<run-folder>/left-undone.txt` (written by `wiki-cycle-scope.py left-undone`, which counts and words every line; its docstring is the one source):
+One of three states, from `<run-folder>/left-undone.txt` (written by `wiki-cycle-scope.py left-undone`, which counts and words every line; the docstring of `_run_state.py` is the one source):
 - the file exists: its text word for word, header line first, nothing counted, reworded, added or dropped by you
 - the file is absent: `Left undone: not checked (no left-undone.txt in the run folder)`, never `nothing`
 - standalone (no run folder): `Left undone: not checked (standalone report: no run folder)`

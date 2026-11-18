@@ -1,0 +1,72 @@
+"""Throwaway check for plan step 8 (never shipped, never gated: a .txt name).
+
+    uv run --project C:/github.com/llm-wiki-bootstrap python <this file> <old.py> <new1.py> <new2.py> <new3.py>
+
+Compares the old wiki-cycle-scope.py (git show 625223a:scripts/wiki-cycle-scope.py) with the three files after the
+move. Every top-level function, class and assignment of the old file is looked up by name in the new files and its
+ast.dump compared. Reports: a name whose dump differs, an old name in no new file, a name defined twice (in one file
+or across the new files; for assignments to the same name twice in the OLD file it is only reported when the new
+files differ from the old count). Exit 1 on any report.
+"""
+import ast
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+
+def top_level(path: Path) -> list[tuple[str, str, str]]:
+    """(name, kind, ast.dump) of every top-level def, class and assignment, in source order."""
+    out = []
+    for node in ast.parse(path.read_text(encoding="utf-8")).body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            out.append((node.name, type(node).__name__, ast.dump(node)))
+        elif isinstance(node, ast.Assign):
+            for t in node.targets:
+                if isinstance(t, ast.Name):
+                    out.append((t.id, "Assign", ast.dump(node)))
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            out.append((node.target.id, "Assign", ast.dump(node)))
+    return out
+
+
+def main() -> int:
+    old_path, *new_paths = (Path(a) for a in sys.argv[1:])
+    old = top_level(old_path)
+    new: dict[str, list[tuple[Path, str]]] = defaultdict(list)
+    for p in new_paths:
+        for name, _kind, dump in top_level(p):
+            new[name].append((p, dump))
+    old_by: dict[str, list[str]] = defaultdict(list)
+    for name, _kind, dump in old:
+        old_by[name].append(dump)
+    bad = 0
+    same = 0
+    for name, dumps in old_by.items():
+        got = new.get(name)
+        if not got:
+            print(f"MISSING  {name}: in no new file")
+            bad += 1
+            continue
+        if len(got) != len(dumps):
+            print(f"DUPLICATE  {name}: defined {len(dumps)}x in the old file, {len(got)}x in the new files "
+                  f"({', '.join(p.name for p, _ in got)})")
+            bad += 1
+            continue
+        if [d for _p, d in got] != dumps:
+            print(f"DIFFERS  {name}: body differs between the old file and {', '.join(p.name for p, _ in got)}")
+            bad += 1
+            continue
+        same += 1
+    for name in new:
+        if name not in old_by:
+            print(f"NEW  {name}: in {', '.join(p.name for p, _ in new[name])} but not in the old file")
+            bad += 1
+    print(f"{same} names identical, {bad} reported (old file {len(old_by)} names; new files "
+          f"{sum(len(v) for v in new.values())} definitions)")
+    for p in new_paths:
+        print(f"  {p.name}: {len(top_level(p))} top-level definitions")
+    return 1 if bad else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

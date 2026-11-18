@@ -21,6 +21,8 @@ from pathlib import Path
 
 SCRIPT = Path(os.environ.get("WIKI_SCOPE_SCRIPT") or
               Path(__file__).resolve().parents[2] / "scripts" / "wiki-cycle-scope.py")
+RUN_STATE = SCRIPT.parent / "_run_state.py"      # unfinished, left-undone and lint-fixes, and their docstring
+CYCLE_COMMON = SCRIPT.parent / "_cycle_common.py"    # what the scope commands and the run-state code share
 results: list[tuple[bool, str]] = []
 
 
@@ -846,7 +848,7 @@ with tempfile.TemporaryDirectory() as td:
 
     def left_undone_mode_table_matches_skill():
         import importlib.util
-        spec = importlib.util.spec_from_file_location("wiki_cycle_scope_under_test", SCRIPT)
+        spec = importlib.util.spec_from_file_location("wiki_cycle_scope_under_test", RUN_STATE)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         script_table = {step: set(modes) for step, modes in getattr(mod, "STEP_MODES", {}).items()}
@@ -884,6 +886,8 @@ with tempfile.TemporaryDirectory() as td:
         check("left_undone_mode_table_matches_skill: the skill's table has the five modes and all nine steps",
               modes == ["quick", "full", "ingest-only", "discover-only", "prompt-for-urls"] and len(runs) == 9
               and all(runs[s] for s in runs), (modes, runs))
+        check("left_undone_mode_table_matches_skill: the script's table is not empty: it names all nine steps, each with modes",
+              len(script_table) == 9 and all(script_table.values()), script_table)
         check("left_undone_mode_table_matches_skill: the script's table agrees with it for those five modes",
               drift(script_table, skill_text) == [], drift(script_table, skill_text))
         flipped = skill_text.replace("| 6 Claims, 7 refresh | — |", "| 6 Claims, 7 refresh | ✓ |", 1)
@@ -1040,7 +1044,7 @@ with tempfile.TemporaryDirectory() as td:
 
     def left_undone_docstring_names_the_unsupported_working_folder():
         import ast
-        doc = ast.get_docstring(ast.parse(SCRIPT.read_text(encoding="utf-8"))) or ""
+        doc = ast.get_docstring(ast.parse(RUN_STATE.read_text(encoding="utf-8"))) or ""
         check("left_undone_docstring_names_the_unsupported_working_folder: the docstring says a working folder whose "
               ".claude/wiki-config.json names another notebook is not supported",
               "names another notebook" in doc and "not a supported case" in doc, doc[doc.find("`left-undone`"):][:700])
@@ -1048,7 +1052,7 @@ with tempfile.TemporaryDirectory() as td:
 
     def left_undone_session_buckets_lets_an_unexpected_error_surface():
         import importlib.util
-        spec = importlib.util.spec_from_file_location("wiki_cycle_scope_session_buckets", SCRIPT)
+        spec = importlib.util.spec_from_file_location("wiki_cycle_scope_session_buckets", RUN_STATE)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
 
@@ -1084,7 +1088,7 @@ with tempfile.TemporaryDirectory() as td:
     # ── left-undone step 4: newest_step, the one walk over the run folders' step results ──
     def newest_step_returns_the_newest_matching_result():
         import importlib.util
-        spec = importlib.util.spec_from_file_location("wiki_cycle_scope_newest_step", SCRIPT)
+        spec = importlib.util.spec_from_file_location("wiki_cycle_scope_newest_step", CYCLE_COMMON)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         root = mknb("ns1")
@@ -1670,7 +1674,7 @@ with tempfile.TemporaryDirectory() as td:
         p, lines, _ = s4_lu("s5d", "--lint-only --semantic", [s5_sem(5)])
         check("left_undone_names_semantic_findings_from_earlier_runs: so does a --lint-only --semantic run, beside its own line",
               old_lines(lines) == [SUP, COLL] and f"{SEMF}5 — {NO_FIX}; {S5_WAY}" in lines, lines)
-        doc = ast.get_docstring(ast.parse(SCRIPT.read_text(encoding="utf-8"))) or ""
+        doc = ast.get_docstring(ast.parse(RUN_STATE.read_text(encoding="utf-8"))) or ""
         check("left_undone_names_semantic_findings_from_earlier_runs: the docstring says only completed lints are read, "
               "so an older partial lint is not",
               "only completed lints are read" in doc and "partial" in doc[doc.find("only completed lints are read") - 300:][:600],
