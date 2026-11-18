@@ -133,6 +133,90 @@
         "tests/skills/wiki-cycle/cases.json": "cc81de01f23b59b4a1b7096fbeb7142a059d3031950782215f16544b58e4bca9",
         "tests/skills/wiki-cycle/check.py": "a334fe8b564b0a8fed54c947cef8fc3e22476fc473c3e453d040c18a327bba39"
       }
+    },
+    {
+      "round": 2,
+      "at": "2026-11-18T17:47:33Z",
+      "diff_sha256": "6d7d4058cd978b185af9bfc5420d8a13ac1d77e4e54c95d74b3131a69ec2dbcf",
+      "findings_sha256": "f340b6b5611095272246d1bc3025759182a69eb542e710d16fc10dee9df1562f",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-34",
+        "standards-35",
+        "standards-36",
+        "standards-37",
+        "standards-38",
+        "standards-39",
+        "standards-40",
+        "standards-41",
+        "standards-42",
+        "standards-43",
+        "standards-44",
+        "standards-45",
+        "standards-46",
+        "standards-47",
+        "standards-48",
+        "standards-49",
+        "spec-19",
+        "spec-20",
+        "spec-21",
+        "spec-22",
+        "spec-23",
+        "spec-24",
+        "spec-25",
+        "spec-26",
+        "spec-27"
+      ],
+      "new": [
+        "standards-34",
+        "standards-35",
+        "standards-36",
+        "standards-37",
+        "standards-38",
+        "standards-39",
+        "standards-40",
+        "standards-41",
+        "standards-42",
+        "standards-43",
+        "standards-44",
+        "standards-45",
+        "standards-46",
+        "standards-47",
+        "standards-48",
+        "standards-49",
+        "spec-19",
+        "spec-20",
+        "spec-21",
+        "spec-22",
+        "spec-23",
+        "spec-24",
+        "spec-25",
+        "spec-26",
+        "spec-27"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "7f65e63c77097b2e7ea7828795115ead8d69ce8e80dd9158d5d613eecd1c7b59",
+        "INSTALL-INVENTORY.md": "291d617164798d977ada6044c0e1945fbf70ca1376385773edbbf2087e3f3d4e",
+        "scripts/_cycle_common.py": "e02449cc25452f80f96d5a6aca5b2fb287d556a88f271aaeead651c9fe8ad66c",
+        "scripts/_install_tooling.py": "9f57072106e0930f3dc92027a04c8583cd645bfcb9aa196bd85a359a41c06fb2",
+        "scripts/_run_state.py": "72147bcb02f29526c0ab3745297a0718c5511bb1b910bcbd9196cd90b437214b",
+        "scripts/wiki-cycle-scope.py": "51b557806262cfeb9e439e13d93f8589e634648f690831f47ad3061fdde9331f",
+        "scripts/wiki-triage.py": "547c616fdd68a55cfc1f39280245f80be2f7f7bca4eb60bddf4414a6cb536d89",
+        "skills/wiki-cycle/SKILL.md": "86604e8c6067e58defe0bcfe93eb5faccd2b0123e04dd640d35ad14dcdde2fc4",
+        "skills/wiki-cycle/reference.md": "7b115845387f1e8cb725d3548b8d2bf62cdf7d43446505c8d65570c008f127e8",
+        "skills/wiki-cycle/wiki-seed/wiki-cycle.md": "74b48949973c34e75a930d52b41049f9f1f9bf68d3c35d2f679b10ec39ea13aa",
+        "skills/wiki-report/SKILL.md": "cd5a9acae97176bc8f411c2fe2c81b4bfcce90e8c45b12474171e7a1ceeb2beb",
+        "skills/wiki-report/wiki-seed/wiki-report.md": "6cd21d25e82a3df01ac34627f9b2adb4c0b8bdaee647ea06c8747f716c36c2bb",
+        "tests/scripts/test_cycle_scope.py": "dd2cc0160ab8dc0c9105966a5bfe7bdbf4e2e5ec9c0f03c6651bb7b5c90ed448",
+        "tests/scripts/test_left_undone_fixture.py": "d55c44aee880998d01a4823b82f106f0c63ab69f1c2de0373f57e328a0d7f762",
+        "tests/scripts/test_wiki_triage.py": "abc0e40c6c6a2ac3e0c6a73498f432d4e2ce795a9b2f18be29d49c2e66714b5a",
+        "tests/skills/PENDING.md": "a7f3252914616d984339b241cc5232a31b2a5a21921070492fa7ef87bf4e187a",
+        "tests/skills/wiki-cycle/cases.json": "cc81de01f23b59b4a1b7096fbeb7142a059d3031950782215f16544b58e4bca9",
+        "tests/skills/wiki-cycle/check.py": "631e5f8a907b405ee7afa8aaeacb8a1d7722761f1a5c46d40dc26c1e9b61c79e"
+      }
     }
   ],
   "items": {
@@ -1459,6 +1543,531 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "6cd21d25e82a3df01ac34627f9b2adb4c0b8bdaee647ea06c8747f716c36c2bb"
+        }
+      ]
+    },
+    "standards-34": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-triage.py:167` (`intake_tickets` docstring) \u2014 C2: names a caller the move changed. Quote: `Used by wiki-cycle-scope.py's left-undone counts`. The counts now live in `_run_state.py` (callers `bucket_ticket_lines` and `ticket_marked_sources`). Sibling site of standards-1. Fix: \"Used by `_run_state.py`'s left-undone counts\".",
+      "file": "scripts/wiki-triage.py",
+      "line": 167,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "c177d092701eca864723a79c11180f179415124ac8a47bbb04cd0d98ca9bd61d",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "c177d092701eca864723a79c11180f179415124ac8a47bbb04cd0d98ca9bd61d"
+        }
+      ]
+    },
+    "standards-35": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/_run_state.py:271` (`cmd_unfinished`, `cmd_lint_fixes`, `cmd_left_undone`) with `scripts/wiki-cycle-scope.py:494-508,512-518` \u2014 S7/G31: the move split an implicit argparse contract across two files. `main()` defines `--mark-interrupted`, `--reason`, `--today`, `--show`, `--applied`, `--declined`, sets `args.topic_name` by hand and runs the `un.error(...)` checks; the consumers in `_run_state.py` read those attributes. A flag renamed in one file fails only at run time in the other. Fix: `_run_state.py` exports `add_arguments(sub)` for its three commands and `main()` calls it; a cheaper option is to name the Namespace attributes in each `cmd_*` docstring.",
+      "file": "scripts/_run_state.py",
+      "line": 271,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "588f48dae1c06add4d367386dce03f346cfee0612ecc709e3e94f05fc3ce814f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "588f48dae1c06add4d367386dce03f346cfee0612ecc709e3e94f05fc3ce814f"
+        }
+      ]
+    },
+    "standards-36": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/_run_state.py:213-215` (import of `_front`, `_parse_time`) \u2014 N2: underscore-private names imported across modules. Quote: `_front, _parse_time, claims_scope, entries, newest_step, ...`. `wiki-cycle-scope.py` imports `_front` too, so a name marked private now has two importers. Fix: drop the underscore (`front`, `parse_time`) in `_cycle_common.py`, in its own rename step.",
+      "file": "scripts/_run_state.py",
+      "line": 213,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "588f48dae1c06add4d367386dce03f346cfee0612ecc709e3e94f05fc3ce814f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "588f48dae1c06add4d367386dce03f346cfee0612ecc709e3e94f05fc3ce814f"
+        }
+      ]
+    },
+    "standards-37": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/_cycle_common.py:4` (module docstring) \u2014 C1/C2: change history, and not quite true. Quote: `Moved here unchanged from wiki-cycle-scope.py so the import runs one way`. `write_scope` and `_front` lost a date from their docstrings, so \"unchanged\" is false for those two. Fix: keep the rationale only: \"wiki-cycle-scope.py imports this module and `_run_state.py`; `_run_state.py` imports this module; this module imports neither.\"",
+      "file": "scripts/_cycle_common.py",
+      "line": 4,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "c02c277cd9925fe857e0d44da9a9c572a3bd6359a8713c08f1e547bb895f50d2",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "c02c277cd9925fe857e0d44da9a9c572a3bd6359a8713c08f1e547bb895f50d2"
+        }
+      ]
+    },
+    "standards-38": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/_run_state.py:413-426` (`session_buckets`, the standards-2 fix) \u2014 R11/R8: the narrowed `except` still swallows a read error that its own docstring says surfaces. Quote: `parse_errors: tuple[type[BaseException], ...] = (AttributeError, TypeError, ValueError)`. `wiki-triage.py:129` reads with `readme.read_text(encoding=\"utf-8\")`; invalid UTF-8 raises `UnicodeDecodeError`, a `ValueError`, so it falls back to `main`, while the docstring says \"a read error or any other failure surfaces\". Fix: `except UnicodeDecodeError: raise` before `except parse_errors:`, or say in the docstring that an undecodable README counts as unparseable. (The Spec axis raises the same site below, from the plan's side.)",
+      "file": "scripts/_run_state.py",
+      "line": 413,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "588f48dae1c06add4d367386dce03f346cfee0612ecc709e3e94f05fc3ce814f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "588f48dae1c06add4d367386dce03f346cfee0612ecc709e3e94f05fc3ce814f"
+        }
+      ]
+    },
+    "standards-39": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/_cycle_common.py` (module name) \u2014 N2/S16: `_cycle_common` names the sharing, not the concept; its contents are notebook entries, run-folder step results and the scope functions. Fix: a concept name such as `_cycle_scopes.py`. The module is cohesive today, so S16 is not triggered.",
+      "file": "scripts/_cycle_common.py",
+      "line": null,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e02449cc25452f80f96d5a6aca5b2fb287d556a88f271aaeead651c9fe8ad66c",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "e02449cc25452f80f96d5a6aca5b2fb287d556a88f271aaeead651c9fe8ad66c"
+        }
+      ]
+    },
+    "standards-40": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/skills/wiki-cycle/check.py:3079-3088` \u2014 repo convention (tests/skills/README.md, \"Who writes the cases\"): the two checks grading the new `left-undone-planted` kind were added to the editing session's branch by hand. Quote README:17 \"The session that changes a skill never writes or edits the cases that grade its change\"; README:21 \"(an existing kind is never changed)\"; check.py:3079 \"# the report pastes left-undone.txt word for word\". The kind is new in this change, so the clause does not exempt it. Fix: send the two `add(...)` checks to eval-case-writer as text for the branch and save them unchanged; log the hand edit in PENDING until then. Sub-point (suggestion): the comment says \"word for word\" but `_lu_lines` (check.py:3031) strips `*` and backticks and the code drops `---` rules; reword the comment.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 3079,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a"
+        }
+      ]
+    },
+    "standards-41": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/skills/PENDING.md:28` (the 2026-11-17 row; the lens cited line 353 of the file as it read it) \u2014 repo convention (every change is logged): the row still reads \"Cases by `eval-case-writer`, saved unchanged\" and \"`test_cycle_scope.py` 302/302\" after this diff added runtime `check()` calls, and never records the two hand-added check.py checks. The 2026-11-15 row shows the convention: \"`check.py` changed after it\". Fix: add \"check.py: two checks added by hand after the runs (lines 3079-3088), no model run used them\" and re-run the count.",
+      "file": "tests/skills/PENDING.md",
+      "line": 28,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "af166eb4e161be82d7f29746325dc7776bd9882d0c2f7bedd620920b43517c53",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "af166eb4e161be82d7f29746325dc7776bd9882d0c2f7bedd620920b43517c53"
+        }
+      ]
+    },
+    "standards-42": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/scripts/test_left_undone_fixture.py:172` \u2014 PY9: `own(label, f\"compose_report words the '{name}' branch as the skill does\", got == want, (got, want))` prints a plain PASS on a check of the test's own composer. The same holds for the section checks, which pass by construction because `compose_report` writes `lu.rstrip()` (line 108): check.py:3083 \"the section equals left-undone.txt\" in grade A, and check.py:3148 \"the section reads 'Left undone: nothing'\" plus :3151 in case B. Line 54 says \"the section is the script's file verbatim, so those checks do bite\"; they bite only on tampered text (`tamper_checks`). Fix: add `\"compose_report words\"`, `\"the section equals left-undone.txt\"`, `\"the section reads 'Left undone: nothing'\"`, `\"no queue line under\"` to `COMPOSED`, have `own()` honour the label, and reword line 54. (Sibling of standards-15.)",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 172,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4"
+        }
+      ]
+    },
+    "standards-43": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/scripts/test_cycle_scope.py:1874` \u2014 R15, sibling of standards-14, unaddressed: `lines[0].startswith(\"Left undone: \") and lines[0].endswith(\" queue(s)\")` under \"with queues the header counts them\"; a wrong count passes. Fix: `lines[:1] == [\"Left undone: N queue(s)\"]` with N the header this fixture yields.",
+      "file": "tests/scripts/test_cycle_scope.py",
+      "line": 1874,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af"
+        }
+      ]
+    },
+    "standards-44": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_cycle_scope.py`, new `left_undone_session_buckets_lets_an_unexpected_error_surface` \u2014 R12/R3: the four README-shape checks carry the surfacing test's name (`..._lets_an_unexpected_error_surface: {label} in the intake README reads as`), so a failure there reads as a surfacing regression. Fix: rename that prefix to `left_undone_session_buckets_falls_back_on_a_malformed_intake_readme`, or split the function.",
+      "file": "tests/scripts/test_cycle_scope.py",
+      "line": null,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "dd2cc0160ab8dc0c9105966a5bfe7bdbf4e2e5ec9c0f03c6651bb7b5c90ed448",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "dd2cc0160ab8dc0c9105966a5bfe7bdbf4e2e5ec9c0f03c6651bb7b5c90ed448"
+        }
+      ]
+    },
+    "standards-45": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_left_undone_fixture.py:60-62` vs `:100` \u2014 S2: the `NEEDS_NO_FIX` and `NEEDS_NOT_RECORDED` constants repeat `compose_report`'s literal \"applied or declined not recorded (no fix step in this mode)\". Fix: build the composer's strings from the constants.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 60,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4"
+        }
+      ]
+    },
+    "standards-46": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `skills/wiki-report/wiki-seed/wiki-report.md:94` (the lens's line number; the `--brief` sentence of the Left undone paragraph) \u2014 C2: \"With `--brief` it adds the file's first line.\" omits the no-file line that `skills/wiki-report/SKILL.md` now adds. Fix: append \"With no file it adds that state's not-checked line.\"",
+      "file": "skills/wiki-report/wiki-seed/wiki-report.md",
+      "line": 94,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "6cd21d25e82a3df01ac34627f9b2adb4c0b8bdaee647ea06c8747f716c36c2bb",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "6cd21d25e82a3df01ac34627f9b2adb4c0b8bdaee647ea06c8747f716c36c2bb"
+        }
+      ]
+    },
+    "standards-47": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `INSTALL-INVENTORY.md:123` \u2014 C2: \"whose docstring is the one source of their rules\" sits after `wiki-cycle-scope.py`; the docstring is in `_run_state.py`. Fix: \"whose docstring (in `_run_state.py`) is the one source\".",
+      "file": "INSTALL-INVENTORY.md",
+      "line": 123,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "0391b8b7d4b7295317ae8238363a7b2cdea449010ed3f50d480477ae1b7c3254",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "0391b8b7d4b7295317ae8238363a7b2cdea449010ed3f50d480477ae1b7c3254"
+        }
+      ]
+    },
+    "standards-48": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `skills/wiki-cycle/wiki-seed/wiki-cycle.md:46` \u2014 C1: \"a run begun before this rule\" is migration wording on a line this change edited; CHANGELOG already has a Migration field. Fix: drop it if the note is kept elsewhere.",
+      "file": "skills/wiki-cycle/wiki-seed/wiki-cycle.md",
+      "line": 46,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "74b48949973c34e75a930d52b41049f9f1f9bf68d3c35d2f679b10ec39ea13aa",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "74b48949973c34e75a930d52b41049f9f1f9bf68d3c35d2f679b10ec39ea13aa"
+        }
+      ]
+    },
+    "standards-49": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_cycle_scope.py:851` \u2014 names: `\"wiki_cycle_scope_under_test\"`, `\"wiki_cycle_scope_newest_step\"` and `\"wiki_cycle_scope_session_buckets\"` now load `_run_state.py` or `_cycle_common.py`. Fix: rename to `run_state_*` / `cycle_common_*`.",
+      "file": "tests/scripts/test_cycle_scope.py",
+      "line": 851,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "4d2b50f9cf6d34b52a0ffdf50d7d4aab8a71a3ef4011b470246e334091e985af"
+        }
+      ]
+    },
+    "spec-19": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `tests/skills/PENDING.md:28` \u2014 the paid evidence for case A is presented as covering the final check, but the strict check postdates those runs and nothing re-scores them. Intent: plan.md:295 \"Done when the red-green command exits 0 with each of A and B `red then green` on both models\" and \"A's lines are the expected lines listed under Case A and equal the script's file\". Code: the row says \"**Red then green on both models** (old copy b7401bb)\"; the equality checks are at check.py:3083-3088 (\"the section equals left-undone.txt\"), added after runs 20261117-193036 and -222534. The 2026-11-15 row records the same situation (\"`check.py` changed after it, \u2026 no model run used the final `check.py`\"), the 11-17 row does not. Affected: the case-A section-equality criterion is not shown on the final check.py. Fix: re-score the two saved case-A reports against the final check (no paid run), then say so in the row, or say the row covers the earlier check only.",
+      "file": "tests/skills/PENDING.md",
+      "line": 28,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "af166eb4e161be82d7f29746325dc7776bd9882d0c2f7bedd620920b43517c53",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "af166eb4e161be82d7f29746325dc7776bd9882d0c2f7bedd620920b43517c53"
+        }
+      ]
+    },
+    "spec-20": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/PENDING.md:28` \u2014 \"Script tests: `test_cycle_scope.py` 302/302\" matches no recorded count: checkpoints.md:176 says 310/310, :193 says 317/317, and \"302\" appears nowhere in checkpoints.md. Fix: date the figure (\"302 at the 2026-11-17 red-green run\") or update it to 317/317.",
+      "file": "tests/skills/PENDING.md",
+      "line": 28,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "af166eb4e161be82d7f29746325dc7776bd9882d0c2f7bedd620920b43517c53",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "af166eb4e161be82d7f29746325dc7776bd9882d0c2f7bedd620920b43517c53"
+        }
+      ]
+    },
+    "spec-21": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_left_undone_fixture.py:146-147` \u2014 the docstring says \"compose_report writes each branch from the left-undone.txt line the skill says picks it\" and names \"each no-file line compose_report writes\". `compose_report` (:86-109) writes three wordings and no no-file line; its else branch (:101-102) picks by line text alone, while SKILL.md:305 also reads whether `lint-fixes.txt` exists for the partial and unreadable lines. Fix: state what is checked (skill substrings; the three composer branches); PENDING already lists the partial-with-record gap. (Sibling of spec-5.)",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 146,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4"
+        }
+      ]
+    },
+    "spec-22": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_left_undone_fixture.py:52-54` \u2014 the COMPOSED comment says \"the section is the script's file verbatim, so those checks do bite\"; in `grade()` the composed section is the file itself (compose_report :108), so the equality check passes by construction there and `tamper_checks` (:178-201) only shows it can fail. Fix: say that, or drop \"do bite\".",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 52,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "5e87b8c0303bff58ad87cf7c2f0eee1f1114cb5275cb5e92ca3648fdcd7eeef4"
+        }
+      ]
+    },
+    "spec-23": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/_run_state.py:417` \u2014 `parse_errors` includes `ValueError`, and `UnicodeDecodeError` is one. `wiki-triage.py:129` calls `readme.read_text(encoding=\"utf-8\")` inside `buckets()`, which `session_buckets` calls in its try (:424); its docstring says \"a read error or any other failure surfaces\" (:416). A non-UTF-8 intake README becomes the silent `main` bucket and no test at test_cycle_scope.py:1053-1086 covers it. Intent: plan step 3 \"an unparseable intake README falls to `buckets()`'s one-bucket default\"; whether an undecodable file is \"unparseable\" or a read error needs a ruling. Fix: decide; if a read error, catch only the parse types and add a non-UTF-8 case. (Sibling of standards-2; the Standards axis raises the same site.)",
+      "file": "scripts/_run_state.py",
+      "line": 417,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "588f48dae1c06add4d367386dce03f346cfee0612ecc709e3e94f05fc3ce814f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "588f48dae1c06add4d367386dce03f346cfee0612ecc709e3e94f05fc3ce814f"
+        }
+      ]
+    },
+    "spec-24": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `skills/wiki-report/wiki-seed/wiki-report.md:24` and `CHANGELOG.md:16` \u2014 siblings of spec-12: they say \"With `--brief` it adds the file's first line\" and \"`--brief` carries its first line\" with no absent-file state, while `skills/wiki-report/SKILL.md:317` now says \"When `left-undone.txt` is absent, print that no-file state's line instead\". Fix: add that sentence to both. (The missing suffix rule is round 1's open nit, not re-raised.)",
+      "file": "skills/wiki-report/wiki-seed/wiki-report.md",
+      "line": 24,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f639c4d4f57715d281d4ca726a6cff59485b75ce4a6cd5e8c78a9310a0d9ec28",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "f639c4d4f57715d281d4ca726a6cff59485b75ce4a6cd5e8c78a9310a0d9ec28"
+        }
+      ]
+    },
+    "spec-25": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `INSTALL-INVENTORY.md:123` \u2014 \"the run-state reporting of `wiki-cycle-scope.py` \u2026 whose docstring is the one source of their rules\": the commands and their docstring now live in `_run_state.py`. Fix: name `_run_state.py`'s docstring.",
+      "file": "INSTALL-INVENTORY.md",
+      "line": 123,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "0391b8b7d4b7295317ae8238363a7b2cdea449010ed3f50d480477ae1b7c3254",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "0391b8b7d4b7295317ae8238363a7b2cdea449010ed3f50d480477ae1b7c3254"
+        }
+      ]
+    },
+    "spec-26": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `skills/wiki-report/wiki-seed/wiki-report.md:22` \u2014 \"read from the run folder's `fallbacks.txt`\" now sits in a sentence covering Left undone and Needs you, which do not read that file. Fix: move the clause to the Fallbacks item.",
+      "file": "skills/wiki-report/wiki-seed/wiki-report.md",
+      "line": 22,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f639c4d4f57715d281d4ca726a6cff59485b75ce4a6cd5e8c78a9310a0d9ec28",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "f639c4d4f57715d281d4ca726a6cff59485b75ce4a6cd5e8c78a9310a0d9ec28"
+        }
+      ]
+    },
+    "spec-27": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `tests/skills/wiki-cycle/check.py:3030-3031` and `:3082` \u2014 `_lu_lines` filters `l.strip()` before stripping backticks, so a line of only \"```\" becomes \"\", and `-{3,}` leaves a `___` rule in place; a fenced or `___`-separated paste would fail a non-verbatim report. Fix: strip first, then drop blanks, and drop `_{3,}` too.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 3030,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "ec5dee0458e7cd7eb0212b87c0b361e7623829762a0d2cc982eec9b7da36992a"
         }
       ]
     }
