@@ -103,11 +103,11 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _atomic_io import atomic_write_text  # noqa: E402
-from _cycle_common import (  # noqa: E402
+from _atomic_io import atomic_write_text
+from _cycle_common import (
     _front, claims_scope, newest_step, semantic_scope, staged, synthesis_scope, write_scope)
-from _run_state import cmd_left_undone, cmd_lint_fixes, cmd_unfinished  # noqa: E402
-from _wiki_config import (  # noqa: E402
+from _run_state import cmd_left_undone, cmd_lint_fixes, cmd_unfinished
+from _wiki_config import (
     confirm_before_promote, load_config, now_stamp, topic_root)
 
 if hasattr(sys.stdout, "reconfigure"):

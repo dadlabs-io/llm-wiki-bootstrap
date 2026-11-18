@@ -45,21 +45,6 @@
     }
   },
   {
-    "file": "tests/scripts/test_wiki_triage.py",
-    "test_name": "intake_tickets_lists_source_carrying_tickets_once",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "95df879ef7cd81754d6e836345c9c74271e0633c3f12de54d5469cc2d4666453",
-    "frozen_at_step": 3,
-    "frozen_at": "2026-11-17",
-    "red": {
-      "command": "uv run python tests/scripts/test_wiki_triage.py",
-      "exit": 1,
-      "tail": "PASS retry-list: exit 0\nPASS retry-list: counts the three items\nPASS retry-list: each item's link and reason\nPASS retry-list: the owner's task list per bucket (the reader's notebook)\nPASS retry-list: names each bucket's reader\nPASS retry-list --cycle: only that cycle's items\nPASS save-list: a retry is not a page to save\nFAIL intake_tickets_lists_source_carrying_tickets_once: each ticket once, with its bucket and source  [NotImplementedError: ]\nFAIL intake_tickets_lists_source_carrying_tickets_once: the frontmatter comes with it  [NotImplementedError: ]\nFAIL intake_tickets_lists_source_carrying_tickets_once: a README, a log, a _-file, a note with no source: and a bucket with no folder add nothing  [NotImplementedError: ]\n64/67 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
-      "date": "2026-11-17"
-    }
-  },
-  {
     "file": "tests/scripts/test_cycle_scope.py",
     "test_name": "lint_fixes_refuses_ids_it_cannot_place",
     "hash_of": "test",
@@ -782,5 +767,55 @@
       }
     ],
     "unfrozen_reason": "step 8 (the run-state module split): loads newest_step from _cycle_common.py where it now lives; same assertions, Mark's word 2026-11-18"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_refuses_an_undecodable_intake_readme",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "40d441f7b1b7cd2e4d457af8c858f4a819de51acc847e709740902471e7e4a7a",
+    "frozen_at_step": "verify-1",
+    "frozen_at": "2026-11-18",
+    "green_reason": {
+      "reason": "the behaviour already existed (fix round 2); bite shown on a scratch copy of scripts/ without the UnicodeDecodeError re-raise: both checks fail (exit 0, a file counting the default bucket), 317/322",
+      "date": "2026-11-18"
+    }
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "scope_script_runs_from_the_installed_file_set",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e21a6a783303f6bc345ede825f0bc4938a26d102bb5191edc929dccfbd667616",
+    "frozen_at_step": "verify-1",
+    "frozen_at": "2026-11-18",
+    "green_reason": {
+      "reason": "the manifests already listed both modules (step 8); bite shown on a scratch copy of scripts/ with _run_state.py dropped from the manifests: both checks fail (ModuleNotFoundError: _run_state), 317/322",
+      "date": "2026-11-18"
+    }
+  },
+  {
+    "file": "tests/scripts/test_wiki_triage.py",
+    "test_name": "intake_tickets_lists_source_carrying_tickets_once",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "7fb9049bec74a6b3c02f4a3b3a1fc7a3902c0b29de9c580fd4712927ebcfbd7c",
+    "frozen_at_step": "verify-1",
+    "frozen_at": "2026-11-18",
+    "red": {
+      "command": "uv run python tests/scripts/test_wiki_triage.py",
+      "exit": 1,
+      "tail": "PASS retry-list: exit 0\nPASS retry-list: counts the three items\nPASS retry-list: each item's link and reason\nPASS retry-list: the owner's task list per bucket (the reader's notebook)\nPASS retry-list: names each bucket's reader\nPASS retry-list --cycle: only that cycle's items\nPASS save-list: a retry is not a page to save\nFAIL intake_tickets_lists_source_carrying_tickets_once: each ticket once, with its bucket and source  [NotImplementedError: ]\nFAIL intake_tickets_lists_source_carrying_tickets_once: the frontmatter comes with it  [NotImplementedError: ]\nFAIL intake_tickets_lists_source_carrying_tickets_once: a README, a log, a _-file, a note with no source: and a bucket with no folder add nothing  [NotImplementedError: ]\n64/67 passed\nwarning: `VIRTUAL_ENV=C:\\Users\\mark\\.claude\\wiki-scripts\\.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead",
+      "date": "2026-11-17"
+    },
+    "unfreezes": [
+      {
+        "reason": "verify: the floor guard counts a noqa marker as a silenced checker and the repo runs no linter, so the BLE001 marker became a plain comment; comment only, no assertion changed",
+        "date": "2026-11-18",
+        "step": "verify-1",
+        "hash": "7fb9049bec74a6b3c02f4a3b3a1fc7a3902c0b29de9c580fd4712927ebcfbd7c"
+      }
+    ],
+    "unfrozen_reason": "verify: the floor guard counts a noqa marker as a silenced checker and the repo runs no linter, so the BLE001 marker became a plain comment; comment only, no assertion changed"
   }
 ]

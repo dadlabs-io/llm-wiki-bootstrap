@@ -1092,6 +1092,46 @@ with tempfile.TemporaryDirectory() as td:
               "a read error and is raised, not counted as the main bucket", got == "raised", got)
     left_undone_session_buckets_lets_an_unexpected_error_surface()
 
+    def left_undone_refuses_an_undecodable_intake_readme():
+        """Plan step 3: a README that is not UTF-8 makes the command exit non-zero and write no file (the report then
+        reads the no-file state), never a count from the default bucket."""
+        root = mknb("lu10c")
+        intake = root / "_inbox" / "intake"
+        intake.mkdir(parents=True)
+        (intake / "README.md").write_bytes(b"---\nbuckets: [\xff\xfe]\n---\n\n# Intake\n")
+        rf = lu_run(root, "2026-06-19-01", cycle="--quick")
+        p, lines = lu("lu10c", rf)
+        check("left_undone_refuses_an_undecodable_intake_readme: the command exits non-zero",
+              p.returncode != 0, (p.returncode, p.stdout[-200:]))
+        check("left_undone_refuses_an_undecodable_intake_readme: no left-undone.txt is written",
+              not (rf / "left-undone.txt").exists(), lines[:3])
+    left_undone_refuses_an_undecodable_intake_readme()
+
+    def scope_script_runs_from_the_installed_file_set():
+        """Plan step 8: the script runs from a folder other than scripts/, holding exactly the files the install
+        manifests ship (TRAVEL_SCRIPTS and TOOLING_HELPER_SCRIPTS), so a module left out of the lists fails here."""
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("install_tooling_manifests", SCRIPT.parent / "_install_tooling.py")
+        tooling = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(tooling)
+        # a folder of its own, outside the test notebook's git repo (later tests commit that whole repo)
+        with tempfile.TemporaryDirectory(prefix="installed-wiki-scripts-") as inst:
+            installed = Path(inst)
+            for name in list(tooling.TRAVEL_SCRIPTS) + list(tooling.TOOLING_HELPER_SCRIPTS):
+                if (SCRIPT.parent / name).is_file():
+                    shutil.copy2(SCRIPT.parent / name, installed / name)
+            check("scope_script_runs_from_the_installed_file_set: the manifests ship both run-state modules",
+                  (installed / "_run_state.py").is_file() and (installed / "_cycle_common.py").is_file(),
+                  sorted(p.name for p in installed.glob("_*.py")))
+            root = mknb("lu10d")
+            rf = lu_run(root, "2026-06-19-02", cycle="--lint-only")
+            p = subprocess.run([sys.executable, str(installed / "wiki-cycle-scope.py"), "--topic", "lu10d", "left-undone",
+                                "--run-folder", str(rf), "--today", TODAY], cwd=proj, capture_output=True, text=True,
+                               encoding="utf-8", env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+            check("scope_script_runs_from_the_installed_file_set: left-undone runs from the installed copy and writes "
+                  "its file", p.returncode == 0 and (rf / "left-undone.txt").is_file(), (p.returncode, p.stderr[-300:]))
+    scope_script_runs_from_the_installed_file_set()
+
     # ── left-undone step 4: newest_step, the one walk over the run folders' step results ──
     def newest_step_returns_the_newest_matching_result():
         import importlib.util

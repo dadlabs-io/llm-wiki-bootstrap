@@ -13,8 +13,8 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _entry_checks import split_frontmatter  # noqa: E402
-from _atomic_io import atomic_write_text  # noqa: E402
+from _entry_checks import split_frontmatter
+from _atomic_io import atomic_write_text
 
 
 def entries(nb: Path) -> list[str]:

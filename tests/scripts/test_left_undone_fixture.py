@@ -354,7 +354,7 @@ def main() -> int:
             t = time.time()
             try:
                 fn(suite, tmp)
-            except Exception as e:  # noqa: BLE001 - a builder that raises is a result to report, not a crash
+            except Exception as e:  # deliberately broad: a builder that raises is a result to report, not a crash
                 import traceback
                 traceback.print_exc()
                 failures.append(f"{name}: raised {type(e).__name__}: {e}")

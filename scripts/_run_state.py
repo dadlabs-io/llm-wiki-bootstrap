@@ -209,11 +209,11 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _atomic_io import atomic_write_text  # noqa: E402
-from _cycle_common import (  # noqa: E402
+from _atomic_io import atomic_write_text
+from _cycle_common import (
     _front, _parse_time, claims_scope, entries, newest_step, semantic_scope, staged, step_results, synthesis_scope,
     write_scope)
-from _wiki_config import in_sessions, in_tasks, now_stamp, today_label  # noqa: E402
+from _wiki_config import in_sessions, in_tasks, now_stamp, today_label
 
 
 CYCLE_ID = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{2}$")
@@ -892,7 +892,8 @@ def cmd_lint_fixes(nb: Path, args) -> int:
     if applied & declined:
         print(f"error: id(s) {', '.join(map(str, sorted(applied & declined)))} are in both --applied and --declined", file=sys.stderr)
         return 2
-    fmt = lambda s: ",".join(map(str, sorted(s)))  # noqa: E731
+    def fmt(ids: set[int]) -> str:
+        return ",".join(map(str, sorted(ids)))
     out = rf / "lint-fixes.txt"
     atomic_write_text(out, f"applied: {fmt(applied)}".rstrip() + f"\ndeclined: {fmt(declined)}".rstrip()
                       + f"\nat: {now_stamp()}\n")

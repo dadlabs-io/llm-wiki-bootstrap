@@ -296,7 +296,7 @@ with tempfile.TemporaryDirectory() as td:
             (it / "_inbox" / "intake" / rel).write_text(text, encoding="utf-8")
         try:
             got = [(f, Path(p).name, s, fm) for f, p, s, fm in mod.intake_tickets(it)]
-        except Exception as e:  # noqa: BLE001 - a missing function must be a failed check, not a crashed script
+        except Exception as e:  # deliberately broad: a missing function must be a failed check, not a crashed script
             got = f"{type(e).__name__}: {e}"
         check("intake_tickets_lists_source_carrying_tickets_once: each ticket once, with its bucket and source",
               isinstance(got, list) and sorted((f, n, s) for f, n, s, _ in got) == [
