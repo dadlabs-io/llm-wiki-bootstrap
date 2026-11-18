@@ -100,7 +100,7 @@ reason joins the Decisions log (a scratchpad is written when there is none); an 
 written (task #240, lesson #10: a cycle died before its report and nothing flagged it).
 
 `left-undone`: what the cycle leaves undone, counted fresh from the notebook and the run folder's step files, written
-to <rf>/left-undone.txt and read by /wiki-report (task #240, lesson #9; Mark, 2026-11-16: after a run, anything left
+to <rf>/left-undone.txt and read by /wiki-report (task #240, lesson #9; Mark's rule: after a run, anything left
 undone is named, with the count and why). Exit 2, nothing written, for a `--today` that is not a calendar date
 (YYYY-MM-DD), a run folder or notebook that is not there. It changes no entry and writes no `*-scope.txt`. Run it from
 the project whose notebook is counted: a working folder whose .claude/wiki-config.json names another notebook is
@@ -497,7 +497,7 @@ def synthesis_scope(nb: Path, cutoff: datetime | None, forced: bool = False) -> 
 
 
 def cmd_synthesis(nb: Path, args) -> int:
-    """Research entries promoted since the last answered synthesis (task #176, 2026-10-19): synthesis runs in
+    """Research entries promoted since the last answered synthesis (task #176): synthesis runs in
     every cycle that ingests, so it covers what the user promoted between cycles, never only this run's batch."""
     rf = Path(args.run_folder)
     scope, research, why = synthesis_scope(nb, None if args.all else last_synthesis(nb, rf), args.all)
@@ -1260,7 +1260,7 @@ def step_data(folder: Path, name: str) -> dict:
 
 
 def usable_findings(data: dict) -> list | None:
-    """The `findings` list of a semantic lint result (agentic-design's 2026-10-30 file: one flat list, its length in
+    """The `findings` list of a semantic lint result (agentic-design's semantic lint file: one flat list, its length in
     `summary.findings`), or None when it cannot be trusted: no list, not a list, or a length that disagrees."""
     findings, summary = data.get("findings"), data.get("summary")
     if isinstance(findings, list) and isinstance(summary, dict) and summary.get("findings") == len(findings):
