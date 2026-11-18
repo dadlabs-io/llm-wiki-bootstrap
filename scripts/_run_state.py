@@ -422,6 +422,8 @@ def session_buckets(tri, nb: Path) -> list[dict]:
         pass
     try:
         return tri.buckets(nb)[0]
+    except UnicodeDecodeError:
+        raise  # an undecodable README is a read error, though UnicodeDecodeError is a ValueError
     except parse_errors:
         return [{"folder": "main", "reader": tri.me()}]
 

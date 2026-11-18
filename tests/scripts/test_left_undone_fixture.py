@@ -49,10 +49,14 @@ NEEDS_SESSION = (
 DROPPED = {"left-undone-planted": ("no --full-only step ran", "pending queue empty", "triage ran: one log row"),
            "left-undone-clean": ("quick steps all wrote their pair", "triage ran: one log row")}
 
-# Checks that read a line this test composed itself from left-undone.txt (compose_report): they cannot fail on a
-# model's wording here, so a pass is printed as "PASS (composed)", never as proof of what /wiki-report writes. The
-# section's own lines are not in this list: the section is the script's file verbatim, so those checks do bite.
-COMPOSED = ("the Numbers row's stale count equals", "Needs you carries")
+# Checks that read a line this test composed itself from left-undone.txt (compose_report), or grade the composer
+# itself: they cannot fail on a model's wording here, so a pass is printed as "PASS (composed)", never as proof of what
+# /wiki-report writes. The Left undone section is composed too: compose_report writes the file's text, so the checks
+# on it pass by construction in grade() and bite only in tamper_checks, where the report is altered first. Each entry
+# is a name prefix of check.py's checks (or of this test's own composer checks); extend it when check.py's
+# case-A section checks are renamed.
+COMPOSED = ("the Numbers row's stale count equals", "Needs you carries", "compose_report words",
+            "the section equals left-undone.txt", "the section reads 'Left undone: nothing'", "no queue line under")
 
 SKILL_TEXT = REPO / "skills" / "wiki-report" / "SKILL.md"
 # the Needs-you wordings and the no-file lines of the wiki-report skill, as the skill text writes them
@@ -137,7 +141,8 @@ def report(label: str, results: list[dict], kind: str) -> None:
 
 
 def own(label: str, name: str, ok: bool, detail: object = "") -> None:
-    print(f"  {'PASS' if ok else 'FAIL':18} {name}" + ("" if ok else f"\n{'':21}detail: {detail}"), flush=True)
+    passed = "PASS (composed)" if name.startswith(COMPOSED) else "PASS"
+    print(f"  {passed if ok else 'FAIL':18} {name}" + ("" if ok else f"\n{'':21}detail: {detail}"), flush=True)
     if not ok:
         failures.append(f"{label}: {name}  [{detail}]")
 

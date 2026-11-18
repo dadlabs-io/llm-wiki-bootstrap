@@ -1083,6 +1083,13 @@ with tempfile.TemporaryDirectory() as td:
             got = [b["folder"] for b in mod.session_buckets(tri, root)]
             check(f"left_undone_session_buckets_lets_an_unexpected_error_surface: {label} in the intake README reads as "
                   "the one-bucket default", got == ["main"], got)
+        (intake / "README.md").write_bytes(b"---\nbuckets: [\xff\xfe]\n---\n\n# Intake\n")
+        try:
+            got = mod.session_buckets(tri, root)
+        except UnicodeDecodeError:
+            got = "raised"
+        check("left_undone_session_buckets_lets_an_unexpected_error_surface: an intake README that is not valid UTF-8 is "
+              "a read error and is raised, not counted as the main bucket", got == "raised", got)
     left_undone_session_buckets_lets_an_unexpected_error_surface()
 
     # ── left-undone step 4: newest_step, the one walk over the run folders' step results ──
@@ -1871,7 +1878,7 @@ with tempfile.TemporaryDirectory() as td:
         _, p, lines = s6_run("s6h", "--lint-only")
         check("left_undone_drops_the_interim_form: with queues the header counts them and no Not counted yet line or "
               "disk-state header is written",
-              lines[0].startswith("Left undone: ") and lines[0].endswith(" queue(s)") and lines[-1].startswith("- ")
+              lines[:1] == ["Left undone: 4 queue(s)"] and lines[-1].startswith("- ")
               and not [l for l in lines if l.startswith(("Not counted yet", "Left undone (disk-state"))], lines)
     left_undone_drops_the_interim_form()
 

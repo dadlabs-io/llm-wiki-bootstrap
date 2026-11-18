@@ -192,3 +192,10 @@ Mark (terminal): "yes please" — the split goes into this change, as the fix fo
 - Split done by developer: `_cycle_common.py` 14 names (the shared helpers, plus the three scope functions and their four helpers, which the moved code also calls), `_run_state.py` 52 names, `wiki-cycle-scope.py` 31. Saved outputs byte-identical (left-undone and unfinished on both notebooks, lint-fixes --show), suites equal before and after (test_cycle_scope 316 → 317, the one new check the drift test's tightening).
 - After the move the prescan named two dates in moved docstrings (`write_scope`, `_front`); the orchestrator removed them, so `split-ast-check.py.txt` reports 95 names identical and those 2 different, docstring text only. Re-checked by the orchestrator: test_cycle_scope 317/317, fixture test every check passed, prescan clean.
 - Frozen tests changed, awaiting Mark's yes to re-freeze: 6 from fix round 1 (header counts pinned) and 3 from step 8 (the mode-table drift test tightened and pointed at `_run_state.py`; the newest_step test pointed at `_cycle_common.py`; the docstring test pointed at `_run_state.py`).
+
+## Review round 2 — 2026-11-18
+Verdict: 25 findings, 5 blocking (standards-40, -41, -42, -43, spec-19), all in tests and the PENDING log; the pure move found clean on both axes. standards-40 was caused by the orchestrator's fix-round-1 brief, which had the developer write two case-A checks into check.py by hand (README: the editing session never writes the cases that grade its change). Back to implement: fix round 2, the second of 3 retries.
+
+## Budget — 2026-11-18
+Asked: raise the run's cost cap from $120 to $150 ($98.29 used; fix round 2, the case-writer, review round 3 and verify estimated at $25-30).
+Mark (terminal): "yes please contninue" — read as yes to the raise only; the re-freeze question stays open and is asked again before verify.

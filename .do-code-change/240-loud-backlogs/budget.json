@@ -6,13 +6,23 @@
  "caps": {
   "turns": 2200,
   "minutes": 720.0,
-  "cost": 120.0
+  "cost": 150.0
  },
  "joined": [
   {
    "session_id": "230ea06a-d6f2-4215-8329-27b67b6add9e",
    "transcript": "C:/Users/mark/.claude/projects/C--github-com-llm-wiki-bootstrap/230ea06a-d6f2-4215-8329-27b67b6add9e.jsonl",
    "at": "2026-11-18T15:56:35Z"
+  }
+ ],
+ "raised": [
+  {
+   "at": "2026-11-18T18:21:33Z",
+   "from": {
+    "turns": 2200,
+    "minutes": 720.0,
+    "cost": 120.0
+   }
   }
  ]
 }
