@@ -231,6 +231,13 @@ architect (verifying-before-done): FAIL on bar-unmoved and coverage; tests-bite 
 - `test_wiki_triage.py`'s frozen intake test re-frozen (its comment changed, no assertion).
 - Fresh: test_cycle_scope 322/322, triage 67/67, synthesis 9/9, checker-hold 12/12, promote 14/14, dequeue 10/10, fixture every check passed; check-freeze PASS; scope-guard PASS (18 files); ledger met after 11 stale verdicts re-verified against those runs.
 
+## Verify, second pass — 2026-11-18
+architect: tests, diff, findings, frozen, coverage, bar, scope all PASS; tests-bite FAIL as the named exception Mark approved (checkpoints.md "Mutation pass"). verification-result.md "Second pass".
+
+## Finishing decision — 2026-11-18
+keep — verify VERDICT: FAIL on tests-bite only, the named exception Mark approved 2026-11-17 ("Hand pass, ~100 bugs (Recommended)"), every other layer PASS (verification-result.md, second pass); on the branch the run started on (main). No push (asked for by name, separately).
+Record tags (on Mark's standing word, reused from the code-changes README table): `code-change`, group `skills`, `wiki-cycle`, `wiki-report`. Revises no earlier record; it moves lesson #10's `unfinished` code (record 2026-11-14 240-unfinished-run-check) into `_run_state.py`, linked from the summary.
+
 ## Paid red-green run of the two new cases — 2026-11-18
 Asked: go for `run_skill_test.py wiki-cycle --cases <verbatim>,<old-run> --red-green b7401bb` (8 sessions, about $7-8).
 Mark (terminal): "proceed"

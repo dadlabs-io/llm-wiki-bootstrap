@@ -1,0 +1,36 @@
+{
+  "slug": "240-loud-backlogs",
+  "outcome": "success",
+  "outcome_note": "Finishing decision: keep, on main, no push. Verify (second pass) VERDICT: FAIL on tests-bite only, the named exception Mark approved 2026-11-17 (prove_tests_bite.py cannot see scripts/; a hand pass of 119 mutants, 111 killed, 6 survivors killed by new frozen tests, 2 equivalent). Every other layer PASS. Review rounds past the retry cap and the review-ledger fixed-gate override ran on Mark's word.",
+  "size": "full",
+  "size_moved_to_full": false,
+  "fixed_point": "6f23c8c",
+  "branch": "main",
+  "stages": [
+    {"stage": "clarify and requirements", "start": "2026-11-16", "end": "2026-11-16T18:45:30-05:00", "retries": 0, "note": "start time not recorded; Decisions 1-6 put one at a time"},
+    {"stage": "plan and red-team (8 red-team rounds, plan revision 7, VERDICT NONE FOUND)", "start": "2026-11-16T18:45:30-05:00", "end": "2026-11-16T21:00:06-05:00", "retries": 0},
+    {"stage": "plan confirmation (12 decisions, build in one go)", "start": "2026-11-16T21:00:06-05:00", "end": "2026-11-17T13:39:08-05:00", "retries": 0, "note": "includes an overnight wait for Mark"},
+    {"stage": "implement steps 1-6", "start": "2026-11-17T13:39:08-05:00", "end": "2026-11-17T19:02:53-05:00", "retries": 0},
+    {"stage": "step 7: cases A and B, unpaid fixture, paid red-green ($7.15 + $3.31), docs, live read-only run", "start": "2026-11-17T19:02:53-05:00", "end": "2026-11-17T22:34:47-05:00", "retries": 0},
+    {"stage": "hand mutation pass (tests-bite named exception)", "start": "2026-11-17T22:34:47-05:00", "end": "2026-11-18T00:49:02-05:00", "retries": 0},
+    {"stage": "review rounds 1-4 with fix rounds 1-4; step 8 (run-state module split) added on Mark's word; two new eval cases from eval-case-writer, paid red-green ($6.27)", "start": "2026-11-18T10:57:27-05:00", "end": "2026-11-18T16:31:47-05:00", "retries": 4, "note": "Mark lifted the retry cap ('Just get 'er done'); the fixed gate was overridden once on his word"},
+    {"stage": "verify (first pass FAIL: bar-unmoved, coverage; routed and fixed; second pass FAIL on the named exception only)", "start": "2026-11-18T16:31:47-05:00", "end": "2026-11-18T17:10:00-05:00", "retries": 1, "note": "end time approximate"},
+    {"stage": "finish: finishing decision (keep), record, install by the SOP", "start": "2026-11-18T17:10:00-05:00", "end": "2026-11-18", "retries": 0}
+  ],
+  "gates": {
+    "tests": "PASS (test_cycle_scope 322/322, triage 67/67, synthesis 9/9, checker-hold 12/12, promote 14/14, dequeue 10/10, fixture every check passed)",
+    "diff-contains-fix": "PASS (18 files)",
+    "findings-addressed": "PASS (review-ledger query met: 21 closed, 81 non-blocking open, 4 rounds)",
+    "frozen-tests": "PASS (check-freeze exit 0: 38 entries + 122 from earlier changes, 74 frozen green)",
+    "coverage": "PASS (rows 3d and 8d existing tests; 8b manual: step 8)",
+    "bar-unmoved": "PASS (floor-guard clean after the first pass's 11 noqa markers were removed)",
+    "in-scope": "PASS (scope-guard exit 0, 18 files)",
+    "tests-bite": "FAIL, named, approved by Mark 2026-11-17 (prove_tests_bite.py COULD-NOT-RUN on scripts/; hand pass 111/119 killed, 6 survivors killed by new tests, 2 equivalent)"
+  },
+  "run_budget_status": [
+    "minutes: 625 of 720 active minutes used, 95 left",
+    "turns: 1730 of 2200 used (main session 479 across 2 sessions, sub-agents 1251), 470 left",
+    "cost: $126.24 of $150.00 used, $23.76 left (estimated at API list prices as of 2026-10-06), before the second verify pass and the finish",
+    "run-budget: exit 0 - every cap that stops the run has room left"
+  ]
+}
