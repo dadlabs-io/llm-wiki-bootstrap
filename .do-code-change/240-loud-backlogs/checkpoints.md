@@ -159,3 +159,4 @@ Mark (terminal): "go"
 
 Asked: "go for the test A re-run (about $3.60)?" (case full-run-resumed-at-report-names-every-planted-backlog-in-left-undone, red-green against b7401bb, both models, after the writer's Numbers-row check fix 8b9cd93).
 Mark: "yes"
+Result: red then green on both models ($3.31; report tests/skills/.results/wiki-cycle/20261117-222534-red-green-b7401bb/report.md). Old copy failed for the right reason (no Left undone section); new copy passed. The report lists a permission denial per model (a `cd …; ls` Bash on sonnet, a Read of the run scratchpad on opus) under failed checks; the case still passed.
