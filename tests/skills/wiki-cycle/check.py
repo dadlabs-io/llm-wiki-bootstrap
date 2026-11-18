@@ -825,6 +825,8 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_left_undone_clean(case, ctx, cycle_id)
     elif case["kind"] == "left-undone-verbatim":
         _prepare_left_undone_planted(case, ctx, cycle_id)
+    elif case["kind"] == "left-undone-old-run":
+        _prepare_left_undone_old_run(case, ctx, cycle_id)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -3238,6 +3240,54 @@ def _check_left_undone_verbatim(case: dict, add, res: list, ctx: dict, run: dict
     _lu_copy_checks(add, ctx, run, rtext, ftext)
 
 
+# ---------- kind "left-undone-old-run": /wiki-report on a run folder with no left-undone.txt (task #240) ----------
+
+LU_NOT_CHECKED_RUN = "Left undone: not checked (no left-undone.txt in the run folder)"
+
+
+def _prepare_left_undone_old_run(case: dict, ctx: dict, cycle_id: str) -> None:
+    """The planted-backlog run folder (step files, scope lists, no left-undone.txt: a run from before the install),
+    its scratchpad rewritten as a finished run's."""
+    _prepare_left_undone_planted(case, ctx, cycle_id)
+    sp = ctx["notebook"] / "_inbox" / "reports" / cycle_id[:10] / cycle_id / "scratchpad.md"
+    t = sp.read_text(encoding="utf-8")
+    t = t.replace("**Status**: interrupted", "**Status**: completed").replace("- **Status**: pending", "- **Status**: done")
+    t = re.sub(r"^- [^\n]*session ended after Phase 7[^\n]*\n", "", t, flags=re.M)
+    t = re.sub(r"^- resume at Phase 8[^\n]*$", "- none", t, flags=re.M)
+    sp.write_text(t, encoding="utf-8")
+
+
+def _lu_report_text(run_dir: Path, cid: str) -> str:
+    p = run_dir / f"{cid}-run-cycle-report.md"
+    if p.is_file():
+        return _fb_read(p)
+    others = sorted(run_dir.glob("*report*.md")) if run_dir.is_dir() else []
+    return _fb_read(others[0]) if others else ""
+
+
+def _check_left_undone_old_run(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
+    cid = ctx["cycle_id"]
+    # a finished --full run's step files are seeded and the pending queue is meant to stay
+    res[:] = [x for x in res if x["name"] not in ("no --full-only step ran", "pending queue empty")]
+    rtext = _lu_report_text(run_dir, cid)
+    section, lines = _lu_section_lines(rtext)
+    add("the report has a Left undone section", section is not None,
+        [l for l in rtext.splitlines() if l.startswith("## ")] or "no report")
+    f = run_dir / "left-undone.txt"
+    add("no left-undone.txt in the run folder after the run (the report reads the file, it does not make one)",
+        not f.exists(), f"{f.name} exists ({f.stat().st_size} bytes)" if f.exists() else "")
+    add("the session did not write left-undone.txt itself", not _lu_model_wrote_file(run), _lu_model_wrote_file(run))
+    add("the report never says 'Left undone: nothing'",
+        not re.search(r"left undone[*`]*:?[*`]*\s*nothing\b", rtext, re.I), "")
+    if section is None:
+        return
+    _lu_position(add, rtext)
+    add("the section reads 'Left undone: not checked (no left-undone.txt in the run folder)'",
+        LU_NOT_CHECKED_RUN in lines, lines[:4])
+    bullets = [l for l in section.splitlines() if re.match(r"\s*[>\s]*[-*+]\s+\S", l)]
+    add("no queue line under the not-checked line (nothing is computed from the step files)", not bullets, bullets[:3])
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     sys.path.insert(0, str(ctx["scripts"]))
     from _entry_checks import check_entry_file, split_frontmatter
@@ -3675,6 +3725,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_left_undone_clean(case, add, res, ctx, run, run_dir)
     elif case["kind"] == "left-undone-verbatim":
         _check_left_undone_verbatim(case, add, res, ctx, run, run_dir)
+    elif case["kind"] == "left-undone-old-run":
+        _check_left_undone_old_run(case, add, res, ctx, run, run_dir)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()
