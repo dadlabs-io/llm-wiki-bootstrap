@@ -105,19 +105,27 @@ undone is named, with the count and why). Exit 2, nothing written, for a `--toda
 (YYYY-MM-DD), a run folder or notebook that is not there. It changes no entry and writes no `*-scope.txt`. Run it from
 the project whose notebook is counted: a working folder whose .claude/wiki-config.json names another notebook is
 not a supported case (this session's bucket is read from that file, so it would label the wrong bucket as this
-session's). This is Part 1, the disk-state counts, and most of Part 2: the entries not linted, without claims and not
-synthesised, the lint findings, the semantic findings and the earlier runs' semantic findings; the sources are not
-counted yet.
+session's). It counts the disk-state queues (review dates, tickets, staged entries, checklists), the entries not
+linted, without claims and not synthesised, the lint findings, the semantic findings and the earlier runs' semantic
+findings, the dropped, failed and deferred sources and the tier-4 deferrals, and, in a `--report-only` run, copies the
+last run's event lines.
 
   File shape. Line 1 is a header the script writes: `Left undone: <N> queue(s)`, N the number of queue lines below
   it, `Mode: not checked` lines and `, not checked` lines included (each is something not known to be empty), or
-  `Left undone (disk-state queues): none` when there are none. A `--report-only` file has a second line, `Disk-state
-  queues are counted now; event lines are from the last run (<id>)`, which is not a queue line and not counted in N;
-  the last run is the newest earlier run folder that holds a `<id>-run-cycle-report.md` and whose scratchpad mode is
-  not report-only (`none: no earlier run with a report` when there is none). Then the queue lines,
-  `- <queue>: <N> — <reason and way out>`. The file always ends with the interim line `Not counted yet: leftovers of
-  steps that ran (...)`; it is not a queue line and does not count toward N (it goes when Part 2 is built; until then
-  `Left undone: nothing` is never written).
+  `Left undone: nothing` when there are none. A `--report-only` file has a second line, `Disk-state queues are counted
+  now; event lines are from the last run (<id>)`, which is not a queue line and not counted in N; the last run is the
+  newest earlier run folder that holds a `<id>-run-cycle-report.md` and whose scratchpad mode is not report-only
+  (`none: no earlier run with a report` when there is none). Then the queue lines, `- <queue>: <N> — <reason and way
+  out>`.
+
+  Event lines and the last run. The lint findings, this run's semantic findings, the sources and the tier-4 deferrals
+  are the run's event lines. A run that is not `--report-only` writes them to <rf>/left-undone-events.txt (a `#` header
+  line, then one line each; an absent file means a run before the install). A `--report-only` run writes no such file,
+  and instead of computing those lines (it ran no step) copies the last run's, each ending `(from <id>)`; with no
+  last run they read `- Events of the last run: not checked (no earlier run with a report)`, with a last run that left
+  no events file `(that run left no left-undone-events.txt)`. Everything else is counted fresh in every run, the
+  earlier runs' semantic findings too (standing backlogs read from the lint files, never copied or written to the
+  events file). A report-only run is never the last run, so nothing nests.
 
   Mode and modifiers, read from the run folder's scratchpad.md, never typed. Tokens are split on whitespace, commas,
   semicolons and parentheses, with backticks, quotes and trailing punctuation stripped. The mode is the first token
@@ -145,7 +153,10 @@ counted yet.
 
   Review dates. Entries are wiki/ pages without `_`-prefixed files, README.md, sessions/ and the top-level tasks/
   cards. Past: `review_after` is a YYYY-MM-DD calendar date strictly before `--today` (default the local date), quotes
-  stripped. No review_after: the key is absent. Not a date: present and not a calendar date.
+  stripped. No review_after: the key is absent. Not a date: present and not a calendar date. The one count printed at
+  0: in a mode that runs refresh (and with the mode readable and not contradicted), a refresh.json that is absent or
+  not completed gives `- Past review_after: 0, not checked (refresh left no refresh.json)` (or `the refresh ended
+  <status>`), because the dates alone do not show that refresh ran; it is what keeps such a run from reading nothing.
 
   | Queue (step it depends on)    | Mode does not run it                                                   | Ran (completed)                                                                      |
   | Past review_after (refresh)   | this mode does not run refresh; /wiki-cycle --refresh-only lists them  | refresh ran; this count is from the dates now (refreshing them is your call: /wiki-refresh) |
@@ -234,9 +245,31 @@ counted yet.
   counted twice) with unresolved findings gets `- Semantic findings from <id>: <N>, superseded by a newer lint; no
   longer shown in full; the findings are in lint-semantic.md (run <id>); no later cycle step shows them again`, also when
   the newest lint found nothing; older lints with a non-empty findings list and no fixes record collapse into one
-  line, `- <N> earlier lints recorded no applied or declined findings; no longer shown in full`, and a lint with an
-  empty or unusable list prints and counts nothing. These lines are counted in the header and are never added to an
-  awaiting figure.
+  line, `- <N> earlier lints recorded no applied or declined findings; no longer shown in full`, a lint with an empty
+  list prints and counts nothing, and one whose findings list cannot be trusted (any earlier completed lint, the newest
+  or not) reads `- Semantic findings from <id>: not checked (lint-semantic.json has no usable findings list)`. These
+  lines are counted in the header and are never added to an awaiting figure.
+
+  Sources (update.json, discover.json; event lines). One line per item, `- Source <url, else slug, else id, else item>:
+  <skipped|deferred|failed> — <reason as the file holds it, whitespace collapsed>` (`(no reason recorded)` when it has
+  none; an error's reason is its `message`): from update.json every skipped, deferred and errors item, from
+  discover.json every skipped item except one whose reason says "already covered" (nothing was queued for it; an
+  ingest skip of that kind stays, its ticket is still in the bucket), and never a source whose ticket in a configured
+  bucket carries `retry:` or `save_as_pdf:` (Needs you names those; compared as the exact `source:` string, so a link in
+  another form is listed twice, harmlessly). A step a mode runs that left no file: `- Sources: not checked (ingest left
+  no update.json)` or `(discovery left no discover.json)`; a mode that does not run it, an unknown mode or a
+  contradiction (the Mode line says it) adds none; a file that cannot be read `- Sources: not checked (<file>
+  unreadable)`, also when the list it holds is not a list. Discovery's deferred and errors are not read.
+
+  Tier-4 deferrals (event lines), only when this run folder holds discover.json (it ran discovery) and `--no-confirm-discovery`
+  is among the modifiers; an unattended run that did not write the flag into its scratchpad produces no line and no
+  not-checked line (the stated silent miss). The checklist is `<run date>-discovery.md` (the first ten characters of the cycle id)
+  in _inbox/discovered/, else _inbox/done/. A candidate line is `- [ ] **N.** [Title](url) — tier N — **Why**: …`; an
+  unticked one saying `tier 4` right after the link whose link the notebook does not hold (the check behind
+  `wiki-feeds.py known`, loaded once for all links, no subprocess) is `- Source <url>: deferred — tier 4: needs your
+  review (--no-confirm-discovery)`. A held link (known reports it held, in the wiki, staged, pending, done or a bucket;
+  known reads only the first 30 lines of a ticket, so a ticket with its source: later reads new and may add a line) is
+  not a deferral. No checklist in either folder: `- Tier-4 sources: not checked (no discovery checklist for <date>)`.
 
 `lint-fixes`: the fixes record of cycle Step 5, the one fact no step file holds (which semantic findings the user
 applied or declined). `--show` prints the findings of <rf>/lint-semantic.json from its `findings` list, one per line,
@@ -868,8 +901,7 @@ STEP_FILES = {"discover": "discover.json", "triage": "triage.json", "ingest": "u
               "lint": "lint-mechanical.json", "semantic": "lint-semantic.json", "claims": "claims.json",
               "refresh": "refresh.json", "synthesis": "synthesis.json"}
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-INTERIM_LAST = ("Not counted yet: leftovers of steps that ran (lint findings, dropped sources, "
-                "entries not linted, claimed or synthesised)")
+EVENTS_FILE = "left-undone-events.txt"
 
 
 MODIFIERS = ("--no-confirm-discovery", "--lint-all", "--direct", "--since")
@@ -968,6 +1000,15 @@ def _triage():
     return mod
 
 
+def session_buckets(tri, nb: Path) -> list[dict]:
+    """The notebook's configured buckets; frontmatter that does not parse reads as the one-bucket default, as no README
+    gives."""
+    try:
+        return tri.buckets(nb)[0]
+    except Exception:  # noqa: BLE001
+        return [{"folder": "main", "reader": tri.me()}]
+
+
 def bucket_ticket_lines(nb: Path, mode: str | None, problem: str | None) -> list[str]:
     """This session's bucket tickets (one line per bucket it reads) and, once, the other readers' (the `mark`
     bucket included); a folder with no ticket adds nothing."""
@@ -984,10 +1025,7 @@ def bucket_ticket_lines(nb: Path, mode: str | None, problem: str | None) -> list
         pending = [f"- Tickets in _inbox/pending/: {waiting} — not triaged: arrived after triage, "
                    "or triage did not complete"]
     me, lines, others = tri.me(), [], []
-    try:
-        bs = tri.buckets(nb)[0]
-    except Exception:  # noqa: BLE001 - frontmatter that does not parse: the one-bucket default, as no README gives
-        bs = [{"folder": "main", "reader": me}]
+    bs = session_buckets(tri, nb)
     counts: dict[str, int] = {}
     for folder, _path, _source, _front_ in tri.intake_tickets(nb, bs):
         counts[folder] = counts.get(folder, 0) + 1
@@ -1122,14 +1160,94 @@ def entry_backlog_lines(nb: Path, rf: Path, mode: str | None, problem: str | Non
     return lines
 
 
-def last_run_id(nb: Path, rf: Path) -> str | None:
-    """The newest earlier run folder with a `<id>-run-cycle-report.md` whose scratchpad mode is not report-only."""
-    found = []
-    for d in (nb / "_inbox" / "reports").glob("*/*"):
-        if (d.is_dir() and CYCLE_ID.match(d.name) and d.name < rf.name
-                and (d / f"{d.name}-run-cycle-report.md").is_file() and cycle_mode(d)[0] != "report-only"):
-            found.append(d.name)
-    return max(found, default=None)
+def last_run(nb: Path, rf: Path) -> Path | None:
+    """The last run: the newest earlier run folder with a `<id>-run-cycle-report.md` whose scratchpad mode is not
+    report-only (a report-only run is never chosen, so a copy never nests)."""
+    found = [d for d in (nb / "_inbox" / "reports").glob("*/*")
+             if d.is_dir() and CYCLE_ID.match(d.name) and d.name < rf.name
+             and (d / f"{d.name}-run-cycle-report.md").is_file() and cycle_mode(d)[0] != "report-only"]
+    return max(found, key=lambda d: d.name, default=None)
+
+
+def copied_event_lines(last: Path | None) -> list[str]:
+    """A --report-only run's event lines: the last run's left-undone-events.txt, each line ending `(from <id>)`."""
+    if last is None:
+        return ["- Events of the last run: not checked (no earlier run with a report)"]
+    f = last / EVENTS_FILE
+    if not f.is_file():
+        return [f"- Events of the last run: not checked (that run left no {EVENTS_FILE})"]
+    return [f"{l} (from {last.name})" for l in f.read_text(encoding="utf-8", errors="replace").splitlines()
+            if l.startswith("- ")]
+
+
+# the step results that list sources: file, the mode-table key, the step's name in a reason, the lists read
+SOURCE_STEPS = (("update.json", "ingest", "ingest", (("skipped", "skipped"), ("deferred", "deferred"), ("errors", "failed"))),
+                ("discover.json", "discover", "discovery", (("skipped", "skipped"),)))
+
+
+def ticket_marked_sources(nb: Path) -> set[str]:
+    """The `source:` of every bucket ticket carrying `retry:` or `save_as_pdf:` (Needs you names those)."""
+    tri = _triage()
+    return {src for _folder, _path, src, front in tri.intake_tickets(nb, session_buckets(tri, nb))
+            if "retry" in front or "save_as_pdf" in front}
+
+
+def source_lines(nb: Path, rf: Path, mode: str | None, problem: str | None) -> list[str]:
+    """One line per source the run's ingest skipped, deferred or failed and its discovery skipped (a discovery drop
+    for 'already covered' was never queued, and a source whose ticket is in Needs you is left out); a step the mode
+    runs that left no file, or one that cannot be read, is not checked."""
+    out, marked = [], None
+    for name, step, label, lists in SOURCE_STEPS:
+        status = step_status(rf, name)
+        if status is None:
+            if not problem and mode in STEP_MODES[step]:
+                out.append(f"- Sources: not checked ({label} left no {name})")
+            continue
+        data = step_data(rf, name)
+        if status == "unreadable" or any(not isinstance(data.get(k, []), list) for k, _ in lists):
+            out.append(f"- Sources: not checked ({name} unreadable)")
+            continue
+        for key, verb in lists:
+            for item in data.get(key, []):
+                rec = item if isinstance(item, dict) else {"url": item}
+                src = str(next((rec[k] for k in ("url", "slug", "id", "item") if rec.get(k)), "(no source recorded)"))
+                reason = " ".join(str(rec.get("reason") or rec.get("message") or "").split())
+                if name == "discover.json" and "already covered" in reason.lower():
+                    continue
+                marked = ticket_marked_sources(nb) if marked is None else marked
+                if src not in marked:
+                    out.append(f"- Source {src}: {verb} — {reason or '(no reason recorded)'}")
+    return out
+
+
+TIER4 = re.compile(r"^\s*-\s*\[ \]\s.*?\]\((?P<url>[^)\s]+)\)\s*[—–-]+\s*tier\s*4\b", re.I)
+
+
+def _feeds():
+    """wiki-feeds.py's module (its file name has a dash), loaded as _triage() loads wiki-triage.py."""
+    spec = importlib.util.spec_from_file_location("_wiki_feeds_pkg", Path(__file__).resolve().parent / "wiki-feeds.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def tier4_lines(nb: Path, rf: Path, modifiers: list[str]) -> list[str]:
+    """The unticked tier-4 candidates of this run's discovery checklist that the notebook does not hold, deferred by an
+    unattended run. Only a run whose folder holds discover.json and whose scratchpad lists --no-confirm-discovery."""
+    if not (rf / "discover.json").is_file() or "--no-confirm-discovery" not in modifiers:
+        return []
+    day = rf.name[:10]
+    found = [f for f in (nb / "_inbox" / d / f"{day}-discovery.md" for d in ("discovered", "done")) if f.is_file()]
+    if not found:
+        return [f"- Tier-4 sources: not checked (no discovery checklist for {day})"]
+    urls = [m.group("url") for l in found[0].read_text(encoding="utf-8", errors="replace").splitlines()
+            if (m := TIER4.match(l))]
+    if not urls:
+        return []
+    feeds = _feeds()
+    held = feeds.known_sources(nb)
+    return [f"- Source {u}: deferred — tier 4: needs your review (--no-confirm-discovery)"
+            for u in urls if feeds.source_key(u) not in held]
 
 
 def step_data(folder: Path, name: str) -> dict:
@@ -1289,15 +1407,15 @@ def earlier_semantic_lines(nb: Path, rf: Path) -> list[str]:
         if folder.resolve() == mine:
             continue
         kind, n = lint_backlog(folder)
-        if i == 0:
+        if kind == "unusable":
+            out.append(f"- Semantic findings from {folder.name}: not checked (lint-semantic.json has no usable findings list)")
+        elif i == 0:
             if kind == "open":
                 out.append(f"- Semantic findings from {folder.name}: {n} — awaiting your approval; "
                            f"{where_findings(folder.name)}; fixes made by hand since are not seen")
             elif kind == "unrecorded":
                 out.append(f"- Semantic findings from {folder.name}: {n}, not checked "
                            "(that run recorded no applied or declined findings)")
-            elif kind == "unusable":
-                out.append(f"- Semantic findings from {folder.name}: not checked (lint-semantic.json has no usable findings list)")
         elif kind == "open":
             out.append(f"- Semantic findings from {folder.name}: {n}, superseded by a newer lint; no longer shown in "
                        f"full; {where_findings(folder.name)}")
@@ -1376,8 +1494,8 @@ def cmd_left_undone(nb: Path, args) -> int:
     problem = mode_problem(mode, rf)
     past, none, bad = review_date_counts(nb, today)
     queues = []
-    if past:
-        refresh = step_status(rf, STEP_FILES["refresh"])
+    refresh = step_status(rf, STEP_FILES["refresh"])
+    if past or (not problem and mode in STEP_MODES["refresh"] and refresh != "completed"):
         if problem:
             queues.append(f"- Past review_after: {len(past)}, not checked ({problem})")
         elif mode not in STEP_MODES["refresh"]:
@@ -1397,19 +1515,26 @@ def cmd_left_undone(nb: Path, args) -> int:
         queues.append(f"- review_after not a date: {len(bad)} — refresh cannot read it; correct the date "
                       "(the lint lists them under Dates not in ISO form)")
     queues += entry_backlog_lines(nb, rf, mode, problem)
-    queues += lint_lines(rf, mode, problem)
-    queues += semantic_lines(rf, mode, problem)
+    reporting = mode == "report-only"
+    last = last_run(nb, rf) if reporting else None
+    events = copied_event_lines(last) if reporting else (
+        lint_lines(rf, mode, problem) + semantic_lines(rf, mode, problem) + source_lines(nb, rf, mode, problem)
+        + tier4_lines(nb, rf, modifiers))
+    queues += events
     queues += earlier_semantic_lines(nb, rf)
     queues += bucket_ticket_lines(nb, mode, problem)
     queues += staged_lines(nb, rf)
     queues += checklist_lines(nb)
     if problem:
         queues.append(f"- Mode: not checked ({problem}); steps that left no file are not known")
-    head = f"Left undone: {len(queues)} queue(s)" if queues else "Left undone (disk-state queues): none"
+    head = f"Left undone: {len(queues)} queue(s)" if queues else "Left undone: nothing"
     second = ([f"Disk-state queues are counted now; event lines are from the last run "
-               f"({last_run_id(nb, rf) or 'none: no earlier run with a report'})"] if mode == "report-only" else [])
+               f"({last.name if last else 'none: no earlier run with a report'})"] if reporting else [])
     out = rf / "left-undone.txt"
-    atomic_write_text(out, "\n".join([head, *second, *queues, INTERIM_LAST]) + "\n")
+    if not reporting:
+        atomic_write_text(rf / EVENTS_FILE, f"# {EVENTS_FILE}: {len(events)} event line(s) (cycle {rf.name})\n"
+                          + "".join(l + "\n" for l in events))
+    atomic_write_text(out, "\n".join([head, *second, *queues]) + "\n")
     print(f"left-undone: {head}; mode {mode or 'unknown'}; modifiers {','.join(modifiers) or 'none'} -> {out}")
     return 0
 

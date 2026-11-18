@@ -314,7 +314,7 @@ Everything waiting on the user, one line each, with what to do and where:
 
 Print the report inline (not just a file path). The morning report is meant to be READ, not filed and forgotten. Show it directly, then mention where the file is saved.
 
-If `--brief`, just show the Numbers table, Recommendations and Needs you — skip the details. After Numbers, and only when `fallbacks.txt` holds N > 0 fallback lines, add one line: `Fallbacks: N — see the full report`. Then, also after Numbers, the Left undone line: line 1 of `left-undone.txt` verbatim, followed by ` — see the full report` only when that line reads `Left undone: <N> queue(s)` (not after `Left undone: nothing`, `Left undone (disk-state queues): none`, or the two `not checked` states, which are complete as they stand); the line is the file's own, so compose no count.
+If `--brief`, just show the Numbers table, Recommendations and Needs you — skip the details. After Numbers, and only when `fallbacks.txt` holds N > 0 fallback lines, add one line: `Fallbacks: N — see the full report`. Then, also after Numbers, the Left undone line: line 1 of `left-undone.txt` verbatim, followed by ` — see the full report` only when that line reads `Left undone: <N> queue(s)` (not after `Left undone: nothing` or the two `not checked` states, which are complete as they stand); the line is the file's own, so compose no count.
 
 **`⚠️ Needs you` is always the last section**, in the file and inline: the user reads from the bottom up and looks there first.
 

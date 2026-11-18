@@ -645,8 +645,6 @@ with tempfile.TemporaryDirectory() as td:
 
     PAST_NOT_RUN = "this mode does not run refresh; /wiki-cycle --refresh-only lists them"
     PAST_RAN = "refresh ran; this count is from the dates now (refreshing them is your call: /wiki-refresh)"
-    INTERIM_LAST = ("Not counted yet: leftovers of steps that ran (lint findings, dropped sources, "
-                    "entries not linted, claimed or synthesised)")
     LINT_NONE = "- Lint findings: not checked (the mechanical lint left no lint-mechanical.json)"
 
     def left_undone_counts_review_dates():
@@ -675,11 +673,12 @@ with tempfile.TemporaryDirectory() as td:
         check("left_undone_counts_review_dates: a review_after that is not a date counts 1",
               "- review_after not a date: 1 — refresh cannot read it; correct the date "
               "(the lint lists them under Dates not in ISO form)" in lines, lines)
-        check("left_undone_counts_review_dates: exactly three queue lines, and the interim line last, not a queue",
-              len([l for l in lines if l.startswith("- ")]) == 6 and lines[-1:] == [INTERIM_LAST], lines)
+        check("left_undone_counts_review_dates: exactly six queue lines, the last of them a queue line",
+              len([l for l in lines if l.startswith("- ")]) == 6 and lines[-1].startswith("- "), lines)
         rel = "_inbox/reports/2026-06-15/2026-06-15-01/left-undone.txt"
-        check("left_undone_counts_review_dates: only left-undone.txt is new, nothing else changed, no scope file",
-              set(after) - set(before) == {rel} and all(after.get(k) == v for k, v in before.items())
+        check("left_undone_counts_review_dates: only left-undone.txt and its events file are new, nothing else changed, no scope file",
+              set(after) - set(before) == {rel, rel.replace("left-undone.txt", "left-undone-events.txt")}
+              and all(after.get(k) == v for k, v in before.items())
               and not [k for k in after if k.endswith("-scope.txt")], sorted(set(after) ^ set(before)))
         rf = lu_run(root, "2026-06-15-02", cycle="--full", files=[("refresh.json", "completed")])
         p, lines = lu("lu1", rf)
@@ -944,7 +943,7 @@ with tempfile.TemporaryDirectory() as td:
         p, lines = step3_run("lu6", cycle="--lint-only")
         check("left_undone_counts_bucket_tickets: --lint-only names this session's bucket once and the others once, "
               "and counts both in the header",
-              p.returncode == 0 and lines == ["Left undone: 3 queue(s)", LINT_NONE, OWN_NO_INGEST, OTHERS, INTERIM_LAST],
+              p.returncode == 0 and lines == ["Left undone: 3 queue(s)", LINT_NONE, OWN_NO_INGEST, OTHERS],
               (p.stderr[-300:], lines))
         p, lines = step3_run("lu6", cycle="--full")
         check("left_undone_counts_bucket_tickets: --full gives the ran reason on this session's bucket, the others unchanged",
@@ -967,7 +966,7 @@ with tempfile.TemporaryDirectory() as td:
         late = f"{head} — not triaged: arrived after triage, or triage did not complete"
         p, lines = step3_run("lu7", cycle="--lint-only")
         check("left_undone_counts_pending_tickets: --lint-only counts the three (one with no source:) and says it does not triage",
-              p.returncode == 0 and lines == ["Left undone: 2 queue(s)", LINT_NONE, no_triage, INTERIM_LAST],
+              p.returncode == 0 and lines == ["Left undone: 2 queue(s)", LINT_NONE, no_triage],
               (p.stderr[-300:], lines))
         p, lines = step3_run("lu7", cycle="--prompt-for-urls")
         check("left_undone_counts_pending_tickets: a mode that ingests and does not triage says it does not triage",
@@ -990,11 +989,11 @@ with tempfile.TemporaryDirectory() as td:
         for name in ("s1.md", "s2.md", "_x.md", "README.md"):
             (prop / name).write_text("---\ntitle: s\n---\n", encoding="utf-8")
         (prop / "s1.proposed_metadata.json").write_text("{}", encoding="utf-8")
-        none = ["Left undone: 1 queue(s)", LINT_NONE, INTERIM_LAST]
+        none = ["Left undone: 1 queue(s)", LINT_NONE]
         p, lines = step3_run("lu8", cycle="--lint-only", setting="false")
         check("left_undone_counts_staged_entries: with confirm_before_promote false the two staged entries are one queue line",
               p.returncode == 0 and lines == ["Left undone: 2 queue(s)", LINT_NONE, "- Staged entries: 2 — staged before "
-                                              "this run, or held by the checker; /wiki-promote", INTERIM_LAST],
+                                              "this run, or held by the checker; /wiki-promote"],
               (p.stderr[-300:], lines))
         p, lines = step3_run("lu8", cycle="--lint-only", setting="true")
         check("left_undone_counts_staged_entries: with confirm_before_promote true Needs you has them, so no line",
@@ -1002,7 +1001,7 @@ with tempfile.TemporaryDirectory() as td:
         p, lines = step3_run("lu8", cycle="--lint-only")
         check("left_undone_counts_staged_entries: with no promote-setting.txt the count is kept and not checked is said",
               lines == ["Left undone: 2 queue(s)", LINT_NONE, "- Staged entries: 2, not checked (no promote-setting.txt: "
-                                                              "whether they wait for you is not known)", INTERIM_LAST], lines)
+                                                              "whether they wait for you is not known)"], lines)
         mknb("lu8b")
         p, lines = step3_run("lu8b", cycle="--lint-only", setting="false")
         check("left_undone_counts_staged_entries: no staged entries add nothing, with the setting false or absent",
@@ -1019,12 +1018,12 @@ with tempfile.TemporaryDirectory() as td:
         check("left_undone_counts_discovery_checklists: one checklist is one queue line, a README and a _-file are not counted",
               p.returncode == 0 and lines == [
                   "Left undone: 2 queue(s)", LINT_NONE, "- Discovery checklists: 1 — still in _inbox/discovered/ "
-                  "(discovery files a processed one in _inbox/done/); whether it was reviewed is not recorded", INTERIM_LAST],
+                  "(discovery files a processed one in _inbox/done/); whether it was reviewed is not recorded"],
               (p.stderr[-300:], lines))
         mknb("lu9b")
         p, lines = step3_run("lu9b", cycle="--lint-only")
         check("left_undone_counts_discovery_checklists: no _inbox/discovered/ adds nothing",
-              lines == ["Left undone: 1 queue(s)", LINT_NONE, INTERIM_LAST], lines)
+              lines == ["Left undone: 1 queue(s)", LINT_NONE], lines)
     left_undone_counts_discovery_checklists()
 
     def left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme():
@@ -1035,7 +1034,7 @@ with tempfile.TemporaryDirectory() as td:
         lu_tickets(intake / "main", "m", 2)
         p, lines = step3_run("lu10", cycle="--lint-only")
         check("left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme: exit 0 and the main bucket is this session's",
-              p.returncode == 0 and lines == ["Left undone: 2 queue(s)", LINT_NONE, OWN_NO_INGEST, INTERIM_LAST],
+              p.returncode == 0 and lines == ["Left undone: 2 queue(s)", LINT_NONE, OWN_NO_INGEST],
               (p.returncode, p.stderr[-300:], lines))
     left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme()
 
@@ -1167,11 +1166,12 @@ with tempfile.TemporaryDirectory() as td:
         p, lines, (new, edited) = s4_lu("s4a", "--lint-only")
         n = len([l for l in lines if l.startswith("- ")])
         check("left_undone_counts_entries_not_linted: --lint-only counts the entry added and the one re-reviewed since "
-              "the last lint, gives the does-not-run reason, a header of the line count (never nothing) and the interim line last",
+              "the last lint, gives the does-not-run reason and a header of the line count (never nothing)",
               p.returncode == 0 and f"{SEM}2 — {SEM_OFF}" in lines and lines[:1] == [f"Left undone: {n} queue(s)"]
-              and lines[-1:] == [INTERIM_LAST], (p.stderr[-300:], lines))
-        check("left_undone_counts_entries_not_linted: only left-undone.txt is new, nothing changed, no scope file written",
-              [k.rsplit("/", 1)[-1] for k in new] == ["left-undone.txt"] and edited == [], (new, edited))
+              and lines[-1].startswith("- "), (p.stderr[-300:], lines))
+        check("left_undone_counts_entries_not_linted: only left-undone.txt and its events file are new, nothing changed, no scope file written",
+              sorted(k.rsplit("/", 1)[-1] for k in new) == ["left-undone-events.txt", "left-undone.txt"] and edited == [],
+              (new, edited))
         p, lines, _ = s4_lu("s4a", "--full")
         check("left_undone_counts_entries_not_linted: --full with no lint-semantic.json keeps the count and says the lint left none",
               f"{SEM}2, not checked (the semantic lint left no lint-semantic.json)" in lines, lines)
@@ -1275,7 +1275,8 @@ with tempfile.TemporaryDirectory() as td:
         check("left_undone_counts_entries_without_claims: with no claims index every entry is counted, a task card is not, "
               "with the does-not-run reason, and no scope file is written",
               p.returncode == 0 and f"{CLM}3 — {CLM_OFF}" in lines
-              and [k.rsplit("/", 1)[-1] for k in new] == ["left-undone.txt"] and edited == [], (p.stderr[-300:], lines, new))
+              and sorted(k.rsplit("/", 1)[-1] for k in new) == ["left-undone-events.txt", "left-undone.txt"]
+              and edited == [], (p.stderr[-300:], lines, new))
         s4_claims_nb("s4g", D1)
         p, lines, _ = s4_lu("s4g", "--lint-only")
         check("left_undone_counts_entries_without_claims: with an index only the unindexed and the revised entries are counted",
@@ -1326,7 +1327,8 @@ with tempfile.TemporaryDirectory() as td:
         check("left_undone_counts_entries_not_synthesised: the research entries added since the last synthesis are counted, "
               "a superseded one is not, with the does-not-run reason and no scope file written",
               p.returncode == 0 and f"{SYN}1 — {SYN_OFF}" in lines
-              and [k.rsplit("/", 1)[-1] for k in new] == ["left-undone.txt"] and edited == [], (p.stderr[-300:], lines, new))
+              and sorted(k.rsplit("/", 1)[-1] for k in new) == ["left-undone-events.txt", "left-undone.txt"]
+              and edited == [], (p.stderr[-300:], lines, new))
         p, lines, _ = s4_lu("s4i", "--ingest-only", s4_synth([r_new]))
         check("left_undone_counts_entries_not_synthesised: this run's completed synthesis and a scope file listing the new "
               "entry: no line", s4_line(lines, SYN) is None, lines)
@@ -1392,9 +1394,10 @@ with tempfile.TemporaryDirectory() as td:
         check("left_undone_names_lint_findings: a lint of 2 broken links and 1 unquoted yaml gives those two lines and "
               "none for files_scanned, standalone, backlink_blocks_out_of_step or the zero kind, in a mode with no fix step",
               p.returncode == 0 and lines == ["Left undone: 2 queue(s)", f"- Lint broken links: 2 — {NO_FIX}",
-                                              f"- Lint unquoted yaml: 1 — {NO_FIX}", INTERIM_LAST], (p.stderr[-300:], lines))
-        check("left_undone_names_lint_findings: only left-undone.txt is new and nothing changed",
-              [k.rsplit("/", 1)[-1] for k in new] == ["left-undone.txt"] and edited == [], (new, edited))
+                                              f"- Lint unquoted yaml: 1 — {NO_FIX}"], (p.stderr[-300:], lines))
+        check("left_undone_names_lint_findings: only left-undone.txt and its events file are new and nothing changed",
+              sorted(k.rsplit("/", 1)[-1] for k in new) == ["left-undone-events.txt", "left-undone.txt"] and edited == [],
+              (new, edited))
         p, lines, _ = s4_lu("s5a", "--full", [s5_lint(), s5_fixes()])
         check("left_undone_names_lint_findings: --full with a fixes record and a lint stamped after it says each kind is "
               "still present after the Step 5 fixes",
@@ -1667,6 +1670,229 @@ with tempfile.TemporaryDirectory() as td:
         check("left_undone_names_semantic_findings_from_earlier_runs: an earlier lint every finding of which was answered adds nothing",
               old_lines(lines) == [], lines)
     left_undone_names_semantic_findings_from_earlier_runs()
+
+    # ── left-undone step 6: sources, tier-4 deferrals, --report-only's copy of the last run, no interim form ──
+    s6_runs = [0]
+
+    def s6_run(topic, cycle, files=(), cid=None, report=False):
+        """A fresh run folder (`cid`, else the next id of a counter) on notebook `topic` holding `files` (name, JSON
+        object or raw text); (run folder, process, left-undone lines)."""
+        s6_runs[0] += 1
+        cid = cid or f"2026-10-06-{s6_runs[0]:02d}"
+        rf = lu_run(tmp / "notebooks" / topic, cid, cycle=cycle)
+        for name, content in files:
+            (rf / name).write_text(content if isinstance(content, str) else json.dumps(content), encoding="utf-8")
+        if report:
+            (rf / f"{cid}-run-cycle-report.md").write_text("# report\n", encoding="utf-8")
+        p, lines = lu(topic, rf)
+        return rf, p, lines
+
+    def s6_update(**lists):
+        return {"status": "completed", "skipped": [], "deferred": [], "errors": [], **lists}
+
+    def left_undone_names_each_source_the_run_left():
+        root = mknb("s6a")
+        intake = root / "_inbox" / "intake" / "main"
+        intake.mkdir(parents=True)
+        (intake / "held.md").write_text("---\nsource: https://x.test/held\nretry: slow (2026-10-05, cycle x)\n---\n",
+                                        encoding="utf-8")
+        (intake / "pdf.md").write_text("---\nsource: https://x.test/pdf\nsave_as_pdf: paywall\n---\n", encoding="utf-8")
+        (intake / "plain.md").write_text("---\nsource: https://x.test/plain\n---\n", encoding="utf-8")
+        upd = s6_update(skipped=[{"url": "https://x.test/skip", "reason": "thin content"}, {"slug": "a-slug", "reason": "dup"},
+                                 {"url": "https://x.test/noreason"}],
+                        deferred=[{"url": "https://x.test/def", "reason": "429"}, {"url": "https://x.test/held", "reason": "slow"},
+                                  {"url": "https://x.test/pdf", "reason": "paywall"}, {"url": "https://x.test/plain", "reason": "429"}],
+                        errors=[{"code": "E1", "message": "boom", "item": "https://x.test/err"}])
+        dis = s6_update(skipped=[{"url": "https://x.test/low", "reason": "LOW relevance"},
+                                 {"url": "https://x.test/cov", "reason": "already covered by x"}])
+        rf, p, lines = s6_run("s6a", "--quick", [("update.json", upd), ("discover.json", dis)])
+        want = ["- Source https://x.test/skip: skipped — thin content", "- Source a-slug: skipped — dup",
+                "- Source https://x.test/noreason: skipped — (no reason recorded)",
+                "- Source https://x.test/def: deferred — 429", "- Source https://x.test/plain: deferred — 429",
+                "- Source https://x.test/err: failed — boom", "- Source https://x.test/low: skipped — LOW relevance"]
+        got = [l for l in lines if l.startswith("- Source")]
+        check("left_undone_names_each_source_the_run_left: each skipped, deferred and failed source is a line "
+              "with its reason as the file holds it, the discovery drop 'already covered' and the two sources whose ticket "
+              "carries retry: or save_as_pdf: left out", sorted(got) == sorted(want), got)
+        n = len([l for l in lines if l.startswith("- ")])
+        check("left_undone_names_each_source_the_run_left: the header counts them",
+              lines[:1] == [f"Left undone: {n} queue(s)"] and n >= len(want), lines[:1])
+        ev = rf / "left-undone-events.txt"
+        events = ev.read_text(encoding="utf-8").splitlines() if ev.is_file() else []
+        check("left_undone_names_each_source_the_run_left: the events file holds the same source lines under a # header",
+              events[:1] and events[0].startswith("#") and [l for l in events if l.startswith("- Source")] == got, events)
+        _, p, lines = s6_run("s6a", "--ingest-only")
+        check("left_undone_names_each_source_the_run_left: a mode that ingests and left no update.json is not checked",
+              "- Sources: not checked (ingest left no update.json)" in lines, lines)
+        _, p, lines = s6_run("s6a", "--quick", [("update.json", s6_update())])
+        check("left_undone_names_each_source_the_run_left: a mode that discovers and left no discover.json is not checked",
+              "- Sources: not checked (discovery left no discover.json)" in lines
+              and not [l for l in lines if "update.json" in l], lines)
+        _, p, lines = s6_run("s6a", "--lint-only")
+        check("left_undone_names_each_source_the_run_left: a mode that neither ingests nor discovers adds no source line",
+              not [l for l in lines if l.startswith(("- Source", "- Tier-4"))], lines)
+        _, p, lines = s6_run("s6a", "--quick", [("update.json", "{not json"), ("discover.json", s6_update())])
+        check("left_undone_names_each_source_the_run_left: an update.json that does not parse is not checked, no crash",
+              p.returncode == 0 and "- Sources: not checked (update.json unreadable)" in lines, (p.stderr[-300:], lines))
+        _, p, lines = s6_run("s6a", None, [("update.json", upd)])
+        check("left_undone_names_each_source_the_run_left: an unknown mode with no discover.json adds no 'left no' line (the Mode line says it)",
+              not [l for l in lines if l.startswith("- Sources")] and "- Source https://x.test/skip: skipped — thin content" in lines,
+              lines)
+    left_undone_names_each_source_the_run_left()
+
+    T4 = "- Source https://x.test/t4a: deferred — tier 4: needs your review (--no-confirm-discovery)"
+    CHECKLIST = ("# Discovery 2026-10-06\n\n- [ ] **1.** [A](https://x.test/t4a) — tier 4 — **Why**: new (NEEDS HUMAN REVIEW)\n"
+                 "- [ ] **2.** [B](https://x.test/t3) — tier 3 — **Why**: (NEEDS HUMAN REVIEW) not tier 4\n"
+                 "- [x] **3.** [C](https://x.test/t4done) — tier 4 — **Why**: ticked\n"
+                 "- [ ] **4.** [D](https://x.test/t4held) — tier 4 — **Why**: already queued\n")
+
+    def s6_tier_nb(name, where="done", text=CHECKLIST):
+        root = mknb(name)
+        if where:
+            (root / "_inbox" / where).mkdir(parents=True, exist_ok=True)
+            (root / "_inbox" / where / "2026-10-06-discovery.md").write_text(text, encoding="utf-8")
+        pend = root / "_inbox" / "pending"
+        pend.mkdir(parents=True, exist_ok=True)
+        (pend / "held.md").write_text("---\nsource: https://x.test/t4held\n---\n", encoding="utf-8")
+        return root
+
+    def left_undone_names_deferred_tier_4_sources():
+        dis = [("discover.json", s6_update()), ("update.json", s6_update())]
+        s6_tier_nb("s6b")
+        _, p, lines = s6_run("s6b", "--quick, --no-confirm-discovery", dis)
+        got = [l for l in lines if l.startswith(("- Source", "- Tier-4"))]
+        check("left_undone_names_deferred_tier_4_sources: with discover.json and the flag, a checklist in _inbox/done/ gives "
+              "one line for the unticked tier-4 candidate not held anywhere, none for tier 3, a ticked one or a held one",
+              got == [T4], (p.stderr[-300:], got))
+        s6_tier_nb("s6c", where="discovered")
+        _, p, lines = s6_run("s6c", "--quick, --no-confirm-discovery", dis)
+        check("left_undone_names_deferred_tier_4_sources: the same checklist in _inbox/discovered/ gives the same line",
+              [l for l in lines if l.startswith(("- Source", "- Tier-4"))] == [T4], lines)
+        _, p, lines = s6_run("s6c", "--quick", dis)
+        check("left_undone_names_deferred_tier_4_sources: no --no-confirm-discovery in the scratchpad adds no tier-4 line (the stated silent miss)",
+              not [l for l in lines if l.startswith(("- Source", "- Tier-4"))], lines)
+        _, p, lines = s6_run("s6c", "--ingest-only, --no-confirm-discovery", [("update.json", s6_update())])
+        check("left_undone_names_deferred_tier_4_sources: a run with no discover.json adds no tier-4 line, whatever an earlier run left",
+              not [l for l in lines if l.startswith(("- Source", "- Tier-4"))], lines)
+        s6_tier_nb("s6d", where=None)
+        _, p, lines = s6_run("s6d", "--quick, --no-confirm-discovery", dis)
+        check("left_undone_names_deferred_tier_4_sources: no checklist in either folder is not checked, with the date",
+              "- Tier-4 sources: not checked (no discovery checklist for 2026-10-06)" in lines, lines)
+        s6_tier_nb("s6e2", text="- [ ] **1.** [T](https://x.test/t2) — tier 2 — **Why**: z\n")
+        _, p, lines = s6_run("s6e2", "--quick, --no-confirm-discovery", dis)
+        check("left_undone_names_deferred_tier_4_sources: a checklist with no tier-4 candidate adds no line",
+              not [l for l in lines if l.startswith(("- Source", "- Tier-4"))], lines)
+    left_undone_names_deferred_tier_4_sources()
+
+    def left_undone_repeats_the_last_runs_events_when_only_reporting():
+        root = mknb("s6f")
+        page(root, "wiki/research/x/none-a.md")
+        a, p, lines = s6_run("s6f", "--quick", [("update.json", s6_update(skipped=[{"url": "https://x.test/skip",
+                                                                                   "reason": "thin content"}])),
+                                                ("discover.json", s6_update())], cid="2026-10-07-01", report=True)
+        s6_run("s6f", "--full", cid="2026-10-07-02")
+        b, p, lines_b = s6_run("s6f", "--report-only", cid="2026-10-07-03", report=True)
+        c, p, lines_c = s6_run("s6f", "--report-only", cid="2026-10-07-04")
+        src = "- Source https://x.test/skip: skipped — thin content"
+        ev = a / "left-undone-events.txt"
+        a_events = ev.read_text(encoding="utf-8").splitlines() if ev.is_file() else []
+        check("left_undone_repeats_the_last_runs_events_when_only_reporting: the events file of a run that is not "
+              "--report-only holds its event lines under a # header",
+              a_events[:1] and a_events[0].startswith("#") and src in a_events, a_events)
+        check("left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run copies them with "
+              "(from <id>), counts them in the header, and skips an unreported run",
+              lines_b[1:2] == ["Disk-state queues are counted now; event lines are from the last run (2026-10-07-01)"]
+              and f"{src} (from 2026-10-07-01)" in lines_b
+              and lines_b[:1] == [f"Left undone: {len([l for l in lines_b if l.startswith('- ')])} queue(s)"], lines_b)
+        check("left_undone_repeats_the_last_runs_events_when_only_reporting: its own run says no lint ran and counts "
+              "the disk-state queues fresh",
+              not [l for l in lines_b if l.startswith("- Lint findings: not checked (no lint ran")]
+              and any(l.startswith("- No review_after: 1 —") for l in lines_b), lines_b)
+        check("left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run writes no events file, "
+              "and another report-only run after it still cites the last full run",
+              not (b / "left-undone-events.txt").exists() and not (c / "left-undone-events.txt").exists()
+              and f"{src} (from 2026-10-07-01)" in lines_c, (sorted(p.name for p in b.iterdir()), lines_c))
+        mknb("s6g")
+        _, p, lines = s6_run("s6g", "--report-only", cid="2026-10-08-02")
+        check("left_undone_repeats_the_last_runs_events_when_only_reporting: no earlier run with a report is not checked",
+              "- Events of the last run: not checked (no earlier run with a report)" in lines, lines)
+        s6_run("s6g", "--full", cid="2026-10-09-01", report=True)
+        (tmp / "notebooks" / "s6g" / "_inbox" / "reports" / "2026-10-09" / "2026-10-09-01" / "left-undone-events.txt").unlink(missing_ok=True)
+        _, p, lines = s6_run("s6g", "--report-only", cid="2026-10-09-02")
+        check("left_undone_repeats_the_last_runs_events_when_only_reporting: a last run with no events file is not checked",
+              "- Events of the last run: not checked (that run left no left-undone-events.txt)" in lines
+              and lines[:1] == [f"Left undone: {len([l for l in lines if l.startswith('- ')])} queue(s)"], lines)
+    left_undone_repeats_the_last_runs_events_when_only_reporting()
+
+    def left_undone_drops_the_interim_form():
+        mknb("s6h")
+        _, p, lines = s6_run("s6h", "--lint-only", [("lint-mechanical.json", {"status": "completed", "timestamp": S5_LINT,
+                                                                             "not_checked": [], "summary": {"files_scanned": 1}})])
+        check("left_undone_drops_the_interim_form: a run with nothing counted is exactly Left undone: nothing",
+              p.returncode == 0 and lines == ["Left undone: nothing"], (p.stderr[-300:], lines))
+        page(tmp / "notebooks" / "s6h", "wiki/research/x/none-a.md")
+        _, p, lines = s6_run("s6h", "--lint-only")
+        check("left_undone_drops_the_interim_form: with queues the header counts them and no Not counted yet line or "
+              "disk-state header is written",
+              lines[0].startswith("Left undone: ") and lines[0].endswith(" queue(s)") and lines[-1].startswith("- ")
+              and not [l for l in lines if l.startswith(("Not counted yet", "Left undone (disk-state"))], lines)
+    left_undone_drops_the_interim_form()
+
+    def left_undone_reads_nothing_after_a_fully_answered_full_run():
+        root = mknb("s6i")
+        for rel, day in (("old-a", D0), ("old-b", D0), ("claimless", D0), ("promoted", D1), ("reviewed-late", D1)):
+            s4_entry(root, f"wiki/research/x/{rel}.md", day)
+        s4_entry(root, "wiki/project/best-practices/bp.md", D0)
+        page(root, "wiki/tasks/card.md")
+        s4_commit(D0)
+        (root / "_inbox").mkdir(exist_ok=True)
+        (root / "_inbox" / "claims-index.json").write_text(json.dumps({"claims": [
+            {"source_entry": f"research/x/{n}.md"} for n in ("old-a", "old-b", "promoted", "reviewed-late")]
+            + [{"source_entry": "project/best-practices/bp.md"}]}), encoding="utf-8")
+        s4_commit(D1)
+        rf = lu_run(root, "2026-10-10-01", cycle="--full")
+        x = "wiki/research/x/"
+        for name, rec, scope in (
+                ("lint-semantic.json", s5_sem_rec(2, stamp=s4_stamp(D1)),
+                 ("semantic-scope.txt", [x + "reviewed-late.md", "_inbox/proposed/promoted.md"])),
+                ("claims.json", {"status": "completed", "timestamp": s4_stamp(D1)},
+                 ("claims-scope.txt", [x + "claimless.md", x + "promoted.md", x + "reviewed-late.md"])),
+                ("synthesis.json", {"status": "completed", "timestamp": s4_stamp(D1)}, ("synthesis-scope.txt", [])),
+                ("refresh.json", {"status": "completed", "timestamp": s4_stamp(D1)}, None),
+                ("triage.json", {"status": "completed", "timestamp": s4_stamp(D1)}, None),
+                ("update.json", s6_update(), None), ("discover.json", s6_update(), None),
+                ("lint-mechanical.json", {"status": "completed", "timestamp": S5_LINT, "not_checked": [],
+                                          "summary": {"files_scanned": 7, "broken_links": 0, "standalone": 1}}, None)):
+            s4_step(rf, name, "completed", text=json.dumps(rec), scope=scope)
+        (rf / "lint-fixes.txt").write_text(f"applied: 1\ndeclined: 2\nat: {S5_EARLY}\n", encoding="utf-8")
+        (rf / "promote-setting.txt").write_text("confirm_before_promote: true\nfrom: test\n", encoding="utf-8")
+        p, lines = lu("s6i", rf)
+        check("left_undone_reads_nothing_after_a_fully_answered_full_run: every step completed with its scope file, a staged "
+              "entry linted then promoted, an entry re-reviewed on the lint's day, a task card, a claim-less entry, every "
+              "finding accounted for and a lint after the fixes: the file is Left undone: nothing",
+              p.returncode == 0 and lines == ["Left undone: nothing"], (p.stderr[-300:], lines))
+        (rf / "refresh.json").unlink()
+        p, lines = lu("s6i", rf)
+        check("left_undone_reads_nothing_after_a_fully_answered_full_run: the same run with refresh.json removed gives the "
+              "third state on the past-due line and is not nothing",
+              "- Past review_after: 0, not checked (refresh left no refresh.json)" in lines
+              and lines[:1] == ["Left undone: 1 queue(s)"], lines)
+    left_undone_reads_nothing_after_a_fully_answered_full_run()
+
+    def left_undone_names_an_older_lint_with_no_usable_findings_list():
+        root = mknb("s6j")
+        old = "2026-09-21-01"
+        d = root / "_inbox" / "reports" / "2026-09-21" / old
+        d.mkdir(parents=True)
+        (d / "lint-semantic.json").write_text(json.dumps({"status": "completed", "timestamp": "2026-09-21T09:00:00-04:00"}),
+                                              encoding="utf-8")
+        s5_hist(root, "2026-09-22", 1, 0, note=("", ""))
+        p, lines, _ = s4_lu("s6j", "--ingest-only")
+        check("left_undone_names_an_older_lint_with_no_usable_findings_list: an older completed lint whose findings list "
+              "cannot be trusted is not checked, never silent, and the header counts the line",
+              f"- Semantic findings from {old}: not checked (lint-semantic.json has no usable findings list)" in lines
+              and lines[:1] == [f"Left undone: {len([l for l in lines if l.startswith('- ')])} queue(s)"], lines)
+    left_undone_names_an_older_lint_with_no_usable_findings_list()
 
 failed =[n for ok, n in results if not ok]
 for ok, n in results:

@@ -45,3 +45,14 @@ Reconciliation: names are the developer's own; the over-claims are check labels 
 - left_undone_does_not_read_a_lint_with_no_summary_as_clean: over-claims (asserts the not-checked line is present, not that no other Lint line is).
 
 Reconciliation: names are the developer's own; the test-run budget is spent, so no strengthen-and-refreeze round. Left as is, named for the code-reviewer; the one over-claiming name is the last.
+
+## Step 6 (one doubt-reviewer, haiku, foreground; briefed with the `check-freeze.py names --step 6` output file, contract: each test's name claims nothing its assertions do not check)
+
+- left_undone_names_each_source_the_run_left: over-claims in one label ("the Mode line says it" is not asserted).
+- left_undone_repeats_the_last_runs_events_when_only_reporting: over-claims in two labels ("says no lint ran" asserts only the absence of the wrong line; "last full run" cites a --quick run).
+- left_undone_drops_the_interim_form: over-claims in one label (the header count is not compared with the queue lines).
+- left_undone_reads_nothing_after_a_fully_answered_full_run: one aggregate equality for six fixture conditions, no per-condition control; the refresh.json half is the one sensitivity check.
+- left_undone_names_an_older_lint_with_no_usable_findings_list: holds.
+- left_undone_names_deferred_tier_4_sources: two labels over-claim ("the stated silent miss", "whatever an earlier run left"). The reviewer's worry that the comma-joined flag text does not reach the run is settled: the tier-4 line is produced by those same calls, and tokens split on commas.
+
+Reconciliation: names are the developer's own; the test-run budget is spent, so no strengthen-and-refreeze round. Left as is, named for the code-reviewer.
