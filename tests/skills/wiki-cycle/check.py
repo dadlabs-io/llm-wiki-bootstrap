@@ -819,6 +819,10 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_backlinks(case, ctx)
     elif case["kind"] == "fallbacks":
         _prepare_fallbacks(case, ctx, cycle_id)
+    elif case["kind"] == "left-undone-planted":
+        _prepare_left_undone_planted(case, ctx, cycle_id)
+    elif case["kind"] == "left-undone-clean":
+        _prepare_left_undone_clean(case, ctx, cycle_id)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -2691,6 +2695,450 @@ def _check_fallbacks(case: dict, add, res: list, ctx: dict, run: dict, run_dir: 
     _fb_ordered(add, rtext, section)
 
 
+# ---------- seed builders for the kinds "left-undone-planted" and "left-undone-clean" ----------
+from datetime import datetime, timedelta
+
+LU_SRC = {  # key -> (slug, reason as the step returned it); the url is https://example.com/skilltest/<slug>
+    "skipped": ("lu-skipped-page", "near-duplicate of an entry already in the wiki (duplicate gate)"),
+    "deferred": ("lu-deferred-page", "worker ran out of its turn budget; deferred to the next run"),
+    "failed": ("lu-failed-page", "fetch returned 404 not found"),
+    "low": ("lu-low-tier-page", "tier LOW: promotional page, not queued"),
+    "covered": ("lu-covered-page", "already covered by agent-memory-architectures"),
+}
+LU_TOKENS = {"skipped": "duplicate", "deferred": "budget", "failed": "404", "low": "promotional"}
+
+LU_INTAKE_README = """---
+buckets:
+  - folder: main
+    purpose: Context engineering, agent memory, and anything relevant that fits no other bucket
+    reader: cycletest
+  - folder: security
+    purpose: AI agent security (prompt injection, tool misuse, data exfiltration)
+    reader: other-bot
+  - folder: mark
+    purpose: Items the user reads himself
+    reader: mark
+---
+
+# Intake buckets (test)
+"""
+
+LU_SCRATCH_A = """# Cycle Run — {date}
+
+**Status**: interrupted
+**Started**: {started}
+**Topic**: {notebook}
+**Cycle**: {cycle_id} (--full)
+
+## Run config
+- Mode: --full
+- Triggered by: user
+- This session reads as: {notebook}
+
+## Phase log
+
+### Phase 1.0: Drive-fetch
+- **Status**: done
+- **Notes**: Drive not enabled for this project; nothing fetched
+
+### Phase 1: Discover
+- **Status**: done
+- **Notes**: 5 candidates seen; 1 LOW-tier skip and 1 already covered (see discover.json)
+
+### Phase 1.5: Human review #1
+- **Status**: done
+- **Notes**: nothing to review
+
+### Phase 1.7: Triage
+- **Status**: done
+- **Routed**: 0 · **Raws captured for other readers**: 0 · **Readers told**: none
+
+### Phase 1.8: Pages no fetcher can get
+- **Status**: skipped (every page could be fetched)
+
+### Phase 2: Ingest
+- **Status**: done
+- **Items**: 3 · **Workers**: 1 (sonnet)
+- **Completed**: none
+- **Failed**: 1 (see update.json)
+- **Notes**: update.json and update.md written by the orchestrator
+
+### Phase 2.5: Dequeue + staging check
+- **Status**: done
+- **Notes**: wiki-promote --check: 1 staged, 0 held
+
+### Phase 2.6: Checker
+- **Status**: skipped (the gate picks no staged entry: short, no transcript)
+
+### Phase 3: Integration scripts, then the mechanical lint
+- **Status**: done
+- **Notes**: lint-mechanical.json written
+
+### Phase 4: Semantic lint
+- **Status**: done
+- **Notes**: lint-semantic.json written, 5 findings
+
+### Phase 5: Lint fixes
+- **Status**: done
+- **Notes**: lint-fixes.txt written: 2 applied, 1 declined
+
+### Phase 5.5: Promote
+- **Status**: skipped (the staged entry is left for /wiki-promote)
+
+### Phase 5.6: Hubs
+- **Status**: skipped (no hub page declares a tag)
+
+### Phase 6: Claims
+- **Status**: done
+- **Notes**: claims.json written
+
+### Phase 6.5: Synthesis
+- **Status**: done
+- **Notes**: synthesis.json written
+
+### Phase 7: Refresh
+- **Status**: done
+- **Notes**: refresh scan finished
+
+### Phase 8: Report
+- **Status**: pending
+
+### Phase 9: Commit
+- **Status**: pending
+
+## Decisions log
+- {started} — full run: every phase through 7 done
+- {started} — session ended after Phase 7 (interrupted)
+
+## Unresolved for next run
+- resume at Phase 8 (the report); every earlier phase, through Phase 7, is done and its result is in this folder
+"""
+
+
+def _lu_stamp(ctx: dict, **delta) -> str:
+    return (datetime.fromisoformat(ctx["started"]) - timedelta(**delta)).isoformat()
+
+
+def _lu_step(run: Path, cid: str, skill: str, step: str, stamp: str, status: str = "completed",
+             summary=None, **extra) -> None:
+    """A step pair with every STEP_FIELDS key (the .json and its .md)."""
+    run.mkdir(parents=True, exist_ok=True)
+    d = {"skill": skill, "cycle_id": cid, "step": step, "timestamp": stamp, "status": status,
+         "summary": summary or {}, "queued": [], "skipped": [], "deferred": [], "notes": "", "errors": []}
+    d.update(extra)
+    (run / f"{step}.json").write_text(json.dumps(d, indent=2), encoding="utf-8")
+    (run / f"{step}.md").write_text(f"# {step} - {cid}\n\n**Status**: {status}\n**Timestamp**: {stamp}\n",
+                                    encoding="utf-8")
+
+
+def _lu_complete(path: Path, review_after: str = "2099-01-01") -> None:
+    """Full frontmatter (adds what is missing, or a whole block when the file has none) and review_after set."""
+    text = path.read_text(encoding="utf-8")
+    m = re.match(r"\A---\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|\Z)", text, re.S)
+    head, body = (m.group(1), text[m.end():]) if m else ("", text)
+    lines = [l for l in head.splitlines() if not re.match(r"review_after\s*:", l)]
+    have = {re.match(r"([A-Za-z_]+)\s*:", l).group(1) for l in lines if re.match(r"[A-Za-z_]+\s*:", l)}
+    h1 = re.search(r"(?m)^#\s+(.+?)\s*$", body)
+    title = (h1.group(1) if h1 else path.stem.replace("-", " ")).replace('"', "'")
+    defaults = {"title": f'"{title}"', "date": "2026-01-05", "source_url": f'"internal://skilltest/seed/{path.stem}"',
+                "ingested_by": "skilltest-fixture", "tier": "self", "confidence": "medium",
+                "last_reviewed": "2026-01-05", "tags": "[agents]"}
+    lines += [f"{k}: {v}" for k, v in defaults.items() if k not in have]
+    lines.append(f"review_after: {review_after}")
+    path.write_text("---\n" + "\n".join(lines) + "\n---\n\n" + body.lstrip(), encoding="utf-8")
+
+
+def _lu_complete_all(nb: Path) -> None:
+    for p in sorted((nb / "wiki").rglob("*.md")):
+        if _is_entry(p.relative_to(nb).as_posix()):
+            _lu_complete(p)
+
+
+def _lu_entries(nb: Path) -> list:
+    return [p.relative_to(nb).as_posix() for p in sorted((nb / "wiki").rglob("*.md"))
+            if _is_entry(p.relative_to(nb).as_posix())]
+
+
+def _lu_write_entry(nb: Path, stem: str, title: str, review_after) -> None:
+    ra = "" if review_after is None else f"review_after: {review_after}\n"
+    (nb / "wiki" / "research" / "best-practices" / f"{stem}.md").write_text(
+        f'---\ntitle: "{title}"\ndate: 2026-01-05\nsource_url: "internal://skilltest/seed/{stem}"\n'
+        f"ingested_by: skilltest-fixture\ntier: self\nconfidence: medium\nlast_reviewed: 2026-01-05\n{ra}"
+        f"tags: [agents]\n---\n\n# {title}\n\n## TL;DR\n\nOne short practice about {title.lower()}.\n\n"
+        f"## What it covers\n\n- One practice, stated briefly.\n", encoding="utf-8")
+
+
+def _lu_scope_file(path: Path, header: str, rels: list) -> None:
+    path.write_text(f"# {header}\n" + "".join(f"{r}\n" for r in rels), encoding="utf-8")
+
+
+def _lu_claims_index(nb: Path, rels: list, when: str) -> None:
+    claims = [{"id": f"{Path(r).stem}-{n}", "entry": r, "source": r, "source_entry": r, "path": r,
+               "subject": Path(r).stem.replace("-", " "), "predicate": f"states point {n}",
+               "object": "as written when the index was built", "classification": "sourced"}
+              for r in rels for n in (1, 2)]
+    idx = nb / "_inbox" / "claims-index.json"
+    idx.parent.mkdir(parents=True, exist_ok=True)
+    idx.write_text(json.dumps({"version": 1, "generated_at": when, "written_at": when, "updated": when,
+                               "claims": claims}, indent=2), encoding="utf-8")
+    ts = datetime.fromisoformat(when).timestamp()
+    os.utime(idx, (ts, ts))
+
+
+def _lu_ticket(path: Path, url: str, today: str) -> None:
+    path.write_text(f"---\nsource: {url}\nadded: {today}\nadded_by: skilltest\npriority: 3\n---\n\n"
+                    f"Queued for the test.\n", encoding="utf-8")
+
+
+def _prepare_left_undone_planted(case: dict, ctx: dict, cycle_id: str) -> None:
+    """A --full run interrupted after Phase 7 (refresh.json deliberately absent), with every backlog planted:
+    2 entries past review_after (the seed's others reset to 2099), 1 with none, 1 malformed, 1 staged entry,
+    tickets in this session's bucket (2), a second reader's (2) and mark's (1), 3 in pending/, 1 discovery
+    checklist; the step files carry the findings, fixes record, sources and scope lists. Entries are committed
+    on a backdated orphan branch so none reads as added after any cut-off."""
+    nb, today = ctx["notebook"], cycle_id[:10]
+    st = lambda **d: _lu_stamp(ctx, **d)
+    old = datetime.fromisoformat(ctx["started"]) - timedelta(days=10)
+    _lu_complete_all(nb)
+    _lu_write_entry(nb, "lu-past-one", "Past due note one", "2026-03-01")
+    _lu_write_entry(nb, "lu-past-two", "Past due note two", "2026-04-01")
+    _lu_write_entry(nb, "lu-undated", "Undated note", None)
+    _lu_write_entry(nb, "lu-baddate", "Bad date note", "next-quarter")
+    name, title, tags = RESUME_ITEMS[0]
+    fx = HERE / "fixtures" / "resume"
+    shutil.copy2(fx / "raw" / f"{name}.md", nb / "raw" / f"{name}.md")
+    p = _script(ctx, "wiki-update.py", "--topic", NOTEBOOK, "--source", str(fx / "bodies" / f"{name}.md"),
+                "--source-url", f"https://example.com/skilltest/{name}", "--raw-path", f"raw/{name}.md",
+                "--title", title, "--tags", tags, "--folder", "research/best-practices", "--tier", "3",
+                "--confidence", "medium", "--ingested-by", "skilltest-fixture",
+                "--staged", "--skip-integration", "--no-index")
+    if p.returncode != 0:
+        raise RuntimeError(f"could not stage the left-undone entry: {p.stdout}{p.stderr}")
+    staged = sorted(x.relative_to(nb).as_posix() for x in (nb / "_inbox" / "proposed").glob("*.md")
+                    if not x.name.startswith("_"))
+    rels = _lu_entries(nb) + staged
+    _lu_claims_index(nb, rels, st(minutes=20))
+    _scope_age(nb, old)
+    _scope_backdated_history(ctx, old, [f"notebooks/{NOTEBOOK}/{x}" for x in
+                                        ("wiki", "raw", "_inbox/proposed", "_inbox/claims-index.json")])
+
+    intake = nb / "_inbox" / "intake"
+    intake.mkdir(parents=True, exist_ok=True)
+    (intake / "README.md").write_text(LU_INTAKE_README, encoding="utf-8")
+    for bucket, n in (("main", 2), ("security", 2), ("mark", 1)):
+        (intake / bucket).mkdir(exist_ok=True)
+        for i in range(1, n + 1):
+            _lu_ticket(intake / bucket / f"{today}-lu-{bucket}-{i}.md",
+                       f"https://example.com/skilltest/lu-{bucket}-{i}", today)
+    for i in (1, 2, 3):
+        pr = _script(ctx, "wiki-list-add.py", "--topic", NOTEBOOK, "--source",
+                     f"https://example.com/skilltest/lu-pending-{i}", "--added-by", "skilltest")
+        if pr.returncode != 0:
+            raise RuntimeError(f"could not queue lu-pending-{i}: {pr.stdout}{pr.stderr}")
+    ctx["lu_pending"] = _tickets(nb / "_inbox" / "pending")
+    disc = nb / "_inbox" / "discovered"
+    disc.mkdir(parents=True, exist_ok=True)
+    (disc / f"{today}-discovery.md").write_text(
+        f"# Discovery checklist - {today}\n\n- [ ] https://example.com/skilltest/lu-candidate-one (tier 2)\n",
+        encoding="utf-8")
+
+    run = nb / "_inbox" / "reports" / today / cycle_id
+    run.mkdir(parents=True, exist_ok=True)
+    (run / "scratchpad.md").write_text(LU_SCRATCH_A.format(
+        date=today, started=st(hours=4), notebook=NOTEBOOK, cycle_id=cycle_id), encoding="utf-8")
+    url = lambda k: f"https://example.com/skilltest/{LU_SRC[k][0]}"
+    item = lambda k: {"url": url(k), "slug": LU_SRC[k][0], "reason": LU_SRC[k][1]}
+    _lu_step(run, cycle_id, "wiki-update", "update", st(minutes=210),
+             summary={"items_attempted": 3, "items_ingested": 0, "items_skipped": 1, "items_deferred": 1,
+                      "items_failed": 1},
+             skipped=[item("skipped")], deferred=[item("deferred")],
+             errors=[{**item("failed"), "error": LU_SRC["failed"][1]}])
+    _lu_step(run, cycle_id, "wiki-discover", "discover", st(minutes=200),
+             summary={"candidates": 5, "skipped": 2},
+             skipped=[{**item("low"), "tier": "LOW"}, item("covered")])
+    for s in ("reciprocate-backlinks", "index-per-folder", "map-compile"):
+        _lu_step(run, cycle_id, "wiki-cycle", s, st(minutes=90))
+    _lu_step(run, cycle_id, "wiki-lint", "lint-mechanical", st(minutes=45),
+             summary={"broken_links": 2, "unquoted_yaml": 1, "backlink_blocks_out_of_step": 0,
+                      "files_scanned": len(rels), "standalone": 0})
+    findings = [{"id": f"SL-{i}", "entry": rels[i % len(rels)], "type": "contradiction",
+                 "description": f"Planted finding {i}", "suggested_fix": "reword the line"} for i in range(1, 6)]
+    _lu_step(run, cycle_id, "wiki-lint", "lint-semantic", st(minutes=30),
+             summary={"entries_in_scope": len(rels), "findings": 5}, findings=findings)
+    _lu_scope_file(run / "semantic-scope.txt", "semantic lint scope", rels)
+    (run / "lint-fixes.txt").write_text(
+        f"# lint-fixes: the semantic findings the user applied or declined at cycle Step 5\n"
+        f"at: {st(minutes=60)}\napplied: SL-1, SL-2\ndeclined: SL-3\n", encoding="utf-8")
+    _lu_step(run, cycle_id, "wiki-claims", "claims", st(minutes=20), summary={"entries_in_scope": len(rels)})
+    _lu_scope_file(run / "claims-scope.txt", "claims scope", rels)
+    _lu_step(run, cycle_id, "wiki-cycle", "synthesis", st(minutes=15), summary={"entries_in_scope": 0})
+    _lu_scope_file(run / "synthesis-scope.txt", "synthesis scope", [])
+    (run / "promote-setting.txt").write_text("confirm_before_promote: false\n", encoding="utf-8")
+    ctx["lu_seeded"] = {q.name: q.read_bytes() for q in run.iterdir() if q.is_file() and q.name != "scratchpad.md"}
+
+
+def _prepare_left_undone_clean(case: dict, ctx: dict, cycle_id: str) -> None:
+    """The suite's seed made lint-clean (full frontmatter and a tier on every entry, review_after 2099, a hub
+    linking every page, itself declared standalone; the backlink blocks are left to the run's own rebuild), one
+    earlier completed run (dated 3 days before the cycle's date: scratchpad, report, a zero-findings semantic lint
+    and its scope, a claims index and scope, a completed synthesis and scope), entries committed before those
+    cut-offs, no staged entries, empty queues."""
+    import posixpath
+    nb = ctx["notebook"]
+    started = datetime.fromisoformat(ctx["started"])
+    _lu_complete_all(nb)
+    hub = nb / "wiki" / "project" / "lu-notebook-hub.md"
+    hub.parent.mkdir(parents=True, exist_ok=True)
+    targets = _lu_entries(nb) + ["wiki/README.md"]
+    links = "\n".join(f"- [{Path(r).stem}]({posixpath.relpath(r, 'wiki/project')})" for r in targets)
+    hub.write_text(f'---\ntitle: "Notebook hub"\nstandalone: true\n---\n\n# Notebook hub\n\n## TL;DR\n\n'
+                   f"Every page of this notebook, linked once.\n\n## Pages\n\n{links}\n", encoding="utf-8")
+    _lu_complete(hub)
+    rels = _lu_entries(nb)
+    d3 = started - timedelta(days=3)
+    pid = f"{d3.date().isoformat()}-01"
+    prior = nb / "_inbox" / "reports" / pid[:10] / pid
+    stamp = d3.isoformat()
+    _lu_claims_index(nb, rels, stamp)
+    _scope_age(nb, started - timedelta(days=12))
+    _scope_backdated_history(ctx, started - timedelta(days=10),
+                             [f"notebooks/{NOTEBOOK}/{x}" for x in ("wiki", "_inbox/claims-index.json")])
+    _lu_step(prior, pid, "wiki-lint", "lint-semantic", stamp,
+             summary={"entries_in_scope": len(rels), "findings": 0}, findings=[])
+    _lu_scope_file(prior / "semantic-scope.txt", "semantic lint scope", rels)
+    _lu_step(prior, pid, "wiki-claims", "claims", stamp, summary={"entries_in_scope": len(rels)})
+    _lu_scope_file(prior / "claims-scope.txt", "claims scope", rels)
+    _lu_step(prior, pid, "wiki-cycle", "synthesis", stamp, summary={"entries_in_scope": 0})
+    _lu_scope_file(prior / "synthesis-scope.txt", "synthesis scope", [])
+    (prior / "scratchpad.md").write_text(
+        f"# Cycle scratchpad - {pid}\n\n**Cycle**: {pid} (--full)\n**Status**: completed\n**Started**: {stamp}\n",
+        encoding="utf-8")
+    (prior / f"{pid}-run-cycle-report.md").write_text(
+        f"# Run cycle report - {pid}\n\n## Needs you\n\nNothing waits on you.\n", encoding="utf-8")
+    (prior / f"{pid}-run-cycle-report.json").write_text("{}", encoding="utf-8")
+
+
+# ---------- kinds "left-undone-planted" / "left-undone-clean": the cycle report's Left undone section (task #240) ----------
+
+def _lu_section(rtext: str):
+    m = re.search(r"^##\s+[^\n]*left undone[^\n]*\n(.*?)(?=^##\s|\Z)", rtext, re.I | re.M | re.S)
+    return m.group(1) if m else None
+
+
+def _lu_lines(section: str) -> list:
+    return [re.sub(r"[*`]", "", l).strip() for l in section.splitlines() if l.strip()]
+
+
+def _lu_find(lines: list, *pats, skip=None):
+    """The first line matching every pattern (case-insensitive) and not `skip`."""
+    for l in lines:
+        if all(re.search(p, l, re.I) for p in pats) and not (skip and re.search(skip, l, re.I)):
+            return l
+    return None
+
+
+def _lu_position(add, rtext: str) -> bool:
+    heads = [l[3:].strip() for l in rtext.splitlines() if l.startswith("## ")]
+    li = next((i for i, h in enumerate(heads) if re.search(r"left undone", h, re.I)), None)
+    fb = next((i for i, h in enumerate(heads) if re.search(r"\bfallbacks\b", h, re.I)), None)
+    ok = (li is not None and li == len(heads) - 2 and "needs you" in heads[-1].lower()
+          and (fb is None or fb < li))
+    add("Left undone is the second-to-last section, above Needs you (after Fallbacks when there is one)", ok, heads)
+    return li is not None
+
+
+def _check_left_undone_planted(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
+    nb, cid = ctx["notebook"], ctx["cycle_id"]
+    # a resumed --full run: step files of --full-only steps are seeded, and the pending queue is meant to stay
+    res[:] = [x for x in res if x["name"] not in ("no --full-only step ran", "pending queue empty")]
+    workers = [a for a in _agent_calls(run) if str(a.get("subagent_type", "")) == "wiki-ingester"]
+    add("no wiki-ingester spawned (the run resumed at cycle Step 8, past ingest)", not workers,
+        [a.get("description") for a in workers])
+    changed = [n for n, b in ctx["lu_seeded"].items()
+               if not (run_dir / n).is_file() or (run_dir / n).read_bytes() != b]
+    add("the seeded step files are byte-identical after the run", not changed, changed)
+    pend = _tickets(nb / "_inbox" / "pending")
+    add("the 3 pending tickets are still there", pend == ctx["lu_pending"] and len(pend) == 3, pend)
+    stext = (run_dir / "scratchpad.md").read_text(encoding="utf-8", errors="replace") \
+        if (run_dir / "scratchpad.md").is_file() else ""
+    for ph in (8, 9):
+        add(f"scratchpad: Phase {ph} done",
+            bool(re.search(rf"Phase {ph}\b[^\n]*\n\s*-\s*\*\*Status\*\*:\s*done", stext, re.I)), stext[-300:])
+
+    rtext = _fb_read(run_dir / f"{cid}-run-cycle-report.md")
+    section = _lu_section(rtext)
+    add("the report has a Left undone section", section is not None, [l for l in rtext.splitlines() if l.startswith("## ")])
+    if section is None:
+        return
+    _lu_position(add, rtext)
+    lines = _lu_lines(section)
+    add("the section does not read 'Left undone: nothing'", not any(re.match(r"left undone\W*nothing", l, re.I) for l in lines),
+        lines[:3])
+    wanted = [
+        ("past review_after: 2, third state (refresh left no refresh.json)",
+         (r"past review_after\b[^\d\n]{0,25}\b2\b", r"not checked", r"refresh"), None),
+        ("no review_after: 1", (r"\bno review_after\b[^\d\n]{0,25}\b1\b",), None),
+        ("review_after not a date: 1", (r"review_after not a date\b[^\d\n]{0,25}\b1\b",), None),
+        ("broken links: 2, still present after the Step 5 fixes",
+         (r"broken[ _]links?\b[^\d\n]{0,25}\b2\b", r"still present"), None),
+        ("unquoted yaml: 1, still present after the Step 5 fixes",
+         (r"unquoted[ _]yaml\b[^\d\n]{0,25}\b1\b", r"still present"), None),
+        ("semantic findings: 2, awaiting your approval",
+         (r"semantic findings\b[^\d\n]{0,25}\b2\b", r"awaiting your approval"), None),
+        ("other readers' buckets in one line: security 2 and mark 1",
+         (r"other readers", r"security\W{0,6}2\b|\b2\b\W{0,12}security", r"mark\W{0,6}1\b|\b1\b\W{0,12}mark"), None),
+        ("pending: 3, not triaged", (r"pending\b[^\d\n]{0,30}\b3\b", r"not triaged"), None),
+        ("this session's bucket tickets: 2, left in the bucket", (r"left in the bucket", r"\b2\b"), r"other readers"),
+        ("staged entries: 1, with the way out", (r"staged\b[^\d\n]{0,40}\b1\b", r"/wiki-promote|before this run"), None),
+        ("discovery checklists: 1", (r"checklists?\b[^\d\n]{0,40}\b1\b", r"_inbox/discovered|still in"), None),
+    ]
+    for key, (slug, _reason) in LU_SRC.items():
+        if key != "covered":
+            wanted.append((f"sources: {slug} named with its reason", (re.escape(slug), LU_TOKENS[key]), None))
+    for name, pats, skip in wanted:
+        add(f"Left undone line: {name}", _lu_find(lines, *pats, skip=skip) is not None, lines)
+    add("the 'already covered' discovery skip is not named", LU_SRC["covered"][0] not in section, LU_SRC["covered"][0])
+
+    needs = _needs_you(rtext)
+    add("Needs you carries '2 semantic lint findings awaiting your approval'",
+        bool(re.search(r"\b2\b\**\s*semantic lint findings awaiting your approval", needs, re.I)), needs[:300])
+    past = _lu_find(lines, r"past review_after\b")
+    m = re.search(r"past review_after\b[^\d\n]{0,25}\b(\d+)\b", past or "", re.I)
+    row = next((l for l in rtext.replace(section, "").splitlines()
+                if re.search(r"stale", l, re.I) and "review_after" in l.lower()), None)
+    rm = re.search(r"stale[^\d\n]*(\d+)", row or "", re.I)
+    add("the Numbers row's stale count equals Left undone's past count",
+        bool(m and rm) and int(m.group(1)) == int(rm.group(1)), {"left_undone": past, "numbers_row": row})
+
+
+def _check_left_undone_clean(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
+    cid = ctx["cycle_id"]
+    # --lint-only runs no ingest: no update pair
+    res[:] = [x for x in res if x["name"] != "quick steps all wrote their pair"]
+    present = {p.stem for p in run_dir.glob("*.json")} if run_dir.is_dir() else set()
+    add("quick steps wrote their pair (all but update: --lint-only runs no ingest)",
+        all(s in present for s in QUICK_STEPS if s != "update"), [s for s in QUICK_STEPS if s not in present])
+    lj = _bl_lint(run_dir)
+    summ = lj.get("summary") or {}
+    counts = {k: v for k, v in summ.items() if k not in ("files_scanned", "standalone")
+              and isinstance(v, int) and not isinstance(v, bool)}
+    add("premise: the real lint read the built notebook as completed with every finding count 0",
+        lj.get("status") == "completed" and bool(counts) and not [k for k, v in counts.items() if v],
+        {"status": lj.get("status"), "nonzero": {k: v for k, v in counts.items() if v}, "notes": str(lj.get("notes"))[:200]})
+    workers = [a for a in _agent_calls(run) if str(a.get("subagent_type", "")) == "wiki-ingester"]
+    add("no wiki-ingester spawned (--lint-only)", not workers, [a.get("description") for a in workers])
+    rtext = _fb_read(run_dir / f"{cid}-run-cycle-report.md")
+    section = _lu_section(rtext)
+    add("the report has a Left undone section", section is not None, [l for l in rtext.splitlines() if l.startswith("## ")])
+    if section is None:
+        return
+    _lu_position(add, rtext)
+    add("the section reads 'Left undone: nothing'", bool(re.search(r"left undone[*`]*:?[*`]*\s*nothing\b", section, re.I)),
+        section[:300])
+    bullets = [l for l in section.splitlines() if re.match(r"\s*[-*]\s+\S", l)]
+    add("no queue line under 'Left undone: nothing'", not bullets, bullets[:3])
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     sys.path.insert(0, str(ctx["scripts"]))
     from _entry_checks import check_entry_file, split_frontmatter
@@ -3122,6 +3570,10 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_backlinks(case, add, res, ctx, run_dir)
     elif case["kind"] == "fallbacks":
         _check_fallbacks(case, add, res, ctx, run, run_dir)
+    elif case["kind"] == "left-undone-planted":
+        _check_left_undone_planted(case, add, res, ctx, run, run_dir)
+    elif case["kind"] == "left-undone-clean":
+        _check_left_undone_clean(case, add, res, ctx, run, run_dir)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()
