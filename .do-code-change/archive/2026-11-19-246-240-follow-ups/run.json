@@ -1,0 +1,40 @@
+{
+  "slug": "246-240-follow-ups",
+  "outcome": "success",
+  "outcome_note": "Finishing decision: keep, on main, no push. Verify VERDICT: FAIL on two named layers: findings-addressed (review-ledger exit 3, round 4 past the cap of 3; Mark 2026-11-19T04:58Z 'continue maually', and 05:35Z 'Just keep going. Don't worru about the caps') and tests-bite (prove_tests_bite.py COULD-NOT-RUN, it mutates only src/ and the code is in scripts/; hand mutation M0-M5 killed; covered by the same 05:35Z word, stated to him so he can object). Every other layer PASS. The two round-4 blocking findings were fixed by hand and never re-reviewed.",
+  "size": "full",
+  "size_moved_to_full": true,
+  "size_moved_reason": "second fix round (the small path's cap is 1); started as small, proposed at Change confirmation",
+  "fixed_point": "047d868",
+  "branch": "main",
+  "stages": [
+    {"stage": "clarify and requirements", "start": "2026-11-18T17:10:49-05:00", "end": "2026-11-18T17:41:42-05:00", "retries": 0, "note": "start is the previous change's last commit; the clarify commit is a5ed0f0"},
+    {"stage": "plan", "start": "2026-11-18T17:41:42-05:00", "end": "2026-11-18T17:52:35-05:00", "retries": 0, "note": "no red-team (small path)"},
+    {"stage": "change confirmation (five decisions put one at a time)", "start": "2026-11-18T17:52:35-05:00", "end": "2026-11-18T19:01:24-05:00", "retries": 0},
+    {"stage": "implement steps 1-5 and 7, step 6 (writer's checks), step 9a (two fresh cases), steps 8 and 9 (record, paid runs)", "start": "2026-11-18T19:01:24-05:00", "end": "2026-11-18T20:44:22-05:00", "retries": 0, "note": "paid red-green $22.24 and Left undone cases $3.60"},
+    {"stage": "review round 1 and fix round 1", "start": "2026-11-18T20:44:22-05:00", "end": "2026-11-18T21:04:35-05:00", "retries": 1},
+    {"stage": "review round 2 and fix round 2 (size moved to full)", "start": "2026-11-18T21:04:35-05:00", "end": "2026-11-18T23:26:40-05:00", "retries": 2, "note": "design question on the write detector put to Mark; fixed gate overridden once on his word"},
+    {"stage": "review round 3 and fix round 3", "start": "2026-11-18T23:26:40-05:00", "end": "2026-11-18T23:43:37-05:00", "retries": 3},
+    {"stage": "review round 4 (retry ceiling) and manual fixes", "start": "2026-11-18T23:43:37-05:00", "end": "2026-11-19T00:05:01-05:00", "retries": 3, "note": "Mark: 'continue maually'; standards-34 and spec-17 fixed by the session, no further review round"},
+    {"stage": "paid re-run of the two Left undone cases on the final checks ($2.87)", "start": "2026-11-19T00:05:01-05:00", "end": "2026-11-19T00:28:27-05:00", "retries": 0},
+    {"stage": "verify (FAIL on findings-addressed and tests-bite)", "start": "2026-11-19T00:28:27-05:00", "end": "2026-11-19T00:34:30-05:00", "retries": 0},
+    {"stage": "finish: finishing decision (keep), record", "start": "2026-11-19T00:34:30-05:00", "end": "2026-11-19T00:36:05-05:00", "retries": 0, "note": "end is the Finishing decision commit; the archive and filing follow"}
+  ],
+  "retries_total": "3 fix rounds plus one manual round after the retry ceiling",
+  "gates": {
+    "tests": "PASS (test_cycle_scope 330/330, triage 67/67, synthesis 9/9, checker-hold 12/12, promote 14/14, dequeue 10/10, fixture every check passed)",
+    "diff-contains-fix": "PASS (8 files, 435 insertions, 27 deletions)",
+    "findings-addressed": "FAIL, named, approved by Mark 2026-11-19 (review-ledger exit 3: round 4 past the cap of 3; three STALE lines; standards-34 and spec-17 fixed by hand, never re-reviewed)",
+    "frozen-tests": "PASS (check-freeze exit 0: 4 entries + 160 from earlier changes, 77 frozen green)",
+    "coverage": "PASS (every row existing or a plan-marked manual check)",
+    "bar-unmoved": "PASS (floor-guard clean, 435 added, 27 removed lines)",
+    "in-scope": "PASS (scope-guard exit 0, 8 files)",
+    "tests-bite": "FAIL, named, covered by Mark's 'Just keep going' 2026-11-19 (prove_tests_bite.py COULD-NOT-RUN on scripts/; hand mutation M0-M5 killed)"
+  },
+  "run_budget_status": [
+    "minutes: 162 of 720 active minutes used, 558 left (418 on the wall clock; a gap over 10 minutes is a wait, not counted)",
+    "turns: 557 of 2200 used (main session 214, sub-agents 343), 1643 left",
+    "cost: $46.14 of $120.00 used, $73.86 left (estimated at API list prices as of 2026-10-06)",
+    "run-budget: exit 0 - every cap that stops the run has room left"
+  ]
+}

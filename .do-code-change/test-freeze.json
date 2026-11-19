@@ -3226,5 +3226,90 @@
     ],
     "unfrozen_reason": "verify: the floor guard counts a noqa marker as a silenced checker and the repo runs no linter, so the BLE001 marker became a plain comment; comment only, no assertion changed",
     "change": "240-loud-backlogs"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "wiki_cycle_skill_says_to_leave_out_a_flag_with_no_ids",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "979838dfe8cdf6cdc734b023d03f43378613a82b775c75f4964c028666bd8bd3",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_cycle_scope.py",
+      "exit": 1,
+      "tail": "PASS left_undone_reads_nothing_after_a_fully_answered_full_run: the same run with refresh.json removed gives the third state on the past-due line and is not nothing\nPASS left_undone_names_an_older_lint_with_no_usable_findings_list: an older completed lint whose findings list cannot be trusted is not checked, never silent, and the header counts the line\nPASS left_undone_reads_a_step_result_with_no_status_as_unknown: a lint result with no status field reads ended unknown, never completed\nPASS left_undone_bridges_a_promoted_stem_only_from_inbox_proposed: a scope file naming the stem under _inbox/done/ does not cover the live entry\nPASS left_undone_reads_a_fixes_record_missing_one_line_as_unreadable: a record with no declined line counts all 3 findings as not checked\nPASS left_undone_reads_a_fixes_record_missing_one_line_as_unreadable: a record with no applied line counts all 3 findings as not checked\nPASS left_undone_names_a_partial_lint_that_lists_no_reason: a partial lint with an empty not_checked list reads ended partial, never nothing\nPASS left_undone_names_a_partial_lint_that_lists_no_reason: a completed lint that lists a reason still gives its counts\nPASS lint_fixes_skips_an_empty_id_between_commas: 1,,2 and ,3 read as the ids 1, 2 and 3\nPASS semantic_scope_takes_its_cut_off_from_an_earlier_run_only: a lint result already in this run's folder is not the cut-off, the earlier run's is\nFAIL wiki_cycle_skill_says_to_leave_out_a_flag_with_no_ids: cycle Step 5 item 3, the one that records the answer, says to leave out a flag that has no ids  [3. **Record** the answer, every time, with no ids when nothing was applied or declined, and also when Step 4 was skipped (a lint ran within 24 hours): the same command with `--applied <ids> --declined <ids>` instead of `--show`. Exit 2 names the bad id and writes nothing: correct it and run again.]\n322/323 passed",
+      "date": "2026-11-19"
+    },
+    "change": "246-240-follow-ups"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "21fed51a3fd65f7ef57c21fe6bcdfb868a0d0bb07c74d68e8ea022bcb02f6415",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "name review round 1: an entry re-reviewed on the claims run's own day added so a commit-day cutoff fails; first freeze was red (exit 1) on HEAD, fix since applied",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the name claimed the claims run as cut-off, the assertions did not tell it from an earlier day",
+        "date": "2026-11-19",
+        "step": 2,
+        "hash": "21fed51a3fd65f7ef57c21fe6bcdfb868a0d0bb07c74d68e8ea022bcb02f6415"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the name claimed the claims run as cut-off, the assertions did not tell it from an earlier day",
+    "change": "246-240-follow-ups"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_claims_count_with_an_index_but_no_claims_json_is_the_unindexed_plus_revised",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "c05c14230970a394fb6e6bf49f14407206d9e9445067a41be4d6d2cf4fe04470",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "pins behaviour that already existed (green on first run by design); bite by hand mutation in step 7",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the name claimed 'plus revised', no entry was revised; a second notebook with a revised entry added",
+        "date": "2026-11-19",
+        "step": 3,
+        "hash": "c05c14230970a394fb6e6bf49f14407206d9e9445067a41be4d6d2cf4fe04470"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the name claimed 'plus revised', no entry was revised; a second notebook with a revised entry added",
+    "change": "246-240-follow-ups"
+  },
+  {
+    "file": "tests/scripts/test_cycle_scope.py",
+    "test_name": "left_undone_claims_cutoff_is_the_index_time_whatever_claims_json_says",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ebf7115c4d74b2820adc37dbbada5f75a0694e5a835a408766ec5051148270fb",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "pins behaviour that already existed (green on first run by design); bite by hand mutation M2 in step 7",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: 'whatever claims.json says' varied only one stamp; a claims.json stamped before the index added",
+        "date": "2026-11-19",
+        "step": 3,
+        "hash": "ebf7115c4d74b2820adc37dbbada5f75a0694e5a835a408766ec5051148270fb"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: 'whatever claims.json says' varied only one stamp; a claims.json stamped before the index added",
+    "change": "246-240-follow-ups"
   }
 ]
