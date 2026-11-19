@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "captured_at": "2026-11-19T20:09:10Z",
+  "repo_root": "C:/github.com/llm-wiki-bootstrap",
+  "baseline_sha": "da876cc5d4bbb102f9a897c3df575c8813d3f817",
+  "head_at_capture": "ee456b94b07166c2b9c7f4659d16d688d7597452",
+  "tree_was_clean": false,
+  "untracked_at_baseline": {},
+  "untracked_capped": false,
+  "artifact_dir": ".do-code-change/243-framework-docs-master"
+}
