@@ -3154,8 +3154,8 @@ def _lu_norm_line(line: str) -> str:
     (allowed, applied to the file and the section alike): a leading '> ', a leading list marker (- * +, removed
     before emphasis so '* x' and '- x' agree), '*' and backtick emphasis, backslash escapes before punctuation, and
     whitespace runs. Everything else is a change to the text, a dash written as a hyphen (or the reverse) included
-    (Mark, 2026-11-18: 'word for word' includes the dash character): a reworded, added, dropped or reordered line,
-    joined or split lines, a table rendering."""
+    (the requester's ruling: 'word for word' includes the dash character): a reworded, added, dropped or reordered
+    line, joined or split lines, a table rendering."""
     s = line.strip()
     while s.startswith(">"):
         s = s[1:].lstrip()
@@ -3391,7 +3391,7 @@ def _check_left_undone_old_run(case: dict, add, res: list, ctx: dict, run: dict,
     add("no queue line under the not-checked line (nothing is computed from the step files)", not bullets, bullets[:3])
 
 
-# ---------- kind "lint-fixes-record": Step 5 records the answer to the semantic findings, never with a bare flag (task #246, finding spec-15) ----------
+# ---------- kind "lint-fixes-record": Step 5 records the answer to the semantic findings, never with a bare flag (task #246) ----------
 
 _LF_CALL = re.compile(r"\blint-fixes\b")
 _LF_VALUE = re.compile(r"\"[^\"]*\"|'[^']*'|[^\s;&|<>()]*")
