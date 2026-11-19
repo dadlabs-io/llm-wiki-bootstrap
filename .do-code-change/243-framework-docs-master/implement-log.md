@@ -1,0 +1,14 @@
+# Implement log — 243-framework-docs-master
+
+One block per step, written by the orchestrator from the developer's hand-back and its own re-run.
+
+## Step 1 — 2026-11-19
+- Developer hand-back: green; orchestrator re-run `uv run python tests/scripts/test_global_toolset.py` → `50/50 passed`. Other suites the developer ran, all exit 0: test_tooling_state_seam 23/23, test_install_manifest 21/21, test_refresh_prunes 11/11, test_install_incomplete 25/25, test_not_checked 23/23, test_html_markdown 13/13, test_standalone 21/21.
+- Changed: `scripts/_install_tooling.py`, `scripts/_wiki_config.py`, `scripts/new-wiki.py`, `scripts/wiki-update.py`, `agents/wiki-ingester/wiki-ingester-reading-list.json`, `tests/scripts/test_global_toolset.py`.
+- Taken early from step 5: the reading list's 4 old-path links. The plan's own Invariant says the reading-list check moves to the new path in step 1, and that check can only pass if the file moves too. Step 5's sweep will find nothing left in that file.
+- Plan correction (callers of `seed_toolset`'s dict): `phase_docs`, plus `_install_tooling_steps` → `install_tooling()` → `print_summary` (called by the global install in `new-wiki.py` and by `wiki-upgrade.py:68`). `--mode status` reads `toolset_status`, not the dict. Both are covered by tests.
+- Accepted trade-off (doubt-log): the old copy is unlinked even when the new copy's write failed. A doc can then exist at neither path until the next refresh, whose status reports the add. This follows the plan's "all removals and copies still run".
+- Not guarded, outside the plan's Failures: reads, `glob` and `iterdir`. An unreadable file can raise out of `seed_toolset`.
+- `TOOLSET_LOCAL_DIR` deferred to step 2. Old-path comments and docstrings are left for step 5's sweep.
+- Grep for `agentic-design` over `scripts/`: 38 occurrences in 16 files, the same as before the change (Invariant holds).
+- Python pack: `gating-python-changes` is red at gate 1 (ruff format/check on the 5 changed files). The repo has no ruff config and the errors read were pre-existing; the repo is off the python baseline (`scaffolding-python-projects --check` 4/14). Not a workflow gate here (no signed `step_gates`), so it is parked.

@@ -517,7 +517,9 @@ def set_search_mode(mode: str, config_path=None) -> Path:
 # (where the install creates and registers it); else, a machine with no registry,
 # ~/.claude/global-toolset. The install writes the answer into every skill as {{TOOLSET_DIR}}.
 TOOLSET_NAME = "global-toolset"
-TOOLSET_FRAMEWORK_DOCS = Path("wiki") / "project" / "best-practices" / "framework"
+TOOLSET_FRAMEWORK_DOCS = Path("wiki") / "best-practices" / "framework"
+# Where installs before task 243 put the six docs; read only by the refresh's remove scan.
+TOOLSET_OLD_FRAMEWORK_DOCS = Path("wiki") / "project" / "best-practices" / "framework"
 
 
 def toolset_location(config_path=None):

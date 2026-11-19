@@ -806,9 +806,16 @@ def phase_docs(args):
     for key, label in (("add", "added"), ("replace", "replaced"), ("remove", "removed")):
         for rel in status[key]:
             print(f"  {verb}{label}: {rel}")
-    _ok(f"global toolset docs at {status['root']}: {len(status['add'])} {verb}added, "
-        f"{len(status['replace'])} {verb}replaced, {len(status['remove'])} {verb}removed; "
-        f"registry: {status['registered']}")
+    failed = status.get("failed") or []
+    for entry in failed:
+        print(f"FAILED {entry['path']}: {entry['reason']}")
+    summary = (f"global toolset docs at {status['root']}: {len(status['add'])} {verb}added, "
+               f"{len(status['replace'])} {verb}replaced, {len(status['remove'])} {verb}removed; "
+               f"registry: {status['registered']}")
+    if failed:
+        _warn(f"{summary}; {len(failed)} file operation(s) FAILED, so the refresh is incomplete")
+        return 1
+    _ok(summary)
     return 0
 
 

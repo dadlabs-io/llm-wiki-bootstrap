@@ -23,6 +23,7 @@ import subprocess
 import sys
 import traceback
 from datetime import datetime
+from functools import partial
 from pathlib import Path
 
 # ---------- Global install targets (claude-code) ----------
@@ -137,7 +138,7 @@ UV_INSTALL_HINT = {
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import (  # noqa: E402
-    TOOLSET_FRAMEWORK_DOCS, TOOLSET_NAME, fill_placeholders, toolset_location)
+    TOOLSET_FRAMEWORK_DOCS, TOOLSET_NAME, TOOLSET_OLD_FRAMEWORK_DOCS, fill_placeholders, toolset_location)
 
 # ---------- The global toolset (task #25, 2026-10-04) ----------
 # One notebook holds every global tooling doc once: the llm-wiki pack's usage pages at how-to/llm-wiki/
@@ -192,6 +193,9 @@ def toolset_status(pkg: Path, root: Path) -> dict:
         folder = root / TOOLSET_PACK / sub
         remove += [(TOOLSET_PACK / sub / p.name).as_posix() for p in sorted(folder.glob("*.md"))
                    if TOOLSET_PACK / sub / p.name not in files] if folder.is_dir() else []
+    old_docs = root / TOOLSET_OLD_FRAMEWORK_DOCS  # the docs' place before task 243: every .md left there goes
+    remove += [(TOOLSET_OLD_FRAMEWORK_DOCS / p.name).as_posix() for p in sorted(old_docs.glob("*.md"))
+               if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if old_docs.is_dir() else []
     state = "missing" if not root.is_dir() else ("stale" if add or replace or remove else "current")
     if not files:  # nothing to compare against is not "current" (task #133)
         state = "not-checked"
@@ -213,10 +217,23 @@ def _register_toolset(reg_path: Path, root: Path, dry_run: bool) -> str:
     return value
 
 
+def _guarded(op, path, failed: list) -> bool:
+    """Run one file operation; an OSError is recorded in ``failed`` as {path, reason} and False returned,
+    so one held or unwritable file never stops the rest of a refresh (task 243)."""
+    try:
+        op()
+        return True
+    except OSError as e:
+        failed.append({"path": Path(path).as_posix(), "reason": f"{type(e).__name__}: {e}"})
+        return False
+
+
 def seed_toolset(pkg: Path, dry_run: bool = False, config_path=None) -> dict:
     """Create (and register) the global toolset if it is not there yet, then make this pack's files in it
-    match the package: add, replace, and remove the pages of skills or agents that no longer ship. Another
-    pack's folder under how-to/ is never touched. Returns the status it acted on, with ``registered``."""
+    match the package: add, replace, and remove the pages of skills or agents that no longer ship, and the
+    framework docs' old copy (its emptied folder too). Another pack's folder under how-to/ is never touched.
+    Returns the status it acted on, with ``registered`` and, on a real run, ``failed``: the {path, reason} of
+    every file operation that raised OSError (the rest of the refresh still ran; ``failed`` never feeds state)."""
     root, reg_path, registered = toolset_location(config_path)
     status = toolset_status(pkg, root)
     status["registered"] = "already" if registered else "no registry"
@@ -225,12 +242,17 @@ def seed_toolset(pkg: Path, dry_run: bool = False, config_path=None) -> dict:
     if dry_run:
         return status
     files = toolset_files(pkg)
+    failed: list = []
     for rel in status["add"] + status["replace"]:
         dst = root / rel
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(files[Path(rel)], dst)
+        if _guarded(partial(dst.parent.mkdir, parents=True, exist_ok=True), dst, failed):
+            _guarded(partial(shutil.copyfile, files[Path(rel)], dst), dst, failed)
     for rel in status["remove"]:
-        (root / rel).unlink()
+        _guarded((root / rel).unlink, root / rel, failed)
+    old_docs = root / TOOLSET_OLD_FRAMEWORK_DOCS  # only an emptied folder goes, never a parent
+    if old_docs.is_dir() and not any(old_docs.iterdir()):
+        _guarded(old_docs.rmdir, old_docs, failed)
+    status["failed"] = failed
     return status
 
 
@@ -1367,6 +1389,10 @@ def print_summary(summary: dict):
         verb_t = "would write" if dry else "wrote"
         print(f"  global toolset:   {verb_t} {len(ts['add'])} new, {len(ts['replace'])} changed, removed "
               f"{len(ts['remove'])}; registry: {ts['registered']}  → {ts['root']}")
+        if ts.get("failed"):
+            print(f"  global toolset:   INCOMPLETE, {len(ts['failed'])} file operation(s) failed:")
+            for entry in ts["failed"]:
+                print(f"    FAILED {entry['path']}: {entry['reason']}")
     else:
         print("  global toolset:   skipped: not the global scripts folder")
     pr = summary.get("pruned") or {}

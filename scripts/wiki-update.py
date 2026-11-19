@@ -1260,8 +1260,8 @@ def tier_rubric_text() -> tuple[str | None, str]:
     """The frontmatter spec's tier rubric and confidence scale, read verbatim from the spec (the only
     place they are defined), with the path it came from: the global toolset's copy, else this repo's
     framework-docs/ beside scripts/. (None, where it looked) when neither is there."""
-    from _wiki_config import toolset_location
-    places = [toolset_location()[0] / "wiki" / "project" / "best-practices" / "framework" / SPEC_NAME,
+    from _wiki_config import TOOLSET_FRAMEWORK_DOCS, toolset_location
+    places = [toolset_location()[0] / TOOLSET_FRAMEWORK_DOCS / SPEC_NAME,
               Path(__file__).resolve().parent.parent / "framework-docs" / SPEC_NAME]
     for spec in places:
         if spec.is_file():
