@@ -1,64 +1,65 @@
-## Red-team round 2: 243-framework-docs-master (revised plan: `wiki/best-practices/{framework,local}`, practice-page links, notebook moves and repoints)
+## Red-team round 3 (narrow): 243-framework-docs-master, steps 3, 4, 14, 17 and the reconciled requirements
 
-Written by the orchestrator from the red-team's report (a fresh `architect` instance running `strategy-red-team`, one `red-team-reviewer` on haiku, 37 of 40 reads); `readonly-guard.py check --step red-team` exited 0 (694 files compared, HEAD unchanged) before this file was written. Round 1 is `plan-red-team-round-1.md`. "Verified" = re-checked against the code by the red-team; "reviewer-cited" = not re-read.
+Written by the orchestrator from the red-team's report (a fresh `architect` running `strategy-red-team`, one `red-team-reviewer` on haiku, foreground); `readonly-guard.py check --step red-team` exited 0 (695 files compared, HEAD unchanged) before this file was written. Rounds 1 and 2: `plan-red-team-round-1.md`, `plan-red-team-round-2.md`. "Verified" = read by the red-team itself; "reviewer-cited" = not re-read. Two reviewer attacks were dropped as noise by the red-team (the per-file flag the plan already adds; the lessons folder path, already `research/wiki/` in Decision 5).
 
 ### Kill-assumptions (ranked)
 
-1. **Claim:** Phase B copies `seed/best-practices-local/README.md` on every run via `_copy_tree(names=…)`, restoring the shipped bytes over an edited README (step 3).
-   **Fails if:** `_copy_tree` skips a destination whose mtime is at or after the source's (`scripts/new-wiki.py:316-318`, verified), so an edited README is never restored; the toolset side compares bytes (`_install_tooling.py:188`), so only Phase B is affected. Second break (reviewer-cited, `new-wiki.py:1064-1070`, `_render_template` `skip_if_exists=False`): Phase B re-renders `README.md`, `HOME.md`, `_MAP.md` on every run, and adding `best-practices` to `WIKI_FOLDERS` changes the rendered README, so "a re-run adds only the local README" fails on a populated wiki.
-   **Evidence to get now:** edit the README in a temp wiki, run Phase B, compare bytes; Phase B over a populated wiki without `best-practices/`, diff names and bytes.
-   **Kill criterion:** shipped bytes not restored, or the diff shows any file besides the new README.
-   **Cheapest test:** the two runs, as step 3's first tests.
-   **Fix class:** plan error for the copy (take the byte-comparing write as the primary route). Choice for Mark on the re-render: state that a re-run also re-renders README/HOME/_MAP, or render those only when the wiki is new.
+**K1. A Phase B re-run overwrites a populated wiki's compiled `_MAP.md` with the day-1 placeholder.**
+- Claim: "`_MAP.md` is regenerated every run" (Choice D); step 3 "`_MAP.md` is regenerated to the template's render".
+- Fails if: `_render_template` writes `seed/wiki/_MAP.md.tmpl` over the file (verified, `new-wiki.py:1064-1070, 1342-1365`); the template is a placeholder ("This section will populate once entries exist"); the real map is built by `wiki-map-compile.py` (`new-wiki.py:1036-1037`); the project CLAUDE.md @-imports `_MAP.md` into every session (`new-wiki.py:1104-1107`). Mark's "map should get refreshed as its changed" means a compile, not a template render.
+- Kill criterion: a second Phase B run over a wiki with entries leaves the placeholder.
+- Cheapest test: step 3's retrofit tree-diff asserting `_MAP.md` keeps its entry list.
+- Fix class: choice — (a) run `wiki-map-compile.py` after Phase B; (b) write the template only when missing; (c) leave `_MAP.md` alone. Standing rule: `10-install-and-setup.md:233-234` "Scaffold files are written once ... No refresh touches an existing project."
 
-2. **Claim:** the global install removes the old `wiki/project/best-practices/framework/*.md` so nothing is in two places; existing wikis are retrofitted later.
-   **Fails if:** consumers installed or rendered before the change still name the old path: (a) eight project CLAUDE.md files rendered from `templates/CLAUDE.md.tmpl:94,164` with `skip_if_exists=True` (investment-agent, spotify-app, soundboard-app, soundboard-app-api, sudoku-app-api, workflows-core, the equal-experts project, llm-wiki-bootstrap's own; verified by grep); line 94 names the old path as the authority for the frontmatter spec; (b) rpg-strategist's project-level skills (7 files; out of scope per Mark's memory, noted only); (c) `--phase docs` runs only `seed_toolset` (reviewer-cited), so on a machine whose installed skills still name the old path it removes what they read; (d) the install writes skills at steps 2-3 and the toolset at step 7 (`_install_tooling.py:770`, verified), so a failure in steps 4-6 leaves new skills with an old toolset (reported by `InstallIncomplete`, not repaired).
-   **Evidence to get now:** `--phase docs` alone on the changed tree, then resolve one `{{TOOLSET_DIR}}` link from an installed skill; grep every `CLAUDE.md` under `C:\github.com`.
-   **Kill criterion:** a live consumer on this machine resolves to a deleted path.
-   **Fix class:** choice for Mark: (a) remove now and accept dead lines in ~8 CLAUDE.md files until the retrofit card; (b) keep the old copy until the retrofit card; (c) add the CLAUDE.md line fix to the retrofit card and say so in the plan.
+**K2. The re-run the plan calls "the supported way" has no supported entry, and has unlisted side effects.**
+- Claim: Out of Scope "a Phase B re-run over an existing wiki is the supported way to add `local/README.md` and refresh `_MAP.md`"; step 3 "nothing else changed"; card #248 relies on it.
+- Fails if: `new-wiki.py:920-930` refuses a non-empty target without `--force` (verified); the wrappers never pass `--force` (`10-install-and-setup.md:254`); `SKILL.md:213` forbids `--force` without the user's yes; step 3's test must pass `--force` and the plan does not say so. B8 `_upsert_registry` merges `confirm_before_create`/`confirm_before_promote` from CLI defaults (true) over the registry entry, and rewrites `.claude/wiki-config.json` (`wiki_folders`, `project_description`) (verified, `new-wiki.py:189-224, 1145-1163, 1178-1203`): a "retrofit" re-run resets a `false` gate to `true`. B7.5 renders `llm-wiki/README.md` on every run without `skip_if_exists` (verified, `:1109-1113`). The `--force` warning text (`new-wiki.py:927-929`, `SKILL.md:213`) still says it "writes everything else".
+- Kill criterion: any file or registry key besides `best-practices/local/README.md` changes on a retrofit re-run.
+- Fix class: plan error (llm-wiki/README.md into `skip_if_exists` and the invariant; the `--force` text; the test passes `--force`) and choice (may a re-run reset gates and `wiki_folders`, or must Phase B preserve them; or #248 retrofits by a narrower route).
 
-3. **Claim:** the repoint lists are complete (63 occurrences in 34 repo files; 19 live pages; 128 links in 84 agentic-design files).
-   **Fails if:** live pages outside both lists link the old toolset path: a notebook grep outside agentic-design found 37 matches in 25 files, including llm-wiki-bootstrap `project/architecture/00-system-overview.md`, `20-ingesting-a-source.md`, `50-quality-and-promotion.md`, `best-practices/wiki-authoring-where-we-stand.md`, `memory-architecture-where-we-stand.md` and several decisions; also `agent-builder-bootstrap/CLAUDE.md`, `cottage-build/wiki/project/best-practices/README.md` (4), the soundboard-app and spotify-app READMEs. A broader count (any `best-practices/framework/` mention outside agentic-design) was 79 files, unclassified.
-   **Evidence to get now:** resolve every `global-toolset/wiki/project/best-practices/framework/` link across the notebooks, split into live pages, records, machine files.
-   **Fix class:** choice for Mark: widen the repoint to the live pages found, or list them for a later card. Plan error: Scope / Out of Scope must name the decision either way; agent-builder's CLAUDE.md stays out (Exclusions), listed not edited.
+**K3. The plan names `WIKI_FOLDERS` and `folder_notes` but not `taxonomy_for`.**
+- Fails if: `best-practices/` is created only from what `taxonomy_for()` returns (reviewer-cited, `_wiki_config.py:118-134`, `new-wiki.py:1016-1023`); for `none` that is `sessions` only.
+- Cheapest test: step 3's first Expected bullet already catches it.
+- Fix class: plan error — name the `taxonomy_for` edit and its other callers.
 
-4. **Claim:** step 2's "`local` exists as a plain file → the refresh does not raise ... still refreshes every other file"; step 1 "No new function".
-   **Fails if:** `seed_toolset`'s `mkdir(..., exist_ok=True)` and `shutil.copyfile` (`_install_tooling.py:230-231`, verified) raise on a plain file and stop the loop; `unlink()` (`:233`) raises on a held file on Windows after earlier copies ran.
-   **Cheapest test:** a temp toolset with a plain file at `wiki/best-practices/local`, then `seed_toolset`.
-   **Fix class:** plan error: a per-file guard with a reported result in step 2; drop "No new function".
+**K4. Step 14's scope misses live in-notebook pages outside `wiki/**`.**
+- Fails if: the notebook root `_INDEX.md` carries the old link (lines 614, 626, 665, reviewer-cited; match verified); `_inbox/design-rebuild/**` matches (drafts of the architecture pages; no disposition); card #248 names the old path as its subject (a link-only repoint would change its meaning); `10-install-and-setup.md:215` states the old path in live prose, which "prose left" would leave wrong.
+- Cheapest test: list over the whole notebook folder, classify each hit.
+- Fix class: plan error — widen the listing; `_INDEX.md` is rebuilt by the indexer (list, don't edit); architecture prose goes to the finish step's wiki record; card #248 excluded. Choice: the `_inbox/design-rebuild/**` copies.
 
-5. **Claim:** step 4's scan check vs step 10's conditional `V2_ROADMAP.md` edit; requirements' "the 2026-10-05 decision still holds".
-   **Fails if:** `V2_ROADMAP.md:56` names the old path, so the scan fails or step 10's condition is moot (reviewer-cited). The 2026-10-05 global-toolset decision states the docs live at `wiki/project/best-practices/framework/` (its line 29, verified), which the path change reverses; only the 2026-11-13 decision is superseded.
-   **Fix class:** plan error: V2_ROADMAP edited in step 4's sweep; a one-line "layout moved by #243" note on the 10-05 decision under step 13 (or superseded, if Mark prefers).
+**K5. Step 17's old-path guard has no return slot, and scenario 2 is not drivable through the skill.**
+- Fails if: the guard at `check.py:368-372` sits in the shared scaffold branch, not a `kind`, and `tests/skills/README.md:21` says "an existing kind is never changed"; after step 1 the guarded path can never exist, so it is vacuous; requirements' "code change means test change" and that rule are not reconciled. Scenario 2 (a re-run over edited HOME/README) needs the user's `--force` yes (`SKILL.md:213`; the `force` case at `check.py:286-296`), so a paid red-green run could end asking a question on both copies. The two scenarios are step 3's own Expected bullets (README line 20 asks for scenarios that did not exist while the change was made); README line 19 asks for the requirement quoted in full.
+- Cheapest test: give the writer the drafted brief and ask first whether scenario 2 can run (free).
+- Fix class: choice (how the guard is fixed) and plan error (quote Decision 7 in full; scenario 2 gives the `--force` yes, or is dropped for script tests).
 
-6. **Claim:** trivial-stakes proposals (step 9 "no", steps 5 and 8 "yes").
-   **Fails if (step 9, reviewer-cited):** `wiki-update.py:1269` `tier_rubric_text` returns only the span from `### Tier rubric` to `### Review cadence` (doc lines 103-138); a rule placed after it is never shown to ingest. **Fails if (step 5):** applied while the plan's Decisions needed 1 is open (Mark's "settle conventions before applying"); folding the seven decisions' reasons into practice text falls under "entries say only what the source says". **Holds:** step 8 "yes" (no script reads `framework-version`; floors updated).
-   **Fix class:** plan error: step 9 states where the rules land and tests that `tier_rubric_text()` holds both. Choices for Mark: Decisions needed 1; the trivial-stakes "yes" on steps 5 and 10 (the template line is read by every new project's agents).
+**K6. The reconciled requirements still contradict plan.md (verified).**
+- Fact line 13 says "plan step 13"; it is step 16.
+- Fact line 38 and Decision 2 say 53 files / "the 53 mentions are repointed"; the plan has 83 files, 180 occurrences, split 60 left / 3 listed / 19 repointed / 1 moved.
+- Exclusion line 59 ("No change to the 231 ... 00-95 pages beyond what the architecture-decisions move needs") vs step 14 repointing the 00, 20, 50 pages (Choice B).
+- Decision 7 says `local/` files are "linted as entries and searched" for wiki and toolset; `10-install-and-setup.md:217` says `list_topics()` hides `global-toolset`, so the toolset's `local/` is neither.
+- Fix class: plan error — reconcile requirements.
 
-7. **Claim:** step 4's file list and Scope cover every test and guard naming the path; step 3's lint invariant.
-   **Fails if (reviewer-cited):** `tests/skills/new-wiki/check.py:368-372` asserts no docs are copied to `wiki/project/best-practices/framework` (a guard on a path that can no longer hold a copy; outside the plan's test Scope). A user note without frontmatter in a wiki's `best-practices/local/` is linted as an entry (`wiki-lint-mechanical.py:189-195` skips only `_INDEX`, `_MAP`, `_inbox`, `sessions`, `tasks`). `wiki-qmd-query.py:773` indexes only `research` and `project`, so `best-practices/local/` notes are never searched.
-   **Fix class:** plan error: `tests/skills/new-wiki/check.py` into Scope (red-then-green per the repo's tests/skills rule). Choices for Mark: exempt `best-practices/local/` user files from the entry checks; whether search indexes it.
+### Skip, drop and default rules in steps 3, 4, 14, 17 against the standing rules
+- README/HOME written only when missing, `_MAP.md` and `local/` README refreshed: `10-install-and-setup.md:233-234` (written once; no refresh touches an existing project) vs Mark's Choice D; K1 and K2 follow.
+- `_copy_tree` not used: no standing rule found; the plan's reason holds (`new-wiki.py:316-318`).
+- Lint has no exemption for `local/`: settled by Choice C; holds (reviewer-cited `wiki-lint-mechanical.py:187-195`).
+- `sample_titles` gains `best-practices`; `drop_machine_files` keeps user notes: no standing rule found; holds (reviewer-cited `wiki-qmd-query.py:571-596, 770-774`).
+- Step 14 journals and prose left; other projects left: Choices 2 and B; holds except K4.
+- Step 17 no full suite by default; paid only on Mark's go: `tests/skills/README.md:3, 7-13` agree; holds.
+- Step 17 PENDING rows for lint and search: no standing rule beyond the README's "small change" line; holds if `sample_titles` is the only search change.
+- Step 17 cost $2-6: based on the $2.23 precedent (PENDING 2026-10-23); no standing rule for the range.
 
 ### What holds up
-- Counts re-counted: 63 occurrences in 34 files for the old path; 83 files for `architecture-decisions`; 128 in 84 confirmed by the reviewer; the class split sums to 83 with `231-split-plan.md` counted as a journal.
-- The dry-run: `seed_toolset` builds `status` before the early return (`_install_tooling.py:221,225-226`), so the README appears in a dry run with no new key.
-- `local/` is safe from every code path found: no `"local"` in `scripts/`; the manifest records scripts, skills, agents, hooks only; uninstall does not reach the toolset (reviewer-cited `_install_tooling.py:779-792,939-978`); the remove scan covers only the pack folders and the planned old folder.
-- Taxonomy and lint accept a new top-level folder: `wiki-map-compile.py:378-386` maps only direct `.md` children of non-container folders; `SYSTEM_STEMS` exempts `README` from body checks (`_entry_checks.py:63`); no lint folder list rejects it.
-- `framework-contract: true` pages stay exempt from body checks.
-- Link depth: four `../` reaches `notebooks/` from the new toolset folder; wiki-authoring line 221's llm-wiki link drops from five to four. `_cycle_common.py:158` and `tests/skills/wiki-cycle/check.py:1124` read the project's own canon, so leaving them is right.
-- agent-builder: no `best-practices/framework` hit in its repo.
-- Round 1's findings are fixed in the steps (README frontmatter and lint test, dry-run placement, `pool.json` out with a reason, counts and class split, `Failures:` lines, step 11's anchors and `.obsidian`), except attacks 4 and 5 above.
+- Step 4's code claims (lint covers `best-practices/local/`; `sample_titles` is the only list naming `research`/`project`; `drop_machine_files` keeps user notes).
+- The qmd collection covers the whole `wiki/` folder: `40-search-and-indexing.md:44`; also the orchestrator's check (the lint tells users `qmd collection add "<wiki_root>"`). The real pattern is step 4's manual evidence.
+- No existing test relies on a re-run re-rendering README/HOME (grep of `tests/skills/new-wiki/`, `tests/scripts/`, both wrappers).
+- `eval-case-writer` is installed; step 17 agrees with `tests/skills/README.md` on red-then-green on both models, the writer writing the cases, the full suite waiting for Mark.
 
 ### Could not assess
-- no standing rule found: `pool.json` and `tests/search/.results/` out of scope (frozen question set).
-- no standing rule found: journals, archives and reports left as records (Mark's Choice 2 decides it).
-- no standing rule found: existing wikis keep the old layout (Mark's Choice 3).
-- no standing rule found: `_cycle_common.py:158` and `tests/skills/wiki-cycle/check.py:1124` left alone.
-- no standing rule found: rerank spec "Practice page: none".
-- no standing rule found: the moved decision record "not shipped, no local file".
-- no standing rule found: agentic-design's own folder not moved (Decisions needed 1 open).
-- The old toolset copy removed: "No dead code or retired skills" supports it; attack 2 sets the cost beside it.
-- `CONSTRAINTS.md` does not exist.
-- Not read or not run: step 11's real anchors; Windows unlink and rmdir under a held file; whether an exception in install steps 4-6 is caught before step 7; where the install places `framework-docs/` for the `wiki-update.py:1265` fallback; `40-search-and-indexing.md`; classification of the 79 other-notebook matches; the full per-class split of the 128 links.
+- no standing rule found: the `local/` README replaced by byte comparison on a re-run (Choice 3).
+- no standing rule found: `sample_titles` addition and its "no timing run".
+- no standing rule found: step 14's "edit link-only, leave prose".
+- no standing rule found: step 17's $2-6 range.
+- Not run: Phase B, qmd, any suite, `qmd collection list`. `taxonomy_for` and the `_INDEX.md` line numbers are reviewer-cited. Whether `_inbox/design-rebuild/**` is live is the requester's call. Whether the writer returns a usable guard fix needs a paid run.
 
 VERDICT: KILL-ASSUMPTIONS FOUND
