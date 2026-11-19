@@ -51,3 +51,12 @@ Size: full — second fix round (small path's cap 1; the rounds spent count towa
 - Red before the writer's save (scratchpad fix2.txt): 5 FAILED, exactly the identical cp / Set-Content / > accepts and the grep move / grep -c copy reads (old detector hits). Green after: exit 0, 'every check passed'.
 - review-ledger.py fixed: exit 1: standards-17 'did not move' (its location parsed as the code example shutil.copy('a','left-undone.txt'), not check.py, which the fix changed); standards-24 'names no file' (note only). Skill suggestion filed (do-code-change--review-ledger-py-fixed-refused-standards.md). Override put to Mark.
 - Override of the fixed gate for standards-17 / standards-24 (Mark, Discord DM 2026-11-19T04:25Z, verbatim): "yes".
+
+## Review round 3 — 2026-11-19
+- 16 findings, 3 blocking: standards-25 (fixture lacks MultiEdit/NotebookEdit/path/backslash/old-run plants), standards-26 (writer's text: rstrip vs 'any changed text'), spec-10 (CHANGELOG names the wrong cause of Sonnet's old-copy failure). Round-2 fixes confirmed; the ruling not raised. query --cap 3: not yet met, 3 open blocking + 4 stale round-1 verdicts (files changed since) for round 4 to re-verify.
+- Fix round 3 (the last the full-path cap allows): writer replay (rstrip claim, basename match), developer (fixture plants, CHANGELOG cause and Opus note, PENDING column, docstring nit).
+
+## Fix round 3 — 2026-11-19
+- Writer replay saved unchanged: the script-output check compares exactly (bytes decoded without newline translation; whitespace and line endings included; the detail names the first differing line or the line-ending difference); the write check's target match is the path's last part equal to left-undone.txt; docstring phrase per the writer.
+- Developer: fixture plants MultiEdit, NotebookEdit, a 'path'-keyed tool, a backslash Windows path (fail the write check), a Read and a Write to copy-of-left-undone.txt (pass it), the old-run kind's write check (Write fails, Read passes); CHANGELOG cause of Sonnet's old-copy failure corrected (no permission denials alone; step JSON contract followed) and the Opus new-copy denial named (#247); PENDING columns; docstring nit. test_cycle_scope.py 330/330.
+- Red before the writer's save: 1 FAILED, the copy-of-left-undone.txt control. Green after: exit 0, 'every check passed' (149 PASS lines), the exact script-output check passing on the plain runs.

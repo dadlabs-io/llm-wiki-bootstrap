@@ -3198,7 +3198,7 @@ _LU_READ_TOOLS = ("Read", "Glob", "Grep")
 def _lu_model_wrote_file(run: dict) -> list:
     """Calls in which the session aimed a file-writing tool at left-undone.txt: Write, Edit, MultiEdit,
     NotebookEdit, or any other non-read tool whose file_path, path or notebook_path, or whose edits[].file_path,
-    ends in left-undone.txt (backslash paths too). Shell and PowerShell commands are not read for writes: any route
+    whose last path part is left-undone.txt (backslash paths too). Shell and PowerShell commands are not read for writes: any route
     through them is left to the check in _lu_copy_checks that re-runs the script and fails any text that differs
     from its output, so a shell rewrite whose text is identical to the script's is accepted."""
     hits = []
@@ -3208,7 +3208,7 @@ def _lu_model_wrote_file(run: dict) -> list:
             continue
         targets = [str(inp.get(k, "")) for k in ("file_path", "path", "notebook_path")]
         targets += [str(e.get("file_path", "")) for e in (inp.get("edits") or []) if isinstance(e, dict)]
-        if any(t.replace("\\", "/").lower().endswith("left-undone.txt") for t in targets):
+        if any(t.replace("\\", "/").rstrip("/").split("/")[-1].lower() == "left-undone.txt" for t in targets):
             hits.append(name)
     return hits
 
@@ -3255,7 +3255,7 @@ def _lu_script_output(ctx: dict, run_dir: Path):
         p = _script(ctx, "wiki-cycle-scope.py", "--topic", NOTEBOOK, "left-undone", "--run-folder", str(run_dir))
         if p.returncode != 0 or not f.is_file():
             return None, f"exit {p.returncode}: {(p.stdout + p.stderr)[-200:]}"
-        return f.read_text(encoding="utf-8", errors="replace"), ""
+        return f.read_bytes().decode("utf-8", errors="replace"), ""
     finally:
         for q in [q for q in run_dir.rglob("*") if q.is_file() and q not in snap]:
             q.unlink()
@@ -3282,11 +3282,14 @@ def _lu_copy_checks(add, ctx: dict, run: dict, rtext: str, ftext: str) -> None:
         if made is None:
             add(name, False, "could not run the script to compare: " + why)
         else:
-            on_disk = [l.rstrip() for l in ftext.splitlines()]
-            script = [l.rstrip() for l in made.splitlines()]
-            add(name, on_disk == script,
-                "" if on_disk == script else "the file differs from the script's own output: "
-                + _lu_first_diff(script, on_disk, "script", "file"))
+            raw = (run_dir / "left-undone.txt").read_bytes().decode("utf-8", errors="replace")
+            if raw == made:
+                add(name, True, "")
+            else:
+                diff = _lu_first_diff(made.splitlines(), raw.splitlines(), "script", "file")
+                add(name, False, "the file differs from the script's own output (compared exactly, whitespace and "
+                    "line endings included): " + (diff or "same lines, different line endings or final newline: "
+                    f"script ends {ascii(made[-20:])}, file ends {ascii(raw[-20:])}"))
     missing = [l for l in want if l not in got]
     extra = [l for l in got if l not in want]
     add("the section's lines are the file's lines, in order, none added, reworded or dropped",

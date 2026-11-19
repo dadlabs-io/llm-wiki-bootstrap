@@ -115,6 +115,62 @@
         "tests/skills/wiki-cycle/cases.json": "5c9ff224f0fb1a9f90b866050f21b7eaeb062a4b5aed05342a165e92365eb4a6",
         "tests/skills/wiki-cycle/check.py": "7a46a49fd1621d8f577b19d49d54f2ad2fd68dfe586f7dad2a5da9062a0266cc"
       }
+    },
+    {
+      "round": 3,
+      "at": "2026-11-19T04:36:24Z",
+      "diff_sha256": "6085e163c163d5a85f9c80c3956ce1dea4c7c51d628b8ce127862c8b5f262003",
+      "findings_sha256": "ac46be649fd57013fce0d546038f3b3dad23b72f50ef0823bc4af00dfc815dd9",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-25",
+        "standards-26",
+        "standards-27",
+        "standards-28",
+        "standards-29",
+        "standards-30",
+        "standards-31",
+        "standards-32",
+        "standards-33",
+        "spec-10",
+        "spec-11",
+        "spec-12",
+        "spec-13",
+        "spec-14",
+        "spec-15",
+        "spec-16"
+      ],
+      "new": [
+        "standards-25",
+        "standards-26",
+        "standards-27",
+        "standards-28",
+        "standards-29",
+        "standards-30",
+        "standards-31",
+        "standards-32",
+        "standards-33",
+        "spec-10",
+        "spec-11",
+        "spec-12",
+        "spec-13",
+        "spec-14",
+        "spec-15",
+        "spec-16"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "8d17c7c3bb4ae41cbf60cb3768339c8186706833e5900d3336bff5266df46127",
+        "scripts/_run_state.py": "07f71209c54be7de075730f3e36444b535c11f5aaeec26d8483f63f317536795",
+        "skills/wiki-cycle/SKILL.md": "c795d52232e9cc989ab88d0a1981d6be98db1486512bd5db25c3628a0166c5e6",
+        "tests/scripts/test_cycle_scope.py": "c200e1f1b21224fee2109f2c815ad960258d9c6eac7bbd554f43e62b180bed8e",
+        "tests/scripts/test_left_undone_fixture.py": "20dcfe02de9a7eb9c45462fe47516cd0589369126e1e52e0a25e2ce528cc0989",
+        "tests/skills/PENDING.md": "fd706424977456492f647a1e7e2ae8a97920a06b92124f9e595ffeb116d21fb0",
+        "tests/skills/wiki-cycle/cases.json": "5c9ff224f0fb1a9f90b866050f21b7eaeb062a4b5aed05342a165e92365eb4a6",
+        "tests/skills/wiki-cycle/check.py": "6fc36349f3a584d3ef6e7be58bf2ee9d42e780745027fe547675d9008c9a633b"
+      }
     }
   ],
   "items": {
@@ -973,6 +1029,342 @@
           "round": 2,
           "verdict": "addressed",
           "fingerprint": "903030fa24ed2c9e720aace9c210b060d84abcc2234dc2359a05acd87b29234a"
+        }
+      ]
+    },
+    "standards-25": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] T1, T3, T5 (writer's text for check.py:3207-3211; the gap is in `tests/scripts/test_left_undone_fixture.py:290-295`): the new `_lu_model_wrote_file` branches have no case. The fixture plants only `Write` and `Edit` on `file_path` (`tool = {\"Write\": ...`), while its docstring and CHANGELOG.md:16 promise \"a Write, Edit, MultiEdit or NotebookEdit\". MultiEdit, NotebookEdit (`notebook_path`), the `path` key, `edits[].file_path`, a backslash path, the `_LU_READ_TOOLS` skip (a Read of the file must pass), and the old-run kind's call at check.py:3361 are not exercised. Fix: one plant per route that must fail the write check, a Read plant on the target that must pass, and one old-run plant.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 290,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f22aa3d38c26b2ba28588f02474fb341d7ae62258e329caa3521564c86ed4c61",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "f22aa3d38c26b2ba28588f02474fb341d7ae62258e329caa3521564c86ed4c61"
+        }
+      ]
+    },
+    "standards-26": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] C2 (writer's text) `check.py:3285-3286` against `CHANGELOG.md:16` and `check.py:3268-3269`: the copy check compares `[l.rstrip() for l in ftext.splitlines()]`, so a trailing-space edit passes, while CHANGELOG says \"any changed text fails whatever route wrote it\" and the `_lu_copy_checks` docstring says \"no route by the session can make the copy check pass against a file the session wrote\". Fix: compare unstripped lines, or word both as \"any change other than trailing spaces\"; add a plant for a trailing-space edit.",
+      "file": "check.py",
+      "line": 3285,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "6a5a6381d23060026f314ff4fb27e0804c090052f00fa3758b08f6796fcfe57e",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "6a5a6381d23060026f314ff4fb27e0804c090052f00fa3758b08f6796fcfe57e"
+        }
+      ]
+    },
+    "standards-27": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] C2 (writer's text) `check.py:3275`, `:3281`: the names \"the session did not write left-undone.txt itself (one script writes it; the model composes no count)\" and \"(not changed or made by the session)\" are now false for an identical shell rewrite, which passes both. Fix: rename to what is checked (no Write, Edit, MultiEdit or NotebookEdit aimed at the file; the text equals the script's own output), then update `WROTE_ITSELF` (fixture:72) and `NEEDS_SESSION` (fixture:49), which match on the name.",
+      "file": "check.py",
+      "line": 3275,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "fdc1f05798dc47a7f4be03639a876032717161e0463534fce51361871044e08a",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "fdc1f05798dc47a7f4be03639a876032717161e0463534fce51361871044e08a"
+        }
+      ]
+    },
+    "standards-28": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S2 (writer's text) `check.py:3209-3212`: the target normalisation (`file_path`, `path`, `notebook_path`, backslash to slash) repeats `tests/skills/task-list/check.py:386` and `tests/skills/dream/check.py:402`. Fix: one helper in `tests/skills/_trajectory.py`. A judgement call: the three checks ask different questions.",
+      "file": "check.py",
+      "line": 3209,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "ab4c47c42f169f33ce369febe16900127bdba553c30f14b6c7bee8e9eca7a409",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "ab4c47c42f169f33ce369febe16900127bdba553c30f14b6c7bee8e9eca7a409"
+        }
+      ]
+    },
+    "standards-29": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] PY9 `tests/scripts/test_left_undone_fixture.py:326-330`: the events-file plant passes whenever the script does not rewrite the events file, so the restore is not shown to bite. The Spec lens traced that the fixture's case A is a `--full` run, so `_run_state.py:957-959` does rewrite it; the test still does not assert it. The deletion branch (`check.py:3260-3261`, files the script made) has no plant. Fix: assert the bytes changed during the run (wrap `suite._script`), and plant a new file that must be gone after `check()`.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 326,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f22aa3d38c26b2ba28588f02474fb341d7ae62258e329caa3521564c86ed4c61",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "f22aa3d38c26b2ba28588f02474fb341d7ae62258e329caa3521564c86ed4c61"
+        }
+      ]
+    },
+    "standards-30": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] PY9 `tests/scripts/test_left_undone_fixture.py:318-320`: the 14-route loop repeats one assertion; the script-output check reads only the disk, so the route names change labels, not outcomes. Fix: keep one case and say in the docstring that routes do not change this verdict, or keep the labels for readability.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 318,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f22aa3d38c26b2ba28588f02474fb341d7ae62258e329caa3521564c86ed4c61",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "f22aa3d38c26b2ba28588f02474fb341d7ae62258e329caa3521564c86ed4c61"
+        }
+      ]
+    },
+    "standards-31": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/PENDING.md:28`: \"Run on Mark's yes: results in ...\" sits in the \"Why it was not run\" column and \"Next full wiki-cycle run checks these\" says the change is unrun, so the row reads as both run and pending; it also omits the Opus-only caveat on none-answered that CHANGELOG.md:16 carries. Fix: say what has not been run and state the caveat.",
+      "file": "tests/skills/PENDING.md",
+      "line": 28,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "fbd3950dd0dc6eb15ee57fc7de5fef13587c6c28fa03876f2cb986c58cef6356",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "fbd3950dd0dc6eb15ee57fc7de5fef13587c6c28fa03876f2cb986c58cef6356"
+        }
+      ]
+    },
+    "standards-32": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_left_undone_fixture.py:254-256` against `:308`: the docstring says \"the same shell routes with the text identical\"; the loop runs three of the 14. Fix: \"three shell routes\".",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 254,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f22aa3d38c26b2ba28588f02474fb341d7ae62258e329caa3521564c86ed4c61",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "f22aa3d38c26b2ba28588f02474fb341d7ae62258e329caa3521564c86ed4c61"
+        }
+      ]
+    },
+    "standards-33": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] S13 `tests/scripts/test_left_undone_fixture.py:250`: `session_write_plants` is about 90 lines in six phases. Fix: one function per phase, or keep the docstring's phase list in step with the code.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 250,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f22aa3d38c26b2ba28588f02474fb341d7ae62258e329caa3521564c86ed4c61",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "f22aa3d38c26b2ba28588f02474fb341d7ae62258e329caa3521564c86ed4c61"
+        }
+      ]
+    },
+    "spec-10": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `CHANGELOG.md:16` names the wrong cause of Sonnet's none-answered old-copy failure. Intent: the brief asked for \"Sonnet's old-copy failure was the step JSON contract\"; that wording is copied from `checkpoints.md:30` (\"sonnet old FAIL (no permission denials; step JSON contract: NOT the record checks)\"). Implemented: `tests/skills/.results/wiki-cycle/20261118-195235-red-green-047d868/report.md:29` (the run report the reviewer read) says \"old failed: no permission denials (read-guard and the blocked Skill tool counted apart); every step JSON follows the contract (fields, cycle_id)\". CHANGELOG.md:16 says the opposite. Affected: a reader of CHANGELOG who wants to know why the none-answered case does not discriminate. Fix: say Sonnet's old-copy failure was \"no permission denials\" (read-guard and the blocked Skill tool counted apart), and correct `checkpoints.md:30` the same way, unless a fresh read of the old-copy report shows the step-JSON cause.",
+      "file": "CHANGELOG.md",
+      "line": 16,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "903030fa24ed2c9e720aace9c210b060d84abcc2234dc2359a05acd87b29234a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "903030fa24ed2c9e720aace9c210b060d84abcc2234dc2359a05acd87b29234a"
+        }
+      ]
+    },
+    "spec-11": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `CHANGELOG.md:16` omits that both `lint-fixes-record` cases fail on Opus's new copy while it calls none-answered \"kept as a regression case\". Intent: `checkpoints.md:30-31`: Opus \"new FAIL (1)\" in both cases, a sandbox Write refused by the edit gate; `report.md:29-30` \"fails on the new copy\". Fix: state that both fail on Opus's new copy on that denial, parked under #247.",
+      "file": "CHANGELOG.md",
+      "line": 16,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "903030fa24ed2c9e720aace9c210b060d84abcc2234dc2359a05acd87b29234a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "903030fa24ed2c9e720aace9c210b060d84abcc2234dc2359a05acd87b29234a"
+        }
+      ]
+    },
+    "spec-12": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] (writer's text) `check.py:3281` and `:3268-3269`: the check name \"(not changed or made by the session)\" and the docstring \"no route by the session can make the copy check pass against a file the session wrote\" contradict `requirements.md:43` (\"a session that rewrites the file with text identical to the script's output by a shell route is accepted\"). Fix: name it \"(the text equals the script's own output)\" and say an identical rewrite by any route passes.",
+      "file": "check.py",
+      "line": 3281,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "c2057269e138aa8520cf462ced5b076e92e16a2259b593401d3b65058058e515",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "c2057269e138aa8520cf462ced5b076e92e16a2259b593401d3b65058058e515"
+        }
+      ]
+    },
+    "spec-13": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] The fixture does not plant the other Write-type routes the ruling names, nor the old-run write check: `test_left_undone_fixture.py:290-291` plants Write and Edit only; check.py:3361 has no plant (only the verbatim kind gets `session_write_plants`, line 394). Fix: MultiEdit (`edits[0].file_path`), NotebookEdit (`notebook_path`), a backslash Write and an old-run plant.",
+      "file": "test_left_undone_fixture.py",
+      "line": 290,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "036f9c8ff8893dfca0e1e01b6d9d831fd84f4adedf54fd2ff87a87eee1d55d51",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "036f9c8ff8893dfca0e1e01b6d9d831fd84f4adedf54fd2ff87a87eee1d55d51"
+        }
+      ]
+    },
+    "spec-14": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] (writer's text) `check.py:3285-3286`: `[l.rstrip() ...]` lets trailing-space or final-newline changes pass the script-output check, though `requirements.md:43` says \"the file must equal the script's own output\". Changed words and counts still fail. Fix: compare without `rstrip`, both sides read the same way.",
+      "file": "check.py",
+      "line": 3285,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7d5e86af0a24db9a789fffe869e19ceef743c7c4125e7f278076b725b3dfed09",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "7d5e86af0a24db9a789fffe869e19ceef743c7c4125e7f278076b725b3dfed09"
+        }
+      ]
+    },
+    "spec-15": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] (writer's text) `check.py:3199-3200`, `:3211`: the docstring says \"any other non-read tool whose file_path ... ends in left-undone.txt\", and `endswith(\"left-undone.txt\")` also matches a name such as `copy-of-left-undone.txt`; the ruling names four tools aimed at the file. Fix: name the four tools; match the run folder's own file name.",
+      "file": "check.py",
+      "line": 3199,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "799e12f213e1acd190d26ff40fe6b9827449173dd1f70e854cf7cc7819dbbaf5",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "799e12f213e1acd190d26ff40fe6b9827449173dd1f70e854cf7cc7819dbbaf5"
+        }
+      ]
+    },
+    "spec-16": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `tests/skills/PENDING.md:28`: a result pointer sits in the \"Why it was not run\" column. Fix: put the reason there (\"next full run checks these; paid results in ...\").",
+      "file": "tests/skills/PENDING.md",
+      "line": 28,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "fbd3950dd0dc6eb15ee57fc7de5fef13587c6c28fa03876f2cb986c58cef6356",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "fbd3950dd0dc6eb15ee57fc7de5fef13587c6c28fa03876f2cb986c58cef6356"
         }
       ]
     }

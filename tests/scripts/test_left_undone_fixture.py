@@ -252,7 +252,7 @@ def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
     requester's ruling): the write check fails only a Write, Edit, MultiEdit or NotebookEdit aimed at the file; every other
     route is judged by the script-output check, which fails any changed text and accepts an identical rewrite. So:
     a dash turned into a hyphen in the section; the tool routes on the untouched file (write check fails); each shell
-    route with one count changed on disk (script-output check fails); the same shell routes with the text identical
+    route with one count changed on disk (script-output check fails); three of the shell routes with the text identical
     (write check passes, accepted) and read-only calls (pass); the run folder's other files put back after check()."""
     target = (rf / "left-undone.txt").as_posix()
     lu_file = rf / "left-undone.txt"
@@ -288,7 +288,14 @@ def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
         ">|": ("Bash", {"command": f"echo x >| {target}"}),
     }
     tool = {"Write": ("Write", {"file_path": target, "content": "x"}),
-            "Edit": ("Edit", {"file_path": target, "old_string": "a", "new_string": "b"})}
+            "Edit": ("Edit", {"file_path": target, "old_string": "a", "new_string": "b"}),
+            "MultiEdit": ("MultiEdit", {"edits": [{"file_path": target, "old_string": "a", "new_string": "b"}]}),
+            "NotebookEdit": ("NotebookEdit", {"notebook_path": target, "new_source": "x"}),
+            "a tool input keyed `path`": ("SomeWriteTool", {"path": target, "content": "x"}),
+            "Write to a backslash Windows path": ("Write", {"file_path": target.replace("/", "\\"), "content": "x"})}
+    not_the_file = {"Read of the file": ("Read", {"file_path": target}),
+                    "Write to copy-of-left-undone.txt": ("Write", {"file_path": f"{rf.as_posix()}/copy-of-left-undone.txt",
+                                                                    "content": "x"})}
     reads = {"grep move": ("Bash", {"command": f"grep move {target}"}),
              "grep -c copy": ("Bash", {"command": f"grep -c copy {target}"}),
              "Add-Content with Get-Content": ("PowerShell",
@@ -305,6 +312,9 @@ def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
         for name, call in tool.items():
             verdict("the write check fails a session that wrote left-undone.txt by", name,
                     named(session_with(step8_call(suite, rf), call), WROTE_ITSELF), False)
+        for name, call in not_the_file.items():  # a read tool, or another file's name: not a write of the target
+            verdict("the write check passes a session whose call is a", name,
+                    named(session_with(step8_call(suite, rf), call), WROTE_ITSELF), True)
         for name in ("cp", "PowerShell Set-Content", ">"):  # identical text by a shell route: accepted
             call = shell[name]
             verdict("the write check accepts an identical left-undone.txt by", name,
@@ -335,6 +345,23 @@ def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
             events_file.unlink(missing_ok=True)
         else:
             events_file.write_bytes(events_original)
+
+
+def old_run_write_plants(suite) -> None:
+    """The left-undone-old-run kind's own write check, called on an empty folder (no sandbox: the check reads only the
+    session's tool calls): a Write aimed at left-undone.txt fails it, a Read of the file passes it."""
+    case = case_of("left-undone-old-run")
+    with tempfile.TemporaryDirectory(prefix="lu-oldrun-") as td:
+        run_dir = Path(td)
+        target = (run_dir / "left-undone.txt").as_posix()
+        for name, call, want_ok in (("Write to left-undone.txt", ("Write", {"file_path": target, "content": "x"}), False),
+                                    ("Read of left-undone.txt", ("Read", {"file_path": target}), True)):
+            res: list[dict] = []
+            suite._check_left_undone_old_run(case, lambda n, ok, d="": res.append({"name": n, "ok": bool(ok)}), res,
+                                             {"cycle_id": "x"}, session_with(call), run_dir)
+            hit = next((r for r in res if r["name"] == WROTE_ITSELF), None)
+            own("old-run", f"the old-run kind's write check {'passes' if want_ok else 'fails'} a {name}",
+                hit is not None and hit["ok"] == want_ok, "check absent" if hit is None else hit)
 
 
 def case_a_expected(cid: str) -> list[str]:
@@ -455,6 +482,7 @@ def main() -> int:
     t0 = time.time()
     print("\n=== wiki-report skill text and the composer's Needs-you branches ===", flush=True)
     needs_you_wordings(SKILL_TEXT.read_text(encoding="utf-8"))
+    old_run_write_plants(suite)
     with tempfile.TemporaryDirectory(prefix="lu-fixture-") as td:
         tmp = Path(td)
         for name, fn in (("A", case_a), ("B", case_b)):
