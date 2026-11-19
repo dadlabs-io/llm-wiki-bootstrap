@@ -67,6 +67,54 @@
         "tests/skills/wiki-cycle/cases.json": "5c9ff224f0fb1a9f90b866050f21b7eaeb062a4b5aed05342a165e92365eb4a6",
         "tests/skills/wiki-cycle/check.py": "6e3be5fe92a1ec30125f6ec7d89f6045d342e13bf316b9c314dce1fed79d7083"
       }
+    },
+    {
+      "round": 2,
+      "at": "2026-11-19T02:29:56Z",
+      "diff_sha256": "3204af2d86917c7958bb3e28750e5b87ca194232d13d51bab2b3da08bc8eba8d",
+      "findings_sha256": "1f0eadfa9d6680559732e2cf8793b7a39a60aef1d932b23511acd5850fe582d9",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-16",
+        "standards-17",
+        "standards-18",
+        "standards-19",
+        "standards-20",
+        "standards-21",
+        "standards-22",
+        "standards-23",
+        "standards-24",
+        "spec-7",
+        "spec-8",
+        "spec-9"
+      ],
+      "new": [
+        "standards-16",
+        "standards-17",
+        "standards-18",
+        "standards-19",
+        "standards-20",
+        "standards-21",
+        "standards-22",
+        "standards-23",
+        "standards-24",
+        "spec-7",
+        "spec-8",
+        "spec-9"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "41681e938c0a39806c6f2c9dc98c4e3b4b97528fba2a6ac3039c5a0441efbb63",
+        "scripts/_run_state.py": "07f71209c54be7de075730f3e36444b535c11f5aaeec26d8483f63f317536795",
+        "skills/wiki-cycle/SKILL.md": "c795d52232e9cc989ab88d0a1981d6be98db1486512bd5db25c3628a0166c5e6",
+        "tests/scripts/test_cycle_scope.py": "c200e1f1b21224fee2109f2c815ad960258d9c6eac7bbd554f43e62b180bed8e",
+        "tests/scripts/test_left_undone_fixture.py": "b505835090ffd9a48a853b5fd3782dbb827db8bfcbac96368d8d51df650ea052",
+        "tests/skills/PENDING.md": "5abc408a6529c7327f0690cedfc2e771ffdcd5c3435735715f59d31ff3c19acf",
+        "tests/skills/wiki-cycle/cases.json": "5c9ff224f0fb1a9f90b866050f21b7eaeb062a4b5aed05342a165e92365eb4a6",
+        "tests/skills/wiki-cycle/check.py": "7a46a49fd1621d8f577b19d49d54f2ad2fd68dfe586f7dad2a5da9062a0266cc"
+      }
     }
   ],
   "items": {
@@ -613,6 +661,258 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "55b2f9f312f6c3a83c0ac79657c11f30ef693491ed04d85919ca13509a95bef5"
+        }
+      ]
+    },
+    "standards-16": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] (writer's text) G2, C2 `tests/skills/wiki-cycle/check.py:3197-3202, 3203-3211, 3207, 3221`: the comment promises \"a command that only reads the file ... is not a hit\", but reads still match, because the file is anchored by position (last argument) and the verb or alias is matched anywhere before it, not in command position. Probed with `uv run python -B` against `_lu_model_wrote_file` (each returned a hit): `grep -c copy <file>`, `grep move <file>`, `grep ni <file>`, `grep -i sc <file>`, `Select-String -Pattern ac -Path <file>` (aliases `ni`, `sc`, `ac`, `clc` in `_LU_PS_RE`), `grep tee <file>`, `grep -c install <file>`, `tee report.md < <file>`, `[IO.File]::WriteAllText('report.md', [IO.File]::ReadAllText('<file>'))`, `truncate -r <file> other.txt`, `Copy-Item a -Destination <file>.bak`. Round-1 standards-3's own example (`Add-Content ... -Value (Get-Content <file>)`) is fixed and passes; its siblings are not. Affected: a session that only reads the file fails \"the session did not write left-undone.txt itself\", turning a paid case red for the wrong reason. The fixture's only read control is the `Add-Content` form (`test_left_undone_fixture.py:297`). Fix: match copy verbs, `tee`, `truncate` and PowerShell aliases only as the command word (start, or after `;`, `&`, `|`, `(`), and add `-Destination` an end anchor; add a read control per shape to the fixture. Back to eval-case-writer as a replay.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 3197,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "70d343389313e86e44494d828758bf0badbb99afedd4e418d112f7759fb043d1",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "70d343389313e86e44494d828758bf0badbb99afedd4e418d112f7759fb043d1"
+        }
+      ]
+    },
+    "standards-17": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] (writer's text) G2 `check.py:3209-3213, 3249-3263`: literal write routes the rule claims to catch are missed. Probed, each returned no hit: `cp /tmp/a <file> 2>&1` (the copy pattern needs the file at the end of the command, `:3211`), `open('left-undone.txt', mode='w')` (`:3213` needs a quote straight after the comma), `Set-Content -Path:<file> -Value x`, `shutil.copy('a','left-undone.txt')`, `rni a <file>`, `Export-Csv -Path <file>`, `Invoke-WebRequest -OutFile <file>`. From reading `_lu_ps_writes_file`: `New-Item -Path <dir> -Name left-undone.txt`, an unlisted switch such as `-Confirm:$false` placed before the path, and a quoted `-Value \"a|b\"` cut at `|` before tokenizing also lose the destination. CHANGELOG.md line 10 and PENDING.md line 28 list `cp, mv, copy ...` as caught; that holds for the bare form only. Fix: allow redirections after the file, accept `mode=`, read `-Path:value`, add the missing aliases and cmdlets, tokenize before splitting on `;|&`; one fixture route per branch. Replay through eval-case-writer. (The Spec axis raises the same gap against the requirement; reported there separately.)",
+      "file": "shutil.copy('a','left-undone.txt')",
+      "line": null,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "424ab07f643576ec50c10607aeee34452cb9e78d41ee96baee7d3360641f60e0",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "424ab07f643576ec50c10607aeee34452cb9e78d41ee96baee7d3360641f60e0"
+        }
+      ]
+    },
+    "standards-18": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/skills/PENDING.md:28` against `tests/skills/README.md:69` (standards-12, claimed addressed, not fixed): the 2026-11-18 row is still one long table row carrying a measurement (run ids, costs, per-model red/green outcomes, the none-answered finding). The README says a PENDING row worth more than a line uses the four headings (Compared with, n, Cost, What this does not show). The Standards lens rated this important; round 1 had it a suggestion. PENDING.md was read to its last line (184): every older row is longer still, so the convention in practice differs from the README text. Whether this row counts as a measurement is the author's call. Fix: put the measurement under those four headings in a linked note and leave a one-line row.",
+      "file": "tests/skills/PENDING.md",
+      "line": 28,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "9d52d80829ab2aab0e0591a5be47ed7a58bff3e5be68cdd977a7b3842bcf881b",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "9d52d80829ab2aab0e0591a5be47ed7a58bff3e5be68cdd977a7b3842bcf881b"
+        }
+      ]
+    },
+    "standards-19": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] R4, S13 (writer's text) `check.py:3249-3263`: `_lu_ps_writes_file` nests for, while, if, if (four levels) in a 38-line function that masks groups, tokenizes and finds the destination. `_lu_model_wrote_file` (`:3282-3289`) still nests four levels (round-1 standards-10 stays open). Fix: extract `_lu_ps_destination(seg) -> str | None`, use guard clauses.",
+      "file": "check.py",
+      "line": 3249,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "3e0075e48893900abdd276a329f99cdb87469dfb5328136f23cd358da94b7898",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "3e0075e48893900abdd276a329f99cdb87469dfb5328136f23cd358da94b7898"
+        }
+      ]
+    },
+    "standards-20": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] T1, T3, T5 `tests/scripts/test_left_undone_fixture.py:277-300`: the new branches have no failing case. Routes cover only `-Path` writes; none covers a positional destination (`Set-Content <file> x`), `-FilePath`, `-LiteralPath`, `-Destination` or an alias; the restore of other run-folder files in `_lu_script_output` (`check.py:3342-3346`, round-1 standards-6) is untested (a changed `left-undone-events.txt` is never planted); the `_LF_CALL` lookahead (`:3457`, standards-5) has no test. Fix: one route per branch with its read control, and a planted events file.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 277,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "0fe5abc484e73ce2305bb1055bb1742e38a0194b1f8d2922cd3e6af885da1642",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "0fe5abc484e73ce2305bb1055bb1742e38a0194b1f8d2922cd3e6af885da1642"
+        }
+      ]
+    },
+    "standards-21": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] PY9 `tests/scripts/test_left_undone_fixture.py:260-274`: the dash plant still judges by `caught()`, whose `about` regex (`left.undone|section|queue line`) accepts any failing check with such a name, the same loose test round-1 standards-1 named for the routes. Fix: use `named(..., SECTION_EQUALS_FILE)` as `tamper_checks` does, and drop `caught` and `about`.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 260,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "0fe5abc484e73ce2305bb1055bb1742e38a0194b1f8d2922cd3e6af885da1642",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "0fe5abc484e73ce2305bb1055bb1742e38a0194b1f8d2922cd3e6af885da1642"
+        }
+      ]
+    },
+    "standards-22": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] (writer's text) N1, G25 `check.py:3236-3247`: `range(4)` and `range(5)` are unexplained pass counts; `hold` and `restore` do not say what they hold. Fix: a named constant with one line of reason; `mask_group` and `unmask`.",
+      "file": "check.py",
+      "line": 3236,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "204274acf192dfffa64ed28b912b1235d207b62dcf2b38883dbd8cb31370b123",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "204274acf192dfffa64ed28b912b1235d207b62dcf2b38883dbd8cb31370b123"
+        }
+      ]
+    },
+    "standards-23": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_left_undone_fixture.py:40, 267`: `NEEDS_AWAITING =\"<N> ...` lost the space before the quote (the line was edited though unrelated), and nested `def named` follows a statement with no blank line. Fix: restore `NEEDS_AWAITING = `; add the blank line.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 40,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "b505835090ffd9a48a853b5fd3782dbb827db8bfcbac96368d8d51df650ea052",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "b505835090ffd9a48a853b5fd3782dbb827db8bfcbac96368d8d51df650ea052"
+        }
+      ]
+    },
+    "standards-24": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] (writer's text) `check.py:3327-3332, 3342-3346`: the docstring says the whole run folder is put back, but only files are; a directory the script made stays (probed: an empty `newdir` remained after restore). Fix: remove new directories too, or say files only.",
+      "file": null,
+      "line": null,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "5d3faa5803a3b23f352daa59da29a708c348eb0257b71e55a56cc0f1161a3db6",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "5d3faa5803a3b23f352daa59da29a708c348eb0257b71e55a56cc0f1161a3db6"
+        }
+      ]
+    },
+    "spec-7": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] (writer's text) `check.py:3203-3211, 3207, 3221`: a read-only command is counted as a write. Intent: `check.py:3274-3275`, \"In each the file must be the destination: a command that only reads it is no hit\"; plan Failures: a model that renders correctly must pass. Implemented: `_LU_COPY_VERBS` (`:3203`) is matched anywhere before the file name (`:3209`); probed `grep -c copy <file>`, `grep move <file>`, `grep tee <file>`, `grep ni <file>` all return a hit labelled \"copy or move onto it\", \"tee\" or \"PowerShell write\". Affected: a paid session that greps the file fails \"the session did not write left-undone.txt itself\". The fixture's only read control is `test_left_undone_fixture.py:297`. Fix: anchor verbs, `tee` and aliases to command position; add read controls (`grep \"move\" left-undone.txt`). Replay through eval-case-writer.",
+      "file": "check.py",
+      "line": 3274,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "193e4a8f7f1da29407d19039b0e9d04ed9415ff2cae757f9661d4e601c28ac63",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "193e4a8f7f1da29407d19039b0e9d04ed9415ff2cae757f9661d4e601c28ac63"
+        }
+      ]
+    },
+    "spec-8": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] (writer's text) `check.py:3275-3276`: the write detector misses literal routes the requirement covers, while the docstring says the only miss is a path held in a variable. Intent: `requirements.md:43`, \"the write detector must catch every route by which the session itself produces `left-undone.txt`\"; Mark's accepted limit is the variable-path case only (checkpoints.md Step 6). Implemented: probed, no hit for `shutil.copy('a','left-undone.txt')`, `open('left-undone.txt', mode='w')`, `rni a <file>`, `Export-Csv -Path <file>`, `Invoke-WebRequest -OutFile <file>`, `cp /tmp/a <file> 2>&1`, `Set-Content -Path:<file>`; `curl -o <file>` has no pattern (reported by the Spec lens). Fixture plants none of them. Affected: a session writing the script's identical text by one of these passes the write check and the copy check; the script-output comparison catches only text that differs. Fix: replay these routes to eval-case-writer with one fixture plant each, or put the wider limit to Mark, since it is not the accepted one.",
+      "file": "check.py",
+      "line": 3275,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d6b8b5e34da94985377f455bea1ca7391e3ac1a3690a12727023d06dab708941",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "d6b8b5e34da94985377f455bea1ca7391e3ac1a3690a12727023d06dab708941"
+        }
+      ]
+    },
+    "spec-9": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `CHANGELOG.md:16` and `tests/skills/PENDING.md:28` say \"none-answered passes on the old copy\", but checkpoints.md Step 9 records it on Opus only; on Sonnet the old copy failed the step JSON contract, not the record checks. Fix: \"passes on the old copy on Opus only; Sonnet's old-copy failure was the step JSON contract\".",
+      "file": "CHANGELOG.md",
+      "line": 16,
+      "first_round": 2,
+      "last_seen_round": 2,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "20cc99ad20ccf6b31ab4c37e684264eea652f8fbf680f590c3fc6ee511f91ad7",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "20cc99ad20ccf6b31ab4c37e684264eea652f8fbf680f590c3fc6ee511f91ad7"
         }
       ]
     }
