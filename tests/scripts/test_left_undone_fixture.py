@@ -18,7 +18,7 @@ section as the file's text; names in COMPOSED) cannot fail here and print "PASS 
 script's wording can fail and print a plain PASS. What /wiki-report itself writes is graded only by a paid session. The wiki-report skill's own text is
 checked directly (every Needs-you wording, the no-file lines, the --brief rule), case A's folder is also graded by the
 left-undone-verbatim kind, and its section-against-file checks are shown to fail an invented, a reworded and a dropped
-queue line. The left-undone-old-run case is not run here (an unpaid smoke of it was run by hand, checkpoints.md).
+queue line. The left-undone-old-run case is not built here; only its write check is run, by old_run_write_plants.
 
 Checks that read the model's session (completed, denials, workers spawned, Phase 8 and 9 done) cannot be graded
 here: they are listed apart as "needs the paid session" and are not failures. The sandbox is torn down at the end.
