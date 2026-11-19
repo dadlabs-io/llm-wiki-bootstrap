@@ -232,3 +232,23 @@ Listing pass only, 2026-11-19. Nothing in project-notebooks was edited. Scripts 
 - Counts (agentic-design, every file): 1043 items. 109 auto-repointable in 76 files (28 with an anchor, all mapped to existing headings; 0 headings to add); 81 for Mark (8 live, 73 in machine files); 9 owned by step 15; 3 unrecognised (`wiki/.obsidian/workspace.json`); 4 mentions that are not links; 837 items in 109 record files skipped.
 - Plan's 128 links in 84 files: measured under `wiki/` with the plan's pattern, 130 occurrences on 127 lines in 83 files. Count of every doc-name form is 133 items in 84 files (126 links, 7 mentions).
 - Dry run of `repoint.py`: 76 files, 109 links would change, 0 problems; every proposed target and anchor resolves.
+
+## Step 14 — manual evidence
+Written by the developer, 2026-11-19. No test (Trivial stakes: yes). Nothing committed. Script and output: session scratchpad `...\scratchpad\step14\step14.py` (modes `list`, `apply`, `resolve`); the apply step re-checked each file's hash against the listing and would have skipped a changed one (none did).
+
+Listing (whole `notebooks/llm-wiki-bootstrap/` folder, hits of `global-toolset/wiki/project/best-practices/framework/`): 25 lines in 16 files, by class:
+- live page, link (edited): 17 lines in 11 files (19 links; two lines hold two links)
+- design-rebuild (`_inbox/design-rebuild/**`, left): 3 lines in 3 files (`final/50-quality-and-promotion.md:55`, `quality/documented.md:60`, `quality/living.md:43`; all prose)
+- root `_INDEX.md` (listed, indexer rebuilds): 3 lines (614, 626, 665), all links
+- live page, prose not a link (left): 1 (`wiki/project/architecture/50-quality-and-promotion.md:66`, architecture prose, the finish step's wiki record)
+- sessions (left): 1 (`wiki/sessions/main/237-decisions-for-mark.md:139`)
+- card #248: 0 hits (the card does not carry the full path string); other/unclassified: 0.
+Before 25 lines; after 8 (3 design-rebuild, 3 root `_INDEX.md`, 1 prose, 1 sessions). Zero live links to the old path remain.
+
+Files changed (11, all under `notebooks/llm-wiki-bootstrap/wiki/`, links only): project/architecture/00-system-overview.md (1), 20-ingesting-a-source.md (2), 50-quality-and-promotion.md (2); project/best-practices/memory-architecture-where-we-stand.md (1), wiki-authoring-where-we-stand.md (2); project/decisions/architecture-decisions-2026-04-10.md (1, the step 8 page, line 30 now), code-changes-summary-in-wiki-working-files-in-raw-2026-09-14.md (1), duplicates-retired-not-deleted-dedup-normalised-2026-09-14.md (1), icarus-integration-plan-2026-05-21.md (5), pages-declare-themselves-standalone-no-built-in-list-2026-09-24.md (2); project/troubleshooting/research-cycle-failures-we-hit-2026-04-to-10.md (1). 19 links repointed.
+
+Resolve (path arithmetic onto `notebooks/global-toolset/wiki/best-practices/framework/<doc>`, doc checked in `framework-docs/`, anchor checked against that doc's headings): `links 19 dead 0`. Docs hit: wiki-authoring (7), wiki-frontmatter (7, one with `#tier-rubric`, heading `### tier rubric` exists), memory-signals (3), cycle-step-return-format (1), no others. No anchor into `#review-cadence`.
+
+Listed, not edited: the 3 root `_INDEX.md` lines; the prose line in 50-quality-and-promotion.md:66 and the 3 design-rebuild lines (finish step's record / records); the session journal line.
+
+Plan inconsistencies: (1) the plan says to classify card #248 hits; there are none. (2) Step 8's note said the architecture-decisions page line ~26 links the old path; it is line 30 after the step 8 edits. (3) The plan's `manual: step 14` says evidence goes to `checkpoints.md`; it is here, as for earlier steps.
