@@ -257,7 +257,8 @@ def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
     target = (rf / "left-undone.txt").as_posix()
     lu_file = rf / "left-undone.txt"
     events_file = rf / "left-undone-events.txt"
-    original = lu_file.read_text(encoding="utf-8")
+    original_bytes = lu_file.read_bytes()  # the script writes LF; every write here is bytes, so no CRLF slips in
+    original = original_bytes.decode("utf-8")
     events_original = events_file.read_bytes() if events_file.is_file() else None
     base = compose_report(rf, cid)
     report_path = rf / f"{cid}-run-cycle-report.md"
@@ -323,15 +324,24 @@ def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
             verdict("the write check passes a call that only reads left-undone.txt:", name,
                     named(session_with(step8_call(suite, rf), call), WROTE_ITSELF), True)
         # one count changed on disk, the report copying it: every shell route fails the script-output check
-        lu_file.write_text(changed, encoding="utf-8")
+        lu_file.write_bytes(changed.encode("utf-8"))
         report_path.write_text(compose_report(rf, cid), encoding="utf-8")
         for name, call in shell.items():
             verdict("the script-output check fails a changed left-undone.txt written by", name,
                     named(session_with(step8_call(suite, rf), call), SCRIPT_OUTPUT), False)
         verdict("the script-output check fails a count changed with no tool call:", "none",
                 named(session_with(step8_call(suite, rf)), SCRIPT_OUTPUT), False)
-        lu_file.write_text(original, encoding="utf-8")
+        # the exact comparison: whitespace alone and line endings alone are changes too
+        for name, text in (("a trailing space added to one line", original.replace(first, first + " ", 1)),
+                           ("the line endings changed to CRLF", original.replace("\n", "\r\n"))):
+            lu_file.write_bytes(text.encode("utf-8"))
+            report_path.write_text(compose_report(rf, cid), encoding="utf-8")
+            verdict("the script-output check fails", name,
+                    named(session_with(step8_call(suite, rf)), SCRIPT_OUTPUT), False)
+        lu_file.write_bytes(original_bytes)
         report_path.write_text(base, encoding="utf-8")
+        verdict("the script-output check passes", "the file put back byte for byte",
+                named(session_with(step8_call(suite, rf)), SCRIPT_OUTPUT), True)
         # the script's other run-folder files are put back byte for byte after check() re-runs it
         events_file.write_text("planted: not the script's text\n", encoding="utf-8")
         planted = events_file.read_bytes()
@@ -339,7 +349,7 @@ def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
         own("A", "check() puts a changed left-undone-events.txt back byte for byte",
             events_file.is_file() and events_file.read_bytes() == planted, "the planted bytes were not restored")
     finally:
-        lu_file.write_text(original, encoding="utf-8")
+        lu_file.write_bytes(original_bytes)
         report_path.write_text(base, encoding="utf-8")
         if events_original is None:
             events_file.unlink(missing_ok=True)
