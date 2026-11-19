@@ -226,3 +226,9 @@ Plan inconsistencies / left: (1) `wiki-seed/install.md:63` and `wiki-seed/new-wi
 
 ## Step 12 — 2026-11-19, green
 - `templates/CLAUDE.md.tmpl` precedence entry 1 gains one sentence: a project's own changes go in `wiki/best-practices/local/<doc name>`, never in the doc; read it after the framework doc (the doc's "Local changes" line says in what order). 5 new tests in test_standalone render the template through Phase B. Orchestrator re-run: 40/40. The developer reports test_local_folder 16/16, test_global_toolset 80/80, check-freeze PASS (70 entries).
+
+## Step 13 — listing
+Listing pass only, 2026-11-19. Nothing in project-notebooks was edited. Scripts and output live in the session scratchpad `...\scratchpad\step13\`: `list_links.py`, `listing.json`, `listing.md`, `repoint.py` (prepared, dry-run only).
+- Counts (agentic-design, every file): 1043 items. 109 auto-repointable in 76 files (28 with an anchor, all mapped to existing headings; 0 headings to add); 81 for Mark (8 live, 73 in machine files); 9 owned by step 15; 3 unrecognised (`wiki/.obsidian/workspace.json`); 4 mentions that are not links; 837 items in 109 record files skipped.
+- Plan's 128 links in 84 files: measured under `wiki/` with the plan's pattern, 130 occurrences on 127 lines in 83 files. Count of every doc-name form is 133 items in 84 files (126 links, 7 mentions).
+- Dry run of `repoint.py`: 76 files, 109 links would change, 0 problems; every proposed target and anchor resolves.
