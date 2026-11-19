@@ -71,7 +71,7 @@ SKILL_TEXT = REPO / "skills" / "wiki-report" / "SKILL.md"
 # the Needs-you wordings and the no-file lines of the wiki-report skill, as the skill text writes them
 WROTE_ITSELF = "the session did not write left-undone.txt itself"
 SCRIPT_OUTPUT = "left-undone.txt is the text wiki-cycle-scope.py left-undone writes"
-NEEDS_AWAITING ="<N> semantic lint findings awaiting your approval — <run-folder>/lint-semantic.md"
+NEEDS_AWAITING = "<N> semantic lint findings awaiting your approval — <run-folder>/lint-semantic.md"
 NEEDS_NO_FIX = ("<N> semantic lint findings, applied or declined not recorded (no fix step in this mode)"
                 " — <run-folder>/lint-semantic.md")
 NEEDS_NOT_RECORDED = "<N> semantic lint findings, applied or declined not recorded — <run-folder>/lint-semantic.md"
@@ -248,67 +248,93 @@ def step8_call(suite, rf: Path) -> tuple[str, dict]:
 
 
 def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
-    """Defects the left-undone-verbatim checks must catch, each run through check() and put back: a dash turned into
-    a hyphen in the section; each route of writing left-undone.txt, run on the untouched file (the script's output, the
-    report copying it) so only the write check can fail it, with a read-only call as the control that must pass; and a
-    count changed with no tool call, which only the file-against-script check sees (the variable-path route)."""
+    """Defects the left-undone-verbatim checks must catch, each run through check() and put back. The rule (Mark,
+    2026-11-19): the write check fails only a Write, Edit, MultiEdit or NotebookEdit aimed at the file; every other
+    route is judged by the script-output check, which fails any changed text and accepts an identical rewrite. So:
+    a dash turned into a hyphen in the section; the tool routes on the untouched file (write check fails); each shell
+    route with one count changed on disk (script-output check fails); the same shell routes with the text identical
+    (write check passes, accepted) and read-only calls (pass); the run folder's other files put back after check()."""
     target = (rf / "left-undone.txt").as_posix()
     lu_file = rf / "left-undone.txt"
+    events_file = rf / "left-undone-events.txt"
     original = lu_file.read_text(encoding="utf-8")
+    events_original = events_file.read_bytes() if events_file.is_file() else None
     base = compose_report(rf, cid)
     report_path = rf / f"{cid}-run-cycle-report.md"
-    about = re.compile(r"left.undone|section|queue line", re.I)
-
-    def caught(session: dict) -> list[str]:
-        res = suite.check(case, before, before, session, ctx)
-        return [r["name"] for r in res if not r["ok"] and about.search(r["name"])]
-
     dash_line = next(l for l in original.splitlines() if l.startswith("- ") and "—" in l)
+
     def named(session: dict, prefix: str) -> dict | None:
         res = suite.check(case, before, before, session, ctx)
         return next((r for r in res if r["name"].startswith(prefix)), None)
 
+    def verdict(label: str, name: str, res: dict | None, want_ok: bool) -> None:
+        own("A", f"{label} {name}", res is not None and res["ok"] == want_ok,
+            "check absent" if res is None else ("passed" if res["ok"] else res["detail"]))
+
+    shell = {
+        ">": ("Bash", {"command": f"echo x > {target}"}),
+        "tee": ("Bash", {"command": f"echo x | tee {target}"}),
+        "cp": ("Bash", {"command": f"cp /tmp/mine.txt {target}"}),
+        "mv": ("Bash", {"command": f"mv /tmp/mine.txt {target}"}),
+        "sed -i": ("Bash", {"command": f"sed -i 's/: 2/: 3/' {target}"}),
+        "python -c": ("Bash", {"command": f"python -c \"open('{target}', 'w').write('x')\""}),
+        "python shutil.copy": ("Bash", {"command": f"python -c \"import shutil; shutil.copy('/tmp/a', '{target}')\""}),
+        "python open(mode='w')": ("Bash", {"command": f"python -c \"open('{target}', mode='w').write('x')\""}),
+        "PowerShell Set-Content": ("PowerShell", {"command": f"Set-Content -Path {target} -Value x"}),
+        "PowerShell copy": ("PowerShell", {"command": f"copy C:/tmp/mine.txt {target}"}),
+        "PowerShell move": ("PowerShell", {"command": f"move C:/tmp/mine.txt {target}"}),
+        "PowerShell ren": ("PowerShell", {"command": f"ren {rf.as_posix()}/mine.txt left-undone.txt"}),
+        "xcopy": ("PowerShell", {"command": f"xcopy /y C:/tmp/mine.txt {target}"}),
+        ">|": ("Bash", {"command": f"echo x >| {target}"}),
+    }
+    tool = {"Write": ("Write", {"file_path": target, "content": "x"}),
+            "Edit": ("Edit", {"file_path": target, "old_string": "a", "new_string": "b"})}
+    reads = {"grep move": ("Bash", {"command": f"grep move {target}"}),
+             "grep -c copy": ("Bash", {"command": f"grep -c copy {target}"}),
+             "Add-Content with Get-Content": ("PowerShell",
+                                              {"command": f"Add-Content -Path report.md -Value (Get-Content {target})"})}
+    first = next(l for l in original.splitlines() if l.startswith("- ") and re.search(r": \d+", l))
+    changed = original.replace(first, re.sub(r"(?<=: )\d+", lambda m: str(int(m.group()) + 1), first, count=1), 1)
+
     try:
         report_path.write_text(base.replace(dash_line, dash_line.replace("—", "-", 1), 1), encoding="utf-8")
-        own("A", "a check fails a section that turns the file's dash into a hyphen",
-            bool(caught(session_with(step8_call(suite, rf)))), "no check failed")
+        verdict("the section-equals-file check fails", "a section that turns the file's dash into a hyphen",
+                named(session_with(step8_call(suite, rf)), SECTION_EQUALS_FILE), False)
         report_path.write_text(base, encoding="utf-8")
-        # the file the script wrote, the report copying it unchanged: each route is judged on the write check alone
-        routes = {
-            "Write": ("Write", {"file_path": target, "content": "x"}),
-            "Edit": ("Edit", {"file_path": target, "old_string": "a", "new_string": "b"}),
-            ">": ("Bash", {"command": f"echo x > {target}"}),
-            "tee": ("Bash", {"command": f"echo x | tee {target}"}),
-            "cp": ("Bash", {"command": f"cp /tmp/mine.txt {target}"}),
-            "mv": ("Bash", {"command": f"mv /tmp/mine.txt {target}"}),
-            "sed -i": ("Bash", {"command": f"sed -i 's/: 2/: 3/' {target}"}),
-            "python -c": ("Bash", {"command": f"python -c \"open('{target}', 'w').write('x')\""}),
-            "a PowerShell Set-Content": ("PowerShell", {"command": f"Set-Content -Path {target} -Value x"}),
-            "PowerShell copy": ("PowerShell", {"command": f"copy C:/tmp/mine.txt {target}"}),
-            "PowerShell move": ("PowerShell", {"command": f"move C:/tmp/mine.txt {target}"}),
-            "PowerShell ren": ("PowerShell", {"command": f"ren {rf.as_posix()}/mine.txt left-undone.txt"}),
-            "xcopy": ("PowerShell", {"command": f"xcopy /y C:/tmp/mine.txt {target}"}),
-            ">|": ("Bash", {"command": f"echo x >| {target}"}),
-        }
-        for name, call in routes.items():
-            res = named(session_with(step8_call(suite, rf), call), WROTE_ITSELF)
-            own("A", f"the write check fails a session that wrote left-undone.txt by {name}",
-                res is not None and not res["ok"], "check absent" if res is None else "passed")
-        read_only = ("PowerShell", {"command": f"Add-Content -Path report.md -Value (Get-Content {target})"})
-        res = named(session_with(step8_call(suite, rf), read_only), WROTE_ITSELF)
-        own("A", "the write check passes a call that reads left-undone.txt and writes the report",
-            res is not None and res["ok"], "check absent" if res is None else res["detail"])
-        # a count changed with no tool call at all: only the file-against-script check can see it
-        first = next(l for l in original.splitlines() if l.startswith("- ") and re.search(r": \d+", l))
-        lu_file.write_text(original.replace(first, re.sub(r"(?<=: )\d+", lambda m: str(int(m.group()) + 1), first,
-                                                          count=1), 1), encoding="utf-8")
+        # the untouched file: only a Write or Edit tool call fails the write check
+        for name, call in tool.items():
+            verdict("the write check fails a session that wrote left-undone.txt by", name,
+                    named(session_with(step8_call(suite, rf), call), WROTE_ITSELF), False)
+        for name in ("cp", "PowerShell Set-Content", ">"):  # identical text by a shell route: accepted
+            call = shell[name]
+            verdict("the write check accepts an identical left-undone.txt by", name,
+                    named(session_with(step8_call(suite, rf), call), WROTE_ITSELF), True)
+        for name, call in reads.items():
+            verdict("the write check passes a call that only reads left-undone.txt:", name,
+                    named(session_with(step8_call(suite, rf), call), WROTE_ITSELF), True)
+        # one count changed on disk, the report copying it: every shell route fails the script-output check
+        lu_file.write_text(changed, encoding="utf-8")
         report_path.write_text(compose_report(rf, cid), encoding="utf-8")
-        res = named(session_with(step8_call(suite, rf)), SCRIPT_OUTPUT)
-        own("A", "the script-output check fails a count changed with no tool call",
-            res is not None and not res["ok"], "check absent" if res is None else "passed")
+        for name, call in shell.items():
+            verdict("the script-output check fails a changed left-undone.txt written by", name,
+                    named(session_with(step8_call(suite, rf), call), SCRIPT_OUTPUT), False)
+        verdict("the script-output check fails a count changed with no tool call:", "none",
+                named(session_with(step8_call(suite, rf)), SCRIPT_OUTPUT), False)
+        lu_file.write_text(original, encoding="utf-8")
+        report_path.write_text(base, encoding="utf-8")
+        # the script's other run-folder files are put back byte for byte after check() re-runs it
+        events_file.write_text("planted: not the script's text\n", encoding="utf-8")
+        planted = events_file.read_bytes()
+        suite.check(case, before, before, session_with(step8_call(suite, rf)), ctx)
+        own("A", "check() puts a changed left-undone-events.txt back byte for byte",
+            events_file.is_file() and events_file.read_bytes() == planted, "the planted bytes were not restored")
     finally:
         lu_file.write_text(original, encoding="utf-8")
         report_path.write_text(base, encoding="utf-8")
+        if events_original is None:
+            events_file.unlink(missing_ok=True)
+        else:
+            events_file.write_bytes(events_original)
 
 
 def case_a_expected(cid: str) -> list[str]:
