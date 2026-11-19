@@ -1,0 +1,515 @@
+{
+  "schema": 1,
+  "diff_base": "047d868",
+  "rounds": [
+    {
+      "round": 1,
+      "at": "2026-11-19T01:55:31Z",
+      "diff_sha256": "18233d0b2a027913bfb70f87e1d364e01f759cb6fc994ccd966f3fd67b98ce52",
+      "findings_sha256": "24600bbc230ebb24f308d6e0c4f25d9e582f81cca1db2f7e8199876431f414ef",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "standards-13",
+        "standards-14",
+        "standards-15",
+        "spec-1",
+        "spec-2",
+        "spec-3",
+        "spec-4",
+        "spec-5",
+        "spec-6"
+      ],
+      "new": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "standards-13",
+        "standards-14",
+        "standards-15",
+        "spec-1",
+        "spec-2",
+        "spec-3",
+        "spec-4",
+        "spec-5",
+        "spec-6"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "a10b597cf82a840d2ddbe247661a826eb2365771349db212ef10c7f7dff51f91",
+        "scripts/_run_state.py": "a6ac5cf65c3e0a998aa9465b72c625e8cf6b816bde08cce7dc63d4e28acc3a2b",
+        "skills/wiki-cycle/SKILL.md": "c795d52232e9cc989ab88d0a1981d6be98db1486512bd5db25c3628a0166c5e6",
+        "tests/scripts/test_cycle_scope.py": "c200e1f1b21224fee2109f2c815ad960258d9c6eac7bbd554f43e62b180bed8e",
+        "tests/scripts/test_left_undone_fixture.py": "bc83c2c86c99f4954261c0368ac31d26f5ffb01dc67671776a31109978a70a78",
+        "tests/skills/PENDING.md": "a2b02904ce818d0dec723faccdbcec72ea471d3d071cbc4b49c0fcbc12c09ee5",
+        "tests/skills/wiki-cycle/cases.json": "5c9ff224f0fb1a9f90b866050f21b7eaeb062a4b5aed05342a165e92365eb4a6",
+        "tests/skills/wiki-cycle/check.py": "6e3be5fe92a1ec30125f6ec7d89f6045d342e13bf316b9c314dce1fed79d7083"
+      }
+    }
+  ],
+  "items": {
+    "standards-1": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/scripts/test_left_undone_fixture.py`, `session_write_plants` (PY9, R15): the route checks pass for the wrong reason. The file is tampered before the routes run (`lu_file.write_text(original.replace(first, re.sub(r\"(?<=: )\\d+\", ...` at about line 270). The loop then asserts `own(\"A\", f\"a check fails a session that wrote left-undone.txt by {name}\", bool(hit), ...)`, where `caught()` accepts any failing check whose name matches `left.undone|section|queue line`. The script-output check fails on every route, so a route the detector misses still passes. Fix: run each route on the untampered file and assert that \"the session did not write left-undone.txt itself\" fails for it.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "bc83c2c86c99f4954261c0368ac31d26f5ffb01dc67671776a31109978a70a78",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "bc83c2c86c99f4954261c0368ac31d26f5ffb01dc67671776a31109978a70a78"
+        }
+      ]
+    },
+    "standards-2": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] (writer's text) `tests/skills/wiki-cycle/check.py` `_lu_copy_checks` (about 3288) and `_check_left_undone_old_run` (about 3371-3382): existing kinds now grade differently. The diff removes the dash mapping in `_lu_norm_line`. `tests/skills/README.md` says an existing kind is never changed. Plan and requirements line 40 override this for the two named kinds; the finding is the repo-standard conflict, for a person to rule on. Fix: get Mark's ruling that the override covers the old-run kind too, or return the stricter rule as a new kind.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "6e3be5fe92a1ec30125f6ec7d89f6045d342e13bf316b9c314dce1fed79d7083",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "6e3be5fe92a1ec30125f6ec7d89f6045d342e13bf316b9c314dce1fed79d7083"
+        }
+      ]
+    },
+    "standards-3": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] (writer's text) `check.py:3198-3208`: the comment says a command \"that only reads it, or reads it and writes something else, is not a hit\". The pattern `\\b(?:Set-Content|Add-Content|Out-File|Clear-Content|New-Item)\\b[^\\n;&|]*left-undone\\.txt` matches `Add-Content -Path report.md -Value (Get-Content left-undone.txt)`, which is a read. Fix: anchor the file to the write's destination argument.",
+      "file": "check.py",
+      "line": 3198,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "f8008ac49cd6f9824a34a2a6835a76d96de4659f5ac91d5dfc059b61de973e2d",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "f8008ac49cd6f9824a34a2a6835a76d96de4659f5ac91d5dfc059b61de973e2d"
+        }
+      ]
+    },
+    "standards-4": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/skills/PENDING.md` 2026-11-18 row against `tests/skills/README.md`: \"A case that passes on the old copy goes back to `eval-case-writer` (mode `replay`) ... it is not counted as proof\". The row says none-answered \"does not discriminate (Opus passes on the old text)\". The requester accepted the outcome and carded #247 (not a finding in itself). The finding is that the row records the change as proven while one case is not. Fix: say in the row that none-answered is not proof, or replay it.",
+      "file": "tests/skills/PENDING.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a2b02904ce818d0dec723faccdbcec72ea471d3d071cbc4b49c0fcbc12c09ee5",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a2b02904ce818d0dec723faccdbcec72ea471d3d071cbc4b49c0fcbc12c09ee5"
+        }
+      ]
+    },
+    "standards-5": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] (writer's text) `check.py:3396`: `_LF_CALL = re.compile(r\"\\blint-fixes\\b\")` also matches `lint-fixes.txt`, so `recording` counts a `cat .../lint-fixes.txt`. Fix: `r\"\\blint-fixes(?![\\w.-])\"`.",
+      "file": "check.py",
+      "line": 3396,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "9bbb263734fb794cb62d19f0dbe4314943a918ff01683e3e470ae17366bd413d",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "9bbb263734fb794cb62d19f0dbe4314943a918ff01683e3e470ae17366bd413d"
+        }
+      ]
+    },
+    "standards-6": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] (writer's text) G20/R1 `check.py` `_lu_script_output` (about 3277-3285): re-running `wiki-cycle-scope.py left-undone` also writes `left-undone-events.txt` (`scripts/_run_state.py:958`), and only `left-undone.txt` is restored. Fix: snapshot and restore the run folder, or name the side effect.",
+      "file": "check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "230c3f96af1b0bb9fd10ca741c1318611f7adace99f3efa9bd63591ed638a41c",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "230c3f96af1b0bb9fd10ca741c1318611f7adace99f3efa9bd63591ed638a41c"
+        }
+      ]
+    },
+    "standards-7": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] (writer's text) S2: the shell-call test at `check.py:3229` repeats at `:3419`. Fix: one helper.",
+      "file": "check.py",
+      "line": 3229,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "5ec899b3fb70c4673363bc07e77356cb54eb87c854f7ee7f0bda82370f7674dd",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "5ec899b3fb70c4673363bc07e77356cb54eb87c854f7ee7f0bda82370f7674dd"
+        }
+      ]
+    },
+    "standards-8": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] (writer's text) S2: `drop = {\"quick steps all wrote their pair\", ...}` (about 3441) repeats the set in `_check_promote_setting` (about 539). Fix: a shared constant.",
+      "file": null,
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "50a5089b2b388e6dc4010f84503676432f9161309347d3fdbf4ff850ec56f63c",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "50a5089b2b388e6dc4010f84503676432f9161309347d3fdbf4ff850ec56f63c"
+        }
+      ]
+    },
+    "standards-9": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] (writer's text) S4/S2: `run_dir = ctx[\"notebook\"] / \"_inbox\" / \"reports\" / cid[:10] / cid` (about 3299) rebuilds the path `_check_left_undone_verbatim` already holds. Fix: pass `run_dir` into `_lu_copy_checks`.",
+      "file": null,
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "ddd63090ed9da672e504f9b91c37361371688ff9f7ed47cc244e291a41fcbea1",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "ddd63090ed9da672e504f9b91c37361371688ff9f7ed47cc244e291a41fcbea1"
+        }
+      ]
+    },
+    "standards-10": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] (writer's text) R4: `_lu_model_wrote_file` nests for, if, if, for, if in the shell branch. Fix: extract `_lu_shell_write(cmd)` and use guard clauses.",
+      "file": null,
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "aa43b3da2849e8d2e251317ad538fe60765095f29f277fd0f2d9f963c431c7cf",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "aa43b3da2849e8d2e251317ad538fe60765095f29f277fd0f2d9f963c431c7cf"
+        }
+      ]
+    },
+    "standards-11": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] (writer's text) R9: `except json.JSONDecodeError: step = {}` (about 3447) reports a corrupt `lint-semantic.json` as absent. Fix: report the parse error.",
+      "file": "lint-semantic.json",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "58808b14adf23ebda38248957765d9c933c441ffb0910cbfe95e4e89bb5f3150",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "58808b14adf23ebda38248957765d9c933c441ffb0910cbfe95e4e89bb5f3150"
+        }
+      ]
+    },
+    "standards-12": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/PENDING.md` row: a measurement longer than a line, where the README says such a row uses the four headings (Compared with, n, Cost, What this does not show). Fix: put the measurement in a linked note under those headings.",
+      "file": "tests/skills/PENDING.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a2b02904ce818d0dec723faccdbcec72ea471d3d071cbc4b49c0fcbc12c09ee5",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "a2b02904ce818d0dec723faccdbcec72ea471d3d071cbc4b49c0fcbc12c09ee5"
+        }
+      ]
+    },
+    "standards-13": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] (writer's text) G25/F3/N1/G16/C1/PY3 in `check.py`: `_lu_first_diff` windows `k - 25`, `k + 45`, `[:150]` and `_lf_bare_flags` `m.end() + 30` are bare numbers. `show_line: bool = True` is a flag argument. Parameters `a`, `b` carry labels only. `_LU_WRITE_RES` is an eight-part regex table with no per-pattern comment. The header `(task #246) ----------` carries a ticket. `_lu_script_output` returns `(text, why)` with `None` first on failure. Fix each: named constants, a label parameter, a comment per pattern, a result type.",
+      "file": "check.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d2822d50d26b4d05744a955b2d2892f680d4aa361bc0d52bd595d3ffad70b85f",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "d2822d50d26b4d05744a955b2d2892f680d4aa361bc0d52bd595d3ffad70b85f"
+        }
+      ]
+    },
+    "standards-14": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_cycle_scope.py`: `wiki_cycle_skill_says_to_leave_out_a_flag_with_no_ids` (R13) asserts prose substrings, and `left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff` (R12) holds three scenarios. Fix: split, or name the first as a text check.",
+      "file": "tests/scripts/test_cycle_scope.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "c200e1f1b21224fee2109f2c815ad960258d9c6eac7bbd554f43e62b180bed8e",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "c200e1f1b21224fee2109f2c815ad960258d9c6eac7bbd554f43e62b180bed8e"
+        }
+      ]
+    },
+    "standards-15": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `tests/scripts/test_left_undone_fixture.py`: `session_with(step8_call(suite, rf))` repeats four times (S2). Fix: one helper.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "bc83c2c86c99f4954261c0368ac31d26f5ffb01dc67671776a31109978a70a78",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "bc83c2c86c99f4954261c0368ac31d26f5ffb01dc67671776a31109978a70a78"
+        }
+      ]
+    },
+    "spec-1": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] (writer's text) `tests/skills/wiki-cycle/check.py:3203-3204`: the write detector misses routes the requirement names. Intent, requirements line 43: \"the write detector must catch every route by which the session itself produces `left-undone.txt`\". Implemented: the \"copy or move into it\" pattern lists `cp|mv|install|ln|rsync|Copy-Item|Move-Item|Rename-Item`. It has no `copy`, `move`, `ren` or `xcopy` aliases, and no `>|`. Affected: a session that writes identical text with PowerShell `copy` passes. The script-output check catches only text that differs. Mark accepted only the variable-path case (checkpoints.md Step 6, \"yes\"). Fix: add the aliases and `>|`, through a replay by eval-case-writer, not a session edit.",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 3203,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "999170ec59c044fd35d9e2ea3afad2fe37bcb860e8c7528da266ddff38bf39a4",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "999170ec59c044fd35d9e2ea3afad2fe37bcb860e8c7528da266ddff38bf39a4"
+        }
+      ]
+    },
+    "spec-2": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] (writer's text) `check.py:3426` and `:3433`: an empty quoted value counts as a value. Intent, requirement A1: the session \"leaves out a flag that has no ids\". `lint-fixes --applied \"\" --declined \"\"` passes the no-bare-flag check and the two-empty-lists check (`:3473`), though the flag was not left out. Fix: count an empty quoted value as not left out; replay through the writer.",
+      "file": "check.py",
+      "line": 3426,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "356e438588b74691c03ea92bf1a44757ad498d90dddd8152a72544aab7cc6bdb",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "356e438588b74691c03ea92bf1a44757ad498d90dddd8152a72544aab7cc6bdb"
+        }
+      ]
+    },
+    "spec-3": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_left_undone_fixture.py:270-273`: each route plant also rewrites the on-disk file, so the script-output check fails for every route whatever the regex does. Plan step 5 specified this design, so it is not a deviation. The fixture cannot show that `_LU_WRITE_RES` catches cp, mv, sed, python or PowerShell. Same root cause as the first Standards finding; reported on each axis separately. Fix: run each route on the unmodified file and require a route-named failure.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 270,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "cf065b10ad1ab5af58ba44e6a7c51a70ed12dd9688331f2f830c6516dae67e7e",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "cf065b10ad1ab5af58ba44e6a7c51a70ed12dd9688331f2f830c6516dae67e7e"
+        }
+      ]
+    },
+    "spec-4": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `CHANGELOG.md:16` (\"the session writing `left-undone.txt` by any route fails\") and `tests/skills/PENDING.md:28` (\"every write route caught\") overclaim against the first Spec finding and Mark's accepted limit. Fix: name the routes checked and the variable-path limit.",
+      "file": "CHANGELOG.md",
+      "line": 16,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "6210ce2db53ab6580c0055d98a430070d2279edc95775928d83e69a5a64addb5",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "6210ce2db53ab6580c0055d98a430070d2279edc95775928d83e69a5a64addb5"
+        }
+      ]
+    },
+    "spec-5": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `scripts/_run_state.py:116-117`: the plan pins \"...since the index was written; every entry only when there is no index\", and the code has a comma. Line 117 also runs past the docstring's wrap. Fix: use the pinned semicolon and rewrap.",
+      "file": "scripts/_run_state.py",
+      "line": 116,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "0d1361237579cf5a6ce1d748a7553662fddbb825027bc0f6e1bf1a90561ff0cd",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "0d1361237579cf5a6ce1d748a7553662fddbb825027bc0f6e1bf1a90561ff0cd"
+        }
+      ]
+    },
+    "spec-6": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] Plan drift, no defect: `test_cycle_scope.py:2064` adds `old-b` at D1 (plan step 2 names only old-a), and `:2116` lists old-a and old-c in the claims.json scope. `s3_indexed_nb` and `step8_call` are helpers the plan does not name; `tamper_checks` now uses `session_with(step8_call(...))`. Fix: update the plan text or accept.",
+      "file": "test_cycle_scope.py",
+      "line": 2064,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "55b2f9f312f6c3a83c0ac79657c11f30ef693491ed04d85919ca13509a95bef5",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "55b2f9f312f6c3a83c0ac79657c11f30ef693491ed04d85919ca13509a95bef5"
+        }
+      ]
+    }
+  }
+}
