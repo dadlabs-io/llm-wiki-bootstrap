@@ -1,5 +1,9 @@
 ## Step 9: no non-trivial decision (doc text, links and version numbers only; Trivial stakes: yes)
 
+## Step 10: no non-trivial decision (doc wording in framework-docs/wiki-frontmatter-best-practices.md, no Python line changed)
+
+The wording changes are pinned by eight tests in test_standalone.py (seam C). Readers checked first: the only reader of the rubric is `tier_rubric_text()` in wiki-update.py, which cuts the span between the headings `### tier rubric` and `### review cadence` and prints it; no script or skill parses the cell text. The old cell text "code read beyond the README" occurs in no other shipped file (agents/wiki-ingester/AGENT.md:83 says "beyond the README" about how deep to read a repo, a different sentence).
+
 ## Step 1: toolset refresh (remove scan, _guarded, rmdir of the emptied old folder)
 
 CLAIM: "seed_toolset writes the six docs at wiki/best-practices/framework/, deletes the old copies and the emptied old folder only, names any OSError from a copy or delete in `failed` and carries on, and a dry run has no `failed`."

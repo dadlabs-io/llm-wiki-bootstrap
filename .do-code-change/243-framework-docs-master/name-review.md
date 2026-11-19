@@ -68,3 +68,14 @@ The reviewer also flagged a line of the names output ("hand them to the name rev
 - test_the_where_we_stand_link_in_wiki_authoring_reaches_the_llm_wiki_notebook: same. Renamed test_the_where_we_stand_link_in_wiki_authoring_normalises_to_its_notebook_path.
 - test_each_doc_version_is_at_least_its_bumped_number: OVER-CLAIMS ("bumped" implies a before/after). Renamed test_each_doc_version_is_at_least_the_planned_number.
 - Not acted on: the reviewer's "could not settle" notes (no-frontmatter behaviour of the helper; a mismatched STEP9_DOCS key would raise, not fail cleanly).
+
+## Step 10 (one doubt-reviewer, fed the `check-freeze.py names` output)
+
+- test_the_rubric_span_holds_the_vendor_post_rule: OK
+- test_the_rubric_span_holds_the_repository_sentence: OVER-CLAIMS ("new" in the check message, not the name). Message reworded; re-frozen.
+- test_the_rubric_span_lacks_the_old_repository_cell_text: OVER-CLAIMS (no whitespace normalisation). Fixed: normalised like its siblings; re-frozen.
+- test_status_row_says_wiki_promote_strips_proposed: OVER-CLAIMS (strip object not tied). Fixed: assertion needs "`wiki-promote` strips the `proposed` line", doc row reworded to match; re-frozen.
+- test_origin_row_says_the_agent_stamps_it_per_the_claude_md_template: OVER-CLAIMS (two loose substrings). Fixed: one contiguous clause; re-frozen.
+- test_origin_row_says_no_script_writes_it: OK
+- test_origin_row_keeps_its_four_values: OVER-CLAIMS (presence, not exactness). Renamed test_origin_row_still_lists_its_four_values; old name retired.
+- test_cycle_id_row_says_nothing_in_the_install_writes_it: OK

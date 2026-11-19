@@ -258,7 +258,110 @@ test_each_practice_link_normalises_to_its_page_path_from_the_toolset_folder()
 test_the_where_we_stand_link_in_wiki_authoring_normalises_to_its_notebook_path()
 test_each_doc_version_is_at_least_the_planned_number()
 
-failed = [n for ok, n in results if not ok]
+
+# ── task #243, step 10: the frontmatter doc's tier rules and three field rows ──
+# Expected texts are typed out here, never read back from the doc they check.
+VENDOR_POST_RULE = ("An official vendor post with something checkable behind it (code, docs, a public benchmark) "
+                    "is tier 2; one that is pitch alone is tier 4.")
+REPOSITORY_SENTENCE = ("read at least the README and sanity-check the main code (not all of a big repo); "
+                       "if unsure, check size or that the main functions work; else ask the user")
+OLD_REPOSITORY_CELL_TEXT = "code read beyond the README"
+
+
+def rubric_span() -> str:
+    """What `wiki-update.py`'s `tier_rubric_text()` returns, from the package's framework-docs/ (the machine config
+    points at an empty temp toolset, so the machine's own toolset is never read)."""
+    import importlib.util
+    with tempfile.TemporaryDirectory() as t:
+        vault = Path(t) / "vault"
+        (vault / "notebooks").mkdir(parents=True)
+        registry = vault / "linked-notebooks.json"
+        registry.write_text(json.dumps({"notebooks": {"other": {"root": "notebooks/other"}}}), encoding="utf-8")
+        cfg = Path(t) / "wiki-config.json"
+        cfg.write_text(json.dumps({"registry": registry.as_posix()}), encoding="utf-8")
+        before = os.environ.get("WIKI_GLOBAL_CONFIG")
+        os.environ["WIKI_GLOBAL_CONFIG"] = str(cfg)
+        try:
+            spec = importlib.util.spec_from_file_location("wiki_update_for_rubric", SCRIPTS / "wiki-update.py")
+            assert spec is not None and spec.loader is not None
+            mod = importlib.util.module_from_spec(spec)
+            sys.path.insert(0, str(SCRIPTS))
+            spec.loader.exec_module(mod)
+            text, _where = mod.tier_rubric_text()
+        finally:
+            if before is None:
+                os.environ.pop("WIKI_GLOBAL_CONFIG", None)
+            else:
+                os.environ["WIKI_GLOBAL_CONFIG"] = before
+    return text or ""
+
+
+def field_row(field: str) -> str:
+    rows = [l for l in ftext.splitlines() if l.startswith(f"| `{field}` |")]
+    return rows[0] if len(rows) == 1 else ""
+
+
+def test_the_rubric_span_holds_the_vendor_post_rule():
+    span = " ".join(rubric_span().split())
+    check("test_the_rubric_span_holds_the_vendor_post_rule: the span `tier_rubric_text()` returns says an official "
+          "vendor post with something checkable is tier 2 and one that is pitch alone is tier 4",
+          VENDOR_POST_RULE in span, span[:200])
+
+
+def test_the_rubric_span_holds_the_repository_sentence():
+    span = " ".join(rubric_span().split())
+    check("test_the_rubric_span_holds_the_repository_sentence: the span `tier_rubric_text()` returns carries the "
+          "repository reading sentence", REPOSITORY_SENTENCE in span, span[:200])
+
+
+def test_the_rubric_span_lacks_the_old_repository_cell_text():
+    span = " ".join(rubric_span().split())
+    check("test_the_rubric_span_lacks_the_old_repository_cell_text: the span is non-empty and no longer says "
+          "'code read beyond the README'", bool(span) and OLD_REPOSITORY_CELL_TEXT not in span, span[:200])
+
+
+def test_status_row_says_wiki_promote_strips_proposed():
+    row = field_row("status")
+    check("test_status_row_says_wiki_promote_strips_proposed: a `status` row names `proposed` and says "
+          "`wiki-promote` strips it", "`proposed`" in row and "`wiki-promote` strips the `proposed` line" in row, row[:200])
+
+
+def test_origin_row_says_the_agent_stamps_it_per_the_claude_md_template():
+    row = field_row("origin")
+    check("test_origin_row_says_the_agent_stamps_it_per_the_claude_md_template: the `origin` row says the agent "
+          "stamps it, following the CLAUDE.md template",
+          "The agent stamps it, following the CLAUDE.md template" in row, row[:300])
+
+
+def test_origin_row_says_no_script_writes_it():
+    row = field_row("origin")
+    check("test_origin_row_says_no_script_writes_it: the `origin` row says no script writes it",
+          "no script writes it" in row, row[:300])
+
+
+def test_origin_row_still_lists_its_four_values():
+    row = field_row("origin")
+    check("test_origin_row_still_lists_its_four_values: the `origin` row still lists inline, wrap-up, wiki-update, wiki-cycle",
+          all(f"`{v}`" in row for v in ("inline", "wrap-up", "wiki-update", "wiki-cycle")), row[:300])
+
+
+def test_cycle_id_row_says_nothing_in_the_install_writes_it():
+    row = field_row("cycle_id")
+    check("test_cycle_id_row_says_nothing_in_the_install_writes_it: a `cycle_id` row says no script, skill, "
+          "template or agent writes it into an entry",
+          "no script, skill, template or agent in this install writes it into an entry" in row, row[:300])
+
+
+test_the_rubric_span_holds_the_vendor_post_rule()
+test_the_rubric_span_holds_the_repository_sentence()
+test_the_rubric_span_lacks_the_old_repository_cell_text()
+test_status_row_says_wiki_promote_strips_proposed()
+test_origin_row_says_the_agent_stamps_it_per_the_claude_md_template()
+test_origin_row_says_no_script_writes_it()
+test_origin_row_still_lists_its_four_values()
+test_cycle_id_row_says_nothing_in_the_install_writes_it()
+
+failed =[n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)
 print(f"\n{len(results) - len(failed)}/{len(results)} passed")

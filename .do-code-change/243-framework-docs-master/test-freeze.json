@@ -946,5 +946,168 @@
       }
     ],
     "unfrozen_reason": "name review round 1: the test never checked the local line it claims to follow; added body[0] == the local line"
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_the_rubric_span_holds_the_vendor_post_rule",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f99e89024f92029332cc0a97829e21cd8ac4475d25c1a6148da0d45488bd7819",
+    "frozen_at_step": 10,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_standalone.py",
+      "exit": 1,
+      "tail": "FAIL test_the_rubric_span_holds_the_repository_sentence: the span `tier_rubric_text()` returns carries the new repository reading sentence  [### tier rubric From [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practices.md): | Tier | Value | Source type | |---|---|---| | 1 | `1` | Peer-reviewed / primary \u2014 papers, arXi]\nFAIL test_the_rubric_span_lacks_the_old_repository_cell_text: the span is non-empty and no longer says 'code read beyond the README'  [### tier rubric\nFrom [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practices.md):\n| Tier | Value | Source type |\n|---|---|---|\n| 1 | `1` | Peer-reviewed / primary \u2014 papers, ar]\nFAIL test_status_row_says_wiki_promote_strips_proposed: a `status` row names `proposed` and says `wiki-promote` strips it\nFAIL test_origin_row_says_the_agent_stamps_it_per_the_claude_md_template: the `origin` row says the agent stamps it, following the CLAUDE.md template  [| `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |]\nFAIL test_origin_row_says_no_script_writes_it: the `origin` row says no script writes it  [| `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |]\nPASS test_origin_row_keeps_its_four_values: the `origin` row still lists inline, wrap-up, wiki-update, wiki-cycle\nFAIL test_cycle_id_row_says_nothing_in_the_install_writes_it: a `cycle_id` row says no script, skill, template or agent writes it into an entry\n28/35 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_origin_row_says_no_script_writes_it",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "8de844b217242777868c4d9b45deb2af74127a550b1939d77b5a8b8b8e72b039",
+    "frozen_at_step": 10,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_standalone.py",
+      "exit": 1,
+      "tail": "FAIL test_the_rubric_span_holds_the_repository_sentence: the span `tier_rubric_text()` returns carries the new repository reading sentence  [### tier rubric From [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practices.md): | Tier | Value | Source type | |---|---|---| | 1 | `1` | Peer-reviewed / primary \u2014 papers, arXi]\nFAIL test_the_rubric_span_lacks_the_old_repository_cell_text: the span is non-empty and no longer says 'code read beyond the README'  [### tier rubric\nFrom [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practices.md):\n| Tier | Value | Source type |\n|---|---|---|\n| 1 | `1` | Peer-reviewed / primary \u2014 papers, ar]\nFAIL test_status_row_says_wiki_promote_strips_proposed: a `status` row names `proposed` and says `wiki-promote` strips it\nFAIL test_origin_row_says_the_agent_stamps_it_per_the_claude_md_template: the `origin` row says the agent stamps it, following the CLAUDE.md template  [| `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |]\nFAIL test_origin_row_says_no_script_writes_it: the `origin` row says no script writes it  [| `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |]\nPASS test_origin_row_keeps_its_four_values: the `origin` row still lists inline, wrap-up, wiki-update, wiki-cycle\nFAIL test_cycle_id_row_says_nothing_in_the_install_writes_it: a `cycle_id` row says no script, skill, template or agent writes it into an entry\n28/35 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_cycle_id_row_says_nothing_in_the_install_writes_it",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "40abc85610961d1d0a772d8af0e9d25f9fb28200220cfb06be35e9b2ca9d144f",
+    "frozen_at_step": 10,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_standalone.py",
+      "exit": 1,
+      "tail": "FAIL test_the_rubric_span_holds_the_repository_sentence: the span `tier_rubric_text()` returns carries the new repository reading sentence  [### tier rubric From [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practices.md): | Tier | Value | Source type | |---|---|---| | 1 | `1` | Peer-reviewed / primary \u2014 papers, arXi]\nFAIL test_the_rubric_span_lacks_the_old_repository_cell_text: the span is non-empty and no longer says 'code read beyond the README'  [### tier rubric\nFrom [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practices.md):\n| Tier | Value | Source type |\n|---|---|---|\n| 1 | `1` | Peer-reviewed / primary \u2014 papers, ar]\nFAIL test_status_row_says_wiki_promote_strips_proposed: a `status` row names `proposed` and says `wiki-promote` strips it\nFAIL test_origin_row_says_the_agent_stamps_it_per_the_claude_md_template: the `origin` row says the agent stamps it, following the CLAUDE.md template  [| `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |]\nFAIL test_origin_row_says_no_script_writes_it: the `origin` row says no script writes it  [| `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |]\nPASS test_origin_row_keeps_its_four_values: the `origin` row still lists inline, wrap-up, wiki-update, wiki-cycle\nFAIL test_cycle_id_row_says_nothing_in_the_install_writes_it: a `cycle_id` row says no script, skill, template or agent writes it into an entry\n28/35 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_origin_row_keeps_its_four_values",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "06b9a0477700871d50f0ba48c6ff6e20358e67816b5476428dfea56d8e47c213",
+    "frozen_at_step": 10,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "coverage test: the origin row already lists the four values and the step rewrites that row, so it guards them; bite shown by deleting one value from the row (the test then fails)",
+      "date": "2026-11-19"
+    },
+    "retired": {
+      "reason": "renamed to test_origin_row_still_lists_its_four_values after name review round 1",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_the_rubric_span_lacks_the_old_repository_cell_text",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "a8c0409a464ea53076274a2cc407a82d949c990be720a952b915510453eccd70",
+    "frozen_at_step": 10,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "the old text is already gone; normalising only widens what counts as present",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: whitespace-normalised like its siblings",
+        "date": "2026-11-19",
+        "step": 10,
+        "hash": "a8c0409a464ea53076274a2cc407a82d949c990be720a952b915510453eccd70"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: whitespace-normalised like its siblings"
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_origin_row_says_the_agent_stamps_it_per_the_claude_md_template",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "a9009e8fd8af1ff446abcad88d8697d60f57dd418ea9f64db650bb7e6984e5fb",
+    "frozen_at_step": 10,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "doc row already carries the clause; strengthened assertion met by the existing text",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the stamp and the template asserted as one contiguous clause",
+        "date": "2026-11-19",
+        "step": 10,
+        "hash": "a9009e8fd8af1ff446abcad88d8697d60f57dd418ea9f64db650bb7e6984e5fb"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the stamp and the template asserted as one contiguous clause"
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_the_rubric_span_holds_the_repository_sentence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d2b5db4f8b0db788bfb987e78c170eafd1f21074ffe4156518bbc0d9568fa42d",
+    "frozen_at_step": 10,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "message text only; assertion unchanged",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: only the check message lost the word new",
+        "date": "2026-11-19",
+        "step": 10,
+        "hash": "d2b5db4f8b0db788bfb987e78c170eafd1f21074ffe4156518bbc0d9568fa42d"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: only the check message lost the word new"
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_origin_row_still_lists_its_four_values",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "07245fb10e2becac0d411393e5d58fc5105d4bc426339324dc2e6e3192942eda",
+    "frozen_at_step": 10,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "rename of test_origin_row_keeps_its_four_values after name review round 1 (presence, not exactness); bite shown by deleting wiki-cycle from the row: the test failed, then reverted",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_status_row_says_wiki_promote_strips_proposed",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "222e863f559d7b255d5aa814b9cb164f0344182beb9567c830209929f685c858",
+    "frozen_at_step": 10,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "assertion strengthened after the doc row passed the weaker form; the strengthened form was met by editing the doc row in the same round",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertion tied to the strip object, the proposed line",
+        "date": "2026-11-19",
+        "step": 10,
+        "hash": "222e863f559d7b255d5aa814b9cb164f0344182beb9567c830209929f685c858"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: assertion tied to the strip object, the proposed line"
   }
 ]

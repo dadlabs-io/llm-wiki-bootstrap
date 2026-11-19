@@ -35,7 +35,7 @@ Single source of truth for what every entry's YAML frontmatter must contain. Enf
 | `tier` | int or literal `self` | `1`, `2`, `3`, `4` for external sources (see [tier rubric](#tier-rubric)); literal `self` for self-authored synthesis. |
 | `confidence` | enum | `high`, `medium`, `low`. Author's confidence in the entry's claims. |
 | `last_reviewed` | ISO date | `YYYY-MM-DD` of the last human or agent re-read. Update when content is verified. |
-| `review_after` | ISO date | `YYYY-MM-DD` when the entry should be re-checked. See [review cadence](#review-cadence). |
+| `review_after` | ISO date | `YYYY-MM-DD` when the entry should be re-checked. See [review cadence](#review-cadence-default-review_after-offset). |
 | `tags` | list | At least 3 tags. Inline `[a, b, c]` or block list form both accepted. |
 
 ## Conditional field — `raw_path`
@@ -59,7 +59,9 @@ Path is relative to the topic root (the folder containing `_INDEX.md`), **not** 
 | Field | Purpose | When to include |
 |---|---|---|
 | `aliases` | list | Alternate titles for search — include when the entry covers something known by multiple names. |
-| `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |
+| `origin` | enum | One of: `inline`, `wrap-up`, `wiki-update`, `wiki-cycle`. Which skill/path filed this entry. The agent stamps it, following the CLAUDE.md template (`origin: inline` for an entry it files during a session) and the `/wrap-up` entry template (`origin: wrap-up`); no script writes it. Useful at `/wiki-promote --review` time to spot whether the agent filed it during the session (inline) or batched at session end (wrap-up). Default if omitted: `wiki-update`. |
+| `status` | `proposed` \| `superseded` | `proposed` marks an entry staged in `_inbox/proposed/`: `wiki-update.py --staged` writes it, and `wiki-promote` strips the `proposed` line when it moves the entry into the wiki, so a promoted entry never carries it. `superseded` is set by hand alongside `superseded_by` (see that row). |
+| `cycle_id` | string | The lint names it, with `origin`, as the place for cycle provenance (never `ingested_by`), but no script, skill, template or agent in this install writes it into an entry: `cycle_id` is the run's id in step files, run folders and `--cycle-id` arguments. Set by hand if wanted; nothing checks it. |
 | `superseded_by` | relative path | When an entry is retired in favor of another, point to the successor, with `status: superseded` alongside. Keep both entries per both-sides-stay (principle 4). A retired entry stays on disk but leaves the INDEX, the MAP and search results, and the lint exempts it from the body checks and the orphan list (`is_superseded()` in `_entry_checks.py`, 2026-09-14). The value is a path (or a bare slug), never a note: any value retires the entry, so "(none yet)" hides a live entry. The successor names the retired entry back, a link or its slug, so each leads to the other (lint, 2026-10-14). |
 | `describes` | relative path, optionally `<path>@<commit>` | The code this entry describes — a file or folder in the project's repo, optionally pinned to the commit it was read at (`bootstrap/scripts/wiki-promote.py@1f90bf4`). Only for a `project/` entry about code: a component, a script's behaviour, an architecture rule enforced in code. It gives staleness a **content trigger**: when that file moves on, the entry is flagged for re-reading without waiting for `review_after`. Calendar review still applies — the two signals catch different failures, see [review cadence](#review-cadence-default-review_after-offset). The path is relative to the project's repo: the notebook's `project_root` in the registry (`linked-notebooks.json`), or the folder above `llm-wiki/` for a wiki inside its project. Omit it on every entry that does not describe code; a missing `describes` is never a lint error. (added 2026-09-16; checked by the lint since 2026-09-17) |
 | `kind` | `living` \| `history` \| `source` \| `working` | The page's kind (authoring principle 13). Each folder has a default: `project/architecture/` is `living`; `project/decisions/`, `code-changes/`, `troubleshooting/` and `sessions/` journals are `history`; `research/` is `source`; handoff, active context and task cards are `working`. Write it on every living page (`kind: living`, so lint, wrap-up and search can tell living pages apart wherever they sit) and on any page outside its folder's default. The lint's "Design Pages Behind Their Notes" check reads it: a `kind: living` page anywhere is checked; a page in `project/architecture/` or `project/components/` marked `kind: history` is not. (added 2026-10-19; replaces the one-day `keep_current: true` flag) |
@@ -111,7 +113,7 @@ From [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practi
 | Tier | Value | Source type |
 |---|---|---|
 | 1 | `1` | Peer-reviewed / primary — papers, arXiv preprints included (see below), official spec docs, source code |
-| 2 | `2` | Established documentation — vendor/framework docs, official blog posts |
+| 2 | `2` | Established documentation — vendor/framework docs, official blog posts that pass the vendor-post rule below |
 | 3 | `3` | Reputable expert / first-hand — founder posts, expert blogs, conf talks, journalism (KDnuggets, VentureBeat, Karpathy gists, Simon Willison, Hamel Husain, Lance Martin); a named practitioner's first-hand post on any platform; a single-maintainer repository that works and is documented (see below) |
 | 4 | `4` | Community / unverified — Reddit and forum threads, anonymous gists, unsourced or SEO posts, vendor marketing, retellings of someone else's work, early or unverifiable repositories — **never auto-ingest**, human review only |
 | self | `self` | Self-authored synthesis, plans, specs, session notes |
@@ -126,8 +128,10 @@ Where a source is hosted says little about it: Medium carries both an engineer's
 
 | Source | Tier 2 | Tier 3 | Tier 4 |
 |---|---|---|---|
-| **A post** — Medium, Substack, X long-form, a personal or company dev blog | — (an official vendor or framework post is tier 2 by the row above) | A named practitioner writing first-hand: their own system, their own measured results, or an author with a track record in this wiki | Anonymous or unsourced; SEO or listicle; vendor marketing for its own product; a retelling of someone else's work (tier it by the original — ingest the original where you can) |
-| **An individual's GitHub repository** | Adopted: several maintainers or an organisation, tagged releases, evidence of outside use | One maintainer, a working and documented project, its code read beyond the README | Early, unreleased, or unverifiable (a README with nothing behind it) |
+| **A post** — Medium, Substack, X long-form, a personal or company dev blog | — (an official vendor post is tier 2 or tier 4 by the rule under this table) | A named practitioner writing first-hand: their own system, their own measured results, or an author with a track record in this wiki | Anonymous or unsourced; SEO or listicle; vendor marketing for its own product; a retelling of someone else's work (tier it by the original — ingest the original where you can) |
+| **An individual's GitHub repository** | Adopted: several maintainers or an organisation, tagged releases, evidence of outside use | One maintainer, a working and documented project; to judge it, read at least the README and sanity-check the main code (not all of a big repo); if unsure, check size or that the main functions work; else ask the user | Early, unreleased, or unverifiable (a README with nothing behind it) |
+
+An official vendor post with something checkable behind it (code, docs, a public benchmark) is tier 2; one that is pitch alone is tier 4.
 
 How deeply **we** read a source raises our `confidence`, never its tier: tier describes the source, confidence our entry. A retelling keeps its author's figures `sourced` via the author (authoring best practices, principle 5).
 

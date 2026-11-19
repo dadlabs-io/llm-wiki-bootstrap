@@ -196,3 +196,10 @@ Other relative links in the six docs, at the new depth:
 - the wiki-authoring where-we-stand link: five `../` -> four, resolves (above).
 
 Plan inconsistencies: (1) the plan's Implementation Decisions line for the Local changes sentence omits the `Local changes: ` label that requirements Decision 3 has; the label is used. (2) The plan names no test names for step 9; three were renamed after name review (listed in name-review.md).
+
+## Step 10 — 2026-11-19, green
+- Frontmatter doc: the vendor-post rule sits under the posts table, inside the span `tier_rubric_text()` returns. The repository Tier 3 cell carries the reading rule, ending "ask the user" (generic for a shipped doc). New `status` and `cycle_id` rows; the `origin` row says who stamps it. The broken `#review-cadence` anchor is fixed. Added beyond the plan, so the doc does not contradict itself: the top table's Tier 2 row and the posts table's Tier 2 cell point at the vendor-post rule. No version bump (step 9 did it).
+- 8 new tests in test_standalone. Orchestrator re-run: 35/35. The developer reports test_global_toolset 80/80, test_html_markdown 13/13, test_dedup_content 15/15, and check-freeze PASS (65 entries).
+- Reader grep: only `tier_rubric_text()` reads the rubric (it cuts the span by the two headings, still in place). Nothing parses the cell text.
+- cycle_id re-grep: nothing writes it into an entry; it appears only as the run id. The lint names it as the place for cycle provenance.
+- Plan correction: the rubric headings are lower case (`### tier rubric`), and the span is now about lines 107-143.
