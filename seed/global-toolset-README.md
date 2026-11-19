@@ -19,7 +19,7 @@ global-toolset/
                                         user-guide.md, install.md, drive-setup.md, skill-suggestions.md,
                                         skills/<name>.md, agents/<name>.md
     <other pack>/                    ← each other installed pack (agent-builder's packs), written by its own installer
-  wiki/project/best-practices/framework/   ← the six framework-contract docs (frontmatter spec, authoring
+  wiki/best-practices/framework/   ← the six framework-contract docs (frontmatter spec, authoring
                                               principles, cycle step contract, …)
 ```
 

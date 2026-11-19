@@ -40,6 +40,10 @@ The reviewer also flagged a line of the names output ("hand them to the name rev
 - test_note_without_tags_in_best_practices_local_draws_the_finding_it_draws_elsewhere: OK (heading-level comparison)
 - test_note_without_frontmatter_in_best_practices_local_draws_the_finding_it_draws_elsewhere: OK
 
+## Step 5 (one doubt-reviewer, fed the `check-freeze.py names` output)
+
+- test_no_shipped_file_names_the_old_toolset_framework_path: OVER-CLAIMS (four findings). Fixed by assertions, re-frozen with an unfrozen reason: pathlib-chained parts and backslash spellings now match; a line holding the allowlisted constant is skipped only if it does not also spell the path; the check fails when a swept folder is missing or empty. Accepted, not changed: "no shipped file" means the listed folders and three root files (the plan's seam C list); root files outside it (README.md, install scripts) are not scanned; parts split across lines are not matched.
+
 ## Step 2 (one doubt-reviewer, fed the `check-freeze.py names` output)
 
 - test_empty_toolset_gets_local_readme_with_shipped_bytes: OK

@@ -136,6 +136,34 @@ for home in (ROOT / "seed" / "wiki" / "HOME.md.tmpl",):
     check(f"{home.relative_to(ROOT).as_posix()} declares itself standalone with a reason",
           reason.strip().lower() not in {"", "true", "yes"}, reason)
 
+# ── task #243, step 5: the old toolset framework path is named nowhere ──────
+OLD_FRAMEWORK_PATH = "project/best-practices/framework"
+OLD_PATH_PARTS = re.compile(r"""["']project["']\)?\s*[/,]\s*["']best-practices["']\)?\s*[/,]\s*["']framework["']""")
+OLD_PATH_BACKSLASH = re.compile(r"project\\{1,2}best-practices\\{1,2}framework")
+SWEPT_DIRS = ("skills", "agents", "templates", "seed", "wiki-seed", "framework-docs", "scripts")
+SWEPT_FILES = ("CLAUDE.md", "INSTALL-INVENTORY.md", "V2_ROADMAP.md")
+OLD_COPY_CONSTANT = "TOOLSET_OLD_FRAMEWORK_DOCS"  # the one line that names the old folder: the remove scan reads it
+
+
+def test_no_shipped_file_names_the_old_toolset_framework_path():
+    files = [ROOT / f for f in SWEPT_FILES]
+    for d in SWEPT_DIRS:
+        files += [p for p in (ROOT / d).rglob("*") if p.is_file() and "__pycache__" not in p.parts]
+    hits = []
+    for p in files:
+        for n, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if OLD_COPY_CONSTANT in line and OLD_FRAMEWORK_PATH not in line and not OLD_PATH_BACKSLASH.search(line):
+                continue
+            if OLD_FRAMEWORK_PATH in line or OLD_PATH_PARTS.search(line) or OLD_PATH_BACKSLASH.search(line):
+                hits.append(f"{p.relative_to(ROOT).as_posix()}:{n}")
+    check("test_no_shipped_file_names_the_old_toolset_framework_path: no shipped file names "
+          "project/best-practices/framework, spelled out or built from its parts",
+          not hits and all(f.is_file() for f in files[:len(SWEPT_FILES)])
+          and all((ROOT / d).is_dir() and any(p.is_file() for p in (ROOT / d).rglob("*")) for d in SWEPT_DIRS),f"{len(hits)} hits: {hits}")
+
+
+test_no_shipped_file_names_the_old_toolset_framework_path()
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

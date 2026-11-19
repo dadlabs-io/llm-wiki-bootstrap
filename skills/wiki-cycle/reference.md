@@ -74,7 +74,7 @@ Created at Step 0 as `<run-folder>/scratchpad.md` and updated after every phase;
 
 ## Cycle id and run folder
 
-`cycle_id` is `<YYYY-MM-DD>-<NN>`: the local date (`today_label()`), and `NN` the next unused number in `_inbox/reports/<date>/` (`01` first). Everything a run writes lives in `_inbox/reports/<date>/<cycle_id>/`: the scratchpad, each step's `<step>.json` + `<step>.md` (the [cycle step return format]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md); the JSON is authoritative), the scope files, `fallbacks.txt` (the steps that left their expected tool path, one line each; the rule is in `SKILL.md`), the checker reports under `checker/`, and `<cycle_id>-run-cycle-report.md` + `.json`.
+`cycle_id` is `<YYYY-MM-DD>-<NN>`: the local date (`today_label()`), and `NN` the next unused number in `_inbox/reports/<date>/` (`01` first). Everything a run writes lives in `_inbox/reports/<date>/<cycle_id>/`: the scratchpad, each step's `<step>.json` + `<step>.md` (the [cycle step return format]({{TOOLSET_DIR}}/wiki/best-practices/framework/cycle-step-return-format.md); the JSON is authoritative), the scope files, `fallbacks.txt` (the steps that left their expected tool path, one line each; the rule is in `SKILL.md`), the checker reports under `checker/`, and `<cycle_id>-run-cycle-report.md` + `.json`.
 
 ## Step 1.0 — Drive-fetch, in detail
 

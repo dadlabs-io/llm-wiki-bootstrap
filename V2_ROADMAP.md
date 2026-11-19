@@ -53,7 +53,7 @@ When the repo goes wide:
 
 ### 5. User-override layering for seed content
 
-V1 ships the usage docs (`how-to/llm-wiki/`) and the framework-contract docs (`wiki/project/best-practices/framework/`) once, into the global toolset notebook (since 2026-10-04; before that a copy in every project). On every refresh they get re-copied from the bootstrap source — so any edits in place are lost. (The seeded `llm-wiki/best-practices/` folder was retired 2026-09-13; project conventions live in `wiki/project/best-practices/`, which is user content.)
+V1 ships the usage docs (`how-to/llm-wiki/`) and the framework-contract docs (`wiki/best-practices/framework/`) once, into the global toolset notebook (since 2026-10-04; before that a copy in every project). On every refresh they get re-copied from the bootstrap source — so any edits in place are lost. (The seeded `llm-wiki/best-practices/` folder was retired 2026-09-13; project conventions live in `wiki/project/best-practices/`, which is user content.)
 
 The v1 workaround: keep project-specific pages in the project's own wiki. The `_FRAMEWORK_MANAGED.md` marker in the toolset's `how-to/` makes this explicit.
 

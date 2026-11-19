@@ -144,7 +144,7 @@ from _wiki_config import (  # noqa: E402
 # ---------- The global toolset (task #25, 2026-10-04) ----------
 # One notebook holds every global tooling doc once: the llm-wiki pack's usage pages at how-to/llm-wiki/
 # (agent-builder's installer writes its own packs beside it), the how-to root marker, and the six
-# framework-contract docs at wiki/project/best-practices/framework/. No project wiki carries a copy.
+# framework-contract docs at wiki/best-practices/framework/. No project wiki carries a copy.
 # A global install creates, registers and refreshes it; `new-wiki.py --phase docs` refreshes only it.
 TOOLSET_PACK = Path("how-to") / "llm-wiki"
 

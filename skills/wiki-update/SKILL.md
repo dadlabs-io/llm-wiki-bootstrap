@@ -11,7 +11,7 @@ reviewed_for_model: claude-opus-5
 Files one external source as a wiki entry: the verbatim original under `raw/`, and a summary in `wiki/<folder>/` of what you actually read, linked to what the wiki already holds. The summary says only what the source says; anything of ours is labelled as ours.
 
 This skill does not restate the rules it follows:
-- Frontmatter fields, tier and confidence: the frontmatter spec, `{{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`.
+- Frontmatter fields, tier and confidence: the frontmatter spec, `{{TOOLSET_DIR}}/wiki/best-practices/framework/wiki-frontmatter-best-practices.md`.
 - Authoring doctrine (claim classes, blockquotes, secondary figures, auto-captions): `wiki-authoring-best-practices.md` in the same folder.
 - Structure: `wiki-update.py` refuses to file an entry that fails the gate (step 5).
 
@@ -108,6 +108,6 @@ Tell the user where the entry was filed or staged (and why: the `promote_mode=` 
 
 ## Cycle contract
 
-When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md).
+When invoked inside `/wiki-cycle`, this skill writes `<run-folder>/<step>.json` and `<step>.md` per the [Cycle Step Return Format contract]({{TOOLSET_DIR}}/wiki/best-practices/framework/cycle-step-return-format.md).
 
 The incidents behind these rules are recorded in llm-wiki-bootstrap's `CHANGELOG.md` (2026-09-14, "`/wiki-update` trimmed").

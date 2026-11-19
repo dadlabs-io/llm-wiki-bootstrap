@@ -162,7 +162,7 @@ The usage docs (this page and the others in `how-to/`) and the framework-contrac
 - **A source waits in `pending/`, is triaged into an `intake/` bucket, and moves to `done/` once ingested.** `done/` is what stops a source being ingested twice.
 - **A page nothing links to** is an orphan, unless its frontmatter declares `standalone: "<reason>"` (the landing page does).
 - **`sessions/` is working memory, not curated content.** `/wrap-up` writes it; the lint and the indexes skip it, and search still finds it. Task cards (`tasks/`) are skipped too, search included; the lint checks them against their own rules instead.
-- **The global toolset is framework-managed:** its `how-to/` pages and `wiki/project/best-practices/framework/` docs are refreshed from the framework, and a local edit is overwritten. Ask for the change in the framework instead.
+- **The global toolset is framework-managed:** its `how-to/` pages and `wiki/best-practices/framework/` docs are refreshed from the framework, and a local edit is overwritten. Ask for the change in the framework instead.
 
 ## The ideas it is built on
 
@@ -172,7 +172,7 @@ llm-wiki follows Chappy Asel's [self-improving AI stack](https://x.com/chappyase
 |---|---|---|
 | **L1 — Knowledge base** | Structured Markdown plus an index. | The entries, their frontmatter, `_INDEX.md`, the search. |
 | **L2 — Agent memory** | Load a small map always, the detail on demand. | `_MAP.md` always loaded; per-folder `_INDEX.md` when needed; full entries through search. |
-| **L3 — Context engineering** | Load just in time; search before reading. | The [tiered context loading](../../wiki/project/best-practices/framework/tiered-context-loading.md) contract. |
+| **L3 — Context engineering** | Load just in time; search before reading. | The [tiered context loading](../../wiki/best-practices/framework/tiered-context-loading.md) contract. |
 | **L4 — Agent systems** | Skills, routed. | The skills, with `/wiki-cycle` orchestrating the research half. |
 | **L5 — Self-improvement** | A read-write loop that compounds. | The cycle, and `/wrap-up` feeding each session's lessons back in. |
 
@@ -192,14 +192,14 @@ Or ask the agent in plain English; it reads these pages when a question needs th
 
 ## The framework contracts
 
-In the global toolset's `wiki/project/best-practices/framework/`, refreshed with the framework:
+In the global toolset's `wiki/best-practices/framework/`, refreshed with the framework:
 
-- [Wiki frontmatter](../../wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md): the metadata every entry carries.
-- [Wiki authoring](../../wiki/project/best-practices/framework/wiki-authoring-best-practices.md): how an entry's body is laid out.
-- [Tiered context loading](../../wiki/project/best-practices/framework/tiered-context-loading.md): how an agent consults the wiki.
-- [Cycle step return format](../../wiki/project/best-practices/framework/cycle-step-return-format.md): what each cycle step writes.
-- [Memory signals: sidecar vs frontmatter](../../wiki/project/best-practices/framework/memory-signals-sidecar-vs-frontmatter-pattern.md): where truth-status lives.
-- [Search bucket rerank](../../wiki/project/best-practices/framework/wiki-search-bucket-rerank-spec.md): how search orders results by truth-status.
+- [Wiki frontmatter](../../wiki/best-practices/framework/wiki-frontmatter-best-practices.md): the metadata every entry carries.
+- [Wiki authoring](../../wiki/best-practices/framework/wiki-authoring-best-practices.md): how an entry's body is laid out.
+- [Tiered context loading](../../wiki/best-practices/framework/tiered-context-loading.md): how an agent consults the wiki.
+- [Cycle step return format](../../wiki/best-practices/framework/cycle-step-return-format.md): what each cycle step writes.
+- [Memory signals: sidecar vs frontmatter](../../wiki/best-practices/framework/memory-signals-sidecar-vs-frontmatter-pattern.md): where truth-status lives.
+- [Search bucket rerank](../../wiki/best-practices/framework/wiki-search-bucket-rerank-spec.md): how search orders results by truth-status.
 
 ## Further reading
 

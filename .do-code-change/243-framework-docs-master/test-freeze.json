@@ -791,5 +791,27 @@
       }
     ],
     "unfrozen_reason": "name review round 1: the fixture only covered best-practices/local; added a best-practices/framework entry so the name's claim is checked"
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_no_shipped_file_names_the_old_toolset_framework_path",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "277c837dc0d238ed1fc7613bdb97b17bc181b551363d3f60ad57d6c8fcbe2802",
+    "frozen_at_step": 5,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "scan test red on first freeze (47 hits, exit 1); strengthened after name review, green on the swept tree; parts branch bite shown by a transient parts-built path in scripts/_install_tooling.py (flagged, reverted)",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: scan also matches pathlib-chained parts and backslash spellings, no longer skips a constant line that also spells the path, and fails when a swept folder is missing or empty",
+        "date": "2026-11-19",
+        "step": 5,
+        "hash": "277c837dc0d238ed1fc7613bdb97b17bc181b551363d3f60ad57d6c8fcbe2802"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: scan also matches pathlib-chained parts and backslash spellings, no longer skips a constant line that also spells the path, and fails when a swept folder is missing or empty"
   }
 ]

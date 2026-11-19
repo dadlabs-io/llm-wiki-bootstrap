@@ -55,7 +55,7 @@ entry("research/active/e-tool-use.md", "Tool use", "2026-09-01",
 (W / "sessions" / "main").mkdir(parents=True)
 (W / "sessions" / "main" / "handoff.md").write_text("# handoff\n", encoding="utf-8")
 (W / "HOME.md").write_text("---\ntitle: Home\n---\n# Home\n", encoding="utf-8")
-entry("project/best-practices/framework/spec.md", "Spec", "2026-09-01", extra_fm="framework-contract: true\n")
+entry("best-practices/framework/spec.md", "Spec", "2026-09-01", extra_fm="framework-contract: true\n")
 
 reg = BASE / "vault" / "linked-notebooks.json"
 reg.write_text(json.dumps({"notebooks": {"gapnb": {"root": "notebooks/gapnb"}}}), encoding="utf-8")
@@ -76,7 +76,7 @@ search = {
         row("research/active/c-retrieval.md", 0.70),             # already linked (c -> a): skip
         row("sessions/main/handoff.md", 0.95),                    # a session page: never
         row("HOME.md", 0.90),                                     # HOME: never
-        row("project/best-practices/framework/spec.md", 0.88),    # a framework doc: never
+        row("best-practices/framework/spec.md", 0.88),    # a framework doc: never
         row("research/active/d-new-paper.md", 0.30),              # below the score floor
         {**row("research/active/d-new-paper.md", 0.0), "found_by": "keyword"},
     ],

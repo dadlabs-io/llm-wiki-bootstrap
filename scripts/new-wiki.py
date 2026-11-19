@@ -772,7 +772,7 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
 def phase_docs(args):
     """--phase docs: refresh ONLY the global toolset's docs (task #25, 2026-10-04) -- the llm-wiki pack's
     usage pages (how-to/llm-wiki/), the how-to root marker and the six framework-contract docs
-    (wiki/project/best-practices/framework/), kept once in the global-toolset notebook. No project wiki
+    (wiki/best-practices/framework/), kept once in the global-toolset notebook. No project wiki
     carries a copy any more, so nothing else is touched. A global install (`--mode tooling`,
     `install-wiki.ps1 -RefreshOnly`) does the same as one of its steps; this is the narrow path after a
     docs-only change. The toolset is created and registered when it is not there yet.

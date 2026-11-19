@@ -99,7 +99,7 @@ Flag three categories:
 **Filename**: `_inbox/reports/<date>/<cycle_id>/<cycle_id>-run-cycle-report.md`
 
 - `cycle_id` = `<date>-<NN>` (e.g. `2026-04-24-01`). If invoked standalone (not inside a `/wiki-cycle` run), determine `NN` by scanning the day's existing folders.
-- Also write `<cycle_id>-run-cycle-report.json` alongside it — the aggregated JSON union of per-step JSONs (see [cycle-step-return-format best practice]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/cycle-step-return-format.md)).
+- Also write `<cycle_id>-run-cycle-report.json` alongside it — the aggregated JSON union of per-step JSONs (see [cycle-step-return-format best practice]({{TOOLSET_DIR}}/wiki/best-practices/framework/cycle-step-return-format.md)).
 
 **Data source — when running inside `/wiki-cycle`**: read the per-step JSONs from `<run-folder>/` (`discover.json`, `update.json`, `lint-mechanical.json`, `lint-semantic.json`, `refresh.json`, `claims.json`, `synthesis.json`), `cost.md`, `unfinished-runs.txt` (earlier runs with no report), `fallbacks.txt` (steps that left their expected tool path), `left-undone.txt` (what the cycle left undone), and the triage step's retry list and unmatched PDFs (`wiki-triage.py retry-list --cycle <cycle_id>`, `attach-pdfs`'s output). The report is assembled from those — don't re-run steps.
 

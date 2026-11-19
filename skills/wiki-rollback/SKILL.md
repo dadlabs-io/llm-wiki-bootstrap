@@ -121,6 +121,6 @@ New entry: <path-to-rollback-entry>
 ## Related
 
 - [icarus-integration-plan.md §4](llm-wiki-bootstrap :: wiki/project/decisions/icarus-integration-plan-2026-05-21.md — not shipped with the framework)
-- [memory-signals-sidecar-vs-frontmatter-pattern.md]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/memory-signals-sidecar-vs-frontmatter-pattern.md) — sidecar truth-status block this updates
+- [memory-signals-sidecar-vs-frontmatter-pattern.md]({{TOOLSET_DIR}}/wiki/best-practices/framework/memory-signals-sidecar-vs-frontmatter-pattern.md) — sidecar truth-status block this updates
 - [wiki-verify SKILL.md](../wiki-verify/SKILL.md) — the verify side; needed to create verified ancestors before rollback works
-- [wiki-search-bucket-rerank-spec.md]({{TOOLSET_DIR}}/wiki/project/best-practices/framework/wiki-search-bucket-rerank-spec.md) — `--include-rolled-back` audit flag on the search side
+- [wiki-search-bucket-rerank-spec.md]({{TOOLSET_DIR}}/wiki/best-practices/framework/wiki-search-bucket-rerank-spec.md) — `--include-rolled-back` audit flag on the search side

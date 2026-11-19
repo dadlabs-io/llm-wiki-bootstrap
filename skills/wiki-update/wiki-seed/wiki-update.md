@@ -59,7 +59,7 @@ The agent never picks the mode on its own: the notebook's setting does, unless y
 
 ### Tier and confidence
 
-Tier is the source's quality, from `1` (primary or peer-reviewed) to `4` (community), or `self` for the wiki's own synthesis. Confidence is how reliable the entry is. The agent chooses both from the rubric in the frontmatter spec ([wiki-frontmatter-best-practices.md](../../../wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md), in the global toolset), the one place they are defined; between two adjacent tiers it takes the lower. Tier 4 never auto-ingests.
+Tier is the source's quality, from `1` (primary or peer-reviewed) to `4` (community), or `self` for the wiki's own synthesis. Confidence is how reliable the entry is. The agent chooses both from the rubric in the frontmatter spec ([wiki-frontmatter-best-practices.md](../../../wiki/best-practices/framework/wiki-frontmatter-best-practices.md), in the global toolset), the one place they are defined; between two adjacent tiers it takes the lower. Tier 4 never auto-ingests.
 
 ### Duplicates
 

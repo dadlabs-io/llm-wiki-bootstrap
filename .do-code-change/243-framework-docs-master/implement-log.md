@@ -64,3 +64,10 @@ Plan notes for this step: `skills/wiki-search/SKILL.md` and its wiki-seed page h
 - `sample_titles` halves gain `best-practices`. Tests: 4 in test_search_mode (82/82), 3 lint tests in test_local_folder (16/16); orchestrator re-ran both. The `drop_machine_files` and lint tests were already green, so they are coverage tests, frozen green with reasons; their bite was shown by transient mutations, reverted (the lint mutation on a scratch copy). check-freeze PASS (47 entries).
 - The wiki-search skill text has no searched-folders line naming only research/ and project/, so it is unchanged.
 - The manual evidence is above (qmd pattern `**/*.md` on all 10 collections; a temp-index keyword search found `best-practices/local/my-notes.md`; the temp index was removed). The plan says checkpoints.md; it lives here, and checkpoints.md points here.
+
+## Step 5 — 2026-11-19, green
+- Scan test `test_no_shipped_file_names_the_old_toolset_framework_path` in test_standalone: red 21/22 (47 hits), green 22/22 (orchestrator re-ran). 47 hits rewritten in 33 files: root docs, 11 SKILL.md, wiki-cycle reference, 5 skill wiki-seed pages, 2 templates, the global-toolset README seed, 2 wiki-seed pages, the frontmatter doc, and comments/docstrings in 3 scripts. Also test_link_gaps' fixture.
+- Orchestrator grep afterwards (excluding .do-code-change, tests/search, archive): only CHANGELOG history, the step-1 `OLD_DIR` fixture, the scan test's own constant, and PENDING.md:65 (a record).
+- Frontmatter gate over the 11 changed skills: 11/11 parse, 0 would be refused.
+- Plan corrections: CLAUDE.md:172 held no old path. The template's project-canon line is now at line 51.
+- Departure: the developer read only the edited regions of new-wiki.py, wiki-update.py, _install_tooling.py and the frontmatter doc (one-token path edits at grep-located lines), not those files whole.

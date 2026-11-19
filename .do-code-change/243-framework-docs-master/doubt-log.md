@@ -12,6 +12,10 @@ no non-trivial decision (step 2): the change is one added entry in `toolset_file
 
 no non-trivial decision (step 3): the production change is one list append in `taxonomy_for`, one `folder_notes` row, one `_render_template` call and one early `is_file()` guard (new branching, one `if`, returns 1 before the project folder or wiki is created). The guard's behaviour is a behavioural claim pinned by `test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder` (red first, then green), so no doubt cycle was spawned. Not decided here, sent back to the plan: how the shipped README passes the real mechanical lint (see the hand-back).
 
+## Step 5: sweep of the old toolset framework path
+
+no non-trivial decision (step 5): text substitutions at every site, plus one scan test. The only judgement calls, an allowlist for the line naming `TOOLSET_OLD_FRAMEWORK_DOCS` (only when the line does not also spell the path) and leaving the historical `topic-template/wiki/best-practices/framework/` text in INSTALL-INVENTORY.md line 72, are pinned by the scan test itself.
+
 ## Step 4: search and lint over `best-practices/local/`
 
 no non-trivial decision (step 4): the only production change is one folder name added to the tuple of halves in `sample_titles` (no new branching, no boundary crossed, nothing irreversible). Its behaviour is pinned by `test_sample_titles_includes_best_practices_entries` (red first, then green). The other six tests pin behaviour that already held (`drop_machine_files`, the lint over `local/`); each was shown to bite by a transient mutation (production, reverted, `git diff` checked) or on a scratch copy of `scripts/` outside the repo (the lint file is outside the edit gate's scope), so no doubt cycle was spawned.

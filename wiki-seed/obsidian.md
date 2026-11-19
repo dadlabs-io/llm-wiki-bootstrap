@@ -29,7 +29,7 @@ Settings → Files & Links → Excluded files.
 
 | Plugin | Why it helps |
 |---|---|
-| **Dataview** | Every entry's frontmatter (`tier`, `confidence`, `review_after`, `date`, `tags`) is queryable, so a page can list, say, every tier-1 entry due for review this week. Field meanings: the framework's frontmatter spec in the global toolset (`wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md`) |
+| **Dataview** | Every entry's frontmatter (`tier`, `confidence`, `review_after`, `date`, `tags`) is queryable, so a page can list, say, every tier-1 entry due for review this week. Field meanings: the framework's frontmatter spec in the global toolset (`wiki/best-practices/framework/wiki-frontmatter-best-practices.md`) |
 | **Obsidian Linter** | Keeps frontmatter consistent if you do edit a page by hand |
 | **Tag Wrangler** | Shows tags used once and helps rename a tag everywhere |
 | **Backlinks pane** (built in) | Shows live what each entry's `BACKLINKS-AUTO` block holds (that block is written by `wiki-reciprocate-backlinks.py` at each promotion and cycle) |
