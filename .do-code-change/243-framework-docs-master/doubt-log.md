@@ -7,3 +7,7 @@ STOP: trivial findings (no finding changed the artifact; no plan sentence is con
 ## Step 2: toolset `local/README.md` as a listed framework file
 
 no non-trivial decision (step 2): the change is one added entry in `toolset_files()`, one constant and one shipped text. The property "a user's file in `local/` is never added, changed, removed or listed in `remove`" is held by adding no code (the remove scan is not extended to `local/`, and only the README is listed) and is pinned by `test_user_files_in_local_are_untouched`, so a behavioural test covers it and no doubt cycle was spawned.
+
+## Step 3: scaffold writes `wiki/best-practices/local/README.md`
+
+no non-trivial decision (step 3): the production change is one list append in `taxonomy_for`, one `folder_notes` row, one `_render_template` call and one early `is_file()` guard (new branching, one `if`, returns 1 before the project folder or wiki is created). The guard's behaviour is a behavioural claim pinned by `test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder` (red first, then green), so no doubt cycle was spawned. Not decided here, sent back to the plan: how the shipped README passes the real mechanical lint (see the hand-back).

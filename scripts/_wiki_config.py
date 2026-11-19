@@ -118,7 +118,8 @@ FOLDER_CHOICES = ("stubs", "empty", "none")
 def taxonomy_for(project_folder: str = "stubs", research_folder: str = "stubs") -> list:
     """The folders a scaffold creates for a pair of /new-wiki answers. Each answer
     is 'stubs' (the half with its default subfolders), 'empty' (the half's root
-    only — subfolders appear on first use) or 'none'. sessions/ is always last."""
+    only — subfolders appear on first use) or 'none'. best-practices/local (the user's own changes to the
+    framework docs) and sessions/ are always last, in that order."""
     for label, value in (("project_folder", project_folder), ("research_folder", research_folder)):
         if value not in FOLDER_CHOICES:
             raise ValueError(f"{label} must be one of {FOLDER_CHOICES}, got {value!r}")
@@ -131,6 +132,7 @@ def taxonomy_for(project_folder: str = "stubs", research_folder: str = "stubs") 
         folders += PROJECT_TAXONOMY
     elif project_folder == "empty":
         folders.append("project")
+    folders.append("best-practices/local")
     folders.append("sessions")
     return folders
 

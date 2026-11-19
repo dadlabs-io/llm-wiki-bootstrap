@@ -464,5 +464,232 @@
       }
     ],
     "unfrozen_reason": "step 2 adds local/README.md under the same parent; Mark approved 2026-11-19 ('yes')"
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_taxonomy_puts_best_practices_local_before_sessions_for_all_nine_pairs",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "3442c9b3022917b7960b05977e40f24207269def1e4fc2280a326e2bd4bc9600",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_local_folder.py",
+      "exit": 1,
+      "tail": "]\nFAIL test_phase_b_summary_lists_best_practices_local_before_sessions: the Phase B summary's wiki_folders lists best-practices/local before sessions  [['research/active', 'research/long-term', 'research/tooling', 'research/best-practices', 'research/interesting-docs', 'sessions']]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: lint of the fresh scaffold: the README is there, lint ran, and nothing it reports names best-practices  [(False, True, ' lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\\n\\n- `README.md` \u2014 missing `HOME.md`\\n')]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: control: the same lint does name a note without frontmatter placed in best-practices/local/  [ lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\n- `README.md` \u2014 missing `HOME.md`\n]\nFAIL test_dry_run_prints_would_lines_for_the_local_folder_and_its_readme: --dry-run: exit 0, a WOULD mkdir line for best-practices/local and a WOULD write line for its README  [(0, 'iki-search \\\\\"<query>\\\\\"` (hybrid BM25 + vector + LLM rerank)\",\\n    \"Ask the agent in plain English anytime \\\\u2014 \\'what commands do I have\\', \\'how do I X\\', \\'show me the wiki\\'\"\\n  ],\\n  \"help_anytime\": \"Ask in plain English. CLAUDE.md loads the command reference (C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpm27pc0_6/vault/notebooks/global-toolset/how-to/llm-wiki/commands.md, in the global toolset) and the wiki README; the agent reads the other how-to pages there when a question needs them.\"\\n}\\n')]\nPASS test_dry_run_leaves_every_file_and_folder_of_the_temp_tree_as_it_was: --dry-run: exit 0, every file and folder in the temp tree has the same name and bytes as before\nFAIL test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder: missing README source: non-zero exit, the missing file named, no wiki/best-practices folder  [(0, \"notebooks\\\\demo\\\\_config\\\\feeds.md\\n[new-wiki] \u2713 registered 'demo' -> notebooks/demo (confirm_before_create=True, confirm_before_promote=True, project_root: ../work/demo) in linked-notebooks.json\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpyvmxksp4\\\\run\\\\home\\\\.claude\\\\wiki-config.json\\n[new-wiki] \u2713 registry recorded in wiki-config.json (machine-wide fallback)\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpyvmxksp4\\\\run\\\\work\\\\demo\\\\.claude\\\\wiki-config.json\\n\", [])]\nPASS test_existing_claude_md_is_kept_byte_for_byte: a target that already has a CLAUDE.md: exit 0, the file's bytes unchanged\nPASS test_first_run_renders_the_three_wiki_scaffold_files: a first run: _MAP.md, README.md and HOME.md written, non-empty, no template placeholder left\n3/13 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_phase_b_readme_folder_list_has_a_best_practices_local_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "b063a7c8dfded67cefde45de7673a15299e9e5bc490c6356926e6e05ec20a865",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_local_folder.py",
+      "exit": 1,
+      "tail": "]\nFAIL test_phase_b_summary_lists_best_practices_local_before_sessions: the Phase B summary's wiki_folders lists best-practices/local before sessions  [['research/active', 'research/long-term', 'research/tooling', 'research/best-practices', 'research/interesting-docs', 'sessions']]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: lint of the fresh scaffold: the README is there, lint ran, and nothing it reports names best-practices  [(False, True, ' lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\\n\\n- `README.md` \u2014 missing `HOME.md`\\n')]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: control: the same lint does name a note without frontmatter placed in best-practices/local/  [ lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\n- `README.md` \u2014 missing `HOME.md`\n]\nFAIL test_dry_run_prints_would_lines_for_the_local_folder_and_its_readme: --dry-run: exit 0, a WOULD mkdir line for best-practices/local and a WOULD write line for its README  [(0, 'iki-search \\\\\"<query>\\\\\"` (hybrid BM25 + vector + LLM rerank)\",\\n    \"Ask the agent in plain English anytime \\\\u2014 \\'what commands do I have\\', \\'how do I X\\', \\'show me the wiki\\'\"\\n  ],\\n  \"help_anytime\": \"Ask in plain English. CLAUDE.md loads the command reference (C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpw9zgbh7n/vault/notebooks/global-toolset/how-to/llm-wiki/commands.md, in the global toolset) and the wiki README; the agent reads the other how-to pages there when a question needs them.\"\\n}\\n')]\nPASS test_dry_run_leaves_every_file_and_folder_of_the_temp_tree_as_it_was: --dry-run: exit 0, every file and folder in the temp tree has the same name and bytes as before\nFAIL test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder: missing README source: non-zero exit, the missing file named, no wiki/best-practices folder  [(0, \"notebooks\\\\demo\\\\_config\\\\feeds.md\\n[new-wiki] \u2713 registered 'demo' -> notebooks/demo (confirm_before_create=True, confirm_before_promote=True, project_root: ../work/demo) in linked-notebooks.json\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp3_rbamxh\\\\run\\\\home\\\\.claude\\\\wiki-config.json\\n[new-wiki] \u2713 registry recorded in wiki-config.json (machine-wide fallback)\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp3_rbamxh\\\\run\\\\work\\\\demo\\\\.claude\\\\wiki-config.json\\n\", [])]\nPASS test_existing_claude_md_is_kept_byte_for_byte: a target that already has a CLAUDE.md: exit 0, the file's bytes unchanged\nPASS test_first_run_renders_the_three_wiki_scaffold_files: a first run: _MAP.md, README.md and HOME.md written, non-empty, no template placeholder left\n3/13 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_phase_b_summary_lists_best_practices_local_before_sessions",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "6e6afcfab73203c26af88f64e07ec4e81a379e0da95766ba6165836c0478de07",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_local_folder.py",
+      "exit": 1,
+      "tail": "]\nFAIL test_phase_b_summary_lists_best_practices_local_before_sessions: the Phase B summary's wiki_folders lists best-practices/local before sessions  [['research/active', 'research/long-term', 'research/tooling', 'research/best-practices', 'research/interesting-docs', 'sessions']]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: lint of the fresh scaffold: the README is there, lint ran, and nothing it reports names best-practices  [(False, True, ' lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\\n\\n- `README.md` \u2014 missing `HOME.md`\\n')]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: control: the same lint does name a note without frontmatter placed in best-practices/local/  [ lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\n- `README.md` \u2014 missing `HOME.md`\n]\nFAIL test_dry_run_prints_would_lines_for_the_local_folder_and_its_readme: --dry-run: exit 0, a WOULD mkdir line for best-practices/local and a WOULD write line for its README  [(0, 'iki-search \\\\\"<query>\\\\\"` (hybrid BM25 + vector + LLM rerank)\",\\n    \"Ask the agent in plain English anytime \\\\u2014 \\'what commands do I have\\', \\'how do I X\\', \\'show me the wiki\\'\"\\n  ],\\n  \"help_anytime\": \"Ask in plain English. CLAUDE.md loads the command reference (C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpd8vypox4/vault/notebooks/global-toolset/how-to/llm-wiki/commands.md, in the global toolset) and the wiki README; the agent reads the other how-to pages there when a question needs them.\"\\n}\\n')]\nPASS test_dry_run_leaves_every_file_and_folder_of_the_temp_tree_as_it_was: --dry-run: exit 0, every file and folder in the temp tree has the same name and bytes as before\nFAIL test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder: missing README source: non-zero exit, the missing file named, no wiki/best-practices folder  [(0, \"notebooks\\\\demo\\\\_config\\\\feeds.md\\n[new-wiki] \u2713 registered 'demo' -> notebooks/demo (confirm_before_create=True, confirm_before_promote=True, project_root: ../work/demo) in linked-notebooks.json\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpfufiwjal\\\\run\\\\home\\\\.claude\\\\wiki-config.json\\n[new-wiki] \u2713 registry recorded in wiki-config.json (machine-wide fallback)\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpfufiwjal\\\\run\\\\work\\\\demo\\\\.claude\\\\wiki-config.json\\n\", [])]\nPASS test_existing_claude_md_is_kept_byte_for_byte: a target that already has a CLAUDE.md: exit 0, the file's bytes unchanged\nPASS test_first_run_renders_the_three_wiki_scaffold_files: a first run: _MAP.md, README.md and HOME.md written, non-empty, no template placeholder left\n3/13 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "8990e2a4fb1dedd987c93863dd99f2f140c15f115b7e286e54834618cf2fe540",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_local_folder.py",
+      "exit": 1,
+      "tail": "]\nFAIL test_phase_b_summary_lists_best_practices_local_before_sessions: the Phase B summary's wiki_folders lists best-practices/local before sessions  [['research/active', 'research/long-term', 'research/tooling', 'research/best-practices', 'research/interesting-docs', 'sessions']]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: lint of the fresh scaffold: the README is there, lint ran, and nothing it reports names best-practices  [(False, True, ' lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\\n\\n- `README.md` \u2014 missing `HOME.md`\\n')]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: control: the same lint does name a note without frontmatter placed in best-practices/local/  [ lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\n- `README.md` \u2014 missing `HOME.md`\n]\nFAIL test_dry_run_prints_would_lines_for_the_local_folder_and_its_readme: --dry-run: exit 0, a WOULD mkdir line for best-practices/local and a WOULD write line for its README  [(0, 'iki-search \\\\\"<query>\\\\\"` (hybrid BM25 + vector + LLM rerank)\",\\n    \"Ask the agent in plain English anytime \\\\u2014 \\'what commands do I have\\', \\'how do I X\\', \\'show me the wiki\\'\"\\n  ],\\n  \"help_anytime\": \"Ask in plain English. CLAUDE.md loads the command reference (C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpxv1syovw/vault/notebooks/global-toolset/how-to/llm-wiki/commands.md, in the global toolset) and the wiki README; the agent reads the other how-to pages there when a question needs them.\"\\n}\\n')]\nPASS test_dry_run_leaves_every_file_and_folder_of_the_temp_tree_as_it_was: --dry-run: exit 0, every file and folder in the temp tree has the same name and bytes as before\nFAIL test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder: missing README source: non-zero exit, the missing file named, no wiki/best-practices folder  [(0, \"notebooks\\\\demo\\\\_config\\\\feeds.md\\n[new-wiki] \u2713 registered 'demo' -> notebooks/demo (confirm_before_create=True, confirm_before_promote=True, project_root: ../work/demo) in linked-notebooks.json\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp_nzmrqfb\\\\run\\\\home\\\\.claude\\\\wiki-config.json\\n[new-wiki] \u2713 registry recorded in wiki-config.json (machine-wide fallback)\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp_nzmrqfb\\\\run\\\\work\\\\demo\\\\.claude\\\\wiki-config.json\\n\", [])]\nPASS test_existing_claude_md_is_kept_byte_for_byte: a target that already has a CLAUDE.md: exit 0, the file's bytes unchanged\nPASS test_first_run_renders_the_three_wiki_scaffold_files: a first run: _MAP.md, README.md and HOME.md written, non-empty, no template placeholder left\n3/13 passed",
+      "date": "2026-11-19"
+    },
+    "retired": {
+      "reason": "renamed to test_lint_of_a_fresh_scaffold_draws_no_finding_on_the_local_readme_that_home_does_not: plan premise false (fresh scaffold never lints clean); Mark approved parity with HOME.md 2026-11-19",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_dry_run_prints_would_lines_for_the_local_folder_with_its_readme",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "4b6531ed701e1eb5a66c8b4805fcb0386e39608f970c803d50173a701ff5a66c",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_local_folder.py",
+      "exit": 1,
+      "tail": "]\nFAIL test_phase_b_summary_lists_best_practices_local_before_sessions: the Phase B summary's wiki_folders lists best-practices/local before sessions  [['research/active', 'research/long-term', 'research/tooling', 'research/best-practices', 'research/interesting-docs', 'sessions']]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: lint of the fresh scaffold: the README is there, lint ran, and nothing it reports names best-practices  [(False, True, ' lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\\n\\n- `README.md` \u2014 missing `HOME.md`\\n')]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: control: the same lint does name a note without frontmatter placed in best-practices/local/  [ lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\n- `README.md` \u2014 missing `HOME.md`\n]\nFAIL test_dry_run_prints_would_lines_for_the_local_folder_with_its_readme: --dry-run: exit 0, a WOULD mkdir line for best-practices/local and a WOULD write line for its README  [(0, 'iki-search \\\\\"<query>\\\\\"` (hybrid BM25 + vector + LLM rerank)\",\\n    \"Ask the agent in plain English anytime \\\\u2014 \\'what commands do I have\\', \\'how do I X\\', \\'show me the wiki\\'\"\\n  ],\\n  \"help_anytime\": \"Ask in plain English. CLAUDE.md loads the command reference (C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpxak4146r/vault/notebooks/global-toolset/how-to/llm-wiki/commands.md, in the global toolset) and the wiki README; the agent reads the other how-to pages there when a question needs them.\"\\n}\\n')]\nPASS test_dry_run_leaves_the_temp_tree_unchanged: --dry-run: exit 0, every file and folder in the temp tree has the same name and bytes as before\nFAIL test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder: missing README source: non-zero exit, the missing file named, no wiki/best-practices folder  [(0, \"notebooks\\\\demo\\\\_config\\\\feeds.md\\n[new-wiki] \u2713 registered 'demo' -> notebooks/demo (confirm_before_create=True, confirm_before_promote=True, project_root: ../work/demo) in linked-notebooks.json\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmptpf_yrls\\\\run\\\\home\\\\.claude\\\\wiki-config.json\\n[new-wiki] \u2713 registry recorded in wiki-config.json (machine-wide fallback)\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmptpf_yrls\\\\run\\\\work\\\\demo\\\\.claude\\\\wiki-config.json\\n\", [])]\nPASS test_existing_claude_md_is_kept_byte_for_byte: a target that already has a CLAUDE.md: exit 0, the file's bytes unchanged\nPASS test_first_run_renders_the_three_wiki_scaffold_files: a first run: _MAP.md, README.md and HOME.md written, non-empty, no template placeholder left\n3/13 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "4e25875dd15641f760f7dec1669ec93d1fd9beb44cdb642ff17490c3ae642345",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_local_folder.py",
+      "exit": 1,
+      "tail": "]\nFAIL test_phase_b_summary_lists_best_practices_local_before_sessions: the Phase B summary's wiki_folders lists best-practices/local before sessions  [['research/active', 'research/long-term', 'research/tooling', 'research/best-practices', 'research/interesting-docs', 'sessions']]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: lint of the fresh scaffold: the README is there, lint ran, and nothing it reports names best-practices  [(False, True, ' lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\\n\\n- `README.md` \u2014 missing `HOME.md`\\n')]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: control: the same lint does name a note without frontmatter placed in best-practices/local/  [ lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\n- `README.md` \u2014 missing `HOME.md`\n]\nFAIL test_dry_run_prints_would_lines_for_the_local_folder_with_its_readme: --dry-run: exit 0, a WOULD mkdir line for best-practices/local and a WOULD write line for its README  [(0, 'iki-search \\\\\"<query>\\\\\"` (hybrid BM25 + vector + LLM rerank)\",\\n    \"Ask the agent in plain English anytime \\\\u2014 \\'what commands do I have\\', \\'how do I X\\', \\'show me the wiki\\'\"\\n  ],\\n  \"help_anytime\": \"Ask in plain English. CLAUDE.md loads the command reference (C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpun3aendi/vault/notebooks/global-toolset/how-to/llm-wiki/commands.md, in the global toolset) and the wiki README; the agent reads the other how-to pages there when a question needs them.\"\\n}\\n')]\nPASS test_dry_run_leaves_the_temp_tree_unchanged: --dry-run: exit 0, every file and folder in the temp tree has the same name and bytes as before\nFAIL test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder: missing README source: non-zero exit, the missing file named, no wiki/best-practices folder  [(0, \"notebooks\\\\demo\\\\_config\\\\feeds.md\\n[new-wiki] \u2713 registered 'demo' -> notebooks/demo (confirm_before_create=True, confirm_before_promote=True, project_root: ../work/demo) in linked-notebooks.json\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp_80en_59\\\\run\\\\home\\\\.claude\\\\wiki-config.json\\n[new-wiki] \u2713 registry recorded in wiki-config.json (machine-wide fallback)\\n[new-wiki] \u2713 wrote C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp_80en_59\\\\run\\\\work\\\\demo\\\\.claude\\\\wiki-config.json\\n\", [])]\nPASS test_existing_claude_md_is_kept_byte_for_byte: a target that already has a CLAUDE.md: exit 0, the file's bytes unchanged\nPASS test_first_run_renders_the_three_wiki_scaffold_files: a first run: _MAP.md, README.md and HOME.md written, non-empty, no template placeholder left\n3/13 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_dry_run_leaves_the_temp_tree_unchanged",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d6af3e39f23bcd170f17226df662e7f920f1f0bc6c54c16d28a51c41e87f4001",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "pins existing behaviour the step must not break (a dry run writes nothing); bite proven 2026-11-19 by a temporary mutation of the B6 folder loop that mkdirs in a dry run: 0/13 passed with it, restored after",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_existing_claude_md_is_kept_byte_for_byte",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "7de01ab1b06641fcc65af3b798a4be4fd508ceb3b88de37aa7f424a6b43ea6c3",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "invariant that holds before the step (no existing test pinned it, searched tests/scripts for skip_if_exists, preserved and already exists); bite proven 2026-11-19 by a temporary skip_if_exists=False on the CLAUDE.md render: 0/13 passed with it, restored after",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_first_run_renders_the_three_wiki_scaffold_files",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "12b3dc6f2d4af891215963b63cd3b04611d877c2ff34a2efcfbab949851a454e",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "invariant that holds before the step (no existing test pinned _MAP, README and HOME rendered on a first run, searched tests/scripts for HOME.md); bite proven 2026-11-19 by a temporary change of the seed/wiki source folder name: 0/13 passed with it, restored after",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_phase_b_writes_local_readme_with_shipped_bytes_for_stubs",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "05a4d2d5109e71ae4cc5e63a34e4f3fc2eb34a573aee574127bf2c0552fb051b",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_local_folder.py",
+      "exit": 1,
+      "tail": "PASS test_phase_b_readme_folder_list_has_a_best_practices_local_line: the wiki's README folder list has a best-practices/local/ line\nPASS test_phase_b_summary_lists_best_practices_local_before_sessions: the Phase B summary's wiki_folders lists best-practices/local before sessions\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: lint of the fresh scaffold: the README is there, lint ran, and nothing it reports names best-practices  [(False, True, ' lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\\n\\n- `README.md` \u2014 missing `HOME.md`\\n')]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: control: the same lint does name a note without frontmatter placed in best-practices/local/  [ lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\n- `README.md` \u2014 missing `HOME.md`\n]\nFAIL test_dry_run_prints_would_lines_for_the_local_folder_with_its_readme: --dry-run: exit 0, a WOULD mkdir line for best-practices/local and a WOULD write line for its README  [(0, 'iki-search \\\\\"<query>\\\\\"` (hybrid BM25 + vector + LLM rerank)\",\\n    \"Ask the agent in plain English anytime \\\\u2014 \\'what commands do I have\\', \\'how do I X\\', \\'show me the wiki\\'\"\\n  ],\\n  \"help_anytime\": \"Ask in plain English. CLAUDE.md loads the command reference (C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmp0fd8estp/vault/notebooks/global-toolset/how-to/llm-wiki/commands.md, in the global toolset) and the wiki README; the agent reads the other how-to pages there when a question needs them.\"\\n}\\n')]\nPASS test_dry_run_leaves_the_temp_tree_unchanged: --dry-run: exit 0, every file and folder in the temp tree has the same name and bytes as before\nPASS test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder: missing README source: non-zero exit, the missing file named, no wiki/best-practices folder\nPASS test_existing_claude_md_is_kept_byte_for_byte: a target that already has a CLAUDE.md: exit 0, the file's bytes unchanged\nPASS test_first_run_renders_the_three_wiki_scaffold_files: a first run: _MAP.md, README.md and HOME.md written, non-empty, no template placeholder left\n7/13 passed",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "step 3 own test, never green yet: the helper returned paths into a deleted TemporaryDirectory so the check could never pass; reads now happen inside the with, assertions unchanged; red re-shown with the README write removed (README absent)",
+        "date": "2026-11-19",
+        "step": 3,
+        "hash": "05a4d2d5109e71ae4cc5e63a34e4f3fc2eb34a573aee574127bf2c0552fb051b"
+      }
+    ],
+    "unfrozen_reason": "step 3 own test, never green yet: the helper returned paths into a deleted TemporaryDirectory so the check could never pass; reads now happen inside the with, assertions unchanged; red re-shown with the README write removed (README absent)"
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_phase_b_writes_local_readme_with_shipped_bytes_for_empty",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d0c9f407c66e502de0b936fa94c5f895bffd2e6ad1ad2b3c1232f5fcd2504a0e",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_local_folder.py",
+      "exit": 1,
+      "tail": "PASS test_phase_b_readme_folder_list_has_a_best_practices_local_line: the wiki's README folder list has a best-practices/local/ line\nPASS test_phase_b_summary_lists_best_practices_local_before_sessions: the Phase B summary's wiki_folders lists best-practices/local before sessions\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: lint of the fresh scaffold: the README is there, lint ran, and nothing it reports names best-practices  [(False, True, ' lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\\n\\n- `README.md` \u2014 missing `HOME.md`\\n')]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: control: the same lint does name a note without frontmatter placed in best-practices/local/  [ lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\n- `README.md` \u2014 missing `HOME.md`\n]\nFAIL test_dry_run_prints_would_lines_for_the_local_folder_with_its_readme: --dry-run: exit 0, a WOULD mkdir line for best-practices/local and a WOULD write line for its README  [(0, 'iki-search \\\\\"<query>\\\\\"` (hybrid BM25 + vector + LLM rerank)\",\\n    \"Ask the agent in plain English anytime \\\\u2014 \\'what commands do I have\\', \\'how do I X\\', \\'show me the wiki\\'\"\\n  ],\\n  \"help_anytime\": \"Ask in plain English. CLAUDE.md loads the command reference (C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmp5e3l5_b1/vault/notebooks/global-toolset/how-to/llm-wiki/commands.md, in the global toolset) and the wiki README; the agent reads the other how-to pages there when a question needs them.\"\\n}\\n')]\nPASS test_dry_run_leaves_the_temp_tree_unchanged: --dry-run: exit 0, every file and folder in the temp tree has the same name and bytes as before\nPASS test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder: missing README source: non-zero exit, the missing file named, no wiki/best-practices folder\nPASS test_existing_claude_md_is_kept_byte_for_byte: a target that already has a CLAUDE.md: exit 0, the file's bytes unchanged\nPASS test_first_run_renders_the_three_wiki_scaffold_files: a first run: _MAP.md, README.md and HOME.md written, non-empty, no template placeholder left\n7/13 passed",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "step 3 own test, never green yet: the helper returned paths into a deleted TemporaryDirectory so the check could never pass; reads now happen inside the with, assertions unchanged; red re-shown with the README write removed (README absent)",
+        "date": "2026-11-19",
+        "step": 3,
+        "hash": "d0c9f407c66e502de0b936fa94c5f895bffd2e6ad1ad2b3c1232f5fcd2504a0e"
+      }
+    ],
+    "unfrozen_reason": "step 3 own test, never green yet: the helper returned paths into a deleted TemporaryDirectory so the check could never pass; reads now happen inside the with, assertions unchanged; red re-shown with the README write removed (README absent)"
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_phase_b_writes_local_readme_with_shipped_bytes_for_none",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "cf5d01f3c107ce8942f8d4d63425e806b1a2de5daee0b6a2ddccf1cb5b98a4df",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_local_folder.py",
+      "exit": 1,
+      "tail": "PASS test_phase_b_readme_folder_list_has_a_best_practices_local_line: the wiki's README folder list has a best-practices/local/ line\nPASS test_phase_b_summary_lists_best_practices_local_before_sessions: the Phase B summary's wiki_folders lists best-practices/local before sessions\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: lint of the fresh scaffold: the README is there, lint ran, and nothing it reports names best-practices  [(False, True, ' lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\\n\\n- `README.md` \u2014 missing `HOME.md`\\n')]\nFAIL test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: control: the same lint does name a note without frontmatter placed in best-practices/local/  [ lint, so a page listed with extra or missing pages means the rebuild went wrong; run on its own, such a page is one whose block is behind its links: run `wiki-reciprocate-backlinks.py`, and if it stays listed, look at the script. A block not closed, or inside an unclosed code fence, needs a hand fix to the page (the rebuild leaves such a page alone). Warn-only.\n- `README.md` \u2014 missing `HOME.md`\n]\nFAIL test_dry_run_prints_would_lines_for_the_local_folder_with_its_readme: --dry-run: exit 0, a WOULD mkdir line for best-practices/local and a WOULD write line for its README  [(0, 'iki-search \\\\\"<query>\\\\\"` (hybrid BM25 + vector + LLM rerank)\",\\n    \"Ask the agent in plain English anytime \\\\u2014 \\'what commands do I have\\', \\'how do I X\\', \\'show me the wiki\\'\"\\n  ],\\n  \"help_anytime\": \"Ask in plain English. CLAUDE.md loads the command reference (C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpqrsb0bei/vault/notebooks/global-toolset/how-to/llm-wiki/commands.md, in the global toolset) and the wiki README; the agent reads the other how-to pages there when a question needs them.\"\\n}\\n')]\nPASS test_dry_run_leaves_the_temp_tree_unchanged: --dry-run: exit 0, every file and folder in the temp tree has the same name and bytes as before\nPASS test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder: missing README source: non-zero exit, the missing file named, no wiki/best-practices folder\nPASS test_existing_claude_md_is_kept_byte_for_byte: a target that already has a CLAUDE.md: exit 0, the file's bytes unchanged\nPASS test_first_run_renders_the_three_wiki_scaffold_files: a first run: _MAP.md, README.md and HOME.md written, non-empty, no template placeholder left\n7/13 passed",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "step 3 own test, never green yet: the helper returned paths into a deleted TemporaryDirectory so the check could never pass (and the no-project/ assertion was vacuous); reads now happen inside the with, assertions unchanged; red re-shown with the README write removed (README absent)",
+        "date": "2026-11-19",
+        "step": 3,
+        "hash": "cf5d01f3c107ce8942f8d4d63425e806b1a2de5daee0b6a2ddccf1cb5b98a4df"
+      }
+    ],
+    "unfrozen_reason": "step 3 own test, never green yet: the helper returned paths into a deleted TemporaryDirectory so the check could never pass (and the no-project/ assertion was vacuous); reads now happen inside the with, assertions unchanged; red re-shown with the README write removed (README absent)"
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_lint_of_a_fresh_scaffold_draws_no_finding_on_the_local_readme_that_home_does_not",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "b27fcc4a22451e8a6811cfa32b3a6e191342b1523272768a3cf4c8ca775403cc",
+    "frozen_at_step": 3,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "red was shown before the change at 12/13 with the old README (orphan, missing confidence and missing lifecycle findings the HOME.md does not draw, the first two); green after the README gained confidence and standalone, 13/13",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "plan premise false (fresh scaffold never lints clean); Mark approved parity with HOME.md 2026-11-19",
+        "date": "2026-11-19",
+        "step": 3,
+        "hash": "b27fcc4a22451e8a6811cfa32b3a6e191342b1523272768a3cf4c8ca775403cc"
+      }
+    ],
+    "unfrozen_reason": "plan premise false (fresh scaffold never lints clean); Mark approved parity with HOME.md 2026-11-19"
   }
 ]

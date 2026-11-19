@@ -17,6 +17,19 @@
 
 The reviewer also flagged a line of the names output ("hand them to the name reviewer") as instruction-like text; not acted on.
 
+## Step 3 (one doubt-reviewer, fed the `check-freeze.py names` output, shared helpers listed once)
+
+- test_taxonomy_puts_best_practices_local_before_sessions_for_all_nine_pairs: OK
+- test_phase_b_readme_folder_list_has_a_best_practices_local_line: OVER-CLAIMS (low): "folder list" is not tied to a section; any line of the README starting with the list item counts. Accepted: the line is the folder-list item format and no other README text starts with it.
+- test_phase_b_summary_lists_best_practices_local_before_sessions: OK
+- test_lint_of_a_fresh_scaffold_reports_nothing_from_best_practices: OVER-CLAIMS: the regex skips `project/best-practices` and `research/best-practices` on purpose (the stub folders exist in the scaffold). Accepted, not changed: the test is red anyway on the three real findings; the exclusion is stated here. The control passes (a note without frontmatter in `best-practices/local/` is named), so the lint does see the folder.
+- test_dry_run_prints_would_lines_for_the_local_folder_with_its_readme: OK
+- test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder: OVER-CLAIMS (low): only `wiki/best-practices` is checked, not the stub folders under project/ and research/. Accepted: the guard returns before B1, so nothing is created; the test checks the plan's named folder.
+- test_dry_run_leaves_the_temp_tree_unchanged: OK (home and vault are under the temp root by construction)
+- test_existing_claude_md_is_kept_byte_for_byte: OK
+- test_first_run_renders_the_three_wiki_scaffold_files: OK
+- test_phase_b_writes_local_readme_with_shipped_bytes_for_stubs / _empty / _none: OK
+
 ## Step 2 (one doubt-reviewer, fed the `check-freeze.py names` output)
 
 - test_empty_toolset_gets_local_readme_with_shipped_bytes: OK

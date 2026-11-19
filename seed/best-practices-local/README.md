@@ -3,6 +3,8 @@ title: "Local changes to the framework docs"
 date: 2026-11-19
 tags: [best-practices, local, framework-contract]
 tier: self
+confidence: high
+standalone: "the folder's guide: nothing links to it by design"
 framework-contract: true
 framework-version: 1
 ---

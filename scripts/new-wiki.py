@@ -947,7 +947,14 @@ def phase_b(args):
     templates_src = wiki_src / "templates"
     seed_src = wiki_src / "seed"
 
-    # B1 — mkdir + git init (skip if already inside a repo → no nested repo)
+    # Every scaffold writes wiki/best-practices/local/README.md (taxonomy_for adds the folder for every answer):
+    # stop before the project folder and the wiki are created when its source is not in the package.
+    local_readme_src = seed_src / "best-practices-local" / "README.md"
+    if not local_readme_src.is_file():
+        _err(f"the shipped best-practices/local README is missing from the package: {local_readme_src}")
+        return 1
+
+    # B1— mkdir + git init (skip if already inside a repo → no nested repo)
     _info(f"project folder: {target}")
     if args.dry_run:
         print(f"WOULD mkdir {target} (+ git init only if not already inside a repo)")
@@ -1049,6 +1056,7 @@ def phase_b(args):
     folder_notes = {
         "research": "external content — articles, papers, videos (`/wiki-update`, `/wiki-cycle`)",
         "project": "what we build — decisions, components, patterns, troubleshooting (`/wrap-up`)",
+        "best-practices/local": "your own changes to the framework docs; read them after the doc they change",
         "sessions": "per-persona episodic logs and working-memory dashboards (`/wrap-up`)",
     }
     wiki_folders_md = "\n".join(
@@ -1077,6 +1085,9 @@ def phase_b(args):
                              wiki_scaffold_vars, args.dry_run)
     else:
         _warn(f"seed/wiki/ not found in bootstrap; wiki scaffold files skipped")
+    # The user-changes README for the framework docs (a framework file: the shipped text, rendered like the rest).
+    _render_template(local_readme_src, wiki_root / "best-practices" / "local" / "README.md",
+                     wiki_scaffold_vars, args.dry_run)
 
     # B7 — render top-level project files: CLAUDE.md / README.md / .gitignore
     # CLAUDE.md @-imports: relative paths for an in-project wiki, absolute for an

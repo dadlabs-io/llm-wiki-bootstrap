@@ -18,3 +18,17 @@ One block per step, written by the orchestrator from the developer's hand-back a
 - Orchestrator re-run: `test_global_toolset.py` → `80/80 passed`; `test_standalone.py` → `21/21 passed`.
 - Changed: `scripts/_wiki_config.py` (`TOOLSET_LOCAL_DIR`), `scripts/_install_tooling.py` (`toolset_files()` lists `local/README.md`), new `seed/best-practices-local/README.md`, `tests/scripts/test_global_toolset.py` (13 new tests).
 - Deviation from the plan: "README held open on Windows" is tested with a read-only file instead. A Python open handle does not block `copyfile`, so it cannot make the write fail.
+
+## Step 3 — 2026-11-19 (hand-back 1, not green)
+- Built: `taxonomy_for` appends `best-practices/local` before `sessions` for all nine pairs; `new-wiki.py` adds the missing-source guard before B1, the `folder_notes` row `best-practices/local`, and the README render at the end of B6.5. Tests in new `tests/scripts/test_local_folder.py`: 12/13 pass. Also green: global_toolset 80/80, standalone 21/21, tooling_state_seam 23/23, git_hooks_optin 17/17. check-freeze PASS (39 entries).
+- Red: the plan's "lint reports no finding from `best-practices/`" premise is false. The lint names the README for: orphan (no `standalone:`), missing confidence, missing last_reviewed/review_after. A fresh scaffold's HOME.md and README.md already draw the confidence and lifecycle findings. Put to Mark on Discord with a recommendation (parity with HOME.md).
+- Plan corrections: `.claude/wiki-config.json`'s `wiki_folders` holds the two answers, not the folder list; the folder list is Phase B's stdout JSON `wiki_folders` (tested). The `folder_notes` key is `best-practices/local`.
+- Folder-guard findings, listed and not fixed:
+  - `wiki-update.py` `validate_folder`: a bare `--folder best-practices` in a new wiki now passes Case 1 (its top segment exists on disk) and files into `wiki/best-practices/`; it was refused as ambiguous before.
+  - `MERGED_TAXONOMY` lacks `best-practices/local`, and the `SCAFFOLD_TAXONOMY` comment is stale.
+  - `wiki-map-compile.py:378` `CONTAINER_FOLDERS = {"research","project"}`: `local/` notes never reach `_MAP.md`.
+
+## Step 3 — hand-back 2, green
+- Mark's decision (21:44Z) applied. The README gains `confidence: high` and `standalone: "the folder's guide: nothing links to it by design"`, with no lifecycle dates. The lint test is now `test_lint_of_a_fresh_scaffold_draws_no_finding_on_the_local_readme_that_home_does_not` (the README's finding kinds must be a subset of HOME.md's). It was re-frozen and the old name retired.
+- Orchestrator re-run: test_local_folder 13/13, test_global_toolset 80/80. The developer also reports standalone 21/21 and check-freeze PASS (40 entries plus 164 earlier).
+- Limit: the parity test has not been seen failing on a README with an extra finding. Its bite rests on the earlier 12/13 red against the old README.
