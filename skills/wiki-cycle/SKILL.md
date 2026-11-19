@@ -155,7 +155,7 @@ It writes `semantic-scope.txt`: the entries added or revised since the last sema
 
 1. **Show** the findings: the mechanical lint's, and the semantic lint's with the ids the script prints, `uv run --project {{WIKI_SCRIPTS_DIR}} python {{WIKI_SCRIPTS_DIR}}/wiki-cycle-scope.py --topic <notebook> lint-fixes --run-folder <run-folder> --show` (use only those ids, never count positions).
 2. **Apply** what the user approves (fix agents by category, up to 3, on Step 0's `lint fixes` model). A finding that would edit a `framework-contract: true` doc goes to the user instead: the docs refresh overwrites such edits.
-3. **Record** the answer, every time, with no ids when nothing was applied or declined, and also when Step 4 was skipped (a lint ran within 24 hours): the same command with `--applied <ids> --declined <ids>` instead of `--show`. Exit 2 names the bad id and writes nothing: correct it and run again.
+3. **Record** the answer, every time, with no ids when nothing was applied or declined, and also when Step 4 was skipped (a lint ran within 24 hours): the same command with `--applied <ids> --declined <ids>` instead of `--show`, leaving out a flag that has no ids (with neither flag it records two empty lists). Exit 2 names the bad id and writes nothing: correct it and run again.
 4. **Re-run the mechanical lint**, Step 3's command with `--cycle-id <cycle_id> --run-folder <run-folder>`, so its result is stamped after the record and describes the fixed notebook (Step 8's `left-undone` reads a lint stamped before the record as not checked).
 
 Then Step 5.5.

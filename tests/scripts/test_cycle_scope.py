@@ -2045,6 +2045,86 @@ with tempfile.TemporaryDirectory() as td:
               p.returncode == 0 and f"since {S5_LINT} " in p.stdout and S5_LATE not in p.stdout, (p.returncode, p.stdout))
     semantic_scope_takes_its_cut_off_from_an_earlier_run_only()
 
+    def wiki_cycle_skill_says_to_leave_out_a_flag_with_no_ids():
+        skill = Path(__file__).resolve().parents[2] / "skills" / "wiki-cycle" / "SKILL.md"
+        item = next((l for l in skill.read_text(encoding="utf-8").splitlines()
+                     if l.startswith("3. **Record** the answer")), "")
+        check("wiki_cycle_skill_says_to_leave_out_a_flag_with_no_ids: cycle Step 5 item 3, the one that records the answer, "
+              "says to leave out a flag that has no ids",
+              "instead of `--show`" in item and "leaving out a flag that has no ids" in item, item)
+    wiki_cycle_skill_says_to_leave_out_a_flag_with_no_ids()
+
+    def left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff():
+        both = ["wiki/research/x/old-a.md", "wiki/research/x/old-b.md"]
+        root = mknb("s2b")
+        s4_entry(root, "wiki/research/x/old-a.md", D0)
+        s4_entry(root, "wiki/research/x/old-b.md", D0)
+        s4_commit(D0)
+        s4_entry(root, "wiki/research/x/old-a.md", D2)
+        s4_entry(root, "wiki/research/x/old-b.md", D1)
+        done = [dict(name="claims.json", status="completed", stamp=s4_stamp(D1), scope=("claims-scope.txt", both))]
+        p, lines, _ = s4_lu("s2b", "--full", done)
+        check("left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff: no index, a completed claims.json: "
+              "an entry re-reviewed after that run's day is counted, one re-reviewed on that day is not",
+              f"{CLM}1 — {CLM_RAN}" in lines, (p.stderr[-200:], lines))
+        root = mknb("s2c")
+        s4_entry(root, "wiki/research/x/old-a.md", D0)
+        s4_entry(root, "wiki/research/x/old-b.md", D0)
+        s4_commit(D0)
+        p, lines, _ = s4_lu("s2c", "--full", done)
+        check("left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff: no index, nothing re-reviewed since: "
+              "no claims line",
+              s4_line(lines, CLM) is None, (p.stderr[-200:], lines))
+        p, lines, _ = s4_lu("s2b", "--full", [dict(done[0], status="partial")])
+        check("left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff: no index, a partial claims.json: "
+              "every entry counted, not checked",
+              f"{CLM}2, not checked (the claims step ended partial; what it covered is unknown)" in lines,
+              (p.stderr[-200:], lines))
+    left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff()
+
+    def s3_indexed_nb(name):
+        """old-a, old-b, old-c committed D0 and an index of old-a and old-b written D1."""
+        root = mknb(name)
+        for nm in ("old-a", "old-b", "old-c"):
+            s4_entry(root, f"wiki/research/x/{nm}.md", D0)
+        s4_commit(D0)
+        idx = root / "_inbox" / "claims-index.json"
+        idx.parent.mkdir(parents=True, exist_ok=True)
+        idx.write_text(json.dumps({"generated": D1, "claims": [
+            {"source_entry": "research/x/old-a.md"}, {"source_entry": "research/x/old-b.md"}]}), encoding="utf-8")
+        s4_commit(D1)
+        return root
+
+    def left_undone_claims_count_with_an_index_but_no_claims_json_is_the_unindexed_plus_revised():
+        s3_indexed_nb("s3a")
+        p, lines, _ = s4_lu("s3a", "--lint-only")
+        check("left_undone_claims_count_with_an_index_but_no_claims_json_is_the_unindexed_plus_revised: an index naming "
+              "all but one entry and nothing revised since counts that one, not every entry",
+              f"{CLM}1 — {CLM_OFF}" in lines, (p.stderr[-200:], lines))
+        root = s3_indexed_nb("s3a2")
+        s4_entry(root, "wiki/research/x/old-a.md", D2)
+        p, lines, _ = s4_lu("s3a2", "--lint-only")
+        check("left_undone_claims_count_with_an_index_but_no_claims_json_is_the_unindexed_plus_revised: an indexed entry "
+              "re-reviewed after the index was written is counted too",
+              f"{CLM}2 — {CLM_OFF}" in lines, (p.stderr[-200:], lines))
+    left_undone_claims_count_with_an_index_but_no_claims_json_is_the_unindexed_plus_revised()
+
+    def left_undone_claims_cutoff_is_the_index_time_whatever_claims_json_says():
+        root = s3_indexed_nb("s3b")
+        s4_entry(root, "wiki/research/x/old-a.md", D2)
+        done = [dict(name="claims.json", status="completed", stamp=s4_stamp(D3),
+                     scope=("claims-scope.txt", ["wiki/research/x/old-a.md", "wiki/research/x/old-c.md"]))]
+        p, lines, _ = s4_lu("s3b", "--full", done)
+        check("left_undone_claims_cutoff_is_the_index_time_whatever_claims_json_says: an entry re-reviewed after the "
+              "index was written and before a later claims.json is still counted",
+              f"{CLM}1 — {CLM_RAN}" in lines, (p.stderr[-200:], lines))
+        early = [dict(done[0], stamp=s4_stamp(D0))]
+        p, lines, _ = s4_lu("s3b", "--full", early)
+        check("left_undone_claims_cutoff_is_the_index_time_whatever_claims_json_says: the same with a claims.json stamped "
+              "before the index",
+              f"{CLM}1 — {CLM_RAN}" in lines, (p.stderr[-200:], lines))
+    left_undone_claims_cutoff_is_the_index_time_whatever_claims_json_says()
+
 failed =[n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

@@ -103,7 +103,8 @@ last run's event lines.
 
   Entries not linted, without claims, not synthesised: one covered-set rule for the three, whether the step ran in this
   run or an earlier one. The cut-off C is the timestamp of the newest completed result of the step in any run folder,
-  this one included (newest_step; claims: C is when claims-index.json was last written), and S is the scope file
+  this one included (newest_step; claims: C is when claims-index.json was last written (with no index: the newest
+  completed claims.json's timestamp)), and S is the scope file
   (semantic-scope.txt, claims-scope.txt, synthesis-scope.txt) in that folder, the exact list the step read. What a
   step run now would read, from the scope functions the semantic, claims and synthesis commands share (semantic_scope,
   claims_scope, synthesis_scope), is the scope-now at C; of it only live wiki entries count (task cards, sessions and
@@ -112,7 +113,8 @@ last run's event lines.
   entry has that name), and its last_reviewed day is not after C's day: a step compares days, so an entry re-reviewed
   later on C's own day is covered (a stated under-count), one re-reviewed on a later day is counted whatever S says.
   With no completed result anywhere, nothing is covered and scope-now is every entry (synthesis: every research entry
-  when a best-practices page exists, else none). The wording by mode and this run's own result: the mode does not run
+  when a best-practices page exists, else none; claims: scope-now is the entries no index claim comes from plus those
+  revised since the index was written, every entry only when there is no index). The wording by mode and this run's own result: the mode does not run
   the step, the table; the mode runs it and its result is absent `<count>, not checked (<step> left no <file>)`
   (semantic lint only: with the newest completed lint under 24 hours old, `the semantic lint was skipped: one ran
   within 24 hours (<id>)`), unreadable `(<file> unreadable)`, not completed `(<step> ended <status>; what it covered is
@@ -549,7 +551,8 @@ def entry_backlog_lines(nb: Path, rf: Path, mode: str | None, problem: str | Non
         if key == "semantic":
             scope = semantic_scope(nb, cutoff)[0]
         elif key == "claims":
-            scope, _all, _why, cutoff = claims_scope(nb)
+            scope, _all, _why, written = claims_scope(nb)
+            cutoff = written or cutoff
         else:
             scope = synthesis_scope(nb, cutoff)[0]
         read = read_scope_file(found[1], scope_file) if found else set()

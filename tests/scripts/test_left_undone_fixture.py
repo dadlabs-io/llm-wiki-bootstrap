@@ -205,7 +205,7 @@ def tamper_checks(suite, case, ctx, cid, rf, before) -> None:
     try:
         for name, text in variants.items():
             report_path.write_text(text, encoding="utf-8")
-            res = suite.check(case, before, before, empty_session(), ctx)
+            res = suite.check(case, before, before, session_with(step8_call(suite, rf)), ctx)
             same = next((r for r in res if r["name"].startswith(SECTION_EQUALS_FILE)), None)
             own("A", f"the section-equals-file check fails {name}", same is not None and not same["ok"],
                 "check absent" if same is None else "passed")
@@ -230,6 +230,63 @@ def build(suite, tmp: Path, kind: str):
 def empty_session() -> dict:
     return {"result": {"subtype": "success", "is_error": False, "permission_denials": []}, "tool_calls": [],
             "text": "", "error_texts": {}, "stderr_tail": "", "wall_s": 0}
+
+
+def session_with(*calls: tuple[str, dict]) -> dict:
+    """An empty session that made these tool calls, each (tool name, input)."""
+    s = empty_session()
+    s["tool_calls"] = [{"name": n, "input": i} for n, i in calls]
+    return s
+
+
+def step8_call(suite, rf: Path) -> tuple[str, dict]:
+    """The one legitimate call of a plant-free session: the script, as cycle Step 8 prints it."""
+    return ("Bash", {"command": f"uv run --project {REPO}/scripts python {REPO}/scripts/wiki-cycle-scope.py "
+                                f"--topic {suite.NOTEBOOK} left-undone --run-folder {rf.as_posix()}"})
+
+
+def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
+    """Defects the left-undone-verbatim checks must catch, each run through check() and put back: a dash turned into
+    a hyphen in the section, and a session that wrote left-undone.txt itself by a route (the file then differs from the
+    script's by one count and the report copies it). The four old routes are controls: they fail today."""
+    target = (rf / "left-undone.txt").as_posix()
+    lu_file = rf / "left-undone.txt"
+    original = lu_file.read_text(encoding="utf-8")
+    base = compose_report(rf, cid)
+    report_path = rf / f"{cid}-run-cycle-report.md"
+    about = re.compile(r"left.undone|section|queue line", re.I)
+
+    def caught(session: dict) -> list[str]:
+        res = suite.check(case, before, before, session, ctx)
+        return [r["name"] for r in res if not r["ok"] and about.search(r["name"])]
+
+    dash_line = next(l for l in original.splitlines() if l.startswith("- ") and "—" in l)
+    try:
+        report_path.write_text(base.replace(dash_line, dash_line.replace("—", "-", 1), 1), encoding="utf-8")
+        own("A", "a check fails a section that turns the file's dash into a hyphen",
+            bool(caught(session_with(step8_call(suite, rf)))), "no check failed")
+        report_path.write_text(base, encoding="utf-8")
+        first = next(l for l in original.splitlines() if l.startswith("- ") and re.search(r": \d+", l))
+        lu_file.write_text(original.replace(first, re.sub(r"(?<=: )\d+", lambda m: str(int(m.group()) + 1), first, count=1), 1),
+                           encoding="utf-8")
+        report_path.write_text(compose_report(rf, cid), encoding="utf-8")
+        routes = {
+            "Write": ("Write", {"file_path": target, "content": "x"}),
+            "Edit": ("Edit", {"file_path": target, "old_string": "a", "new_string": "b"}),
+            ">": ("Bash", {"command": f"echo x > {target}"}),
+            "tee": ("Bash", {"command": f"echo x | tee {target}"}),
+            "cp": ("Bash", {"command": f"cp /tmp/mine.txt {target}"}),
+            "mv": ("Bash", {"command": f"mv /tmp/mine.txt {target}"}),
+            "sed -i": ("Bash", {"command": f"sed -i 's/: 2/: 3/' {target}"}),
+            "python -c": ("Bash", {"command": f"python -c \"open('{target}', 'w').write('x')\""}),
+            "a PowerShell call": ("PowerShell", {"command": f"Set-Content -Path {target} -Value x"}),
+        }
+        for name, call in routes.items():
+            hit = caught(session_with(step8_call(suite, rf), call))
+            own("A", f"a check fails a session that wrote left-undone.txt by {name}", bool(hit), "no check failed")
+    finally:
+        lu_file.write_text(original, encoding="utf-8")
+        report_path.write_text(base, encoding="utf-8")
 
 
 def case_a_expected(cid: str) -> list[str]:
@@ -279,12 +336,14 @@ def grade(suite, case, ctx, cid, rf, label) -> None:
     (rf / f"{cid}-run-cycle-report.json").write_text("{}", encoding="utf-8")
     finish_scratchpad(rf)
     before = suite.snapshot(ctx)
-    results = suite.check(case, before, before, empty_session(), ctx)
+    plain = session_with(step8_call(suite, rf))  # a plant-free session: the script's own call, nothing written
+    results = suite.check(case, before, before, plain, ctx)
     report(label, results, case["kind"])
     if case["kind"] == "left-undone-planted":
         verbatim = case_of("left-undone-verbatim")  # the same seeded folder, graded by the section-against-file kind
-        report(f"{label} (verbatim)", suite.check(verbatim, before, before, empty_session(), ctx), verbatim["kind"])
+        report(f"{label} (verbatim)", suite.check(verbatim, before, before, plain, ctx), verbatim["kind"])
         tamper_checks(suite, verbatim, ctx, cid, rf, before)
+        session_write_plants(suite, verbatim, ctx, cid, rf, before)
 
 
 def case_a(suite, tmp: Path) -> None:

@@ -1,0 +1,163 @@
+[
+ {
+  "id": "M0",
+  "label": "canary: a queue at 0 is no longer skipped",
+  "line": 563,
+  "exit": 1,
+  "verdict": "killed",
+  "failing_checks": [
+   "FAIL left_undone_counts_review_dates: exit 0 and the header counts the three queue lines  [(0, '', ['Left undone: 5 queue(s)', '- Past review_after: 2 \u2014 this mo",
+   "FAIL left_undone_counts_review_dates: exactly six queue lines, the last of them a queue line  [['Left undone: 5 queue(s)', '- Past review_after: 2 \u2014 this mode d",
+   "FAIL left_undone_names_what_it_cannot_check: a mismatch adds the Mode line and the header counts all three  [['Left undone: 4 queue(s)', '- Past review_after: 2",
+   "FAIL left_undone_names_what_it_cannot_check: no scratchpad keeps the count, the other lines and adds the Mode line  [['Left undone: 4 queue(s)', '- Past review_",
+   "FAIL left_undone_names_what_it_cannot_check: two lines naming different modes keeps the count, the other lines and adds the Mode line  [['Left undone: 4 queue(s",
+   "FAIL left_undone_names_what_it_cannot_check: no mode token and nothing else gives one queue, never nothing  [['Left undone: 2 queue(s)', '- Not yet synthesised:",
+   "FAIL left_undone_names_what_it_cannot_check: --report-only names the last full run on its second line, uncounted  [('', ['Left undone: 4 queue(s)', 'Disk-state ",
+   "FAIL left_undone_counts_bucket_tickets: --lint-only names this session's bucket once and the others once, and counts both in the header  [('', ['Left undone: 6 ",
+   "FAIL left_undone_counts_pending_tickets: --lint-only counts the three (one with no source:) and says it does not triage  [('', ['Left undone: 5 queue(s)', '- No",
+   "FAIL left_undone_counts_staged_entries: with confirm_before_promote false the two staged entries are one queue line  [('', ['Left undone: 5 queue(s)', '- Not se",
+   "FAIL left_undone_counts_staged_entries: with confirm_before_promote true Needs you has them, so no line  [['Left undone: 4 queue(s)', '- Not semantically linted",
+   "FAIL left_undone_counts_staged_entries: with no promote-setting.txt the count is kept and not checked is said  [['Left undone: 5 queue(s)', '- Not semantically ",
+   "FAIL left_undone_counts_staged_entries: no staged entries add nothing, with the setting false or absent  [['Left undone: 4 queue(s)', '- Not semantically linted",
+   "FAIL left_undone_counts_discovery_checklists: one checklist is one queue line, a README and a _-file are not counted  [('', ['Left undone: 5 queue(s)', '- Not s",
+   "FAIL left_undone_counts_discovery_checklists: no _inbox/discovered/ adds nothing  [['Left undone: 4 queue(s)', '- Not semantically linted: 0 \u2014 this mode does no",
+   "FAIL left_undone_falls_back_to_one_bucket_on_an_unparseable_intake_readme: exit 0 and the main bucket is this session's  [(0, '', ['Left undone: 5 queue(s)', '-",
+   "FAIL left_undone_counts_entries_not_linted: --lint-only counts the entry added and the one re-reviewed since the last lint, gives the does-not-run reason and a ",
+   "FAIL left_undone_counts_entries_not_linted: --full with no lint-semantic.json keeps the count and says the lint left none  [['Left undone: 7 queue(s)', '- Past ",
+   "FAIL left_undone_counts_entries_not_linted: this run's completed lint and a scope file listing both: no line  [['Left undone: 8 queue(s)', '- Past review_after:",
+   "FAIL left_undone_counts_entries_not_linted: a lint that did not read the new entry counts it, with the ran reason  [['Left undone: 7 queue(s)', '- Past review_a",
+   "FAIL left_undone_counts_entries_not_linted: a partial lint with a 3-entry scope file is not subtracted, the line says not checked  [['Left undone: 7 queue(s)', ",
+   "FAIL left_undone_counts_entries_not_linted: a lint-semantic.json that does not parse is not checked, no crash  [('', ['Left undone: 7 queue(s)', '- Past review_",
+   "FAIL left_undone_counts_entries_not_linted: a completed lint with no scope file is not checked, the count kept  [['Left undone: 7 queue(s)', '- Past review_afte",
+   "FAIL left_undone_counts_entries_not_linted: a mode that cannot be read keeps the count and says so  [['Left undone: 3 queue(s)', '- Not yet synthesised: 0, not ",
+   "FAIL left_undone_counts_entries_not_linted: read and re-reviewed on the lint's own day is not counted, one re-reviewed on a later day is, whatever the scope fil",
+   "FAIL left_undone_counts_entries_not_linted: re-reviewed on the lint's day and not in the scope file is counted  [['Left undone: 6 queue(s)', '- Past review_afte",
+   "FAIL left_undone_counts_entries_not_linted: a staged entry linted then promoted is not counted, nor is a task card  [['Left undone: 7 queue(s)', '- Past review_",
+   "FAIL left_undone_counts_entries_not_linted: a name present twice under wiki/ is not bridged, both are counted  [['Left undone: 6 queue(s)', '- Past review_after",
+   "FAIL left_undone_counts_entries_not_linted: no lint in a mode that runs it, one under 24 hours old: says it was skipped  [['Left undone: 7 queue(s)', '- Past re",
+   "FAIL left_undone_counts_entries_without_claims: with no claims index every entry is counted, a task card is not, with the does-not-run reason, and no scope file",
+   "FAIL left_undone_counts_entries_without_claims: with an index only the unindexed and the revised entries are counted  [['Left undone: 2 queue(s)', '- Not yet sy",
+   "FAIL left_undone_counts_entries_without_claims: --full with no claims.json keeps the count and says the step left none  [['Left undone: 6 queue(s)', '- Past rev",
+   "FAIL left_undone_counts_entries_without_claims: a partial claims step is not subtracted, the line says not checked  [['Left undone: 6 queue(s)', '- Past review_",
+   "FAIL left_undone_counts_entries_without_claims: a claims.json that does not parse is not checked, no crash  [('', ['Left undone: 6 queue(s)', '- Past review_aft",
+   "FAIL left_undone_counts_entries_without_claims: a completed claims step with no scope file is not checked, the count kept  [['Left undone: 6 queue(s)', '- Past ",
+   "FAIL left_undone_counts_entries_without_claims: entries the claims step read and found no claims in are not counted  [['Left undone: 7 queue(s)', '- Past review",
+   "FAIL left_undone_counts_entries_without_claims: one the step did not read is counted, with the ran reason  [['Left undone: 6 queue(s)', '- Past review_after: 0,",
+   "FAIL left_undone_counts_entries_not_synthesised: the research entries added since the last synthesis are counted, a superseded one is not, with the does-not-run",
+   "FAIL left_undone_counts_entries_not_synthesised: this run's completed synthesis and a scope file listing the new entry: no line  [['Left undone: 3 queue(s)', '-",
+   "FAIL left_undone_counts_entries_not_synthesised: a synthesis that did not read the new entry counts it, with the ran reason  [['Left undone: 2 queue(s)', '- Lin",
+   "FAIL left_undone_counts_entries_not_synthesised: a mode that synthesises, no synthesis.json: not checked, count kept  [['Left undone: 2 queue(s)', '- Lint findi",
+   "FAIL left_undone_counts_entries_not_synthesised: a partial synthesis is not subtracted, the line says not checked  [['Left undone: 2 queue(s)', '- Lint findings",
+   "FAIL left_undone_counts_entries_not_synthesised: a synthesis.json that does not parse is not checked, no crash  [('', ['Left undone: 2 queue(s)', '- Lint findin",
+   "FAIL left_undone_counts_entries_not_synthesised: a completed synthesis with no scope file is not checked, count kept  [['Left undone: 2 queue(s)', '- Lint findi",
+   "FAIL left_undone_counts_entries_not_synthesised: with no best-practices page there is nothing to synthesise into, no line  [['Left undone: 2 queue(s)', '- Not y",
+   "FAIL left_undone_names_lint_findings: a lint of 2 broken links and 1 unquoted yaml gives those two lines and none for files_scanned, standalone, backlink_blocks",
+   "FAIL left_undone_names_lint_findings: a partial lint gives one not-checked line per part, no counts, never nothing  [['Left undone: 5 queue(s)', '- Not semantic",
+   "FAIL left_undone_names_lint_findings: an unknown mode with no lint adds no lint line (the Mode line covers it)  [['Left undone: 4 queue(s)', '- Not semantically",
+   "FAIL left_undone_names_semantic_findings_from_earlier_runs: the header counts those lines  [['Left undone: 7 queue(s)']]",
+   "FAIL left_undone_names_each_source_the_run_left: the header counts them  [(['Left undone: 12 queue(s)'], 12)]",
+   "FAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a --report-only run copies them with (from <id>), counts them in the header, and skips an unr",
+   "FAIL left_undone_repeats_the_last_runs_events_when_only_reporting: a last run with no events file is not checked  [['Left undone: 4 queue(s)', 'Disk-state queue",
+   "FAIL left_undone_drops_the_interim_form: a run with nothing counted is exactly Left undone: nothing  [('', ['Left undone: 3 queue(s)', '- Not semantically linte",
+   "FAIL left_undone_drops_the_interim_form: with queues the header counts them and no Not counted yet line or disk-state header is written  [['Left undone: 3 queue",
+   "FAIL left_undone_reads_nothing_after_a_fully_answered_full_run: every step completed with its scope file, a staged entry linted then promoted, an entry re-revie",
+   "FAIL left_undone_reads_nothing_after_a_fully_answered_full_run: the same run with refresh.json removed gives the third state on the past-due line and is not not",
+   "FAIL left_undone_names_an_older_lint_with_no_usable_findings_list: an older completed lint whose findings list cannot be trusted is not checked, never silent, a",
+   "FAIL left_undone_bridges_a_promoted_stem_only_from_inbox_proposed: a scope file naming the stem under _inbox/done/ does not cover the live entry  [('', ['Left u",
+   "FAIL left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff: no index, a completed claims.json: an entry re-reviewed after that run's day is count",
+   "FAIL left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff: no index, nothing re-reviewed since: no claims line  [('', ['Left undone: 7 queue(s)'",
+   "FAIL left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff: no index, a partial claims.json: every entry counted, not checked  [('', ['Left undon",
+   "FAIL left_undone_claims_count_with_an_index_but_no_claims_json_is_the_unindexed_plus_revised: an index naming all but one entry and nothing revised since counts",
+   "FAIL left_undone_claims_count_with_an_index_but_no_claims_json_is_the_unindexed_plus_revised: an indexed entry re-reviewed after the index was written is counte",
+   "FAIL left_undone_claims_cutoff_is_the_index_time_whatever_claims_json_says: an entry re-reviewed after the index was written and before a later claims.json is s",
+   "FAIL left_undone_claims_cutoff_is_the_index_time_whatever_claims_json_says: the same with a claims.json stamped before the index  [('', ['Left undone: 6 queue(s"
+  ],
+  "last": [
+   "265/330 passed"
+  ],
+  "secs": 133
+ },
+ {
+  "id": "M1",
+  "label": "M1: the index time replaces the cut-off even when there is no index",
+  "line": 554,
+  "exit": 1,
+  "verdict": "killed",
+  "failing_checks": [
+   "FAIL left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff: no index, a completed claims.json: an entry re-reviewed after that run's day is count"
+  ],
+  "last": [
+   "329/330 passed"
+  ],
+  "secs": 133
+ },
+ {
+  "id": "M2",
+  "label": "M2: a claims.json overrides the index time",
+  "line": 554,
+  "exit": 1,
+  "verdict": "killed",
+  "failing_checks": [
+   "FAIL left_undone_claims_cutoff_is_the_index_time_whatever_claims_json_says: an entry re-reviewed after the index was written and before a later claims.json is s"
+  ],
+  "last": [
+   "329/330 passed"
+  ],
+  "secs": 133
+ },
+ {
+  "id": "M3",
+  "label": "M3: the claims scope taken as every entry",
+  "line": 554,
+  "exit": 1,
+  "verdict": "killed",
+  "failing_checks": [
+   "FAIL left_undone_counts_entries_without_claims: with an index only the unindexed and the revised entries are counted  [['Left undone: 3 queue(s)', '- Not semant",
+   "FAIL left_undone_counts_entries_without_claims: --full with no claims.json keeps the count and says the step left none  [['Left undone: 7 queue(s)', '- Past rev",
+   "FAIL left_undone_counts_entries_without_claims: a partial claims step is not subtracted, the line says not checked  [['Left undone: 7 queue(s)', '- Past review_",
+   "FAIL left_undone_counts_entries_without_claims: a claims.json that does not parse is not checked, no crash  [('', ['Left undone: 7 queue(s)', '- Past review_aft",
+   "FAIL left_undone_counts_entries_without_claims: a completed claims step with no scope file is not checked, the count kept  [['Left undone: 7 queue(s)', '- Past ",
+   "FAIL left_undone_counts_entries_without_claims: entries the claims step read and found no claims in are not counted  [['Left undone: 7 queue(s)', '- Past review",
+   "FAIL left_undone_counts_entries_without_claims: one the step did not read is counted, with the ran reason  [['Left undone: 7 queue(s)', '- Past review_after: 0,",
+   "FAIL left_undone_reads_nothing_after_a_fully_answered_full_run: every step completed with its scope file, a staged entry linted then promoted, an entry re-revie",
+   "FAIL left_undone_reads_nothing_after_a_fully_answered_full_run: the same run with refresh.json removed gives the third state on the past-due line and is not not",
+   "FAIL left_undone_claims_count_with_an_index_but_no_claims_json_is_the_unindexed_plus_revised: an index naming all but one entry and nothing revised since counts",
+   "FAIL left_undone_claims_count_with_an_index_but_no_claims_json_is_the_unindexed_plus_revised: an indexed entry re-reviewed after the index was written is counte",
+   "FAIL left_undone_claims_cutoff_is_the_index_time_whatever_claims_json_says: an entry re-reviewed after the index was written and before a later claims.json is s",
+   "FAIL left_undone_claims_cutoff_is_the_index_time_whatever_claims_json_says: the same with a claims.json stamped before the index  [('', ['Left undone: 7 queue(s"
+  ],
+  "last": [
+   "317/330 passed"
+  ],
+  "secs": 130
+ },
+ {
+  "id": "M4",
+  "label": "M4: a partial claims.json sets the cut-off",
+  "line": 549,
+  "exit": 1,
+  "verdict": "killed",
+  "failing_checks": [
+   "FAIL left_undone_counts_entries_without_claims: a partial claims step is not subtracted, the line says not checked  [['Left undone: 7 queue(s)', '- Past review_",
+   "FAIL left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff: no index, a partial claims.json: every entry counted, not checked  [('', ['Left undon"
+  ],
+  "last": [
+   "328/330 passed"
+  ],
+  "secs": 130
+ },
+ {
+  "id": "M5",
+  "label": "M5: the no-index cut-off is dropped (the pre-fix code)",
+  "line": 554,
+  "exit": 1,
+  "verdict": "killed",
+  "failing_checks": [
+   "FAIL left_undone_claims_count_with_no_index_uses_the_claims_run_as_cutoff: no index, a completed claims.json: an entry re-reviewed after that run's day is count"
+  ],
+  "last": [
+   "329/330 passed"
+  ],
+  "secs": 130
+ }
+]

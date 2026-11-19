@@ -1,0 +1,114 @@
+"""Hand mutation pass for change 246-240-follow-ups, step 7 (A2). prove_tests_bite.py cannot run on scripts/, so each
+mutant is one bug planted in a scratch copy of the repo's tracked files (never the repo itself). `orig` must match
+exactly ONE place in scripts/_run_state.py (asserted by --check). Each mutant runs tests/scripts/test_cycle_scope.py in
+its scratch copy; a non-zero exit is a kill, and the FAIL lines name the killing tests.
+Pattern: .do-code-change/archive/2026-11-18-240-loud-backlogs/hand-mutation-lu.py.txt
+
+    uv run python hand-mutation-claims.py --check
+    uv run python hand-mutation-claims.py --run <result.json> [--jobs 4]
+"""
+import argparse, json, shutil, subprocess, sys, time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+
+REPO = Path(r"C:\github.com\llm-wiki-bootstrap")
+SCRATCH = Path(r"C:\Users\mark\AppData\Local\Temp\2025-05-10_Temp\claude\10c13c95e6a1fa3b\7933309e-98e3-47f3-9ffc-68b0032aaf39\scratchpad\mutation246")
+F = "scripts/_run_state.py"
+FIX = "            scope, _all, _why, written = claims_scope(nb)\n            cutoff = written or cutoff"
+
+MUTANTS = [  # (label, orig, new)
+    ("canary: a queue at 0 is no longer skipped", "        if not n:\n            continue\n        if problem:",
+     "        if n:\n            continue\n        if problem:"),
+    ("M1: the index time replaces the cut-off even when there is no index", FIX,
+     "            scope, _all, _why, written = claims_scope(nb)\n            cutoff = written"),
+    ("M2: a claims.json overrides the index time", FIX,
+     "            scope, _all, _why, written = claims_scope(nb)\n            cutoff = found[0] if found else written"),
+    ("M3: the claims scope taken as every entry", FIX,
+     "            scope, _all, _why, written = claims_scope(nb)\n            scope = _all\n            cutoff = written or cutoff"),
+    ("M4: a partial claims.json sets the cut-off", 'found = newest_step(nb, result, "completed")',
+     'found = newest_step(nb, result, None if key == "claims" else "completed")'),
+    ("M5: the no-index cut-off is dropped (the pre-fix code)", FIX,
+     "            scope, _all, _why, cutoff = claims_scope(nb)"),
+]
+
+
+def plant(text, orig, new):
+    n = text.count(orig)
+    assert n == 1, f"matched {n} places: {orig[:80]!r}"
+    i = text.index(orig)
+    return text[:i] + new + text[i + len(orig):], text.count("\n", 0, i) + 1
+
+
+def check():
+    text = (REPO / F).read_text(encoding="utf-8")
+    bad = 0
+    for k, (label, orig, new) in enumerate(MUTANTS):
+        try:
+            assert orig != new
+            plant(text, orig, new)
+        except AssertionError as e:
+            bad += 1
+            print(f"M{k} {label}: {e}")
+    print(f"{len(MUTANTS)} mutants, {bad} without exactly one match")
+    return bad
+
+
+def build_base():
+    base = SCRATCH / "base"
+    if base.exists():
+        shutil.rmtree(base)
+    files = subprocess.run(["git", "-C", str(REPO), "ls-files", "-z"], capture_output=True, text=True,
+                           encoding="utf-8").stdout.split("\0")
+    for f in files:
+        if not f or f.startswith((".do-code-change/", "archive/", "graphify-out/")):
+            continue
+        src = REPO / f
+        if src.is_file():
+            (base / f).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, base / f)
+    return base
+
+
+def run_one(k, base):
+    label, orig, new = MUTANTS[k]
+    mutated, line = plant((REPO / F).read_text(encoding="utf-8"), orig, new)
+    work = SCRATCH / f"m{k}"
+    if work.exists():
+        shutil.rmtree(work, ignore_errors=True)
+    shutil.copytree(base, work)
+    (work / F).write_text(mutated, encoding="utf-8")
+    t0 = time.time()
+    p = subprocess.run(["uv", "run", "--project", str(REPO), "python", str(work / "tests" / "scripts" / "test_cycle_scope.py")],
+                       cwd=work, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
+    out = p.stdout + p.stderr
+    fails = [l[:160] for l in out.splitlines() if l.startswith("FAIL")]
+    rec = {"id": f"M{k}", "label": label, "line": line, "exit": p.returncode,
+           "verdict": "survived" if p.returncode == 0 else "killed",
+           "failing_checks": fails, "last": [l for l in out.splitlines() if l.strip()][-1:], "secs": round(time.time() - t0)}
+    shutil.rmtree(work, ignore_errors=True)
+    return rec
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--check", action="store_true")
+    ap.add_argument("--run")
+    ap.add_argument("--jobs", type=int, default=3)
+    a = ap.parse_args()
+    if a.check or not a.run:
+        sys.exit(1 if check() else 0)
+    if check():
+        sys.exit(1)
+    SCRATCH.mkdir(parents=True, exist_ok=True)
+    base = build_base()
+    results = {}
+    with ThreadPoolExecutor(a.jobs) as ex:
+        futs = [ex.submit(run_one, k, base) for k in range(len(MUTANTS))]
+        for fut in as_completed(futs):
+            r = fut.result()
+            results[r["id"]] = r
+            print(f"{r['id']} {r['verdict'].upper()} ({r['secs']}s) {r['label']}", flush=True)
+            Path(a.run).write_text(json.dumps(sorted(results.values(), key=lambda r: r["id"]), indent=1), encoding="utf-8")
+
+
+main()
