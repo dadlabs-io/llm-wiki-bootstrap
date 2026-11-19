@@ -1,3 +1,5 @@
+## Step 4b: no non-trivial decision (one constant extended; the compiler's walk is unchanged)
+
 ## Step 9: no non-trivial decision (doc text, links and version numbers only; Trivial stakes: yes)
 
 ## Step 10: no non-trivial decision (doc wording in framework-docs/wiki-frontmatter-best-practices.md, no Python line changed)

@@ -44,6 +44,14 @@ The reviewer also flagged a line of the names output ("hand them to the name rev
 
 - test_no_shipped_file_names_the_old_toolset_framework_path: OVER-CLAIMS (four findings). Fixed by assertions, re-frozen with an unfrozen reason: pathlib-chained parts and backslash spellings now match; a line holding the allowlisted constant is skipped only if it does not also spell the path; the check fails when a swept folder is missing or empty. Accepted, not changed: "no shipped file" means the listed folders and three root files (the plan's seam C list); root files outside it (README.md, install scripts) are not scanned; parts split across lines are not matched.
 
+## Step 4b (one doubt-reviewer, fed the test sources)
+
+- test_map_lists_a_note_in_best_practices_local: OK
+- test_existing_map_sections_do_not_change_when_best_practices_local_gains_a_note: OK (renamed from a name with `and`, before any freeze)
+- test_wiki_with_no_best_practices_folder_compiles_a_map_with_no_best_practices_section: OK
+- test_a_best_practices_local_folder_with_no_titled_note_leaves_the_map_unchanged: OVER-CLAIMS (narrow: only a no-frontmatter note). Fixed: a frontmatter note without a title added. Re-frozen.
+- test_the_shipped_local_readme_is_treated_in_the_map_as_a_readme_in_research_is: OVER-CLAIMS ("exactly": booleans only). Fixed: entry lines and purpose text compared across both folders. Re-frozen.
+
 ## Step 2 (one doubt-reviewer, fed the `check-freeze.py names` output)
 
 - test_empty_toolset_gets_local_readme_with_shipped_bytes: OK

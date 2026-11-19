@@ -110,6 +110,7 @@ Repository (llm-wiki-bootstrap):
 - `scripts/new-wiki.py`
 - `scripts/wiki-update.py`
 - `scripts/wiki-qmd-query.py`
+- `scripts/wiki-map-compile.py` (step 4b, Mark 2026-11-19)
 - `seed/**`
 - `framework-docs/**`
 - `skills/**` (only the lines naming the framework path, the search scope where a skill lists it, and the new-wiki skill's docs)
@@ -200,6 +201,13 @@ none
    - Failures: `skills/wiki-search/SKILL.md` or its wiki-seed page lists the searched folders as `research/` and `project/` only → the line gains `best-practices/` (the implementer greps for the pair). The real collection's file pattern excludes `best-practices/` (the manual evidence) → stop, and the question goes to `checkpoints.md`; no collection is edited by this change.
    - Invariant: the existing 78 `test_search_mode.py` checks stay green.
    - Speed: `sample_titles` adds one folder to a `rglob` over a notebook's `.md` files, run only by `--depth-check` (6 titles, a few seconds) — no timing run: the added folder holds a handful of files per wiki (the live toolset-style notebooks hold under 20), so it cannot move the check's time.
+   Trivial stakes: no
+
+4b. `_MAP.md` lists notes in `best-practices/` (the framework docs aside, which a wiki never holds) — done when the new check in `tests/scripts/test_local_folder.py` passes (seam F). Added at implement on Mark's "yes" (2026-11-19 23:15Z, `checkpoints.md`).
+   uses: `wiki-map-compile.py` `CONTAINER_FOLDERS` (line ~378), extended with `best-practices`; no new function.
+   - Expected: a wiki holding a note at `best-practices/local/my-notes.md` compiles a `_MAP.md` that lists it; the `research/` and `project/` sections are unchanged; the shipped `local/README.md` appears only as a README is treated elsewhere (whatever the compiler does with a folder README in `research/` or `project/` today).
+   - Failures: a wiki with no `best-practices/` folder compiles exactly as before (no empty section, no error).
+   - Invariant: the existing map-compile tests stay green.
    Trivial stakes: no
 
 5. Every shipped file that names the old toolset framework path names the new one — done when the new scan check in `tests/scripts/test_standalone.py` passes (seam C: no file under `skills/`, `agents/`, `templates/`, `seed/`, `wiki-seed/`, `framework-docs/`, `scripts/`, `CLAUDE.md`, `INSTALL-INVENTORY.md` or `V2_ROADMAP.md` contains `project/best-practices/framework` or a path built from `"project"`, `"best-practices"`, `"framework"` parts) and the existing path checks pass. The old-path guard in `tests/skills/new-wiki/check.py` (lines 368-372) is not edited here: it is a skill-suite check, so it comes from `eval-case-writer` in step 17.

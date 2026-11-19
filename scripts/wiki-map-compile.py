@@ -375,7 +375,7 @@ def process(wiki_root: Path, topic: str, dry_run: bool = False) -> dict:
     # Container folders (research/, project/) hold subfolders instead of direct
     # .md entries. Walk one level deeper into those. sessions/ is NON-CURATED
     # (working + episodic memory) and is excluded from the map entirely.
-    CONTAINER_FOLDERS = {"research", "project"}
+    CONTAINER_FOLDERS = {"research", "project", "best-practices"}
     for child in sorted(wiki_root.iterdir()):
         if not child.is_dir() or child.name.startswith("."):
             continue

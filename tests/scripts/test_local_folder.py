@@ -318,6 +318,91 @@ def test_note_without_frontmatter_in_best_practices_local_draws_the_finding_it_d
           here == there and bool(here), (sorted(here), sorted(there), out[-600:]))
 
 
+# ---------- step 4b: _MAP.md lists notes in best-practices/local/ (seam F) ----------
+def _compile_map(files: dict) -> str:
+    """Write each `{path under wiki/: text}` into a minimal temp wiki, run wiki-map-compile's `process` over it and
+    return the _MAP.md it wrote with the date lines that change with the day left out."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("wiki_map_compile", ROOT / "scripts" / "wiki-map-compile.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    with tempfile.TemporaryDirectory() as t:
+        wiki = Path(t) / "demo" / "wiki"
+        wiki.mkdir(parents=True)
+        for rel, text in files.items():
+            p = wiki / rel
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(text, encoding="utf-8")
+        mod.process(wiki, "demo")
+        text = (wiki / "_MAP.md").read_text(encoding="utf-8")
+    return "\n".join(ln for ln in text.splitlines() if not ln.startswith(("date:", "last_reviewed:", "review_after:")))
+
+
+def _folder_block(map_text: str, folder: str) -> list:
+    """The lines of the `### [`<folder>/`]` section of a map, or [] when it has none."""
+    block, inside = [], False
+    for ln in map_text.splitlines():
+        if ln.startswith("### "):
+            inside = ln.startswith(f"### [`{folder}/`]")
+        elif ln.startswith("## "):
+            inside = False
+        if inside:
+            block.append(ln)
+    return block
+
+
+RESEARCH_NOTE = VALID_NOTE.replace("My local note", "Research note")
+PROJECT_NOTE = VALID_NOTE.replace("My local note", "Project note")
+BASE_WIKI = {"research/active/research-note.md": RESEARCH_NOTE, "project/decisions/project-note.md": PROJECT_NOTE}
+
+
+def test_map_lists_a_note_in_best_practices_local():
+    text = _compile_map({**BASE_WIKI, f"{LOCAL}/my-notes.md": VALID_NOTE})
+    block = _folder_block(text, LOCAL)
+    check("_MAP.md: a section for best-practices/local/ lists the note as a link to it",
+          "- [My local note](./best-practices/local/my-notes.md) _[Tself]_" in block, block)
+
+
+def test_existing_map_sections_do_not_change_when_best_practices_local_gains_a_note():
+    without = _compile_map(BASE_WIKI)
+    with_note = _compile_map({**BASE_WIKI, f"{LOCAL}/my-notes.md": VALID_NOTE})
+    pairs = [(_folder_block(without, f), _folder_block(with_note, f)) for f in ("research/active", "project/decisions")]
+    check("_MAP.md: the research/active/ and project/decisions/ sections are non-empty and the same with and "
+          "without a note in best-practices/local/", all(a and a == b for a, b in pairs), pairs)
+
+
+def test_wiki_with_no_best_practices_folder_compiles_a_map_with_no_best_practices_section():
+    text = _compile_map(BASE_WIKI)
+    check("_MAP.md: a wiki with no best-practices folder compiles a map that names none and has its two sections",
+          "best-practices" not in text and bool(_folder_block(text, "research/active"))
+          and bool(_folder_block(text, "project/decisions")), text[-400:])
+
+
+def test_a_best_practices_local_folder_with_no_titled_note_leaves_the_map_unchanged():
+    without = _compile_map(BASE_WIKI)
+    no_title = VALID_NOTE.replace('title: "My local note"\n', "")
+    untitled = _compile_map({**BASE_WIKI, f"{LOCAL}/scratch.md": NOTE_WITHOUT_FRONTMATTER,
+                             f"{LOCAL}/no-title.md": no_title})
+    check("_MAP.md: a best-practices/local/ folder holding only notes with no title (no frontmatter, and "
+          "frontmatter without a title) compiles the same map as no folder at all",
+          "title:" not in no_title and untitled == without, (untitled[-300:], without[-300:]))
+
+
+def test_the_shipped_local_readme_is_treated_in_the_map_as_a_readme_in_research_is():
+    readme = SHIPPED_README.read_text(encoding="utf-8")
+    text = _compile_map({"research/active/README.md": readme, f"{LOCAL}/README.md": readme})
+
+    def treatment(folder: str):
+        block = _folder_block(text, folder)
+        entry = [ln.replace(folder, "<folder>") for ln in block if ln.startswith("- [")]
+        purpose = [ln for ln in block[1:] if ln.strip() and not ln.startswith(("Top entries:", "- ["))]
+        return bool(block), entry, purpose, bool(purpose) and not purpose[0].startswith("(no purpose set")
+
+    here, there = treatment(LOCAL), treatment("research/active")
+    check("_MAP.md: the shipped local README gets a section, a listed entry and a purpose line exactly as the same "
+          "README does in research/active/", here == there and here[0] and bool(here[1]) and here[3], (here, there))
+
+
 def _run(fn):
     """Run one test function; every check it records is named after it, and a crash is a failed check, not the end."""
     first = len(results)
@@ -342,7 +427,12 @@ for _test in (test_taxonomy_puts_best_practices_local_before_sessions_for_all_ni
               test_first_run_renders_the_three_wiki_scaffold_files,
               test_valid_note_in_best_practices_local_draws_no_lint_finding,
               test_note_without_tags_in_best_practices_local_draws_the_finding_it_draws_elsewhere,
-              test_note_without_frontmatter_in_best_practices_local_draws_the_finding_it_draws_elsewhere):
+              test_note_without_frontmatter_in_best_practices_local_draws_the_finding_it_draws_elsewhere,
+              test_map_lists_a_note_in_best_practices_local,
+              test_existing_map_sections_do_not_change_when_best_practices_local_gains_a_note,
+              test_wiki_with_no_best_practices_folder_compiles_a_map_with_no_best_practices_section,
+              test_a_best_practices_local_folder_with_no_titled_note_leaves_the_map_unchanged,
+              test_the_shipped_local_readme_is_treated_in_the_map_as_a_readme_in_research_is):
     _run(_test)
 
 failed = [n for ok, n in results if not ok]

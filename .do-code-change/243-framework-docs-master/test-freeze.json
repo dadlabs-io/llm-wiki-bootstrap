@@ -1203,5 +1203,90 @@
       }
     ],
     "unfrozen_reason": "name review round 1: only two fragments of the sentence were checked; now four distinctive fragments"
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_map_lists_a_note_in_best_practices_local",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e0764f2b92cacdb7ccfcccedd89ac2afa71fb26b7d2a16afad8a3533266448e3",
+    "frozen_at_step": "4b",
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_local_folder.py",
+      "exit": 1,
+      "tail": "PASS test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder: missing README source: non-zero exit, the missing file named, no wiki/best-practices folder\nPASS test_existing_claude_md_is_kept_byte_for_byte: a target that already has a CLAUDE.md: exit 0, the file's bytes unchanged\nPASS test_first_run_renders_the_three_wiki_scaffold_files: a first run: _MAP.md, README.md and HOME.md written, non-empty, no template placeholder left\nPASS test_valid_note_in_best_practices_local_draws_no_lint_finding: lint: a note with valid frontmatter in best-practices/local/ is named under no finding (the control, a note without frontmatter beside it, is named)\nPASS test_note_without_tags_in_best_practices_local_draws_the_finding_it_draws_elsewhere: lint: the same note without `tags` is named under the same findings in best-practices/local/ as in research/active/, among them the missing-tags one\nPASS test_note_without_frontmatter_in_best_practices_local_draws_the_finding_it_draws_elsewhere: lint: the same note without frontmatter is named under the same findings in best-practices/local/ as in research/active/, and there is at least one\nFAIL test_map_lists_a_note_in_best_practices_local: _MAP.md: a section for best-practices/local/ lists the note as a link to it  [[]]\nPASS test_research_and_project_sections_are_the_same_with_and_without_the_note: _MAP.md: the research/active/ and project/decisions/ sections are non-empty and the same with and without a note in best-practices/local/\nPASS test_wiki_with_no_best_practices_folder_compiles_a_map_with_no_best_practices_section: _MAP.md: a wiki with no best-practices folder compiles a map that names none and has its two sections\nPASS test_a_best_practices_local_folder_with_no_titled_note_leaves_the_map_unchanged: _MAP.md: a best-practices/local/ folder holding only a note with no title compiles the same map as no folder at all\nFAIL test_the_shipped_local_readme_is_treated_in_the_map_as_a_readme_in_research_is: _MAP.md: the shipped local README gets a section, a listed entry and a purpose line exactly as the same README does in research/active/  [((False, False, False), (True, True, True))]\n19/21 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_wiki_with_no_best_practices_folder_compiles_a_map_with_no_best_practices_section",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "8154c4df390e6878f79d78642b850cc53f10faf8f21f2f6387c69fbad592bd42",
+    "frozen_at_step": "4b",
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "coverage of unchanged behaviour, cannot fail before the change; bite shown by a transient mutation that added an empty best-practices/local section to every map: the test failed, reverted",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_existing_map_sections_do_not_change_when_best_practices_local_gains_a_note",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "6db57d058132d3be71b087d6fd486079d348061bf47d4ce8d3706afbc24a5c1d",
+    "frozen_at_step": "4b",
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "coverage of unchanged behaviour (a regression guard), cannot fail before the change; bite shown by a transient mutation that skipped the container walk when best-practices/ exists: the test failed (empty research and project sections), reverted",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_the_shipped_local_readme_is_treated_in_the_map_as_a_readme_in_research_is",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "9fe1525eac3df8b81c2d57100e3f553e09328cbb721444c9651b9ab5deaacfde",
+    "frozen_at_step": "4b",
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "red was shown before the one-line change (local block absent: (False, False, False) against (True, True, True)); strengthened after green, assertions only added",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: assertion compared booleans only; now compares entry lines and purpose text across the two folders",
+        "date": "2026-11-19",
+        "step": "4b",
+        "hash": "9fe1525eac3df8b81c2d57100e3f553e09328cbb721444c9651b9ab5deaacfde"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: assertion compared booleans only; now compares entry lines and purpose text across the two folders"
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_a_best_practices_local_folder_with_no_titled_note_leaves_the_map_unchanged",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "dc24ff33b9cf81c3e47a9cb0e2e4ba51cb03898261e23baa5b761bb048c6514b",
+    "frozen_at_step": "4b",
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "coverage of unchanged behaviour; bite by transient mutation (if sub_entries or True) failed the test, reverted",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: fixture now also holds a frontmatter note without a title",
+        "date": "2026-11-19",
+        "step": "4b",
+        "hash": "dc24ff33b9cf81c3e47a9cb0e2e4ba51cb03898261e23baa5b761bb048c6514b"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: fixture now also holds a frontmatter note without a title"
   }
 ]
