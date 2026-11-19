@@ -20,3 +20,7 @@ Branch: main (small path stays on its branch).
 - Fixture: uv run python tests/scripts/test_left_undone_fixture.py -> exit 0, 'every check passed'; all six new plants caught (dash, cp, mv, sed -i, python -c, PowerShell), four old-route controls caught, plain runs pass; the new script-output comparison passes on plain runs (writer's question 1, determinism, answered by this run).
 - Writer's questions 2-5 put to Mark (pending).
 - Fresh-case writer (step 9a) refused 'Mode: new': fresh mode needs two cases; put to Mark (two cases, ~$12 total, or none) — pending.
+- Step 9(a) two fresh cases (~$12 total paid run): Mark, Discord DM 2026-11-19T00:43Z, verbatim: "yes but do we report them?" -> answered: results per case per model, red-green outcome, posted to him and kept in the record.
+- Writer's design questions 2-5 (script-output comparison as main guard; detector counts writes to the file only; identical rewrite through a variable path unflagged): Mark, Discord DM 2026-11-19T00:47Z, verbatim: "yes".
+- Step 9(a) cases saved unchanged from eval-case-writer (fresh, second answer after a replay with the mode facts: --lint-only --semantic never reaches Step 5): two lint-fixes-record cases in cases.json + kind lint-fixes-record in check.py; json parses, check.py compiles.
+- Cost correction before running: red-green runs each new case on the old copy and the new, so 9(a) is 8 sessions (similar resumed --full case: ~$1.2 Sonnet + ~$2.7 Opus), ~$16, plus 9(b) ~$6.27: ~$22 total, not the ~$12 put to Mark. Put to Mark before any run.

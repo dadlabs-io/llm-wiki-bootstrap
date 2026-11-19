@@ -827,6 +827,8 @@ def prompt(case: dict, ctx: dict) -> str:
         _prepare_left_undone_planted(case, ctx, cycle_id)
     elif case["kind"] == "left-undone-old-run":
         _prepare_left_undone_old_run(case, ctx, cycle_id)
+    elif case["kind"] == "lint-fixes-record":
+        _prepare_lint_fixes_record(case, ctx, cycle_id)
     _write_config(ctx, email=case["kind"] == "email", drive=case["kind"] == "drive")
     if case["kind"] == "email":
         _prepare_email(ctx)
@@ -3389,6 +3391,89 @@ def _check_left_undone_old_run(case: dict, add, res: list, ctx: dict, run: dict,
     add("no queue line under the not-checked line (nothing is computed from the step files)", not bullets, bullets[:3])
 
 
+# ---------- kind "lint-fixes-record": Step 5 records the answer to the semantic findings, never with a bare flag (task #246, finding spec-15) ----------
+
+_LF_CALL = re.compile(r"\blint-fixes\b")
+_LF_VALUE = re.compile(r"\"[^\"]*\"|'[^']*'|[^\s;&|<>()]*")
+
+
+def _prepare_lint_fixes_record(case: dict, ctx: dict, cycle_id: str) -> None:
+    """The promote-setting fixture in its --full form (two staged entries, the scratchpad resuming before the
+    semantic lint). 'none-answered': nothing more; Step 4 runs on the staged entries. 'lint-within-24h': a completed
+    semantic lint 2 hours old in an earlier run folder dated yesterday (not today's -01, which is this run's own
+    folder), so Step 4's 24-hour rule skips it."""
+    from datetime import datetime, timedelta
+    _prepare_promote_setting({"mode": "full"}, ctx, cycle_id)
+    if case["variant"] == "lint-within-24h":
+        started = datetime.fromisoformat(ctx["started"])
+        pid = f"{(started - timedelta(days=1)).date().isoformat()}-01"
+        _prior_lint(ctx, pid, (started - timedelta(hours=2)).isoformat())
+
+
+def _lf_commands(run: dict) -> list:
+    """(call id, command) of every shell call that names lint-fixes."""
+    out = []
+    for c in run["tool_calls"]:
+        inp = c.get("input") or {}
+        cmd = str(inp.get("command", ""))
+        if (c["name"] in ("Bash", "PowerShell") or "command" in inp) and _LF_CALL.search(cmd):
+            out.append((c.get("id"), cmd))
+    return out
+
+
+def _lf_bare_flags(cmd: str) -> list:
+    """Each --applied / --declined in cmd with no value: nothing after it (end, newline or a shell operator), or
+    another option next. An empty quoted string is a value (argparse takes it), so it is not bare."""
+    bare = []
+    for m in re.finditer(r"--(?:applied|declined)(?![\w-])(=?)", cmd):
+        tail = cmd[m.end():]
+        if not m.group(1):
+            tail = tail.lstrip(" \t")
+        nxt = _LF_VALUE.match(tail).group(0)
+        if nxt == "" or (not m.group(1) and nxt.startswith("-")):
+            bare.append(cmd[m.start():m.end() + 30].replace("\n", " "))
+    return bare
+
+
+def _check_lint_fixes_record(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:
+    # a resumed --full run: the checks of a staged quick run that its premise contradicts (the same ones
+    # _check_promote_setting drops for mode full, and the --full-only one)
+    drop = {"quick steps all wrote their pair", "no --full-only step ran",
+            "nothing filed straight into wiki/ (staged run)"}
+    res[:] = [x for x in res if x["name"] not in drop]
+    sj = run_dir / "lint-semantic.json"
+    try:
+        step = json.loads(sj.read_text(encoding="utf-8")) if sj.is_file() else {}
+    except json.JSONDecodeError:
+        step = {}
+    ran = bool(step) and not re.match(r"skipped", str(step.get("status") or ""), re.I)
+    if case["variant"] == "none-answered":
+        add("premise: Step 4 ran a semantic lint in this run", ran, step.get("status") or "no lint-semantic.json")
+    else:
+        add("premise: Step 4 ran no new semantic lint (the earlier one is 2 hours old, inside the 24 hours)",
+            not ran, step.get("status") or "no lint-semantic.json")
+
+    cmds = _lf_commands(run)
+    recording = [c for _, c in cmds if "--show" not in c]
+    add("the session ran lint-fixes to record the answer (not --show only)", bool(recording),
+        [c[:120] for _, c in cmds] or "no lint-fixes call")
+    bare = [b for _, c in cmds for b in _lf_bare_flags(c)]
+    add("no lint-fixes call passed a bare --applied or --declined (a flag with no ids is left out)", not bare, bare)
+    errs = run.get("error_texts") or {}
+    failed = [f"{c[:80]} -> {errs[i][:100]}" for i, c in cmds
+              if i in errs and re.search(r"exit code 2\b|expected one argument", errs[i], re.I)]
+    add("no lint-fixes call exited 2 (argparse error)", not failed, failed)
+
+    f = run_dir / "lint-fixes.txt"
+    ftext = f.read_text(encoding="utf-8", errors="replace") if f.is_file() else ""
+    add("lint-fixes.txt is in the run folder", f.is_file(),
+        [p.name for p in run_dir.iterdir()] if run_dir.is_dir() else "no run folder")
+    am = re.search(r"(?im)^applied:[ \t]*(.*)$", ftext)
+    dm = re.search(r"(?im)^declined:[ \t]*(.*)$", ftext)
+    add("lint-fixes.txt records both lists empty (applied: and declined: with nothing after)",
+        bool(am and dm) and not am.group(1).strip() and not dm.group(1).strip(), ftext[:200] or "no file")
+
+
 def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[dict]:
     sys.path.insert(0, str(ctx["scripts"]))
     from _entry_checks import check_entry_file, split_frontmatter
@@ -3828,6 +3913,8 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         _check_left_undone_verbatim(case, add, res, ctx, run, run_dir)
     elif case["kind"] == "left-undone-old-run":
         _check_left_undone_old_run(case, add, res, ctx, run, run_dir)
+    elif case["kind"] == "lint-fixes-record":
+        _check_lint_fixes_record(case, add, res, ctx, run, run_dir)
 
     # ---- the commit ----
     commits = _git(ctx, "rev-list", f"{ctx['fixture_commit']}..HEAD").split()
