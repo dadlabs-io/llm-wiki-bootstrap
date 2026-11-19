@@ -248,8 +248,8 @@ def step8_call(suite, rf: Path) -> tuple[str, dict]:
 
 
 def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
-    """Defects the left-undone-verbatim checks must catch, each run through check() and put back. The rule (Mark,
-    2026-11-19): the write check fails only a Write, Edit, MultiEdit or NotebookEdit aimed at the file; every other
+    """Defects the left-undone-verbatim checks must catch, each run through check() and put back. The rule (the
+    requester's ruling): the write check fails only a Write, Edit, MultiEdit or NotebookEdit aimed at the file; every other
     route is judged by the script-output check, which fails any changed text and accepts an identical rewrite. So:
     a dash turned into a hyphen in the section; the tool routes on the untouched file (write check fails); each shell
     route with one count changed on disk (script-output check fails); the same shell routes with the text identical
