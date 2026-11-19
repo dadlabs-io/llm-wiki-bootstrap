@@ -168,6 +168,13 @@ Plan inconsistencies:
 3. 181 occurrences, not 180 (card 243).
 4. The plan's `manual: step 8` says evidence goes to `checkpoints.md`; it is here, as for steps 4, 6 and 7.
 
+## Step 8 — repoint to the hub (Mark 23:12Z)
+Mark, Discord 2026-11-19 23:12Z: "LLM-WIKI might point and AgentiucDEsign, but Agentic_Degsign does NOT poiunt at LKLM wiki. If its important, it goes in Agentic-Desgign". Nothing committed.
+- 13 links in 11 agentic-design files repointed from the llm-wiki record to `wiki/research/wiki/wiki-best-practices.md` (relative per file; link text and prose untouched): the 3 `project/architecture/` pages, chappy-asel, getting-started (2), karpathy, the 2 orchestration pages, anywhere-agents-yzhao (line 59; no practice page covers hook usage, so the hub), the qmd page, qmd-v2-5 (2).
+- The two generated indexes, `_INDEX.md` (root) and `wiki/research/implementation/_INDEX.md`: my one-line edit was each file's only change, so both were restored with `git checkout`. They again list the old path; the indexer drops the entry on its next run (step 15).
+- Resolve (`resolve2.py`): 13 links to the hub, 0 dead.
+- Grep for `architecture-decisions-2026-04-10` over all of agentic-design: 0 matches. A grep for any link to `llm-wiki-bootstrap` under agentic-design `wiki/` still finds 85 occurrences in 70 files; those existed before this step (other pages, including 5 of the 11 files above, outside the framework docs; out of this change per the plan's Exclusions) and are not touched.
+
 ## Step 9 — manual evidence
 Written by the developer, 2026-11-19. Trivial stakes: yes (no mutation pass). Nothing committed.
 
