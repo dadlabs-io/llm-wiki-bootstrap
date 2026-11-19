@@ -133,3 +133,37 @@ Plan inconsistencies:
 2. The practice pages already link the README, so "a practice page changed by a lesson links to the lesson" had nothing to add: no lesson, no edit.
 3. Plan manual line says checkpoints.md; the evidence is here.
 4. The README covers six of seven decisions as "no departure"; the seventh is open.
+
+## Step 8 — manual evidence
+Written by the developer, 2026-11-19. No test (Trivial stakes: yes). Nothing committed; the only staged change in project-notebooks is the `git mv`.
+
+New path: `C:\github.com\project-notebooks\notebooks\llm-wiki-bootstrap\wiki\project\decisions\architecture-decisions-2026-04-10.md` (`git mv` from `notebooks/agentic-design/wiki/research/implementation/architecture-decisions.md`; git status shows `RM`). The old path no longer exists. Filename choice: that folder's pages are `<slug>-<date>.md`; the date is the page's original `date: 2026-04-10`. The target did not exist beforehand (Glob `architecture*` found none).
+
+Counts (Grep of `architecture-decisions` over `notebooks/`, before any edit): 83 files, 181 occurrences (the plan says 180; the extra one is in card 243, edited by another session after the plan was written).
+- left as records, 60 files, unchanged: agentic-design `_inbox/archive/**` 30, `_inbox/reports/**` 24, claims-index `.bak` 2, llm-wiki `sessions/**` 4 (three journals plus `231-split-plan.md`).
+- machine files, 3, listed and not edited (below).
+- live pages, 19: 14 in agentic-design, 3 llm-wiki pages, 2 task cards.
+- the page itself, 1. 60 + 3 + 19 + 1 = 83.
+After: the 60 records and 3 machine files unchanged (git status shows no `_inbox`, `sessions` or `_signals`/`_config` change from this step; `_inbox/reports/lint-report.md` and `.obsidian/workspace.json` were already modified by other sessions). Of the 19 live pages, 13 agentic-design files were edited (15 links); 6 were not edited (below). Grep of the old name (`architecture-decisions` not followed by `-`) in `wiki/` now: 13 occurrences in 11 files, all in the left/listed classes or prose (below).
+
+Moved page, read against its rules: frontmatter keeps `tier: self`, `date: 2026-04-10`, `source_url`, `confidence`, `last_reviewed`, `review_after`; adds `category: decision`, tags `llm-wiki-bootstrap, decision` first; drops `raw_path: (none — self-authored)` (decision 2026-09-15: self-authored entries omit `raw_path`). No `origin` added (the old page had none; not invented). The page opens, under the title, with `## The flow this record belongs to` (agentic-design says how, llm-wiki builds and records why, a departure sends the lesson and reason back to the practice page; links to the hub and to the lessons README, depth `../../../../agentic-design/wiki/research/wiki/`). Body otherwise unchanged except link targets. All 25 relative links that changed were rewritten by script (relative to the new location; same targets); `## Related` was among them. The auto Backlinks block keeps its markers, heading and the "do not hand-edit" line; its three entries are removed (the one agentic-design page that linked it, getting-started, now links the record directly; the backlink tool rebuilds the block).
+
+Resolve run (scratch `resolve.py`, path-exists plus anchor-heading check): moved page 30 links, 0 dead; each of the 13 edited agentic-design files, changed lines only, 0 dead (`_INDEX.md` 1, 3 architecture pages 1 each, chappy 1, implementation `_INDEX.md` 1, getting-started 2, karpathy 1, orchestration 2, anywhere-agents 3 lines, qmd 1, qmd-v2-5 2); 15 links repointed in all. The script's final loop crashed on an unrelated deleted file of another session after listing all of mine; nothing of mine was after it.
+
+The 3 machine files, for Mark (not edited), matching lines:
+- `notebooks/agentic-design/_config/drift-watch.md:21`: `| [`research/implementation/architecture-decisions.md`](../wiki/research/implementation/architecture-decisions.md) | Recent commits + bootstrap-sync state | Decisions referenced still in force; any reversed decisions noted |` (a drift-watch row; its link is now dead).
+- `notebooks/agentic-design/_signals/architecture-decisions.json:2`: `"slug": "architecture-decisions",` (the page's signals sidecar; slug-keyed, now orphaned from its page).
+- `notebooks/agentic-design/_inbox/claims-index.json`, 14 lines: `"source_entry": "implementation/architecture-decisions.md"` at lines 23457, 23468, 23479, 23490 (the claim at 23456 reads "...as of the architecture-decisions doc"), and `"source_entry": "research/implementation/architecture-decisions.md"` at lines 67966, 67978, 67990, 68002, 68014, 97281, 97296, 97311, 97326.
+
+Not edited, listed for the orchestrator:
+1. The 3 llm-wiki live pages (the 2026-09-25 decision line 41, the 2026-11-13 decision line 31, troubleshooting line 60) and cards 231 (lines 16, 40) and 243 (lines 7, 16) name the page in prose (`architecture-decisions.md`, "the architecture-decisions page") with no link; there is no link target to repoint. Card 243 not edited per the brief; card 231 also left, since the hits are rough-note prose, not links. The 2026-11-13 decision is step 16's.
+2. agentic-design root `_INDEX.md:471`, a generated tree line `├── architecture-decisions.md` under `implementation/`: not a link; the indexer drops it on its next run (step 15).
+3. `moe-foundry-...-ruv-cohen.md:58` names `docs/architecture-decisions.md` in the third-party `ruvnet/MoE-Foundry` repo: not our page, not repointed.
+4. The moved page's line 26 still links the toolset's old layout `global-toolset/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md#tier-rubric` (the new `wiki/best-practices/framework/` does not exist in the toolset until the install). It resolves today; step 14 repoints it.
+5. The remaining `source_url: internal://synthesis/2026-04-10-architecture-decisions` in the moved page is an identifier, kept.
+
+Plan inconsistencies:
+1. The plan counts the 19 live pages as links to repoint; only 13 agentic-design files carry link targets. The 3 llm-wiki pages and 2 cards hold prose, and `moe-foundry` (counted among the 9 research files) is a false positive. So 13 files, not 19.
+2. Decision 2 says agentic-design pages are repointed "to the practice pages (Decision 5)"; step 8 says "to its new place". Followed step 8 as the brief says. The 15 repointed agentic-design links now point INTO llm-wiki, against Mark's "agentic-design does not link to llm-wiki". Orchestrator to decide per link; each is an `## Related` list entry or a see-also (`anywhere-agents-yzhao.md:59` is an inline link whose text is "settings.json hook usage").
+3. 181 occurrences, not 180 (card 243).
+4. The plan's `manual: step 8` says evidence goes to `checkpoints.md`; it is here, as for steps 4, 6 and 7.
