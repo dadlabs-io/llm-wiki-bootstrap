@@ -136,21 +136,6 @@
   },
   {
     "file": "tests/scripts/test_global_toolset.py",
-    "test_name": "test_write_failure_is_listed_failed_rest_refreshed",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "75e72f261f7bb06f08ab51052d8cc584902d06f293fd764c8f58b20ef43f30a0",
-    "frozen_at_step": 1,
-    "frozen_at": "2026-11-19",
-    "red": {
-      "command": "uv run python tests/scripts/test_global_toolset.py",
-      "exit": 1,
-      "tail": "FAIL test_global_install_summary_names_failed_paths: install summary: a `FAILED <path>: <reason>` line and a word saying the refresh is incomplete  [onfig.json\n  global toolset:   wrote 0 new, 0 changed, removed 0; registry: already  \u2192 r\n  retired:          removed 0 files of skills, scripts or agents that no longer ship\n  placeholder {{WIKI_SCRIPTS_DIR}} \u2192 s\n  placeholder {{TOOLSET_DIR}}      \u2192\n  Restart Claude Code if these dirs are new so it picks up the\n  new skills + scripts.\n============================================================\n]\nFAIL test_spec_lookup_reads_the_toolset_at_new_path: spec lookup: the toolset's new-path spec is the one read  [('C:/github.com/llm-wiki-bootstrap/framework-docs/wiki-frontmatter-best-practices.md', '### tier rubric\\n\\nFrom [wiki-authoring-best-practices.md principle 7](./wiki-authoring-best-practices.md):\\n\\n| Tier | Value | Source type |\\n|---|---|---|\\n| 1 | `1` | Peer-reviewed / primary \u2014 papers, arXiv preprints included (see below), official spec docs, source code |\\n| 2 | `2` | Established documentation \u2014 vendor/framework docs, official blog posts |\\n| 3 | `3` | Reputable expert / first-hand \u2014 founder posts, expert blogs, conf talks, journalism (KDnuggets, VentureBeat, Karpathy gists, Simon Willison, Hamel Husain, Lance Martin); a named practitioner\\'s first-hand post on any platform; a single-maintainer repository that works and is documented (see below) |\\n| 4 | `4` | Community / unverified \u2014 Reddit and forum threads, anonymous gists, unsourced or SEO posts, vendor marketing, retellings of someone else\\'s work, early or unverifiable repositories \u2014 **never auto-ingest**, human review only |\\n| self | `self` | Self-authored synthesis, plans, specs, session notes |\\n\\nWhen unsure between two adjacent tiers, prefer the LOWER tier (more conservative). Tiers 1\u20133 are auto-ingestible; tier 4 always queues for human approval.\\n\\n**A research paper on arXiv is tier 1, reviewed or not** (Mark, 2026-10-11: \"we\\'re talking about scientific documents\"). A position or workshop paper is still a paper. That a preprint is unreviewed, or rests on a small or synthetic study, lowers the entry\\'s `confidence`, never its tier, and the entry says why. (Cycle 2026-10-11-01 filed 23 arXiv papers at tier 1 and one, an opinion paper, at tier 2: the rubric did not say.)\\n\\n#### Posts and individual repositories: tier the author and the evidence, not the platform (2026-09-23)\\n\\nWhere a source is hosted says little about it: Medium carries both an engineer\\'s measured account of their own system and an SEO listicle, and GitHub carries both a code-verified survey and a weekend experiment. Until 2026-09-23 this table put \"Medium\" and \"an individual\\'s repository\" in tier 4 wholesale, and one cycle\\'s triage and the session that filed the same items tiered similar repositories 2, 3 and 4. The rule:\\n\\n| Source | Tier 2 | Tier 3 | Tier 4 |\\n|---|---|---|---|\\n| **A post** \u2014 Medium, Substack, X long-form, a personal or company dev blog | \u2014 (an official vendor or framework post is tier 2 by the row above) | A named practitioner writing first-hand: their own system, their own measured results, or an author with a track record in this wiki | Anonymous or unsourced; SEO or listicle; vendor marketing for its own product; a retelling of someone else\\'s work (tier it by the original \u2014 ingest the original where you can) |\\n| **An individual\\'s GitHub repository** | Adopted: several maintainers or an organisation, tagged releases, evidence of outside use | One maintainer, a working and documented project, its code read beyond the README | Early, unreleased, or unverifiable (a README with nothing behind it) |\\n\\nHow deeply **we** read a source raises our `confidence`, never its tier: tier describes the source, confidence our entry. A retelling keeps its author\\'s figures `sourced` via the author (authoring best practices, principle 5).\\n\\n**Restatement rule (2026-08-01; template synced to v3 on 2026-09-02).** This table is the only place the tier rubric is defined, and the confidence scale below is the only place confidence is defined. Folder READMEs, `_INDEX` files, eval rubrics, skill definitions and entry bodies **link here; they do not restate it.** A paraphrase cannot be lint-checked, ages independently of the thing it paraphrases, and \u2014 where it also claims to be \"the same as elsewhere\" \u2014 actively deters verification. The same rule applies to any rule in this document. If a folder needs a rubric this table does not support, that is a gap to close here, not a local variant to publish there. (Why it matters: on 2026-09-02 the `wiki-update` skill\\'s own paraphrase of the confidence scale had drifted from this table and an ingest had to guess which won. Precedence is now stated in the project CLAUDE.md: framework-contract docs first.)\\n\\n### confidence scale\\n\\n- `high` \u2014 claims are well-sourced, recently verified, from tier 1-2 sources\\n- `medium` \u2014 tier 3 source, older entry, or synthesis with some inference\\n- `low` \u2014 tier 4, speculative, or flagged for re-review')]\nFAIL test_spec_lookup_falls_back_to_package_docs_without_new_path: spec lookup: no spec at the new path -> framework-docs/ beside scripts/ (the old path is not read)  [('C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpeor0fs9d/vault/notebooks/global-toolset/wiki/project/best-practices/framework/wiki-frontmatter-best-practices.md', '### tier rubric\\nOLD-PATH-RUBRIC')]\n27/47 passed",
-      "date": "2026-11-19"
-    }
-  },
-  {
-    "file": "tests/scripts/test_global_toolset.py",
     "test_name": "test_global_install_summary_names_failed_paths",
     "hash_of": "test",
     "hash_scope": "test+module",
@@ -217,5 +202,267 @@
       }
     ],
     "unfrozen_reason": "name review round 1: 'without writing' over-claimed; added a before/after snapshot of every toolset file"
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_empty_toolset_gets_local_readme_with_shipped_bytes",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "a6309e18f41586c53a11b582e6719af722bda3934b0e9050a529ca0b3bdcd5ab",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "FAIL test_dry_run_reports_local_readme_writes_nothing: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp5ou7ita_\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_shipped_local_readme_names_both_places: shipped README: the global toolset's wiki/best-practices/local/ is named for every wiki on the machine\nFAIL test_shipped_local_readme_names_both_places: shipped README: this wiki's own wiki/best-practices/local/ is named for this wiki only\nFAIL test_shipped_local_readme_tells_the_reader_to_ask_when_unsure: shipped README: says to ask the user which when unsure\nFAIL test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier  [{}]\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1  [{}]\nFAIL test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nFAIL test_plain_file_where_local_belongs_lists_readme_in_failed: raised FileNotFoundError: [WinError 2] The system cannot find the file specified: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpxax6_c5a\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local'\nFAIL test_unwritable_readme_replacement_is_listed_failed_rest_done: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpgc1nki9p\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error  [([WindowsPath('README.md'), WindowsPath('how-to/_FRAMEWORK_MANAGED.md')], {'root': 'C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmp38uy2lek/vault/notebooks/global-toolset', 'state': 'missing', 'add': ['README.md'], 'replace': [], 'remove': []})]\n51/68 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_edited_local_readme_is_replaced_by_refresh",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ec065e7c193d002fba5bc15437f9fbf07e4d9b56d88d7d6662ad5143a09ac59b",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "FAIL test_dry_run_reports_local_readme_writes_nothing: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp_w_45fi3\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_shipped_local_readme_names_both_places: shipped README: the global toolset's wiki/best-practices/local/ is named for every wiki on the machine\nFAIL test_shipped_local_readme_names_both_places: shipped README: this wiki's own wiki/best-practices/local/ is named for this wiki only\nFAIL test_shipped_local_readme_tells_the_reader_to_ask_when_unsure: shipped README: says to ask the user which when unsure\nFAIL test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier  [{}]\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1  [{}]\nFAIL test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nFAIL test_plain_file_where_local_belongs_lists_readme_in_failed: raised FileNotFoundError: [WinError 2] The system cannot find the file specified: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpl6nj6ajc\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local'\nFAIL test_unwritable_readme_replacement_is_listed_failed_rest_done: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp70kchfji\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error  [([WindowsPath('README.md'), WindowsPath('how-to/_FRAMEWORK_MANAGED.md')], {'root': 'C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmp2x26_q4f/vault/notebooks/global-toolset', 'state': 'missing', 'add': ['README.md'], 'replace': [], 'remove': []})]\n51/68 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_deleted_local_readme_is_added_again",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "40c90a943fb7992b02c3a9330948233c45a5bc559f1ba58bce97db3a21aaaf10",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "FAIL test_dry_run_reports_local_readme_writes_nothing: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpn6b9qflk\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_shipped_local_readme_names_both_places: shipped README: the global toolset's wiki/best-practices/local/ is named for every wiki on the machine\nFAIL test_shipped_local_readme_names_both_places: shipped README: this wiki's own wiki/best-practices/local/ is named for this wiki only\nFAIL test_shipped_local_readme_tells_the_reader_to_ask_when_unsure: shipped README: says to ask the user which when unsure\nFAIL test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier  [{}]\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1  [{}]\nFAIL test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nFAIL test_plain_file_where_local_belongs_lists_readme_in_failed: raised FileNotFoundError: [WinError 2] The system cannot find the file specified: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpwp_k3pkk\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local'\nFAIL test_unwritable_readme_replacement_is_listed_failed_rest_done: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpatyugve4\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error  [([WindowsPath('README.md'), WindowsPath('how-to/_FRAMEWORK_MANAGED.md')], {'root': 'C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmp716kqxa8/vault/notebooks/global-toolset', 'state': 'missing', 'add': ['README.md'], 'replace': [], 'remove': []})]\n51/68 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_user_files_in_local_are_untouched",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ebe7f97353a1ed5207faf1c4722cf5b07bda04f7aa737a16e3bbceaa3dc17dd9",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "FAIL test_dry_run_reports_local_readme_writes_nothing: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpv6ubuaf1\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_shipped_local_readme_names_both_places: shipped README: the global toolset's wiki/best-practices/local/ is named for every wiki on the machine\nFAIL test_shipped_local_readme_names_both_places: shipped README: this wiki's own wiki/best-practices/local/ is named for this wiki only\nFAIL test_shipped_local_readme_tells_the_reader_to_ask_when_unsure: shipped README: says to ask the user which when unsure\nFAIL test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier  [{}]\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1  [{}]\nFAIL test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nFAIL test_plain_file_where_local_belongs_lists_readme_in_failed: raised FileNotFoundError: [WinError 2] The system cannot find the file specified: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp5yznbz21\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local'\nFAIL test_unwritable_readme_replacement_is_listed_failed_rest_done: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpx6wjplct\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error  [([WindowsPath('README.md'), WindowsPath('how-to/_FRAMEWORK_MANAGED.md')], {'root': 'C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpqc4j8u56/vault/notebooks/global-toolset', 'state': 'missing', 'add': ['README.md'], 'replace': [], 'remove': []})]\n51/68 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_shipped_local_readme_says_do_not_edit_it",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e66fe503d50fb0d30f7c85cf6ba0b4ef653b4fcfa380b17abb5c6d3da7af788a",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "FAIL test_dry_run_reports_local_readme_writes_nothing: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp32fyvcxx\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_shipped_local_readme_names_both_places: shipped README: the global toolset's wiki/best-practices/local/ is named for every wiki on the machine\nFAIL test_shipped_local_readme_names_both_places: shipped README: this wiki's own wiki/best-practices/local/ is named for this wiki only\nFAIL test_shipped_local_readme_tells_the_reader_to_ask_when_unsure: shipped README: says to ask the user which when unsure\nFAIL test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier  [{}]\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1  [{}]\nFAIL test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nFAIL test_plain_file_where_local_belongs_lists_readme_in_failed: raised FileNotFoundError: [WinError 2] The system cannot find the file specified: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpru5jgev4\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local'\nFAIL test_unwritable_readme_replacement_is_listed_failed_rest_done: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpeu85lbwb\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error  [([WindowsPath('README.md'), WindowsPath('how-to/_FRAMEWORK_MANAGED.md')], {'root': 'C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpnykd8dbm/vault/notebooks/global-toolset', 'state': 'missing', 'add': ['README.md'], 'replace': [], 'remove': []})]\n51/68 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_shipped_local_readme_has_no_template_placeholder",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "aa1af4d9e8f9fb10fdcca1f5423dc8d082a2a3f2a0e6c39a9b5ee7493ff944d4",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "FAIL test_dry_run_reports_local_readme_writes_nothing: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpb1rb06dm\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_shipped_local_readme_names_both_places: shipped README: the global toolset's wiki/best-practices/local/ is named for every wiki on the machine\nFAIL test_shipped_local_readme_names_both_places: shipped README: this wiki's own wiki/best-practices/local/ is named for this wiki only\nFAIL test_shipped_local_readme_tells_the_reader_to_ask_when_unsure: shipped README: says to ask the user which when unsure\nFAIL test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier  [{}]\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1  [{}]\nFAIL test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nFAIL test_plain_file_where_local_belongs_lists_readme_in_failed: raised FileNotFoundError: [WinError 2] The system cannot find the file specified: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp73b_1v83\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local'\nFAIL test_unwritable_readme_replacement_is_listed_failed_rest_done: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp3in5kyhi\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error  [([WindowsPath('README.md'), WindowsPath('how-to/_FRAMEWORK_MANAGED.md')], {'root': 'C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpjy0920hu/vault/notebooks/global-toolset', 'state': 'missing', 'add': ['README.md'], 'replace': [], 'remove': []})]\n51/68 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_plain_file_where_local_belongs_lists_readme_in_failed",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "f07a64b3b7272edefafa6d58e74d7f59620b78ad058d0f96a7efaa2e90497b19",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "FAIL test_dry_run_reports_local_readme_writes_nothing: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpywqje497\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_shipped_local_readme_names_both_places: shipped README: the global toolset's wiki/best-practices/local/ is named for every wiki on the machine\nFAIL test_shipped_local_readme_names_both_places: shipped README: this wiki's own wiki/best-practices/local/ is named for this wiki only\nFAIL test_shipped_local_readme_tells_the_reader_to_ask_when_unsure: shipped README: says to ask the user which when unsure\nFAIL test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier  [{}]\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1  [{}]\nFAIL test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nFAIL test_plain_file_where_local_belongs_lists_readme_in_failed: raised FileNotFoundError: [WinError 2] The system cannot find the file specified: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpfn5sggr0\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local'\nFAIL test_unwritable_readme_replacement_is_listed_failed_rest_done: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp624xs_q7\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error  [([WindowsPath('README.md'), WindowsPath('how-to/_FRAMEWORK_MANAGED.md')], {'root': 'C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmp8tszchxi/vault/notebooks/global-toolset', 'state': 'missing', 'add': ['README.md'], 'replace': [], 'remove': []})]\n51/68 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_missing_readme_source_is_skipped_by_status",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e8482f55c2378a11201346783605be6f2f96b241fd86698f6b56ca4db03e531d",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "FAIL test_dry_run_reports_local_readme_writes_nothing: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpqgkpuh5q\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_shipped_local_readme_names_both_places: shipped README: the global toolset's wiki/best-practices/local/ is named for every wiki on the machine\nFAIL test_shipped_local_readme_names_both_places: shipped README: this wiki's own wiki/best-practices/local/ is named for this wiki only\nFAIL test_shipped_local_readme_tells_the_reader_to_ask_when_unsure: shipped README: says to ask the user which when unsure\nFAIL test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier  [{}]\nFAIL test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1  [{}]\nFAIL test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nFAIL test_plain_file_where_local_belongs_lists_readme_in_failed: raised FileNotFoundError: [WinError 2] The system cannot find the file specified: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmp09bdd_xr\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local'\nFAIL test_unwritable_readme_replacement_is_listed_failed_rest_done: raised FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpmd7dc5dj\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\best-practices\\\\local\\\\README.md'\nFAIL test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error  [([WindowsPath('README.md'), WindowsPath('how-to/_FRAMEWORK_MANAGED.md')], {'root': 'C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpiy_6jt1f/vault/notebooks/global-toolset', 'state': 'missing', 'add': ['README.md'], 'replace': [], 'remove': []})]\n51/68 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_dry_run_reports_local_readme_writes_nothing",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "eba05e70065b4c29def527e62e2495340d8d9423457cb6b570c51b2ca9adfd0d",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "PASS test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: the lint's frontmatter parser loads it with no finding and treats it as a framework page\nPASS test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: exactly the README in failed, with a reason\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: every other file still refreshed (the edited page restored)\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: --phase docs exits 1 printing `FAILED <path>: <reason>`\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: exactly that file in failed, with a reason\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: the other edited page restored, the README left as it was\nPASS test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error\n78/80 passed",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: asserts every toolset file unchanged and no folder created, not only wiki/",
+        "date": "2026-11-19",
+        "step": 2,
+        "hash": "eba05e70065b4c29def527e62e2495340d8d9423457cb6b570c51b2ca9adfd0d"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: asserts every toolset file unchanged and no folder created, not only wiki/"
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_shipped_local_readme_names_both_places",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ac216e8a465976d5cfb7f4d21f19919ce0f3712c53a2f3587ffd889a69699e01",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "PASS test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: the lint's frontmatter parser loads it with no finding and treats it as a framework page\nPASS test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: exactly the README in failed, with a reason\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: every other file still refreshed (the edited page restored)\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: --phase docs exits 1 printing `FAILED <path>: <reason>`\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: exactly that file in failed, with a reason\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: the other edited page restored, the README left as it was\nPASS test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error\n78/80 passed",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: each path is checked on the line that gives its scope",
+        "date": "2026-11-19",
+        "step": 2,
+        "hash": "ac216e8a465976d5cfb7f4d21f19919ce0f3712c53a2f3587ffd889a69699e01"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: each path is checked on the line that gives its scope"
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_shipped_local_readme_tells_the_reader_to_ask_when_unsure",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "e5b49edf6287149565721b8267a6d6e2257b5b99354980d5dec4733212aec51a",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "PASS test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: the lint's frontmatter parser loads it with no finding and treats it as a framework page\nPASS test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: exactly the README in failed, with a reason\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: every other file still refreshed (the edited page restored)\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: --phase docs exits 1 printing `FAILED <path>: <reason>`\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: exactly that file in failed, with a reason\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: the other edited page restored, the README left as it was\nPASS test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error\n78/80 passed",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the ask instruction is checked on one line with 'when unsure which'",
+        "date": "2026-11-19",
+        "step": 2,
+        "hash": "e5b49edf6287149565721b8267a6d6e2257b5b99354980d5dec4733212aec51a"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the ask instruction is checked on one line with 'when unsure which'"
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_shipped_local_readme_has_the_lint_frontmatter",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "b16fa26395098d614199ef6d91a1dbc3cd8260989076605b845530c6a605c79f",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "PASS test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: the lint's frontmatter parser loads it with no finding and treats it as a framework page\nPASS test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: exactly the README in failed, with a reason\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: every other file still refreshed (the edited page restored)\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: --phase docs exits 1 printing `FAILED <path>: <reason>`\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: exactly that file in failed, with a reason\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: the other edited page restored, the README left as it was\nPASS test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error\n78/80 passed",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the lint's own parser and loadability check now run on the README",
+        "date": "2026-11-19",
+        "step": 2,
+        "hash": "b16fa26395098d614199ef6d91a1dbc3cd8260989076605b845530c6a605c79f"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the lint's own parser and loadability check now run on the README"
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_unwritable_readme_replacement_is_listed_failed_rest_done",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "c78c1b6d7dc5ed4d4a3fa42b070d9fef5e008f5b5699ff4e746ff2b40831c13b",
+    "frozen_at_step": 2,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "PASS test_shipped_local_readme_says_do_not_edit_it: shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: frontmatter has title, date, tags and tier\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: framework-contract true, framework-version 1\nPASS test_shipped_local_readme_has_the_lint_frontmatter: shipped README: the lint's frontmatter parser loads it with no finding and treats it as a framework page\nPASS test_shipped_local_readme_has_no_template_placeholder: shipped README: not empty and no {{ placeholder, so rendering equals copying\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: exactly the README in failed, with a reason\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: every other file still refreshed (the edited page restored)\nPASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: --phase docs exits 1 printing `FAILED <path>: <reason>`\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: exactly that file in failed, with a reason\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: the other edited page restored, the README left as it was\nPASS test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error\n78/80 passed",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the root skip records a named check instead of passing silently",
+        "date": "2026-11-19",
+        "step": 2,
+        "hash": "c78c1b6d7dc5ed4d4a3fa42b070d9fef5e008f5b5699ff4e746ff2b40831c13b"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the root skip records a named check instead of passing silently"
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_write_failure_is_listed_failed_rest_refreshed",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "6d83121ae49f7db624dc011d480f792496fdd2d31357b47255fe4c82ccb38be2",
+    "frozen_at_step": 1,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "expectation updated for step 2 (README under the same parent); the old assertions failed 2 checks at 78/80 against step 2's code, the new ones pass 80/80",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "step 2 adds local/README.md under the same parent; Mark approved 2026-11-19 ('yes')",
+        "date": "2026-11-19",
+        "step": 1,
+        "hash": "6d83121ae49f7db624dc011d480f792496fdd2d31357b47255fe4c82ccb38be2"
+      }
+    ],
+    "unfrozen_reason": "step 2 adds local/README.md under the same parent; Mark approved 2026-11-19 ('yes')"
   }
 ]

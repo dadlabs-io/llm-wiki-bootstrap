@@ -17,6 +17,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -230,10 +231,13 @@ def test_write_failure_is_listed_failed_rest_refreshed():
         (root / "wiki" / "best-practices").write_text("a plain file where the folder belongs\n", encoding="utf-8")
         st = it.seed_toolset(ROOT)
         failed_paths = sorted(Path(e["path"]).name for e in st["failed"])
-        check("a plain file where wiki/best-practices/ belongs: the six docs listed in failed, each with a reason",
-              failed_paths == DOC_NAMES and all(e["reason"] for e in st["failed"]), st["failed"])
+        check("a plain file where wiki/best-practices/ belongs: the six docs and local/README.md listed in failed, "
+              "each with a reason",
+              failed_paths == sorted(DOC_NAMES + ["README.md"]) and all(e["reason"] for e in st["failed"]),
+              st["failed"])
         check("a plain file where wiki/best-practices/ belongs: every other file still written",
-              all((root / rel).is_file() for rel in it.toolset_files(ROOT) if not rel.as_posix().startswith(NEW_DIR)))
+              all((root / rel).is_file() for rel in it.toolset_files(ROOT)
+                  if not rel.as_posix().startswith("wiki/best-practices/")))
 
 
 def test_global_install_summary_names_failed_paths():
@@ -282,6 +286,212 @@ def test_spec_lookup_falls_back_to_package_docs_without_new_path():
         check("spec lookup: no spec at the new path -> framework-docs/ beside scripts/ (the old path is not read)",
               text is not None and "OLD-PATH-RUBRIC" not in text
               and Path(where).resolve() == (ROOT / "framework-docs" / SPEC_NAME).resolve(), (where, text))
+
+
+# --- task 243, step 2: the toolset carries wiki/best-practices/local/README.md as a framework file; the user's files
+# beside it are never added, changed, removed or listed in `remove`.
+LOCAL_DIR = "wiki/best-practices/local"
+LOCAL_README = f"{LOCAL_DIR}/README.md"
+LOCAL_README_SRC = ROOT / "seed" / "best-practices-local" / "README.md"
+
+
+def _shipped_readme() -> str:
+    return LOCAL_README_SRC.read_text(encoding="utf-8") if LOCAL_README_SRC.is_file() else ""
+
+
+def test_empty_toolset_gets_local_readme_with_shipped_bytes():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        before = it.toolset_status(ROOT, root)
+        it.seed_toolset(ROOT)
+        dst = root / LOCAL_README
+        check("local README: reported as add on an empty toolset", LOCAL_README in before["add"], before["add"])
+        check("local README: created with the shipped text's bytes",
+              LOCAL_README_SRC.is_file() and dst.is_file() and dst.read_bytes() == LOCAL_README_SRC.read_bytes())
+        check("local README: status current afterwards", it.toolset_status(ROOT, root)["state"] == "current")
+
+
+def test_edited_local_readme_is_replaced_by_refresh():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        it.seed_toolset(ROOT)
+        dst = root / LOCAL_README
+        dst.write_text("edited by hand\n", encoding="utf-8")
+        st = it.toolset_status(ROOT, root)
+        check("edited README: stale with only it in replace", st["state"] == "stale"
+              and st["replace"] == [LOCAL_README] and not st["add"] and not st["remove"], st)
+        check("edited README: --check exits 1 before the refresh", _docs_phase("--check").returncode == 1)
+        it.seed_toolset(ROOT)
+        check("edited README: the shipped bytes restored",
+              LOCAL_README_SRC.is_file() and dst.read_bytes() == LOCAL_README_SRC.read_bytes())
+        check("edited README: --check exits 0 after the refresh", _docs_phase("--check").returncode == 0)
+        shipped = LOCAL_README_SRC.read_bytes() if LOCAL_README_SRC.is_file() else b"x\n"
+        dst.write_bytes(shipped[: len(shipped) // 2])  # an older shipped text, as an earlier install left it
+        st = it.toolset_status(ROOT, root)
+        it.seed_toolset(ROOT)
+        check("older shipped README: stale with it in replace, then restored",
+              st["state"] == "stale" and st["replace"] == [LOCAL_README] and dst.read_bytes() == shipped, st)
+
+
+def test_deleted_local_readme_is_added_again():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        it.seed_toolset(ROOT)
+        (root / LOCAL_README).unlink()
+        st = it.toolset_status(ROOT, root)
+        check("deleted README: add names it", st["add"] == [LOCAL_README] and st["state"] == "stale", st)
+        it.seed_toolset(ROOT)
+        check("deleted README: created again with the shipped bytes",
+              LOCAL_README_SRC.is_file() and (root / LOCAL_README).read_bytes() == LOCAL_README_SRC.read_bytes())
+
+
+def test_user_files_in_local_are_untouched():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        it.seed_toolset(ROOT)
+        mine = root / LOCAL_DIR / "my-notes.md"
+        mine.write_bytes(b"my own notes\r\nline two\n")
+        deep = root / LOCAL_DIR / "my-folder" / "deeper" / "kept.md"
+        deep.parent.mkdir(parents=True)
+        deep.write_bytes(b"kept\n")
+        snap = {f.relative_to(root).as_posix(): f.read_bytes() for f in (root / LOCAL_DIR).rglob("*") if f.is_file()}
+        st = it.toolset_status(ROOT, root)
+        check("user files: status current and nothing in remove with them there",
+              st["state"] == "current" and not st["remove"] and not st["add"] and not st["replace"], st)
+        it.seed_toolset(ROOT)
+        st2 = it.seed_toolset(ROOT)
+        after = {f.relative_to(root).as_posix(): f.read_bytes() for f in (root / LOCAL_DIR).rglob("*") if f.is_file()}
+        check("user files: two refreshes leave every file's name and bytes as they were", snap == after
+              and f"{LOCAL_DIR}/my-notes.md" in after and f"{LOCAL_DIR}/my-folder/deeper/kept.md" in after, after)
+        check("user files: the second refresh wrote and removed nothing",
+              not st2["add"] and not st2["replace"] and not st2["remove"] and not st2["failed"], st2)
+        check("user folders: the subfolders are still there", deep.is_file() and mine.is_file())
+
+
+def test_dry_run_reports_local_readme_writes_nothing():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        st = it.seed_toolset(ROOT, dry_run=True)
+        check("dry run, empty toolset: README in add, nothing written (the toolset folder is not even created)",
+              LOCAL_README in st["add"] and not root.exists(), st["add"])
+        it.seed_toolset(ROOT)
+        dst = root / LOCAL_README
+        dst.write_text("edited by hand\n", encoding="utf-8")
+        snap = {f.relative_to(root).as_posix(): f.read_bytes() for f in root.rglob("*") if f.is_file()}
+        st = it.seed_toolset(ROOT, dry_run=True)
+        after = {f.relative_to(root).as_posix(): f.read_bytes() for f in root.rglob("*") if f.is_file()}
+        check("dry run, edited README: README in replace, every file in the toolset the same name and bytes",
+              st["replace"] == [LOCAL_README] and snap == after, st)
+
+
+def test_shipped_local_readme_names_both_places():
+    lines = [ln.lower() for ln in _shipped_readme().splitlines()]
+    check("shipped README: one line gives the global toolset's wiki/best-practices/local/ for every wiki",
+          any("every wiki" in ln and "global toolset's" in ln and "wiki/best-practices/local/" in ln for ln in lines),
+          lines)
+    check("shipped README: one line gives this wiki's own wiki/best-practices/local/ for this wiki only",
+          any("this wiki only" in ln and "this wiki's" in ln and "wiki/best-practices/local/" in ln
+              and "global toolset" not in ln for ln in lines), lines)
+
+
+def test_shipped_local_readme_tells_the_reader_to_ask_when_unsure():
+    lines = [ln.lower() for ln in _shipped_readme().splitlines()]
+    check("shipped README: one line tells the reader, when unsure which, to ask the user",
+          any("when unsure which" in ln and "ask the user" in ln for ln in lines), lines)
+
+
+def test_shipped_local_readme_says_do_not_edit_it():
+    text = _shipped_readme().lower()
+    check("shipped README: it is a framework file replaced on update, do not edit it, name a file after the doc",
+          "do not edit" in text and "replaced" in text and "name a file after the framework doc" in text, text[-400:])
+
+
+def test_shipped_local_readme_has_the_lint_frontmatter():
+    text = _shipped_readme()
+    head = text.split("---")[1] if text.startswith("---") and text.count("---") >= 2 else ""
+    keys = {ln.split(":", 1)[0].strip(): ln.split(":", 1)[1].strip() for ln in head.splitlines() if ":" in ln}
+    check("shipped README: frontmatter has title, date, tags and tier",
+          all(keys.get(k) for k in ("title", "date", "tags", "tier")), keys)
+    check("shipped README: framework-contract true, framework-version 1",
+          keys.get("framework-contract") == "true" and keys.get("framework-version") == "1", keys)
+    import _entry_checks as ec  # the parser and checks the lint uses
+    fm, _body = ec.split_frontmatter(text)
+    check("shipped README: the lint's frontmatter parser loads it with no finding and treats it as a framework page",
+          fm.get("title") and not ec.check_frontmatter_loadable(text)
+          and ec.is_exempt(LOCAL_README_SRC, fm), (fm, ec.check_frontmatter_loadable(text)))
+
+
+def test_shipped_local_readme_has_no_template_placeholder():
+    text = _shipped_readme()
+    check("shipped README: not empty and no {{ placeholder, so rendering equals copying",
+          bool(text.strip()) and "{{" not in text, text[:200])
+
+
+def test_plain_file_where_local_belongs_lists_readme_in_failed():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        it.seed_toolset(ROOT)
+        shutil.rmtree(root / LOCAL_DIR)
+        (root / LOCAL_DIR).write_text("a plain file where the folder belongs\n", encoding="utf-8")
+        commands = root / "how-to/llm-wiki/commands.md"
+        commands.write_text("edited by hand\n", encoding="utf-8")
+        try:
+            st = it.seed_toolset(ROOT)
+        except OSError as e:
+            check("plain file: seed_toolset does not raise", False, repr(e))
+            return
+        failed = st.get("failed")
+        check("plain file: exactly the README in failed, with a reason",
+              isinstance(failed, list) and len(failed) == 1 and failed[0]["path"] == (root / LOCAL_README).as_posix()
+              and failed[0]["reason"], failed)
+        check("plain file: every other file still refreshed (the edited page restored)",
+              commands.read_bytes() == (ROOT / "wiki-seed" / "commands.md").read_bytes())
+        p = _docs_phase()
+        want = f"FAILED {(root / LOCAL_README).as_posix()}: "
+        check("plain file: --phase docs exits 1 printing `FAILED <path>: <reason>`",
+              p.returncode == 1 and any(ln.startswith(want) and len(ln) > len(want) for ln in p.stdout.splitlines()),
+              (p.returncode, p.stdout[-300:]))
+
+
+def test_unwritable_readme_replacement_is_listed_failed_rest_done():
+    if hasattr(os, "geteuid") and os.geteuid() == 0:  # root writes through a read-only file
+        check("unwritable README: skipped, root writes through a read-only file (nothing proved here)", True)
+        return
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        it.seed_toolset(ROOT)
+        dst = root / LOCAL_README
+        dst.write_text("edited by hand\n", encoding="utf-8")
+        commands = root / "how-to/llm-wiki/commands.md"
+        commands.write_text("edited by hand\n", encoding="utf-8")
+        os.chmod(dst, 0o444)  # replacing it raises PermissionError, as a file held by another program does
+        try:
+            st = it.seed_toolset(ROOT)
+        except OSError as e:
+            check("unwritable README: seed_toolset does not raise", False, repr(e))
+            return
+        finally:
+            os.chmod(dst, 0o644)
+        failed = st.get("failed")
+        check("unwritable README: exactly that file in failed, with a reason",
+              isinstance(failed, list) and len(failed) == 1 and failed[0]["path"] == dst.as_posix()
+              and failed[0]["reason"], failed)
+        check("unwritable README: the other edited page restored, the README left as it was",
+              commands.read_bytes() == (ROOT / "wiki-seed" / "commands.md").read_bytes()
+              and dst.read_text(encoding="utf-8") == "edited by hand\n")
+
+
+def test_missing_readme_source_is_skipped_by_status():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        pkg = Path(t) / "pkg"
+        (pkg / "seed").mkdir(parents=True)
+        (pkg / "seed" / "global-toolset-README.md").write_text("toolset readme\n", encoding="utf-8")
+        listed = it.toolset_files(pkg)
+        st = it.toolset_status(pkg, root)
+        check("README source missing from the package: listed, but not in add, replace or remove, no error",
+              Path(LOCAL_README) in listed and LOCAL_README not in st["add"] + st["replace"] + st["remove"]
+              and st["add"] == ["README.md"], (list(listed), st))
 
 
 def _run(fn):
@@ -404,7 +614,16 @@ for _test in (test_empty_toolset_gets_docs_at_new_layout, test_old_copy_makes_st
               test_dry_run_lists_no_failed_entries, test_non_md_items_in_old_folder_keep_the_folder,
               test_write_failure_is_listed_failed_rest_refreshed, test_global_install_summary_names_failed_paths,
               test_spec_lookup_reads_the_toolset_at_new_path,
-              test_spec_lookup_falls_back_to_package_docs_without_new_path):
+              test_spec_lookup_falls_back_to_package_docs_without_new_path,
+              test_empty_toolset_gets_local_readme_with_shipped_bytes, test_edited_local_readme_is_replaced_by_refresh,
+              test_deleted_local_readme_is_added_again, test_user_files_in_local_are_untouched,
+              test_dry_run_reports_local_readme_writes_nothing, test_shipped_local_readme_names_both_places,
+              test_shipped_local_readme_tells_the_reader_to_ask_when_unsure,
+              test_shipped_local_readme_says_do_not_edit_it, test_shipped_local_readme_has_the_lint_frontmatter,
+              test_shipped_local_readme_has_no_template_placeholder,
+              test_plain_file_where_local_belongs_lists_readme_in_failed,
+              test_unwritable_readme_replacement_is_listed_failed_rest_done,
+              test_missing_readme_source_is_skipped_by_status):
     _run(_test)
 
 failed = [n for ok, n in results if not ok]

@@ -138,7 +138,8 @@ UV_INSTALL_HINT = {
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _wiki_config import (  # noqa: E402
-    TOOLSET_FRAMEWORK_DOCS, TOOLSET_NAME, TOOLSET_OLD_FRAMEWORK_DOCS, fill_placeholders, toolset_location)
+    TOOLSET_FRAMEWORK_DOCS, TOOLSET_LOCAL_DIR, TOOLSET_NAME, TOOLSET_OLD_FRAMEWORK_DOCS, fill_placeholders,
+    toolset_location)
 
 # ---------- The global toolset (task #25, 2026-10-04) ----------
 # One notebook holds every global tooling doc once: the llm-wiki pack's usage pages at how-to/llm-wiki/
@@ -162,6 +163,7 @@ def toolset_files(pkg: Path) -> dict:
                     files[TOOLSET_PACK / kind / page.name] = page
     for doc in sorted((pkg / "framework-docs").glob("*.md")):
         files[TOOLSET_FRAMEWORK_DOCS / doc.name] = doc
+    files[TOOLSET_LOCAL_DIR / "README.md"] = pkg / "seed" / "best-practices-local" / "README.md"
     return files
 
 

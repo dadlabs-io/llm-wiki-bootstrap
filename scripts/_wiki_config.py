@@ -518,6 +518,8 @@ def set_search_mode(mode: str, config_path=None) -> Path:
 # ~/.claude/global-toolset. The install writes the answer into every skill as {{TOOLSET_DIR}}.
 TOOLSET_NAME = "global-toolset"
 TOOLSET_FRAMEWORK_DOCS = Path("wiki") / "best-practices" / "framework"
+# The user's own changes to the framework docs; only its README.md is the install's, every other file is the user's.
+TOOLSET_LOCAL_DIR = Path("wiki") / "best-practices" / "local"
 # Where installs before task 243 put the six docs; read only by the refresh's remove scan.
 TOOLSET_OLD_FRAMEWORK_DOCS = Path("wiki") / "project" / "best-practices" / "framework"
 
