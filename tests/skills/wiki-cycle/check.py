@@ -3145,21 +3145,21 @@ def _check_left_undone_clean(case: dict, add, res: list, ctx: dict, run: dict, r
     add("no queue line under 'Left undone: nothing'", not bullets, bullets[:3])
 
 
-# ---------- kinds "left-undone-verbatim" / "left-undone-resumed": the section is the script's file, copied (task #240) ----------
+# ---------- kinds "left-undone-verbatim" / "left-undone-old-run": the section is the script's file, copied (task #240) ----------
 
 def _lu_norm_line(line: str) -> str:
     """One line reduced to its words. What counts as FORMATTING a markdown report may put around a pasted line
     (allowed, applied to the file and the section alike): a leading '> ', a leading list marker (- * +, removed
-    before emphasis so '* x' and '- x' agree), '*' and backtick emphasis, backslash escapes before punctuation,
-    whitespace runs, and an em or en dash written as a hyphen (punctuation, not a word). Anything else is a change
-    to the text: a reworded, added, dropped or reordered line, joined or split lines, a table rendering."""
+    before emphasis so '* x' and '- x' agree), '*' and backtick emphasis, backslash escapes before punctuation, and
+    whitespace runs. Everything else is a change to the text, a dash written as a hyphen (or the reverse) included
+    (Mark, 2026-11-18: 'word for word' includes the dash character): a reworded, added, dropped or reordered line,
+    joined or split lines, a table rendering."""
     s = line.strip()
     while s.startswith(">"):
         s = s[1:].lstrip()
     s = re.sub(r"^[-*+]\s+", "", s)
     s = re.sub(r"\\([^\w\s])", r"\1", s)
     s = re.sub(r"[*`]", "", s)
-    s = s.replace("\u2014", "-").replace("\u2013", "-")
     return re.sub(r"\s+", " ", s).strip()
 
 
@@ -3190,33 +3190,134 @@ def _lu_section_lines(rtext: str):
     return m.group(2), lines
 
 
+_LU_FILE = r"left-undone\.txt"
+_LU_READ_TOOLS = ("Read", "Glob", "Grep")
+# how a shell command (Bash or PowerShell, backslashes already turned to '/') writes left-undone.txt: each pattern
+# needs the file named as the target of that very write, so a command that only reads it, or reads it and writes
+# something else, is not a hit
+_LU_WRITE_RES = (
+    ("redirect", re.compile(r">>?\s*[\"']?[^\s\"'<>|;&]*" + _LU_FILE, re.I)),
+    ("tee", re.compile(r"\b(?:tee|Tee-Object)\b[^\n|;&]*" + _LU_FILE, re.I)),
+    ("copy or move into it", re.compile(
+        r"\b(?:cp|mv|install|ln|rsync|Copy-Item|Move-Item|Rename-Item)\b[^\n;&|]*" + _LU_FILE
+        + r"[\"']?\s*(?:$|[;&|\n)])", re.I | re.M)),
+    ("in-place edit", re.compile(r"\b(?:sed|perl)\b[^\n&|]*\s-[A-Za-z]*i\S*[^\n&|]*" + _LU_FILE, re.I)),
+    ("PowerShell write", re.compile(
+        r"\b(?:Set-Content|Add-Content|Out-File|Clear-Content|New-Item)\b[^\n;&|]*" + _LU_FILE, re.I)),
+    ("open for writing", re.compile(r"\bopen\([^)]*" + _LU_FILE + r"[^)]*,\s*[\"'](?:[wax]|r\+)", re.I)),
+    ("path write", re.compile(
+        r"\b(?:Path|PurePath)\(\s*[\"'][^\"']*" + _LU_FILE + r"[\"']\s*\)\.(?:write_text|write_bytes)\(|"
+        r"\b(?:WriteAll\w+|AppendAll\w+)\([^)]*" + _LU_FILE, re.I)),
+    ("truncate or dd", re.compile(r"\btruncate\b[^\n;&|]*" + _LU_FILE + r"|\bdd\b[^\n]*\bof=\S*" + _LU_FILE, re.I)),
+)
+
+
 def _lu_model_wrote_file(run: dict) -> list:
-    """Calls in which the session itself wrote left-undone.txt (Write, Edit, or a shell redirect or tee into it)."""
+    """Calls in which the session itself wrote left-undone.txt, by any tool: Write, Edit, MultiEdit or any other
+    non-read tool that names the file as its target, and a shell command (Bash or PowerShell, or any call with a
+    'command' input; Windows backslash paths too) that redirects or tees into it, copies or moves onto it, edits it in
+    place, or writes it with a PowerShell cmdlet, a Python open() or Path write, or truncate or dd. A route this misses
+    (the path held in a variable) is still caught when the file's text differs from the script's, by the check in
+    _lu_copy_checks that runs the script."""
     hits = []
     for c in run["tool_calls"]:
-        inp = c.get("input") or {}
-        if c["name"] in ("Write", "Edit") and str(inp.get("file_path", "")).replace("\\", "/").endswith("left-undone.txt"):
-            hits.append(c["name"])
-        elif c["name"] == "Bash" and re.search(r"(?:>>?|\btee\b(?:\s+-a)?)\s*[\"']?[^\s\"'|;&]*left-undone\.txt",
-                                               str(inp.get("command", ""))):
-            hits.append("Bash: " + str(inp.get("command", ""))[:120])
+        name, inp = c["name"], c.get("input") or {}
+        if name in _LU_READ_TOOLS:
+            continue
+        if name in ("Bash", "PowerShell") or "command" in inp:
+            cmd = str(inp.get("command", "")).replace("\\", "/")
+            if re.search(_LU_FILE, cmd, re.I):
+                for label, rx in _LU_WRITE_RES:
+                    if rx.search(cmd):
+                        hits.append(f"{name} ({label}): " + cmd[:120])
+                        break
+        else:
+            targets = [str(inp.get(k, "")) for k in ("file_path", "path", "notebook_path")]
+            targets += [str(e.get("file_path", "")) for e in (inp.get("edits") or []) if isinstance(e, dict)]
+            if any(t.replace("\\", "/").lower().endswith("left-undone.txt") for t in targets):
+                hits.append(name)
     return hits
 
 
+def _lu_first_diff(want: list, got: list, a: str = "file", b: str = "section", show_line: bool = True) -> str:
+    """Where two lists of text lines first differ, worded to be read: the line, the first differing character of each
+    side (ascii-escaped, so an em dash shows as \\u2014 beside a plain '-'), and the two lines around that character.
+    '' when the lists are equal. `want` is side a, `got` side b. Lines count the normalised text lines (blank lines
+    are not counted)."""
+    for i in range(max(len(want), len(got))):
+        w = want[i] if i < len(want) else None
+        g = got[i] if i < len(got) else None
+        if w == g:
+            continue
+        at = f"text line {i + 1}: " if show_line else ""
+        if w is None:
+            return f"{at}{b} has an extra line {ascii(g[:150])}; {a} ends after {len(want)} lines"
+        if g is None:
+            return f"{at}{b} ends after {len(got)} lines; {a} has {ascii(w[:150])}"
+        k = next((j for j, (x, y) in enumerate(zip(w, g)) if x != y), min(len(w), len(g)))
+        lo = max(0, k - 25)
+
+        def cut(s: str) -> str:
+            return ("..." if lo else "") + s[lo:k + 45] + ("..." if len(s) > k + 45 else "")
+
+        wc = ascii(w[k]) if k < len(w) else "end of line"
+        gc = ascii(g[k]) if k < len(g) else "end of line"
+        return (f"{at}first difference at character {k + 1}: {a} {wc} vs {b} {gc}; "
+                f"{a}: {ascii(cut(w))} | {b}: {ascii(cut(g))}")
+    return ""
+
+
+def _lu_script_output(ctx: dict, run_dir: Path):
+    """(text, why): left-undone.txt as `wiki-cycle-scope.py left-undone` writes it for this run folder, made by
+    running the script itself; the session's file is put back byte for byte afterwards, whatever happens. (None, reason)
+    when the script cannot be run or leaves no file."""
+    f = run_dir / "left-undone.txt"
+    keep = f.read_bytes()
+    try:
+        f.unlink()
+        p = _script(ctx, "wiki-cycle-scope.py", "--topic", NOTEBOOK, "left-undone", "--run-folder", str(run_dir))
+        if p.returncode != 0 or not f.is_file():
+            return None, f"exit {p.returncode}: {(p.stdout + p.stderr)[-200:]}"
+        return f.read_text(encoding="utf-8", errors="replace"), ""
+    finally:
+        f.write_bytes(keep)
+
+
 def _lu_copy_checks(add, ctx: dict, run: dict, rtext: str, ftext: str) -> None:
-    """The section against the file: same lines, same order, nothing added, reworded or dropped; and no queue line
-    the file does not hold."""
+    """The file is the script's own output (so no route by the session can make the copy check pass against a file
+    the session wrote); the section against the file: same lines, same order, nothing added, reworded or dropped; and
+    no queue line the file does not hold. A failed copy check names the first line that differs, file beside section."""
+    import difflib
     section, got = _lu_section_lines(rtext)
     want = _lu_norm_lines(ftext)
+    wrote = _lu_model_wrote_file(run)
     add("the session did not write left-undone.txt itself (one script writes it; the model composes no count)",
-        not _lu_model_wrote_file(run), _lu_model_wrote_file(run))
+        not wrote, wrote)
+    cid = ctx["cycle_id"]
+    run_dir = ctx["notebook"] / "_inbox" / "reports" / cid[:10] / cid
+    if (run_dir / "left-undone.txt").is_file():  # a missing file already fails "left-undone.txt is in the run folder"
+        made, why = _lu_script_output(ctx, run_dir)
+        name = "left-undone.txt is the text wiki-cycle-scope.py left-undone writes for this run folder (not changed or made by the session)"
+        if made is None:
+            add(name, False, "could not run the script to compare: " + why)
+        else:
+            on_disk = [l.rstrip() for l in ftext.splitlines()]
+            script = [l.rstrip() for l in made.splitlines()]
+            add(name, on_disk == script,
+                "" if on_disk == script else "the file differs from the script's own output: "
+                + _lu_first_diff(script, on_disk, "script", "file"))
     missing = [l for l in want if l not in got]
     extra = [l for l in got if l not in want]
     add("the section's lines are the file's lines, in order, none added, reworded or dropped",
-        got == want, {"missing": missing[:3], "extra": extra[:3], "section": got[:4], "file": want[:4]})
+        got == want, "" if got == want else _lu_first_diff(want, got) + f" ({len(want)} file lines, "
+        f"{len(got)} section lines; {len(missing)} file lines not in the section, {len(extra)} section lines not in the file)")
     queue_in_section = [_lu_norm_line(l) for l in (section or "").splitlines() if re.match(r"\s*[>\s]*[-*+]\s+\S", l)]
     foreign = [l for l in queue_in_section if l not in want]
-    add("no queue line (a line starting '- ') in the section that the file does not hold", not foreign, foreign[:3])
+    near = difflib.get_close_matches(foreign[0], want, 1, 0.5) if foreign else []
+    add("no queue line (a line starting '- ') in the section that the file does not hold", not foreign,
+        "" if not foreign else f"{len(foreign)} line(s); first, nearest file line beside it: "
+        + (_lu_first_diff(near, [foreign[0]], "file", "section", show_line=False) if near
+           else f"section {ascii(foreign[0][:150])}, no similar file line"))
 
 
 def _check_left_undone_verbatim(case: dict, add, res: list, ctx: dict, run: dict, run_dir: Path) -> None:

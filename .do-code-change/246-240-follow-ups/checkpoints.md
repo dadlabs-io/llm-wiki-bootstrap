@@ -14,3 +14,9 @@ Size: small (proposed; see plan hand-back)
 
 Size: small — the six criteria: no open design decision (the split question follows from Mark's one-card word); callers of uncovered, entry_backlog_lines, claims_scope, _lu_* all inside Scope (architect's caller search); no schema or migration; no live-data write; no HIGH file; no program refusal changed. Production files in Scope: 2 (shown, not deciding).
 Branch: main (small path stays on its branch).
+
+## Step 6 — 2026-11-19
+- eval-case-writer (replay) answer saved unchanged into tests/skills/wiki-cycle/check.py (blocks 1-4: header, _lu_norm_line without the dash mapping, _lu_model_wrote_file widened, _lu_first_diff + _lu_script_output + _lu_copy_checks). No check renamed, so no fixture constant re-pointed.
+- Fixture: uv run python tests/scripts/test_left_undone_fixture.py -> exit 0, 'every check passed'; all six new plants caught (dash, cp, mv, sed -i, python -c, PowerShell), four old-route controls caught, plain runs pass; the new script-output comparison passes on plain runs (writer's question 1, determinism, answered by this run).
+- Writer's questions 2-5 put to Mark (pending).
+- Fresh-case writer (step 9a) refused 'Mode: new': fresh mode needs two cases; put to Mark (two cases, ~$12 total, or none) — pending.
