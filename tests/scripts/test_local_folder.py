@@ -237,6 +237,87 @@ def test_first_run_renders_the_three_wiki_scaffold_files():
               and f"# {sc.name} — wiki" in texts["README.md"], (p.returncode, {k: bool(v) for k, v in texts.items()}))
 
 
+# ---------- step 4: a user's note in best-practices/local/ is linted like any entry (seam F) ----------
+_NOTE_HEAD = """---
+title: "My local note"
+date: 2026-11-19
+source_url: internal://local-note
+ingested_by: human
+{tags}tier: self
+confidence: high
+last_reviewed: 2026-11-19
+review_after: 2027-02-19
+standalone: "a user's own note: nothing links to it by design"
+---
+
+# My local note
+"""
+_NOTE_BODY = """
+## TL;DR
+
+A note of my own about how this wiki should be written.
+
+## Related
+
+- [Home](../../HOME.md)
+- [Read me](../../README.md)
+"""
+VALID_NOTE = _NOTE_HEAD.format(tags="tags: [local, notes, stub]\n") + _NOTE_BODY
+NOTE_WITHOUT_TAGS = _NOTE_HEAD.format(tags="") + _NOTE_BODY
+NOTE_WITHOUT_FRONTMATTER = "# My local note\n" + _NOTE_BODY
+
+
+def _lint_report_after_writing(notes: dict) -> str:
+    """Scaffold a fresh wiki, write each `{path under wiki/: text}` into it, run the mechanical lint over it, and
+    return what it prints plus the report file it saves (the findings are in both)."""
+    with tempfile.TemporaryDirectory() as t:
+        sc = Scaffold(Path(t))
+        sc.run()
+        for rel, text in notes.items():
+            p = sc.wiki / rel
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(text, encoding="utf-8")
+        q = subprocess.run([sys.executable, str(ROOT / "scripts" / "wiki-lint-mechanical.py"),
+                            "--topic", sc.name, "--vault", str(sc.vault / "notebooks")],
+                           capture_output=True, text=True, encoding="utf-8",
+                           env={**os.environ, "HOME": str(sc.home), "USERPROFILE": str(sc.home),
+                                "WIKI_GLOBAL_CONFIG": str(sc.global_cfg), "PYTHONIOENCODING": "utf-8"})
+        report = sc.vault / "notebooks" / sc.name / "_inbox" / "reports" / "lint-report.md"
+        saved = report.read_text(encoding="utf-8") if report.is_file() else ""
+        return q.stdout + q.stderr + saved
+
+
+def test_valid_note_in_best_practices_local_draws_no_lint_finding():
+    out = _lint_report_after_writing({f"{LOCAL}/my-notes.md": VALID_NOTE,
+                                      f"{LOCAL}/bad-note.md": NOTE_WITHOUT_FRONTMATTER})
+    # the report lists a page that declares `standalone:` under its own "declared" heading: a list, not a finding
+    seen = {k for k in _finding_kinds(out, f"{LOCAL}/my-notes.md") if "Standalone Pages" not in k}
+    control = _finding_kinds(out, f"{LOCAL}/bad-note.md")
+    check("lint: a note with valid frontmatter in best-practices/local/ is named under no finding "
+          "(the control, a note without frontmatter beside it, is named)",
+          "Report saved to" in out and not seen and bool(control), (sorted(seen), sorted(control), out[-600:]))
+
+
+def test_note_without_tags_in_best_practices_local_draws_the_finding_it_draws_elsewhere():
+    out = _lint_report_after_writing({f"{LOCAL}/my-notes.md": NOTE_WITHOUT_TAGS,
+                                      "research/active/my-notes.md": NOTE_WITHOUT_TAGS})
+    here = _finding_kinds(out, f"{LOCAL}/my-notes.md")
+    there = _finding_kinds(out, "research/active/my-notes.md")
+    check("lint: the same note without `tags` is named under the same findings in best-practices/local/ as in "
+          "research/active/, among them the missing-tags one",
+          here == there and any("tags" in k.lower() for k in here), (sorted(here), sorted(there), out[-600:]))
+
+
+def test_note_without_frontmatter_in_best_practices_local_draws_the_finding_it_draws_elsewhere():
+    out = _lint_report_after_writing({f"{LOCAL}/my-notes.md": NOTE_WITHOUT_FRONTMATTER,
+                                      "research/active/my-notes.md": NOTE_WITHOUT_FRONTMATTER})
+    here = _finding_kinds(out, f"{LOCAL}/my-notes.md")
+    there = _finding_kinds(out, "research/active/my-notes.md")
+    check("lint: the same note without frontmatter is named under the same findings in best-practices/local/ as in "
+          "research/active/, and there is at least one",
+          here == there and bool(here), (sorted(here), sorted(there), out[-600:]))
+
+
 def _run(fn):
     """Run one test function; every check it records is named after it, and a crash is a failed check, not the end."""
     first = len(results)
@@ -258,7 +339,10 @@ for _test in (test_taxonomy_puts_best_practices_local_before_sessions_for_all_ni
               test_dry_run_leaves_the_temp_tree_unchanged,
               test_missing_readme_source_stops_the_scaffold_before_any_best_practices_folder,
               test_existing_claude_md_is_kept_byte_for_byte,
-              test_first_run_renders_the_three_wiki_scaffold_files):
+              test_first_run_renders_the_three_wiki_scaffold_files,
+              test_valid_note_in_best_practices_local_draws_no_lint_finding,
+              test_note_without_tags_in_best_practices_local_draws_the_finding_it_draws_elsewhere,
+              test_note_without_frontmatter_in_best_practices_local_draws_the_finding_it_draws_elsewhere):
     _run(_test)
 
 failed = [n for ok, n in results if not ok]

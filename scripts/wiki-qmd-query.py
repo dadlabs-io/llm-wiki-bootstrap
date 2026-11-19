@@ -768,9 +768,9 @@ def stats() -> int:
 
 
 def sample_titles(notebook: str, n: int) -> list[str]:
-    """n entry titles spread evenly across a notebook's research/ and project/ entries."""
+    """n entry titles spread evenly across a notebook's research/, project/ and best-practices/ entries."""
     root = Path(wiki_dir(notebook))
-    files = sorted(p for half in ("research", "project") for p in (root / half).rglob("*.md")
+    files = sorted(p for half in ("research", "project", "best-practices") for p in (root / half).rglob("*.md")
                    if p.name.lower() not in MACHINE_FILES | {"readme.md"})
     titles = []
     for p in files[:: max(1, len(files) // n)][:n]:

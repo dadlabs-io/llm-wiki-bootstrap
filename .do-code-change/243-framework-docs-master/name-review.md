@@ -30,6 +30,16 @@ The reviewer also flagged a line of the names output ("hand them to the name rev
 - test_first_run_renders_the_three_wiki_scaffold_files: OK
 - test_phase_b_writes_local_readme_with_shipped_bytes_for_stubs / _empty / _none: OK
 
+## Step 4 (one doubt-reviewer, fed the `check-freeze.py names` output)
+
+- test_sample_titles_includes_best_practices_entries: OVER-CLAIMS (narrow): the fixture held only best-practices/local. Fixed: a best-practices/framework entry added, four titles expected. Re-frozen with an unfrozen reason.
+- test_drop_machine_files_keeps_a_note_in_best_practices_local: OK
+- test_drop_machine_files_still_drops_an_index_in_best_practices_local: OK
+- test_drop_machine_files_still_drops_a_task_card: OK
+- test_valid_note_in_best_practices_local_draws_no_lint_finding: OK (the Standalone Pages heading is a list, not a finding)
+- test_note_without_tags_in_best_practices_local_draws_the_finding_it_draws_elsewhere: OK (heading-level comparison)
+- test_note_without_frontmatter_in_best_practices_local_draws_the_finding_it_draws_elsewhere: OK
+
 ## Step 2 (one doubt-reviewer, fed the `check-freeze.py names` output)
 
 - test_empty_toolset_gets_local_readme_with_shipped_bytes: OK

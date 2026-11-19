@@ -362,6 +362,71 @@ if hasattr(lint, "reindex_command"):
     check("full: the lint says `qmd update && qmd embed`", lint.reindex_command() == "qmd update && qmd embed",
           lint.reindex_command())
 
+# ---------- task #243 step 4: notes in best-practices/ (and best-practices/local/) are sampled and kept ----------
+def _titled_note(path: Path, title: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(f'---\ntitle: "{title}"\n---\n\nbody\n', encoding="utf-8")
+
+
+def test_sample_titles_includes_best_practices_entries():
+    with tempfile.TemporaryDirectory() as t:
+        root = Path(t) / "wiki"
+        _titled_note(root / "research" / "active" / "r.md", "Research note")
+        _titled_note(root / "project" / "decisions" / "p.md", "Project note")
+        _titled_note(root / "best-practices" / "local" / "my-notes.md", "Local best practice note")
+        _titled_note(root / "best-practices" / "framework" / "f.md", "Framework best practice note")
+        old = q.wiki_dir
+        q.wiki_dir = lambda notebook: str(root)
+        try:
+            titles = q.sample_titles("demo", 6)
+        finally:
+            q.wiki_dir = old
+        check("sample_titles: a temp notebook with one entry each under research/, project/, best-practices/local/ "
+              "and best-practices/framework/ gives all four titles",
+              sorted(titles) == ["Framework best practice note", "Local best practice note", "Project note",
+                                 "Research note"], titles)
+
+
+def _kept_names(rows: list[dict]) -> tuple[list[str], int]:
+    kept, dropped = q.drop_machine_files(json.dumps(rows), "json", 30)
+    return [r["file"].rsplit("/", 1)[-1] for r in json.loads(kept)], dropped
+
+
+def test_drop_machine_files_keeps_a_note_in_best_practices_local():
+    note = _row("best-practices/local/my-notes")
+    names, dropped = _kept_names([note, _row("best-practices/local/_INDEX"), _row("tasks/243-card")])
+    check("drop_machine_files: the row for wiki/best-practices/local/my-notes.md is kept", names == ["my-notes.md"],
+          names)
+
+
+def test_drop_machine_files_still_drops_an_index_in_best_practices_local():
+    names, dropped = _kept_names([_row("best-practices/local/my-notes"), _row("best-practices/local/_INDEX")])
+    check("drop_machine_files: an _INDEX.md beside the note is dropped, the note kept, one row dropped",
+          names == ["my-notes.md"] and dropped == 1, (names, dropped))
+
+
+def test_drop_machine_files_still_drops_a_task_card():
+    names, dropped = _kept_names([_row("best-practices/local/my-notes"), _row("tasks/243-card")])
+    check("drop_machine_files: a card under wiki/tasks/ is dropped, the note kept, one row dropped",
+          names == ["my-notes.md"] and dropped == 1, (names, dropped))
+
+
+def _run(fn):
+    """Run one test function; every check it records is named after it, and a crash is a failed check."""
+    first = len(results)
+    try:
+        fn()
+    except Exception as e:  # noqa: BLE001 - a crash is a failed check named after the test, not the end of the file
+        check(f"raised {type(e).__name__}: {e}", False)
+    results[first:] = [(ok, f"{fn.__name__}: {name}") for ok, name in results[first:]]
+
+
+for _test in (test_sample_titles_includes_best_practices_entries,
+              test_drop_machine_files_keeps_a_note_in_best_practices_local,
+              test_drop_machine_files_still_drops_an_index_in_best_practices_local,
+              test_drop_machine_files_still_drops_a_task_card):
+    _run(_test)
+
 failed = [n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

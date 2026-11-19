@@ -32,3 +32,35 @@ One block per step, written by the orchestrator from the developer's hand-back a
 - Mark's decision (21:44Z) applied. The README gains `confidence: high` and `standalone: "the folder's guide: nothing links to it by design"`, with no lifecycle dates. The lint test is now `test_lint_of_a_fresh_scaffold_draws_no_finding_on_the_local_readme_that_home_does_not` (the README's finding kinds must be a subset of HOME.md's). It was re-frozen and the old name retired.
 - Orchestrator re-run: test_local_folder 13/13, test_global_toolset 80/80. The developer also reports standalone 21/21 and check-freeze PASS (40 entries plus 164 earlier).
 - Limit: the parity test has not been seen failing on a README with an extra finding. Its bite rests on the earlier 12/13 red against the old README.
+
+## Step 4 manual evidence
+
+(a) `qmd collection list` on the machine's real collections (read-only; no collection was added, edited or removed). Every collection, the llm-wiki-bootstrap one included, carries the pattern `**/*.md` over the notebook's whole `wiki/` folder, which covers `best-practices/` and `best-practices/local/`:
+
+```
+C:\github.com\project-notebooks\notebooks\llm-wiki-bootstrap\wiki (qmd://C:\github.com\project-notebooks\notebooks\llm-wiki-bootstrap\wiki/)
+  Pattern:  **/*.md
+  Files:    564
+  Updated:  16h ago
+```
+(the same `Pattern:  **/*.md` line for agentic-design, 1731 files, and for all eight others; 10 collections before and after the temp run below)
+
+(b) One keyword search (`qmd search`, no model, no GPU) over a temp named index `tmp243step4` holding one collection `tmp243step4` over a temp folder (`<scratchpad>\qmdtmp\wiki`) with a note at `best-practices/local/my-notes.md`:
+
+```
+> qmd --index tmp243step4 collection add <scratchpad>/qmdtmp/wiki --name tmp243step4
+Collection: <scratchpad>\qmdtmp\wiki (**/*.md)
+Indexed: 1 new, 0 updated, 0 unchanged, 0 removed
+> qmd --index tmp243step4 search zephyrquartz
+qmd://tmp243step4/best-practices/local/my-notes.md?index=tmp243step4:2 #de6d37
+Title: Zephyrquartz local best practice note
+Score:   0%
+```
+Cleanup: `qmd --index tmp243step4 collection remove tmp243step4` printed `Removed collection 'tmp243step4'`; the temp index file `~/.cache/qmd/tmp243step4.sqlite` (created by the `--index` name) was then deleted; `qmd collection list` afterwards again shows the same 10 real collections.
+
+Plan notes for this step: `skills/wiki-search/SKILL.md` and its wiki-seed page hold no searched-folders line naming only `research/` and `project/` (grep over `skills/wiki-search`; the only `research/`/`project/` mentions are an agentic-design path in a source note and the `project/` entry the skill offers to file), so no skill text changed. `40-search-and-indexing.md`'s depth-check line is the finish step's wiki record (Out of Scope).
+
+## Step 4 — 2026-11-19, green
+- `sample_titles` halves gain `best-practices`. Tests: 4 in test_search_mode (82/82), 3 lint tests in test_local_folder (16/16); orchestrator re-ran both. The `drop_machine_files` and lint tests were already green, so they are coverage tests, frozen green with reasons; their bite was shown by transient mutations, reverted (the lint mutation on a scratch copy). check-freeze PASS (47 entries).
+- The wiki-search skill text has no searched-folders line naming only research/ and project/, so it is unchanged.
+- The manual evidence is above (qmd pattern `**/*.md` on all 10 collections; a temp-index keyword search found `best-practices/local/my-notes.md`; the temp index was removed). The plan says checkpoints.md; it lives here, and checkpoints.md points here.

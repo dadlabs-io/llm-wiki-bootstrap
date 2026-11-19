@@ -691,5 +691,105 @@
       }
     ],
     "unfrozen_reason": "plan premise false (fresh scaffold never lints clean); Mark approved parity with HOME.md 2026-11-19"
+  },
+  {
+    "file": "tests/scripts/test_search_mode.py",
+    "test_name": "test_drop_machine_files_keeps_a_note_in_best_practices_local",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "0edfe274514a51e38b94a17d1d1a3898811b21b0cb00d2fd943fe4ed00934ba3",
+    "frozen_at_step": 4,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "drop_machine_files already keeps a note in best-practices/local (no code change needed); bite proven by transient production mutations, reverted: task regex widened to /wiki/ and task_file never matching and _index.md removed from MACHINE_FILES each failed it",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_search_mode.py",
+    "test_name": "test_drop_machine_files_still_drops_an_index_in_best_practices_local",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d313c587881b4d983cf67fd39de6289c040ad34b3b78ccded1f7a74fed071db4",
+    "frozen_at_step": 4,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "behaviour already exists (no code change needed); bite proven by transient mutation, reverted: removing _index.md from MACHINE_FILES failed it (and the widened task regex failed it)",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_search_mode.py",
+    "test_name": "test_drop_machine_files_still_drops_a_task_card",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "bfdff1a79d36de16ad7b11a0dcb6aa9ac06e5ae1e771238c8b57a3052618e4b8",
+    "frozen_at_step": 4,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "behaviour already exists (no code change needed); bite proven by transient mutation, reverted: task_file regex changed to never match failed it (and the widened regex failed it)",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_valid_note_in_best_practices_local_draws_no_lint_finding",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "6c5a4bbb46e7080698c502c2e4f279df5e854726a67682e739a05b4201fa4098",
+    "frozen_at_step": 4,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "the lint already treats local/ notes as entries (the plan: no code change, the skip list untouched); bite proven on a scratch copy of the scripts whose collect_md_files skips best-practices/local: this test failed (the control note was no longer named)",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_note_without_tags_in_best_practices_local_draws_the_finding_it_draws_elsewhere",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "49b6641ae7af908ca4138d7d30c4eff29072a43b9d877e231f6f3ff426dcd406",
+    "frozen_at_step": 4,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "the lint already lints local/ notes as entries (no code change); bite proven on a scratch copy of the scripts whose collect_md_files skips best-practices/local: this test failed (no finding there, three elsewhere)",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_note_without_frontmatter_in_best_practices_local_draws_the_finding_it_draws_elsewhere",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "1b8682885c8e8ebc8d2026cd48febf96f2614a1dc074fd130982a31a6cfca1ba",
+    "frozen_at_step": 4,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "the lint already lints local/ notes as entries (no code change); bite proven on a scratch copy of the scripts whose collect_md_files skips best-practices/local: this test failed (no finding there, eight elsewhere)",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_search_mode.py",
+    "test_name": "test_sample_titles_includes_best_practices_entries",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "eff981b5538b8e555b5ccbc2bd098be3744a6ab593d967f2083c4039ca4d3f4b",
+    "frozen_at_step": 4,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "strengthened after its red: the original fixture failed on the unchanged code (81/82, best-practices/local title missing); the added framework entry also fails without best-practices in sample_titles' halves, as the same missing-folder cause",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the fixture only covered best-practices/local; added a best-practices/framework entry so the name's claim is checked",
+        "date": "2026-11-19",
+        "step": 4,
+        "hash": "eff981b5538b8e555b5ccbc2bd098be3744a6ab593d967f2083c4039ca4d3f4b"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the fixture only covered best-practices/local; added a best-practices/framework entry so the name's claim is checked"
   }
 ]
