@@ -1,116 +1,105 @@
-# Review report, round 3 (focused): 246-240-follow-ups
+# Review report, round 4 (focused, last round the cap allows): 246-240-follow-ups
 
-Fixed point 047d868 (resolves). Focused round: the change under review is what fix round 2 moved, diffed from the round-2 review commit f2b243b to the working tree (`review-ledger.py changed`: CHANGELOG.md, tests/scripts/test_left_undone_fixture.py, tests/skills/PENDING.md, tests/skills/wiki-cycle/check.py), about 300 changed lines, one part per axis, no untracked files outside `.do-code-change/`. Files the round-2 review read and the fix left alone (`scripts/_run_state.py`, `skills/wiki-cycle/SKILL.md`, `tests/scripts/test_cycle_scope.py`, `tests/skills/wiki-cycle/cases.json`) are out of this round; nothing was raised in them. Prescan ran clean (review ids, round numbers, dates, width skipped). Lenses ran as `code-reviewer-lens`, unnamed, `run_in_background: false`; both came back as launch notices and their reports were taken from their completion messages; no retry. Mark's ruling (shell writes are not detected by design; two exact checks) was passed to both lenses and is raised nowhere. Findings in `check.py` are the eval-case-writer's text and are labelled "(writer's text)".
+Fixed point 047d868 (resolves; `git merge-base 047d868 HEAD` is 047d868; 17 commits in `git log 047d868..HEAD`). Focused round: the change under review is what fix round 3 moved, diffed from ddcf3fe (the tree round 3 reviewed) to the working tree: `CHANGELOG.md` (1/1), `tests/scripts/test_left_undone_fixture.py` (30/2), `tests/skills/PENDING.md` (1/1), `tests/skills/wiki-cycle/check.py` (11/8), 55 changed lines, no untracked files outside `.do-code-change/`. The set equals `review-ledger.py changed`'s four files. One part per axis. Files round 3 reviewed and the fix left alone (`scripts/_run_state.py`, `skills/wiki-cycle/SKILL.md`, `tests/scripts/test_cycle_scope.py`, `tests/skills/wiki-cycle/cases.json`) are out of this round; nothing was raised in them. One lens remark on an untouched line (check.py:3364 calls `_lu_model_wrote_file(run)` twice) is out of scope for the same reason and is not counted. Prescan was clean (review ids, round numbers, dates and width skipped). Lenses ran as `code-reviewer-lens`, unnamed, `run_in_background: false`, on the `sonnet` tier (raised from the default tier because the last round cannot be repeated; the cause-of-failure question in CHANGELOG needed a careful read). Both came back as launch notices and their reports were taken from their completion messages. The Standards lens did not open CHANGELOG.md, so that file got its one retry (a further lens on line 16 only), which read it in full. Rulings 1-3 were passed to both lenses and are raised nowhere. Findings in `check.py` would be the writer's text; none was raised there that counts. Both axes ran on all four files; every file is LOW, so Change risk was not run. The fixture (exit 0) and `test_cycle_scope.py` (330/330) were not run by this review (a review runs no test); their results are in checkpoints.md.
 
 ## Standards
 
-- [important] T1, T3, T5 (writer's text for check.py:3207-3211; the gap is in `tests/scripts/test_left_undone_fixture.py:290-295`): the new `_lu_model_wrote_file` branches have no case. The fixture plants only `Write` and `Edit` on `file_path` (`tool = {"Write": ...`), while its docstring and CHANGELOG.md:16 promise "a Write, Edit, MultiEdit or NotebookEdit".
-  - MultiEdit, NotebookEdit (`notebook_path`), the `path` key, `edits[].file_path`, a backslash path, the `_LU_READ_TOOLS` skip (a Read of the file must pass), and the old-run kind's call at check.py:3361 are not exercised.
-  - Fix: one plant per route that must fail the write check, a Read plant on the target that must pass, and one old-run plant.
-- [important] C2 (writer's text) `check.py:3285-3286` against `CHANGELOG.md:16` and `check.py:3268-3269`: the copy check compares `[l.rstrip() for l in ftext.splitlines()]`, so a trailing-space edit passes, while CHANGELOG says "any changed text fails whatever route wrote it" and the `_lu_copy_checks` docstring says "no route by the session can make the copy check pass against a file the session wrote".
-  - Fix: compare unstripped lines, or word both as "any change other than trailing spaces"; add a plant for a trailing-space edit.
-- [suggestion] C2 (writer's text) `check.py:3275`, `:3281`: the names "the session did not write left-undone.txt itself (one script writes it; the model composes no count)" and "(not changed or made by the session)" are now false for an identical shell rewrite, which passes both. Fix: rename to what is checked (no Write, Edit, MultiEdit or NotebookEdit aimed at the file; the text equals the script's own output), then update `WROTE_ITSELF` (fixture:72) and `NEEDS_SESSION` (fixture:49), which match on the name.
-- [suggestion] S2 (writer's text) `check.py:3209-3212`: the target normalisation (`file_path`, `path`, `notebook_path`, backslash to slash) repeats `tests/skills/task-list/check.py:386` and `tests/skills/dream/check.py:402`. Fix: one helper in `tests/skills/_trajectory.py`. A judgement call: the three checks ask different questions.
-- [suggestion] PY9 `tests/scripts/test_left_undone_fixture.py:326-330`: the events-file plant passes whenever the script does not rewrite the events file, so the restore is not shown to bite. The Spec lens traced that the fixture's case A is a `--full` run, so `_run_state.py:957-959` does rewrite it; the test still does not assert it. The deletion branch (`check.py:3260-3261`, files the script made) has no plant. Fix: assert the bytes changed during the run (wrap `suite._script`), and plant a new file that must be gone after `check()`.
-- [suggestion] PY9 `tests/scripts/test_left_undone_fixture.py:318-320`: the 14-route loop repeats one assertion; the script-output check reads only the disk, so the route names change labels, not outcomes. Fix: keep one case and say in the docstring that routes do not change this verdict, or keep the labels for readability.
-- [suggestion] `tests/skills/PENDING.md:28`: "Run on Mark's yes: results in ..." sits in the "Why it was not run" column and "Next full wiki-cycle run checks these" says the change is unrun, so the row reads as both run and pending; it also omits the Opus-only caveat on none-answered that CHANGELOG.md:16 carries. Fix: say what has not been run and state the caveat.
-- [nit] `tests/scripts/test_left_undone_fixture.py:254-256` against `:308`: the docstring says "the same shell routes with the text identical"; the loop runs three of the 14. Fix: "three shell routes".
-- [nit] S13 `tests/scripts/test_left_undone_fixture.py:250`: `session_write_plants` is about 90 lines in six phases. Fix: one function per phase, or keep the docstring's phase list in step with the code.
+- [important] PY9, T3, T5 `tests/scripts/test_left_undone_fixture.py:326-332`: the "script-output check fails a changed left-undone.txt written by <route>" plants (all 14 shell routes, and the "none" plant) cannot show that the one changed count is what fails them, and the exact comparison has no case of its own.
+  - The fixture writes the changed file in text mode: `lu_file.write_text(changed, encoding="utf-8")`. On Windows `write_text` turns "\n" into CRLF. The script writes `left-undone.txt` with `newline=""` (`scripts/_atomic_io.py:80`, `open(tmp, "w", encoding=encoding, newline="")`), so its output is bare LF. `_lu_copy_checks` now compares bytes (`if raw == made:`, check.py:3286), so each plant fails on CRLF against LF alone, with or without the count change; the expected verdict is False, so they pass either way.
+  - A Grep of the fixture for `trailing|rstrip|\r|final newline|line ending` finds only the `rstrip` calls in `compose_report` (lines 122-123). Round-3 standards-26's fix asked for "a plant for a trailing-space edit"; none exists, and the branch `diff or "same lines, different line endings or final newline"` (check.py:3289-3292) has no case.
+  - The restores at fixture lines 333 and 342 use `write_text(original)` too and change the file from LF to CRLF; no assertion expecting a pass runs after them today (`session_write_plants` is the last call in `grade`, line 421; the plain pass run is at 415), so nothing fails yet.
+  - Fix: write the changed file with `lu_file.write_bytes(changed.encode("utf-8"))` (and the restores likewise), so only the count differs; add one plant that changes only a trailing space and one that changes only the line endings, each required to fail the script-output check.
+- [nit] C2/C3 `tests/skills/wiki-cycle/check.py:3199-3201` (writer's text): the edited docstring reads "whose file_path, path or notebook_path, or whose edits[].file_path, whose last path part is left-undone.txt"; the double "whose" is hard to parse. Fix: "any other non-read tool with a file_path, path, notebook_path or edits[].file_path whose last path part is left-undone.txt".
+- [nit] G2 `CHANGELOG.md:16`, the parenthetical about Sonnet's old copy: "read-guard and the blocked Skill tool counted apart" is unclear and three clauses chain on commas. Fix: split into short clauses (moot if the Spec finding's rewrite is taken, which replaces this sentence).
 
 Unverified:
-- `.do-code-change/archive/2026-11-18-246-240-follow-ups/` (the PENDING pointer) does not exist yet; earlier runs were archived under that date-slug pattern at finish. Step 9's results are in the live `.do-code-change/246-240-follow-ups/checkpoints.md:27-33`.
-- `check.py:3210` reads `edits[].file_path`; whether a real MultiEdit call carries that key was not checkable offline.
-- `tests/skills/.results/wiki-cycle/20261118-195236/report.md` was not opened (Glob timed out).
-- The fixture and `test_cycle_scope.py` were not run by this review (checkpoints.md gives exit 0 and 330/330).
+- The fixture's exit 0 and `test_cycle_scope.py` 330/330 (checkpoints.md, Fix round 3) were not re-run here.
+- That the CRLF write happens on this machine rests on the Windows platform and `Path.write_text`'s default newline translation; the fixture was not run to print the bytes.
+- Whether a real MultiEdit call carries `edits[].file_path`: not checkable offline (a real call carries a top-level `file_path`, which the Edit plant already covers).
 
 Checks made:
-- Round-2 Standards findings confirmed fixed by the reviewer's own reads: the detector, its reader and its regexes are gone (Grep for `_LU_FILE`, `_lu_ps_writes_file`, `_LU_WRITE_RES`, `_LU_PS_`, `_LU_COPY_VERBS`, `caught(` over the repo outside `.do-code-change/` found nothing), so the read-counted-as-write, literal-route-missed, nesting and `range(4)`/`range(5)` findings no longer have code to stand on; the dash plant is judged by `named(..., SECTION_EQUALS_FILE)`; `NEEDS_AWAITING = ` spacing and the blank line before `def named` are fixed; the `_lu_script_output` docstring says a made directory is not removed and matches the body.
-- The PENDING row is no longer a measurement (README format satisfied).
-- The events-file plant does bite on the restore: `scripts/_run_state.py:957-959` writes `left-undone-events.txt` on a non-`--report-only` run, and the check runs the script without that flag.
-- Every function and constant the diff adds has a caller (R26): `_lu_model_wrote_file` at check.py:3274 and :3361, `session_write_plants` at fixture:394.
+- Round-3 Standards findings, fixed and confirmed by the lens's and my own reads: standards-25 (the fixture now plants MultiEdit, NotebookEdit, a `path`-keyed tool, a backslash Write, a Read and a Write to `copy-of-left-undone.txt` as pass controls, and `old_run_write_plants` for the old-run kind, called from `main`, fixture 485); standards-31 (PENDING columns now hold the reason and the pointer in their own cells; the Opus-only caveat is in the Change column); standards-32 (the docstring says "three of the shell routes"; the loop runs `cp`, `PowerShell Set-Content`, `>`); standards-26's code half (exact byte comparison, no `rstrip`; its plant half is the finding above).
+- Round-1 re-verification, standards-1 (fixture route plants judged on the untouched file): still fixed. The tool plants and the not-the-file plants run on the untouched file and are judged by `named(..., WROTE_ITSELF)`, a prefix match on the check's own name, not the old loose `caught()`; the three identical shell rewrites and three reads are judged on the same untouched file expecting a pass; only the shell routes with a changed count are judged by `SCRIPT_OUTPUT` (ruling 1), subject to the first finding.
+- Round-1 re-verification, standards-2 (old-run kind graded stricter, Mark's ruling): still fixed. `_check_left_undone_old_run` reaches `_lu_norm_line` through `_lu_section_lines` (check.py:3358); `_lu_norm_line` (3152-3165) has no dash mapping (Read). The shared `_lu_model_wrote_file` now matches the last path part exactly: narrower than `endswith` only for names such as `copy-of-left-undone.txt`, which is the round-3 spec-15 fix and sits inside ruling 1; ruling 2 concerns text grading. Shell writes to the file in the old-run kind are still caught by "no left-undone.txt in the run folder after the run" (check.py:3362, `not f.exists()`), so removing shell-text detection opened no hole there. README line 21 ("an existing kind is never changed") is overridden for these kinds by the requester ("yes okay its stricter thanks for asking").
+- Round-1 re-verification, standards-4 (PENDING row does not count none-answered as proof): still fixed. The row says "only lint-within-24h discriminates ... none-answered passes the old copy on Opus only and is a regression case; both fail on Opus's new copy on the sandbox edit gate, task #247". It does not name the replay step README line 49 describes; CHANGELOG assigns the sharpening to #247.
+- Grep over `tests/` for `_LU_WRITE_RES|_lu_ps_writes_file|_LU_PS_|_LU_COPY_VERBS|_LU_FILE|Copy-Item|xcopy|caught(` finds only the fixture's `xcopy` plant string.
 
 | File | Risk | Part | Standards | Spec | Change risk |
 |---|---|---|---|---|---|
-| `tests/skills/wiki-cycle/check.py` | LOW (test code, writer's text) | 1 | in part: 3180-3309 (every changed line) | in part: 2554-2555, 2732-2745, 3150-3374 | not run |
-| `tests/scripts/test_left_undone_fixture.py` | LOW (tests) | 1 | in full | in full | not run |
-| `tests/skills/PENDING.md` | LOW | 1 | in part: 1-89 (changed row read) | in part: 1-89 | not run |
-| `CHANGELOG.md` | LOW | 1 | in part: 1-80 (changed block) | in part: 13-18 | not run |
-
-Every changed line was read by each lens; the unread parts are context only.
+| `tests/skills/wiki-cycle/check.py` | LOW (test code, writer's text) | 1 | in full (3140-3380) | in part: 3190-3379 (every changed line) | not run |
+| `tests/scripts/test_left_undone_fixture.py` | LOW (tests) | 1 | in full | in part: 235-512 (every changed line) | not run |
+| `tests/skills/PENDING.md` | LOW | 1 | in full (line 28, the changed row) | in part: line 28 | not run |
+| `CHANGELOG.md` | LOW | 1 | in full after the retry (14-19) | in part: 14-17 | not run |
 
 | Coverage (Standards) | Verdict | Search |
 |---|---|---|
-| S1, S3-S12, G25, F3, C5, C1, C3, R2 | clear | lens reads of every added name, literal and comment |
-| S2 / G5 | found | Grep `file_path\|notebook_path` in tests/ |
-| R1, N7 / G20 | clear | `_lu_script_output` docstring announces the run and restore |
-| R26 | clear | Grep of call sites, see Checks made |
-| C2 | found | check.py:3275, 3281, 3268-3269; fixture:255 |
-| S13 / G30 | found | fixture:250 |
-| G34, S14, G19, G28, G29, R4, G31, G16, S15 | clear | read; max nesting three, guarded; no hits for removed names |
-| R7-R11, G4 | clear | `finally` at check.py:3259-3264 covers every return |
-| T1, T3, T5, T6 | found | fixture:290-295 |
-| R12-R15, T4 | clear | each verdict names one concept; writes confined to the sandbox run folder and restored in `finally`; no skip |
-| PY9 | found | events plant and the 14-route loop |
-| PY1-PY8, PY10, PY11 | clear / n/a | none added; no async code; `difflib` is stdlib |
-| documented standard: tests/skills/README.md PENDING format | clear | row read against it |
-| Sections not pasted | n/a | Names, Classes and modules, Boundary conditions, Concurrency, Refactoring and scope |
+| S1, S3-S12, G25, F3, C5, R2, C1 | clear | lens reads of every added name and literal (`made[-20:]` is a display window) |
+| S2 / G5 | clear | the old-run write check calls the one shared helper |
+| R1, N7 / G20 | clear | `_lu_script_output` docstring announces snapshot and restore |
+| R26 | clear | `old_run_write_plants` called from `main` |
+| C2, C3 | found | check.py:3199-3201 docstring; CHANGELOG.md:16 wording |
+| Names N2-N6, R3 | clear | `raw`, `made`, `not_the_file` read in context |
+| Functions S13-G16, R4 | clear | the new `_lu_copy_checks` branch is short, nesting two |
+| Tests T1, T3, T5, T6 | found | whitespace and line-ending branch unplanted |
+| R12-R15, T4 | clear | each plant names one outcome; nothing loosened or skipped |
+| PY9 | found | CRLF-overdetermined plants |
+| PY1-PY8, PY10, PY11 | clear / n/a | no new imports, Any or async |
+| Boundary G3, G33, G26, G2 | clear | empty `edits` and non-dict entries handled; `[-1]` guarded by `split` |
+| Classes, Error handling, Concurrency, Refactoring sections | n/a | not pasted (no class, no handler change, no concurrency, not a refactor) |
+| Documented standard: tests/skills/README.md | clear | "existing kind", "not counted as proof", PENDING row read against it |
+| Re-verify standards-1, 2, 4 | clear | see Checks made |
 
-Well built: `_lu_model_wrote_file` is short and its docstring states the ruling; the dash plant is judged by name, the restores run in `finally`, and the fixture's cleanup is in one place.
+Well built: each tool-route plant is judged on the untouched file by the write check's own name, and `_lu_script_output` restores the run folder byte for byte.
 
 ## Spec
 
-- [important] `CHANGELOG.md:16` names the wrong cause of Sonnet's none-answered old-copy failure.
-  - Intent: the brief asked for "Sonnet's old-copy failure was the step JSON contract"; that wording is copied from `checkpoints.md:30` ("sonnet old FAIL (no permission denials; step JSON contract: NOT the record checks)").
-  - Implemented: `tests/skills/.results/wiki-cycle/20261118-195235-red-green-047d868/report.md:29` (the run report the reviewer read) says "old failed: no permission denials (read-guard and the blocked Skill tool counted apart); every step JSON follows the contract (fields, cycle_id)". CHANGELOG.md:16 says the opposite.
-  - Affected: a reader of CHANGELOG who wants to know why the none-answered case does not discriminate.
-  - Fix: say Sonnet's old-copy failure was "no permission denials" (read-guard and the blocked Skill tool counted apart), and correct `checkpoints.md:30` the same way, unless a fresh read of the old-copy report shows the step-JSON cause.
-- [suggestion] `CHANGELOG.md:16` omits that both `lint-fixes-record` cases fail on Opus's new copy while it calls none-answered "kept as a regression case".
-  - Intent: `checkpoints.md:30-31`: Opus "new FAIL (1)" in both cases, a sandbox Write refused by the edit gate; `report.md:29-30` "fails on the new copy".
-  - Fix: state that both fail on Opus's new copy on that denial, parked under #247.
-- [suggestion] (writer's text) `check.py:3281` and `:3268-3269`: the check name "(not changed or made by the session)" and the docstring "no route by the session can make the copy check pass against a file the session wrote" contradict `requirements.md:43` ("a session that rewrites the file with text identical to the script's output by a shell route is accepted"). Fix: name it "(the text equals the script's own output)" and say an identical rewrite by any route passes.
-- [suggestion] The fixture does not plant the other Write-type routes the ruling names, nor the old-run write check: `test_left_undone_fixture.py:290-291` plants Write and Edit only; check.py:3361 has no plant (only the verbatim kind gets `session_write_plants`, line 394). Fix: MultiEdit (`edits[0].file_path`), NotebookEdit (`notebook_path`), a backslash Write and an old-run plant.
-- [nit] (writer's text) `check.py:3285-3286`: `[l.rstrip() ...]` lets trailing-space or final-newline changes pass the script-output check, though `requirements.md:43` says "the file must equal the script's own output". Changed words and counts still fail. Fix: compare without `rstrip`, both sides read the same way.
-- [nit] (writer's text) `check.py:3199-3200`, `:3211`: the docstring says "any other non-read tool whose file_path ... ends in left-undone.txt", and `endswith("left-undone.txt")` also matches a name such as `copy-of-left-undone.txt`; the ruling names four tools aimed at the file. Fix: name the four tools; match the run folder's own file name.
-- [nit] `tests/skills/PENDING.md:28`: a result pointer sits in the "Why it was not run" column. Fix: put the reason there ("next full run checks these; paid results in ...").
+- [important] `CHANGELOG.md:16` still misstates why Sonnet's none-answered old copy failed, now in the opposite direction (round-3 spec-10 was not fixed; its premise was a misread).
+  - Intent: `tests/skills/.results/wiki-cycle/20261118-195235-red-green-047d868/report.md:29` reads "old failed: no permission denials (read-guard and the blocked Skill tool counted apart); every step JSON follows the contract (fields, cycle_id)". `tests/skills/README.md:49` defines that parenthetical as "the checks that failed on the old copy". Both strings are check names: `tests/skills/wiki-cycle/check.py:896` ("no permission denials (read-guard and the blocked Skill tool counted apart)") and `check.py:3508` ("every step JSON follows the contract (fields, cycle_id)"). So on Sonnet's old copy two checks failed, the permission-denials check and the step JSON contract check, and neither is a record check; the new copy passed (report.md:36). `checkpoints.md:30` ("no permission denials; step JSON contract: NOT the record checks") says the same and is right.
+  - Implemented: CHANGELOG.md:16 now says "Sonnet's old copy failed it on "no permission denials" alone, ... and every step JSON followed the contract, so neither the record checks nor the contract told the copies apart". Wrong on three counts: "alone", "every step JSON followed the contract", and "the contract [did not] tell the copies apart" (the contract check failed on the old copy and passed on the new one). Round 3 read the second item as a passing check and its fix wrote that into the changelog.
+  - Affected: a reader judging whether none-answered is evidence. The case's Sonnet red is for a wrong reason (permission and contract checks), which is why it does not discriminate.
+  - Fix: "Sonnet's old copy failed it on two checks, no permission denials (read-guard and the blocked Skill tool counted apart) and the step JSON contract (fields, cycle_id); the record checks did not fail". Leave `checkpoints.md:30` as it is; round 3's request to correct it was wrong too.
 
 Unverified:
-- The PENDING pointer `.do-code-change/archive/2026-11-18-246-240-follow-ups/checkpoints.md` does not exist yet; it resolves when the run is archived.
-- `tests/skills/.results/wiki-cycle/20261118-195236/report.md` was not opened.
-- Spec-side, not raised (files not moved this round): `requirements.md:56` and `plan.md:70` still say a `>` or `tee` write must fail; `requirements.md:43` supersedes that and the fixture follows line 43.
+- The PENDING pointer `.do-code-change/archive/2026-11-18-246-240-follow-ups/checkpoints.md` does not exist yet (it resolves when the run is archived; the archive date slug is not known now).
+- The fixture's exit 0 and `test_cycle_scope.py` 330/330 (checkpoints.md) were not re-run here.
+- The "edit gate" cause of Opus's Write denial rests on `checkpoints.md:30` (`dcc-edit-gate --explain`); `report.md:49-52` shows only the denied Writes of `build.py` and `build_index.py`.
 
 Checks made:
-- Round-2 Spec findings: the shell-detector findings (a read counted as a write; literal routes missed) are moot by the ruling and the code now matches it: `check.py:3198-3213` reads tool targets only, and Grep for `_lu_model_wrote_file(` hits only `_lu_copy_checks` (3274) and the old-run kind (3361), so both callers are served.
-- The none-answered "Opus only" part of round-2 spec-3 is fixed in CHANGELOG.md and PENDING.md; the cause given for Sonnet is the first finding.
-- A session-written differing file cannot pass the copy check: `_fb_read` (check.py:2554-2555) is a plain read, the script-output check at 3285-3289 compares it with the script's re-run output; only trailing whitespace passes (the nit above).
-- Dash strictness unchanged (`_lu_norm_line` has no dash mapping; Grep of the dash characters finds only docstrings); a failed copy check names the first differing line (`_lu_first_diff`, check.py:3226-3240); no `left-undone-resumed` in `check.py`.
-- The events plant is real (case A is `--full`, `_run_state.py:941, 957-959`); the dash plant is non-vacuous (`dash_line` is read from the file); the identical-text Bash plants pass because command text is not read, which is the ruling.
+- Round-1 re-verification, spec-1 (alias routes `copy`, `move`, `ren`, `xcopy`, `>|`): SUPERSEDED by ruling 1, not "fixed". `requirements.md:43` was rewritten after the requester's "a" and replaces the earlier catch-every-route reading; the detector is gone from `check.py` (Grep above). Changed-text writes by those routes are caught by the exact script-output comparison (check.py:3280-3292); the fixture plants all 14 shell routes (fixture 274-289), judged by that check, subject to the Standards finding's CRLF caveat. An identical rewrite is accepted by ruling.
+- Round-3 Spec findings fixed and confirmed: spec-11 (CHANGELOG and PENDING now say both cases fail on Opus's new copy on the edit gate, #247; `report.md:36-37` shows FAIL (1) twice); spec-13 (plants at fixture 290-295 and `old_run_write_plants`); spec-14 (check.py:3285-3292 compares `raw == made` with no `rstrip`, matching `requirements.md:43`); spec-15 (check.py:3211 matches the last path part; control at fixture 296-298); spec-16 (the "Why it was not run" column holds no result pointer).
+- CHANGELOG's "a Write, Edit, MultiEdit or NotebookEdit aimed at `left-undone.txt` fails" agrees with `_lu_model_wrote_file` (check.py:3198-3213) and the plants. The PENDING row's none-answered and Opus statements agree with `report.md:36-37, 49-52` and `checkpoints.md:30-32`.
+- Sibling search for the same wrong wording: `Grep "step JSON contract|none-answered"` over the repo finds the sentence only in CHANGELOG.md:16 and PENDING.md:28 (PENDING does not repeat the contract claim) and in `checkpoints.md:30` (correct).
 
 | Coverage (Spec) | Verdict | Search |
 |---|---|---|
-| a detector matches the ruling | clear | `check.py:3198-3213`; Grep for removed names, no hits; two callers |
-| b none-answered wording | found | CHANGELOG.md:16 against checkpoints.md:30 and report.md:29-30 |
-| c fixture shows each claim | found | Write-type routes and old-run unplanted; events and dash plants confirmed |
-| d requirement line 43: a differing file cannot pass | clear | `_fb_read`, check.py:3285-3289; trailing whitespace is the nit |
-| e PENDING pointer | found | live checkpoints.md:27-33 holds Step 9; archive path does not exist yet |
-| ruling and the old-run write check | found | check.py:3361 has no plant |
-| dash strictness; first differing line named | clear | Grep of dash characters; `_lu_first_diff` |
+| spec-10 cause of Sonnet's old-copy failure | found | Grep of both check names in `tests/skills/*.py` (check.py:896, 3508) |
+| spec-11 Opus new-copy denial named | clear | report.md:36-37, 49-52; checkpoints.md:30-32 |
+| spec-13 plants and old-run plant | clear | fixture 290-298, 350-364, 485 |
+| spec-14 exact comparison | clear | check.py:3285-3292 |
+| spec-15 basename match | clear | check.py:3211; fixture 296-298 |
+| spec-16 PENDING columns | clear | PENDING.md:28 read |
+| spec-1 re-verification | clear (superseded by ruling 1) | Grep for the old detector names, none |
+| (a) CHANGELOG/PENDING Opus claim | clear | report.md:49-52 |
+| (b) PENDING result pointers | clear, archive path Unverified | checkpoints.md Step 9 |
+| (c) CHANGELOG write-check sentence | clear | check.py:3198-3213 |
+| (d) requirements.md:43 "equal the script's own output" | clear | check.py:3286 |
 
-Well built: the detector is now the ruling's two checks, both callers are wired, and the dash mapping is gone from `_lu_norm_line`.
+Well built: the exact byte comparison names the first differing line, and the fixture pins every tool route with its pass controls.
 
 ## Change risk
 
-No high-risk file; the change-risk lens was not run. The file table above is the triage: every moved file is LOW (test code, tests, release notes, a docs table).
+No high-risk file; the change-risk lens was not run. The file table under Standards is the triage: every moved file is LOW (test code, tests, release notes, a docs table).
 
-needs-a-human: none (no auth, session, token or data-migration change; spec resolved from requirements.md, plan.md and checkpoints.md).
+needs-a-human: none (no auth, session, token or data-migration change; spec resolved from `requirements.md`, `plan.md` and `checkpoints.md`).
 
 ## Summary
 
-Standards: 8 findings (2 important, 4 suggestion, 2 nit). The worst: the new write-detector branches have no fixture case beyond Write and Edit, and the copy check's `rstrip` makes the documented "any changed text fails" broader than the code.
+Standards: 3 findings (1 important, 2 nit). The worst: the changed-count plants fail on CRLF against LF alone on Windows, and the new exact comparison has no trailing-space or line-ending plant.
 
-Spec: 7 findings (1 important, 3 suggestion, 3 nit). The worst: CHANGELOG.md:16 gives the wrong cause for Sonnet's old-copy failure, contradicted by the run report.
+Spec: 1 finding (important). CHANGELOG.md:16 states Sonnet's old-copy failure wrongly again: two checks failed (permission denials and the step JSON contract), not "alone" with the contract followed.
 
 Change risk: not run.
 
-The axes agree on two gaps: the unplanted MultiEdit, NotebookEdit and old-run routes, and the `rstrip` and stale check names in `check.py`. Round-2 findings confirmed fixed: the detector findings (removed), PENDING row format, the dash plant, the nits, the none-answered "Opus only" wording (its Sonnet cause is still wrong). Findings marked "(writer's text)" go back to eval-case-writer as a replay; the rest are the developer's. Both axes are worth acting on.
+Re-verified STALE round-1 items: spec-1 superseded by ruling 1; standards-1, standards-2 and standards-4 still fixed. The axes do not overlap. Both axes are worth acting on; the Spec finding's fix is one sentence, and the Standards finding's is a `write_bytes` change plus two plants.
 
 VERDICT: Standards FINDINGS · Spec FINDINGS · Change risk NOT RUN · needs-a-human 0

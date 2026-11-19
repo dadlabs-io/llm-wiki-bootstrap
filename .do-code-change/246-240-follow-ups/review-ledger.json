@@ -171,6 +171,38 @@
         "tests/skills/wiki-cycle/cases.json": "5c9ff224f0fb1a9f90b866050f21b7eaeb062a4b5aed05342a165e92365eb4a6",
         "tests/skills/wiki-cycle/check.py": "6fc36349f3a584d3ef6e7be58bf2ee9d42e780745027fe547675d9008c9a633b"
       }
+    },
+    {
+      "round": 4,
+      "at": "2026-11-19T04:54:41Z",
+      "diff_sha256": "63feb2df45d73632dafa2b9a0635fd4abc9fbf1b3f32490a6572d78223fe5290",
+      "findings_sha256": "018cc047d6272ee5b036bdd2473f45070a428ad24bad8fb7d0d29ca29964ad30",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-34",
+        "standards-35",
+        "standards-36",
+        "spec-17"
+      ],
+      "new": [
+        "standards-34",
+        "standards-35",
+        "standards-36",
+        "spec-17"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        "CHANGELOG.md": "82a4a2367891f497a325a58e4b5d8729afcfae7147054de20eb2478e39ba6bad",
+        "scripts/_run_state.py": "07f71209c54be7de075730f3e36444b535c11f5aaeec26d8483f63f317536795",
+        "skills/wiki-cycle/SKILL.md": "c795d52232e9cc989ab88d0a1981d6be98db1486512bd5db25c3628a0166c5e6",
+        "tests/scripts/test_cycle_scope.py": "c200e1f1b21224fee2109f2c815ad960258d9c6eac7bbd554f43e62b180bed8e",
+        "tests/scripts/test_left_undone_fixture.py": "8bf8df24376e598c94ebd80dc7b34a5c5688b194f1d3b430eb57e38b904893b1",
+        "tests/skills/PENDING.md": "0e2da82f9e66775e7a5845e2c4266db7f4d8d637a027441352f6955604430a87",
+        "tests/skills/wiki-cycle/cases.json": "5c9ff224f0fb1a9f90b866050f21b7eaeb062a4b5aed05342a165e92365eb4a6",
+        "tests/skills/wiki-cycle/check.py": "20c4aa1e7d63110535d1af1040f97d5fb43cda0b987243185dd0068913da7e35"
+      }
     }
   ],
   "items": {
@@ -1445,6 +1477,90 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "b36785c0aae1d75466b66b01751bd8f0156b5704690123904e330a36fe4a7836"
+        }
+      ]
+    },
+    "standards-34": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] PY9, T3, T5 `tests/scripts/test_left_undone_fixture.py:326-332`: the \"script-output check fails a changed left-undone.txt written by <route>\" plants (all 14 shell routes, and the \"none\" plant) cannot show that the one changed count is what fails them, and the exact comparison has no case of its own. The fixture writes the changed file in text mode: `lu_file.write_text(changed, encoding=\"utf-8\")`. On Windows `write_text` turns \"\\n\" into CRLF. The script writes `left-undone.txt` with `newline=\"\"` (`scripts/_atomic_io.py:80`, `open(tmp, \"w\", encoding=encoding, newline=\"\")`), so its output is bare LF. `_lu_copy_checks` now compares bytes (`if raw == made:`, check.py:3286), so each plant fails on CRLF against LF alone, with or without the count change; the expected verdict is False, so they pass either way. A Grep of the fixture for `trailing|rstrip|\\r|final newline|line ending` finds only the `rstrip` calls in `compose_report` (lines 122-123). Round-3 standards-26's fix asked for \"a plant for a trailing-space edit\"; none exists, and the branch `diff or \"same lines, different line endings or final newline\"` (check.py:3289-3292) has no case. The restores at fixture lines 333 and 342 use `write_text(original)` too and change the file from LF to CRLF; no assertion expecting a pass runs after them today (`session_write_plants` is the last call in `grade`, line 421; the plain pass run is at 415), so nothing fails yet. Fix: write the changed file with `lu_file.write_bytes(changed.encode(\"utf-8\"))` (and the restores likewise), so only the count differs; add one plant that changes only a trailing space and one that changes only the line endings, each required to fail the script-output check.",
+      "file": "tests/scripts/test_left_undone_fixture.py",
+      "line": 326,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "25492bb7a5fd235a79be788238a6e759ff111f3949cffadf7a7b0d3988a8da02",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "25492bb7a5fd235a79be788238a6e759ff111f3949cffadf7a7b0d3988a8da02"
+        }
+      ]
+    },
+    "standards-35": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] C2/C3 `tests/skills/wiki-cycle/check.py:3199-3201` (writer's text): the edited docstring reads \"whose file_path, path or notebook_path, or whose edits[].file_path, whose last path part is left-undone.txt\"; the double \"whose\" is hard to parse. Fix: \"any other non-read tool with a file_path, path, notebook_path or edits[].file_path whose last path part is left-undone.txt\".",
+      "file": "tests/skills/wiki-cycle/check.py",
+      "line": 3199,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "68b1d067191744bcc36bd57c7c4d9e851ca644d50247734ab0d9b3b35e1bc3f8",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "68b1d067191744bcc36bd57c7c4d9e851ca644d50247734ab0d9b3b35e1bc3f8"
+        }
+      ]
+    },
+    "standards-36": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] G2 `CHANGELOG.md:16`, the parenthetical about Sonnet's old copy: \"read-guard and the blocked Skill tool counted apart\" is unclear and three clauses chain on commas. Fix: split into short clauses (moot if the Spec finding's rewrite is taken, which replaces this sentence).",
+      "file": "CHANGELOG.md",
+      "line": 16,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e0482ed3740bc46a6b3cd086279868f234c40411b4515bf4d7ab59460431b880",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "e0482ed3740bc46a6b3cd086279868f234c40411b4515bf4d7ab59460431b880"
+        }
+      ]
+    },
+    "spec-17": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `CHANGELOG.md:16` still misstates why Sonnet's none-answered old copy failed, now in the opposite direction (round-3 spec-10 was not fixed; its premise was a misread). Intent: `tests/skills/.results/wiki-cycle/20261118-195235-red-green-047d868/report.md:29` reads \"old failed: no permission denials (read-guard and the blocked Skill tool counted apart); every step JSON follows the contract (fields, cycle_id)\". `tests/skills/README.md:49` defines that parenthetical as \"the checks that failed on the old copy\". Both strings are check names: `tests/skills/wiki-cycle/check.py:896` (\"no permission denials (read-guard and the blocked Skill tool counted apart)\") and `check.py:3508` (\"every step JSON follows the contract (fields, cycle_id)\"). So on Sonnet's old copy two checks failed, the permission-denials check and the step JSON contract check, and neither is a record check; the new copy passed (report.md:36). `checkpoints.md:30` (\"no permission denials; step JSON contract: NOT the record checks\") says the same and is right. Implemented: CHANGELOG.md:16 now says \"Sonnet's old copy failed it on \"no permission denials\" alone, ... and every step JSON followed the contract, so neither the record checks nor the contract told the copies apart\". Wrong on three counts: \"alone\", \"every step JSON followed the contract\", and \"the contract [did not] tell the copies apart\" (the contract check failed on the old copy and passed on the new one). Round 3 read the second item as a passing check and its fix wrote that into the changelog. Affected: a reader judging whether none-answered is evidence. The case's Sonnet red is for a wrong reason (permission and contract checks), which is why it does not discriminate. Fix: \"Sonnet's old copy failed it on two checks, no permission denials (read-guard and the blocked Skill tool counted apart) and the step JSON contract (fields, cycle_id); the record checks did not fail\". Leave `checkpoints.md:30` as it is; round 3's request to correct it was wrong too.",
+      "file": "CHANGELOG.md",
+      "line": 16,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e0482ed3740bc46a6b3cd086279868f234c40411b4515bf4d7ab59460431b880",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "e0482ed3740bc46a6b3cd086279868f234c40411b4515bf4d7ab59460431b880"
         }
       ]
     }
