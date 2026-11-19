@@ -3194,33 +3194,86 @@ def _lu_section_lines(rtext: str):
 
 _LU_FILE = r"left-undone\.txt"
 _LU_READ_TOOLS = ("Read", "Glob", "Grep")
-# how a shell command (Bash or PowerShell, backslashes already turned to '/') writes left-undone.txt: each pattern
-# needs the file named as the target of that very write, so a command that only reads it, or reads it and writes
-# something else, is not a hit
+# How a shell command (Bash or PowerShell, backslashes already turned to '/') writes left-undone.txt. Each pattern
+# needs the file named as the DESTINATION of that very write (the target of a redirect or tee, the last argument of
+# a copy or move, the file of a sed -i, the path a PowerShell write cmdlet writes to, the file an open() or Path
+# write opens), so a command that only reads the file, or reads it and writes something else (including as a
+# cmdlet's -Value), is not a hit. The PowerShell write cmdlets are checked by _lu_ps_writes_file, not by a pattern
+# here, because their destination can come before or after their other arguments.
+_LU_COPY_VERBS = (r"(?:cp|mv|copy|move|ren|rename|xcopy|install|ln|rsync|cpi|mi"
+                  r"|Copy-Item|Move-Item|Rename-Item)")
 _LU_WRITE_RES = (
-    ("redirect", re.compile(r">>?\s*[\"']?[^\s\"'<>|;&]*" + _LU_FILE, re.I)),
+    ("redirect", re.compile(r">[>|]?\s*[\"']?[^\s\"'<>|;&]*" + _LU_FILE, re.I)),
     ("tee", re.compile(r"\b(?:tee|Tee-Object)\b[^\n|;&]*" + _LU_FILE, re.I)),
-    ("copy or move into it", re.compile(
-        r"\b(?:cp|mv|install|ln|rsync|Copy-Item|Move-Item|Rename-Item)\b[^\n;&|]*" + _LU_FILE
-        + r"[\"']?\s*(?:$|[;&|\n)])", re.I | re.M)),
+    ("copy or move onto it", re.compile(
+        r"(?<![\w./-])" + _LU_COPY_VERBS + r"(?![\w.-])[^\n;&|]*(?:"
+        r"-(?:Destination|NewName|Dest\w*)\s+[\"']?[^\s\"']*" + _LU_FILE + r"|"
+        + _LU_FILE + r"[\"']?(?:\s+(?:-\w+|/[A-Za-z]\b))*\s*(?:$|[;&|\n)]))", re.I | re.M)),
     ("in-place edit", re.compile(r"\b(?:sed|perl)\b[^\n&|]*\s-[A-Za-z]*i\S*[^\n&|]*" + _LU_FILE, re.I)),
-    ("PowerShell write", re.compile(
-        r"\b(?:Set-Content|Add-Content|Out-File|Clear-Content|New-Item)\b[^\n;&|]*" + _LU_FILE, re.I)),
     ("open for writing", re.compile(r"\bopen\([^)]*" + _LU_FILE + r"[^)]*,\s*[\"'](?:[wax]|r\+)", re.I)),
     ("path write", re.compile(
         r"\b(?:Path|PurePath)\(\s*[\"'][^\"']*" + _LU_FILE + r"[\"']\s*\)\.(?:write_text|write_bytes)\(|"
-        r"\b(?:WriteAll\w+|AppendAll\w+)\([^)]*" + _LU_FILE, re.I)),
+        r"\b(?:WriteAll\w+|AppendAll\w+)\([^)]*" + _LU_FILE + r"|"
+        r"File\]::(?:Copy|Move|Replace)\([^)]*,\s*[\"'][^\"']*" + _LU_FILE, re.I)),
     ("truncate or dd", re.compile(r"\btruncate\b[^\n;&|]*" + _LU_FILE + r"|\bdd\b[^\n]*\bof=\S*" + _LU_FILE, re.I)),
 )
+# PowerShell write cmdlets and their aliases; the file must be the one the cmdlet writes to
+_LU_PS_RE = re.compile(r"(?<![\w./-])(?:Set-Content|Add-Content|Out-File|Clear-Content|New-Item|sc|ac|clc|ni)(?![\w.-])",
+                       re.I)
+_LU_PS_PATH_PARAMS = ("-path", "-filepath", "-literalpath")
+_LU_PS_SWITCHES = ("-force", "-append", "-nonewline", "-noclobber", "-passthru", "-whatif", "-confirm",
+                   "-asbytestream", "-usetransaction")
+
+
+def _lu_ps_writes_file(cmd: str) -> bool:
+    """True when a PowerShell write cmdlet (Set-Content, Add-Content, Out-File, Clear-Content, New-Item or an alias)
+    in `cmd` has left-undone.txt as its destination: the value of -Path, -FilePath or -LiteralPath (any prefix of
+    them of two letters or more), or else its first positional argument. The cmdlet's other arguments (-Value,
+    -Encoding, ...) are skipped, and a parenthesised group is one token, so `Add-Content -Path report.md -Value
+    (Get-Content left-undone.txt)` is a read of the file, not a write of it."""
+    groups: list = []
+
+    def hold(m):
+        groups.append(m.group(0))
+        return f"\x00{len(groups) - 1}\x00"
+
+    flat = cmd
+    for _ in range(4):
+        flat = re.sub(r"\$?\([^()]*\)", hold, flat)
+
+    def restore(tok: str) -> str:
+        for _ in range(5):
+            tok = re.sub(r"\x00(\d+)\x00", lambda m: groups[int(m.group(1))], tok)
+        return tok
+
+    for m in _LU_PS_RE.finditer(flat):
+        seg = re.split(r"[;|&\n]", flat[m.end():], maxsplit=1)[0]
+        toks = re.findall(r"\"[^\"]*\"|'[^']*'|\S+", seg)
+        dest, i = None, 0
+        while i < len(toks):
+            t = toks[i]
+            tl = t.lower()
+            if t.startswith("-") and len(t) > 1 and not t[1].isdigit():
+                if len(tl) >= 3 and any(p.startswith(tl) for p in _LU_PS_PATH_PARAMS):
+                    dest = toks[i + 1] if i + 1 < len(toks) else None
+                    break
+                i += 1 if tl in _LU_PS_SWITCHES else 2
+                continue
+            dest = t
+            break
+        if dest is not None and re.search(_LU_FILE, restore(dest), re.I):
+            return True
+    return False
 
 
 def _lu_model_wrote_file(run: dict) -> list:
     """Calls in which the session itself wrote left-undone.txt, by any tool: Write, Edit, MultiEdit or any other
     non-read tool that names the file as its target, and a shell command (Bash or PowerShell, or any call with a
-    'command' input; Windows backslash paths too) that redirects or tees into it, copies or moves onto it, edits it in
-    place, or writes it with a PowerShell cmdlet, a Python open() or Path write, or truncate or dd. A route this misses
-    (the path held in a variable) is still caught when the file's text differs from the script's, by the check in
-    _lu_copy_checks that runs the script."""
+    'command' input; Windows backslash paths too) that redirects or tees into it (`>`, `>>`, `>|`), copies or moves
+    onto it (cp, mv, copy, move, ren, xcopy, Copy-Item and the other aliases), edits it in place, or writes it with
+    a PowerShell write cmdlet, a Python open() or Path write, or truncate or dd. In each the file must be the
+    destination: a command that only reads it is no hit. A route this misses (the path held in a variable) is still
+    caught when the file's text differs from the script's, by the check in _lu_copy_checks that runs the script."""
     hits = []
     for c in run["tool_calls"]:
         name, inp = c["name"], c.get("input") or {}
@@ -3229,10 +3282,11 @@ def _lu_model_wrote_file(run: dict) -> list:
         if name in ("Bash", "PowerShell") or "command" in inp:
             cmd = str(inp.get("command", "")).replace("\\", "/")
             if re.search(_LU_FILE, cmd, re.I):
-                for label, rx in _LU_WRITE_RES:
-                    if rx.search(cmd):
-                        hits.append(f"{name} ({label}): " + cmd[:120])
-                        break
+                label = next((lb for lb, rx in _LU_WRITE_RES if rx.search(cmd)), None)
+                if label is None and _lu_ps_writes_file(cmd):
+                    label = "PowerShell write"
+                if label:
+                    hits.append(f"{name} ({label}): " + cmd[:120])
         else:
             targets = [str(inp.get(k, "")) for k in ("file_path", "path", "notebook_path")]
             targets += [str(e.get("file_path", "")) for e in (inp.get("edits") or []) if isinstance(e, dict)]
@@ -3271,10 +3325,13 @@ def _lu_first_diff(want: list, got: list, a: str = "file", b: str = "section", s
 
 def _lu_script_output(ctx: dict, run_dir: Path):
     """(text, why): left-undone.txt as `wiki-cycle-scope.py left-undone` writes it for this run folder, made by
-    running the script itself; the session's file is put back byte for byte afterwards, whatever happens. (None, reason)
-    when the script cannot be run or leaves no file."""
+    running the script itself. The script writes more than that one file (left-undone-events.txt, for one), so the
+    whole run folder is snapshotted first and put back afterwards, whatever happens: files the script made are
+    deleted, files it rewrote get their bytes back. What the script might write outside the run folder is not
+    restored (file times in the run folder do change). (None, reason) when the script cannot be run or leaves no
+    file."""
     f = run_dir / "left-undone.txt"
-    keep = f.read_bytes()
+    snap = {p: p.read_bytes() for p in run_dir.rglob("*") if p.is_file()}
     try:
         f.unlink()
         p = _script(ctx, "wiki-cycle-scope.py", "--topic", NOTEBOOK, "left-undone", "--run-folder", str(run_dir))
@@ -3282,7 +3339,11 @@ def _lu_script_output(ctx: dict, run_dir: Path):
             return None, f"exit {p.returncode}: {(p.stdout + p.stderr)[-200:]}"
         return f.read_text(encoding="utf-8", errors="replace"), ""
     finally:
-        f.write_bytes(keep)
+        for q in [q for q in run_dir.rglob("*") if q.is_file() and q not in snap]:
+            q.unlink()
+        for q, b in snap.items():
+            if not q.is_file() or q.read_bytes() != b:
+                q.write_bytes(b)
 
 
 def _lu_copy_checks(add, ctx: dict, run: dict, rtext: str, ftext: str) -> None:
@@ -3393,7 +3454,7 @@ def _check_left_undone_old_run(case: dict, add, res: list, ctx: dict, run: dict,
 
 # ---------- kind "lint-fixes-record": Step 5 records the answer to the semantic findings, never with a bare flag (task #246) ----------
 
-_LF_CALL = re.compile(r"\blint-fixes\b")
+_LF_CALL = re.compile(r"\blint-fixes(?![\w.-])")
 _LF_VALUE = re.compile(r"\"[^\"]*\"|'[^']*'|[^\s;&|<>()]*")
 
 

@@ -114,8 +114,8 @@ last run's event lines.
   later on C's own day is covered (a stated under-count), one re-reviewed on a later day is counted whatever S says.
   With no completed result anywhere, nothing is covered and scope-now is every entry (synthesis: every research entry
   when a best-practices page exists, else none; claims: scope-now is the entries no index claim comes from plus those
-  revised since the index was written, every entry only when there is no index). The wording by mode and this run's own result: the mode does not run
-  the step, the table; the mode runs it and its result is absent `<count>, not checked (<step> left no <file>)`
+  revised since the index was written; every entry only when there is no index). The wording by mode and this run's
+  own result: the mode does not run the step, the table; the mode runs it and its result is absent `<count>, not checked (<step> left no <file>)`
   (semantic lint only: with the newest completed lint under 24 hours old, `the semantic lint was skipped: one ran
   within 24 hours (<id>)`), unreadable `(<file> unreadable)`, not completed `(<step> ended <status>; what it covered is
   unknown)`, completed the ran wording. The newest completed result with no scope file reads `<count>, not checked (no

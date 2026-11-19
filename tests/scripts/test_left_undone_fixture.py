@@ -69,7 +69,9 @@ emitted: set[str] = set()  # every check name this run printed, for the COMPOSED
 
 SKILL_TEXT = REPO / "skills" / "wiki-report" / "SKILL.md"
 # the Needs-you wordings and the no-file lines of the wiki-report skill, as the skill text writes them
-NEEDS_AWAITING = "<N> semantic lint findings awaiting your approval — <run-folder>/lint-semantic.md"
+WROTE_ITSELF = "the session did not write left-undone.txt itself"
+SCRIPT_OUTPUT = "left-undone.txt is the text wiki-cycle-scope.py left-undone writes"
+NEEDS_AWAITING ="<N> semantic lint findings awaiting your approval — <run-folder>/lint-semantic.md"
 NEEDS_NO_FIX = ("<N> semantic lint findings, applied or declined not recorded (no fix step in this mode)"
                 " — <run-folder>/lint-semantic.md")
 NEEDS_NOT_RECORDED = "<N> semantic lint findings, applied or declined not recorded — <run-folder>/lint-semantic.md"
@@ -247,8 +249,9 @@ def step8_call(suite, rf: Path) -> tuple[str, dict]:
 
 def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
     """Defects the left-undone-verbatim checks must catch, each run through check() and put back: a dash turned into
-    a hyphen in the section, and a session that wrote left-undone.txt itself by a route (the file then differs from the
-    script's by one count and the report copies it). The four old routes are controls: they fail today."""
+    a hyphen in the section; each route of writing left-undone.txt, run on the untouched file (the script's output, the
+    report copying it) so only the write check can fail it, with a read-only call as the control that must pass; and a
+    count changed with no tool call, which only the file-against-script check sees (the variable-path route)."""
     target = (rf / "left-undone.txt").as_posix()
     lu_file = rf / "left-undone.txt"
     original = lu_file.read_text(encoding="utf-8")
@@ -261,15 +264,16 @@ def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
         return [r["name"] for r in res if not r["ok"] and about.search(r["name"])]
 
     dash_line = next(l for l in original.splitlines() if l.startswith("- ") and "—" in l)
+    def named(session: dict, prefix: str) -> dict | None:
+        res = suite.check(case, before, before, session, ctx)
+        return next((r for r in res if r["name"].startswith(prefix)), None)
+
     try:
         report_path.write_text(base.replace(dash_line, dash_line.replace("—", "-", 1), 1), encoding="utf-8")
         own("A", "a check fails a section that turns the file's dash into a hyphen",
             bool(caught(session_with(step8_call(suite, rf)))), "no check failed")
         report_path.write_text(base, encoding="utf-8")
-        first = next(l for l in original.splitlines() if l.startswith("- ") and re.search(r": \d+", l))
-        lu_file.write_text(original.replace(first, re.sub(r"(?<=: )\d+", lambda m: str(int(m.group()) + 1), first, count=1), 1),
-                           encoding="utf-8")
-        report_path.write_text(compose_report(rf, cid), encoding="utf-8")
+        # the file the script wrote, the report copying it unchanged: each route is judged on the write check alone
         routes = {
             "Write": ("Write", {"file_path": target, "content": "x"}),
             "Edit": ("Edit", {"file_path": target, "old_string": "a", "new_string": "b"}),
@@ -279,11 +283,29 @@ def session_write_plants(suite, case, ctx, cid, rf, before) -> None:
             "mv": ("Bash", {"command": f"mv /tmp/mine.txt {target}"}),
             "sed -i": ("Bash", {"command": f"sed -i 's/: 2/: 3/' {target}"}),
             "python -c": ("Bash", {"command": f"python -c \"open('{target}', 'w').write('x')\""}),
-            "a PowerShell call": ("PowerShell", {"command": f"Set-Content -Path {target} -Value x"}),
+            "a PowerShell Set-Content": ("PowerShell", {"command": f"Set-Content -Path {target} -Value x"}),
+            "PowerShell copy": ("PowerShell", {"command": f"copy C:/tmp/mine.txt {target}"}),
+            "PowerShell move": ("PowerShell", {"command": f"move C:/tmp/mine.txt {target}"}),
+            "PowerShell ren": ("PowerShell", {"command": f"ren {rf.as_posix()}/mine.txt left-undone.txt"}),
+            "xcopy": ("PowerShell", {"command": f"xcopy /y C:/tmp/mine.txt {target}"}),
+            ">|": ("Bash", {"command": f"echo x >| {target}"}),
         }
         for name, call in routes.items():
-            hit = caught(session_with(step8_call(suite, rf), call))
-            own("A", f"a check fails a session that wrote left-undone.txt by {name}", bool(hit), "no check failed")
+            res = named(session_with(step8_call(suite, rf), call), WROTE_ITSELF)
+            own("A", f"the write check fails a session that wrote left-undone.txt by {name}",
+                res is not None and not res["ok"], "check absent" if res is None else "passed")
+        read_only = ("PowerShell", {"command": f"Add-Content -Path report.md -Value (Get-Content {target})"})
+        res = named(session_with(step8_call(suite, rf), read_only), WROTE_ITSELF)
+        own("A", "the write check passes a call that reads left-undone.txt and writes the report",
+            res is not None and res["ok"], "check absent" if res is None else res["detail"])
+        # a count changed with no tool call at all: only the file-against-script check can see it
+        first = next(l for l in original.splitlines() if l.startswith("- ") and re.search(r": \d+", l))
+        lu_file.write_text(original.replace(first, re.sub(r"(?<=: )\d+", lambda m: str(int(m.group()) + 1), first,
+                                                          count=1), 1), encoding="utf-8")
+        report_path.write_text(compose_report(rf, cid), encoding="utf-8")
+        res = named(session_with(step8_call(suite, rf)), SCRIPT_OUTPUT)
+        own("A", "the script-output check fails a count changed with no tool call",
+            res is not None and not res["ok"], "check absent" if res is None else "passed")
     finally:
         lu_file.write_text(original, encoding="utf-8")
         report_path.write_text(base, encoding="utf-8")
