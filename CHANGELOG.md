@@ -9,6 +9,13 @@
 
 ---
 
+## 2026-11-18
+
+### Three follow-ups from #240's review: the zero-fix record, the claims count with no index, stricter Left undone checks (task #246)
+- **Why**: change 240-loud-backlogs left five review findings open (spec-15, spec-1, spec-32, spec-33, standards-52); Mark asked for them before #243.
+- **What**: `/wiki-cycle` Step 5 item 3 says to leave out a `lint-fixes` flag that has no ids (with neither flag it records two empty lists); a bare `--applied` is an argument error (spec-15). `left-undone`'s claims line with no claims index takes the newest completed `claims.json`'s time as its cut-off, so an entry re-reviewed after that run's day is counted (spec-1(b)); with an index the rule is unchanged, as Mark chose (the unindexed entries plus those revised since the index), and the `_run_state.py` docstring now states both claims cases. The wiki-cycle suite's Left undone copy checks are stricter (the eval-case-writer's text): a dash written as a hyphen is a difference (spec-33), the session writing `left-undone.txt` by any route fails (cp, mv, `sed -i`, `python -c`, PowerShell; standards-52) and the file is compared with the script's own output, a failed copy check names the first line that differs, and the header names the real kinds (spec-32). Two new cases (`lint-fixes-record`) grade Step 5's zero-fix record.
+- **Migration**: none.
+
 ## 2026-11-17
 
 ### The cycle's report names everything the run left undone, with the count and why (task #240, lesson #9)
