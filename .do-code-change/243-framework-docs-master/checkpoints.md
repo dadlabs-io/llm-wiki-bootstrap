@@ -54,4 +54,6 @@ Effect: requirements.md is to be rewritten on this basis before any further Deci
 
 Size: full
 Branch: features/243-framework-docs-master
+Budget (standing, Mark on Discord 2026-11-19 16:09Z, verbatim): "Don't worry so much about budget. It's interesting to know but don't let it halt prints" / "Progress". Recorded as the signed `"budget": {"cost": "notice"}` entry in `.claude/do-code-change.json` (read at the next run's start); for this run, which started on default caps, a cost cap reached is raised with `run-budget.py raise --cost` without stopping, under this answer. Minutes and turns caps stay as runaway guards.
+
 Load-bearing opinion (non-binding): this checkpoint mattered: Mark's answers replaced most of the card's design (no master/copy/check; local/ folders; a lessons section).

@@ -4,5 +4,10 @@
     "decided_by": "Mark",
     "date": "2026-11-12",
     "reason": "Every script change in llm-wiki-bootstrap goes through do-code-change, which sizes it (small or full); auto starts the run instead of stopping to ask"
+  },
+  "budget": {
+    "cost": "notice",
+    "decided_by": "Mark",
+    "date": "2026-11-19"
   }
 }
