@@ -223,3 +223,6 @@ Plan inconsistencies / left: (1) `wiki-seed/install.md:63` and `wiki-seed/new-wi
 ## Step 11 — orchestrator follow-up
 - Fixed the two stale "only `sessions/` is created" lines the developer listed: `wiki-seed/install.md:63` and `skills/new-wiki/wiki-seed/new-wiki.md:18` now name `best-practices/local/` too.
 - Departure: the developer read `CHANGELOG.md` lines 1-60 only (276 KB; the edit is at the top), not the whole file.
+
+## Step 12 — 2026-11-19, green
+- `templates/CLAUDE.md.tmpl` precedence entry 1 gains one sentence: a project's own changes go in `wiki/best-practices/local/<doc name>`, never in the doc; read it after the framework doc (the doc's "Local changes" line says in what order). 5 new tests in test_standalone render the template through Phase B. Orchestrator re-run: 40/40. The developer reports test_local_folder 16/16, test_global_toolset 80/80, check-freeze PASS (70 entries).

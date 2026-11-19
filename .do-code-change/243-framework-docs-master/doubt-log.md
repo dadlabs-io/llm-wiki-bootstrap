@@ -25,3 +25,7 @@ no non-trivial decision (step 5): text substitutions at every site, plus one sca
 ## Step 4: search and lint over `best-practices/local/`
 
 no non-trivial decision (step 4): the only production change is one folder name added to the tuple of halves in `sample_titles` (no new branching, no boundary crossed, nothing irreversible). Its behaviour is pinned by `test_sample_titles_includes_best_practices_entries` (red first, then green). The other six tests pin behaviour that already held (`drop_machine_files`, the lint over `local/`); each was shown to bite by a transient mutation (production, reverted, `git diff` checked) or on a scratch copy of `scripts/` outside the repo (the lint file is outside the edit gate's scope), so no doubt cycle was spawned.
+
+## Step 12: no non-trivial decision (one sentence added to a template line; no code branch)
+
+The text is pinned by five tests in test_standalone.py (seam C), run against the real Phase B render. The template sentence points to the doc's "Local changes" line for the order and does not copy it.

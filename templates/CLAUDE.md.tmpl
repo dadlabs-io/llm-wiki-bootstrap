@@ -161,7 +161,7 @@ Body sections (skip any that don't apply):
 
 Rules for this project live in several places and will occasionally disagree. Do not average them or pick the friendlier one. Apply this order, and say which rule won:
 
-1. **Framework-contract docs** — the docs under `{{TOOLSET_DIR}}/wiki/best-practices/framework/` (the global toolset) carrying `framework-contract: true` (the frontmatter spec, the authoring principles, the cycle step contract). Canonical. Every other doc is supposed to link to them, never restate them.
+1. **Framework-contract docs** — the docs under `{{TOOLSET_DIR}}/wiki/best-practices/framework/` (the global toolset) carrying `framework-contract: true` (the frontmatter spec, the authoring principles, the cycle step contract). Canonical. Every other doc is supposed to link to them, never restate them. A project's own changes to one of them go in `wiki/best-practices/local/<doc name>`, never in the doc; read it after the framework doc (the doc's "Local changes" line says in what order).
 2. **Skill definitions** — `SKILL.md` files. A skill that restates a contract doc and drifts is a bug: follow the contract doc, flag the skill.
 3. **This CLAUDE.md** and the usage docs in `{{TOOLSET_DIR}}/how-to/`.
 4. **Memory and session notes** — `sessions/`, agent memory. Background, never authority.

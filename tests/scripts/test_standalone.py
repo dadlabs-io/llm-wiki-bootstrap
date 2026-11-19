@@ -361,6 +361,91 @@ test_origin_row_says_no_script_writes_it()
 test_origin_row_still_lists_its_four_values()
 test_cycle_id_row_says_nothing_in_the_install_writes_it()
 
+
+# ── task #243, step 12: the CLAUDE.md template's precedence entry says where a project's own changes go ──
+# The template is rendered the way the scaffold renders it: `new-wiki.py --phase B` into a temp target, under a
+# temporary home so the machine's own config, registry and toolset are never read or written. Expected texts are
+# typed out here, never read back from the template they check.
+_RENDERED: list[str] = []
+
+
+def rendered_claude_md() -> str:
+    if _RENDERED:
+        return _RENDERED[0]
+    with tempfile.TemporaryDirectory() as t:
+        tmp = Path(t)
+        home = tmp / "home"
+        (home / ".claude").mkdir(parents=True)
+        vault = tmp / "vault"
+        (vault / "notebooks").mkdir(parents=True)
+        registry = vault / "linked-notebooks.json"
+        registry.write_text(json.dumps({"notebooks": {}}), encoding="utf-8")
+        target = tmp / "work" / "demo"
+        target.mkdir(parents=True)
+        cfg = tmp / "wiki-config.json"
+        cfg.write_text(json.dumps({"registry": registry.as_posix()}), encoding="utf-8")
+        env = {**os.environ, "HOME": str(home), "USERPROFILE": str(home), "GIT_CONFIG_NOSYSTEM": "1",
+               "PYTHONIOENCODING": "utf-8", "WIKI_GLOBAL_CONFIG": str(cfg), "WIKI_TOOLING_STATE": "installed"}
+        subprocess.run([sys.executable, str(SCRIPTS / "new-wiki.py"), "--phase", "B", "--target-folder", str(target),
+                        "--project-name", "demo", "--project-description", "Wiki for demo",
+                        "--project-folder", "stubs", "--research-folder", "stubs",
+                        "--vault-root", str(vault / "notebooks"), "--registry", str(registry),
+                        "--bootstrap-source", str(ROOT), "--drive-enabled", "no", "--skills-install", "global"],
+                       capture_output=True, text=True, encoding="utf-8", env=env)
+        out = target / "CLAUDE.md"
+        _RENDERED.append(out.read_text(encoding="utf-8") if out.is_file() else "")
+    return _RENDERED[0]
+
+
+def precedence_framework_entry() -> str:
+    lines = [l for l in rendered_claude_md().splitlines() if l.startswith("1. **Framework-contract docs**")]
+    return lines[0] if len(lines) == 1 else ""
+
+
+def test_precedence_entry_names_the_local_folder_path_for_a_doc():
+    entry = precedence_framework_entry()
+    check("test_precedence_entry_names_the_local_folder_path_for_a_doc: the rendered precedence entry for the "
+          "framework-contract docs names `wiki/best-practices/local/<doc name>`",
+          "`wiki/best-practices/local/<doc name>`" in entry, entry[:300])
+
+
+def test_precedence_entry_says_to_read_the_local_file_after_the_framework_doc():
+    entry = precedence_framework_entry()
+    check("test_precedence_entry_says_to_read_the_local_file_after_the_framework_doc: the entry says to read the "
+          "local file after the framework doc",
+          "`wiki/best-practices/local/<doc name>`, never in the doc; read it after the framework doc" in entry,
+          entry[:300])
+
+
+def test_precedence_entry_points_to_the_local_changes_line():
+    entry = precedence_framework_entry()
+    check("test_precedence_entry_points_to_the_local_changes_line: the entry points to the doc's \"Local changes\" "
+          "line for the order",
+          "(the doc's \"Local changes\" line says in what order)" in entry, entry[:300])
+
+
+def test_rendered_template_lacks_the_old_toolset_framework_path():
+    text = rendered_claude_md()
+    check("test_rendered_template_lacks_the_old_toolset_framework_path: the rendered CLAUDE.md is non-empty and "
+          "has no `project/best-practices/framework`",
+          bool(text) and OLD_FRAMEWORK_PATH not in text, text[:200])
+
+
+def test_precedence_entry_does_not_copy_the_local_changes_sentence():
+    entry = precedence_framework_entry()
+    check("test_precedence_entry_does_not_copy_the_local_changes_sentence: the entry exists and carries neither "
+          "'where they differ' nor 'local file wins' from the doc line",
+          bool(entry) and all(p not in entry for p in
+                              ("where they differ", "local file wins", "wiki's local file", "then the toolset's")),
+          entry[:300])
+
+
+test_precedence_entry_names_the_local_folder_path_for_a_doc()
+test_precedence_entry_says_to_read_the_local_file_after_the_framework_doc()
+test_precedence_entry_points_to_the_local_changes_line()
+test_rendered_template_lacks_the_old_toolset_framework_path()
+test_precedence_entry_does_not_copy_the_local_changes_sentence()
+
 failed =[n for ok, n in results if not ok]
 for ok, n in results:
     print(("PASS " if ok else "FAIL ") + n)

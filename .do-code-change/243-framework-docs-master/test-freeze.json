@@ -1109,5 +1109,99 @@
       }
     ],
     "unfrozen_reason": "name review round 1: assertion tied to the strip object, the proposed line"
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_precedence_entry_names_the_local_folder_path_for_a_doc",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "8c8831ed54866c0e971f13e00db20dac987ae2d597d3f0e1c2da35b4a4b3cbf2",
+    "frozen_at_step": 12,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_standalone.py",
+      "exit": 1,
+      "tail": "PASS test_the_rubric_span_lacks_the_old_repository_cell_text: the span is non-empty and no longer says 'code read beyond the README'\nPASS test_status_row_says_wiki_promote_strips_proposed: a `status` row names `proposed` and says `wiki-promote` strips it\nPASS test_origin_row_says_the_agent_stamps_it_per_the_claude_md_template: the `origin` row says the agent stamps it, following the CLAUDE.md template\nPASS test_origin_row_says_no_script_writes_it: the `origin` row says no script writes it\nPASS test_origin_row_still_lists_its_four_values: the `origin` row still lists inline, wrap-up, wiki-update, wiki-cycle\nPASS test_cycle_id_row_says_nothing_in_the_install_writes_it: a `cycle_id` row says no script, skill, template or agent writes it into an entry\nFAIL test_precedence_entry_names_the_local_folder_path_for_a_doc: the rendered precedence entry for the framework-contract docs names `wiki/best-practices/local/<doc name>`  [1. **Framework-contract docs** \u2014 the docs under `C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpna_vrhoq/vault/notebooks/global-toolset/wiki/best-practices/framework/` (the global toolset) carrying `framework-contract: true` (the frontmatter spec, the authoring principles, the cycle step contra]\nFAIL test_precedence_entry_says_to_read_the_local_file_after_the_framework_doc: the entry says to read the local file after the framework doc  [1. **Framework-contract docs** \u2014 the docs under `C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpna_vrhoq/vault/notebooks/global-toolset/wiki/best-practices/framework/` (the global toolset) carrying `framework-contract: true` (the frontmatter spec, the authoring principles, the cycle step contra]\nFAIL test_precedence_entry_points_to_the_local_changes_line: the entry points to the doc's \"Local changes\" line for the order  [1. **Framework-contract docs** \u2014 the docs under `C:/Users/mark/AppData/Local/Temp/2025-05-10_Temp/tmpna_vrhoq/vault/notebooks/global-toolset/wiki/best-practices/framework/` (the global toolset) carrying `framework-contract: true` (the frontmatter spec, the authoring principles, the cycle step contra]\nPASS test_rendered_template_lacks_the_old_toolset_framework_path: the rendered CLAUDE.md is non-empty and has no `project/best-practices/framework`\nPASS test_precedence_entry_does_not_copy_the_local_changes_sentence: the entry exists and carries neither 'where they differ' nor 'local file wins' from the doc line\n37/40 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_rendered_template_lacks_the_old_toolset_framework_path",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d6de7699f6b4f399f2fb0723c4a4b56b67069546f14a0501f83a93aac8d14146",
+    "frozen_at_step": 12,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "guard: passes today because step 5 already moved the template's path; bite shown by a transient mutant (old path appended to the precedence entry) that turned it FAIL, reverted (git diff of the template empty afterwards)",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_precedence_entry_says_to_read_the_local_file_after_the_framework_doc",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "1d25a599c0e27fad90cc41530fc83199414b671f3d06fac4938a2352b8ddda2d",
+    "frozen_at_step": 12,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "re-frozen after strengthening; first red witnessed at the original freeze (exit 1); green with the template line",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the assertion did not tie 'it' to the local path; now checks the local path and the read-after clause as one phrase",
+        "date": "2026-11-19",
+        "step": 12,
+        "hash": "1d25a599c0e27fad90cc41530fc83199414b671f3d06fac4938a2352b8ddda2d"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the assertion did not tie 'it' to the local path; now checks the local path and the read-after clause as one phrase"
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_precedence_entry_points_to_the_local_changes_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ae5fe28a81eebfbee1abc614d816e3c25efd2a7a299914c7378ee0632035e481",
+    "frozen_at_step": 12,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "re-frozen after strengthening; first red witnessed at the original freeze (exit 1); green with the template line",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: 'for the order' unchecked; now checks the parenthesis that says the line gives the order",
+        "date": "2026-11-19",
+        "step": 12,
+        "hash": "ae5fe28a81eebfbee1abc614d816e3c25efd2a7a299914c7378ee0632035e481"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: 'for the order' unchecked; now checks the parenthesis that says the line gives the order"
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_precedence_entry_does_not_copy_the_local_changes_sentence",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "db594932104ad3a7838b86e06126bdf256a8c6f08d9fccf72d8b6476a3688455",
+    "frozen_at_step": 12,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "guard, passes today; bite of the 'where they differ' arm shown by a transient mutant, reverted; the added fragments were not mutated",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: only two fragments of the sentence were checked; now four distinctive fragments",
+        "date": "2026-11-19",
+        "step": 12,
+        "hash": "db594932104ad3a7838b86e06126bdf256a8c6f08d9fccf72d8b6476a3688455"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: only two fragments of the sentence were checked; now four distinctive fragments"
   }
 ]

@@ -79,3 +79,12 @@ The reviewer also flagged a line of the names output ("hand them to the name rev
 - test_origin_row_says_no_script_writes_it: OK
 - test_origin_row_keeps_its_four_values: OVER-CLAIMS (presence, not exactness). Renamed test_origin_row_still_lists_its_four_values; old name retired.
 - test_cycle_id_row_says_nothing_in_the_install_writes_it: OK
+
+## Step 12 (one doubt-reviewer, fed the `check-freeze.py names` output, shared helpers listed once)
+
+- test_precedence_entry_names_the_local_folder_path_for_a_doc: OK
+- test_precedence_entry_says_to_read_the_local_file_after_the_framework_doc: OVER-CLAIMS ("it" not tied to the local path). Fixed: one contiguous phrase holds the local path and "never in the doc; read it after the framework doc". Re-frozen with an unfrozen reason.
+- test_precedence_entry_points_to_the_local_changes_line: OVER-CLAIMS ("for the order" unchecked). Fixed: the whole parenthesis "(the doc's "Local changes" line says in what order)" is required. Re-frozen.
+- test_rendered_template_lacks_the_old_toolset_framework_path: OK ("toolset" is a label only)
+- test_precedence_entry_does_not_copy_the_local_changes_sentence: OVER-CLAIMS (two fragments of the sentence). Fixed: four distinctive fragments now absent. Accepted: a copy in other wording would pass. Re-frozen.
+- Not settled by the reviewer (it cannot run the scaffold): whether the entry holds the phrases; the tests ran the real Phase B and pass.
