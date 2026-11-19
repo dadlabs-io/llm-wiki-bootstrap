@@ -6,11 +6,15 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 9
+framework-version: 10
 last_reviewed: 2026-11-14
 review_after: 2027-02-08
 tags: [best-practice, architecture, orchestrator, wiki-cycle, schema, contract]
 ---
+
+Local changes: `best-practices/local/cycle-step-return-format.md` in the wiki you are working in, then the toolset's `local/cycle-step-return-format.md`, hold this install's own changes. Read them after this doc; where they differ, the wiki's local file wins, then the toolset's, then this doc.
+
+Practice page: [Wiki Best Practices: Authoring](../../../../agentic-design/wiki/research/wiki/wiki-best-practices-authoring.md)
 
 # Cycle Step Return Format
 

@@ -59,3 +59,12 @@ The reviewer also flagged a line of the names output ("hand them to the name rev
 - test_plain_file_where_local_belongs_lists_readme_in_failed: OK
 - test_unwritable_readme_replacement_is_listed_failed_rest_done: OVER-CLAIMS (silent return as root). Fixed: the skip records a named check. Re-frozen.
 - test_missing_readme_source_is_skipped_by_status: OK
+
+## Step 9 (one doubt-reviewer, fed the `check-freeze.py names` output)
+
+- test_each_doc_opens_with_a_local_changes_line_naming_its_own_file: OK
+- test_each_doc_has_a_practice_page_line_right_after_the_local_changes_line: OVER-CLAIMS (never checked the local line it follows). Fixed by assertions: the first line must also be the doc's local line. Re-frozen with an unfrozen reason.
+- test_each_practice_link_reaches_its_page_from_the_toolset_folder: OVER-CLAIMS ("reaches": string only, no file stat). Fixed by rename (file existence is the manual resolve run): test_each_practice_link_normalises_to_its_page_path_from_the_toolset_folder. Old name retired, new frozen with a green reason.
+- test_the_where_we_stand_link_in_wiki_authoring_reaches_the_llm_wiki_notebook: same. Renamed test_the_where_we_stand_link_in_wiki_authoring_normalises_to_its_notebook_path.
+- test_each_doc_version_is_at_least_its_bumped_number: OVER-CLAIMS ("bumped" implies a before/after). Renamed test_each_doc_version_is_at_least_the_planned_number.
+- Not acted on: the reviewer's "could not settle" notes (no-frontmatter behaviour of the helper; a mismatched STEP9_DOCS key would raise, not fail cleanly).

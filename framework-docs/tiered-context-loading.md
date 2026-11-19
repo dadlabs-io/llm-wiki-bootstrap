@@ -6,11 +6,15 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 3
+framework-version: 4
 last_reviewed: 2026-09-16
 review_after: 2026-12-15
 tags: [framework-contract, best-practice, context-engineering, L3, tiered-loading, agent-guidance]
 ---
+
+Local changes: `best-practices/local/tiered-context-loading.md` in the wiki you are working in, then the toolset's `local/tiered-context-loading.md`, hold this install's own changes. Read them after this doc; where they differ, the wiki's local file wins, then the toolset's, then this doc.
+
+Practice page: [Wiki Best Practices: Context Loading and Memory Signals](../../../../agentic-design/wiki/research/wiki/wiki-best-practices-context-loading.md)
 
 # Tiered Context Loading
 

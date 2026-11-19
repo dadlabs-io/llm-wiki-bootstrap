@@ -813,5 +813,138 @@
       }
     ],
     "unfrozen_reason": "name review round 1: scan also matches pathlib-chained parts and backslash spellings, no longer skips a constant line that also spells the path, and fails when a swept folder is missing or empty"
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_each_doc_opens_with_a_local_changes_line_naming_its_own_file",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "83fe77e999672588635d05069c5f8587f7029f829df1cd276177c338842e1551",
+    "frozen_at_step": 9,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_standalone.py",
+      "exit": 1,
+      "tail": "PASS the cycle contract names the standalone array\nFAIL cycle-step-return-format framework-version bumped to 10 or later  [9]\nPASS the frontmatter spec has a `standalone` optional-field row\nFAIL wiki-frontmatter-best-practices framework-version bumped to 20 or later  [19]\nPASS seed/wiki/HOME.md.tmpl declares itself standalone with a reason\nPASS test_no_shipped_file_names_the_old_toolset_framework_path: no shipped file names project/best-practices/framework, spelled out or built from its parts\nFAIL test_each_doc_opens_with_a_local_changes_line_naming_its_own_file: the first line under the frontmatter is the Local changes line with the doc's own file name  [{'cycle-step-return-format.md': '# Cycle Step Return Format', 'memory-signals-sidecar-vs-frontmatter-pattern.md': '# Memory Signals \ufffd Sidecar vs Frontmatter Pattern', 'tiered-context-loading.md': '# Tiered Context Loading', 'wiki-authoring-best-practices.md': '# LLM Wiki Authoring \ufffd Best Practices', 'wiki-frontmatter-best-practices.md': '# Wiki Frontmatter \ufffd Best Practices & Canonical Field Reference', 'wiki-search-bucket-rerank-spec.md': '# Wiki Search \ufffd Bucket-Aware Retrieval Sort Spec'}]\nFAIL test_each_doc_has_a_practice_page_line_right_after_the_local_changes_line: a link line, or exactly `Practice page: none` for the rerank spec  [{'cycle-step-return-format.md': 'The contract between `/wiki-cycle` (orchestrator) and every step-skill it invokes \ufffd `/wiki-discover`, `/wiki-update`, `/', 'memory-signals-sidecar-vs-frontmatter-pattern.md': 'Our canonical position on **where** access-frequency signals (recall_count, last_accessed) should live in a markdown-fir', 'tiered-context-loading.md': \"The convention any agent follows when pulling context from this wiki. Implements Chappy Asel's L3 (Context Engineering) \", 'wiki-authoring-best-practices.md': 'Our canonical position on running a research wiki (like this one), synthesized from 7 external source entries + 3 self-a', 'wiki-frontmatter-best-practices.md': \"Single source of truth for what every entry's YAML frontmatter must contain. Enforces principle 9 (dependency tracking) \", 'wiki-search-bucket-rerank-spec.md': 'Implementation contract for \ufffd3 of icarus-integration-plan.md *(llm-wiki-bootstrap :: wiki/project/decisions/icarus-integ'}]\nFAIL test_each_practice_link_reaches_its_page_from_the_toolset_folder: joined onto notebooks/global-toolset/wiki/best-practices/framework, each link lands on its agentic-design page  [{'cycle-step-return-format.md': None, 'memory-signals-sidecar-vs-frontmatter-pattern.md': None, 'tiered-context-loading.md': None, 'wiki-authoring-best-practices.md': None, 'wiki-frontmatter-best-practices.md': None}]\nFAIL test_the_where_we_stand_link_in_wiki_authoring_reaches_the_llm_wiki_notebook: the one link into llm-wiki-bootstrap lands on notebooks/llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md  [['llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md']]\nFAIL test_each_doc_version_is_at_least_its_bumped_number: framework-version is 10, 4, 4, 17, 20 and 3 or later for the six docs  [{'cycle-step-return-format.md': 9, 'memory-signals-sidecar-vs-frontmatter-pattern.md': 3, 'tiered-context-loading.md': 3, 'wiki-authoring-best-practices.md': 16, 'wiki-frontmatter-best-practices.md': 19, 'wiki-search-bucket-rerank-spec.md': 2}]\n20/27 passed",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_each_practice_link_reaches_its_page_from_the_toolset_folder",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "ae4184b61a79454517bfff211d091a30bc30d78a18ca679bc7984c4d59772939",
+    "frozen_at_step": 9,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_standalone.py",
+      "exit": 1,
+      "tail": "PASS the cycle contract names the standalone array\nFAIL cycle-step-return-format framework-version bumped to 10 or later  [9]\nPASS the frontmatter spec has a `standalone` optional-field row\nFAIL wiki-frontmatter-best-practices framework-version bumped to 20 or later  [19]\nPASS seed/wiki/HOME.md.tmpl declares itself standalone with a reason\nPASS test_no_shipped_file_names_the_old_toolset_framework_path: no shipped file names project/best-practices/framework, spelled out or built from its parts\nFAIL test_each_doc_opens_with_a_local_changes_line_naming_its_own_file: the first line under the frontmatter is the Local changes line with the doc's own file name  [{'cycle-step-return-format.md': '# Cycle Step Return Format', 'memory-signals-sidecar-vs-frontmatter-pattern.md': '# Memory Signals \ufffd Sidecar vs Frontmatter Pattern', 'tiered-context-loading.md': '# Tiered Context Loading', 'wiki-authoring-best-practices.md': '# LLM Wiki Authoring \ufffd Best Practices', 'wiki-frontmatter-best-practices.md': '# Wiki Frontmatter \ufffd Best Practices & Canonical Field Reference', 'wiki-search-bucket-rerank-spec.md': '# Wiki Search \ufffd Bucket-Aware Retrieval Sort Spec'}]\nFAIL test_each_doc_has_a_practice_page_line_right_after_the_local_changes_line: a link line, or exactly `Practice page: none` for the rerank spec  [{'cycle-step-return-format.md': 'The contract between `/wiki-cycle` (orchestrator) and every step-skill it invokes \ufffd `/wiki-discover`, `/wiki-update`, `/', 'memory-signals-sidecar-vs-frontmatter-pattern.md': 'Our canonical position on **where** access-frequency signals (recall_count, last_accessed) should live in a markdown-fir', 'tiered-context-loading.md': \"The convention any agent follows when pulling context from this wiki. Implements Chappy Asel's L3 (Context Engineering) \", 'wiki-authoring-best-practices.md': 'Our canonical position on running a research wiki (like this one), synthesized from 7 external source entries + 3 self-a', 'wiki-frontmatter-best-practices.md': \"Single source of truth for what every entry's YAML frontmatter must contain. Enforces principle 9 (dependency tracking) \", 'wiki-search-bucket-rerank-spec.md': 'Implementation contract for \ufffd3 of icarus-integration-plan.md *(llm-wiki-bootstrap :: wiki/project/decisions/icarus-integ'}]\nFAIL test_each_practice_link_reaches_its_page_from_the_toolset_folder: joined onto notebooks/global-toolset/wiki/best-practices/framework, each link lands on its agentic-design page  [{'cycle-step-return-format.md': None, 'memory-signals-sidecar-vs-frontmatter-pattern.md': None, 'tiered-context-loading.md': None, 'wiki-authoring-best-practices.md': None, 'wiki-frontmatter-best-practices.md': None}]\nFAIL test_the_where_we_stand_link_in_wiki_authoring_reaches_the_llm_wiki_notebook: the one link into llm-wiki-bootstrap lands on notebooks/llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md  [['llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md']]\nFAIL test_each_doc_version_is_at_least_its_bumped_number: framework-version is 10, 4, 4, 17, 20 and 3 or later for the six docs  [{'cycle-step-return-format.md': 9, 'memory-signals-sidecar-vs-frontmatter-pattern.md': 3, 'tiered-context-loading.md': 3, 'wiki-authoring-best-practices.md': 16, 'wiki-frontmatter-best-practices.md': 19, 'wiki-search-bucket-rerank-spec.md': 2}]\n20/27 passed",
+      "date": "2026-11-19"
+    },
+    "retired": {
+      "reason": "renamed to test_each_practice_link_normalises_to_its_page_path_from_the_toolset_folder after name review round 1 (string-only check, name said reaches)",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_the_where_we_stand_link_in_wiki_authoring_reaches_the_llm_wiki_notebook",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "53b6c0670a1e39781bbeb119140088c6a06763f252d0d1bf980a602461ac36e2",
+    "frozen_at_step": 9,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_standalone.py",
+      "exit": 1,
+      "tail": "PASS the cycle contract names the standalone array\nFAIL cycle-step-return-format framework-version bumped to 10 or later  [9]\nPASS the frontmatter spec has a `standalone` optional-field row\nFAIL wiki-frontmatter-best-practices framework-version bumped to 20 or later  [19]\nPASS seed/wiki/HOME.md.tmpl declares itself standalone with a reason\nPASS test_no_shipped_file_names_the_old_toolset_framework_path: no shipped file names project/best-practices/framework, spelled out or built from its parts\nFAIL test_each_doc_opens_with_a_local_changes_line_naming_its_own_file: the first line under the frontmatter is the Local changes line with the doc's own file name  [{'cycle-step-return-format.md': '# Cycle Step Return Format', 'memory-signals-sidecar-vs-frontmatter-pattern.md': '# Memory Signals \ufffd Sidecar vs Frontmatter Pattern', 'tiered-context-loading.md': '# Tiered Context Loading', 'wiki-authoring-best-practices.md': '# LLM Wiki Authoring \ufffd Best Practices', 'wiki-frontmatter-best-practices.md': '# Wiki Frontmatter \ufffd Best Practices & Canonical Field Reference', 'wiki-search-bucket-rerank-spec.md': '# Wiki Search \ufffd Bucket-Aware Retrieval Sort Spec'}]\nFAIL test_each_doc_has_a_practice_page_line_right_after_the_local_changes_line: a link line, or exactly `Practice page: none` for the rerank spec  [{'cycle-step-return-format.md': 'The contract between `/wiki-cycle` (orchestrator) and every step-skill it invokes \ufffd `/wiki-discover`, `/wiki-update`, `/', 'memory-signals-sidecar-vs-frontmatter-pattern.md': 'Our canonical position on **where** access-frequency signals (recall_count, last_accessed) should live in a markdown-fir', 'tiered-context-loading.md': \"The convention any agent follows when pulling context from this wiki. Implements Chappy Asel's L3 (Context Engineering) \", 'wiki-authoring-best-practices.md': 'Our canonical position on running a research wiki (like this one), synthesized from 7 external source entries + 3 self-a', 'wiki-frontmatter-best-practices.md': \"Single source of truth for what every entry's YAML frontmatter must contain. Enforces principle 9 (dependency tracking) \", 'wiki-search-bucket-rerank-spec.md': 'Implementation contract for \ufffd3 of icarus-integration-plan.md *(llm-wiki-bootstrap :: wiki/project/decisions/icarus-integ'}]\nFAIL test_each_practice_link_reaches_its_page_from_the_toolset_folder: joined onto notebooks/global-toolset/wiki/best-practices/framework, each link lands on its agentic-design page  [{'cycle-step-return-format.md': None, 'memory-signals-sidecar-vs-frontmatter-pattern.md': None, 'tiered-context-loading.md': None, 'wiki-authoring-best-practices.md': None, 'wiki-frontmatter-best-practices.md': None}]\nFAIL test_the_where_we_stand_link_in_wiki_authoring_reaches_the_llm_wiki_notebook: the one link into llm-wiki-bootstrap lands on notebooks/llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md  [['llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md']]\nFAIL test_each_doc_version_is_at_least_its_bumped_number: framework-version is 10, 4, 4, 17, 20 and 3 or later for the six docs  [{'cycle-step-return-format.md': 9, 'memory-signals-sidecar-vs-frontmatter-pattern.md': 3, 'tiered-context-loading.md': 3, 'wiki-authoring-best-practices.md': 16, 'wiki-frontmatter-best-practices.md': 19, 'wiki-search-bucket-rerank-spec.md': 2}]\n20/27 passed",
+      "date": "2026-11-19"
+    },
+    "retired": {
+      "reason": "renamed to test_the_where_we_stand_link_in_wiki_authoring_normalises_to_its_notebook_path after name review round 1",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_each_doc_version_is_at_least_its_bumped_number",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "c2f84f52006ebe86113bfaf68c06fa9c95f2c2fc33738a553d733b229de786de",
+    "frozen_at_step": 9,
+    "frozen_at": "2026-11-19",
+    "red": {
+      "command": "uv run python tests/scripts/test_standalone.py",
+      "exit": 1,
+      "tail": "PASS the cycle contract names the standalone array\nFAIL cycle-step-return-format framework-version bumped to 10 or later  [9]\nPASS the frontmatter spec has a `standalone` optional-field row\nFAIL wiki-frontmatter-best-practices framework-version bumped to 20 or later  [19]\nPASS seed/wiki/HOME.md.tmpl declares itself standalone with a reason\nPASS test_no_shipped_file_names_the_old_toolset_framework_path: no shipped file names project/best-practices/framework, spelled out or built from its parts\nFAIL test_each_doc_opens_with_a_local_changes_line_naming_its_own_file: the first line under the frontmatter is the Local changes line with the doc's own file name  [{'cycle-step-return-format.md': '# Cycle Step Return Format', 'memory-signals-sidecar-vs-frontmatter-pattern.md': '# Memory Signals \ufffd Sidecar vs Frontmatter Pattern', 'tiered-context-loading.md': '# Tiered Context Loading', 'wiki-authoring-best-practices.md': '# LLM Wiki Authoring \ufffd Best Practices', 'wiki-frontmatter-best-practices.md': '# Wiki Frontmatter \ufffd Best Practices & Canonical Field Reference', 'wiki-search-bucket-rerank-spec.md': '# Wiki Search \ufffd Bucket-Aware Retrieval Sort Spec'}]\nFAIL test_each_doc_has_a_practice_page_line_right_after_the_local_changes_line: a link line, or exactly `Practice page: none` for the rerank spec  [{'cycle-step-return-format.md': 'The contract between `/wiki-cycle` (orchestrator) and every step-skill it invokes \ufffd `/wiki-discover`, `/wiki-update`, `/', 'memory-signals-sidecar-vs-frontmatter-pattern.md': 'Our canonical position on **where** access-frequency signals (recall_count, last_accessed) should live in a markdown-fir', 'tiered-context-loading.md': \"The convention any agent follows when pulling context from this wiki. Implements Chappy Asel's L3 (Context Engineering) \", 'wiki-authoring-best-practices.md': 'Our canonical position on running a research wiki (like this one), synthesized from 7 external source entries + 3 self-a', 'wiki-frontmatter-best-practices.md': \"Single source of truth for what every entry's YAML frontmatter must contain. Enforces principle 9 (dependency tracking) \", 'wiki-search-bucket-rerank-spec.md': 'Implementation contract for \ufffd3 of icarus-integration-plan.md *(llm-wiki-bootstrap :: wiki/project/decisions/icarus-integ'}]\nFAIL test_each_practice_link_reaches_its_page_from_the_toolset_folder: joined onto notebooks/global-toolset/wiki/best-practices/framework, each link lands on its agentic-design page  [{'cycle-step-return-format.md': None, 'memory-signals-sidecar-vs-frontmatter-pattern.md': None, 'tiered-context-loading.md': None, 'wiki-authoring-best-practices.md': None, 'wiki-frontmatter-best-practices.md': None}]\nFAIL test_the_where_we_stand_link_in_wiki_authoring_reaches_the_llm_wiki_notebook: the one link into llm-wiki-bootstrap lands on notebooks/llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md  [['llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md']]\nFAIL test_each_doc_version_is_at_least_its_bumped_number: framework-version is 10, 4, 4, 17, 20 and 3 or later for the six docs  [{'cycle-step-return-format.md': 9, 'memory-signals-sidecar-vs-frontmatter-pattern.md': 3, 'tiered-context-loading.md': 3, 'wiki-authoring-best-practices.md': 16, 'wiki-frontmatter-best-practices.md': 19, 'wiki-search-bucket-rerank-spec.md': 2}]\n20/27 passed",
+      "date": "2026-11-19"
+    },
+    "retired": {
+      "reason": "renamed to test_each_doc_version_is_at_least_the_planned_number after name review round 1",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_each_practice_link_normalises_to_its_page_path_from_the_toolset_folder",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "c19f977f7e6764c15d5e66ea46a83f254ecd0aa88ecacdd0dc2c43ad8be1eddd",
+    "frozen_at_step": 9,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "rename only of a test frozen red at step 9 (7 FAIL lines incl. this check, None landed on every doc before the edits); body unchanged",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_the_where_we_stand_link_in_wiki_authoring_normalises_to_its_notebook_path",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "eecd925a2690b052027c047e9ae848dc08f8b0d3dcad7bdc068edaca49437781",
+    "frozen_at_step": 9,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "rename only of a test frozen red at step 9 (landed on llm-wiki-bootstrap/... without notebooks/ at five ../); body unchanged",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_each_doc_version_is_at_least_the_planned_number",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "cb2727bf288615e0f3434dba32c4bde8da8b3996d05d026f44a92915c43232bf",
+    "frozen_at_step": 9,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "rename only of a test frozen red at step 9 (versions 9,3,3,16,19,2 failed); body unchanged",
+      "date": "2026-11-19"
+    }
+  },
+  {
+    "file": "tests/scripts/test_standalone.py",
+    "test_name": "test_each_doc_has_a_practice_page_line_right_after_the_local_changes_line",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "0028544ead9e55cddb388e728798645a7460aa1c1bc9a6c95faa41e62fcad336",
+    "frozen_at_step": 9,
+    "frozen_at": "2026-11-19",
+    "green_reason": {
+      "reason": "strengthened after name review; first frozen red at step 9 (all six docs failed)",
+      "date": "2026-11-19"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review round 1: the test never checked the local line it claims to follow; added body[0] == the local line",
+        "date": "2026-11-19",
+        "step": 9,
+        "hash": "0028544ead9e55cddb388e728798645a7460aa1c1bc9a6c95faa41e62fcad336"
+      }
+    ],
+    "unfrozen_reason": "name review round 1: the test never checked the local line it claims to follow; added body[0] == the local line"
   }
 ]

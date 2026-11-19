@@ -6,11 +6,15 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 19
+framework-version: 20
 last_reviewed: 2026-10-23
 review_after: 2027-01-20
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
 ---
+
+Local changes: `best-practices/local/wiki-frontmatter-best-practices.md` in the wiki you are working in, then the toolset's `local/wiki-frontmatter-best-practices.md`, hold this install's own changes. Read them after this doc; where they differ, the wiki's local file wins, then the toolset's, then this doc.
+
+Practice page: [Wiki Best Practices: Frontmatter and Source Tiers](../../../../agentic-design/wiki/research/wiki/wiki-best-practices-frontmatter-and-tiers.md)
 
 # Wiki Frontmatter — Best Practices & Canonical Field Reference
 

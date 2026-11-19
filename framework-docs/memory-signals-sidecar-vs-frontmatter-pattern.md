@@ -7,11 +7,15 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 3
+framework-version: 4
 last_reviewed: 2026-09-08
 review_after: 2026-12-08
 tags: [memory-signals, recall-count, last-accessed, ebbinghaus, sidecar-pattern, frontmatter, decay, qmd, principle-3, self-authored, icarus-schema, truth-status, verify, rollback]
 ---
+
+Local changes: `best-practices/local/memory-signals-sidecar-vs-frontmatter-pattern.md` in the wiki you are working in, then the toolset's `local/memory-signals-sidecar-vs-frontmatter-pattern.md`, hold this install's own changes. Read them after this doc; where they differ, the wiki's local file wins, then the toolset's, then this doc.
+
+Practice page: [Wiki Best Practices: Context Loading and Memory Signals](../../../../agentic-design/wiki/research/wiki/wiki-best-practices-context-loading.md)
 
 # Memory Signals — Sidecar vs Frontmatter Pattern
 

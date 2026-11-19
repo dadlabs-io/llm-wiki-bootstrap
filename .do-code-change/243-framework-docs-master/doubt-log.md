@@ -1,3 +1,5 @@
+## Step 9: no non-trivial decision (doc text, links and version numbers only; Trivial stakes: yes)
+
 ## Step 1: toolset refresh (remove scan, _guarded, rmdir of the emptied old folder)
 
 CLAIM: "seed_toolset writes the six docs at wiki/best-practices/framework/, deletes the old copies and the emptied old folder only, names any OSError from a copy or delete in `failed` and carries on, and a dry run has no `failed`."

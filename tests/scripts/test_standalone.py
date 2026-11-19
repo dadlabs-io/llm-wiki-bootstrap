@@ -124,12 +124,12 @@ check("the cycle contract drops the `orphans <= 1` allowance", "orphans <= 1" no
 check("the cycle contract: a clean run has no orphans",
       "summary.orphans == 0" in ctext, [l for l in ctext.splitlines() if "clean run" in l])
 check("the cycle contract names the standalone array", "standalone: [{file, reason}]" in ctext)
-check("cycle-step-return-format framework-version bumped to 3 or later", version(csf) >= 3, version(csf))
+check("cycle-step-return-format framework-version bumped to 10 or later", version(csf) >= 10, version(csf))
 
 fm = FRAMEWORK / "wiki-frontmatter-best-practices.md"
 ftext = fm.read_text(encoding="utf-8")
 check("the frontmatter spec has a `standalone` optional-field row", "| `standalone` |" in ftext)
-check("wiki-frontmatter-best-practices framework-version bumped to 13 or later", version(fm) >= 13, version(fm))
+check("wiki-frontmatter-best-practices framework-version bumped to 20 or later", version(fm) >= 20, version(fm))
 
 for home in (ROOT / "seed" / "wiki" / "HOME.md.tmpl",):
     reason = str(frontmatter(home.read_text(encoding="utf-8")).get("standalone") or "")
@@ -163,6 +163,100 @@ def test_no_shipped_file_names_the_old_toolset_framework_path():
 
 
 test_no_shipped_file_names_the_old_toolset_framework_path()
+
+
+# ── task #243, step 9: each framework doc opens with its local-changes line and a practice link ──
+# Expected values are typed out, never built with the join or the wording the docs are checked against.
+PRACTICE_PAGE_ROOT = "notebooks/agentic-design/wiki/research/wiki/"
+TOOLSET_FRAMEWORK_FOLDER = "notebooks/global-toolset/wiki/best-practices/framework"
+STEP9_DOCS = {
+    # file name: (expected practice page path from the notebooks root, or None; lowest version)
+    "cycle-step-return-format.md": ("notebooks/agentic-design/wiki/research/wiki/wiki-best-practices-authoring.md", 10),
+    "memory-signals-sidecar-vs-frontmatter-pattern.md":
+        ("notebooks/agentic-design/wiki/research/wiki/wiki-best-practices-context-loading.md", 4),
+    "tiered-context-loading.md":
+        ("notebooks/agentic-design/wiki/research/wiki/wiki-best-practices-context-loading.md", 4),
+    "wiki-authoring-best-practices.md":
+        ("notebooks/agentic-design/wiki/research/wiki/wiki-best-practices-authoring.md", 17),
+    "wiki-frontmatter-best-practices.md":
+        ("notebooks/agentic-design/wiki/research/wiki/wiki-best-practices-frontmatter-and-tiers.md", 20),
+    "wiki-search-bucket-rerank-spec.md": (None, 3),
+}
+LOCAL_LINE = ("Local changes: `best-practices/local/{name}` in the wiki you are working in, then the toolset's "
+              "`local/{name}`, hold this install's own changes. Read them after this doc; where they differ, the "
+              "wiki's local file wins, then the toolset's, then this doc.")
+PRACTICE_LINK = re.compile(r"^Practice page: \[[^\]\n]+\]\((\.\./[^)\s]+\.md)\)$")
+
+
+def lines_after_frontmatter(path: Path) -> list[str]:
+    text = path.read_text(encoding="utf-8")
+    m = re.match(r"^---\s*\n.*?\n---\s*\n", text, re.DOTALL)
+    return [l for l in (text[m.end():] if m else text).splitlines() if l.strip()]
+
+
+def test_each_doc_opens_with_a_local_changes_line_naming_its_own_file():
+    bad = {}
+    for name in STEP9_DOCS:
+        first = (lines_after_frontmatter(FRAMEWORK / name) or [""])[0]
+        if first != LOCAL_LINE.format(name=name):
+            bad[name] = first[:100]
+    check("test_each_doc_opens_with_a_local_changes_line_naming_its_own_file: the first line under the frontmatter "
+          "is the Local changes line with the doc's own file name",
+          not bad and len(STEP9_DOCS) == 6 and len(list(FRAMEWORK.glob("*.md"))) == 6, bad)
+
+
+def test_each_doc_has_a_practice_page_line_right_after_the_local_changes_line():
+    bad = {}
+    for name, (page_path, _) in STEP9_DOCS.items():
+        body = lines_after_frontmatter(FRAMEWORK / name)
+        second = body[1] if len(body) > 1 else ""
+        ok = (body[:1] == [LOCAL_LINE.format(name=name)]
+              and (second == "Practice page: none" if page_path is None else bool(PRACTICE_LINK.match(second))))
+        if not ok:
+            bad[name] = second[:120]
+    check("test_each_doc_has_a_practice_page_line_right_after_the_local_changes_line: a link line, or exactly "
+          "`Practice page: none` for the rerank spec", not bad, bad)
+
+
+def test_each_practice_link_normalises_to_its_page_path_from_the_toolset_folder():
+    import posixpath
+    bad = {}
+    for name, (page_path, _) in STEP9_DOCS.items():
+        if page_path is None:
+            continue
+        body = lines_after_frontmatter(FRAMEWORK / name)
+        m = PRACTICE_LINK.match(body[1]) if len(body) > 1 else None
+        landed = posixpath.normpath(posixpath.join(TOOLSET_FRAMEWORK_FOLDER, m.group(1))) if m else None
+        if landed != page_path:
+            bad[name] = landed
+    check("test_each_practice_link_normalises_to_its_page_path_from_the_toolset_folder: joined onto "
+          "notebooks/global-toolset/wiki/best-practices/framework, each link lands on its agentic-design page",
+          not bad and sum(1 for p, _ in STEP9_DOCS.values() if p) == 5, bad)
+
+
+def test_the_where_we_stand_link_in_wiki_authoring_normalises_to_its_notebook_path():
+    import posixpath
+    text = (FRAMEWORK / "wiki-authoring-best-practices.md").read_text(encoding="utf-8")
+    links = re.findall(r"\]\((\.\./[^)\s#]*llm-wiki-bootstrap/[^)\s#]+)\)", text)
+    landed = [posixpath.normpath(posixpath.join(TOOLSET_FRAMEWORK_FOLDER, l)) for l in links]
+    check("test_the_where_we_stand_link_in_wiki_authoring_normalises_to_its_notebook_path: the one link into "
+          "llm-wiki-bootstrap lands on notebooks/llm-wiki-bootstrap/wiki/project/best-practices/"
+          "wiki-authoring-where-we-stand.md",
+          landed == ["notebooks/llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md"],
+          landed)
+
+
+def test_each_doc_version_is_at_least_the_planned_number():
+    bad = {n: version(FRAMEWORK / n) for n, (_, low) in STEP9_DOCS.items() if version(FRAMEWORK / n) < low}
+    check("test_each_doc_version_is_at_least_the_planned_number: framework-version is 10, 4, 4, 17, 20 and 3 or "
+          "later for the six docs", not bad, bad)
+
+
+test_each_doc_opens_with_a_local_changes_line_naming_its_own_file()
+test_each_doc_has_a_practice_page_line_right_after_the_local_changes_line()
+test_each_practice_link_normalises_to_its_page_path_from_the_toolset_folder()
+test_the_where_we_stand_link_in_wiki_authoring_normalises_to_its_notebook_path()
+test_each_doc_version_is_at_least_the_planned_number()
 
 failed = [n for ok, n in results if not ok]
 for ok, n in results:

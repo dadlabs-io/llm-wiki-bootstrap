@@ -7,11 +7,15 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 16
+framework-version: 17
 last_reviewed: 2026-11-11
 review_after: 2027-02-08
 tags: [best-practices, wiki, knowledge-base, claim-extraction, contradiction-preservation, curation, self-authored, synthesis]
 ---
+
+Local changes: `best-practices/local/wiki-authoring-best-practices.md` in the wiki you are working in, then the toolset's `local/wiki-authoring-best-practices.md`, hold this install's own changes. Read them after this doc; where they differ, the wiki's local file wins, then the toolset's, then this doc.
+
+Practice page: [Wiki Best Practices: Authoring](../../../../agentic-design/wiki/research/wiki/wiki-best-practices-authoring.md)
 
 # LLM Wiki Authoring — Best Practices
 
@@ -218,7 +222,7 @@ Enforcement: the gate (script) for the first half; prose, the printed scores and
 
 ## What llm-wiki has built
 
-Not in this doc: the principles hold for any wiki. What the llm-wiki framework has built for each one, area by area, is on llm-wiki's own page, [Wiki authoring: where llm-wiki stands](../../../../../llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md) (moved there 2026-11-11, task #231; the status table and gap list that stood here are in this doc's git history).
+Not in this doc: the principles hold for any wiki. What the llm-wiki framework has built for each one, area by area, is on llm-wiki's own page, [Wiki authoring: where llm-wiki stands](../../../../llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md) (moved there 2026-11-11, task #231; the status table and gap list that stood here are in this doc's git history).
 
 ## The one real wiki contradiction — autonomy trajectory
 

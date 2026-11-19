@@ -6,12 +6,16 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 2
+framework-version: 3
 last_reviewed: 2026-09-08
 review_after: 2026-12-08
 raw_path: (none — self-authored)
 tags: [best-practices, framework, search, retrieval, icarus-schema, truth-status, qmd, self-authored]
 ---
+
+Local changes: `best-practices/local/wiki-search-bucket-rerank-spec.md` in the wiki you are working in, then the toolset's `local/wiki-search-bucket-rerank-spec.md`, hold this install's own changes. Read them after this doc; where they differ, the wiki's local file wins, then the toolset's, then this doc.
+
+Practice page: none
 
 # Wiki Search — Bucket-Aware Retrieval Sort Spec
 

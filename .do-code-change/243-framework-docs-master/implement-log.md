@@ -167,3 +167,32 @@ Plan inconsistencies:
 2. Decision 2 says agentic-design pages are repointed "to the practice pages (Decision 5)"; step 8 says "to its new place". Followed step 8 as the brief says. The 15 repointed agentic-design links now point INTO llm-wiki, against Mark's "agentic-design does not link to llm-wiki". Orchestrator to decide per link; each is an `## Related` list entry or a see-also (`anywhere-agents-yzhao.md:59` is an inline link whose text is "settings.json hook usage").
 3. 181 occurrences, not 180 (card 243).
 4. The plan's `manual: step 8` says evidence goes to `checkpoints.md`; it is here, as for steps 4, 6 and 7.
+
+## Step 9 — manual evidence
+Written by the developer, 2026-11-19. Trivial stakes: yes (no mutation pass). Nothing committed.
+
+(a) Resolve run: `uv run python <scratchpad>/resolve_step9.py C:/github.com/llm-wiki-bootstrap/framework-docs C:/github.com/project-notebooks/notebooks/global-toolset/wiki/best-practices/framework` (each `Practice page:` link and the where-we-stand link, joined by path arithmetic onto the toolset root, which does not exist yet; the target file is then checked):
+```
+OK   cycle-step-return-format.md: ../../../../agentic-design/wiki/research/wiki/wiki-best-practices-authoring.md -> ...\notebooks\agentic-design\wiki\research\wiki\wiki-best-practices-authoring.md
+OK   memory-signals-sidecar-vs-frontmatter-pattern.md: ../../../../agentic-design/wiki/research/wiki/wiki-best-practices-context-loading.md -> (same folder)
+OK   tiered-context-loading.md: ../../../../agentic-design/wiki/research/wiki/wiki-best-practices-context-loading.md -> (same folder)
+OK   wiki-authoring-best-practices.md: ../../../../agentic-design/wiki/research/wiki/wiki-best-practices-authoring.md -> (same folder)
+OK   wiki-authoring-best-practices.md: ../../../../llm-wiki-bootstrap/wiki/project/best-practices/wiki-authoring-where-we-stand.md -> ...\notebooks\llm-wiki-bootstrap\wiki\project\best-practices\wiki-authoring-where-we-stand.md
+OK   wiki-frontmatter-best-practices.md: ../../../../agentic-design/wiki/research/wiki/wiki-best-practices-frontmatter-and-tiers.md -> (same folder)
+wiki-search-bucket-rerank-spec.md: Practice page: none
+dead: 0
+```
+(b) Mechanical lint (`wiki-lint-mechanical.py`, scratch `lint_step9.py`, the test_standalone harness with the fake qmd): a temp notebook `t` holding the six docs at `wiki/best-practices/framework/` plus a HOME, with stub files at `<tmp>/notebooks/agentic-design/wiki/research/wiki/<page>.md` and the llm-wiki-bootstrap page, so the links are at the real depth. Exit 0; summary: files_scanned 7, broken_links 1, orphans 0, missing_frontmatter 0, missing_tier 0, missing_confidence 0, unquoted_yaml 0, backlink_blocks_out_of_step 6. The one broken link: `wiki-frontmatter-best-practices.md` -> `old-slug.md` (link text "old title"), an example sentence in the doc's "On retirement" bullet, present before step 9. A first run without the stubs showed the six practice links and the where-we-stand link as broken (7 broken_links), as expected for a bare temp tree; with the stubs they resolve, which proves the depth. The six backlink-block findings (not investigated further) name docs whose backlink blocks are missing links to their siblings, as in any wiki without the backlink rebuild.
+
+Step 9 result: `test_standalone.py` red 20/27 first (7 FAIL: the two raised floors and the five new tests), green 27/27 after. test_global_toolset 80/80. check-freeze over the project record: PASS. Name review: see name-review.md (three renames, one strengthened).
+
+Other relative links in the six docs, at the new depth:
+- sibling `./<doc>.md` links in all six docs: unchanged, resolve in the same folder.
+- `./wiki-frontmatter-best-practices.md#tier-rubric` (authoring principle 7; the frontmatter doc's heading is `### tier rubric`): ok.
+- in-page anchors of the frontmatter doc: `#source_url-conventions`, `#tier-rubric`, `#review-cadence` (line 34) and `#review-cadence-default-review_after-offset` (line 60). The heading is "review cadence (default `review_after` offset)", so `#review-cadence` does not match it; it predates step 9, listed not fixed.
+- external https links (Karpathy, Asel, Bush, rohitg00, lucasastorian, SamurAIGPT, yzhao062): unchanged, not depth dependent.
+- `(agentic-design :: ...)` and `(llm-wiki-bootstrap :: ...)` pointers: plain text, not links.
+- `../active/newer-revising-entry-2026.md` in the memory-signals JSON example: example data.
+- the wiki-authoring where-we-stand link: five `../` -> four, resolves (above).
+
+Plan inconsistencies: (1) the plan's Implementation Decisions line for the Local changes sentence omits the `Local changes: ` label that requirements Decision 3 has; the label is used. (2) The plan names no test names for step 9; three were renamed after name review (listed in name-review.md).
