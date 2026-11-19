@@ -105,3 +105,31 @@ Ideas left out because they need build detail (none written as llm-wiki detail):
 Decisions folded in (each page names the decision it adds): authoring adds markdown-not-SQLite, never-suppress-contradictions, two-human-checkpoints, federation and database-first-loop-later; frontmatter adds the tier-system decision; context loading adds grep-then-search. No reason was written that its source does not give; the two new tier rules carry no reason.
 
 Plan inconsistencies: (1) the plan's `manual: step 6` measures lint "before step 6 and after step 15", while the brief asks for no new error from these pages now; the lessons link is a broken link until step 7, and the 41 new backlink-block findings clear only when the backlink rebuild runs. (2) Step 6 is silent on `_INDEX.md`; step 15 owns `research/wiki/_INDEX.md`, and every topic folder's index is generated, so none was written. (3) No page outside the folder links the hub until step 15's pointer; lint shows 0 orphans only because the three pages link back to it.
+
+## Step 7 — manual evidence
+Written by the developer, 2026-11-19. No test (Trivial stakes: yes). Nothing committed in either repo. The plan says checkpoints.md; per plan line 84 and step 6's practice it lives here.
+
+File written: `C:\github.com\project-notebooks\notebooks\agentic-design\wiki\research\wiki\lessons-from-llm-wiki\README.md` (new). No lesson page, no edit to any step-6 page, no other file touched.
+
+Per decision (read against the three practice pages; test: a departure only if what was built contradicts what the page says, a build that does more than the page asks is not one):
+- tier system: no departure. The record links the rubric, which the frontmatter page now carries.
+- federation of specialists: HELD FOR MARK (see below). Not listed as "no departure" in the README; listed there as "Open".
+- never suppress contradictions: no departure. Page and record agree; the duplicate carve-out is about identical copies, not contradictions.
+- database first, loop later: no departure. The record marks it satisfied.
+- markdown not SQLite: no departure. Same three reasons and trade-off on the authoring page.
+- two human checkpoints: no departure. The restated note says "exactly two" is too strong because a full run asks approval for more; the authoring page says keep two and do not soften, never "exactly two". More gates is not softening, so the page stands. The note gives no reason for the extra approvals either, so even on a departure reading it would be held, not a lesson.
+- grep then search: no departure. The context loading page says when a search layer replaces the index; the build does that. The no-fallback / no-keyword-switch policy is a build rule the page makes no claim about; the record gives no design reason for it (step 6 already left it out for that).
+
+Held for Mark: the federation decision. Practice (authoring page, "Federation of single-purpose agents"): agents with one job each, each isolatable ("if the gap finder breaks, the contradiction hunter still works"). Built, per the record's 2026-10-30 status note: skills plus two agents instead of six agents; contradiction detection is the claims skill plus the semantic lint, gap detection and tier audits are the semantic lint. The note says "not a reversal" and gives no reason. Not written as a lesson. When Mark gives the reason, one lesson page and a link from the authoring page follow.
+
+Lint (`uv run --project <repo> python scripts/wiki-lint-mechanical.py --topic agentic-design`, output in scratchpad `lint-step7.txt`): Broken links 0 (was 4 after step 6); Orphan pages 0; spec enforcement all 0. The only findings naming the new folder are backlink-block "out of step" lines (README missing links to the three pages and the hub; 47 pages out of step, missing 91), the same kind as step 6, cleared by the backlink rebuild, not run here. No body-check finding names the new page.
+
+No-llm-wiki grep over `lessons-from-llm-wiki/` for `llm-wiki-bootstrap|global-toolset|framework-docs|best-practices/framework|architecture-decisions|llm-wiki ::`: 0 matches. Link targets containing "llm-wiki": 0 (the folder name itself appears only in the page's own path).
+
+Side effect: the lint rewrote `notebooks/agentic-design/_inbox/reports/lint-report.md` again; not mine, not reverted.
+
+Plan inconsistencies:
+1. The hub and all three practice pages say the lessons section "is being written" / "has nothing to open". Stale now that the README exists; the brief allows only a link-add edit, so left. Needs a one-line fix in step 15 or a later pass.
+2. The practice pages already link the README, so "a practice page changed by a lesson links to the lesson" had nothing to add: no lesson, no edit.
+3. Plan manual line says checkpoints.md; the evidence is here.
+4. The README covers six of seven decisions as "no departure"; the seventh is open.
