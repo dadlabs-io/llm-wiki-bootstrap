@@ -31,6 +31,10 @@ only here now.
 An edit made here is lost on the next refresh. Change the page in its package's source (for llm-wiki, the
 llm-wiki-bootstrap repo: `wiki-seed/`, or `<skill>/wiki-seed/`) and refresh.
 
+## Your own changes to the framework docs
+
+The framework docs sit beside this folder, in the toolset's `wiki/best-practices/framework/`. Your changes to them go in the toolset's `wiki/best-practices/local/`, where a refresh replaces only the README and never touches your files. That README says how to use the folder; each framework doc opens with a "Local changes" line saying where its local files are read from.
+
 ## Project-specific how-to docs
 
 They belong in the project's own wiki, e.g. `wiki/project/patterns/<your-doc>.md`: that is the project's content,

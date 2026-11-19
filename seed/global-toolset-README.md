@@ -21,6 +21,7 @@ global-toolset/
     <other pack>/                    ← each other installed pack (agent-builder's packs), written by its own installer
   wiki/best-practices/framework/   ← the six framework-contract docs (frontmatter spec, authoring
                                               principles, cycle step contract, …)
+  wiki/best-practices/local/       ← your own changes to those docs; its README says how it works
 ```
 
 ## Finding a tool
@@ -36,7 +37,8 @@ folder. For this framework, `how-to/llm-wiki/user-guide.md` explains the whole s
   creates this notebook, registers it as `global-toolset` in `linked-notebooks.json`, and makes `how-to/llm-wiki/`,
   the marker, this README and the framework docs match the llm-wiki-bootstrap source.
   `new-wiki.py --phase docs` refreshes only these docs (`--check` reports first). A change made here by hand is
-  lost on the next refresh: change the source in its library instead.
+  lost on the next refresh: change the source in its library instead. The one exception is `wiki/best-practices/local/`:
+  a refresh replaces only its README and never adds, changes or removes any other file there.
 - **Each pack writes only its own folder.** Another pack's installer keeps its `how-to/<pack>/`; none removes another's.
 - **Not searched.** `/wiki-search` searches a project's own wiki; the installed skills read these pages by path.
 - **Projects keep their own work.** A project's decisions, sessions, code-change records and suggestion box stay in

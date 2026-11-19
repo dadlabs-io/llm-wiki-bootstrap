@@ -35,6 +35,7 @@ Either way the wiki root holds:
 │   │   └── components/ decisions/ architecture/ patterns/ troubleshooting/ best-practices/   ← "stubs"
 │   ├── research/                      ← Q5: stubs | empty | none   (what we ingest; /wiki-update files here)
 │   │   └── active/ long-term/ tooling/ best-practices/ interesting-docs/    ← "stubs"
+│   ├── best-practices/local/          ← always: README only; the user's own changes to the framework docs go here
 │   └── sessions/                      ← always (per-persona journals + dashboards, /wrap-up)
 └── raw/sessions/
 ```
@@ -43,7 +44,7 @@ No docs are copied into the wiki: the pack usage docs and the six framework-cont
 
 Cursor variant: substitutes `.cursor/` for `.claude/`, always bundles, and generates `.cursor/rules/<skill-name>.mdc` from each SKILL.md.
 
-> **Both halves are opt-in.** A wiki with neither `project/` nor `research/` is a plain notes notebook (only `sessions/` is created). A wiki that later needs the other half just creates the folder — every script resolves folders on disk first. Neither half is ever created with the old agentic-design research topics (implementation, skills, orchestration); those are recognised for existing wikis, not scaffolded.
+> **Both halves are opt-in.** A wiki with neither `project/` nor `research/` is a plain notes notebook (only `sessions/` and `best-practices/local/` are created). A wiki that later needs the other half just creates the folder — every script resolves folders on disk first. Neither half is ever created with the old agentic-design research topics (implementation, skills, orchestration); those are recognised for existing wikis, not scaffolded.
 
 ## Flow at a glance
 
@@ -173,6 +174,7 @@ Target folder:   C:\github.com\fitness-app          ← the cwd when its leaf na
 Wiki content:    C:\github.com\project-notebooks\notebooks\fitness-app  (registered notebook)
 Folders:         wiki/project/{components,decisions,architecture,patterns,troubleshooting,best-practices}
                  wiki/research/{active,long-term,tooling,best-practices,interesting-docs}
+                 wiki/best-practices/local/
                  wiki/sessions/
 Skills:          global — installed and current (16 skills, 26 scripts, 1 agent in ~/.claude)
                  [or: installed; 4 files differ from the clone — `install-wiki.ps1 -RefreshOnly` refreshes them when you want]

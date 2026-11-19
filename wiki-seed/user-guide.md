@@ -141,6 +141,7 @@ A notebook (in a notebooks vault, or `<project>/llm-wiki/` for a wiki kept insid
 └── wiki/
     ├── HOME.md                   the landing page
     ├── _MAP.md                   generated: the compressed map the agent always loads
+    ├── best-practices/local/     your own changes to the framework docs; its README says how it works
     ├── project/                  what you build: decisions, patterns, bugs, architecture, …
     ├── research/<folder>/        what you read, one folder per subject
     ├── tasks/                    task cards, one per task, and ORDER.md   (from the first task added)
@@ -162,7 +163,7 @@ The usage docs (this page and the others in `how-to/`) and the framework-contrac
 - **A source waits in `pending/`, is triaged into an `intake/` bucket, and moves to `done/` once ingested.** `done/` is what stops a source being ingested twice.
 - **A page nothing links to** is an orphan, unless its frontmatter declares `standalone: "<reason>"` (the landing page does).
 - **`sessions/` is working memory, not curated content.** `/wrap-up` writes it; the lint and the indexes skip it, and search still finds it. Task cards (`tasks/`) are skipped too, search included; the lint checks them against their own rules instead.
-- **The global toolset is framework-managed:** its `how-to/` pages and `wiki/best-practices/framework/` docs are refreshed from the framework, and a local edit is overwritten. Ask for the change in the framework instead.
+- **The global toolset is framework-managed:** its `how-to/` pages and `wiki/best-practices/framework/` docs are refreshed from the framework, and a local edit is overwritten. Ask for the change in the framework instead, or put your own change in a `best-practices/local/` folder (see [The framework contracts](#the-framework-contracts)).
 
 ## The ideas it is built on
 
@@ -200,6 +201,8 @@ In the global toolset's `wiki/best-practices/framework/`, refreshed with the fra
 - [Cycle step return format](../../wiki/best-practices/framework/cycle-step-return-format.md): what each cycle step writes.
 - [Memory signals: sidecar vs frontmatter](../../wiki/best-practices/framework/memory-signals-sidecar-vs-frontmatter-pattern.md): where truth-status lives.
 - [Search bucket rerank](../../wiki/best-practices/framework/wiki-search-bucket-rerank-spec.md): how search orders results by truth-status.
+
+These docs are replaced on every refresh, so your own changes to them go in a `wiki/best-practices/local/` folder instead: the wiki's own, for that wiki, and the toolset's, for every wiki on the machine. A new wiki starts with that folder and a README in it saying how to use it; each doc opens with a "Local changes" line saying where its local files are read from.
 
 ## Further reading
 
