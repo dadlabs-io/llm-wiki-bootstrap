@@ -22,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, str(ROOT / "scripts"))
-import _wiki_config as wc  # noqa: E402
+import _wiki_config as wc
 
 SHIPPED_README = ROOT / "seed" / "best-practices-local" / "README.md"
 LOCAL = "best-practices/local"
@@ -434,7 +434,7 @@ def _run(fn):
     first = len(results)
     try:
         fn()
-    except Exception as e:  # noqa: BLE001 - a crash is a failed check named after the test, not the end of the file
+    except Exception as e:  # a crash is a failed check named after the test, not the end of the file
         check(f"raised {type(e).__name__}: {e}", False)
     results[first:] = [(ok, f"{fn.__name__}: {name}") for ok, name in results[first:]]
 

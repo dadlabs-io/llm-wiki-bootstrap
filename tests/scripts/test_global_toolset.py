@@ -683,7 +683,7 @@ def _run(fn):
     first = len(results)
     try:
         fn()
-    except Exception as e:  # noqa: BLE001 - a crash is a failed check named after the test, not the end of the file
+    except Exception as e:  # a crash is a failed check named after the test, not the end of the file
         check(f"raised {type(e).__name__}: {e}", False)
     results[first:] = [(ok, f"{fn.__name__}: {name}") for ok, name in results[first:]]
 
