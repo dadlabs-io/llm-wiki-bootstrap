@@ -1,0 +1,236 @@
+"""Hand-rolled mutation pass for change 243 (prove_tests_bite.py mutates only src/**/*.py and runs pytest, so it
+is COULD-NOT-RUN on this repo: code in scripts/, tests are standalone scripts).
+
+Usage: python hand-mutation.py <scratch-root> <result.json>
+<scratch-root> holds a copy of the repo (scripts/, tests/scripts/, framework-docs/, seed/, skills/, agents/,
+templates/, wiki-seed/, tools/, pyproject.toml, VERSION, V2_ROADMAP.md, ...). Every test finds the repo from its own
+__file__ (ROOT = parents[2]), so a test run from the copy exercises the copy's scripts/. One bug is planted at a time
+in the copy only, never in the repo. A mutant is killed when any test file exits non-zero or its last line is not
+'N/N passed'; files are run in order and the run stops at the first one that fails."""
+import json, os, re, shutil, subprocess, sys, time
+from pathlib import Path
+
+SCRATCH = Path(sys.argv[1])
+OUT = Path(sys.argv[2])
+PY = r"C:\github.com\llm-wiki-bootstrap\.venv\Scripts\python.exe"
+MAIN = ["global_toolset", "local_folder", "search_mode", "standalone"]
+EXTRA = ["refresh_prunes", "not_checked", "install_incomplete", "install_manifest", "tooling_state_seam"]
+FILES = MAIN + EXTRA
+
+IT, WC, NW, MC, QQ, WU = ("_install_tooling.py", "_wiki_config.py", "new-wiki.py", "wiki-map-compile.py",
+                          "wiki-qmd-query.py", "wiki-update.py")
+M = []  # (id, file, old, new)
+
+
+def m(i, f, old, new):
+    M.append((i, f, old, new))
+
+
+# canary: not a changed line; must be killed
+m("M0", WC, '    folders.append("sessions")\n', '    pass\n')
+# ---- _wiki_config.py
+m("M1", WC, 'folders.append("best-practices/local")', 'pass')
+m("M2", WC, 'folders.append("best-practices/local")', 'folders.append("best-practices")')
+m("M3", WC, 'folders.append("best-practices/local")', 'folders.insert(0, "best-practices/local")')
+m("M4", WC, 'TOOLSET_FRAMEWORK_DOCS = Path("wiki") / "best-practices" / "framework"',
+  'TOOLSET_FRAMEWORK_DOCS = Path("wiki") / "framework"')
+m("M5", WC, 'TOOLSET_FRAMEWORK_DOCS = Path("wiki") / "best-practices" / "framework"',
+  'TOOLSET_FRAMEWORK_DOCS = Path("wiki") / "project" / "best-practices" / "framework"')
+m("M6", WC, 'TOOLSET_FRAMEWORK_DOCS = Path("wiki") / "best-practices" / "framework"',
+  'TOOLSET_FRAMEWORK_DOCS = Path("wiki") / "best-practices" / "frameworks"')
+m("M7", WC, 'TOOLSET_LOCAL_DIR = Path("wiki") / "best-practices" / "local"',
+  'TOOLSET_LOCAL_DIR = Path("wiki") / "local"')
+m("M8", WC, 'TOOLSET_LOCAL_DIR = Path("wiki") / "best-practices" / "local"',
+  'TOOLSET_LOCAL_DIR = Path("wiki") / "best-practices" / "locals"')
+m("M9", WC, 'TOOLSET_OLD_FRAMEWORK_DOCS = Path("wiki") / "project" / "best-practices" / "framework"',
+  'TOOLSET_OLD_FRAMEWORK_DOCS = Path("wiki") / "best-practices" / "framework"')
+m("M10", WC, 'TOOLSET_OLD_FRAMEWORK_DOCS = Path("wiki") / "project" / "best-practices" / "framework"',
+  'TOOLSET_OLD_FRAMEWORK_DOCS = Path("wiki") / "project" / "best-practices" / "frameworks"')
+m("M11", WC, 'TOOLSET_OLD_FRAMEWORK_DOCS = Path("wiki") / "project" / "best-practices" / "framework"',
+  'TOOLSET_OLD_FRAMEWORK_DOCS = Path("wiki") / "project" / "framework"')
+# ---- _install_tooling.py: toolset_files
+LR = 'files[TOOLSET_LOCAL_DIR / "README.md"] = pkg / "seed" / "best-practices-local" / "README.md"'
+m("M12", IT, LR, 'pass')
+m("M13", IT, LR, 'files[TOOLSET_LOCAL_DIR / "README.md"] = pkg / "seed" / "best-practices" / "README.md"')
+m("M14", IT, LR, 'files[TOOLSET_LOCAL_DIR / "README2.md"] = pkg / "seed" / "best-practices-local" / "README.md"')
+m("M15", IT, LR, 'files[TOOLSET_FRAMEWORK_DOCS / "README.md"] = pkg / "seed" / "best-practices-local" / "README.md"')
+# toolset_status remove scan
+m("M16", IT, 'old_docs = root / TOOLSET_OLD_FRAMEWORK_DOCS  # the docs',
+  'old_docs = root / TOOLSET_FRAMEWORK_DOCS  # the docs')
+m("M17", IT, "remove += [(TOOLSET_OLD_FRAMEWORK_DOCS / p.name).as_posix()",
+  "remove += [(TOOLSET_FRAMEWORK_DOCS / p.name).as_posix()")
+m("M18", IT, "remove += [(TOOLSET_OLD_FRAMEWORK_DOCS / p.name).as_posix()",
+  "remove = [(TOOLSET_OLD_FRAMEWORK_DOCS / p.name).as_posix()")
+m("M19", IT, "if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if old_docs.is_dir() else []",
+  "if TOOLSET_OLD_FRAMEWORK_DOCS / p.name in files] if old_docs.is_dir() else []")
+m("M20", IT, "if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if old_docs.is_dir() else []",
+  "if True] if old_docs.is_dir() else []")
+m("M21", IT, "if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if old_docs.is_dir() else []",
+  "if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if not old_docs.is_dir() else []")
+m("M22", IT, "if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if old_docs.is_dir() else []",
+  "if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if True else []")
+m("M23", IT, "for p in sorted(old_docs.glob(\"*.md\"))", "for p in sorted(old_docs.glob(\"*.txt\"))")
+# _guarded
+m("M24", IT, "        op()\n        return True\n", "        pass\n        return True\n")
+m("M25", IT, "        op()\n        return True\n", "        op()\n        return False\n")
+m("M26", IT, "    except OSError as e:\n        failed.append",
+  "    except ZeroDivisionError as e:\n        failed.append")
+m("M27", IT, "        failed.append({\"path\": Path(path).as_posix(), \"reason\": f\"{type(e).__name__}: {e}\"})\n",
+  "        pass\n")
+m("M28", IT, "{\"path\": Path(path).as_posix(),", "{\"path\": str(path),")
+m("M29", IT, "\"reason\": f\"{type(e).__name__}: {e}\"})", "\"reason\": f\"{e}\"})")
+m("M30", IT, "\"reason\": f\"{type(e).__name__}: {e}\"})", "\"reason\": f\"{type(e).__name__}\"})")
+m("M31", IT, "        return False\n\n\ndef seed_toolset", "        return True\n\n\ndef seed_toolset")
+m("M32", IT, "    failed: list = []\n    for rel in", "    failed: list = []\n    failed.append({'path': 'x', 'reason': 'y'})\n    for rel in")
+# seed_toolset
+m("M33", IT, "if _guarded(partial(dst.parent.mkdir, parents=True, exist_ok=True), dst, failed):",
+  "if not _guarded(partial(dst.parent.mkdir, parents=True, exist_ok=True), dst, failed):")
+m("M34", IT, "if _guarded(partial(dst.parent.mkdir, parents=True, exist_ok=True), dst, failed):",
+  "if True:\n            dst.parent.mkdir(parents=True, exist_ok=True)")
+m("M35", IT, "partial(dst.parent.mkdir, parents=True, exist_ok=True)", "partial(dst.parent.mkdir, parents=False, exist_ok=True)")
+m("M36", IT, "partial(dst.parent.mkdir, parents=True, exist_ok=True)", "partial(dst.parent.mkdir, parents=True, exist_ok=False)")
+m("M37", IT, "            _guarded(partial(shutil.copyfile, files[Path(rel)], dst), dst, failed)\n",
+  "            shutil.copyfile(files[Path(rel)], dst)\n")
+m("M38", IT, "            _guarded(partial(shutil.copyfile, files[Path(rel)], dst), dst, failed)\n",
+  "            pass\n")
+m("M39", IT, "_guarded(partial(shutil.copyfile, files[Path(rel)], dst), dst, failed)",
+  "_guarded(partial(shutil.copyfile, files[Path(rel)], dst), root, failed)")
+m("M40", IT, "        _guarded((root / rel).unlink, root / rel, failed)\n", "        (root / rel).unlink()\n")
+m("M41", IT, "        _guarded((root / rel).unlink, root / rel, failed)\n", "        pass\n")
+m("M42", IT, "    old_docs = root / TOOLSET_OLD_FRAMEWORK_DOCS  # only an emptied",
+  "    old_docs = root / TOOLSET_FRAMEWORK_DOCS  # only an emptied")
+m("M43", IT, "if old_docs.is_dir() and not any(old_docs.iterdir()):", "if old_docs.is_dir() or not any(old_docs.iterdir()):")
+m("M44", IT, "if old_docs.is_dir() and not any(old_docs.iterdir()):", "if old_docs.is_dir() and any(old_docs.iterdir()):")
+m("M45", IT, "if old_docs.is_dir() and not any(old_docs.iterdir()):", "if not any(old_docs.iterdir()):")
+m("M46", IT, "if old_docs.is_dir() and not any(old_docs.iterdir()):", "if False:")
+m("M47", IT, "        _guarded(old_docs.rmdir, old_docs, failed)\n", "        old_docs.rmdir()\n")
+m("M48", IT, "        _guarded(old_docs.rmdir, old_docs, failed)\n", "        pass\n")
+m("M49", IT, '    status["failed"] = failed\n', '    status["failed"] = []\n')
+m("M50", IT, '    status["failed"] = failed\n', '    pass\n')
+# print_summary
+m("M51", IT, 'if ts.get("failed"):', 'if not ts.get("failed"):')
+m("M52", IT, 'if ts.get("failed"):', 'if False:')
+m("M53", IT, "INCOMPLETE, {len(ts['failed'])} file", "INCOMPLETE, 0 file")
+m("M54", IT, 'for entry in ts["failed"]:', 'for entry in ts["failed"][:0]:')
+m("M55", IT, "print(f\"    FAILED {entry['path']}: {entry['reason']}\")", "print(f\"    FAILED {entry['path']}\")")
+m("M56", IT, "print(f\"    FAILED {entry['path']}: {entry['reason']}\")", "print(f\"    FAILED {entry['reason']}\")")
+# ---- new-wiki.py phase_docs
+m("M57", NW, 'failed = status.get("failed") or []', 'failed = []')
+m("M58", NW, '    for entry in failed:\n        print(f"FAILED {entry[\'path\']}: {entry[\'reason\']}")\n',
+  '    for entry in failed:\n        pass\n')
+m("M59", NW, "print(f\"FAILED {entry['path']}: {entry['reason']}\")", "print(f\"FAILED {entry['path']}\")")
+m("M60", NW, "print(f\"FAILED {entry['path']}: {entry['reason']}\")", "print(f\"FAILED {entry['reason']}\")")
+m("M61", NW, "    if failed:\n        _warn(", "    if not failed:\n        _warn(")
+m("M62", NW, "so the refresh is incomplete\")\n        return 1\n", "so the refresh is incomplete\")\n        return 0\n")
+m("M63", NW, "so the refresh is incomplete\")\n        return 1\n", "so the refresh is incomplete\")\n")
+m("M64", NW, '        _warn(f"{summary}; {len(failed)} file operation(s) FAILED, so the refresh is incomplete")\n',
+  '        _ok(f"{summary}; {len(failed)} file operation(s) FAILED, so the refresh is incomplete")\n')
+m("M65", NW, "{len(failed)} file operation(s) FAILED", "0 file operation(s) FAILED")
+m("M66", NW, "    _ok(summary)\n    return 0\n", "    _ok(summary)\n    return 1\n")
+# phase_b guard + wiring
+m("M67", NW, 'local_readme_src = seed_src / "best-practices-local" / "README.md"',
+  'local_readme_src = seed_src / "best-practices" / "README.md"')
+m("M68", NW, "if not local_readme_src.is_file():", "if local_readme_src.is_file():")
+m("M69", NW, "if not local_readme_src.is_file():", "if False:")
+m("M70", NW, 'package: {local_readme_src}")\n        return 1\n', 'package: {local_readme_src}")\n        return 0\n')
+m("M71", NW, 'package: {local_readme_src}")\n        return 1\n', 'package: {local_readme_src}")\n')
+m("M72", NW, '        _err(f"the shipped best-practices/local README is missing from the package: {local_readme_src}")\n',
+  '        pass\n')
+m("M73", NW, '"best-practices/local": "your own changes to the framework docs; read them after the doc they change",\n',
+  '')
+m("M74", NW, '"best-practices/local": "your own changes', '"best-practices/localx": "your own changes')
+m("M75", NW, 'read them after the doc they change"', 'read them after the doc they change"[:0]')
+m("M76", NW, '''    _render_template(local_readme_src, wiki_root / "best-practices" / "local" / "README.md",
+                     wiki_scaffold_vars, args.dry_run)''', '    pass')
+m("M77", NW, 'wiki_root / "best-practices" / "local" / "README.md"', 'wiki_root / "best-practices" / "README.md"')
+m("M78", NW, 'wiki_root / "best-practices" / "local" / "README.md"', 'wiki_root / "local" / "README.md"')
+m("M79", NW, '''"README.md",
+                     wiki_scaffold_vars, args.dry_run)
+''', '''"README.md",
+                     {}, args.dry_run)
+''')
+m("M80", NW, '''"README.md",
+                     wiki_scaffold_vars, args.dry_run)
+''', '''"README.md",
+                     wiki_scaffold_vars, False)
+''')
+m("M81", NW, "_render_template(local_readme_src, wiki_root", "_render_template(seed_src / 'wiki' / 'README.md', wiki_root")
+# ---- wiki-map-compile.py / wiki-qmd-query.py / wiki-update.py
+m("M82", MC, 'CONTAINER_FOLDERS = {"research", "project", "best-practices"}', 'CONTAINER_FOLDERS = {"research", "project"}')
+m("M83", MC, 'CONTAINER_FOLDERS = {"research", "project", "best-practices"}',
+  'CONTAINER_FOLDERS = {"research", "project", "best-practice"}')
+m("M84", MC, 'CONTAINER_FOLDERS = {"research", "project", "best-practices"}',
+  'CONTAINER_FOLDERS = {"research", "best-practices"}')
+m("M85", QQ, 'for half in ("research", "project", "best-practices")', 'for half in ("research", "project")')
+m("M86", QQ, 'for half in ("research", "project", "best-practices")', 'for half in ("research", "project", "best-practice")')
+m("M87", QQ, 'for half in ("research", "project", "best-practices")', 'for half in ("research", "best-practices")')
+m("M88", WU, "toolset_location()[0] / TOOLSET_FRAMEWORK_DOCS / SPEC_NAME", "toolset_location()[0] / SPEC_NAME")
+m("M89", WU, "toolset_location()[0] / TOOLSET_FRAMEWORK_DOCS / SPEC_NAME",
+  'toolset_location()[0] / "wiki" / "project" / "best-practices" / "framework" / SPEC_NAME')
+m("M90", WU, "toolset_location()[0] / TOOLSET_FRAMEWORK_DOCS / SPEC_NAME",
+  'toolset_location()[0] / "wiki" / "best-practices" / "frameworks" / SPEC_NAME')
+m("M91", WU, "from _wiki_config import TOOLSET_FRAMEWORK_DOCS, toolset_location",
+  "from _wiki_config import TOOLSET_FRAMEWORK_DOCS as _x, toolset_location\n    from _wiki_config import TOOLSET_LOCAL_DIR as TOOLSET_FRAMEWORK_DOCS")
+
+LAST = {}
+
+
+def run_file(name, env=None):
+    p = subprocess.run([PY, f"tests/scripts/test_{name}.py"], cwd=SCRATCH, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace", timeout=300,
+                       env=dict(os.environ, PYTHONIOENCODING="utf-8"))
+    lines = p.stdout.strip().splitlines() or [""]
+    tail = lines[-1] if lines[-1] else (p.stderr.strip().splitlines() or [""])[-1]
+    ok = p.returncode == 0 and re.match(r"^(\d+)/\1 passed", lines[-1]) is not None
+    return ok, tail
+
+
+def line_of(text, old):
+    return text[: text.index(old)].count("\n") + 1
+
+
+# optional 3rd argument: ids to run (a run that stopped part way is resumed with the rest; its result file is merged by hand)
+only = set(sys.argv[3].split(",")) if len(sys.argv) > 3 else None
+
+# baseline: every file passes unmutated
+base = {}
+for f in FILES:
+    ok, tail = run_file(f)
+    base[f] = tail
+    print(f"baseline {f}: {tail}", flush=True)
+    assert ok, f"unmutated {f} is not green: {tail}"
+
+results = []
+for mid, fname, old, new in M:
+    if only and mid not in only:
+        continue
+    target = SCRATCH / "scripts" / fname
+    orig = (Path(r"C:\github.com\llm-wiki-bootstrap\scripts") / fname).read_text(encoding="utf-8")
+    assert orig.count(old) == 1, f"{mid}: old text occurs {orig.count(old)} times in {fname}: {old!r}"
+    target.write_text(orig.replace(old, new), encoding="utf-8", newline="\n")
+    ran, killed_by, tail = [], None, ""
+    t0 = time.time()
+    try:
+        for f in FILES:
+            ran.append(f)
+            ok, tail = run_file(f)
+            if not ok:
+                killed_by = f
+                break
+            # survivors of the four main files go on to the extra files; a mutant already past MAIN
+            # is still run against EXTRA so a kill there is recorded
+    except subprocess.TimeoutExpired:
+        killed_by, tail = f, "timeout"
+    finally:
+        shutil.copyfile(Path(r"C:\github.com\llm-wiki-bootstrap\scripts") / fname, target)
+    r = {"id": mid, "file": f"scripts/{fname}", "line": line_of(orig, old),
+         "change": f"{old.strip()}  ->  {new.strip()}", "test_files_run": ran,
+         "killed_by": killed_by, "last_line": tail, "killed": killed_by is not None,
+         "baseline_of_killer": base.get(killed_by)}
+    results.append(r)
+    print(f"{mid} {fname}:{r['line']} {'killed by ' + killed_by + ' (' + tail[:60] + ')' if killed_by else 'SURVIVED'}"
+          f"  [{time.time() - t0:.0f}s]", flush=True)
+    OUT.write_text(json.dumps(results, indent=1), encoding="utf-8")
+
+s = sum(not r["killed"] for r in results)
+print(f"total {len(results)}, killed {len(results) - s}, survived {s}")

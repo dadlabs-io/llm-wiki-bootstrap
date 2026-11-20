@@ -122,6 +122,18 @@ def test_phase_b_readme_folder_list_has_a_best_practices_local_line():
               any(ln.startswith("- `best-practices/local/`") for ln in listed.splitlines()), listed[-600:])
 
 
+def test_phase_b_readme_local_line_carries_its_note():
+    with tempfile.TemporaryDirectory() as t:
+        sc = Scaffold(Path(t))
+        p = sc.run(project="none")
+        listed = (sc.wiki / "README.md").read_text(encoding="utf-8") if (sc.wiki / "README.md").is_file() else ""
+        line = next((ln for ln in listed.splitlines() if ln.startswith("- `best-practices/local/`")), "")
+        check("Phase B exits 0, and the wiki's README line for best-practices/local/ carries a note naming the "
+              "framework docs",
+              p.returncode == 0 and line.startswith("- `best-practices/local/` — ") and "framework docs" in line,
+              (p.returncode, line))
+
+
 def test_phase_b_summary_lists_best_practices_local_before_sessions():
     with tempfile.TemporaryDirectory() as t:
         sc = Scaffold(Path(t))
@@ -418,6 +430,7 @@ for _test in (test_taxonomy_puts_best_practices_local_before_sessions_for_all_ni
               test_phase_b_writes_local_readme_with_shipped_bytes_for_empty,
               test_phase_b_writes_local_readme_with_shipped_bytes_for_none,
               test_phase_b_readme_folder_list_has_a_best_practices_local_line,
+              test_phase_b_readme_local_line_carries_its_note,
               test_phase_b_summary_lists_best_practices_local_before_sessions,
               test_lint_of_a_fresh_scaffold_draws_no_finding_on_the_local_readme_that_home_does_not,
               test_dry_run_prints_would_lines_for_the_local_folder_with_its_readme,

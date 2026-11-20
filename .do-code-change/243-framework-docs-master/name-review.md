@@ -96,3 +96,12 @@ The reviewer also flagged a line of the names output ("hand them to the name rev
 - test_rendered_template_lacks_the_old_toolset_framework_path: OK ("toolset" is a label only)
 - test_precedence_entry_does_not_copy_the_local_changes_sentence: OVER-CLAIMS (two fragments of the sentence). Fixed: four distinctive fragments now absent. Accepted: a copy in other wording would pass. Re-frozen.
 - Not settled by the reviewer (it cannot run the scaffold): whether the entry holds the phrases; the tests ran the real Phase B and pass.
+
+## Mutation pass (one doubt-reviewer, fed the `check-freeze.py names --step mutation` output)
+
+- test_failed_reason_reads_error_class_colon_message: OK (a one-character message would pass `\S`; accepted, the mutants were class or message dropped).
+- test_unremovable_old_folder_is_listed_failed_not_raised: OK (the reviewer could not confirm the `Path.rmdir` patch reaches `WindowsPath`; the hand pass ran M47 against it: killed, 83/84).
+- test_install_summary_counts_the_failed_operations: OK.
+- test_phase_docs_failure_line_is_a_warning_with_the_count: UNDER-CLAIMS (exit 1 asserted, not in the name): accepted, the check text names it. Wrong-reason risk fixed: the count had no left boundary ("7 …" matched inside "17 …"); now a regex with `(?<!\d)`, shown True for 7 and False for 17; the check text computes the count instead of "seven". Re-frozen with an unfrozen reason.
+- test_phase_b_readme_local_line_carries_its_note: OVER-CLAIMS ("says what the folder is for": only the prefix and "framework docs" are checked). Fixed: the check text names what it checks; Phase B's exit 0 now asserted (a late failure after the README write passed before). Re-frozen with an unfrozen reason.
+- After: test_global_toolset.py 84/84, test_local_folder.py 22/22; check-freeze PASS (80 entries + 164 earlier).

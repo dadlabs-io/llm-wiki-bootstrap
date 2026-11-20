@@ -1,0 +1,1420 @@
+{
+ "change": "243-framework-docs-master",
+ "base": "7b66e2a92fc2cfa3892050f143bd35fe0e6bd40d",
+ "harness": "hand-mutation.py.txt (run in two parts: M0-M24, then M25-M91 after a print-encoding crash; the 12 first-pass survivors re-run once after the new tests)",
+ "mutants": 92,
+ "canary": "M0",
+ "killed": 89,
+ "survived": 3,
+ "pass1_survivors": 12,
+ "results": [
+  {
+   "id": "M0",
+   "file": "scripts/_wiki_config.py",
+   "line": 136,
+   "change": "folders.append(\"sessions\")  ->  pass",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "19/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M1",
+   "file": "scripts/_wiki_config.py",
+   "line": 135,
+   "change": "folders.append(\"best-practices/local\")  ->  pass",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "17/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M2",
+   "file": "scripts/_wiki_config.py",
+   "line": 135,
+   "change": "folders.append(\"best-practices/local\")  ->  folders.append(\"best-practices\")",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "17/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M3",
+   "file": "scripts/_wiki_config.py",
+   "line": 135,
+   "change": "folders.append(\"best-practices/local\")  ->  folders.insert(0, \"best-practices/local\")",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "19/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M4",
+   "file": "scripts/_wiki_config.py",
+   "line": 522,
+   "change": "TOOLSET_FRAMEWORK_DOCS = Path(\"wiki\") / \"best-practices\" / \"framework\"  ->  TOOLSET_FRAMEWORK_DOCS = Path(\"wiki\") / \"framework\"",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "74/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M5",
+   "file": "scripts/_wiki_config.py",
+   "line": 522,
+   "change": "TOOLSET_FRAMEWORK_DOCS = Path(\"wiki\") / \"best-practices\" / \"framework\"  ->  TOOLSET_FRAMEWORK_DOCS = Path(\"wiki\") / \"project\" / \"best-practices\" / \"framework\"",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "62/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M6",
+   "file": "scripts/_wiki_config.py",
+   "line": 522,
+   "change": "TOOLSET_FRAMEWORK_DOCS = Path(\"wiki\") / \"best-practices\" / \"framework\"  ->  TOOLSET_FRAMEWORK_DOCS = Path(\"wiki\") / \"best-practices\" / \"frameworks\"",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "75/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M7",
+   "file": "scripts/_wiki_config.py",
+   "line": 524,
+   "change": "TOOLSET_LOCAL_DIR = Path(\"wiki\") / \"best-practices\" / \"local\"  ->  TOOLSET_LOCAL_DIR = Path(\"wiki\") / \"local\"",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "58/69 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M8",
+   "file": "scripts/_wiki_config.py",
+   "line": 524,
+   "change": "TOOLSET_LOCAL_DIR = Path(\"wiki\") / \"best-practices\" / \"local\"  ->  TOOLSET_LOCAL_DIR = Path(\"wiki\") / \"best-practices\" / \"locals\"",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "59/69 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M9",
+   "file": "scripts/_wiki_config.py",
+   "line": 526,
+   "change": "TOOLSET_OLD_FRAMEWORK_DOCS = Path(\"wiki\") / \"project\" / \"best-practices\" / \"framework\"  ->  TOOLSET_OLD_FRAMEWORK_DOCS = Path(\"wiki\") / \"best-practices\" / \"framework\"",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "69/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M10",
+   "file": "scripts/_wiki_config.py",
+   "line": 526,
+   "change": "TOOLSET_OLD_FRAMEWORK_DOCS = Path(\"wiki\") / \"project\" / \"best-practices\" / \"framework\"  ->  TOOLSET_OLD_FRAMEWORK_DOCS = Path(\"wiki\") / \"project\" / \"best-practices\" / \"frameworks\"",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "69/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M11",
+   "file": "scripts/_wiki_config.py",
+   "line": 526,
+   "change": "TOOLSET_OLD_FRAMEWORK_DOCS = Path(\"wiki\") / \"project\" / \"best-practices\" / \"framework\"  ->  TOOLSET_OLD_FRAMEWORK_DOCS = Path(\"wiki\") / \"project\" / \"framework\"",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "69/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M12",
+   "file": "scripts/_install_tooling.py",
+   "line": 166,
+   "change": "files[TOOLSET_LOCAL_DIR / \"README.md\"] = pkg / \"seed\" / \"best-practices-local\" / \"README.md\"  ->  pass",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "58/69 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M13",
+   "file": "scripts/_install_tooling.py",
+   "line": 166,
+   "change": "files[TOOLSET_LOCAL_DIR / \"README.md\"] = pkg / \"seed\" / \"best-practices-local\" / \"README.md\"  ->  files[TOOLSET_LOCAL_DIR / \"README.md\"] = pkg / \"seed\" / \"best-practices\" / \"README.md\"",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "58/69 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M14",
+   "file": "scripts/_install_tooling.py",
+   "line": 166,
+   "change": "files[TOOLSET_LOCAL_DIR / \"README.md\"] = pkg / \"seed\" / \"best-practices-local\" / \"README.md\"  ->  files[TOOLSET_LOCAL_DIR / \"README2.md\"] = pkg / \"seed\" / \"best-practices-local\" / \"README.md\"",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "65/79 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M15",
+   "file": "scripts/_install_tooling.py",
+   "line": 166,
+   "change": "files[TOOLSET_LOCAL_DIR / \"README.md\"] = pkg / \"seed\" / \"best-practices-local\" / \"README.md\"  ->  files[TOOLSET_FRAMEWORK_DOCS / \"README.md\"] = pkg / \"seed\" / \"best-practices-local\" / \"README.md\"",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "59/69 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M16",
+   "file": "scripts/_install_tooling.py",
+   "line": 198,
+   "change": "old_docs = root / TOOLSET_OLD_FRAMEWORK_DOCS  # the docs  ->  old_docs = root / TOOLSET_FRAMEWORK_DOCS  # the docs",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "59/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M17",
+   "file": "scripts/_install_tooling.py",
+   "line": 199,
+   "change": "remove += [(TOOLSET_OLD_FRAMEWORK_DOCS / p.name).as_posix()  ->  remove += [(TOOLSET_FRAMEWORK_DOCS / p.name).as_posix()",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "66/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M18",
+   "file": "scripts/_install_tooling.py",
+   "line": 199,
+   "change": "remove += [(TOOLSET_OLD_FRAMEWORK_DOCS / p.name).as_posix()  ->  remove = [(TOOLSET_OLD_FRAMEWORK_DOCS / p.name).as_posix()",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M19",
+   "file": "scripts/_install_tooling.py",
+   "line": 200,
+   "change": "if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if old_docs.is_dir() else []  ->  if TOOLSET_OLD_FRAMEWORK_DOCS / p.name in files] if old_docs.is_dir() else []",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "69/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M20",
+   "file": "scripts/_install_tooling.py",
+   "line": 200,
+   "change": "if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if old_docs.is_dir() else []  ->  if True] if old_docs.is_dir() else []",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder",
+    "search_mode",
+    "standalone",
+    "refresh_prunes",
+    "not_checked",
+    "install_incomplete",
+    "install_manifest",
+    "tooling_state_seam"
+   ],
+   "killed_by": null,
+   "last_line": "23/23 passed",
+   "killed": false,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": false,
+    "killed_by": null,
+    "last_line": "23/23 passed"
+   },
+   "outcome": "equivalent: files holds only new-layout paths, so `TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files` is true for every old .md: dropping the filter removes the same set"
+  },
+  {
+   "id": "M21",
+   "file": "scripts/_install_tooling.py",
+   "line": 200,
+   "change": "if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if old_docs.is_dir() else []  ->  if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if not old_docs.is_dir() else []",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "69/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M22",
+   "file": "scripts/_install_tooling.py",
+   "line": 200,
+   "change": "if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if old_docs.is_dir() else []  ->  if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if True else []",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder",
+    "search_mode",
+    "standalone",
+    "refresh_prunes",
+    "not_checked",
+    "install_incomplete",
+    "install_manifest",
+    "tooling_state_seam"
+   ],
+   "killed_by": null,
+   "last_line": "23/23 passed",
+   "killed": false,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": false,
+    "killed_by": null,
+    "last_line": "23/23 passed"
+   },
+   "outcome": "equivalent: Path.glob over a folder that does not exist yields nothing, so the is_dir() guard only skips an empty scan: `if True` gives the same list"
+  },
+  {
+   "id": "M23",
+   "file": "scripts/_install_tooling.py",
+   "line": 199,
+   "change": "for p in sorted(old_docs.glob(\"*.md\"))  ->  for p in sorted(old_docs.glob(\"*.txt\"))",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "68/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M24",
+   "file": "scripts/_install_tooling.py",
+   "line": 226,
+   "change": "op()\n        return True  ->  pass\n        return True",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "FileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpth9g7z97\\\\vault\\\\notebooks\\\\global-toolset\\\\how-to\\\\llm-wiki\\\\commands.md'",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M25",
+   "file": "scripts/_install_tooling.py",
+   "line": 226,
+   "change": "op()\n        return True  ->  op()\n        return False",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "- wrap-up: installed → C:\\Users\\mark\\AppData\\Local\\Temp\\2025-05-10_Temp\\tmpr34mwjj_\\skills\\wrap-up  (1 file(s) path-substituted)",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M26",
+   "file": "scripts/_install_tooling.py",
+   "line": 228,
+   "change": "except OSError as e:\n        failed.append  ->  except ZeroDivisionError as e:\n        failed.append",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "68/73 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M27",
+   "file": "scripts/_install_tooling.py",
+   "line": 229,
+   "change": "failed.append({\"path\": Path(path).as_posix(), \"reason\": f\"{type(e).__name__}: {e}\"})  ->  pass",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "74/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M28",
+   "file": "scripts/_install_tooling.py",
+   "line": 229,
+   "change": "{\"path\": Path(path).as_posix(),  ->  {\"path\": str(path),",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "75/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M29",
+   "file": "scripts/_install_tooling.py",
+   "line": 229,
+   "change": "\"reason\": f\"{type(e).__name__}: {e}\"})  ->  \"reason\": f\"{e}\"})",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "82/84 passed",
+   "killed": true,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": true,
+    "killed_by": "global_toolset",
+    "last_line": "82/84 passed"
+   },
+   "killing_test_added": "test_failed_reason_reads_error_class_colon_message",
+   "outcome": "killed"
+  },
+  {
+   "id": "M30",
+   "file": "scripts/_install_tooling.py",
+   "line": 229,
+   "change": "\"reason\": f\"{type(e).__name__}: {e}\"})  ->  \"reason\": f\"{type(e).__name__}\"})",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "82/84 passed",
+   "killed": true,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": true,
+    "killed_by": "global_toolset",
+    "last_line": "82/84 passed"
+   },
+   "killing_test_added": "test_failed_reason_reads_error_class_colon_message",
+   "outcome": "killed"
+  },
+  {
+   "id": "M31",
+   "file": "scripts/_install_tooling.py",
+   "line": 230,
+   "change": "return False\n\n\ndef seed_toolset  ->  return True\n\n\ndef seed_toolset",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M32",
+   "file": "scripts/_install_tooling.py",
+   "line": 247,
+   "change": "failed: list = []\n    for rel in  ->  failed: list = []\n    failed.append({'path': 'x', 'reason': 'y'})\n    for rel in",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "72/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M33",
+   "file": "scripts/_install_tooling.py",
+   "line": 250,
+   "change": "if _guarded(partial(dst.parent.mkdir, parents=True, exist_ok=True), dst, failed):  ->  if not _guarded(partial(dst.parent.mkdir, parents=True, exist_ok=True), dst, failed):",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "- wrap-up: installed → C:\\Users\\mark\\AppData\\Local\\Temp\\2025-05-10_Temp\\tmp38211vh6\\skills\\wrap-up  (1 file(s) path-substituted)",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M34",
+   "file": "scripts/_install_tooling.py",
+   "line": 250,
+   "change": "if _guarded(partial(dst.parent.mkdir, parents=True, exist_ok=True), dst, failed):  ->  if True:\n            dst.parent.mkdir(parents=True, exist_ok=True)",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "75/77 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M35",
+   "file": "scripts/_install_tooling.py",
+   "line": 250,
+   "change": "partial(dst.parent.mkdir, parents=True, exist_ok=True)  ->  partial(dst.parent.mkdir, parents=False, exist_ok=True)",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "43/69 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M36",
+   "file": "scripts/_install_tooling.py",
+   "line": 250,
+   "change": "partial(dst.parent.mkdir, parents=True, exist_ok=True)  ->  partial(dst.parent.mkdir, parents=True, exist_ok=False)",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "- wrap-up: installed → C:\\Users\\mark\\AppData\\Local\\Temp\\2025-05-10_Temp\\tmpz2a4qufi\\skills\\wrap-up  (1 file(s) path-substituted)",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M37",
+   "file": "scripts/_install_tooling.py",
+   "line": 251,
+   "change": "_guarded(partial(shutil.copyfile, files[Path(rel)], dst), dst, failed)  ->  shutil.copyfile(files[Path(rel)], dst)",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/79 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M38",
+   "file": "scripts/_install_tooling.py",
+   "line": 251,
+   "change": "_guarded(partial(shutil.copyfile, files[Path(rel)], dst), dst, failed)  ->  pass",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "- wrap-up: installed → C:\\Users\\mark\\AppData\\Local\\Temp\\2025-05-10_Temp\\tmp5bubpcdl\\skills\\wrap-up  (1 file(s) path-substituted)",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M39",
+   "file": "scripts/_install_tooling.py",
+   "line": 251,
+   "change": "_guarded(partial(shutil.copyfile, files[Path(rel)], dst), dst, failed)  ->  _guarded(partial(shutil.copyfile, files[Path(rel)], dst), root, failed)",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "79/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M40",
+   "file": "scripts/_install_tooling.py",
+   "line": 253,
+   "change": "_guarded((root / rel).unlink, root / rel, failed)  ->  (root / rel).unlink()",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "75/77 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M41",
+   "file": "scripts/_install_tooling.py",
+   "line": 253,
+   "change": "_guarded((root / rel).unlink, root / rel, failed)  ->  pass",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "66/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M42",
+   "file": "scripts/_install_tooling.py",
+   "line": 254,
+   "change": "old_docs = root / TOOLSET_OLD_FRAMEWORK_DOCS  # only an emptied  ->  old_docs = root / TOOLSET_FRAMEWORK_DOCS  # only an emptied",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M43",
+   "file": "scripts/_install_tooling.py",
+   "line": 255,
+   "change": "if old_docs.is_dir() and not any(old_docs.iterdir()):  ->  if old_docs.is_dir() or not any(old_docs.iterdir()):",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmphi54mb71\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\project\\\\best-practices\\\\framework'",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M44",
+   "file": "scripts/_install_tooling.py",
+   "line": 255,
+   "change": "if old_docs.is_dir() and not any(old_docs.iterdir()):  ->  if old_docs.is_dir() and any(old_docs.iterdir()):",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "76/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M45",
+   "file": "scripts/_install_tooling.py",
+   "line": 255,
+   "change": "if old_docs.is_dir() and not any(old_docs.iterdir()):  ->  if not any(old_docs.iterdir()):",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "FileNotFoundError: [WinError 3] The system cannot find the path specified: 'C:\\\\Users\\\\mark\\\\AppData\\\\Local\\\\Temp\\\\2025-05-10_Temp\\\\tmpithn95ai\\\\vault\\\\notebooks\\\\global-toolset\\\\wiki\\\\project\\\\best-practices\\\\framework'",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M46",
+   "file": "scripts/_install_tooling.py",
+   "line": 255,
+   "change": "if old_docs.is_dir() and not any(old_docs.iterdir()):  ->  if False:",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M47",
+   "file": "scripts/_install_tooling.py",
+   "line": 256,
+   "change": "_guarded(old_docs.rmdir, old_docs, failed)  ->  old_docs.rmdir()",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "83/84 passed",
+   "killed": true,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": true,
+    "killed_by": "global_toolset",
+    "last_line": "83/84 passed"
+   },
+   "killing_test_added": "test_unremovable_old_folder_is_listed_failed_not_raised",
+   "outcome": "killed"
+  },
+  {
+   "id": "M48",
+   "file": "scripts/_install_tooling.py",
+   "line": 256,
+   "change": "_guarded(old_docs.rmdir, old_docs, failed)  ->  pass",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M49",
+   "file": "scripts/_install_tooling.py",
+   "line": 257,
+   "change": "status[\"failed\"] = failed  ->  status[\"failed\"] = []",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "74/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M50",
+   "file": "scripts/_install_tooling.py",
+   "line": 257,
+   "change": "status[\"failed\"] = failed  ->  pass",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "69/77 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M51",
+   "file": "scripts/_install_tooling.py",
+   "line": 1394,
+   "change": "if ts.get(\"failed\"):  ->  if not ts.get(\"failed\"):",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "79/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M52",
+   "file": "scripts/_install_tooling.py",
+   "line": 1394,
+   "change": "if ts.get(\"failed\"):  ->  if False:",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "79/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M53",
+   "file": "scripts/_install_tooling.py",
+   "line": 1395,
+   "change": "INCOMPLETE, {len(ts['failed'])} file  ->  INCOMPLETE, 0 file",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "83/84 passed",
+   "killed": true,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": true,
+    "killed_by": "global_toolset",
+    "last_line": "83/84 passed"
+   },
+   "killing_test_added": "test_install_summary_counts_the_failed_operations",
+   "outcome": "killed"
+  },
+  {
+   "id": "M54",
+   "file": "scripts/_install_tooling.py",
+   "line": 1396,
+   "change": "for entry in ts[\"failed\"]:  ->  for entry in ts[\"failed\"][:0]:",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "79/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M55",
+   "file": "scripts/_install_tooling.py",
+   "line": 1397,
+   "change": "print(f\"    FAILED {entry['path']}: {entry['reason']}\")  ->  print(f\"    FAILED {entry['path']}\")",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "79/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M56",
+   "file": "scripts/_install_tooling.py",
+   "line": 1397,
+   "change": "print(f\"    FAILED {entry['path']}: {entry['reason']}\")  ->  print(f\"    FAILED {entry['reason']}\")",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "79/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M57",
+   "file": "scripts/new-wiki.py",
+   "line": 809,
+   "change": "failed = status.get(\"failed\") or []  ->  failed = []",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M58",
+   "file": "scripts/new-wiki.py",
+   "line": 810,
+   "change": "for entry in failed:\n        print(f\"FAILED {entry['path']}: {entry['reason']}\")  ->  for entry in failed:\n        pass",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M59",
+   "file": "scripts/new-wiki.py",
+   "line": 811,
+   "change": "print(f\"FAILED {entry['path']}: {entry['reason']}\")  ->  print(f\"FAILED {entry['path']}\")",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M60",
+   "file": "scripts/new-wiki.py",
+   "line": 811,
+   "change": "print(f\"FAILED {entry['path']}: {entry['reason']}\")  ->  print(f\"FAILED {entry['reason']}\")",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M61",
+   "file": "scripts/new-wiki.py",
+   "line": 815,
+   "change": "if failed:\n        _warn(  ->  if not failed:\n        _warn(",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "76/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M62",
+   "file": "scripts/new-wiki.py",
+   "line": 816,
+   "change": "so the refresh is incomplete\")\n        return 1  ->  so the refresh is incomplete\")\n        return 0",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M63",
+   "file": "scripts/new-wiki.py",
+   "line": 816,
+   "change": "so the refresh is incomplete\")\n        return 1  ->  so the refresh is incomplete\")",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M64",
+   "file": "scripts/new-wiki.py",
+   "line": 816,
+   "change": "_warn(f\"{summary}; {len(failed)} file operation(s) FAILED, so the refresh is incomplete\")  ->  _ok(f\"{summary}; {len(failed)} file operation(s) FAILED, so the refresh is incomplete\")",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "83/84 passed",
+   "killed": true,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": true,
+    "killed_by": "global_toolset",
+    "last_line": "83/84 passed"
+   },
+   "killing_test_added": "test_phase_docs_failure_line_is_a_warning_with_the_count",
+   "outcome": "killed"
+  },
+  {
+   "id": "M65",
+   "file": "scripts/new-wiki.py",
+   "line": 816,
+   "change": "{len(failed)} file operation(s) FAILED  ->  0 file operation(s) FAILED",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "83/84 passed",
+   "killed": true,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": true,
+    "killed_by": "global_toolset",
+    "last_line": "83/84 passed"
+   },
+   "killing_test_added": "test_phase_docs_failure_line_is_a_warning_with_the_count",
+   "outcome": "killed"
+  },
+  {
+   "id": "M66",
+   "file": "scripts/new-wiki.py",
+   "line": 818,
+   "change": "_ok(summary)\n    return 0  ->  _ok(summary)\n    return 1",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M67",
+   "file": "scripts/new-wiki.py",
+   "line": 952,
+   "change": "local_readme_src = seed_src / \"best-practices-local\" / \"README.md\"  ->  local_readme_src = seed_src / \"best-practices\" / \"README.md\"",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "9/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M68",
+   "file": "scripts/new-wiki.py",
+   "line": 953,
+   "change": "if not local_readme_src.is_file():  ->  if local_readme_src.is_file():",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "9/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M69",
+   "file": "scripts/new-wiki.py",
+   "line": 953,
+   "change": "if not local_readme_src.is_file():  ->  if False:",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "20/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M70",
+   "file": "scripts/new-wiki.py",
+   "line": 954,
+   "change": "package: {local_readme_src}\")\n        return 1  ->  package: {local_readme_src}\")\n        return 0",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "20/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M71",
+   "file": "scripts/new-wiki.py",
+   "line": 954,
+   "change": "package: {local_readme_src}\")\n        return 1  ->  package: {local_readme_src}\")",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "20/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M72",
+   "file": "scripts/new-wiki.py",
+   "line": 954,
+   "change": "_err(f\"the shipped best-practices/local README is missing from the package: {local_readme_src}\")  ->  pass",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "20/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M73",
+   "file": "scripts/new-wiki.py",
+   "line": 1059,
+   "change": "\"best-practices/local\": \"your own changes to the framework docs; read them after the doc they change\",  ->  ",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "21/22 passed",
+   "killed": true,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": true,
+    "killed_by": "local_folder",
+    "last_line": "21/22 passed"
+   },
+   "killing_test_added": "test_phase_b_readme_local_line_carries_its_note",
+   "outcome": "killed"
+  },
+  {
+   "id": "M74",
+   "file": "scripts/new-wiki.py",
+   "line": 1059,
+   "change": "\"best-practices/local\": \"your own changes  ->  \"best-practices/localx\": \"your own changes",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "21/22 passed",
+   "killed": true,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": true,
+    "killed_by": "local_folder",
+    "last_line": "21/22 passed"
+   },
+   "killing_test_added": "test_phase_b_readme_local_line_carries_its_note",
+   "outcome": "killed"
+  },
+  {
+   "id": "M75",
+   "file": "scripts/new-wiki.py",
+   "line": 1059,
+   "change": "read them after the doc they change\"  ->  read them after the doc they change\"[:0]",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "21/22 passed",
+   "killed": true,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": true,
+    "killed_by": "local_folder",
+    "last_line": "21/22 passed"
+   },
+   "killing_test_added": "test_phase_b_readme_local_line_carries_its_note",
+   "outcome": "killed"
+  },
+  {
+   "id": "M76",
+   "file": "scripts/new-wiki.py",
+   "line": 1089,
+   "change": "_render_template(local_readme_src, wiki_root / \"best-practices\" / \"local\" / \"README.md\",\n                     wiki_scaffold_vars, args.dry_run)  ->  pass",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "15/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M77",
+   "file": "scripts/new-wiki.py",
+   "line": 1089,
+   "change": "wiki_root / \"best-practices\" / \"local\" / \"README.md\"  ->  wiki_root / \"best-practices\" / \"README.md\"",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "15/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M78",
+   "file": "scripts/new-wiki.py",
+   "line": 1089,
+   "change": "wiki_root / \"best-practices\" / \"local\" / \"README.md\"  ->  wiki_root / \"local\" / \"README.md\"",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "15/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M79",
+   "file": "scripts/new-wiki.py",
+   "line": 1089,
+   "change": "\"README.md\",\n                     wiki_scaffold_vars, args.dry_run)  ->  \"README.md\",\n                     {}, args.dry_run)",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder",
+    "search_mode",
+    "standalone",
+    "refresh_prunes",
+    "not_checked",
+    "install_incomplete",
+    "install_manifest",
+    "tooling_state_seam"
+   ],
+   "killed_by": null,
+   "last_line": "23/23 passed",
+   "killed": false,
+   "pass1_survived": true,
+   "rerun_after_new_tests": {
+    "killed": false,
+    "killed_by": null,
+    "last_line": "23/23 passed"
+   },
+   "outcome": "equivalent: the shipped seed/best-practices-local/README.md has no `{{` placeholder (frozen test test_shipped_local_readme_has_no_template_placeholder), so rendering with {} equals rendering with the scaffold variables"
+  },
+  {
+   "id": "M80",
+   "file": "scripts/new-wiki.py",
+   "line": 1089,
+   "change": "\"README.md\",\n                     wiki_scaffold_vars, args.dry_run)  ->  \"README.md\",\n                     wiki_scaffold_vars, False)",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "19/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M81",
+   "file": "scripts/new-wiki.py",
+   "line": 1089,
+   "change": "_render_template(local_readme_src, wiki_root  ->  _render_template(seed_src / 'wiki' / 'README.md', wiki_root",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "15/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M82",
+   "file": "scripts/wiki-map-compile.py",
+   "line": 378,
+   "change": "CONTAINER_FOLDERS = {\"research\", \"project\", \"best-practices\"}  ->  CONTAINER_FOLDERS = {\"research\", \"project\"}",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "19/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M83",
+   "file": "scripts/wiki-map-compile.py",
+   "line": 378,
+   "change": "CONTAINER_FOLDERS = {\"research\", \"project\", \"best-practices\"}  ->  CONTAINER_FOLDERS = {\"research\", \"project\", \"best-practice\"}",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "19/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M84",
+   "file": "scripts/wiki-map-compile.py",
+   "line": 378,
+   "change": "CONTAINER_FOLDERS = {\"research\", \"project\", \"best-practices\"}  ->  CONTAINER_FOLDERS = {\"research\", \"best-practices\"}",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder"
+   ],
+   "killed_by": "local_folder",
+   "last_line": "19/21 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M85",
+   "file": "scripts/wiki-qmd-query.py",
+   "line": 773,
+   "change": "for half in (\"research\", \"project\", \"best-practices\")  ->  for half in (\"research\", \"project\")",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder",
+    "search_mode"
+   ],
+   "killed_by": "search_mode",
+   "last_line": "81/82 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M86",
+   "file": "scripts/wiki-qmd-query.py",
+   "line": 773,
+   "change": "for half in (\"research\", \"project\", \"best-practices\")  ->  for half in (\"research\", \"project\", \"best-practice\")",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder",
+    "search_mode"
+   ],
+   "killed_by": "search_mode",
+   "last_line": "81/82 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M87",
+   "file": "scripts/wiki-qmd-query.py",
+   "line": 773,
+   "change": "for half in (\"research\", \"project\", \"best-practices\")  ->  for half in (\"research\", \"best-practices\")",
+   "test_files_run": [
+    "global_toolset",
+    "local_folder",
+    "search_mode"
+   ],
+   "killed_by": "search_mode",
+   "last_line": "81/82 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M88",
+   "file": "scripts/wiki-update.py",
+   "line": 1264,
+   "change": "toolset_location()[0] / TOOLSET_FRAMEWORK_DOCS / SPEC_NAME  ->  toolset_location()[0] / SPEC_NAME",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "79/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M89",
+   "file": "scripts/wiki-update.py",
+   "line": 1264,
+   "change": "toolset_location()[0] / TOOLSET_FRAMEWORK_DOCS / SPEC_NAME  ->  toolset_location()[0] / \"wiki\" / \"project\" / \"best-practices\" / \"framework\" / SPEC_NAME",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "78/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M90",
+   "file": "scripts/wiki-update.py",
+   "line": 1264,
+   "change": "toolset_location()[0] / TOOLSET_FRAMEWORK_DOCS / SPEC_NAME  ->  toolset_location()[0] / \"wiki\" / \"best-practices\" / \"frameworks\" / SPEC_NAME",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "79/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  },
+  {
+   "id": "M91",
+   "file": "scripts/wiki-update.py",
+   "line": 1263,
+   "change": "from _wiki_config import TOOLSET_FRAMEWORK_DOCS, toolset_location  ->  from _wiki_config import TOOLSET_FRAMEWORK_DOCS as _x, toolset_location\n    from _wiki_config import TOOLSET_LOCAL_DIR as TOOLSET_FRAMEWORK_DOCS",
+   "test_files_run": [
+    "global_toolset"
+   ],
+   "killed_by": "global_toolset",
+   "last_line": "79/80 passed",
+   "killed": true,
+   "pass1_survived": false,
+   "outcome": "killed"
+  }
+ ]
+}

@@ -1288,5 +1288,112 @@
       }
     ],
     "unfrozen_reason": "name review round 1: fixture now also holds a frontmatter note without a title"
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_install_summary_counts_the_failed_operations",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "44990818176b240ec7a64df98a89f84d0f0d4009529a100aafc9a00fae67174e",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-20",
+    "green_reason": {
+      "reason": "mutation pass: passes on the code; mutant M53 (the INCOMPLETE line prints a count of 0) passes the old suite and fails this test, run in a scratch copy",
+      "date": "2026-11-20"
+    }
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_failed_reason_reads_error_class_colon_message",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "8ab0a2edacfdbb99156ee20aecc174b1acce8e2ee07ef8b1946efc4a27de0929",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-20",
+    "green_reason": {
+      "reason": "mutation pass: passes on the code; mutants M29 (reason drops the error class) and M30 (reason drops the message) pass the old suite and fail this test, run in a scratch copy",
+      "date": "2026-11-20"
+    },
+    "unfreezes": [
+      {
+        "reason": "mutation pass: frozen a moment earlier while an edit had dropped the space in the module-level 'ROOT = Path(...)' the test loads; restored, test body unchanged",
+        "date": "2026-11-20",
+        "step": "mutation",
+        "hash": "8ab0a2edacfdbb99156ee20aecc174b1acce8e2ee07ef8b1946efc4a27de0929"
+      }
+    ],
+    "unfrozen_reason": "mutation pass: frozen a moment earlier while an edit had dropped the space in the module-level 'ROOT = Path(...)' the test loads; restored, test body unchanged"
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_unremovable_old_folder_is_listed_failed_not_raised",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "d8c50195c85bcf01669b7a4ad1afb93f50ef6e25fa97fdc20439dbc9e521d64e",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-20",
+    "green_reason": {
+      "reason": "mutation pass: passes on the code; mutant M47 (the emptied old folder's rmdir unguarded) passes the old suite and makes this test's seed_toolset raise, run in a scratch copy",
+      "date": "2026-11-20"
+    },
+    "unfreezes": [
+      {
+        "reason": "mutation pass: frozen a moment earlier while an edit had dropped the space in the module-level 'ROOT = Path(...)' the test loads; restored, test body unchanged",
+        "date": "2026-11-20",
+        "step": "mutation",
+        "hash": "d8c50195c85bcf01669b7a4ad1afb93f50ef6e25fa97fdc20439dbc9e521d64e"
+      }
+    ],
+    "unfrozen_reason": "mutation pass: frozen a moment earlier while an edit had dropped the space in the module-level 'ROOT = Path(...)' the test loads; restored, test body unchanged"
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_phase_docs_failure_line_is_a_warning_with_the_count",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "49b461ac8728d93f8508c177aa5bd5e422042df468fa987405581952ff7e26cc",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-20",
+    "green_reason": {
+      "reason": "written after the code during the hand mutation pass; kills M64 and M65 (83/84 each); boundary shown by regex on 7 vs 17 (True, False)",
+      "date": "2026-11-20"
+    },
+    "unfreezes": [
+      {
+        "reason": "mutation pass: frozen a moment earlier while an edit had dropped the space in the module-level 'ROOT = Path(...)' the test loads; restored, test body unchanged",
+        "date": "2026-11-20",
+        "step": "mutation",
+        "hash": "cfb743750c9f7e08be5630399ec8a694a9b311d9b0c240e29a1c3bab1e7659d3"
+      },
+      {
+        "reason": "name review (mutation): the count needed a left boundary (7 matched inside 17); now a regex with (?<!\\d); the check text computes the count; the name's under-claim (exit 1 unnamed) accepted, the check text names it",
+        "date": "2026-11-20",
+        "step": "mutation",
+        "hash": "49b461ac8728d93f8508c177aa5bd5e422042df468fa987405581952ff7e26cc"
+      }
+    ],
+    "unfrozen_reason": "name review (mutation): the count needed a left boundary (7 matched inside 17); now a regex with (?<!\\d); the check text computes the count; the name's under-claim (exit 1 unnamed) accepted, the check text names it"
+  },
+  {
+    "file": "tests/scripts/test_local_folder.py",
+    "test_name": "test_phase_b_readme_local_line_carries_its_note",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "0f7a580d57851fc1e3804282b6d517c23ee88cf40e60a4a794aeb66a23657917",
+    "frozen_at_step": "mutation",
+    "frozen_at": "2026-11-20",
+    "green_reason": {
+      "reason": "written after the code during the hand mutation pass; kills M73, M74, M75 (21/22 each)",
+      "date": "2026-11-20"
+    },
+    "unfreezes": [
+      {
+        "reason": "name review (mutation): the check text over-claimed (says what the folder is for); now names what is checked (a note naming the framework docs), and Phase B's exit 0 is asserted so a late failure cannot pass",
+        "date": "2026-11-20",
+        "step": "mutation",
+        "hash": "0f7a580d57851fc1e3804282b6d517c23ee88cf40e60a4a794aeb66a23657917"
+      }
+    ],
+    "unfrozen_reason": "name review (mutation): the check text over-claimed (says what the folder is for); now names what is checked (a note naming the framework docs), and Phase B's exit 0 is asserted so a late failure cannot pass"
   }
 ]

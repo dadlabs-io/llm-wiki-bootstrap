@@ -17,11 +17,13 @@ import importlib.util
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # the install prints arrows, as new-wiki.py does
@@ -494,6 +496,68 @@ def test_missing_readme_source_is_skipped_by_status():
               and st["add"] == ["README.md"], (list(listed), st))
 
 
+def _plain_file_where_best_practices_belongs(root: Path) -> None:
+    (root / "wiki").mkdir(parents=True)
+    (root / "wiki" / "best-practices").write_text("a plain file where the folder belongs\n", encoding="utf-8")
+
+
+def test_failed_reason_reads_error_class_colon_message():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        _plain_file_where_best_practices_belongs(root)
+        st = it.seed_toolset(ROOT)
+        odd = [e["reason"] for e in st["failed"] if not re.match(r"^[A-Z]\w*Error: \S", e["reason"])]
+        check("every failed reason reads `<ErrorClass>: <message>`", bool(st["failed"]) and not odd, odd or st["failed"])
+
+
+def test_unremovable_old_folder_is_listed_failed_not_raised():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        it.seed_toolset(ROOT)
+        _plant_old_docs(root)
+        old = root / OLD_DIR
+        real_rmdir = Path.rmdir
+
+        def rmdir(self):
+            if self == old:
+                raise PermissionError("held by another program")
+            return real_rmdir(self)
+
+        with mock.patch.object(Path, "rmdir", rmdir):
+            try:
+                st = it.seed_toolset(ROOT)
+            except OSError as e:
+                check("old folder that cannot be removed: seed_toolset does not raise", False, repr(e))
+                return
+        check("old folder that cannot be removed: exactly that folder in failed, reason says why",
+              [e["path"] for e in st["failed"]] == [old.as_posix()]
+              and st["failed"][0]["reason"] == "PermissionError: held by another program", st["failed"])
+
+
+def test_install_summary_counts_the_failed_operations():
+    summary = {"scripts_copied": 0, "helpers_copied": 0, "skills_installed": 0, "scripts_dest": "s",
+               "skills_dest": "k", "scripts_dest_value": "s",
+               "toolset": {"add": [], "replace": [], "remove": [], "registered": "already", "root": "r",
+                           "failed": [{"path": "r/a.md", "reason": "PermissionError: held"},
+                                      {"path": "r/b.md", "reason": "PermissionError: held"}]}}
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        it.print_summary(summary)
+    check("install summary: the incomplete line counts the two failed operations",
+          "INCOMPLETE, 2 file operation(s) failed" in out.getvalue(), out.getvalue()[-400:])
+
+
+def test_phase_docs_failure_line_is_a_warning_with_the_count():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        _plain_file_where_best_practices_belongs(root)
+        p = _docs_phase()
+        want = re.compile(rf"(?<!\d){len(DOC_NAMES) + 1} file operation\(s\) FAILED, so the refresh is incomplete")
+        check(f"--phase docs with {len(DOC_NAMES) + 1} failed writes: exit 1, a `!` warning line counts them",
+              p.returncode == 1 and any(ln.startswith("[new-wiki] ! ") and want.search(ln) for ln in p.stderr.splitlines()),
+              (p.returncode, p.stderr[-400:]))
+
+
 def _run(fn):
     """Run one test function; every check it records is named after it, and a crash is a failed check, not the end."""
     first = len(results)
@@ -623,7 +687,11 @@ for _test in (test_empty_toolset_gets_docs_at_new_layout, test_old_copy_makes_st
               test_shipped_local_readme_has_no_template_placeholder,
               test_plain_file_where_local_belongs_lists_readme_in_failed,
               test_unwritable_readme_replacement_is_listed_failed_rest_done,
-              test_missing_readme_source_is_skipped_by_status):
+              test_missing_readme_source_is_skipped_by_status,
+              test_failed_reason_reads_error_class_colon_message,
+              test_unremovable_old_folder_is_listed_failed_not_raised,
+              test_install_summary_counts_the_failed_operations,
+              test_phase_docs_failure_line_is_a_warning_with_the_count):
     _run(_test)
 
 failed = [n for ok, n in results if not ok]
