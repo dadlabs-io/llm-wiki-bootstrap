@@ -6,7 +6,7 @@ ingested_by: claude-code
 tier: self
 confidence: high
 framework-contract: true
-framework-version: 20
+framework-version: 21
 last_reviewed: 2026-10-23
 review_after: 2027-01-20
 tags: [best-practices, frontmatter, wiki, authoring, self-authored, canonical, spec, icarus-schema]
@@ -132,6 +132,7 @@ Where a source is hosted says little about it: Medium carries both an engineer's
 | **An individual's GitHub repository** | Adopted: several maintainers or an organisation, tagged releases, evidence of outside use | One maintainer, a working and documented project; to judge it, read at least the README and sanity-check the main code (not all of a big repo); if unsure, check size or that the main functions work; else ask the user | Early, unreleased, or unverifiable (a README with nothing behind it) |
 
 An official vendor post with something checkable behind it (code, docs, a public benchmark) is tier 2; one that is pitch alone is tier 4.
+Checkable means the post gives some evidence for its claims that you could open and test them against: code you can run, docs that describe the feature as claimed, or a benchmark with its numbers and method published. A claim like "30% faster" with nothing behind it is pitch, and so is a link only to a product page, a pricing page or a sign-up.
 
 How deeply **we** read a source raises our `confidence`, never its tier: tier describes the source, confidence our entry. A retelling keeps its author's figures `sourced` via the author (authoring best practices, principle 5).
 

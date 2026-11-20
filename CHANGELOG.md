@@ -9,6 +9,13 @@
 
 ---
 
+## 2026-11-20
+
+### The vendor-post tier rule says what "checkable" means
+- **Why**: #243's review (risk-3) found the rule's key word undefined. Tier 4 is never ingested automatically, so the word decides whether a vendor post is filed unattended; Mark: "basically they need SOME evidence to back up their claim of '30% faster'".
+- **What**: `wiki-frontmatter-best-practices.md` (framework-version 21) adds one sentence after the rule: checkable means evidence the claims can be tested against (runnable code, docs describing the feature as claimed, a benchmark with numbers and method); a bare claim, or a link only to a product, pricing or sign-up page, is pitch. It sits inside the tier rubric `wiki-update.py` prints at ingest.
+- **Migration**: re-run the refresh. Existing tier-2 vendor entries are not re-tiered; `/wiki-refresh` meets them on their review dates.
+
 ## 2026-11-19
 
 ### The framework docs move to `wiki/best-practices/framework/`, and a user's own changes get a `local/` folder (task #243)
