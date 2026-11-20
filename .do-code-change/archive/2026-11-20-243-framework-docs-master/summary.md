@@ -23,7 +23,7 @@ The global install now writes the six framework docs to the toolset's `wiki/best
 - 16. The 2026-11-13 decision is marked superseded, and the 2026-10-05 decision gets a layout note
 - 17. `/new-wiki`'s changed behaviour passes new cases red then green on both models, and the other skills' changes are logged
 
-New tags: <each row this change added to the folder README's table, as `tag` (group), or "none".>
+New tags: `framework-docs` (tooling), `global-toolset` (tooling).
 
 ## Why: decisions and exclusions
 All settled with Mark on 2026-11-19 (terminal, then his Discord DM); his words are in `checkpoints.md`. Each is a decision, with the alternative turned down.
