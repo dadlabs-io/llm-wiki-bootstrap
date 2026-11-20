@@ -9,5 +9,12 @@
     "cost": "notice",
     "decided_by": "Mark",
     "date": "2026-11-19"
+  },
+  "mutation": "on-demand",
+  "decided_by": "Mark",
+  "date": "2026-11-20",
+  "mutation_decision": {
+    "note": "decided_by and date above are the mutation setting's (prove_tests_bite.py reads them at the top level)",
+    "reason": "Mark, Discord DM 2026-11-20 04:29Z: \"yeah they dopnt really apply so much for us, its more for code CODE\" (asked: accept tests-bite this once, or make it standing). prove_tests_bite.py cannot see scripts/; a hand mutation pass runs when a change is worth it"
   }
 }
