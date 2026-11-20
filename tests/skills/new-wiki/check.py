@@ -354,6 +354,29 @@ def check(case: dict, before: dict, after: dict, run: dict, ctx: dict) -> list[d
         add("nothing scaffolded before the answer", not created, created[:8])
         return res
 
+    if kind == "scaffold-local":
+        # Decision 7 (a): every new wiki gets wiki/best-practices/local/ holding one README, whatever the
+        # project-folder answer; no starter file per doc; not at the places the decision turned down.
+        # Then fall through to the shared scaffold checks below (files, config, registry), read from "expect".
+        cexp = case["expect"]
+        lroot = (ctx["vault"] / "notebooks" / SLUG) if cexp["where"] == "vault" else (ctx["project"] / "llm-wiki")
+        lwiki = lroot / "wiki"
+        local = lwiki / "best-practices" / "local"
+        readme = local / "README.md"
+        add("wiki/best-practices/local/README.md created", readme.is_file(), readme)
+        names = sorted(p.name for p in local.iterdir()) if local.is_dir() else []
+        add("local/ holds the README and nothing else (no starter file per doc)", names == ["README.md"], names)
+        body = readme.read_text(encoding="utf-8") if readme.is_file() else ""
+        add("local/README.md opens with a frontmatter block",
+            bool(re.match(r"\A---\r?\n.*?\r?\n---[ \t]*(\r?\n|\Z)", body, re.S)), body[:120])
+        add("local/README.md names the framework docs", bool(re.search(r"framework", body, re.I)))
+        turned_down = [p for p in (lwiki / "project" / "best-practices" / "local", lroot / "_config" / "local")
+                       if p.exists()]
+        add("no local/ folder at the turned-down places (project/best-practices/local, _config/local)",
+            not turned_down, turned_down)
+        add("no framework docs copied into the wiki (best-practices/framework)",
+            not (lwiki / "best-practices" / "framework").exists(), lwiki / "best-practices" / "framework")
+
     # ---- scaffold cases
     exp = case["expect"]
     project = ctx["project"]

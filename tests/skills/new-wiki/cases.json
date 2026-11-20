@@ -165,6 +165,42 @@
         "round2": "description `Wiki for harbor-log`; project folder: `Yes, with the default stubs`; research folder: `No`; where the wiki lives: `Notebook in the vault`"
       },
       "author": "eval-case-writer"
+    },
+    {
+      "id": "local-readme-project-none",
+      "kind": "scaffold-local",
+      "say": "/new-wiki harbor log",
+      "answers": {
+        "round1": "name `harbor-log`; review gate: `Yes — show me candidates and confirm before publishing`",
+        "round2": "description `Wiki for harbor-log`; project folder: `No`; research folder: `No`; where the wiki lives: `Notebook in the vault`",
+        "plan": "go"
+      },
+      "expect": {
+        "where": "vault",
+        "project": "none",
+        "research": "none",
+        "gate": true,
+        "description": "Wiki for harbor-log"
+      },
+      "author": "eval-case-writer"
+    },
+    {
+      "id": "local-readme-project-default-stubs",
+      "kind": "scaffold-local",
+      "say": "/new-wiki harbor log",
+      "answers": {
+        "round1": "name `harbor-log`; review gate: `Yes — show me candidates and confirm before publishing`",
+        "round2": "description `Wiki for harbor-log`; project folder: `Yes, with the default stubs`; research folder: `No`; where the wiki lives: `Notebook in the vault`",
+        "plan": "go"
+      },
+      "expect": {
+        "where": "vault",
+        "project": "stubs",
+        "research": "none",
+        "gate": true,
+        "description": "Wiki for harbor-log"
+      },
+      "author": "eval-case-writer"
     }
   ]
 }
