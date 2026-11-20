@@ -636,9 +636,9 @@
       "line": 92,
       "first_round": 1,
       "last_seen_round": 1,
-      "verdict": "open",
-      "verdict_round": 1,
-      "fingerprint": "ce5950751f800ee40bb34e8c0720c6b36adb66260d94f3452ca5e00abf31eb38",
+      "verdict": "addressed",
+      "verdict_round": 3,
+      "fingerprint": "d0316b0103ea7224087cc30148f7af7a635594c7472b7927246ab9d1ecc5cca9",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -656,6 +656,11 @@
           "round": 1,
           "verdict": "open",
           "fingerprint": "ce5950751f800ee40bb34e8c0720c6b36adb66260d94f3452ca5e00abf31eb38"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "d0316b0103ea7224087cc30148f7af7a635594c7472b7927246ab9d1ecc5cca9"
         }
       ]
     },
