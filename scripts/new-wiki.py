@@ -511,6 +511,9 @@ def phase_tooling(args):
     if summary.get("frontmatter_failed"):
         _err("one or more skills/agents were refused (frontmatter does not parse) — fix and re-run")
         return 1
+    if (summary.get("toolset") or {}).get("failed"):
+        _err("the global toolset refresh is incomplete (see the FAILED lines above) — fix and re-run")
+        return 1
     return 0
 
 
@@ -771,8 +774,9 @@ def _drive_oauth_walkthrough(scripts_dir: Path):
 
 def phase_docs(args):
     """--phase docs: refresh ONLY the global toolset's docs (task #25, 2026-10-04) -- the llm-wiki pack's
-    usage pages (how-to/llm-wiki/), the how-to root marker and the six framework-contract docs
-    (wiki/best-practices/framework/), kept once in the global-toolset notebook. No project wiki
+    usage pages (how-to/llm-wiki/), the how-to root marker, the six framework-contract docs
+    (wiki/best-practices/framework/) and the README of wiki/best-practices/local/, kept once in the
+    global-toolset notebook. No project wiki
     carries a copy any more, so nothing else is touched. A global install (`--mode tooling`,
     `install-wiki.ps1 -RefreshOnly`) does the same as one of its steps; this is the narrow path after a
     docs-only change. The toolset is created and registered when it is not there yet.
@@ -912,6 +916,9 @@ def phase_b(args):
                 if summary.get("frontmatter_failed"):
                     _err("one or more skills/agents were refused (frontmatter does not parse) — fix and re-run")
                     return 1
+                if (summary.get("toolset") or {}).get("failed"):
+                    _err("the global toolset refresh is incomplete (see the FAILED lines above) — fix and re-run")
+                    return 1
                 global_tooling_installed_now = True
                 tooling_state = "installed"
         elif not tooling["current"]:
@@ -954,7 +961,7 @@ def phase_b(args):
         _err(f"the shipped best-practices/local README is missing from the package: {local_readme_src}")
         return 1
 
-    # B1— mkdir + git init (skip if already inside a repo → no nested repo)
+    # B1 — mkdir + git init (skip if already inside a repo → no nested repo)
     _info(f"project folder: {target}")
     if args.dry_run:
         print(f"WOULD mkdir {target} (+ git init only if not already inside a repo)")

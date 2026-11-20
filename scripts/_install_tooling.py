@@ -144,7 +144,8 @@ from _wiki_config import (  # noqa: E402
 # ---------- The global toolset (task #25, 2026-10-04) ----------
 # One notebook holds every global tooling doc once: the llm-wiki pack's usage pages at how-to/llm-wiki/
 # (agent-builder's installer writes its own packs beside it), the how-to root marker, and the six
-# framework-contract docs at wiki/best-practices/framework/. No project wiki carries a copy.
+# framework-contract docs at wiki/best-practices/framework/, and the README that starts wiki/best-practices/local/
+# (the user's own files there are never touched). No project wiki carries a copy.
 # A global install creates, registers and refreshes it; `new-wiki.py --phase docs` refreshes only it.
 TOOLSET_PACK = Path("how-to") / "llm-wiki"
 
@@ -196,8 +197,8 @@ def toolset_status(pkg: Path, root: Path) -> dict:
         remove += [(TOOLSET_PACK / sub / p.name).as_posix() for p in sorted(folder.glob("*.md"))
                    if TOOLSET_PACK / sub / p.name not in files] if folder.is_dir() else []
     old_docs = root / TOOLSET_OLD_FRAMEWORK_DOCS  # the docs' place before task 243: every .md left there goes
-    remove += [(TOOLSET_OLD_FRAMEWORK_DOCS / p.name).as_posix() for p in sorted(old_docs.glob("*.md"))
-               if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if old_docs.is_dir() else []
+    if old_docs.is_dir():
+        remove += [(TOOLSET_OLD_FRAMEWORK_DOCS / p.name).as_posix() for p in sorted(old_docs.glob("*.md"))]
     state = "missing" if not root.is_dir() else ("stale" if add or replace or remove else "current")
     if not files:  # nothing to compare against is not "current" (task #133)
         state = "not-checked"

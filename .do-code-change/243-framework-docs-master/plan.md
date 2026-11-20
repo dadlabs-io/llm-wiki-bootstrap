@@ -111,6 +111,7 @@ Repository (llm-wiki-bootstrap):
 - `scripts/wiki-update.py`
 - `scripts/wiki-qmd-query.py`
 - `scripts/wiki-map-compile.py` (step 4b, Mark 2026-11-19)
+- `scripts/wiki-upgrade.py` (fix round 1, review finding standards-1/risk-1/spec-7: its global refresh exits 1 on a failed toolset write; the orchestrator's brief names the file)
 - `seed/**`
 - `framework-docs/**`
 - `skills/**` (only the lines naming the framework path, the search scope where a skill lists it, and the new-wiki skill's docs)

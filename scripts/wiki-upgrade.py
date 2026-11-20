@@ -66,6 +66,10 @@ def main() -> int:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
     print_summary(summary)
+    if (summary.get("toolset") or {}).get("failed"):
+        print("ERROR: the global toolset refresh is incomplete (see the FAILED lines above) — fix and re-run",
+              file=sys.stderr)
+        return 1
     return 0
 
 

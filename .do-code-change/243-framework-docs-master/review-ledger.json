@@ -1,0 +1,687 @@
+{
+  "schema": 1,
+  "diff_base": "7b66e2a92fc2cfa3892050f143bd35fe0e6bd40d",
+  "rounds": [
+    {
+      "round": 1,
+      "at": "2026-11-20T05:04:42Z",
+      "diff_sha256": "a55eb7f908adf35080c01462f54ffad4988a00e25ed2d6895aae1538719cecba",
+      "findings_sha256": "14a70d681121b0925efd610355121b3a280e96a2d87d715a437ba19a82192327",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "spec-1",
+        "spec-2",
+        "spec-3",
+        "spec-4",
+        "spec-5",
+        "spec-6",
+        "spec-7",
+        "risk-1",
+        "risk-2",
+        "risk-3",
+        "risk-4"
+      ],
+      "new": [
+        "standards-1",
+        "standards-2",
+        "standards-3",
+        "standards-4",
+        "standards-5",
+        "standards-6",
+        "standards-7",
+        "standards-8",
+        "standards-9",
+        "standards-10",
+        "standards-11",
+        "standards-12",
+        "spec-1",
+        "spec-2",
+        "spec-3",
+        "spec-4",
+        "spec-5",
+        "spec-6",
+        "spec-7",
+        "risk-1",
+        "risk-2",
+        "risk-3",
+        "risk-4"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        ".claude/do-code-change.json": "1ee61ca848e0dd90947101a1b9f54d047969eca1e1451c3f59483932cb4a24e9",
+        "CHANGELOG.md": "529d13d00e01b53c0881b4c03bcb964a0af7e7dd9000dc80b7d0832151a1007a",
+        "CLAUDE.md": "9871402365a8d2d7779b5a67d0345dd098ca15986d8b511d13fd8282a3bbce73",
+        "INSTALL-INVENTORY.md": "9a49fde40a2a05771dfc06a5dd32aedfa3131d5294c0158c8f67baefd47fb4b7",
+        "V2_ROADMAP.md": "e9c9d8b1552438198ba00fd812b5afb06cc5b6883274cbeee188e6975d16fe55",
+        "agents/wiki-ingester/wiki-ingester-reading-list.json": "58f9c8544520af76ff7fdae7318c1c8dab65d80678326bbcfae6ce8bbf45658b",
+        "framework-docs/cycle-step-return-format.md": "227f381b0fdc29a792cfb71026b148d9b6658e3e71544fbef096de79fca37b45",
+        "framework-docs/memory-signals-sidecar-vs-frontmatter-pattern.md": "116f73f5d1bc42cb839eebeef1f3a35a3f3c94363fd48ecb5c9e359dd2b1623b",
+        "framework-docs/tiered-context-loading.md": "c2469ae9798add1c016db2a709a18d446b1b64c956e589651e2253ff1a6049f5",
+        "framework-docs/wiki-authoring-best-practices.md": "10d44a3ee773a5ed8ff899a7f3edf53e7b168d5a41aaedc1a6ce64a097ab3dd3",
+        "framework-docs/wiki-frontmatter-best-practices.md": "e17380d8a059077e6bf4ad6cd2e2d4ab83647ebc872617037f50e0dce8d16f50",
+        "framework-docs/wiki-search-bucket-rerank-spec.md": "4f90de94be308de739d54a9846dd004c7a8d05a9efad7cdc99d68a82ab23c908",
+        "scripts/_install_tooling.py": "d52baba319c1e9f7687a9d0baf5b75d16e3ddbd4705ba6e5dc1af9e58943f3e7",
+        "scripts/_wiki_config.py": "ffcb18cd9155aea3ed6dfe7671c3281e656b648e469a7889c479a1af96e674ae",
+        "scripts/new-wiki.py": "0522fd76eb9f8d17bbf7c80a67ff017e390b36e588230b0a916ffed001a962b6",
+        "scripts/wiki-map-compile.py": "3efafbf5cdbc7e8fb2d7a12e1bcca6d52389d3fa641a6f2628851287e7d5c5e5",
+        "scripts/wiki-qmd-query.py": "30c095e9b02c1c32cafac68e763c709b30cdb8455aaceadc97db29f8a3c08320",
+        "scripts/wiki-update.py": "8333af93513d0a86993f78fdbc998eed59da99b9960b66397229b52f6b283e3e",
+        "seed/best-practices-local/README.md": "d284ee405d030587d5626b3ceac899a9e8b7a300eedeff9b52793abeb149690e",
+        "seed/global-toolset-README.md": "d0cb433289364c5715361fab1e147e0333ca880a98fee515e75f6a51a90b4e78",
+        "seed/how-to/_FRAMEWORK_MANAGED.md": "8229028bfe1d37d7fef0ce01fcccad04f4e7752bf13896f3000c27c92b45bd71",
+        "skills/new-wiki/SKILL.md": "7d7678c12913cf4f155541f6c7f3a181e8fb1ba384baaea4addbd6b5690244cb",
+        "skills/new-wiki/wiki-seed/new-wiki.md": "c58e385e1c38b30c6a4c5be5e38be76b755b4e501e58159c76d8e08e4ec3a9b1",
+        "skills/wiki-claims/SKILL.md": "625783505dc85071c27d9c5d3e0d5838ef420c55adb5a6c17684a91ad3b921d4",
+        "skills/wiki-cycle/SKILL.md": "f0311df361986d1c711e54ab2cbd26cd9d2d4d0da3bb19ad7a6188219414e55d",
+        "skills/wiki-cycle/reference.md": "4ad0726813e655011a23a6e2afdc62fba951ea108d7311f3e9f8a384f1a998cc",
+        "skills/wiki-discover/SKILL.md": "93385f4ff5f2b81bffedc46961404130b6f20f9e3202083dde1ed0e68bd0e3d0",
+        "skills/wiki-discover/wiki-seed/wiki-discover.md": "2c34c94697a63cceb08f09756854cece2f6486c09f9a9fae4e4c282bd6a61e1d",
+        "skills/wiki-lint/SKILL.md": "6091e57270f7669c38254872cc652f2ab6034eaa92c187b39b71bb8cfc652f9a",
+        "skills/wiki-lint/wiki-seed/wiki-lint.md": "2943e66e8a8e9fcab2bf1d793d3cae090f13a5da319c644e059b7099b4108e0c",
+        "skills/wiki-refresh/SKILL.md": "c2e16954d32078a2638918f67be09284522a2c9eeb811ac65b0c0d250d9a521f",
+        "skills/wiki-refresh/wiki-seed/wiki-refresh.md": "6a91b4ec4fac4962e7054f32112b99f43e8a3e95f06b24b82b78161ef59a2667",
+        "skills/wiki-report/SKILL.md": "8138fc4b267ba8a460a24a3b88867aa5b1ba766460df7cfd4fb9f78811f16248",
+        "skills/wiki-rollback/SKILL.md": "1ede2c727814b50959638a74dd5160654f8a56cf66d5b1c6f885610c0ad93b18",
+        "skills/wiki-search/SKILL.md": "d4e180b307d2e7f5c75861646cf4690741422d2ad32d9b6e5dcf01c4f1f0cce1",
+        "skills/wiki-update/SKILL.md": "13fce85f4a3ea8ad760a34337c7d15e1c44b3dd2707207ff94a238a4b34b0259",
+        "skills/wiki-update/wiki-seed/wiki-update.md": "01b635403fbdd748e7203f0fa0fc6147c37f045a8b3bd04f1e37e25064a04708",
+        "skills/wiki-verify/SKILL.md": "a3842165009f21052b2bdfaf12cc61355a392e4d64ad0476c700dd2238e48ed2",
+        "skills/wrap-up/wiki-seed/wrap-up.md": "6375d8c5b6279c9a347abfc91d39a27d0bab9d1e8c80b93f4760211ea7be3118",
+        "templates/CLAUDE.md.tmpl": "a073712073a065892ff9a682b3bb264abeabe915e1882c807d2534472bbeeb17",
+        "templates/feeds.md.tmpl": "772f64458bbb8f9c5b430df96202c37a2222a853c742df6b1cff0f17bb263a58",
+        "tests/scripts/test_global_toolset.py": "dac427ff0251d204d28628fd8a82037fd8dd3242760981dfb339bbc12ee05ff0",
+        "tests/scripts/test_link_gaps.py": "1115ada188c36d4ec33e98dbdcacd8115e9fdef620d54aacd8080d01765133b8",
+        "tests/scripts/test_local_folder.py": "5242d1d76b0e8d99a0e7f25a45db2b1cf1a4112b95cf41cf4a00817c12e97bb6",
+        "tests/scripts/test_search_mode.py": "6ab27c3ebfddcc47b16abd8dff52f73e16e83ec6f66aa948e8680c792a31a172",
+        "tests/scripts/test_standalone.py": "0e4e8c134929fb5f5c46a140557c9250b9f8ccb06887a3f4ab5ebd01c362e46f",
+        "tests/skills/PENDING.md": "147be3f5f1f337c148e63773ae0524d622e4a2a37cc163bd834e4b5ce1c65fb3",
+        "tests/skills/new-wiki/baseline-opus.json": "a020dcdeb7d176bdc076aad1b28f417a86c5bd366ca57475285570cdd9e8d265",
+        "tests/skills/new-wiki/baseline-sonnet.json": "4bc1351dda960251ec382bc096d861e03a8ec41b36fd482e60264dd598576fa6",
+        "tests/skills/new-wiki/cases.json": "27b718f160538c02a00cb2e2f081a3df0785f238cc7248f47098ee375b71c121",
+        "tests/skills/new-wiki/check.py": "20427cd692d941a1915e4ea2f8307c4d81a0c9cc91c3a8869684945cec04f811",
+        "wiki-seed/install.md": "ec3670711e8041e4554d0480f470cef338119e08e03eab4064d483a0e671a5b0",
+        "wiki-seed/obsidian.md": "03c0f751354bd56919887306fec15fb7c58f3b7c9ea0fc61a7aec52fc9e89165",
+        "wiki-seed/user-guide.md": "6d56d94ac880fd3b2f406fa3e0db10d8901334c4eafc94e2de1a9d857f8bbc79"
+      }
+    }
+  ],
+  "items": {
+    "standards-1": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `CHANGELOG.md` (2026-11-19 entry, \"What\" bullet) with `scripts/wiki-upgrade.py:68-69` and `scripts/new-wiki.py:510-514` \u2014 G4: a failed write on the global refresh path prints FAILED and still exits 0. Quote: \"A refresh that cannot write or remove one file now lists it as `FAILED <path>: <reason>`, finishes the rest and exits 1.\" Code: wiki-upgrade.py `print_summary(summary)` then `return 0`; new-wiki.py `--mode tooling` returns 0 unless frontmatter failed. Only `--phase docs` returns 1. Fix: return 1 from both paths when `summary[\"toolset\"][\"failed\"]` is non-empty, or correct the CHANGELOG line. Add a test pinning the exit code on that path (T1 gap).",
+      "file": "CHANGELOG.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "1ce50a321fdb53e587acd6dfcb593e800a947ca337f85823a4417ff1e5d2abea",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "529d13d00e01b53c0881b4c03bcb964a0af7e7dd9000dc80b7d0832151a1007a"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "1ce50a321fdb53e587acd6dfcb593e800a947ca337f85823a4417ff1e5d2abea"
+        }
+      ]
+    },
+    "standards-2": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/scripts/test_global_toolset.py:459` \u2014 T4: a skipped case records a PASS. Quote: `check(\"unwritable README: skipped, root writes through a read-only file (nothing proved here)\", True)`. Fix: record a visible skip, fail the case, or drop it with the reason in a comment.",
+      "file": "tests/scripts/test_global_toolset.py",
+      "line": 459,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "7e757f0a80b851274f061fed653c36f9d04ffa5e98f41adaa434d9d7a9c247aa"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1"
+        }
+      ]
+    },
+    "standards-3": {
+      "axis": "standards",
+      "severity": "important",
+      "text": "[important] `tests/scripts/test_standalone.py:170` \u2014 R26: new constant nothing uses. Quote: `PRACTICE_PAGE_ROOT = \"notebooks/agentic-design/wiki/research/wiki/\"`; grep finds only the definition. Fix: a question for the author: delete it, or build `STEP9_DOCS` from it.",
+      "file": "tests/scripts/test_standalone.py",
+      "line": 170,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "a538ea831a5f38b7e73f5ca7cffa79b5c3670c017008c06f6317c5e9fccd1534",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "9f51ac964935e7c64605b85ac7f4302effb35bdfd03617ed56153c26a183f07d"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "a538ea831a5f38b7e73f5ca7cffa79b5c3670c017008c06f6317c5e9fccd1534"
+        }
+      ]
+    },
+    "standards-4": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/_install_tooling.py:200` \u2014 S15: the clause can never be false, so it is dead logic. Quote: `if TOOLSET_OLD_FRAMEWORK_DOCS / p.name not in files] if old_docs.is_dir() else []`. `files` holds only `how-to/` and `wiki/best-practices/` keys. The lens agrees M20 is equivalent and M22 is equivalent (`glob` on a missing folder yields nothing, so the `is_dir()` guard is redundant). Also S2: lines 196 and 199 are the same comprehension for the same reason. Fix: drop the clause; one helper for the two remove scans.",
+      "file": "scripts/_install_tooling.py",
+      "line": 200,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "15ae30ad1c7148454c22b23990aa42235259734c25cdf943e4a455200cd8b242",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "5eab135887bccd82823d8cb0ccf4d6f29c855d1e864cc75c971903f1c69dc840"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "15ae30ad1c7148454c22b23990aa42235259734c25cdf943e4a455200cd8b242"
+        }
+      ]
+    },
+    "standards-5": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-map-compile.py:375` \u2014 C2: stale comment beside the changed line 378. Quote: `# Container folders (research/, project/) hold subfolders instead of direct` beside `CONTAINER_FOLDERS = {\"research\", \"project\", \"best-practices\"}`. Fix: add best-practices/ to the comment.",
+      "file": "scripts/wiki-map-compile.py",
+      "line": 375,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "7a93583250c1b8c65f73db5e5dcbf8d94d3c7399084598e0a6282ad8cd37bb44",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "3efafbf5cdbc7e8fb2d7a12e1bcca6d52389d3fa641a6f2628851287e7d5c5e5"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "7a93583250c1b8c65f73db5e5dcbf8d94d3c7399084598e0a6282ad8cd37bb44"
+        }
+      ]
+    },
+    "standards-6": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/_wiki_config.py:103` \u2014 C2: the comment no longer matches what the scaffold creates. Quote: `# What a default scaffold creates: both halves with stubs, plus sessions/.` `taxonomy_for` (lines 135-136) now also appends `best-practices/local`. `SCAFFOLD_TAXONOMY` is read by `tests/skills/wiki-cycle/check.py:146-148` and `tests/skills/wiki-update/check.py:97-104` as \"the folders a default /new-wiki creates\". Fix: say the local folder is added by `taxonomy_for`, or derive the constant from it.",
+      "file": "scripts/_wiki_config.py",
+      "line": 103,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "84b53ac69e29acdc3dfac2316599889939217f0aeb92aa629d76fce07a8cc17f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "ffcb18cd9155aea3ed6dfe7671c3281e656b648e469a7889c479a1af96e674ae"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "84b53ac69e29acdc3dfac2316599889939217f0aeb92aa629d76fce07a8cc17f"
+        }
+      ]
+    },
+    "standards-7": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/_wiki_config.py:112` \u2014 S7: the folder list is kept in two places and the diff updated one. Quote: `MERGED_TAXONOMY = (RESEARCH_TAXONOMY + LEGACY_RESEARCH_TAXONOMY + PROJECT_TAXONOMY`, whose comment says \"Every path the folder guards recognise\". A wiki with no top-level `best-practices/` (any wiki made before this change) refuses `--folder best-practices/local`; new wikis pass through Case 1. Fix: add `\"best-practices/local\"` to the list.",
+      "file": "scripts/_wiki_config.py",
+      "line": 112,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "b85abf1432035fe534ab5d30cb0cfa67ceaa8ba6c47f1675fa5b61327cde4e32",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "ffcb18cd9155aea3ed6dfe7671c3281e656b648e469a7889c479a1af96e674ae"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "b85abf1432035fe534ab5d30cb0cfa67ceaa8ba6c47f1675fa5b61327cde4e32"
+        }
+      ]
+    },
+    "standards-8": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S2: duplicated test code added in this diff: `def _run(fn):` with the same body at `tests/scripts/test_global_toolset.py:561`, `tests/scripts/test_local_folder.py:418`, `tests/scripts/test_search_mode.py:414`; the lint subprocess twice in `test_local_folder.py` (lines 169 and 292); the same 8-key `summary` literal in two `test_global_toolset.py` tests. Fix: one shared helper; reuse `_lint_report_after_writing`.",
+      "file": "tests/scripts/test_global_toolset.py",
+      "line": 561,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "7e757f0a80b851274f061fed653c36f9d04ffa5e98f41adaa434d9d7a9c247aa",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "7e757f0a80b851274f061fed653c36f9d04ffa5e98f41adaa434d9d7a9c247aa"
+        }
+      ]
+    },
+    "standards-9": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/scripts/test_global_toolset.py:166`, `:189`, `:203` \u2014 T4: `if sys.platform != \"win32\": ... return` records no check on other platforms, so the check count differs by OS and the skip is invisible. Fix: record a named skip.",
+      "file": "tests/scripts/test_global_toolset.py",
+      "line": 166,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "7e757f0a80b851274f061fed653c36f9d04ffa5e98f41adaa434d9d7a9c247aa"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1"
+        }
+      ]
+    },
+    "standards-10": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/_install_tooling.py:222` \u2014 N7: `def _guarded(op, path, failed: list) -> bool:` appends to its `failed` argument and the name does not say so. Fix: rename to say it records the OSError.",
+      "file": "scripts/_install_tooling.py",
+      "line": 222,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "9250fa7b81e57d4983628021b1199f4cdc801116335fa536cb91b8ecddb0515d",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "9250fa7b81e57d4983628021b1199f4cdc801116335fa536cb91b8ecddb0515d"
+        }
+      ]
+    },
+    "standards-11": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/new-wiki/check.py:372` \u2014 R15: `add(\"local/README.md names the framework docs\", bool(re.search(r\"framework\", body, re.I)))` passes on the bare word. Fix: match the sentence the README must carry.",
+      "file": "tests/skills/new-wiki/check.py",
+      "line": 372,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "54cd834a67de6e9c6ccb91b8dd142642823f5c851369cf86e283bf461e7eb922",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "54cd834a67de6e9c6ccb91b8dd142642823f5c851369cf86e283bf461e7eb922"
+        }
+      ]
+    },
+    "standards-12": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] Tail, grouped by root cause: C2 at `scripts/_install_tooling.py:145` and the `phase_docs` docstring at `scripts/new-wiki.py:773-775` (neither lists the local README the same functions now write); `scripts/new-wiki.py:957` reads `# B1\u2014 mkdir + git init` where the original read `# B1 \u2014 mkdir + git init`; S15 `tests/scripts/test_search_mode.py:397` and `:409` assign `dropped` and never read it; R8 `tests/scripts/test_local_folder.py:144` `summary = {}` after `except ValueError` hides the parse error; S17 `tests/scripts/test_standalone.py:369` `_RENDERED: list[str] = []` is module-level mutable state (a test cache).",
+      "file": "scripts/_install_tooling.py",
+      "line": 145,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d52baba319c1e9f7687a9d0baf5b75d16e3ddbd4705ba6e5dc1af9e58943f3e7",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "d52baba319c1e9f7687a9d0baf5b75d16e3ddbd4705ba6e5dc1af9e58943f3e7"
+        }
+      ]
+    },
+    "spec-1": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] `.do-code-change/243-framework-docs-master/checkpoints.md:92` \u2014 step 17's red-then-green is not met for `local-readme-project-none`, which passed on the old copy on both models, so its red rests on a script check, not the suite. Intent: \"a case that passes on the old copy \u2192 not counted as proof\" (plan.md step 17, Failures). Implemented: checkpoints.md:92 \"`local-readme-project-none` passed on the old copy on both models\"; checkpoints.md:93 records the recommendation \"count the free old-vs-new script check as the red\"; Mark's \"ok please run\" answers the stubs re-run only. The stubs case never ran red on the old copy in the suite. Affected: the done criterion \"every case 'red then green' on Sonnet and Opus\" (plan.md:302) is unmet for both new cases; the baselines record green. Fix: Mark decides in writing whether the free script check counts as the red; otherwise fix the harness (old-copy sessions run the export's new-wiki.py) and rerun both cases red-green.",
+      "file": ".do-code-change/243-framework-docs-master/checkpoints.md",
+      "line": 92,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "ce5950751f800ee40bb34e8c0720c6b36adb66260d94f3452ca5e00abf31eb38",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "1c5d6c22f8f6ee79c0c5788dd2337e1b67a7bef0df2f484ffe7cc0ddb58e6684"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "ce5950751f800ee40bb34e8c0720c6b36adb66260d94f3452ca5e00abf31eb38"
+        }
+      ]
+    },
+    "spec-2": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-update.py:710` \u2014 `--folder best-practices/local` is refused in any wiki that lacks `wiki/best-practices/`. Intent: \"folder guards ... that rejects or mishandles best-practices/local -> fixed if the scaffold's own README trips it, otherwise listed in the hand-back\" (plan.md step 3, Failures). Implemented: wiki-update.py:685-686 (Case 2) and 710 \"would create a NEW top-level folder\"; `_wiki_config.py:112-113` MERGED_TAXONOMY omits the path. A new wiki passes through Case 1 (wiki-update.py:680-681), so the scaffold's own README does not trip it. The hand-back (implement-log.md:26-29) lists the bare-`best-practices` pass and the MERGED omission, not this refusal. Affected: a user filing into `best-practices/local/` in an existing wiki gets an error until the folder is made by hand (card #248). Fix: add `best-practices/local` to MERGED_TAXONOMY, or list the refusal in the hand-back and on #248; decide whether bare `--folder best-practices` stays accepted.",
+      "file": "scripts/wiki-update.py",
+      "line": 710,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "8333af93513d0a86993f78fdbc998eed59da99b9960b66397229b52f6b283e3e",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "8333af93513d0a86993f78fdbc998eed59da99b9960b66397229b52f6b283e3e"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "8333af93513d0a86993f78fdbc998eed59da99b9960b66397229b52f6b283e3e"
+        }
+      ]
+    },
+    "spec-3": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `tests/skills/new-wiki/check.py:391` \u2014 the shared scaffold guard still names the old path, so it cannot fail. Intent: \"its path moves to `wiki/best-practices/framework` because the old path can no longer hold a copy (a vacuous check)\" (plan.md step 17, Cases). Implemented: check.py:391 `pdir, fw = wiki / \"project\", wiki / \"project\" / \"best-practices\" / \"framework\"`; the shared branch is unchanged, as checkpoints.md:91 records (overridden by the writer's answer). The new `scaffold-local` kind (check.py:358-378) holds the live guard. Affected: the shared no-copy check passes for any wiki. Fix: note it as a known vacuous check in the suite README, or move the shared guard through a writer case.",
+      "file": "tests/skills/new-wiki/check.py",
+      "line": 391,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "20427cd692d941a1915e4ea2f8307c4d81a0c9cc91c3a8869684945cec04f811",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "20427cd692d941a1915e4ea2f8307c4d81a0c9cc91c3a8869684945cec04f811"
+        }
+      ]
+    },
+    "spec-4": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `scripts/wiki-map-compile.py:375` \u2014 comment not updated after `best-practices` joined the set (plan step 4b); line 378 is `CONTAINER_FOLDERS = {\"research\", \"project\", \"best-practices\"}`. Fix: name best-practices/ in the comment.",
+      "file": "scripts/wiki-map-compile.py",
+      "line": 375,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "7a93583250c1b8c65f73db5e5dcbf8d94d3c7399084598e0a6282ad8cd37bb44",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "3efafbf5cdbc7e8fb2d7a12e1bcca6d52389d3fa641a6f2628851287e7d5c5e5"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "7a93583250c1b8c65f73db5e5dcbf8d94d3c7399084598e0a6282ad8cd37bb44"
+        }
+      ]
+    },
+    "spec-5": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `scripts/_wiki_config.py:103` \u2014 the SCAFFOLD_TAXONOMY comment is stale (leftover 2): \"What a default scaffold creates: both halves with stubs, plus sessions/.\" while `taxonomy_for` now appends the folder; suite fixtures read the constant as the folders a default /new-wiki creates. Fix: update the comments; decide whether SCAFFOLD_TAXONOMY includes the folder.",
+      "file": "scripts/_wiki_config.py",
+      "line": 103,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "84b53ac69e29acdc3dfac2316599889939217f0aeb92aa629d76fce07a8cc17f",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "ffcb18cd9155aea3ed6dfe7671c3281e656b648e469a7889c479a1af96e674ae"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "84b53ac69e29acdc3dfac2316599889939217f0aeb92aa629d76fce07a8cc17f"
+        }
+      ]
+    },
+    "spec-6": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `.do-code-change/243-framework-docs-master/plan.md:188` \u2014 the expected `wiki_folders` entry in `.claude/wiki-config.json` is not met. Intent: \"`best-practices` is in the wiki's README folder list and in `.claude/wiki-config.json`'s `wiki_folders`\" (plan.md step 3). Implemented: new-wiki.py:1243 `\"wiki_folders\": {\"project\": args.project_folder, \"research\": args.research_folder},` (the config holds the two answers); the folder key is `best-practices/local` (new-wiki.py:1059). The correction is only in implement-log.md:25; checkpoints.md records no approval. Fix: amend plan.md step 3 and the folder_notes line, or record the correction in checkpoints.md.",
+      "file": ".do-code-change/243-framework-docs-master/plan.md",
+      "line": 188,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "3d8692222b9b2f86c260b9e54dcd3dac77bc39b1fe77325207b3936f47923287",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "0434fd9d273fb3d2ca4934fd380a1515d79ac26f0987ecbfc9b6ecdbee333370"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "3d8692222b9b2f86c260b9e54dcd3dac77bc39b1fe77325207b3936f47923287"
+        }
+      ]
+    },
+    "spec-7": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `CHANGELOG.md`, 2026-11-19 entry, \"What\" bullet \u2014 \"finishes the rest and exits 1\" holds for `--phase docs` only. Intent: \"`phase_docs` exits 1 with `FAILED <path>: <reason>`; the global install prints them the same way\" (plan.md step 1). Implemented: `phase_docs` returns 1 on `failed`; `print_summary` prints the INCOMPLETE line and returns nothing, and the diff does not change the global install's exit path. Fix: say \"`--phase docs` exits 1; the global install prints INCOMPLETE\" (or make the install exit 1: see the Change risk axis).",
+      "file": "CHANGELOG.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "1ce50a321fdb53e587acd6dfcb593e800a947ca337f85823a4417ff1e5d2abea",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "529d13d00e01b53c0881b4c03bcb964a0af7e7dd9000dc80b7d0832151a1007a"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "1ce50a321fdb53e587acd6dfcb593e800a947ca337f85823a4417ff1e5d2abea"
+        }
+      ]
+    },
+    "risk-1": {
+      "axis": "risk",
+      "severity": "important",
+      "text": "[important, needs-a-human] `scripts/new-wiki.py:510-514` (and `:911-916`), `scripts/wiki-upgrade.py:68-69` \u2014 a global refresh whose toolset write or remove failed still exits 0. Quotes: `_print_tooling_summary(summary)` / `if summary.get(\"frontmatter_failed\"):` \u2026 `return 0`; wiki-upgrade: `print_summary(summary)` / `return 0`. `status[\"failed\"] = failed` (`_install_tooling.py:257`) is only printed (`:1394-1397`). Before: `(root / rel).unlink()` raised, `install_tooling` wrapped it in `InstallIncomplete` (`_install_tooling.py:647-650`), and both entry points returned 1 (`wiki-upgrade.py:62-64`, `new-wiki.py:504-506`). CHANGELOG line 35 says the refresh \"exits 1\"; true only for `--phase docs` (`new-wiki.py:815-817`). Path: `install-wiki.ps1:172-186` (no `-TargetFolder` runs tooling), `:211-215` `exit $LASTEXITCODE`. Blast radius: the remove loop runs after the add loop regardless (`_install_tooling.py:251-256`). If the new path alone cannot be written (the case `test_write_failure_is_listed_failed_rest_refreshed` builds), the spec exists nowhere; `wiki-update.py:1280-1281` prints `tier rubric: not found` and ingest goes on choosing tiers; the fallback at `wiki-update.py:1265` resolves to `~/.claude/framework-docs/` because `CC_GLOBAL_WIKI_SCRIPTS_DIR = CC_GLOBAL_DIR / \"wiki-scripts\"` (`_install_tooling.py:32`) and no install creates it. Phase B's `--install-global-if-missing` (`new-wiki.py:903-914`) then scaffolds anyway. Mitigation: `toolset_status` recomputes from disk, so `--mode status` reports stale. Fix: return 1 from both tooling paths when `summary[\"toolset\"].get(\"failed\")`, as `frontmatter_failed` already does, or make the CHANGELOG promise true for this path.",
+      "file": "scripts/new-wiki.py",
+      "line": 510,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "42e22c3f4c7e5dec6ec31a02d2fba15f54758e40755be05b00fa88e99eba9ea5",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "0522fd76eb9f8d17bbf7c80a67ff017e390b36e588230b0a916ffed001a962b6"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "42e22c3f4c7e5dec6ec31a02d2fba15f54758e40755be05b00fa88e99eba9ea5"
+        }
+      ]
+    },
+    "risk-2": {
+      "axis": "risk",
+      "severity": "suggestion",
+      "text": "[suggestion, needs-a-human] `scripts/_install_tooling.py:198-200` and `:254-256` \u2014 the remove scan follows whatever `root / wiki/project/best-practices/framework` resolves to. Not reproduced (no shell to create a junction): `old_docs.glob(\"*.md\")` then `unlink()` would delete the link target's `.md` files. Fix: refuse when the realpath is outside `root`.",
+      "file": "scripts/_install_tooling.py",
+      "line": 198,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "5eab135887bccd82823d8cb0ccf4d6f29c855d1e864cc75c971903f1c69dc840",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "5eab135887bccd82823d8cb0ccf4d6f29c855d1e864cc75c971903f1c69dc840"
+        }
+      ]
+    },
+    "risk-3": {
+      "axis": "risk",
+      "severity": "suggestion",
+      "text": "[suggestion] `framework-docs/wiki-frontmatter-best-practices.md` (vendor-post paragraph and the tier 2 row) \u2014 ingest behaviour changes with an undefined test. Quote: \"An official vendor post with something checkable behind it (code, docs, a public benchmark) is tier 2; one that is pitch alone is tier 4.\" The wiki-seed page says \"Tier 4 never auto-ingests.\" \"Checkable\" is undefined; `test_the_rubric_span_holds_the_vendor_post_rule` pins the sentence's wording, not any tier decision. Fix: define \"checkable\" with an example and say what happens to existing tier-2 vendor entries.",
+      "file": "framework-docs/wiki-frontmatter-best-practices.md",
+      "line": null,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "e17380d8a059077e6bf4ad6cd2e2d4ab83647ebc872617037f50e0dce8d16f50",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "e17380d8a059077e6bf4ad6cd2e2d4ab83647ebc872617037f50e0dce8d16f50"
+        }
+      ]
+    },
+    "risk-4": {
+      "axis": "risk",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/wiki-update.py:680-681` (validate_folder Case 1: \"top segment already exists on disk \u2026 safe regardless of taxonomy\") \u2014 every new wiki now has `wiki/best-practices/` (`_wiki_config.py:135`), so `--folder best-practices/<anything>` passes without `--allow-new-top-folder`; before, it was refused (Case 4). Fix: add `best-practices/local` to `MERGED_TAXONOMY`. Checked, no mismatch with wiki-promote for `best-practices/local`: both accept it in a new wiki and both refuse in a wiki without the README.",
+      "file": "scripts/wiki-update.py",
+      "line": 680,
+      "first_round": 1,
+      "last_seen_round": 1,
+      "verdict": "addressed",
+      "verdict_round": 1,
+      "fingerprint": "8333af93513d0a86993f78fdbc998eed59da99b9960b66397229b52f6b283e3e",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 1,
+          "verdict": "open",
+          "fingerprint": "8333af93513d0a86993f78fdbc998eed59da99b9960b66397229b52f6b283e3e"
+        },
+        {
+          "round": 1,
+          "verdict": "addressed",
+          "fingerprint": "8333af93513d0a86993f78fdbc998eed59da99b9960b66397229b52f6b283e3e"
+        }
+      ]
+    }
+  }
+}

@@ -167,7 +167,6 @@ test_no_shipped_file_names_the_old_toolset_framework_path()
 
 # ── task #243, step 9: each framework doc opens with its local-changes line and a practice link ──
 # Expected values are typed out, never built with the join or the wording the docs are checked against.
-PRACTICE_PAGE_ROOT = "notebooks/agentic-design/wiki/research/wiki/"
 TOOLSET_FRAMEWORK_FOLDER = "notebooks/global-toolset/wiki/best-practices/framework"
 STEP9_DOCS = {
     # file name: (expected practice page path from the notebooks root, or None; lowest version)

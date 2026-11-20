@@ -415,6 +415,20 @@ def test_the_shipped_local_readme_is_treated_in_the_map_as_a_readme_in_research_
           "README does in research/active/", here == there and here[0] and bool(here[1]) and here[3], (here, there))
 
 
+def test_filing_into_best_practices_local_is_accepted_in_a_wiki_that_lacks_the_folder():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("wiki_update_for_folder_guard", ROOT / "scripts" / "wiki-update.py")
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    with tempfile.TemporaryDirectory() as t:
+        wiki = Path(t) / "wiki"
+        (wiki / "research").mkdir(parents=True)  # a wiki made before the change: no top-level best-practices/
+        got = mod.validate_folder(wiki, LOCAL)
+        check("validate_folder: best-practices/local is a recognised taxonomy path, no --allow-new-top-folder needed",
+              got == (LOCAL, None), got)
+
+
 def _run(fn):
     """Run one test function; every check it records is named after it, and a crash is a failed check, not the end."""
     first = len(results)
@@ -445,7 +459,8 @@ for _test in (test_taxonomy_puts_best_practices_local_before_sessions_for_all_ni
               test_existing_map_sections_do_not_change_when_best_practices_local_gains_a_note,
               test_wiki_with_no_best_practices_folder_compiles_a_map_with_no_best_practices_section,
               test_a_best_practices_local_folder_with_no_titled_note_leaves_the_map_unchanged,
-              test_the_shipped_local_readme_is_treated_in_the_map_as_a_readme_in_research_is):
+              test_the_shipped_local_readme_is_treated_in_the_map_as_a_readme_in_research_is,
+              test_filing_into_best_practices_local_is_accepted_in_a_wiki_that_lacks_the_folder):
     _run(_test)
 
 failed = [n for ok, n in results if not ok]

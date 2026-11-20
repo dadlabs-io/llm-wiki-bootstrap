@@ -12,6 +12,7 @@ $WIKI_GLOBAL_CONFIG; the machine's own config, registry and toolset are never re
 """
 from __future__ import annotations
 
+import argparse
 import contextlib
 import importlib.util
 import io
@@ -34,6 +35,11 @@ results: list[tuple[bool, str]] = []
 
 def check(name: str, ok: bool, detail: object = ""):
     results.append((bool(ok), name + (f"  [{detail}]" if not ok and detail != "" else "")))
+
+
+def _skip(test_name: str, reason: str):
+    """A case that cannot run here: a visible line, no check recorded (a skip proves nothing, so it is no PASS)."""
+    print(f"SKIP {test_name}: {reason}")
 
 
 # --- task 243, step 1: the framework docs live at wiki/best-practices/framework/ in the toolset, the old copy goes.
@@ -164,6 +170,7 @@ def _held(path: Path):
 
 def test_held_old_file_is_named_in_failed_rest_proceeds():
     if sys.platform != "win32":  # an open handle blocks a delete only on Windows
+        _skip("test_held_old_file_is_named_in_failed_rest_proceeds", "an open handle blocks a delete only on Windows")
         return
     with tempfile.TemporaryDirectory() as t:
         root = _toolset_in(Path(t))
@@ -187,6 +194,7 @@ def test_held_old_file_is_named_in_failed_rest_proceeds():
 
 def test_phase_docs_reports_held_file_as_failed():
     if sys.platform != "win32":
+        _skip("test_phase_docs_reports_held_file_as_failed", "an open handle blocks a delete only on Windows")
         return
     with tempfile.TemporaryDirectory() as t:
         root = _toolset_in(Path(t))
@@ -201,6 +209,7 @@ def test_phase_docs_reports_held_file_as_failed():
 
 def test_dry_run_lists_no_failed_entries():
     if sys.platform != "win32":
+        _skip("test_dry_run_lists_no_failed_entries", "an open handle blocks a delete only on Windows")
         return
     with tempfile.TemporaryDirectory() as t:
         root = _toolset_in(Path(t))
@@ -457,7 +466,8 @@ def test_plain_file_where_local_belongs_lists_readme_in_failed():
 
 def test_unwritable_readme_replacement_is_listed_failed_rest_done():
     if hasattr(os, "geteuid") and os.geteuid() == 0:  # root writes through a read-only file
-        check("unwritable README: skipped, root writes through a read-only file (nothing proved here)", True)
+        _skip("test_unwritable_readme_replacement_is_listed_failed_rest_done",
+              "root writes through a read-only file, nothing proved here")
         return
     with tempfile.TemporaryDirectory() as t:
         root = _toolset_in(Path(t))
@@ -556,6 +566,76 @@ def test_phase_docs_failure_line_is_a_warning_with_the_count():
         check(f"--phase docs with {len(DOC_NAMES) + 1} failed writes: exit 1, a `!` warning line counts them",
               p.returncode == 1 and any(ln.startswith("[new-wiki] ! ") and want.search(ln) for ln in p.stderr.splitlines()),
               (p.returncode, p.stderr[-400:]))
+
+
+def _load_script(file_name: str, module_name: str):
+    spec = importlib.util.spec_from_file_location(module_name, ROOT / "scripts" / file_name)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _install_summary_with_failed_toolset(root: Path) -> dict:
+    """What install_tooling returns after a real refresh of a toolset with a plain file where best-practices/ belongs."""
+    _plain_file_where_best_practices_belongs(root)
+    toolset = it.seed_toolset(ROOT)
+    return {"scripts_copied": 0, "helpers_copied": 0, "skills_installed": 0, "scripts_dest": "s",
+            "skills_dest": "k", "scripts_dest_value": "s", "toolset": toolset}
+
+
+def test_wiki_upgrade_exits_1_when_a_toolset_write_failed():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        summary = _install_summary_with_failed_toolset(root)
+        mod = _load_script("wiki-upgrade.py", "wiki_upgrade_for_exit_code")
+        with (mock.patch.object(mod, "install_tooling", return_value=summary),
+              mock.patch.object(mod, "derive_bootstrap_source", return_value=ROOT),
+              mock.patch.object(sys, "argv", ["wiki-upgrade.py"]),
+              contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO())):
+            code = mod.main()
+        check("wiki-upgrade.py with a failed toolset write: exit 1, the FAILED lines still printed",
+              code == 1 and "FAILED " in out.getvalue(), (code, out.getvalue()[-300:]))
+
+
+def test_new_wiki_tooling_mode_exits_1_when_a_toolset_write_failed():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        summary = _install_summary_with_failed_toolset(root)
+        mod = _load_script("new-wiki.py", "new_wiki_for_exit_code")
+        args = mock.Mock(tool="claude-code", dry_run=False, bootstrap_source=str(ROOT))
+        with (mock.patch.object(mod, "_install_tooling", return_value=summary),
+              contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO())):
+            code = mod.phase_tooling(args)
+        check("new-wiki.py --mode tooling with a failed toolset write: exit 1, the FAILED lines still printed",
+              code == 1 and "FAILED " in out.getvalue(), (code, out.getvalue()[-300:]))
+
+
+class _ArgsDefaultingToNone(argparse.Namespace):
+    """Parsed arguments where every option the test does not give is None, as an unset flag is."""
+
+    def __getattr__(self, name: str) -> None:
+        return None
+
+
+def test_scaffold_stops_when_the_global_install_it_runs_failed_a_toolset_write():
+    with tempfile.TemporaryDirectory() as t:
+        root = _toolset_in(Path(t))
+        summary = _install_summary_with_failed_toolset(root)
+        mod = _load_script("new-wiki.py", "new_wiki_for_exit_code_phase_b")
+        target = Path(t) / "proj"
+        args = _ArgsDefaultingToNone(target_folder=str(target), bootstrap_source=str(ROOT), project_name="proj",
+                                     tool="claude-code", project_folder="stubs", research_folder="stubs",
+                                     install_global_if_missing=True, dry_run=False)
+        with (mock.patch.dict(os.environ, {"WIKI_TOOLING_DRY_RUN": "0"}),
+              mock.patch.object(mod, "global_tooling_status", return_value={"state": "missing", "complete": False}),
+              mock.patch.object(mod, "format_tooling_status", return_value=""),
+              mock.patch.object(mod, "_install_tooling", return_value=summary),
+              contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO())):
+            code = mod.phase_b(args)
+        check("--install-global-if-missing with a failed toolset write: exit 1 and no project folder created",
+              code == 1 and not target.exists(), (code, target.exists()))
 
 
 def _run(fn):
@@ -691,7 +771,10 @@ for _test in (test_empty_toolset_gets_docs_at_new_layout, test_old_copy_makes_st
               test_failed_reason_reads_error_class_colon_message,
               test_unremovable_old_folder_is_listed_failed_not_raised,
               test_install_summary_counts_the_failed_operations,
-              test_phase_docs_failure_line_is_a_warning_with_the_count):
+              test_phase_docs_failure_line_is_a_warning_with_the_count,
+              test_wiki_upgrade_exits_1_when_a_toolset_write_failed,
+              test_new_wiki_tooling_mode_exits_1_when_a_toolset_write_failed,
+              test_scaffold_stops_when_the_global_install_it_runs_failed_a_toolset_write):
     _run(_test)
 
 failed = [n for ok, n in results if not ok]

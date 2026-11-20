@@ -372,7 +372,7 @@ def render_map(wiki_root: Path, topic: str, folder_data: dict[str, list[dict]], 
 
 def process(wiki_root: Path, topic: str, dry_run: bool = False) -> dict:
     folder_data = {}
-    # Container folders (research/, project/) hold subfolders instead of direct
+    # Container folders (research/, project/, best-practices/) hold subfolders instead of direct
     # .md entries. Walk one level deeper into those. sessions/ is NON-CURATED
     # (working + episodic memory) and is excluded from the map entirely.
     CONTAINER_FOLDERS = {"research", "project", "best-practices"}

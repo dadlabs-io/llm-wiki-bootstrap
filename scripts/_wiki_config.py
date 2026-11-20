@@ -100,7 +100,8 @@ RESEARCH_TAXONOMY = [
 LEGACY_RESEARCH_TAXONOMY = [
     "research/implementation", "research/skills", "research/orchestration",
 ]
-# What a default scaffold creates: both halves with stubs, plus sessions/.
+# What a default scaffold creates: both halves with stubs, plus sessions/. taxonomy_for() also adds
+# best-practices/local (every scaffold gets it), which this constant leaves out on purpose.
 SCAFFOLD_TAXONOMY = RESEARCH_TAXONOMY + PROJECT_TAXONOMY + ["sessions"]
 # Every path the folder guards recognise (wiki-update.py validate_folder,
 # wiki-promote.py _normalize_target_folder): the scaffold set plus the legacy
@@ -110,7 +111,7 @@ SCAFFOLD_TAXONOMY = RESEARCH_TAXONOMY + PROJECT_TAXONOMY + ["sessions"]
 # run's working files are copied unchanged. Recognised, not scaffolded — created on the
 # first filing, so it stays out of PROJECT_TAXONOMY.
 MERGED_TAXONOMY = (RESEARCH_TAXONOMY + LEGACY_RESEARCH_TAXONOMY + PROJECT_TAXONOMY
-                   + ["project/code-changes", "sessions"])
+                   + ["project/code-changes", "best-practices/local", "sessions"])
 
 FOLDER_CHOICES = ("stubs", "empty", "none")
 
