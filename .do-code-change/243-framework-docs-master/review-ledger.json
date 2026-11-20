@@ -212,6 +212,97 @@
         "wiki-seed/obsidian.md": "03c0f751354bd56919887306fec15fb7c58f3b7c9ea0fc61a7aec52fc9e89165",
         "wiki-seed/user-guide.md": "6d56d94ac880fd3b2f406fa3e0db10d8901334c4eafc94e2de1a9d857f8bbc79"
       }
+    },
+    {
+      "round": 3,
+      "at": "2026-11-20T05:41:32Z",
+      "diff_sha256": "85cfef6e675f181f57e37c88acb8fb3cd0c9cc94adea93f4230bfba84248ba0d",
+      "findings_sha256": "c5e9758ecf79ce28e63b62ff1c3e1169b877d4630c91266ee870ddd4ceb6b875",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-18",
+        "standards-19",
+        "standards-20",
+        "standards-21",
+        "standards-22",
+        "standards-23",
+        "spec-11",
+        "spec-12",
+        "spec-13",
+        "spec-14"
+      ],
+      "new": [
+        "standards-18",
+        "standards-19",
+        "standards-20",
+        "standards-21",
+        "standards-22",
+        "standards-23",
+        "spec-11",
+        "spec-12",
+        "spec-13",
+        "spec-14"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        ".claude/do-code-change.json": "1ee61ca848e0dd90947101a1b9f54d047969eca1e1451c3f59483932cb4a24e9",
+        "CHANGELOG.md": "832d3acd9526ba35367ffd81160f2513cd711fe12f4475567122674c85e92e73",
+        "CLAUDE.md": "9871402365a8d2d7779b5a67d0345dd098ca15986d8b511d13fd8282a3bbce73",
+        "INSTALL-INVENTORY.md": "9a49fde40a2a05771dfc06a5dd32aedfa3131d5294c0158c8f67baefd47fb4b7",
+        "V2_ROADMAP.md": "e9c9d8b1552438198ba00fd812b5afb06cc5b6883274cbeee188e6975d16fe55",
+        "agents/wiki-ingester/wiki-ingester-reading-list.json": "58f9c8544520af76ff7fdae7318c1c8dab65d80678326bbcfae6ce8bbf45658b",
+        "framework-docs/cycle-step-return-format.md": "227f381b0fdc29a792cfb71026b148d9b6658e3e71544fbef096de79fca37b45",
+        "framework-docs/memory-signals-sidecar-vs-frontmatter-pattern.md": "116f73f5d1bc42cb839eebeef1f3a35a3f3c94363fd48ecb5c9e359dd2b1623b",
+        "framework-docs/tiered-context-loading.md": "c2469ae9798add1c016db2a709a18d446b1b64c956e589651e2253ff1a6049f5",
+        "framework-docs/wiki-authoring-best-practices.md": "10d44a3ee773a5ed8ff899a7f3edf53e7b168d5a41aaedc1a6ce64a097ab3dd3",
+        "framework-docs/wiki-frontmatter-best-practices.md": "e17380d8a059077e6bf4ad6cd2e2d4ab83647ebc872617037f50e0dce8d16f50",
+        "framework-docs/wiki-search-bucket-rerank-spec.md": "4f90de94be308de739d54a9846dd004c7a8d05a9efad7cdc99d68a82ab23c908",
+        "scripts/_install_tooling.py": "5681ef34f175cd44053b2340a51be1a2bc4d5885d415205ff2b492b2773fea6b",
+        "scripts/_wiki_config.py": "b85abf1432035fe534ab5d30cb0cfa67ceaa8ba6c47f1675fa5b61327cde4e32",
+        "scripts/new-wiki.py": "72482ec6796f281466095348689206523cbd578b5e5eb5134f2cad4b00f1ec99",
+        "scripts/wiki-map-compile.py": "610ef454d1469bdd820b08a828870f803b9bee788462296d9af2bdbaa0a1bf10",
+        "scripts/wiki-qmd-query.py": "30c095e9b02c1c32cafac68e763c709b30cdb8455aaceadc97db29f8a3c08320",
+        "scripts/wiki-update.py": "8333af93513d0a86993f78fdbc998eed59da99b9960b66397229b52f6b283e3e",
+        "scripts/wiki-upgrade.py": "cc34b59de4a078d704759be22064ceb78299c440d2b05f35539da65a36e086f2",
+        "seed/best-practices-local/README.md": "d284ee405d030587d5626b3ceac899a9e8b7a300eedeff9b52793abeb149690e",
+        "seed/global-toolset-README.md": "d0cb433289364c5715361fab1e147e0333ca880a98fee515e75f6a51a90b4e78",
+        "seed/how-to/_FRAMEWORK_MANAGED.md": "8229028bfe1d37d7fef0ce01fcccad04f4e7752bf13896f3000c27c92b45bd71",
+        "skills/new-wiki/SKILL.md": "7d7678c12913cf4f155541f6c7f3a181e8fb1ba384baaea4addbd6b5690244cb",
+        "skills/new-wiki/wiki-seed/new-wiki.md": "c58e385e1c38b30c6a4c5be5e38be76b755b4e501e58159c76d8e08e4ec3a9b1",
+        "skills/wiki-claims/SKILL.md": "625783505dc85071c27d9c5d3e0d5838ef420c55adb5a6c17684a91ad3b921d4",
+        "skills/wiki-cycle/SKILL.md": "f0311df361986d1c711e54ab2cbd26cd9d2d4d0da3bb19ad7a6188219414e55d",
+        "skills/wiki-cycle/reference.md": "4ad0726813e655011a23a6e2afdc62fba951ea108d7311f3e9f8a384f1a998cc",
+        "skills/wiki-discover/SKILL.md": "93385f4ff5f2b81bffedc46961404130b6f20f9e3202083dde1ed0e68bd0e3d0",
+        "skills/wiki-discover/wiki-seed/wiki-discover.md": "2c34c94697a63cceb08f09756854cece2f6486c09f9a9fae4e4c282bd6a61e1d",
+        "skills/wiki-lint/SKILL.md": "6091e57270f7669c38254872cc652f2ab6034eaa92c187b39b71bb8cfc652f9a",
+        "skills/wiki-lint/wiki-seed/wiki-lint.md": "2943e66e8a8e9fcab2bf1d793d3cae090f13a5da319c644e059b7099b4108e0c",
+        "skills/wiki-refresh/SKILL.md": "c2e16954d32078a2638918f67be09284522a2c9eeb811ac65b0c0d250d9a521f",
+        "skills/wiki-refresh/wiki-seed/wiki-refresh.md": "6a91b4ec4fac4962e7054f32112b99f43e8a3e95f06b24b82b78161ef59a2667",
+        "skills/wiki-report/SKILL.md": "8138fc4b267ba8a460a24a3b88867aa5b1ba766460df7cfd4fb9f78811f16248",
+        "skills/wiki-rollback/SKILL.md": "1ede2c727814b50959638a74dd5160654f8a56cf66d5b1c6f885610c0ad93b18",
+        "skills/wiki-search/SKILL.md": "d4e180b307d2e7f5c75861646cf4690741422d2ad32d9b6e5dcf01c4f1f0cce1",
+        "skills/wiki-update/SKILL.md": "13fce85f4a3ea8ad760a34337c7d15e1c44b3dd2707207ff94a238a4b34b0259",
+        "skills/wiki-update/wiki-seed/wiki-update.md": "01b635403fbdd748e7203f0fa0fc6147c37f045a8b3bd04f1e37e25064a04708",
+        "skills/wiki-verify/SKILL.md": "a3842165009f21052b2bdfaf12cc61355a392e4d64ad0476c700dd2238e48ed2",
+        "skills/wrap-up/wiki-seed/wrap-up.md": "6375d8c5b6279c9a347abfc91d39a27d0bab9d1e8c80b93f4760211ea7be3118",
+        "templates/CLAUDE.md.tmpl": "a073712073a065892ff9a682b3bb264abeabe915e1882c807d2534472bbeeb17",
+        "templates/feeds.md.tmpl": "772f64458bbb8f9c5b430df96202c37a2222a853c742df6b1cff0f17bb263a58",
+        "tests/scripts/test_global_toolset.py": "af63a02ebd848feaed59c22fde16cb16ea1008cfb5cf2a36c5c0fcd4a1f06175",
+        "tests/scripts/test_link_gaps.py": "1115ada188c36d4ec33e98dbdcacd8115e9fdef620d54aacd8080d01765133b8",
+        "tests/scripts/test_local_folder.py": "15c612163b4326db3f4e2ed814ff59654c2477c39723251f14738a5610c0d5b1",
+        "tests/scripts/test_search_mode.py": "6ab27c3ebfddcc47b16abd8dff52f73e16e83ec6f66aa948e8680c792a31a172",
+        "tests/scripts/test_standalone.py": "3dcc1441ac3f998c129b5762d813fd5c14952d92a0f283e02f061234826c9de6",
+        "tests/skills/PENDING.md": "147be3f5f1f337c148e63773ae0524d622e4a2a37cc163bd834e4b5ce1c65fb3",
+        "tests/skills/new-wiki/baseline-opus.json": "a020dcdeb7d176bdc076aad1b28f417a86c5bd366ca57475285570cdd9e8d265",
+        "tests/skills/new-wiki/baseline-sonnet.json": "4bc1351dda960251ec382bc096d861e03a8ec41b36fd482e60264dd598576fa6",
+        "tests/skills/new-wiki/cases.json": "27b718f160538c02a00cb2e2f081a3df0785f238cc7248f47098ee375b71c121",
+        "tests/skills/new-wiki/check.py": "20427cd692d941a1915e4ea2f8307c4d81a0c9cc91c3a8869684945cec04f811",
+        "wiki-seed/install.md": "ec3670711e8041e4554d0480f470cef338119e08e03eab4064d483a0e671a5b0",
+        "wiki-seed/obsidian.md": "03c0f751354bd56919887306fec15fb7c58f3b7c9ea0fc61a7aec52fc9e89165",
+        "wiki-seed/user-guide.md": "6d56d94ac880fd3b2f406fa3e0db10d8901334c4eafc94e2de1a9d857f8bbc79"
+      }
     }
   ],
   "items": {
@@ -224,8 +315,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "1ce50a321fdb53e587acd6dfcb593e800a947ca337f85823a4417ff1e5d2abea",
+      "verdict_round": 3,
+      "fingerprint": "832d3acd9526ba35367ffd81160f2513cd711fe12f4475567122674c85e92e73",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -238,6 +329,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "1ce50a321fdb53e587acd6dfcb593e800a947ca337f85823a4417ff1e5d2abea"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "832d3acd9526ba35367ffd81160f2513cd711fe12f4475567122674c85e92e73"
         }
       ]
     },
@@ -250,8 +346,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1",
+      "verdict_round": 3,
+      "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -264,6 +360,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59"
         }
       ]
     },
@@ -733,8 +834,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 1,
-      "fingerprint": "42e22c3f4c7e5dec6ec31a02d2fba15f54758e40755be05b00fa88e99eba9ea5",
+      "verdict_round": 3,
+      "fingerprint": "72482ec6796f281466095348689206523cbd578b5e5eb5134f2cad4b00f1ec99",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -747,6 +848,11 @@
           "round": 1,
           "verdict": "addressed",
           "fingerprint": "42e22c3f4c7e5dec6ec31a02d2fba15f54758e40755be05b00fa88e99eba9ea5"
+        },
+        {
+          "round": 3,
+          "verdict": "addressed",
+          "fingerprint": "72482ec6796f281466095348689206523cbd578b5e5eb5134f2cad4b00f1ec99"
         }
       ]
     },
@@ -842,11 +948,16 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 2,
       "fingerprint": "e2f8c52f144cd8c4dcfc9dd0f922daebcb4b0d599b9f118aa5752b44cf2ea3a5",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "e2f8c52f144cd8c4dcfc9dd0f922daebcb4b0d599b9f118aa5752b44cf2ea3a5"
+        },
         {
           "round": 2,
           "verdict": "open",
@@ -862,9 +973,9 @@
       "line": 635,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -872,6 +983,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59"
         }
       ]
     },
@@ -884,8 +1000,8 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1",
+      "verdict_round": 2,
+      "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -893,6 +1009,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1"
+        },
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59"
         }
       ]
     },
@@ -905,8 +1026,8 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1",
+      "verdict_round": 2,
+      "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -914,6 +1035,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "f09a056840be5bb029c797a6b0fb32e20cc38aa34e037c966b751a043ff935b1"
+        },
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59"
         }
       ]
     },
@@ -925,9 +1051,9 @@
       "line": 779,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "46a35519764fa7f7efab4315c9c66cef6333693a01e23b8b5edce29e450bf563",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "242bce65fe72fe896e18683fd0ee5390325d27d1b7da41c0d8e498529b114201",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -935,6 +1061,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "46a35519764fa7f7efab4315c9c66cef6333693a01e23b8b5edce29e450bf563"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "242bce65fe72fe896e18683fd0ee5390325d27d1b7da41c0d8e498529b114201"
         }
       ]
     },
@@ -946,9 +1077,9 @@
       "line": 920,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "fa0d75dd0449a8d5ef46d46b27a5be0df02f877f3aa2a28538fb5b9b1b4fc8ad",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "628243d76654a62af1bee75f52476d85bb064ee87c3b2b6e720fcb91bab22b6a",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -956,6 +1087,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "fa0d75dd0449a8d5ef46d46b27a5be0df02f877f3aa2a28538fb5b9b1b4fc8ad"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "628243d76654a62af1bee75f52476d85bb064ee87c3b2b6e720fcb91bab22b6a"
         }
       ]
     },
@@ -967,9 +1103,9 @@
       "line": 16,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "194a5bed9d72e6d0d53e38d61235d5dd4d43d133300bb6c2893ec932f9937e4f",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "8aa8642ab9b0d75e966798d230b6f6f480078b53630a67890646488b42108ea6",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -977,6 +1113,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "194a5bed9d72e6d0d53e38d61235d5dd4d43d133300bb6c2893ec932f9937e4f"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "8aa8642ab9b0d75e966798d230b6f6f480078b53630a67890646488b42108ea6"
         }
       ]
     },
@@ -989,11 +1130,21 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 2,
       "fingerprint": "663e10d0e43f4abba6840940319d94037b3188f2483d50bf6d1edcc82ec5c1a0",
       "fingerprint_kind": "text-only",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "663e10d0e43f4abba6840940319d94037b3188f2483d50bf6d1edcc82ec5c1a0"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "663e10d0e43f4abba6840940319d94037b3188f2483d50bf6d1edcc82ec5c1a0"
+        },
         {
           "round": 2,
           "verdict": "open",
@@ -1009,9 +1160,9 @@
       "line": 925,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "42e22c3f4c7e5dec6ec31a02d2fba15f54758e40755be05b00fa88e99eba9ea5",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "72482ec6796f281466095348689206523cbd578b5e5eb5134f2cad4b00f1ec99",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -1019,6 +1170,11 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "42e22c3f4c7e5dec6ec31a02d2fba15f54758e40755be05b00fa88e99eba9ea5"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "72482ec6796f281466095348689206523cbd578b5e5eb5134f2cad4b00f1ec99"
         }
       ]
     },
@@ -1031,11 +1187,16 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 2,
       "fingerprint": "e2f8c52f144cd8c4dcfc9dd0f922daebcb4b0d599b9f118aa5752b44cf2ea3a5",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "e2f8c52f144cd8c4dcfc9dd0f922daebcb4b0d599b9f118aa5752b44cf2ea3a5"
+        },
         {
           "round": 2,
           "verdict": "open",
@@ -1052,11 +1213,16 @@
       "first_round": 2,
       "last_seen_round": 2,
       "verdict": "open",
-      "verdict_round": null,
+      "verdict_round": 2,
       "fingerprint": "15ae30ad1c7148454c22b23990aa42235259734c25cdf943e4a455200cd8b242",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
+        {
+          "round": 2,
+          "verdict": "open",
+          "fingerprint": "15ae30ad1c7148454c22b23990aa42235259734c25cdf943e4a455200cd8b242"
+        },
         {
           "round": 2,
           "verdict": "open",
@@ -1072,9 +1238,9 @@
       "line": 68,
       "first_round": 2,
       "last_seen_round": 2,
-      "verdict": "open",
-      "verdict_round": null,
-      "fingerprint": "b5931ffdb715cc6c440dca5c6e9ad43b8efee3bf0a65ae7f82007d4bb1849bb3",
+      "verdict": "addressed",
+      "verdict_round": 2,
+      "fingerprint": "cc34b59de4a078d704759be22064ceb78299c440d2b05f35539da65a36e086f2",
       "fingerprint_kind": "file-diff",
       "fp_verdict": null,
       "history": [
@@ -1082,6 +1248,221 @@
           "round": 2,
           "verdict": "open",
           "fingerprint": "b5931ffdb715cc6c440dca5c6e9ad43b8efee3bf0a65ae7f82007d4bb1849bb3"
+        },
+        {
+          "round": 2,
+          "verdict": "addressed",
+          "fingerprint": "cc34b59de4a078d704759be22064ceb78299c440d2b05f35539da65a36e086f2"
+        }
+      ]
+    },
+    "standards-18": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S2 `scripts/new-wiki.py:920-922` and `:931-933`: the remedy text \"`install-wiki.ps1 -RefreshOnly` (or `new-wiki.py --phase docs` ...)\" is written out twice in the diff, and the frontmatter/toolset exit block is repeated at `new-wiki.py:511-516`, `:916-923` and `wiki-upgrade.py:69-76`. Fix: one shared constant for the hint, one helper in `_install_tooling` for the exit mapping.",
+      "file": "scripts/new-wiki.py",
+      "line": 920,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "628243d76654a62af1bee75f52476d85bb064ee87c3b2b6e720fcb91bab22b6a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "628243d76654a62af1bee75f52476d85bb064ee87c3b2b6e720fcb91bab22b6a"
+        }
+      ]
+    },
+    "standards-19": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] S2/S7 `scripts/new-wiki.py:515` and `scripts/wiki-upgrade.py:74`: `\"the global toolset refresh is incomplete (see the FAILED lines above) \u2014 fix and re-run\"` keeps the vague wording fix round 2 replaced in `phase_b` (`new-wiki.py:920-922`), so one failure has two messages. Fix: use phase_b's wording at both sites.",
+      "file": "scripts/new-wiki.py",
+      "line": 515,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "6376d186ff4537bc728a2be937bdd40033334799113bcad213ff38e5995d6180",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "6376d186ff4537bc728a2be937bdd40033334799113bcad213ff38e5995d6180"
+        }
+      ]
+    },
+    "standards-20": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] S1 `scripts/new-wiki.py:927`: `differs` reads like a flag but holds stale item names. Fix: `stale_names`.",
+      "file": "scripts/new-wiki.py",
+      "line": 927,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d6fa964259430333facb76cf0f0108ed732b8f9a2a3b2cc34d4b1251091a67a9",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "d6fa964259430333facb76cf0f0108ed732b8f9a2a3b2cc34d4b1251091a67a9"
+        }
+      ]
+    },
+    "standards-21": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] `scripts/new-wiki.py:929` says \"toolset docs\" where `scripts/_install_tooling.py:1279` says \"global toolset docs\": one state, two names. Fix: pick one.",
+      "file": "scripts/new-wiki.py",
+      "line": 929,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d6fa964259430333facb76cf0f0108ed732b8f9a2a3b2cc34d4b1251091a67a9",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "d6fa964259430333facb76cf0f0108ed732b8f9a2a3b2cc34d4b1251091a67a9"
+        }
+      ]
+    },
+    "standards-22": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] C3-adjacent `scripts/new-wiki.py:780`: the docstring reflow leaves the short line \"    A global install (`--mode tooling`,\" before the next. Fix: rewrap the paragraph.",
+      "file": "scripts/new-wiki.py",
+      "line": 780,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "242bce65fe72fe896e18683fd0ee5390325d27d1b7da41c0d8e498529b114201",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "242bce65fe72fe896e18683fd0ee5390325d27d1b7da41c0d8e498529b114201"
+        }
+      ]
+    },
+    "standards-23": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] T1 `tests/scripts/test_global_toolset.py:602-612`: the new wiki-upgrade test checks only `code == 1`, not the new stderr text. Fix: also assert the \"refused\" message, as the scaffold test does at `:657-658`.",
+      "file": "tests/scripts/test_global_toolset.py",
+      "line": 602,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59"
+        }
+      ]
+    },
+    "spec-11": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/new-wiki.py:920-922`: the failed-write message says \"free the file named there\", but the FAILED line names the file being written, not the blocker. Intent: plan.md line 181, \"`local` exists as a plain file where the folder should be \u2192 the refresh does not raise; the README is listed in `failed` with the reason\". Implemented: `_guarded(partial(dst.parent.mkdir, ...), dst, failed)` at `scripts/_install_tooling.py:251` records `dst` (the README path), so the user is told to free README.md while the real blocker is the `local` entry. Affected: a user following the message after a plain file sits where `local/` belongs. Fix: record the blocking parent path when mkdir fails, or word it \"free the path named in the FAILED line or the entry that blocks it\".",
+      "file": "scripts/new-wiki.py",
+      "line": 920,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "628243d76654a62af1bee75f52476d85bb064ee87c3b2b6e720fcb91bab22b6a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "628243d76654a62af1bee75f52476d85bb064ee87c3b2b6e720fcb91bab22b6a"
+        }
+      ]
+    },
+    "spec-12": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] `scripts/new-wiki.py:927-933`: when the stale cause is only the uv environment, `differs` is empty and the warning names nothing. Intent: CLAUDE.md Step 0, \"a stale set is named in the plan summary with `-RefreshOnly` as the fix\". Implemented: `stale` is true for `env == \"stale\"` (`_install_tooling.py:1228`), which `differs` does not include; the text reads \"differs from the bootstrap source \u2014 not refreshed here\". The new test sets empty lists with only the toolset stale, so this case is untested. Affected: a user whose only drift is the scripts' environment gets a warning that names no cause (the `()` is gone, the information is not there). Fix: when `differs` is empty and `env` is stale, name \"the scripts' environment (uv)\"; add a test.",
+      "file": "scripts/new-wiki.py",
+      "line": 927,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "d6fa964259430333facb76cf0f0108ed732b8f9a2a3b2cc34d4b1251091a67a9",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "d6fa964259430333facb76cf0f0108ed732b8f9a2a3b2cc34d4b1251091a67a9"
+        }
+      ]
+    },
+    "spec-13": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `scripts/new-wiki.py:920-922`, `:931-933`, `:514-516`, `:916-918`, `:819-821`, `scripts/wiki-upgrade.py:73-76`: sibling \"fix and re-run\" messages name no repair path as phase_b's now does (the phase_docs one has no re-run hint at all). Intent: plan.md line 23 requires only \"says the refresh is incomplete\", so this is consistency, not a gap. Fix: reuse phase_b's wording.",
+      "file": "scripts/new-wiki.py",
+      "line": 920,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "628243d76654a62af1bee75f52476d85bb064ee87c3b2b6e720fcb91bab22b6a",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "628243d76654a62af1bee75f52476d85bb064ee87c3b2b6e720fcb91bab22b6a"
+        }
+      ]
+    },
+    "spec-14": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] `install-wiki.ps1:120` (`[switch]$RefreshOnly`) and `install-wiki.sh:66,85` (`REFRESH_ONLY`) are parsed but never read (Grep: no other use), so the repair `install-wiki.ps1 -RefreshOnly` named by the new text (`new-wiki.py:921`, `:932`) reaches a refresh only through the Mode prompt default (`install-wiki.ps1:172-184`). Pre-existing wording the new lines repeat; the runtime was not run. Fix: wire the switch to `-Mode tooling`, or name the command that works.",
+      "file": "install-wiki.ps1",
+      "line": 120,
+      "first_round": 3,
+      "last_seen_round": 3,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "cc40b8ed78cd3a268ca9db4e7aabd231c66b1f57485f4839da4cdcdaff443d57",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 3,
+          "verdict": "open",
+          "fingerprint": "cc40b8ed78cd3a268ca9db4e7aabd231c66b1f57485f4839da4cdcdaff443d57"
         }
       ]
     }

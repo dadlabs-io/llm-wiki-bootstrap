@@ -1,141 +1,102 @@
-# Review report, round 2 (focused): 243-framework-docs-master
+# Review report, round 3 (focused): 243-framework-docs-master
 
-Fixed point 7b66e2a92fc2cfa3892050f143bd35fe0e6bd40d; HEAD c9a7c89; round 1 reviewed 88e9482. Change under review: the fix round's diff (`git diff 88e9482 c9a7c89`) in the files the fix moved, plus the sibling sites of each addressed finding. Files round 1 reviewed and the fix left alone are out of this round, and nothing new is raised in them. The brief asked for no skip; all three lenses ran, in the foreground (each came back as a launch notice and its report arrived on completion). Lenses ran at the default one-tier-down model. There are no untracked files outside `.do-code-change/`. Spec source: `plan.md`, `requirements.md`, `checkpoints.md`, `doubt-log.md` (resolved from the brief).
+Fixed point 7b66e2a92fc2cfa3892050f143bd35fe0e6bd40d (resolves; merge-base is itself); HEAD 99757ca; round 2 reviewed c9a7c89. Change under review: fix round 2's diff (`git diff c9a7c89 99757ca`, 69 changed lines in 4 files, one part) plus the sibling sites of each addressed finding. Files round 2 reviewed and fix round 2 did not touch (`_install_tooling.py`, `_wiki_config.py` and the rest) are out of this round, and nothing new is raised in them. Left-open items from the brief were not re-raised. The Standards and Spec lenses ran at the default one-tier-down model; each came back as a launch notice and its report arrived on completion. The brief asked for no skip. No untracked files outside `.do-code-change/`. Spec source: `plan.md`, `requirements.md`, `checkpoints.md`, `doubt-log.md`, and CLAUDE.md "Step 0".
 
 ## Standards
 
-- [suggestion] S2 `scripts/_wiki_config.py:114` and `:136`: `"best-practices/local"` is now written in `MERGED_TAXONOMY` and again in `taxonomy_for()` (`folders.append("best-practices/local")`), so one fact lives in two places. Fix: one module constant used in both.
-- [suggestion] PY9 `tests/scripts/test_global_toolset.py:635-638`: the scaffold test discards stderr and asserts only `code == 1 and not target.exists()`. Traced against `phase_b` (new-wiki.py 826-962), it passes for the right reason today: the toolset branch is the only `return 1` reachable with these args. But if `seed/best-practices-local/README.md` were ever missing, the unfixed code would also exit 1 with no target and the test would stay green. Fix: assert the mocked `_install_tooling` was called once and that stderr holds "the global toolset refresh is incomplete". `_ArgsDefaultingToNone` returns None for any misspelt attribute, which also hides argument-name drift.
-- [suggestion] R14 `tests/scripts/test_global_toolset.py:575` (`sys.modules[module_name] = mod`) and `tests/scripts/test_local_folder.py:420`: modules are loaded under fixed names and registered process-wide, never removed. Fix: drop the registration unless needed, or pop the entries afterwards.
-- [suggestion] T4 `tests/scripts/test_global_toolset.py:172-174, 196-198, 211-213, 469-471`: the `_skip` cases record no check, so off Windows (and as root) the held-file and read-only behaviour is untested and nothing in the run footer counts them. Fix: add a skip count to the run footer, or run those cases on a Windows leg.
-- [nit] `scripts/new-wiki.py:779-780`: the reflowed `phase_docs` docstring leaves a short line ("global-toolset notebook. No project wiki") before "carries a copy any more". Fix: reflow the paragraph.
+- [suggestion] S2 `scripts/new-wiki.py:920-922` and `:931-933`: the remedy text "`install-wiki.ps1 -RefreshOnly` (or `new-wiki.py --phase docs` ...)" is written out twice in the diff, and the frontmatter/toolset exit block is repeated at `new-wiki.py:511-516`, `:916-923` and `wiki-upgrade.py:69-76`. Fix: one shared constant for the hint, one helper in `_install_tooling` for the exit mapping.
+- [suggestion] S2/S7 `scripts/new-wiki.py:515` and `scripts/wiki-upgrade.py:74`: `"the global toolset refresh is incomplete (see the FAILED lines above) — fix and re-run"` keeps the vague wording fix round 2 replaced in `phase_b` (`new-wiki.py:920-922`), so one failure has two messages. Fix: use phase_b's wording at both sites.
+- [nit] S1 `scripts/new-wiki.py:927`: `differs` reads like a flag but holds stale item names. Fix: `stale_names`.
+- [nit] `scripts/new-wiki.py:929` says "toolset docs" where `scripts/_install_tooling.py:1279` says "global toolset docs": one state, two names. Fix: pick one.
+- [nit] C3-adjacent `scripts/new-wiki.py:780`: the docstring reflow leaves the short line "    A global install (`--mode tooling`," before the next. Fix: rewrap the paragraph.
+- [nit] T1 `tests/scripts/test_global_toolset.py:602-612`: the new wiki-upgrade test checks only `code == 1`, not the new stderr text. Fix: also assert the "refused" message, as the scaffold test does at `:657-658`.
 
-Unverified:
-- That the dropped `not in files` clause in `toolset_status` was dead: the Standards lens did not read `toolset_files`. (Spec and Change-risk lenses and my own check below read it and found it dead.)
-- The `"FAILED " in out` assertions assume `_print_tooling_summary` prints to stdout; the lens did not resolve the alias. (`print_summary` prints, `_install_tooling.py:1395-1398`.)
-- That a bare `--folder local` now resolves to `best-practices/local` is untested (wiki-promote.py:110,121; wiki-update.py:693).
-- Nothing was executed; test outcomes come from reading.
+Unverified: none. No test was run (read only).
 
 Checks made:
-- Every caller of `print_summary` / `_print_tooling_summary` / `install_tooling` / `_install_tooling` found by Grep: wiki-upgrade.py:61/68, new-wiki.py:500/510 (phase_tooling), 907/915 (phase_b); each now returns 1 on a failed toolset write. `phase_docs` already did. Test files call the functions directly.
-- The Phase B test's earlier `return 1` paths (new-wiki.py 831, 837, 842, 901, 918, 944, 962) traced by me: none fires with the test's args.
-- Standards-4: `toolset_files` keys never lie under `wiki/project/...`, so the dropped clause was always true and the output is unchanged.
-
-Read depth: every fix-round hunk of every moved file was read; each file is `in part` as a whole file because the lens read around the hunks (details in the file table). Only the comment lines at `_install_tooling.py:144-149` were seen by Grep alone, not by the lens's own read. No retry was spawned.
+- Round-1 standards-2 (skipped tests print SKIP and record no check) still holds: `tests/scripts/test_global_toolset.py:40-42`, `def _skip(...)` with `print(f"SKIP {test_name}: {reason}")` and no `check` call; fix round 2 did not touch it.
+- Round-1 standards-1 (a failed toolset write exits 1) still holds: `new-wiki.py:819-821` (phase_docs), `:514-516` (phase_tooling), `:919-923` (phase_b), `wiki-upgrade.py:73-76`. Grep over scripts/ finds `install_tooling(` only at `new-wiki.py:500`, `:907`, `wiki-upgrade.py:61`, and `seed_toolset(` at `new-wiki.py:808` and `_install_tooling.py:795`; every caller tests `toolset.failed`.
+- The warning branch `elif not tooling["current"]` is reached only for stale or not-current state (`_install_tooling.py:1228`, `:1262-1263`), so the `differs` logic is right there.
+- The three new or changed tests each fail on the pre-fix code (the old warning printed `()` with no "toolset docs"; the old message had no `install-wiki.ps1 -RefreshOnly`; the old `wiki-upgrade` returned 0).
 
 | Rule / section | Verdict | Search |
 |---|---|---|
-| S1 Mysterious Name | clear | new identifiers read in context |
-| S2 Duplicated Code | found | `_wiki_config.py:114` vs `:136` |
-| S3 Feature Envy | clear | new helpers read |
-| S4 Data Clumps | clear | summary dict read once |
-| S5 Primitive Obsession | clear | literal read in context |
-| S6 Repeated Switches | clear | no new mode branch |
-| S7 Shotgun Surgery | clear | the three exit sites are one concept, each listed |
-| S8 Divergent Change | clear | none |
-| S9 Speculative Generality | clear | none |
-| S10 Message Chains | clear | none |
-| S11 Middle Man | n/a | no new forwarding class |
-| S12 Refused Bequest | n/a | only subclass overrides `__getattr__` |
-| G25 Magic numbers | clear | env values read against phase_b:903 |
-| F3 Flag Argument | clear | no new boolean parameter |
-| R1 Answers and mutates | clear | helpers read |
-| N7 Hidden Side Effect | clear | helper names read |
-| C5 Commented-out Code | clear | none added |
-| R26 New code nothing uses | clear | Grep: `_skip` 4 uses, `_load_script` 3, `_install_summary_with_failed_toolset` 3, `_ArgsDefaultingToNone` 1, new tests in the run lists |
-| Comments (C1 C2 C3 R2) | found | only nit above; C2 `_wiki_config.py:103-104` checked against `taxonomy_for` |
-| Functions (S13 G34 S14 G19 G28 G29 R4 G31 G16 S15) | clear | S15 dropped clause confirmed dead (see Checks made) |
-| Classes, modules, boundaries (S16 G8 G7 G17 G18 G13 S17 S18 R5 R6 G35 G1) | clear | `sys.modules` write counted under R14 |
-| Error handling (R7 R8 R9 G4 R10 R11) | clear | G4 is the T4 skips; new `_err` lines name the FAILED lines |
-| Tests (T1 T3 T5 T6 R12 R13 R15) | clear | each of the three exit paths and `validate_folder` has a test |
-| R14 / T4 | found | lines above |
-| Python (PY1-PY8, PY10, PY11) | clear / n/a | no cast, Any, async, third-party import; plain-function convention of the repo's test scripts kept |
-| PY9 | found | the scaffold test |
+| S1 | found | `differs` (nit) |
+| S2 | found | remedy string and exit block, four sites |
+| S3-S12 | clear | added lines read; no new type, class, forwarding function or subclass |
+| G25 Magic numbers | clear | literals in the diff read |
+| F3 Flag Argument | clear | no new parameter |
+| R1, N7 | clear | no new function |
+| C5 Commented-out Code | clear | diff read |
+| R26 New code nothing uses | clear | no new function, constant or class; new tests are in the run list (`:815-819`) |
+| Comments (C1 C2 C3 R2) | found | docstring orphan line (nit); no TODO |
+| Functions (S13 G34 S14 G19 G28 G29 R4 G31 G16 S15) | clear | `phase_b` grows by 4 lines; nesting not deepened |
+| Error handling (R7 R8 R9 G4 R10 R11) | clear | the four exit sites read |
+| Tests (T1 T3 T5 T6 R12 R13 R14 R15 T4) | found | T1 nit; no new skip; assertions exact |
+| Python (PY1-PY8, PY10, PY11) | clear / n/a | no cast, async, third-party import; plain-function convention of the repo's test scripts |
+| PY9 | clear | each new test fails pre-fix (see Checks made) |
 
-Well built: the three exit-code tests reach the intended branches through the real `phase_b` and `seed_toolset`, and the `validate_folder` test fails without the MERGED_TAXONOMY entry.
+Read depth: `CHANGELOG.md` in part (10-25), `scripts/new-wiki.py` in part (470-539, 770-827, 880-933), `scripts/wiki-upgrade.py` in full, `tests/scripts/test_global_toolset.py` in part (1-90, 570-827; every changed line).
+
+Well built: the stale-warning test fails before the fix, and the scaffold test now checks that the mocked install ran once.
 
 ## Spec
 
-- [suggestion] `scripts/new-wiki.py:920`: the scaffold's failure message says "fix and re-run", but a re-run only warns and goes on.
-  Intent: CHANGELOG.md:16 "a scaffold's `--install-global-if-missing` stops before it creates the project" (the stop itself is met).
-  Implemented: `_install_tooling.py:1262` `"complete": not missing and not not_checked`; a stale toolset is not in `missing` (`:1226-1227`), so the re-run takes `new-wiki.py:924-927` (`elif not tooling["current"]:` warns "not refreshed here; run `install-wiki.ps1 -RefreshOnly`") and continues to B1 at `:969`.
-  Affected: a user who frees the held file and re-runs gets a project whose toolset docs are still not refreshed. The stale state existed before the change, so it is not a regression.
-  Fix: name the repair command in the message (`install-wiki.ps1 -RefreshOnly` or `new-wiki.py --phase docs`).
-- [nit] `CHANGELOG.md:16`: "A refresh that cannot write or remove one file now lists it as `FAILED`, finishes the rest and exits 1" holds only for toolset files; `_install_tooling.py:648-651` wraps every other failure in `InstallIncomplete`, which stops the install. Fix: say "a toolset refresh".
-- [nit] `plan.md:23`: step 1 says the global install "prints them the same way and says the refresh is incomplete", with no exit code and no scaffold stop; the fix round added both (`checkpoints.md:99`, an orchestrator brief, not a Mark answer). The outcome matches the earlier `InstallIncomplete` path (exit 1 before B1), except that the prune (`:802`) and manifest (`:814`) steps now run. Fix: amend step 1 to record the exit code and the stop.
+- [suggestion] `scripts/new-wiki.py:920-922`: the failed-write message says "free the file named there", but the FAILED line names the file being written, not the blocker.
+  Intent: plan.md line 181, "`local` exists as a plain file where the folder should be → the refresh does not raise; the README is listed in `failed` with the reason".
+  Implemented: `_guarded(partial(dst.parent.mkdir, ...), dst, failed)` at `scripts/_install_tooling.py:251` records `dst` (the README path), so the user is told to free README.md while the real blocker is the `local` entry.
+  Affected: a user following the message after a plain file sits where `local/` belongs.
+  Fix: record the blocking parent path when mkdir fails, or word it "free the path named in the FAILED line or the entry that blocks it".
+- [suggestion] `scripts/new-wiki.py:927-933`: when the stale cause is only the uv environment, `differs` is empty and the warning names nothing.
+  Intent: CLAUDE.md Step 0, "a stale set is named in the plan summary with `-RefreshOnly` as the fix".
+  Implemented: `stale` is true for `env == "stale"` (`_install_tooling.py:1228`), which `differs` does not include; the text reads "differs from the bootstrap source — not refreshed here". The new test sets empty lists with only the toolset stale, so this case is untested.
+  Affected: a user whose only drift is the scripts' environment gets a warning that names no cause (the `()` is gone, the information is not there).
+  Fix: when `differs` is empty and `env` is stale, name "the scripts' environment (uv)"; add a test.
+- [nit] `scripts/new-wiki.py:920-922`, `:931-933`, `:514-516`, `:916-918`, `:819-821`, `scripts/wiki-upgrade.py:73-76`: sibling "fix and re-run" messages name no repair path as phase_b's now does (the phase_docs one has no re-run hint at all). Intent: plan.md line 23 requires only "says the refresh is incomplete", so this is consistency, not a gap. Fix: reuse phase_b's wording.
+- [nit] `install-wiki.ps1:120` (`[switch]$RefreshOnly`) and `install-wiki.sh:66,85` (`REFRESH_ONLY`) are parsed but never read (Grep: no other use), so the repair `install-wiki.ps1 -RefreshOnly` named by the new text (`new-wiki.py:921`, `:932`) reaches a refresh only through the Mode prompt default (`install-wiki.ps1:172-184`). Pre-existing wording the new lines repeat; the runtime was not run. Fix: wire the switch to `-Mode tooling`, or name the command that works.
 
 Unverified:
-- `report_incomplete` (`_install_tooling.py:1299`) was not read, so whether the old log file still matters is unknown.
-- That `_normalize_target_folder` (wiki-promote.py:105-106) accepts `best-practices/local` in a wiki without the folder has no test (`test_local_folder.py:418-429` covers `validate_folder` only). Not run.
-- `checkpoints.md` lines 1-85, `requirements.md` and `doubt-log.md` were searched by Grep, not read in full; `install-wiki.sh` 176-183 and 261-290 were read with context only.
+- `_install_tooling.py:208-220` (`_register_toolset`) and `:243-244` run before the `_guarded` loop and are not guarded: an OSError on the registry write would escape `phase_docs` and stop the rest, so CHANGELOG.md:16 "finishes the rest" holds for toolset files, not the registry. Outside this diff; a test with a read-only `linked-notebooks.json` would settle it.
 - No test was run.
 
 Checks made:
-- The requester's check (Phase B): the stop after a failed toolset write returns 1 before the project folder exists, the same outcome as the earlier `except InstallIncomplete` branch (new-wiki.py:909-911). I confirmed both branches by reading them.
-- Other callers that still exit 0 after a failed toolset write: none (the Standards "Checks made" lists the callers; `install-wiki.ps1` passes `$LASTEXITCODE` and `install-wiki.sh` `exit $?` / `$PHASE_B_EXIT` through, per the Spec and Change-risk lenses).
+- Round-1 risk-1 / standards-1 (exit 1 from every global-tooling entry point) still holds: phase_docs `:819-821`, phase_tooling `:514-516`, phase_b `:919-923`, wiki-upgrade `:73-76`; `install-wiki.ps1` `exit $LASTEXITCODE` (`:215`), `exit $exit` (`:249-251`), `exit $phaseBExit` (`:336`); `install-wiki.sh` `exit $?` (`:183`), `exit $EXIT` (`:216-218`), `exit $PHASE_B_EXIT` (`:290`).
+- (A) The new warning text is true: `()` omitted (`:931`), "toolset docs" added when the toolset is stale (`:928-929`); `--phase docs` repairs a stale toolset (`seed_toolset` add/replace/remove, `_install_tooling.py:249-257`; `phase_docs` `:808`); a re-run after a freed file proceeds because `complete` ignores toolset staleness (`_install_tooling.py:1262`).
+- (B) `wiki-upgrade.py:69-72` returns 1 on `frontmatter_failed`; `print_summary` prints it (`_install_tooling.py:1369-1373`).
+- (C) Every clause of CHANGELOG.md:16 verified: FAILED line printed by phase_docs (`:815`), `_print_tooling_summary` (`_install_tooling.py:1395-1398`) and wiki-upgrade; "finishes the rest" (`:249-257`, `_guarded` `:223-231`); exit 1 on all four paths; the scaffold stops before the project (`phase_b` returns at `:923`, project work starts at `:938`).
+- (D) The three tests (`:602-612`, `:635-658`, `:661-678`) are in the run list (`:815-819`) and fail on the old code; the stale test's `unrelated.txt` triggers the refusal at `new-wiki.py:940-950`, so the scaffold does stop after the warning.
 
-| Check / finding | Verdict | Search |
+| Rule / claim | Verdict | Search |
 |---|---|---|
-| A Phase B stop vs the earlier InstallIncomplete outcome | found | nit 3: same exit and stop; prune and manifest now run before the stop |
-| B other callers exit 0 after a failed write | clear | Grep `print_summary\|_print_tooling_summary\|install_tooling\|_install_tooling(\|seed_toolset` over scripts, tests, wrappers: all CLI exit paths return 1 |
-| C new tests prove the behaviour | clear | only the failed-toolset `return 1` is reachable; red on the unfixed code (see also Standards PY9 suggestion) |
-| D MERGED_TAXONOMY accepts best-practices/local | found | accepted by both guards; bare `local` now auto-prefixes (see Change risk); plan is silent on it |
-| E CHANGELOG sentence | found | nit 2 |
-| F dropped clause | clear | clause always true; output identical |
-| standards-1/risk-1/spec-7 | clear | exit 1 on all three paths |
-| standards-7/spec-2/risk-4 | clear | validate_folder and promote accept the folder |
-| spec-4/5 comments | clear | `wiki-map-compile.py:375`, `_wiki_config.py:103-104` |
-| left-open items | not re-raised | per the brief |
+| A1 warning never prints `()` | clear | `new-wiki.py:926-933`; test `:676` |
+| A2 names "toolset docs" when stale | clear | `:928-929` |
+| A3 empty `differs` case | found | `_install_tooling.py:1228` |
+| A4 `--phase docs` is the docs repair | clear | `seed_toolset` `:234-259`, `phase_docs` `:808` |
+| A5 re-run after a freed file proceeds | clear | `phase_b` `:893`, `:926`; `:1262` |
+| A6 "free the file named there" is true | found | `_install_tooling.py:223-257` |
+| B wiki-upgrade returns 1 on frontmatter_failed | clear | `wiki-upgrade.py:69-72` |
+| C CHANGELOG.md:16 clauses | clear | four exit paths read |
+| D tests prove A-C | clear | `:602-678`, run list `:815-819` |
+| Sibling "fix and re-run" messages | found | nit above |
+| Every entry point exits 1 | clear | Grep `install_tooling\(\|seed_toolset\(\|from _install_tooling` over scripts/ |
+| Wrappers pass the exit code | clear | Grep `LASTEXITCODE\|exit \$\?` in install-wiki.* |
+| `-RefreshOnly` read by a wrapper | found | Grep `RefreshOnly` in install-wiki.ps1 / .sh |
+| Registry write guarded | unverified | `_install_tooling.py:208-220` |
 
-Well built: the Phase B and `wiki-upgrade` tests trigger the real `seed_toolset` failure through a plain file, not a mock, and the wrappers pass every exit code through.
+Read depth: `CHANGELOG.md` in part (1-25), `scripts/new-wiki.py` in part (156-170, 480-539, 770-938), `scripts/wiki-upgrade.py` in full, `tests/scripts/test_global_toolset.py` in part (590-680, 790-827; every added test and the run list); siblings read in part: `_install_tooling.py`, `install-wiki.ps1`, `install-wiki.sh`.
+
+Well built: the failed-write path records each failure and keeps running, so one held file does not stop the refresh, and each exit-1 path has a test that fails on the old code.
 
 ## Change risk
 
 | File | Risk | Why | Part | Standards | Spec | Change risk |
 |---|---|---|---|---|---|---|
-| `scripts/_install_tooling.py` | HIGH | a guard clause removed from the scan whose result feeds file deletion in the user's toolset | 1 | in part (changed hunks; 144-149 by Grep) | in part (changed hunks) | in part (hunk 194-201 in full) |
-| `scripts/new-wiki.py` | MEDIUM | exit-code and state change in phase_tooling and phase_b | 1 | in part (changed hunks) | in part (changed hunks) | in part (hunks 514-516, 919-921 in full) |
-| `scripts/wiki-upgrade.py` | MEDIUM | exit code of the global upgrade | 1 | in part (all of `main`) | in full | in part (40-78) |
-| `scripts/_wiki_config.py` | MEDIUM | widens what the folder guards accept | 1 | in part (all changed lines) | in part | in part |
-| `scripts/wiki-map-compile.py` | LOW | comment | 1 | in part (368-377) | in part | not read |
-| `CHANGELOG.md` | LOW | docs | 1 | in part (changed line) | in part | not read |
-| `tests/scripts/test_global_toolset.py` | LOW | tests | 1 | in part (all new tests in full) | in part | in part |
-| `tests/scripts/test_local_folder.py` | LOW | tests | 1 | in part (new test in full) | in part | in part |
-| `tests/scripts/test_standalone.py` | LOW | tests | 1 | in part (162-172) | in part | grep only |
+| `scripts/new-wiki.py` | MEDIUM | exit-code message and warning text in phase_b; docstring | 1 | in part (changed hunks) | in part (changed hunks) | — |
+| `scripts/wiki-upgrade.py` | MEDIUM | exit code of the global upgrade | 1 | in full | in full | — |
+| `tests/scripts/test_global_toolset.py` | LOW | tests | 1 | in part (every changed line) | in part (every changed line) | — |
+| `CHANGELOG.md` | LOW | docs | 1 | in part (line 16) | in part (line 16) | — |
 
-Files round 1 reviewed and the fix round did not touch are out of this round. The removed-line history (16 lines, all searched) shows no earlier fix or security commit on any removed line; the script's FIX marks are only because the fix commit's own subject says "fix round".
-
-- [important] `scripts/new-wiki.py:925`: a re-run after a failed toolset write warns and proceeds instead of stopping or refreshing. `global_tooling_status` reports the toolset as stale, not partial, so `complete` is true and the scaffold exits 0.
-  Quote: `_warn("global tooling is installed but differs from the bootstrap source " f"({', '.join(tooling['stale_skills'] + tooling['stale_scripts'] + tooling['stale_agents'])}) — "`; the toolset is not in that join, so the message prints `()`.
-  Mechanism: `missing` counts only `toolset["state"] == "missing"` (`_install_tooling.py:1226-1228`) and `toolset_status` reports `stale` once the root exists (`:202`).
-  Fix: have the warning name the toolset docs and the refresh command, or treat a stale toolset as a reason to refresh before scaffolding.
-  Test gap: the scaffold test mocks `global_tooling_status` (`tests/scripts/test_global_toolset.py:632`), so the real re-run state is never exercised.
-- [suggestion] `scripts/_wiki_config.py:114` with `scripts/wiki-promote.py:109-112`: `MERGED_TAXONOMY` gaining `best-practices/local` makes a bare `local` leaf auto-prefix to `best-practices/local`. It used to be kept as-is with a warning. `_normalize_target_folder` checks only for a README under the folder (`:107`), not that the folder exists, so an existing wiki's own `local/` without a README is silently redirected. `wiki-update.py` is protected by its Case 1 (`:680`). Untested. Fix: add a promote test for bare `local`, or check the directory exists in promote.
-- [suggestion] `scripts/_install_tooling.py:199-201`: the old-docs scan lists every `*.md` under `wiki/project/best-practices/framework` for removal with no name check. The removed `not in files` clause was dead (no `toolset_files` key lies under `wiki/project/`, `:153-168`), so the fix changes no behaviour, and a user's own `.md` there was already deleted. Fix: restrict to the six doc names if only the old copy should go.
-- [suggestion] `scripts/wiki-upgrade.py:68-72`: a sibling of the fix's toolset check, outside its hunk and outside what the brief named. It tests only `toolset.failed`, not `frontmatter_failed`, which `new-wiki.py:511` and `:916` both test, so `wiki-upgrade` exits 0 when skills were refused. Fix: add the same check.
-
-Unverified:
-- Round-1 risk-2 and risk-3 were not in this lens's brief, so it cannot say whether the third finding is one of them (left open on purpose; if it is, it is not re-raised).
-- A junction from the old path to the new one would make the scan delete freshly written docs; not checked.
-- Whether any existing wiki has a top-level `local/` without a README is unknown.
-
-Checks made:
-- Returning 1 on a failed toolset write matches the `InstallIncomplete` branch (new-wiki.py:909-911); nothing project-side is written before the return. The registry entry is written before any file operation (`_install_tooling.py:243-244`), so a failed run still leaves the toolset registered.
-- `install-wiki.ps1` passes `$LASTEXITCODE` through (`:215`, `:251`, `:336`); `install-wiki.sh` runs under `set -euo pipefail` (`:48`).
-- `TOOLSET_LOCAL_DIR` (`wiki/best-practices/local`) is not under the old folder (`_wiki_config.py:525,527`).
-- The Phase B test is not vacuous: without the check the project is created and `not target.exists()` fails.
-
-| Question / file | Verdict | Search |
-|---|---|---|
-| Q1 old-docs scan deletes only old docs | found | suggestion 3; behaviour unchanged |
-| Q2 phase_b re-run state | found | important finding 1 |
-| Q3 callers and wrappers | found | suggestion 4 (sibling); callers clear |
-| Q4 MERGED_TAXONOMY blast radius | found | suggestion 2 |
-| Q5 untested surface | clear / found | each exit-1 branch has a test that would fail without it; the re-run state is untested (finding 1) |
-| `_install_tooling.py` (HIGH) | found | seed_toolset, toolset_status, global_tooling_status, print_summary |
-| `new-wiki.py`, `wiki-upgrade.py`, `_wiki_config.py` (MEDIUM) | found | phase_tooling, phase_b, phase_docs; main; MERGED_TAXONOMY and TOOLSET_* |
-
-Well built: the failure list is returned and printed, and every write is guarded, so one held file does not stop the rest of the refresh.
+No high-risk file: the change-risk lens was not run (the diff changes message text, one added exit-1 check and tests; no auth, crypto, external call, migration or removed validation). Files round 2 reviewed and fix round 2 did not touch are out of this round.
 
 ## needs-a-human
 
@@ -143,6 +104,6 @@ None: no finding touches auth, authz, tokens, sessions or a production-data migr
 
 ## Summary
 
-Standards: 5 findings (4 suggestion, 1 nit); worst: the scaffold test could stay green if another early return fired (PY9, a suggestion). Spec: 3 findings (1 suggestion, 2 nit); worst: the scaffold's "fix and re-run" message points at a re-run that only warns. Change risk: 4 findings (1 important, 3 suggestion); worst: the re-run after a failed toolset write warns and proceeds, and the test mocks that state away. The Spec and Change-risk lenses agree on that re-run behaviour. Acting on the Change-risk important finding and the matching Spec suggestion is worth doing. The requester's two named checks came out as follows: Phase B's exit 1 matches the earlier `InstallIncomplete` outcome, and no other caller of `print_summary` / `_print_tooling_summary` still exits 0 on a failed toolset write (the sibling `frontmatter_failed` gap in `wiki-upgrade.py` is a separate pre-existing difference). No file is read `not read` by every axis; reads are `in part` per the file table, with every fix-round hunk read.
+Standards: 6 findings (2 suggestion, 4 nit); worst: the remedy text and the exit-mapping block are repeated across four sites, and two sibling messages keep the vague wording (S2, suggestions). Spec: 4 findings (2 suggestion, 2 nit); worst: "free the file named there" points at the README while the blocker can be the `local` entry, and a uv-environment-only stale state still gets a warning that names no cause. Change risk: not run. The axes agree on one point: the sibling "fix and re-run" messages in `new-wiki.py:515` and `wiki-upgrade.py:74` were not brought to phase_b's wording. Acting on the Spec suggestions is worth doing. Re-verification you asked for: standards-1 / risk-1 (exit 1 from every global-tooling entry point) still holds, and standards-2 (skipped tests print SKIP and record no check) still holds. Fix round 2's addressed items risk-5, spec-8, risk-8, standards-14, spec-9 and standards-17 are met as claimed, each new test failing on the old code. Every file was read in full or in part with every changed line read; none is `not read`.
 
-VERDICT: Standards FINDINGS · Spec FINDINGS · Change risk FINDINGS · needs-a-human 0
+VERDICT: Standards FINDINGS · Spec FINDINGS · Change risk NOT RUN · needs-a-human 0
