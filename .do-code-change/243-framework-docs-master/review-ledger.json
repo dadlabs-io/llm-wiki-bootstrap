@@ -303,6 +303,91 @@
         "wiki-seed/obsidian.md": "03c0f751354bd56919887306fec15fb7c58f3b7c9ea0fc61a7aec52fc9e89165",
         "wiki-seed/user-guide.md": "6d56d94ac880fd3b2f406fa3e0db10d8901334c4eafc94e2de1a9d857f8bbc79"
       }
+    },
+    {
+      "round": 4,
+      "at": "2026-11-20T16:08:47Z",
+      "diff_sha256": "f132e1dd4211c3586263b2a7e0d45ffbd6a56a6ca1699f45952b1a19c5afa16f",
+      "findings_sha256": "c6a88a58973235ade0c54549b422f00a04beb2cefbf782104c1c213d9d3d302c",
+      "review_only": false,
+      "confirming": false,
+      "seen": [
+        "standards-24",
+        "standards-25",
+        "spec-15",
+        "spec-16",
+        "spec-17",
+        "spec-18",
+        "spec-19"
+      ],
+      "new": [
+        "standards-24",
+        "standards-25",
+        "spec-15",
+        "spec-16",
+        "spec-17",
+        "spec-18",
+        "spec-19"
+      ],
+      "reopened": [],
+      "reverted": [],
+      "files": {
+        ".claude/do-code-change.json": "1ee61ca848e0dd90947101a1b9f54d047969eca1e1451c3f59483932cb4a24e9",
+        "CHANGELOG.md": "832d3acd9526ba35367ffd81160f2513cd711fe12f4475567122674c85e92e73",
+        "CLAUDE.md": "9871402365a8d2d7779b5a67d0345dd098ca15986d8b511d13fd8282a3bbce73",
+        "INSTALL-INVENTORY.md": "9a49fde40a2a05771dfc06a5dd32aedfa3131d5294c0158c8f67baefd47fb4b7",
+        "V2_ROADMAP.md": "e9c9d8b1552438198ba00fd812b5afb06cc5b6883274cbeee188e6975d16fe55",
+        "agents/wiki-ingester/wiki-ingester-reading-list.json": "58f9c8544520af76ff7fdae7318c1c8dab65d80678326bbcfae6ce8bbf45658b",
+        "framework-docs/cycle-step-return-format.md": "227f381b0fdc29a792cfb71026b148d9b6658e3e71544fbef096de79fca37b45",
+        "framework-docs/memory-signals-sidecar-vs-frontmatter-pattern.md": "116f73f5d1bc42cb839eebeef1f3a35a3f3c94363fd48ecb5c9e359dd2b1623b",
+        "framework-docs/tiered-context-loading.md": "c2469ae9798add1c016db2a709a18d446b1b64c956e589651e2253ff1a6049f5",
+        "framework-docs/wiki-authoring-best-practices.md": "10d44a3ee773a5ed8ff899a7f3edf53e7b168d5a41aaedc1a6ce64a097ab3dd3",
+        "framework-docs/wiki-frontmatter-best-practices.md": "e17380d8a059077e6bf4ad6cd2e2d4ab83647ebc872617037f50e0dce8d16f50",
+        "framework-docs/wiki-search-bucket-rerank-spec.md": "4f90de94be308de739d54a9846dd004c7a8d05a9efad7cdc99d68a82ab23c908",
+        "scripts/_install_tooling.py": "5681ef34f175cd44053b2340a51be1a2bc4d5885d415205ff2b492b2773fea6b",
+        "scripts/_wiki_config.py": "b85abf1432035fe534ab5d30cb0cfa67ceaa8ba6c47f1675fa5b61327cde4e32",
+        "scripts/new-wiki.py": "72482ec6796f281466095348689206523cbd578b5e5eb5134f2cad4b00f1ec99",
+        "scripts/wiki-map-compile.py": "610ef454d1469bdd820b08a828870f803b9bee788462296d9af2bdbaa0a1bf10",
+        "scripts/wiki-qmd-query.py": "30c095e9b02c1c32cafac68e763c709b30cdb8455aaceadc97db29f8a3c08320",
+        "scripts/wiki-update.py": "8333af93513d0a86993f78fdbc998eed59da99b9960b66397229b52f6b283e3e",
+        "scripts/wiki-upgrade.py": "cc34b59de4a078d704759be22064ceb78299c440d2b05f35539da65a36e086f2",
+        "seed/best-practices-local/README.md": "d284ee405d030587d5626b3ceac899a9e8b7a300eedeff9b52793abeb149690e",
+        "seed/global-toolset-README.md": "d0cb433289364c5715361fab1e147e0333ca880a98fee515e75f6a51a90b4e78",
+        "seed/how-to/_FRAMEWORK_MANAGED.md": "8229028bfe1d37d7fef0ce01fcccad04f4e7752bf13896f3000c27c92b45bd71",
+        "skills/new-wiki/SKILL.md": "7d7678c12913cf4f155541f6c7f3a181e8fb1ba384baaea4addbd6b5690244cb",
+        "skills/new-wiki/wiki-seed/new-wiki.md": "c58e385e1c38b30c6a4c5be5e38be76b755b4e501e58159c76d8e08e4ec3a9b1",
+        "skills/wiki-claims/SKILL.md": "625783505dc85071c27d9c5d3e0d5838ef420c55adb5a6c17684a91ad3b921d4",
+        "skills/wiki-cycle/SKILL.md": "f0311df361986d1c711e54ab2cbd26cd9d2d4d0da3bb19ad7a6188219414e55d",
+        "skills/wiki-cycle/reference.md": "4ad0726813e655011a23a6e2afdc62fba951ea108d7311f3e9f8a384f1a998cc",
+        "skills/wiki-discover/SKILL.md": "93385f4ff5f2b81bffedc46961404130b6f20f9e3202083dde1ed0e68bd0e3d0",
+        "skills/wiki-discover/wiki-seed/wiki-discover.md": "2c34c94697a63cceb08f09756854cece2f6486c09f9a9fae4e4c282bd6a61e1d",
+        "skills/wiki-lint/SKILL.md": "6091e57270f7669c38254872cc652f2ab6034eaa92c187b39b71bb8cfc652f9a",
+        "skills/wiki-lint/wiki-seed/wiki-lint.md": "2943e66e8a8e9fcab2bf1d793d3cae090f13a5da319c644e059b7099b4108e0c",
+        "skills/wiki-refresh/SKILL.md": "c2e16954d32078a2638918f67be09284522a2c9eeb811ac65b0c0d250d9a521f",
+        "skills/wiki-refresh/wiki-seed/wiki-refresh.md": "6a91b4ec4fac4962e7054f32112b99f43e8a3e95f06b24b82b78161ef59a2667",
+        "skills/wiki-report/SKILL.md": "8138fc4b267ba8a460a24a3b88867aa5b1ba766460df7cfd4fb9f78811f16248",
+        "skills/wiki-rollback/SKILL.md": "1ede2c727814b50959638a74dd5160654f8a56cf66d5b1c6f885610c0ad93b18",
+        "skills/wiki-search/SKILL.md": "d4e180b307d2e7f5c75861646cf4690741422d2ad32d9b6e5dcf01c4f1f0cce1",
+        "skills/wiki-update/SKILL.md": "13fce85f4a3ea8ad760a34337c7d15e1c44b3dd2707207ff94a238a4b34b0259",
+        "skills/wiki-update/wiki-seed/wiki-update.md": "01b635403fbdd748e7203f0fa0fc6147c37f045a8b3bd04f1e37e25064a04708",
+        "skills/wiki-verify/SKILL.md": "a3842165009f21052b2bdfaf12cc61355a392e4d64ad0476c700dd2238e48ed2",
+        "skills/wrap-up/wiki-seed/wrap-up.md": "6375d8c5b6279c9a347abfc91d39a27d0bab9d1e8c80b93f4760211ea7be3118",
+        "templates/CLAUDE.md.tmpl": "a073712073a065892ff9a682b3bb264abeabe915e1882c807d2534472bbeeb17",
+        "templates/feeds.md.tmpl": "772f64458bbb8f9c5b430df96202c37a2222a853c742df6b1cff0f17bb263a58",
+        "tests/scripts/test_global_toolset.py": "872fd898cec3cab5b90b6793ebcbda9c874aa5ac6a96cf035126c4fd0a5d474f",
+        "tests/scripts/test_link_gaps.py": "1115ada188c36d4ec33e98dbdcacd8115e9fdef620d54aacd8080d01765133b8",
+        "tests/scripts/test_local_folder.py": "6684f8ae073bdb1091b5e32238bdff40d68c749c9cdc242023fc6cc9b488e5d9",
+        "tests/scripts/test_search_mode.py": "aa931625232996bb1b02e5048046766f958b957386f6aa7001c77496448a121f",
+        "tests/scripts/test_standalone.py": "3dcc1441ac3f998c129b5762d813fd5c14952d92a0f283e02f061234826c9de6",
+        "tests/skills/PENDING.md": "147be3f5f1f337c148e63773ae0524d622e4a2a37cc163bd834e4b5ce1c65fb3",
+        "tests/skills/new-wiki/baseline-opus.json": "a020dcdeb7d176bdc076aad1b28f417a86c5bd366ca57475285570cdd9e8d265",
+        "tests/skills/new-wiki/baseline-sonnet.json": "4bc1351dda960251ec382bc096d861e03a8ec41b36fd482e60264dd598576fa6",
+        "tests/skills/new-wiki/cases.json": "27b718f160538c02a00cb2e2f081a3df0785f238cc7248f47098ee375b71c121",
+        "tests/skills/new-wiki/check.py": "20427cd692d941a1915e4ea2f8307c4d81a0c9cc91c3a8869684945cec04f811",
+        "wiki-seed/install.md": "ec3670711e8041e4554d0480f470cef338119e08e03eab4064d483a0e671a5b0",
+        "wiki-seed/obsidian.md": "03c0f751354bd56919887306fec15fb7c58f3b7c9ea0fc61a7aec52fc9e89165",
+        "wiki-seed/user-guide.md": "6d56d94ac880fd3b2f406fa3e0db10d8901334c4eafc94e2de1a9d857f8bbc79"
+      }
     }
   ],
   "items": {
@@ -346,8 +431,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 3,
-      "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59",
+      "verdict_round": 4,
+      "fingerprint": "fc45117324ebc501b1ffca5fb8b23c63d37015d60a55bb5777fb7c09c5dad011",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -365,6 +450,11 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "c71f0b1df83f8188a894751ee6f6c112fda5c724a506e74b6e8f7dc5ac4f4d59"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "fc45117324ebc501b1ffca5fb8b23c63d37015d60a55bb5777fb7c09c5dad011"
         }
       ]
     },
@@ -637,8 +727,8 @@
       "first_round": 1,
       "last_seen_round": 1,
       "verdict": "addressed",
-      "verdict_round": 3,
-      "fingerprint": "d0316b0103ea7224087cc30148f7af7a635594c7472b7927246ab9d1ecc5cca9",
+      "verdict_round": 4,
+      "fingerprint": "20f9100ae5263e203a7b0e0795e0cf418bcd4a46f27baac752690ec702a53aca",
       "fingerprint_kind": "hunk-diff",
       "fp_verdict": null,
       "history": [
@@ -661,6 +751,11 @@
           "round": 3,
           "verdict": "addressed",
           "fingerprint": "d0316b0103ea7224087cc30148f7af7a635594c7472b7927246ab9d1ecc5cca9"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "20f9100ae5263e203a7b0e0795e0cf418bcd4a46f27baac752690ec702a53aca"
         }
       ]
     },
@@ -1468,6 +1563,158 @@
           "round": 3,
           "verdict": "open",
           "fingerprint": "cc40b8ed78cd3a268ca9db4e7aabd231c66b1f57485f4839da4cdcdaff443d57"
+        }
+      ]
+    },
+    "standards-24": {
+      "axis": "standards",
+      "severity": "suggestion",
+      "text": "[suggestion] standards-24 `tests/scripts/test_local_folder.py:25` (C3 / Python): the removed `# noqa: E402` leaves `import _wiki_config as wc` with no recorded reason for sitting after the `sys.path.insert` on line 24, and the same pattern is marked differently elsewhere (`test_search_mode.py:63` keeps `# noqa: E402`; `test_global_toolset.py:695` has no marker). Fix: a plain reason line above the import (\"after the sys.path insert\"), or one form in all three files.",
+      "file": "tests/scripts/test_local_folder.py",
+      "line": 25,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "837ec3eb44e93fb40878ffa7966c53fda61f9d208ce3c0d9b834e7dbbd80f8b3",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "837ec3eb44e93fb40878ffa7966c53fda61f9d208ce3c0d9b834e7dbbd80f8b3"
+        }
+      ]
+    },
+    "standards-25": {
+      "axis": "standards",
+      "severity": "nit",
+      "text": "[nit] standards-25 `tests/scripts/test_search_mode.py:323` (G4): `gpu = lambda: (\"cuda\", \"CUDA: available\")  # noqa: E731` (and `:324`) is a suppression in a file this window edited. It predates the change (present at the fixed point, so floor-guard does not count it). Fix: a local `def`, or leave it.",
+      "file": "tests/scripts/test_search_mode.py",
+      "line": 323,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "aa931625232996bb1b02e5048046766f958b957386f6aa7001c77496448a121f",
+      "fingerprint_kind": "file-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "aa931625232996bb1b02e5048046766f958b957386f6aa7001c77496448a121f"
+        }
+      ]
+    },
+    "spec-15": {
+      "axis": "spec",
+      "severity": "important",
+      "text": "[important] spec-15 `.do-code-change/243-framework-docs-master/plan.md:189` \u2014 the clause \"`.claude/wiki-config.json`'s `wiki_folders` keeps only the interview's two answers (`project`, `research`)\" is an Expected line that no test and no `manual:` line backs. Intent: plan.md:186 \"done when the new checks in `tests/scripts/test_local_folder.py` pass\". Code: `scripts/new-wiki.py:1218` and `:1256` write `\"wiki_folders\": {\"project\": args.project_folder, \"research\": args.research_folder}`. The behaviour is true and unchanged by this run (neither line is in the `7b66e2a..HEAD` diff of `new-wiki.py`). No test reads a scaffolded `.claude/wiki-config.json`'s content (`test_local_folder.py:145-146` reads the Phase B stdout summary list, a different value). `## Testing Decisions` has no `manual: step 3` line. Affected: verify's coverage layer (row 3c) fails on it. Fix: a `manual: step 3` line in `## Testing Decisions` quoting the probe output; reasoning under Checks made, question 2.",
+      "file": ".do-code-change/243-framework-docs-master/plan.md",
+      "line": 189,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "addressed",
+      "verdict_round": 4,
+      "fingerprint": "d4044df5f2063b18679ada300c4a2f3dc410c75de83459c6acb2f984443fc832",
+      "fingerprint_kind": "hunk-diff",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "fd8209ca08bf29c18d9a45d4c19a9d5a51611bd6a7e2337c9e5c3ae35efdda35"
+        },
+        {
+          "round": 4,
+          "verdict": "addressed",
+          "fingerprint": "d4044df5f2063b18679ada300c4a2f3dc410c75de83459c6acb2f984443fc832"
+        }
+      ]
+    },
+    "spec-16": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] spec-16 `plan.md:26` \u2014 still says `taxonomy_for`'s one caller \"`new-wiki.py:1016` ... also feeds `wiki_folders_md` ... and `.claude/wiki-config.json`'s `wiki_folders`\", which contradicts plan.md:189. The caller is `new-wiki.py:1043` (`folders = taxonomy_for(...)`); the list reaches only the README folder list and the stdout summary (`:1345`), never the config. Fix: edit with spec-15's fix: \"feeds `wiki_folders_md` and the Phase B summary\", citing `:1043`.",
+      "file": "plan.md",
+      "line": 26,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "8cf6398c5622a3dcb91a92f11434471672a237445cacdc5b75d7d8306941ff8b",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "8cf6398c5622a3dcb91a92f11434471672a237445cacdc5b75d7d8306941ff8b"
+        }
+      ]
+    },
+    "spec-17": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] spec-17 `plan.md:32` \u2014 \"so the mechanical lint finds nothing in it\" contradicts plan.md:190 and checkpoints.md:83 (the lint does draw findings on the new README, the same as HOME.md). Fix: reword to match line 190.",
+      "file": "plan.md",
+      "line": 32,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "fed283d7347caa0380db4f8ed5b65bc2ccf2f2a1e09954ba4b98c2f1ac8c85ef",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "fed283d7347caa0380db4f8ed5b65bc2ccf2f2a1e09954ba4b98c2f1ac8c85ef"
+        }
+      ]
+    },
+    "spec-18": {
+      "axis": "spec",
+      "severity": "suggestion",
+      "text": "[suggestion] spec-18 `plan.md` step 17 (lines 297, 303, 306) \u2014 the literal done criterion (\"every case 'red then green' on Sonnet and Opus\"; \"a case that passes on the old copy: not counted as proof\") is still unmet for `local-readme-project-none`; it is met only under Mark's recorded ruling (checkpoints.md:102, \"It meant what you recommended\", DM 2026-11-20 15:28Z). The ruling does not say in words that the free check is model-independent. Fix: a one-line dated amendment under step 17 citing checkpoints.md:102. This does not reopen spec-1.",
+      "file": "plan.md",
+      "line": null,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "055288b1e942e131efe0c540f787ef9b9ce3b90dc15223f60da1b447ee08808d",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "055288b1e942e131efe0c540f787ef9b9ce3b90dc15223f60da1b447ee08808d"
+        }
+      ]
+    },
+    "spec-19": {
+      "axis": "spec",
+      "severity": "nit",
+      "text": "[nit] spec-19 `plan.md:49` \u2014 red-team history \"step 3 lints a freshly scaffolded wiki and expects no finding from `best-practices/`\" is superseded by line 190. Fix: mark it superseded.",
+      "file": "plan.md",
+      "line": 49,
+      "first_round": 4,
+      "last_seen_round": 4,
+      "verdict": "open",
+      "verdict_round": null,
+      "fingerprint": "a64293aac07b984907031bcbc009d690779fe0294b558633106a977ca65c93ef",
+      "fingerprint_kind": "text-only",
+      "fp_verdict": null,
+      "history": [
+        {
+          "round": 4,
+          "verdict": "open",
+          "fingerprint": "a64293aac07b984907031bcbc009d690779fe0294b558633106a977ca65c93ef"
         }
       ]
     }
