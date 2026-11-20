@@ -15,6 +15,7 @@
   "date": "2026-11-20",
   "mutation_decision": {
     "note": "decided_by and date above are the mutation setting's (prove_tests_bite.py reads them at the top level)",
-    "reason": "Mark, Discord DM 2026-11-20 04:29Z: \"yeah they dopnt really apply so much for us, its more for code CODE\" (asked: accept tests-bite this once, or make it standing). prove_tests_bite.py cannot see scripts/; a hand mutation pass runs when a change is worth it"
+    "reason": "Mark, Discord DM 2026-11-20 04:29Z: \"yeah they dopnt really apply so much for us, its more for code CODE\" (asked: accept tests-bite this once, or make it standing). prove_tests_bite.py cannot see scripts/; a hand mutation pass runs when a change is worth it",
+    "scope": "Mark, terminal 2026-11-20 (chose option 2 of 2): a change to skills or docs only gets no mutation pass; a change that edits a file under scripts/ gets a hand mutation pass on its changed lines, run after the last step's green and recorded in the run's implement-log.md (pattern: hand-mutation.py.txt in .do-code-change/archive/2026-11-20-243-framework-docs-master/). Why: 'unless we are writiung scripts, its hard to test for our skills'"
   }
 }
