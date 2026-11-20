@@ -1,0 +1,39 @@
+{
+  "slug": "243-framework-docs-master",
+  "outcome": "success",
+  "outcome_note": "Finishing decision: merge features/243-framework-docs-master into main (fast-forward), then push main (Mark 2026-11-20T17:26Z 'Merge please'). Verify round 3 VERDICT: PASS on every layer; tests-bite off by the signed on-demand setting (Mark 2026-11-20). Step 17's red for local-readme-project-none rests on the free old-vs-new script check, by Mark's ruling (15:28Z 'It meant what you recommended'); the harness gap is card #252. Review round 4 and verify rounds 2-3 ran past the retry ceiling on Mark's word (16:02Z '1': one more review round).",
+  "size": "full",
+  "size_moved_to_full": false,
+  "fixed_point": "7b66e2a",
+  "branch": "features/243-framework-docs-master",
+  "stages": [
+    {"stage": "clarify and Requirements confirmation", "start": "2026-11-19T00:55:29-05:00", "end": "2026-11-19T11:08:09-05:00", "retries": 0, "note": "start is the clarify commit; the gap is a wait for Mark"},
+    {"stage": "plan, red-team x3, Plan confirmation", "start": "2026-11-19T11:08:09-05:00", "end": "2026-11-19T15:09:18-05:00", "retries": 0, "note": "three red-team rounds; plan errors fixed; Mark's go and the scope baseline at the end"},
+    {"stage": "implement steps 1-17 (and 4b)", "start": "2026-11-19T15:09:18-05:00", "end": "2026-11-19T22:47:41-05:00", "retries": 0, "note": "step 17 paid red-green $3.18 and stubs re-run $0.28"},
+    {"stage": "mutation setting and hand mutation pass", "start": "2026-11-19T22:47:41-05:00", "end": "2026-11-19T23:51:52-05:00", "retries": 0, "note": "92 mutants, 89 killed, 3 equivalent, 5 tests added"},
+    {"stage": "review rounds 1-3 and fix rounds 1-2", "start": "2026-11-19T23:51:52-05:00", "end": "2026-11-20T00:41:53-05:00", "retries": 2},
+    {"stage": "spec-1 settled by Mark", "start": "2026-11-20T00:41:53-05:00", "end": "2026-11-20T10:29:27-05:00", "retries": 2, "note": "overnight wait for Mark"},
+    {"stage": "verify round 1 (FAIL: coverage, bar) and its fix", "start": "2026-11-20T10:29:27-05:00", "end": "2026-11-20T10:47:32-05:00", "retries": 3},
+    {"stage": "verify round 2 (FAIL: findings stale, coverage) — retry ceiling", "start": "2026-11-20T10:47:32-05:00", "end": "2026-11-20T11:02:32-05:00", "retries": 3, "note": "Mark: one more review round"},
+    {"stage": "review round 4 and its plan fix", "start": "2026-11-20T11:02:32-05:00", "end": "2026-11-20T11:09:41-05:00", "retries": 3},
+    {"stage": "verify round 3 (PASS)", "start": "2026-11-20T11:09:41-05:00", "end": "2026-11-20T11:25:04-05:00", "retries": 3},
+    {"stage": "finish: Finishing decision (merge), record", "start": "2026-11-20T11:25:04-05:00", "end": "2026-11-20T12:30:00-05:00", "retries": 0, "note": "end approximate; the archive, filing and merge follow"}
+  ],
+  "retries_total": "2 fix rounds after review, 1 after verify round 1, then one manual round (review 4) past the ceiling on Mark's word",
+  "gates": {
+    "tests": "PASS (test_global_toolset 91/91, test_local_folder 23/23, test_standalone 40/40, test_search_mode 82/82; 61 other tests/scripts files exit 0; test_fetch_repo 11/27, identical at the fixed point)",
+    "diff-contains-fix": "PASS (55 files, 2001 insertions, 103 deletions)",
+    "findings-addressed": "PASS (review-ledger met, cap 4 by Mark's checkpoint answer: 7 closed, 45 non-blocking, 4 rounds)",
+    "frozen-tests": "PASS (check-freeze exit 0: 86 entries + 164 from earlier changes, 118 frozen green)",
+    "coverage": "PASS (every done criterion mapped to an existing test or a manual line; step 3's wiki_folders clause manual; step 17 under Mark's ruling)",
+    "bar-unmoved": "PASS (floor-guard clean, 2001 added, 103 removed lines)",
+    "in-scope": "PASS (scope-guard exit 0, 55 files)",
+    "tests-bite": "off (prove_tests_bite.py --check exit 4: mutation on demand, Mark 2026-11-20)"
+  },
+  "run_budget_status": [
+    "minutes: 477 of 720 active minutes used, 243 left (2137 on the wall clock; a gap over 10 minutes is a wait, not counted)",
+    "turns: 1820 of 2200 used (main session 560, sub-agents 1260), 380 left",
+    "cost: $106.87 of $120.00 used, $13.13 left (estimated at API list prices as of 2026-10-06)",
+    "run-budget: exit 0 - every cap that stops the run has room left"
+  ]
+}
