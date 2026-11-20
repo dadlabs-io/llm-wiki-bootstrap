@@ -1358,21 +1358,6 @@
     }
   },
   {
-    "file": "tests/scripts/test_global_toolset.py",
-    "test_name": "test_scaffold_stops_when_the_global_install_it_runs_failed_a_toolset_write",
-    "hash_of": "test",
-    "hash_scope": "test+module",
-    "hash": "374acfe3df1af5444c17d9a89ca2e9a6ae9d4ab866d4f6e25b69297cfe521f86",
-    "frozen_at_step": "fix-1",
-    "frozen_at": "2026-11-20",
-    "red": {
-      "command": "uv run --project C:/github.com/llm-wiki-bootstrap python tests/scripts/test_global_toolset.py",
-      "exit": 1,
-      "tail": "PASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: --phase docs exits 1 printing `FAILED <path>: <reason>`\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: exactly that file in failed, with a reason\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: the other edited page restored, the README left as it was\nPASS test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error\nPASS test_failed_reason_reads_error_class_colon_message: every failed reason reads `<ErrorClass>: <message>`\nPASS test_unremovable_old_folder_is_listed_failed_not_raised: old folder that cannot be removed: exactly that folder in failed, reason says why\nPASS test_install_summary_counts_the_failed_operations: install summary: the incomplete line counts the two failed operations\nPASS test_phase_docs_failure_line_is_a_warning_with_the_count: --phase docs with 7 failed writes: exit 1, a `!` warning line counts them\nFAIL test_wiki_upgrade_exits_1_when_a_toolset_write_failed: wiki-upgrade.py with a failed toolset write: exit 1, the FAILED lines still printed  [(0, '         removed 0 files of skills, scripts or agents that no longer ship\\n  placeholder {{WIKI_SCRIPTS_DIR}} \u2192 s\\n  placeholder {{TOOLSET_DIR}}      \u2192 \\n\\n  Restart Claude Code if these dirs are new so it picks up the\\n  new skills + scripts.\\n============================================================\\n')]\nFAIL test_new_wiki_tooling_mode_exits_1_when_a_toolset_write_failed: new-wiki.py --mode tooling with a failed toolset write: exit 1, the FAILED lines still printed  [(0, '         removed 0 files of skills, scripts or agents that no longer ship\\n  placeholder {{WIKI_SCRIPTS_DIR}} \u2192 s\\n  placeholder {{TOOLSET_DIR}}      \u2192 \\n\\n  Restart Claude Code if these dirs are new so it picks up the\\n  new skills + scripts.\\n============================================================\\n')]\nFAIL test_scaffold_stops_when_the_global_install_it_runs_failed_a_toolset_write: --install-global-if-missing with a failed toolset write: exit 1 and no project folder created  [(0, True)]\n84/87 passed",
-      "date": "2026-11-20"
-    }
-  },
-  {
     "file": "tests/scripts/test_local_folder.py",
     "test_name": "test_filing_into_best_practices_local_is_accepted_in_a_wiki_that_lacks_the_folder",
     "hash_of": "test",
@@ -1480,5 +1465,55 @@
       }
     ],
     "unfrozen_reason": "fix round 1 (standards-2, standards-9): the skip prints a visible SKIP line through _skip() and records no check; the assertions are unchanged"
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_wiki_upgrade_exits_1_when_a_skill_was_refused",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "2e1ad7d28eb3b355ddc8bcd303ef6ee50629c350e50189258398fb85c5edc74b",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-20",
+    "green_reason": {
+      "reason": "Watched red before the fix this round (FAIL ... exit 1 [0]: wiki-upgrade returned 0 on frontmatter_failed); the fix is in the same working tree, so the red command cannot be re-run.",
+      "date": "2026-11-20"
+    }
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_scaffold_warning_names_a_stale_toolset",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "2814f2018e16e3de21bfe85816a9a7e25cb537e362ae1b68670afb4fab4998e9",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-20",
+    "green_reason": {
+      "reason": "Watched red before the fix this round (the warning printed '()' and omitted the toolset docs and the phase-docs command); the fix is in the same working tree, so the red command cannot be re-run.",
+      "date": "2026-11-20"
+    }
+  },
+  {
+    "file": "tests/scripts/test_global_toolset.py",
+    "test_name": "test_scaffold_stops_when_the_global_install_it_runs_failed_a_toolset_write",
+    "hash_of": "test",
+    "hash_scope": "test+module",
+    "hash": "6dca870293937732446d92e9d106d6f6a70d53105525ed9557c4426b04530948",
+    "frozen_at_step": "fix-2",
+    "frozen_at": "2026-11-20",
+    "red": {
+      "command": "uv run --project C:/github.com/llm-wiki-bootstrap python tests/scripts/test_global_toolset.py",
+      "exit": 1,
+      "tail": "PASS test_plain_file_where_local_belongs_lists_readme_in_failed: plain file: --phase docs exits 1 printing `FAILED <path>: <reason>`\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: exactly that file in failed, with a reason\nPASS test_unwritable_readme_replacement_is_listed_failed_rest_done: unwritable README: the other edited page restored, the README left as it was\nPASS test_missing_readme_source_is_skipped_by_status: README source missing from the package: listed, but not in add, replace or remove, no error\nPASS test_failed_reason_reads_error_class_colon_message: every failed reason reads `<ErrorClass>: <message>`\nPASS test_unremovable_old_folder_is_listed_failed_not_raised: old folder that cannot be removed: exactly that folder in failed, reason says why\nPASS test_install_summary_counts_the_failed_operations: install summary: the incomplete line counts the two failed operations\nPASS test_phase_docs_failure_line_is_a_warning_with_the_count: --phase docs with 7 failed writes: exit 1, a `!` warning line counts them\nFAIL test_wiki_upgrade_exits_1_when_a_toolset_write_failed: wiki-upgrade.py with a failed toolset write: exit 1, the FAILED lines still printed  [(0, '         removed 0 files of skills, scripts or agents that no longer ship\\n  placeholder {{WIKI_SCRIPTS_DIR}} \u2192 s\\n  placeholder {{TOOLSET_DIR}}      \u2192 \\n\\n  Restart Claude Code if these dirs are new so it picks up the\\n  new skills + scripts.\\n============================================================\\n')]\nFAIL test_new_wiki_tooling_mode_exits_1_when_a_toolset_write_failed: new-wiki.py --mode tooling with a failed toolset write: exit 1, the FAILED lines still printed  [(0, '         removed 0 files of skills, scripts or agents that no longer ship\\n  placeholder {{WIKI_SCRIPTS_DIR}} \u2192 s\\n  placeholder {{TOOLSET_DIR}}      \u2192 \\n\\n  Restart Claude Code if these dirs are new so it picks up the\\n  new skills + scripts.\\n============================================================\\n')]\nFAIL test_scaffold_stops_when_the_global_install_it_runs_failed_a_toolset_write: --install-global-if-missing with a failed toolset write: exit 1 and no project folder created  [(0, True)]\n84/87 passed",
+      "date": "2026-11-20"
+    },
+    "unfreezes": [
+      {
+        "reason": "standards-14: also assert the install ran once and stderr holds the incomplete message and the refresh command; assertions added, none removed",
+        "date": "2026-11-20",
+        "step": "fix-2",
+        "hash": "6dca870293937732446d92e9d106d6f6a70d53105525ed9557c4426b04530948"
+      }
+    ],
+    "unfrozen_reason": "standards-14: also assert the install ran once and stderr holds the incomplete message and the refresh command; assertions added, none removed"
   }
 ]

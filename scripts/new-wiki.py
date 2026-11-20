@@ -776,8 +776,8 @@ def phase_docs(args):
     """--phase docs: refresh ONLY the global toolset's docs (task #25, 2026-10-04) -- the llm-wiki pack's
     usage pages (how-to/llm-wiki/), the how-to root marker, the six framework-contract docs
     (wiki/best-practices/framework/) and the README of wiki/best-practices/local/, kept once in the
-    global-toolset notebook. No project wiki
-    carries a copy any more, so nothing else is touched. A global install (`--mode tooling`,
+    global-toolset notebook. No project wiki carries a copy any more, so nothing else is touched.
+    A global install (`--mode tooling`,
     `install-wiki.ps1 -RefreshOnly`) does the same as one of its steps; this is the narrow path after a
     docs-only change. The toolset is created and registered when it is not there yet.
 
@@ -917,14 +917,20 @@ def phase_b(args):
                     _err("one or more skills/agents were refused (frontmatter does not parse) — fix and re-run")
                     return 1
                 if (summary.get("toolset") or {}).get("failed"):
-                    _err("the global toolset refresh is incomplete (see the FAILED lines above) — fix and re-run")
+                    _err("the global toolset refresh is incomplete (see the FAILED lines above) — free the "
+                         "file named there, run `install-wiki.ps1 -RefreshOnly` (or `new-wiki.py --phase docs` "
+                         "for the docs alone), then re-run")
                     return 1
                 global_tooling_installed_now = True
                 tooling_state = "installed"
         elif not tooling["current"]:
+            differs = tooling['stale_skills'] + tooling['stale_scripts'] + tooling['stale_agents']
+            if tooling["toolset"]["state"] == "stale":
+                differs.append("toolset docs")
             _warn("global tooling is installed but differs from the bootstrap source "
-                  f"({', '.join(tooling['stale_skills'] + tooling['stale_scripts'] + tooling['stale_agents'])}) — "
-                  "not refreshed here; run `install-wiki.ps1 -RefreshOnly` when you want the current copies")
+                  + (f"({', '.join(differs)}) " if differs else "") + "— "
+                  "not refreshed here; run `install-wiki.ps1 -RefreshOnly` (or `new-wiki.py --phase docs` for "
+                  "the toolset docs alone) when you want the current copies")
         else:
             _ok(f"global tooling: installed and current ({tooling['skills_expected']} skills, "
                 f"{tooling['scripts_expected']} scripts, {tooling['agents_expected']} agents)")

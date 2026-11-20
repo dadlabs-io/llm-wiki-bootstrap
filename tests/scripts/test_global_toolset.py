@@ -599,6 +599,19 @@ def test_wiki_upgrade_exits_1_when_a_toolset_write_failed():
               code == 1 and "FAILED " in out.getvalue(), (code, out.getvalue()[-300:]))
 
 
+def test_wiki_upgrade_exits_1_when_a_skill_was_refused():
+    summary = {"scripts_copied": 0, "helpers_copied": 0, "skills_installed": 0, "scripts_dest": "s",
+               "skills_dest": "k", "scripts_dest_value": "s", "frontmatter_failed": ["wrap-up"]}
+    mod = _load_script("wiki-upgrade.py", "wiki_upgrade_for_refused_skill")
+    with (mock.patch.object(mod, "install_tooling", return_value=summary),
+          mock.patch.object(mod, "print_summary"),
+          mock.patch.object(mod, "derive_bootstrap_source", return_value=ROOT),
+          mock.patch.object(sys, "argv", ["wiki-upgrade.py"]),
+          contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO())):
+        code = mod.main()
+    check("wiki-upgrade.py with a refused skill: exit 1", code == 1, code)
+
+
 def test_new_wiki_tooling_mode_exits_1_when_a_toolset_write_failed():
     with tempfile.TemporaryDirectory() as t:
         root = _toolset_in(Path(t))
@@ -628,14 +641,41 @@ def test_scaffold_stops_when_the_global_install_it_runs_failed_a_toolset_write()
         args = _ArgsDefaultingToNone(target_folder=str(target), bootstrap_source=str(ROOT), project_name="proj",
                                      tool="claude-code", project_folder="stubs", research_folder="stubs",
                                      install_global_if_missing=True, dry_run=False)
+        install = mock.Mock(return_value=summary)
+        err = io.StringIO()
         with (mock.patch.dict(os.environ, {"WIKI_TOOLING_DRY_RUN": "0"}),
               mock.patch.object(mod, "global_tooling_status", return_value={"state": "missing", "complete": False}),
               mock.patch.object(mod, "format_tooling_status", return_value=""),
-              mock.patch.object(mod, "_install_tooling", return_value=summary),
-              contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO())):
+              mock.patch.object(mod, "_install_tooling", install),
+              contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err)):
             code = mod.phase_b(args)
         check("--install-global-if-missing with a failed toolset write: exit 1 and no project folder created",
               code == 1 and not target.exists(), (code, target.exists()))
+        check("--install-global-if-missing with a failed toolset write: the install ran once, the message says why",
+              install.call_count == 1 and "the global toolset refresh is incomplete" in err.getvalue(),
+              (install.call_count, err.getvalue()[-300:]))
+        check("--install-global-if-missing with a failed toolset write: the message names the refresh command",
+              "install-wiki.ps1 -RefreshOnly" in err.getvalue(), err.getvalue()[-300:])
+
+
+def test_scaffold_warning_names_a_stale_toolset():
+    with tempfile.TemporaryDirectory() as t:
+        mod = _load_script("new-wiki.py", "new_wiki_for_stale_toolset_warning")
+        target = Path(t) / "proj"
+        target.mkdir()
+        (target / "unrelated.txt").write_text("stops the scaffold right after the warning\n", encoding="utf-8")
+        args = _ArgsDefaultingToNone(target_folder=str(target), bootstrap_source=str(ROOT), project_name="proj",
+                                     tool="claude-code", dry_run=False)
+        status = {"state": "stale", "complete": True, "current": False, "stale_skills": [], "stale_scripts": [],
+                  "stale_agents": [], "toolset": {"state": "stale"}}
+        err = io.StringIO()
+        with (mock.patch.object(mod, "global_tooling_status", return_value=status),
+              contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err)):
+            mod.phase_b(args)
+        warning = next((ln for ln in err.getvalue().splitlines() if "differs from the bootstrap source" in ln), "")
+        check("stale toolset, current skills and scripts: the warning names the toolset docs and the refresh command",
+              "toolset docs" in warning and "()" not in warning and "install-wiki.ps1 -RefreshOnly" in warning,
+              err.getvalue()[-400:])
 
 
 def _run(fn):
@@ -774,7 +814,9 @@ for _test in (test_empty_toolset_gets_docs_at_new_layout, test_old_copy_makes_st
               test_phase_docs_failure_line_is_a_warning_with_the_count,
               test_wiki_upgrade_exits_1_when_a_toolset_write_failed,
               test_new_wiki_tooling_mode_exits_1_when_a_toolset_write_failed,
-              test_scaffold_stops_when_the_global_install_it_runs_failed_a_toolset_write):
+              test_wiki_upgrade_exits_1_when_a_skill_was_refused,
+              test_scaffold_stops_when_the_global_install_it_runs_failed_a_toolset_write,
+              test_scaffold_warning_names_a_stale_toolset):
     _run(_test)
 
 failed = [n for ok, n in results if not ok]

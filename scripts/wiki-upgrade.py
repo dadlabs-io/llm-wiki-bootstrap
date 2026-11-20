@@ -66,6 +66,10 @@ def main() -> int:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
     print_summary(summary)
+    if summary.get("frontmatter_failed"):
+        print("ERROR: one or more skills/agents were refused (frontmatter does not parse) — fix and re-run",
+              file=sys.stderr)
+        return 1
     if (summary.get("toolset") or {}).get("failed"):
         print("ERROR: the global toolset refresh is incomplete (see the FAILED lines above) — fix and re-run",
               file=sys.stderr)

@@ -344,3 +344,12 @@ Written by the developer, 2026-11-20. Nothing committed. Production edits were s
 - standards-5/6, standards-12 part: comment lines in `wiki-map-compile.py`, `_wiki_config.py` (SCAFFOLD_TAXONOMY value unchanged), `_install_tooling.py`, the `phase_docs` docstring, and `# B1 — mkdir + git init` restored. No test (comments).
 - standards-4: the `not in files` clause dropped from `toolset_status`'s old-docs scan (M20/M22 equivalents; the `is_dir()` guard is kept as an `if`); test_global_toolset stays green.
 - Counts: test_global_toolset 87/87, test_local_folder 23/23, test_standalone 40/40, test_install_incomplete 25/25, test_install_manifest 21/21, test_refresh_prunes 11/11, test_not_checked 23/23, test_tooling_state_seam 23/23. check-freeze: `check-freeze: exit 0 - PASS: every frozen test matches, or changed with a reason` (84 entries, 164 earlier).
+
+## Fix round 2
+
+- risk-5 / spec-8: `scripts/new-wiki.py` phase_b stale warning now appends "toolset docs" when `tooling["toolset"]["state"] == "stale"`, omits the parentheses when the list is empty, names `install-wiki.ps1 -RefreshOnly` and `new-wiki.py --phase docs`; the failed-write `_err` says free the file, run the refresh, re-run. No refresh added. Test `test_scaffold_warning_names_a_stale_toolset` (red: warning lacked toolset docs and printed `()`).
+- risk-8: `scripts/wiki-upgrade.py` returns 1 on `frontmatter_failed`. Test `test_wiki_upgrade_exits_1_when_a_skill_was_refused` (red: exit 0).
+- standards-14: `test_scaffold_stops_when_the_global_install_it_runs_failed_a_toolset_write` also asserts one install call, the incomplete message and the refresh command (red on the command check before the message change). Re-frozen with an unfrozen reason.
+- spec-9: CHANGELOG.md:16 "A toolset refresh that cannot write". standards-17: phase_docs docstring reflowed.
+- Not done: no .pre-commit-config.yaml in this repo. New tests frozen green with a reason (red seen before the fix; not re-runnable).
+- Counts: test_global_toolset 91/91, test_local_folder 23/23, test_standalone 40/40, test_install_incomplete 25/25, test_install_manifest 21/21, test_refresh_prunes 11/11, test_not_checked 23/23, test_tooling_state_seam 23/23.
